@@ -1,0 +1,17 @@
+{
+  "moduleFileExtensions": ["ts", "js", "json"],
+  "testMatch": ["<rootDir>/tests/unit/*.(spec|test).ts|tsx"],
+  "transform": {
+    "^.+\\.ts$": [
+      "ts-jest",
+      {
+        "diagnostics": false
+      }
+    ]
+  },
+  "moduleNameMapper": {
+    "^uuid$": "uuid"
+  },
+  "testEnvironment": "node",
+  "reporters": ["default"]
+}

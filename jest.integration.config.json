@@ -1,0 +1,19 @@
+{
+  "moduleFileExtensions": ["ts", "js", "json"],
+  "testMatch": ["<rootDir>/tests/integration/container/tests/*.(spec|test).ts|tsx"],
+  "transform": {
+    "^.+\\.ts$": [
+      "ts-jest",
+      {
+        "diagnostics": false
+      }
+    ]
+  },
+  "moduleNameMapper": {
+    "^uuid$": "uuid"
+  },
+  "globalSetup": "<rootDir>/tests/integration/container/tests/setup.ts",
+  "globalTeardown": "<rootDir>/tests/integration/container/tests/teardown.ts",
+  "testEnvironment": "node",
+  "reporters": ["default", "./node_modules/jest-html-reporter"]
+}

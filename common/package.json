@@ -1,0 +1,23 @@
+{
+  "name": "aws-wrapper-common-lib",
+  "private": true,
+  "main": "lib/index.ts",
+  "type": "module",
+  "devDependencies": {
+    "@aws-sdk/client-rds": "^3.446.0",
+    "@types/jest": "^26.0.0",
+    "@types/lodash": "^4.14.200",
+    "@types/node": "^20.9.0",
+    "dotenv": "^16.0.3",
+    "lodash": "^4.17.21",
+    "prettier": "^3.0.3",
+    "ts-jest": "^26.0.0",
+    "ts-node": "^10.9.1",
+    "tsx": "^3.12.7",
+    "winston": "3.11.0",
+    "typescript": "^4.2.3"
+  },
+  "files": [
+    "lib/*"
+  ]
+}

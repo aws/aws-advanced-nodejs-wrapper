@@ -1,0 +1,58 @@
+{
+  "name": "aws-wrapper",
+  "private": true,
+  "workspaces": [
+    "common",
+    "pg",
+    "mysql"
+  ],
+  "scripts": {
+    "bench": "npx tsx tests/benchmarks.ts",
+    "bench2": " npx tsx --tsconfig ./tsconfig.json tests/benchmarks.ts",
+    "check": "prettier . --check --config .prettierrc",
+    "connect": "npx tsx tests/connectbenchmarks.ts",
+    "format": "prettier . --write --config .prettierrc",
+    "integration": "jest --config=jest.integration.config.json",
+    "lint": "eslint --fix --ext .ts .",
+    "prepare": "husky install",
+    "test": "jest --config=jest.unit.config.json"
+  },
+  "lint-staged": {
+    "*.ts": [
+      "eslint --cache --fix",
+      "prettier --config .prettierrc"
+    ]
+  },
+  "devDependencies": {
+    "@aws-sdk/credential-providers": "^3.461.0",
+    "@aws-sdk/rds-signer": "^3.461.0",
+    "@types/i18n": "^0.13.10",
+    "@types/jest": "^29.0.0",
+    "@types/lodash": "^4.14.200",
+    "@types/node": "^20.9.0",
+    "@types/node-fetch": "^2.6.9",
+    "@types/pg": "^8.6.6",
+    "@typescript-eslint/eslint-plugin": "^6.12.0",
+    "benny": "^3.7.1",
+    "dotenv": "^16.0.3",
+    "eslint": "^8.54.0",
+    "eslint-config-prettier": "^9.0.0",
+    "eslint-plugin-header": "^3.1.1",
+    "eslint-plugin-prettier": "^5.0.1",
+    "husky": "^8.0.3",
+    "i18n": "^0.15.1",
+    "jest-html-reporter": "^3.10.2",
+    "lint-staged": "^15.1.0",
+    "lodash": "^4.17.21",
+    "mysql2": "^3.6.3",
+    "node-fetch": "^2.6.7",
+    "pg": "^8.10.0",
+    "prettier": "^3.0.3",
+    "toxiproxy-node-client": "^3.0.0",
+    "ts-jest": "^29.0.0",
+    "ts-mockito": "^2.6.1",
+    "ts-node": "^10.9.1",
+    "tsx": "^3.12.7",
+    "typescript": "^4.2.3"
+  }
+}
