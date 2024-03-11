@@ -86,7 +86,6 @@ public class ContainerHelper {
     execInContainer(container, consumer, "printenv", "TEST_ENV_DESCRIPTION");
     execInContainer(container, consumer, "npm", "install", "--no-save");
 
-
     final String filter = System.getenv("FILTER");
 
     Long exitCode;
@@ -107,21 +106,17 @@ public class ContainerHelper {
     execInContainer(container, consumer, "printenv", "TEST_ENV_DESCRIPTION");
     execInContainer(container, consumer, "npm", "install", "--no-save");
 
-    // Long exitCode;
-    // String reportSetting = String.format(
-    // "--html=./tests/integration/container/reports/%s.html",
-    // config.getPrimaryInfo());
-    // System.out.println("\n\n Starting debugpy - you may now attach to the
-    // debugger from vscode...\n\n");
-    // exitCode = execInContainer(container, consumer,
-    // "poetry", "run", "python", "-Xfrozen_modules=off", "-m", "debugpy",
-    // "--listen", "0.0.0.0:5005",
-    // "--wait-for-client",
-    // "./tests/integration/container/scripts/debug_integration_vscode.py",
-    // System.getenv("FILTER"), reportSetting, testFolder);
+    final String filter = System.getenv("FILTER");
 
-    // System.out.println("==== Container console feed ==== <<<<");
-    // assertEquals(0, exitCode, "Some tests failed.");
+    Long exitCode;
+    if (filter != null) {
+      exitCode = execInContainer(container, consumer, "npm", "run", "debug-integration", "--", "-t", filter);
+    } else {
+      exitCode = execInContainer(container, consumer, "npm", "run", "debug-integration");
+    }
+
+    System.out.println("==== Container console feed ==== <<<<");
+    assertEquals(0, exitCode, "Some tests failed.");
   }
 
   public GenericContainer<?> createTestContainer(String dockerImageName, String testContainerImageName) {

@@ -13,6 +13,7 @@
     "connect": "npx tsx tests/connectbenchmarks.ts",
     "format": "prettier . --write --config .prettierrc",
     "integration": "jest --config=jest.integration.config.json",
+    "debug-integration": "node --inspect-brk=0.0.0.0:5005 ./node_modules/jest/bin/jest.js --config=jest.integration.config.json --runInBand",
     "lint": "eslint --fix --ext .ts .",
     "prepare": "husky install",
     "test": "jest --config=jest.unit.config.json"

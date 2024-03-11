@@ -135,3 +135,25 @@ tasks.register<Test>("debug-aurora") {
         systemProperty("exclude-performance", "true")
     }
 }
+
+tasks.register<Test>("debug-aurora-pg") {
+    group = "verification"
+    filter.includeTestsMatching("integration.host.TestRunner.debugTests")
+    doFirst {
+        systemProperty("exclude-docker", "true")
+        systemProperty("exclude-performance", "true")
+        systemProperty("exclude-mysql-driver", "true")
+        systemProperty("exclude-mysql-engine", "true")
+    }
+}
+
+tasks.register<Test>("debug-aurora-mysql") {
+    group = "verification"
+    filter.includeTestsMatching("integration.host.TestRunner.debugTests")
+    doFirst {
+        systemProperty("exclude-docker", "true")
+        systemProperty("exclude-performance", "true")
+        systemProperty("exclude-pg-driver", "true")
+        systemProperty("exclude-pg-engine", "true")
+    }
+}
