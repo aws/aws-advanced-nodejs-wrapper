@@ -86,7 +86,6 @@ public class ContainerHelper {
     execInContainer(container, consumer, "printenv", "TEST_ENV_DESCRIPTION");
     execInContainer(container, consumer, "npm", "install", "--no-save");
 
-
     final String filter = System.getenv("FILTER");
 
     Long exitCode;
