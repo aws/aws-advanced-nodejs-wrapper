@@ -47,7 +47,7 @@ export interface ConnectionPlugin {
     initHostProviderFunc: () => void
   ): void;
 
-  notifyConnectionChanged(changes: Set<HostChangeOptions>): OldConnectionSuggestionAction;
+  notifyConnectionChanged(changes: Set<HostChangeOptions>): Promise<OldConnectionSuggestionAction>;
 
   notifyHostListChanged(changes: Map<string, Set<HostChangeOptions>>): void;
 

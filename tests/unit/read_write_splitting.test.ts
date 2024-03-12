@@ -357,7 +357,7 @@ describe("reader write splitting test", () => {
       clientWrapper_undefined
     );
 
-    const suggestion = target.notifyConnectionChanged(mockChanges);
+    const suggestion = await target.notifyConnectionChanged(mockChanges);
     expect(suggestion).toEqual(OldConnectionSuggestionAction.NO_OPINION);
   });
 

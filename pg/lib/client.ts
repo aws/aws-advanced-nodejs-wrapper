@@ -61,8 +61,12 @@ export class AwsPGClient extends AwsClient {
     return;
   }
 
-  executeQuery(props: Map<string, any>, sql: string): Promise<QueryResult> {
-    return this.targetClient?.client.query(sql);
+  executeQuery(props: Map<string, any>, sql: string, targetClient?: ClientWrapper): Promise<QueryResult> {
+    if (targetClient) {
+      return targetClient?.client.query(sql);
+    } else {
+      return this.targetClient?.client.query(sql);
+    }
   }
 
   query(text: string): Promise<QueryResult> {
@@ -168,8 +172,18 @@ export class AwsPGClient extends AwsClient {
     return this._schema;
   }
 
-  end(): Promise<void> {
-    return this.pluginManager.execute(this.pluginService.getCurrentHostInfo(), this.properties, "end", () => this.targetClient?.client?.end(), null);
+  async end() {
+    const result = await this.pluginManager.execute(
+      this.pluginService.getCurrentHostInfo(),
+      this.properties,
+      "end",
+      () => {
+        return this.targetClient?.client?.end();
+      },
+      null
+    );
+    await this.releaseResources();
+    return result;
   }
 
   async rollback(): Promise<QueryResult> {

@@ -35,7 +35,9 @@ export interface HostListProvider {
 
   getHostRole(client: AwsClient, dialect: DatabaseDialect): Promise<HostRole>;
 
-  identifyConnection(client: AwsClient, dialect: DatabaseDialect): Promise<HostInfo | void | null>;
+  identifyConnection(targetClient: any, dialect: DatabaseDialect): Promise<HostInfo | void | null>;
 
   createHost(host: string, isWriter: boolean, weight: number, lastUpdateTime: number): HostInfo;
+
+  getHostProviderType(): string;
 }

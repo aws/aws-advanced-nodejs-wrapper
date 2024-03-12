@@ -40,7 +40,7 @@ export class SlidingExpirationCache<K, V> {
   private _cleanupIntervalNanos: bigint = BigInt(10 * 60_000_000_000); // 10 minutes
   private readonly _shouldDisposeFunc?: (item: V) => boolean;
   private readonly _itemDisposalFunc?: (item: V) => void;
-  private _map: MapUtils<K, CacheItem<V>> = new MapUtils<K, CacheItem<V>>();
+  _map: MapUtils<K, CacheItem<V>> = new MapUtils<K, CacheItem<V>>();
   private _cleanupTimeNanos: bigint;
 
   constructor(cleanupIntervalNanos: bigint, shouldDisposeFunc?: (item: V) => boolean, itemDisposalFunc?: (item: V) => void) {
@@ -62,6 +62,11 @@ export class SlidingExpirationCache<K, V> {
     this.cleanUp();
     const cacheItem = this._map.computeIfAbsent(key, (k) => new CacheItem(mappingFunc(k), getTimeInNanos() + itemExpirationNanos));
     return cacheItem?.updateExpiration(itemExpirationNanos).item ?? null;
+  }
+
+  putIfAbsent(key: K, value: V, itemExpirationNanos: bigint): V | null {
+    const cacheItem = this._map.putIfAbsent(key, new CacheItem(value, getTimeInNanos() + itemExpirationNanos));
+    return cacheItem?.item ?? null;
   }
 
   get(key: K): V | undefined {
@@ -114,5 +119,9 @@ export class SlidingExpirationCache<K, V> {
     for (const k of this._map.keys) {
       this.removeIfExpired(k);
     }
+  }
+
+  getKeys() {
+    return this._map.keys;
   }
 }

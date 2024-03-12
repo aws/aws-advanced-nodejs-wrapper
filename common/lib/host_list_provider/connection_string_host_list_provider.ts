@@ -124,4 +124,8 @@ export class ConnectionStringHostListProvider implements StaticHostListProvider 
     hostInfo.hostId = host;
     return hostInfo;
   }
+
+  getHostProviderType(): string {
+    return this.constructor.name;
+  }
 }

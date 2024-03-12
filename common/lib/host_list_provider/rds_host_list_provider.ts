@@ -136,16 +136,20 @@ export class RdsHostListProvider implements DynamicHostListProvider {
       throw new TypeError(Messages.get("RdsHostListProvider.incorrectDialect"));
     }
 
-    return dialect.getHostRole(client, this.properties);
+    if (client.targetClient) {
+      return dialect.getHostRole(client.targetClient, this.properties);
+    } else {
+      throw new AwsWrapperError(Messages.get("AwsClient targetClient not defined."));
+    }
   }
 
-  async identifyConnection(client: AwsClient, dialect: DatabaseDialect): Promise<HostInfo | null> {
+  async identifyConnection(targetClient: ClientWrapper, dialect: DatabaseDialect): Promise<HostInfo | null> {
     if (!this.isTopologyAwareDatabaseDialect(dialect)) {
       throw new TypeError(Messages.get("RdsHostListProvider.incorrectDialect"));
     }
-    const instanceName = await dialect.identifyConnection(client, this.properties);
+    const instanceName = await dialect.identifyConnection(targetClient, this.properties);
 
-    return this.refresh().then((topology) => {
+    return this.refresh(targetClient).then((topology) => {
       const matches = topology.filter((host) => host.hostId === instanceName);
       return matches.length === 0 ? null : matches[0];
     });
@@ -264,6 +268,7 @@ export class RdsHostListProvider implements DynamicHostListProvider {
   }
 
   async queryForTopology(targetClient: ClientWrapper, dialect: DatabaseDialect): Promise<HostInfo[]> {
+    console.log(dialect);
     if (!this.isTopologyAwareDatabaseDialect(dialect)) {
       throw new TypeError(Messages.get("RdsHostListProvider.incorrectDialect"));
     }
@@ -373,6 +378,10 @@ export class RdsHostListProvider implements DynamicHostListProvider {
 
   getRdsUrlType(): RdsUrlType {
     return this.rdsUrlType;
+  }
+
+  getHostProviderType(): string {
+    return this.constructor.name;
   }
 }
 

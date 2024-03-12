@@ -20,7 +20,6 @@ import { HostListProvider } from "../../../common/lib/host_list_provider/host_li
 import { RdsHostListProvider } from "../../../common/lib/host_list_provider/rds_host_list_provider";
 import { TopologyAwareDatabaseDialect } from "../../../common/lib/topology_aware_database_dialect";
 import { HostInfo } from "../../../common/lib/host_info";
-import { AwsClient } from "../../../common/lib/aws_client";
 import { HostRole } from "../../../common/lib/host_role";
 import { ClientWrapper } from "../../../common/lib/client_wrapper";
 
@@ -39,7 +38,7 @@ export class AuroraPgDatabaseDialect extends PgDatabaseDialect implements Topolo
 
   constructor() {
     super();
-    this.dialectName = "AuroraPgDatabaseDialect";
+    this.dialectName = this.constructor.name;
   }
 
   getHostListProvider(props: Map<string, any>, originalUrl: string, hostListProviderService: HostListProviderService): HostListProvider {
@@ -64,13 +63,13 @@ export class AuroraPgDatabaseDialect extends PgDatabaseDialect implements Topolo
     return hosts;
   }
 
-  async identifyConnection(client: AwsClient, props: Map<string, any>): Promise<string> {
-    const res = await client.executeQuery(props, AuroraPgDatabaseDialect.HOST_ID_QUERY);
-    return Promise.resolve(res.rows[0]["host"]);
+  async identifyConnection(targetClient: ClientWrapper, props: Map<string, any>): Promise<string> {
+    const res = await targetClient.client.query(AuroraPgDatabaseDialect.HOST_ID_QUERY);
+    return Promise.resolve(res.rows[0]["host"] ?? "");
   }
 
-  async getHostRole(client: AwsClient, props: Map<string, any>): Promise<HostRole> {
-    const res = await client.executeQuery(props, AuroraPgDatabaseDialect.IS_READER_QUERY);
+  async getHostRole(targetClient: ClientWrapper, props: Map<string, any>): Promise<HostRole> {
+    const res = await targetClient.client.query(AuroraPgDatabaseDialect.IS_READER_QUERY);
     return Promise.resolve(res.rows[0]["is_reader"] === "true" ? HostRole.READER : HostRole.WRITER);
   }
 

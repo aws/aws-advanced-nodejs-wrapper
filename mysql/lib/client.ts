@@ -57,12 +57,17 @@ export class AwsMySQLClient extends AwsClient {
     return;
   }
 
-  async executeQuery(props: Map<string, any>, sql: string): Promise<Query> {
+  async executeQuery(props: Map<string, any>, sql: string, targetClient: ClientWrapper): Promise<Query> {
     if (!this.isConnected) {
       await this.connect(); // client.connect is not required for MySQL clients
       this.isConnected = true;
     }
-    return this.targetClient?.client.promise().query({ sql: sql });
+
+    if (targetClient) {
+      return targetClient?.client.promise().query({ sql: sql });
+    } else {
+      return this.targetClient?.client.promise().query({ sql: sql });
+    }
   }
 
   async query(options: QueryOptions, callback?: any): Promise<Query> {
@@ -187,8 +192,8 @@ export class AwsMySQLClient extends AwsClient {
     return this._isolationLevel;
   }
 
-  end() {
-    return this.pluginManager.execute(
+  async end() {
+    const result = await this.pluginManager.execute(
       this.pluginService.getCurrentHostInfo(),
       this.properties,
       "end",
@@ -197,6 +202,8 @@ export class AwsMySQLClient extends AwsClient {
       },
       null
     );
+    await this.releaseResources();
+    return result;
   }
 
   async rollback(): Promise<Query> {

@@ -27,7 +27,7 @@ export class ExecuteTimePluginFactory implements ConnectionPluginFactory {
       const executeTimePlugin = await import("./execute_time_plugin");
       return new executeTimePlugin.ExecuteTimePlugin();
     } catch (error: any) {
-      logger.error(error);
+      logger.error(error.message);
       throw new AwsWrapperError(Messages.get("ConnectionPluginChainBuilder.errorImportingPlugin", "ExecuteTimePlugin"));
     }
   }

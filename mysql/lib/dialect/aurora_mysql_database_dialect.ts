@@ -18,7 +18,6 @@ import { MySQLDatabaseDialect } from "./mysql_database_dialect";
 import { HostListProviderService } from "../../../common/lib/host_list_provider_service";
 import { HostListProvider } from "../../../common/lib/host_list_provider/host_list_provider";
 import { RdsHostListProvider } from "../../../common/lib/host_list_provider/rds_host_list_provider";
-import { AwsClient } from "../../../common/lib/aws_client";
 import { HostInfo } from "../../../common/lib/host_info";
 import { TopologyAwareDatabaseDialect } from "../../../common/lib/topology_aware_database_dialect";
 import { HostRole } from "../../../common/lib/host_role";
@@ -37,7 +36,7 @@ export class AuroraMySQLDatabaseDialect extends MySQLDatabaseDialect implements 
 
   constructor() {
     super();
-    this.dialectName = "AuroraMySQLDatabaseDialect";
+    this.dialectName = this.constructor.name;
   }
 
   getHostListProvider(props: Map<string, any>, originalUrl: string, hostListProviderService: HostListProviderService): HostListProvider {
@@ -62,13 +61,13 @@ export class AuroraMySQLDatabaseDialect extends MySQLDatabaseDialect implements 
     return hosts;
   }
 
-  async identifyConnection(client: AwsClient, props: Map<string, any>): Promise<string> {
-    const res = await client.executeQuery(props, AuroraMySQLDatabaseDialect.HOST_ID_QUERY);
-    return res[0]["host"];
+  async identifyConnection(targetClient: ClientWrapper, props: Map<string, any>): Promise<string> {
+    const res = await targetClient.client.promise().query(AuroraMySQLDatabaseDialect.HOST_ID_QUERY);
+    return res[0][0]["host"] ?? "";
   }
 
-  async getHostRole(client: AwsClient, props: Map<string, any>): Promise<HostRole> {
-    const res = await client.executeQuery(props, AuroraMySQLDatabaseDialect.IS_READER_QUERY);
+  async getHostRole(targetClient: ClientWrapper, props: Map<string, any>): Promise<HostRole> {
+    const res = await targetClient.client.promise().query(AuroraMySQLDatabaseDialect.IS_READER_QUERY);
     return Promise.resolve(res[0]["is_reader"] === "true" ? HostRole.READER : HostRole.WRITER);
   }
 

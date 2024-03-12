@@ -27,7 +27,7 @@ export class ConnectTimePluginFactory implements ConnectionPluginFactory {
       const connectTimePlugin = await import("./connect_time_plugin");
       return new connectTimePlugin.ConnectTimePlugin();
     } catch (error: any) {
-      logger.error(error);
+      logger.error(error.message);
       throw new AwsWrapperError(Messages.get("ConnectionPluginChainBuilder.errorImportingPlugin", "ConnectTimePlugin"));
     }
   }

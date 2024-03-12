@@ -15,7 +15,7 @@
 */
 
 import { RdsHostListProvider } from "../../common/lib/host_list_provider/rds_host_list_provider";
-import { anyFunction, anyString, anything, instance, mock, spy, verify, when } from "ts-mockito";
+import { anyFunction, anyString, anything, instance, mock, reset, spy, verify, when } from "ts-mockito";
 import { HostListProviderService } from "../../common/lib/host_list_provider_service";
 import { PluginService } from "../../common/lib/plugin_service";
 import { AwsClient } from "../../common/lib/aws_client";
@@ -92,6 +92,12 @@ describe("testRdsHostListProvider", () => {
 
   afterEach(() => {
     RdsHostListProvider.clearAll();
+
+    reset(mockDialect);
+    reset(mockClientWrapper);
+    reset(mockClient);
+    reset(mockPluginService);
+    reset(mockHostListProviderService);
   });
 
   it("testGetTopology_returnCachedTopology", async () => {
@@ -414,10 +420,10 @@ describe("testRdsHostListProvider", () => {
   });
 
   it("testIdentifyConnectionWithInvalidHostIdQuery", async () => {
-    when(mockDialect.queryForTopology(anything(), anything())).thenThrow(new AwsWrapperError("bad things"));
+    when(mockDialect.identifyConnection(anything(), anything())).thenThrow(new AwsWrapperError("bad things"));
 
     const rdsHostListProvider = getRdsHostListProvider("foo");
-    await expect(rdsHostListProvider.identifyConnection(instance(mockClient), instance(mockDialect))).rejects.toThrow(AwsWrapperError);
+    await expect(rdsHostListProvider.identifyConnection(instance(mockClientWrapper), instance(mockDialect))).rejects.toThrow(AwsWrapperError);
   });
 
   it("testIdentifyConnectionHostInTopology", async () => {
@@ -437,7 +443,7 @@ describe("testRdsHostListProvider", () => {
     }).build();
 
     when(spiedProvider.refresh()).thenReturn(Promise.resolve([]));
-    const res = await rdsHostListProvider.identifyConnection(instance(mockClient), instance(mockDialect));
+    const res = await rdsHostListProvider.identifyConnection(instance(mockClientWrapper), instance(mockDialect));
     expect(res).toBeNull();
   });
 
