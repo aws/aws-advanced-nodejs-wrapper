@@ -19,7 +19,6 @@ import { ProxyHelper } from "./utils/proxy_helper";
 
 /* eslint-disable @typescript-eslint/no-unused-vars */
 export default async (globalConfig: any, projectConfig: any) => {
-  console.log("Set up");
   // console.log(globalConfig);
 
   const info = (await TestEnvironment.getCurrent()).info;
