@@ -22,6 +22,7 @@ import { WrapperProperties } from "./wrapper_property";
 import { AwsWrapperError } from "./utils/aws_wrapper_error";
 import { Messages } from "./utils/messages";
 import { DefaultPlugin } from "./plugins/default_plugin";
+import { ConnectTimeConnectionPluginFactory } from './plugins/connect_time_connection_plugin';
 
 export class PluginFactoryInfo {}
 
@@ -33,7 +34,8 @@ export class ConnectionPluginChainBuilder {
 
   static readonly PLUGIN_FACTORIES = new Map<string, FactoryClass>([
     ["iam", IamAuthenticationPluginFactory],
-    ["failover", FailoverPluginFactory]
+    ["failover", FailoverPluginFactory],
+    ["connectTime", ConnectTimeConnectionPluginFactory]
   ]);
 
   getPlugins(pluginService: PluginService, props: Map<string, any>): ConnectionPlugin[] {

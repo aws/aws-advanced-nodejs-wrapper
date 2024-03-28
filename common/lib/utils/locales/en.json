@@ -33,5 +33,6 @@
   "ClusterAwareWriterFailoverHandler.taskBFailedToConnectToAnyReader": "[TaskB] Failed to connect to any reader.",
   "ClusterAwareWriterFailoverHandler.standaloneNode": "[TaskB] Host %s is not yet connected to a cluster. The cluster is still being reconfigured.",
   "ClusterAwareWriterFailoverHandler.taskBAttemptConnectionToNewWriter": "[TaskB] Trying to connect to a new writer: '%s'",
-  "ClusterAwareWriterFailoverHandler.alreadyWriter": "Current reader connection is actually a new writer connection."
+  "ClusterAwareWriterFailoverHandler.alreadyWriter": "Current reader connection is actually a new writer connection.",
+  "ConnectTimeConnectionPlugin.connectTime": "Connected in '%s' nanos."
 }

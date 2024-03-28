@@ -17,6 +17,7 @@
 import { HostInfo } from "../host_info";
 import { Messages } from "./messages";
 import { WrapperProperties } from "../wrapper_property";
+import { performance } from 'perf_hooks';
 
 export function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));

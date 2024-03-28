@@ -16,12 +16,61 @@
 
 import { AbstractConnectionPlugin } from "../abstract_connection_plugin";
 import { logger } from '../../logutils';
+import { HostInfo } from "../host_info";
+import { getTimeInNanos } from '../utils/utils';
+import { Messages } from "../utils/messages";
+import { ConnectionPluginFactory } from "../plugin_factory";
+import { ConnectionPlugin } from "../connection_plugin";
+import { PluginService } from '../plugin_service';
 
 export class ConnectTimeConnectionPlugin extends AbstractConnectionPlugin {
     private static subscribedMethods: Set<string> = new Set<string>(["connect", "forceConnect"]);
     private static connectTime: number = 0;
+    private pluginService: PluginService;
+
+    constructor(PluginService: PluginService) {
+        super();
+        this.pluginService = PluginService;
+    }
 
     override getSubscribedMethods(): Set<string> {
         return ConnectTimeConnectionPlugin.subscribedMethods;
+    }
+
+    override connect<T>(hostInfo: HostInfo, props: Map<string, any>, isInitialConnection: boolean, connectFunc: () => Promise<T>): Promise<T> {
+        let startTime = getTimeInNanos();
+        
+        let result = connectFunc();
+
+        let elapsedTimeNanos = Number(getTimeInNanos()) - Number(startTime);
+        ConnectTimeConnectionPlugin.connectTime += elapsedTimeNanos;
+        console.log(elapsedTimeNanos);
+        logger.debug(Messages.get("ConnectTimeConnectionPlugin.connectTime", elapsedTimeNanos.toString()));
+        return result;
+    }
+
+    override forceConnect<T>(hostInfo: HostInfo, props: Map<string, any>, isInitialConnection: boolean, forceConnectFunc: () => Promise<T>): Promise<T> {
+        let startTime = getTimeInNanos();
+
+        let result = forceConnectFunc();
+
+        let elapsedTimeNanos = Number(getTimeInNanos()) - Number(startTime);
+        ConnectTimeConnectionPlugin.connectTime += elapsedTimeNanos;
+        logger.debug(Messages.get("ConnectTimeConnectionPlugin.connectTime", elapsedTimeNanos.toString()));
+        return result;
+    }
+
+    public resetConnectTime(): void {
+        ConnectTimeConnectionPlugin.connectTime = 0;
+    }
+
+    public getTotalConnectTime(): number {
+        return ConnectTimeConnectionPlugin.connectTime;
+    }
+}
+
+export class ConnectTimeConnectionPluginFactory implements ConnectionPluginFactory {
+    getInstance(pluginService: PluginService, properties: Map<string, any>): ConnectionPlugin {
+        return new ConnectTimeConnectionPlugin(pluginService);
     }
 }
