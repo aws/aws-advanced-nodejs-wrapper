@@ -26,33 +26,26 @@ import { PluginService } from '../plugin_service';
 export class ConnectTimeConnectionPlugin extends AbstractConnectionPlugin {
     private static subscribedMethods: Set<string> = new Set<string>(["connect", "forceConnect"]);
     private static connectTime: number = 0;
-    private pluginService: PluginService;
 
-    constructor(PluginService: PluginService) {
-        super();
-        this.pluginService = PluginService;
-    }
-
-    override getSubscribedMethods(): Set<string> {
+    public override getSubscribedMethods(): Set<string> {
         return ConnectTimeConnectionPlugin.subscribedMethods;
     }
 
-    override connect<T>(hostInfo: HostInfo, props: Map<string, any>, isInitialConnection: boolean, connectFunc: () => Promise<T>): Promise<T> {
+    public override async connect<T>(hostInfo: HostInfo, props: Map<string, any>, isInitialConnection: boolean, connectFunc: () => Promise<T>): Promise<T> {
         let startTime = getTimeInNanos();
         
-        let result = connectFunc();
+        let result = await connectFunc();
 
         let elapsedTimeNanos = Number(getTimeInNanos()) - Number(startTime);
         ConnectTimeConnectionPlugin.connectTime += elapsedTimeNanos;
-        console.log(elapsedTimeNanos);
         logger.debug(Messages.get("ConnectTimeConnectionPlugin.connectTime", elapsedTimeNanos.toString()));
         return result;
     }
 
-    override forceConnect<T>(hostInfo: HostInfo, props: Map<string, any>, isInitialConnection: boolean, forceConnectFunc: () => Promise<T>): Promise<T> {
+    public override async forceConnect<T>(hostInfo: HostInfo, props: Map<string, any>, isInitialConnection: boolean, forceConnectFunc: () => Promise<T>): Promise<T> {
         let startTime = getTimeInNanos();
 
-        let result = forceConnectFunc();
+        let result = await forceConnectFunc();
 
         let elapsedTimeNanos = Number(getTimeInNanos()) - Number(startTime);
         ConnectTimeConnectionPlugin.connectTime += elapsedTimeNanos;
@@ -71,6 +64,6 @@ export class ConnectTimeConnectionPlugin extends AbstractConnectionPlugin {
 
 export class ConnectTimeConnectionPluginFactory implements ConnectionPluginFactory {
     getInstance(pluginService: PluginService, properties: Map<string, any>): ConnectionPlugin {
-        return new ConnectTimeConnectionPlugin(pluginService);
+        return new ConnectTimeConnectionPlugin();
     }
 }
