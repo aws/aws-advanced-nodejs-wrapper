@@ -36,7 +36,7 @@ export class ConnectTimeConnectionPlugin extends AbstractConnectionPlugin {
         
         let result = await connectFunc();
 
-        let elapsedTimeNanos = Number(getTimeInNanos()) - Number(startTime);
+        let elapsedTimeNanos = getTimeInNanos() - startTime;
         ConnectTimeConnectionPlugin.connectTime += elapsedTimeNanos;
         logger.debug(Messages.get("ConnectTimeConnectionPlugin.connectTime", elapsedTimeNanos.toString()));
         return result;
@@ -47,7 +47,7 @@ export class ConnectTimeConnectionPlugin extends AbstractConnectionPlugin {
 
         let result = await forceConnectFunc();
 
-        let elapsedTimeNanos = Number(getTimeInNanos()) - Number(startTime);
+        let elapsedTimeNanos = getTimeInNanos() - startTime;
         ConnectTimeConnectionPlugin.connectTime += elapsedTimeNanos;
         logger.debug(Messages.get("ConnectTimeConnectionPlugin.connectTime", elapsedTimeNanos.toString()));
         return result;
