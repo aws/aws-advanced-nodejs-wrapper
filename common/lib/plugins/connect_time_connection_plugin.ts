@@ -53,11 +53,11 @@ export class ConnectTimeConnectionPlugin extends AbstractConnectionPlugin {
         return result;
     }
 
-    public resetConnectTime(): void {
+    public static resetConnectTime(): void {
         ConnectTimeConnectionPlugin.connectTime = 0;
     }
 
-    public getTotalConnectTime(): number {
+    public static getTotalConnectTime(): number {
         return ConnectTimeConnectionPlugin.connectTime;
     }
 }
