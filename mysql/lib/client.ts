@@ -43,7 +43,7 @@ export class AwsMySQLClient extends AwsClient {
 
   async connect(): Promise<Connection> {
     await this.internalConnect();
-    let conn: Promise<Connection> = this.pluginManager.connect(this.pluginService.getCurrentHostInfo(), this.properties, true, async () => {
+    const conn: Promise<Connection> = this.pluginManager.connect(this.pluginService.getCurrentHostInfo(), this.properties, true, async () => {
       return this.targetClient.promise().connect();
     });
     this.isConnected = true;

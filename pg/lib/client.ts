@@ -39,7 +39,7 @@ export class AwsPGClient extends AwsClient {
 
   async connect(): Promise<void> {
     await this.internalConnect();
-    let res: Promise<void> = this.pluginManager.connect(this.pluginService.getCurrentHostInfo(), this.properties, true, () =>
+    const res: Promise<void> = this.pluginManager.connect(this.pluginService.getCurrentHostInfo(), this.properties, true, () =>
       this.targetClient.connect()
     );
     this.isConnected = true;
