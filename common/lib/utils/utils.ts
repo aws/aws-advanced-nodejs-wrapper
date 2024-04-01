@@ -17,7 +17,6 @@
 import { HostInfo } from "../host_info";
 import { Messages } from "./messages";
 import { WrapperProperties } from "../wrapper_property";
-import { performance } from 'perf_hooks';
 
 export function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -39,7 +38,7 @@ export function logTopology(hosts: HostInfo[], msgPrefix: string) {
 }
 
 export function getTimeInNanos() {
-  return performance.now() * 1000000;
+  return process.hrtime.bigint();
 }
 
 export function maskProperties(props: Map<string, any>) {
