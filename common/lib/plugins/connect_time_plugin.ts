@@ -32,22 +32,22 @@ export class ConnectTimePlugin extends AbstractConnectionPlugin {
     }
 
     public override async connect<T>(hostInfo: HostInfo, props: Map<string, any>, isInitialConnection: boolean, connectFunc: () => Promise<T>): Promise<T> {
-        let startTime = getTimeInNanos();
+        const startTime = getTimeInNanos();
         
-        let result = await connectFunc();
+        const result = await connectFunc();
 
-        let elapsedTimeNanos = getTimeInNanos() - startTime;
+        const elapsedTimeNanos = getTimeInNanos() - startTime;
         ConnectTimePlugin.connectTime += elapsedTimeNanos;
         logger.debug(Messages.get("ConnectTimePlugin.connectTime", elapsedTimeNanos.toString()));
         return result;
     }
 
     public override async forceConnect<T>(hostInfo: HostInfo, props: Map<string, any>, isInitialConnection: boolean, forceConnectFunc: () => Promise<T>): Promise<T> {
-        let startTime = getTimeInNanos();
+        const startTime = getTimeInNanos();
 
-        let result = await forceConnectFunc();
+        const result = await forceConnectFunc();
 
-        let elapsedTimeNanos = getTimeInNanos() - startTime;
+        const elapsedTimeNanos = getTimeInNanos() - startTime;
         ConnectTimePlugin.connectTime += elapsedTimeNanos;
         logger.debug(Messages.get("ConnectTimePlugin.connectTime", elapsedTimeNanos.toString()));
         return result;
