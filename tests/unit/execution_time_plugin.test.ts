@@ -18,7 +18,7 @@ import { ExecutionTimePlugin } from "aws-wrapper-common-lib/lib/plugins/executio
 import { sleep } from "aws-wrapper-common-lib/lib/utils/utils";
 import { logger } from "aws-wrapper-common-lib/logutils";
 import { Writable } from "stream";
-import winston, {  } from "winston";
+import winston from "winston";
 
 const mockCallable = jest.fn();
 
@@ -33,9 +33,9 @@ describe("executionTimePluginTest", () => {
 
     let output = '';
     const stream = new Writable();
-    stream._write = (chunk, encoding, callback) => {
+    stream._write = (chunk, encoding, next) => {
       output = output += chunk.toString();
-      callback();
+      next();
     };
 
     const streamTransport = new winston.transports.Stream({ stream })
@@ -48,5 +48,8 @@ describe("executionTimePluginTest", () => {
 
     expect(logMessages[0]).toContain("Executed query in");
     expect(ExecutionTimePlugin.getTotalExecutionTime()).toBeGreaterThan(0n);
+
+    ExecutionTimePlugin.resetExecutionTime();
+    expect(ExecutionTimePlugin.getTotalExecutionTime()).toEqual(0n);
   })
 });

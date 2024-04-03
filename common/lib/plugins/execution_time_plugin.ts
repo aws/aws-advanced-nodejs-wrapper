@@ -36,7 +36,7 @@ export class ExecutionTimePlugin extends AbstractConnectionPlugin {
         const result = await methodFunc();
 
         const elapsedTimeNanos = getTimeInNanos() - startTime;
-        logger.debug(Messages.get("ExecutionTimeConnectionPlugin.executionTime", methodName, elapsedTimeNanos.toString()));
+        logger.debug(Messages.get("ExecutionTimePlugin.executionTime", methodName, elapsedTimeNanos.toString()));
         ExecutionTimePlugin.executionTime += elapsedTimeNanos;
         return result;
     }
