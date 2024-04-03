@@ -48,6 +48,7 @@ describe("executionTimePluginTest", () => {
     await plugin.execute("query", mockCallable, []);
 
     logger.transports[0].silent = false;
+    logger.remove(streamTransport);
 
     const logMessages = output.trim().split('\n');
 
