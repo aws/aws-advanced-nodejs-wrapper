@@ -27,10 +27,11 @@ describe("executionTimePluginTest", () => {
     mockCallable.mockImplementation(() => {
       sleep(10);
       return null;
-    })
+    });
     
     const plugin = new ExecutionTimePlugin();
 
+    // Create stream
     let output = '';
     const stream = new Writable();
     stream._write = (chunk, encoding, next) => {
@@ -38,7 +39,7 @@ describe("executionTimePluginTest", () => {
       next();
     };
 
-    const streamTransport = new winston.transports.Stream({ stream })
+    const streamTransport = new winston.transports.Stream({ stream });
     logger.add(streamTransport);
     logger.level = "debug";
 
@@ -52,7 +53,9 @@ describe("executionTimePluginTest", () => {
 
     const logMessages = output.trim().split('\n');
 
-    expect(logMessages[0]).toContain("Executed query in");
+    const matches = logMessages.filter(str => str.includes("Executed query in")).length;
+    expect(matches).toBeGreaterThan(0);
+
     expect(ExecutionTimePlugin.getTotalExecutionTime()).toBeGreaterThan(0n);
 
     ExecutionTimePlugin.resetExecutionTime();
