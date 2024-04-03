@@ -60,5 +60,5 @@ describe("executionTimePluginTest", () => {
 
     ExecutionTimePlugin.resetExecutionTime();
     expect(ExecutionTimePlugin.getTotalExecutionTime()).toEqual(0n);
-  })
+  });
 });
