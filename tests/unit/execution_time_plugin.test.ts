@@ -42,7 +42,12 @@ describe("executionTimePluginTest", () => {
     logger.add(streamTransport);
     logger.level = "debug";
 
+    // Temporarily suppress console logging
+    logger.transports[0].silent = true;
+
     await plugin.execute("query", mockCallable, []);
+
+    logger.transports[0].silent = false;
 
     const logMessages = output.trim().split('\n');
 
