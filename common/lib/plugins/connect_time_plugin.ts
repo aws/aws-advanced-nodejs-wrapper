@@ -24,46 +24,46 @@ import { ConnectionPlugin } from "../connection_plugin";
 import { PluginService } from '../plugin_service';
 
 export class ConnectTimePlugin extends AbstractConnectionPlugin {
-    private static subscribedMethods: Set<string> = new Set<string>(["connect", "forceConnect"]);
-    private static connectTime: bigint = 0n;
+  private static subscribedMethods: Set<string> = new Set<string>(["connect", "forceConnect"]);
+  private static connectTime: bigint = 0n;
 
-    public override getSubscribedMethods(): Set<string> {
-        return ConnectTimePlugin.subscribedMethods;
-    }
+  public override getSubscribedMethods(): Set<string> {
+    return ConnectTimePlugin.subscribedMethods;
+  }
 
-    public override async connect<T>(hostInfo: HostInfo, props: Map<string, any>, isInitialConnection: boolean, connectFunc: () => Promise<T>): Promise<T> {
-        const startTime = getTimeInNanos();
-        
-        const result = await connectFunc();
+  public override async connect<T>(hostInfo: HostInfo, props: Map<string, any>, isInitialConnection: boolean, connectFunc: () => Promise<T>): Promise<T> {
+    const startTime = getTimeInNanos();
+    
+    const result = await connectFunc();
 
-        const elapsedTimeNanos = getTimeInNanos() - startTime;
-        ConnectTimePlugin.connectTime += elapsedTimeNanos;
-        logger.debug(Messages.get("ConnectTimePlugin.connectTime", elapsedTimeNanos.toString()));
-        return result;
-    }
+    const elapsedTimeNanos = getTimeInNanos() - startTime;
+    ConnectTimePlugin.connectTime += elapsedTimeNanos;
+    logger.debug(Messages.get("ConnectTimePlugin.connectTime", elapsedTimeNanos.toString()));
+    return result;
+  }
 
-    public override async forceConnect<T>(hostInfo: HostInfo, props: Map<string, any>, isInitialConnection: boolean, forceConnectFunc: () => Promise<T>): Promise<T> {
-        const startTime = getTimeInNanos();
+  public override async forceConnect<T>(hostInfo: HostInfo, props: Map<string, any>, isInitialConnection: boolean, forceConnectFunc: () => Promise<T>): Promise<T> {
+    const startTime = getTimeInNanos();
 
-        const result = await forceConnectFunc();
+    const result = await forceConnectFunc();
 
-        const elapsedTimeNanos = getTimeInNanos() - startTime;
-        ConnectTimePlugin.connectTime += elapsedTimeNanos;
-        logger.debug(Messages.get("ConnectTimePlugin.connectTime", elapsedTimeNanos.toString()));
-        return result;
-    }
+    const elapsedTimeNanos = getTimeInNanos() - startTime;
+    ConnectTimePlugin.connectTime += elapsedTimeNanos;
+    logger.debug(Messages.get("ConnectTimePlugin.connectTime", elapsedTimeNanos.toString()));
+    return result;
+  }
 
-    public static resetConnectTime(): void {
-        this.connectTime = 0n;
-    }
+  public static resetConnectTime(): void {
+    ConnectTimePlugin.connectTime = 0n;
+  }
 
-    public static getTotalConnectTime(): bigint {
-        return this.connectTime;
-    }
+  public static getTotalConnectTime(): bigint {
+    return ConnectTimePlugin.connectTime;
+  }
 }
 
 export class ConnectTimePluginFactory implements ConnectionPluginFactory {
-    getInstance(pluginService: PluginService, properties: Map<string, any>): ConnectionPlugin {
-        return new ConnectTimePlugin();
-    }
+  getInstance(pluginService: PluginService, properties: Map<string, any>): ConnectionPlugin {
+    return new ConnectTimePlugin();
+  }
 }
