@@ -51,7 +51,7 @@ export class DefaultPlugin extends AbstractConnectionPlugin {
     logger.debug(Messages.get("DefaultPlugin.executingMethod", methodName));
     const start = performance.now();
     const res = methodFunc();
-    logger.debug(`Execution time for plugin ${this.id}: ${performance.now() - start} ms`);
+    logger.debug(Messages.get("ExecutionTimePlugin.executionTime", this.id, (performance.now() - start).toString()));
     return res;
   }
 }

@@ -23,35 +23,37 @@ import { Messages } from "../utils/messages";
 import { getTimeInNanos } from "../utils/utils";
 
 export class ExecutionTimePlugin extends AbstractConnectionPlugin {
-    private static subscribedMethods: Set<string> = new Set<string>(["*"]);
-    private static executionTime: bigint = 0n;
+  private static readonly subscribedMethods: Set<string> = new Set<string>(["*"]);
+  private static executionTime: bigint = 0n;
+  
+  public override getSubscribedMethods(): Set<string> {
+    return ExecutionTimePlugin.subscribedMethods;
+  }
+
+  public override async execute<T>(methodName: string, methodFunc: () => Promise<T>, methodArgs: any[]): Promise<T> {
+    const startTime = getTimeInNanos();
+
+    const result = await methodFunc();
+
+    const elapsedTimeNanos = getTimeInNanos() - startTime;
     
-    public override getSubscribedMethods(): Set<string> {
-        return ExecutionTimePlugin.subscribedMethods;
-    }
+    // Convert from ns to ms
+    logger.debug(Messages.get("ExecutionTimePlugin.executionTime", methodName, (elapsedTimeNanos / 1000000n).toString()));
+    ExecutionTimePlugin.executionTime += elapsedTimeNanos;
+    return result;
+  }
 
-    public override async execute<T>(methodName: string, methodFunc: () => Promise<T>, methodArgs: any[]): Promise<T> {
-        const startTime = getTimeInNanos();
+  public static resetExecutionTime(): void {
+    ExecutionTimePlugin.executionTime = 0n;
+  }
 
-        const result = await methodFunc();
-
-        const elapsedTimeNanos = getTimeInNanos() - startTime;
-        logger.debug(Messages.get("ExecutionTimePlugin.executionTime", methodName, elapsedTimeNanos.toString()));
-        ExecutionTimePlugin.executionTime += elapsedTimeNanos;
-        return result;
-    }
-
-    public static resetExecutionTime(): void {
-        this.executionTime = 0n;
-    }
-
-    public static getTotalExecutionTime(): bigint {
-        return this.executionTime;
-    }
+  public static getTotalExecutionTime(): bigint {
+    return ExecutionTimePlugin.executionTime;
+  }
 }
 
 export class ExecutionTimePluginFactory implements ConnectionPluginFactory {
-    getInstance(pluginService: PluginService, properties: Map<string, any>): ConnectionPlugin {
-        return new ExecutionTimePlugin();
-    }
+  getInstance(pluginService: PluginService, properties: Map<string, any>): ConnectionPlugin {
+    return new ExecutionTimePlugin();
+  }
 }

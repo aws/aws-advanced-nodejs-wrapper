@@ -21,44 +21,27 @@ import { Writable } from "stream";
 import winston from "winston";
 
 const mockCallable = jest.fn();
+const timeToSleepMs = 1000;
 
 describe("executionTimePluginTest", () => {
   it("test_executeTime", async () => {
-    mockCallable.mockImplementation(() => {
-      sleep(10);
-      return null;
-    });
-    
-    const plugin = new ExecutionTimePlugin();
+  mockCallable.mockImplementation(async () => {
+    await sleep(timeToSleepMs);
+    return null;
+  });
+  
+  const plugin = new ExecutionTimePlugin();
 
-    // Create stream
-    let output = '';
-    const stream = new Writable();
-    stream._write = (chunk, encoding, next) => {
-      output = output += chunk.toString();
-      next();
-    };
+  await plugin.execute("query", mockCallable, []);
 
-    const streamTransport = new winston.transports.Stream({ stream });
-    logger.add(streamTransport);
-    logger.level = "debug";
+  // Convert ms to ns
+  expect(ExecutionTimePlugin.getTotalExecutionTime()).toBeGreaterThan(timeToSleepMs * 1000000);
 
-    // Temporarily suppress console logging
-    logger.transports[0].silent = true;
+  await plugin.execute("query", mockCallable, []);
 
-    await plugin.execute("query", mockCallable, []);
+  expect(ExecutionTimePlugin.getTotalExecutionTime()).toBeGreaterThan(timeToSleepMs * 1000000 * 2);
 
-    logger.transports[0].silent = false;
-    logger.remove(streamTransport);
-
-    const logMessages = output.trim().split('\n');
-
-    const matches = logMessages.filter(str => str.includes("Executed query in")).length;
-    expect(matches).toBeGreaterThan(0);
-
-    expect(ExecutionTimePlugin.getTotalExecutionTime()).toBeGreaterThan(0n);
-
-    ExecutionTimePlugin.resetExecutionTime();
-    expect(ExecutionTimePlugin.getTotalExecutionTime()).toEqual(0n);
+  ExecutionTimePlugin.resetExecutionTime();
+  expect(ExecutionTimePlugin.getTotalExecutionTime()).toEqual(0n);
   });
 });
