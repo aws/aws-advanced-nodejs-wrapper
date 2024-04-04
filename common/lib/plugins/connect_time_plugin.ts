@@ -24,7 +24,7 @@ import { ConnectionPlugin } from "../connection_plugin";
 import { PluginService } from '../plugin_service';
 
 export class ConnectTimePlugin extends AbstractConnectionPlugin {
-  private static subscribedMethods: Set<string> = new Set<string>(["connect", "forceConnect"]);
+  private static readonly subscribedMethods: Set<string> = new Set<string>(["connect", "forceConnect"]);
   private static connectTime: bigint = 0n;
 
   public override getSubscribedMethods(): Set<string> {
