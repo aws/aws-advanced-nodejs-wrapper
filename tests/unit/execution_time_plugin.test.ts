@@ -16,9 +16,6 @@
 
 import { ExecutionTimePlugin } from "aws-wrapper-common-lib/lib/plugins/execution_time_plugin";
 import { sleep } from "aws-wrapper-common-lib/lib/utils/utils";
-import { logger } from "aws-wrapper-common-lib/logutils";
-import { Writable } from "stream";
-import winston from "winston";
 
 const mockCallable = jest.fn();
 const timeToSleepMs = 1000;
