@@ -15,13 +15,13 @@
 */
 
 import { AbstractConnectionPlugin } from "../abstract_connection_plugin";
-import { logger } from '../../logutils';
+import { logger } from "../../logutils";
 import { HostInfo } from "../host_info";
-import { getTimeInNanos } from '../utils/utils';
+import { getTimeInNanos } from "../utils/utils";
 import { Messages } from "../utils/messages";
 import { ConnectionPluginFactory } from "../plugin_factory";
 import { ConnectionPlugin } from "../connection_plugin";
-import { PluginService } from '../plugin_service';
+import { PluginService } from "../plugin_service";
 
 export class ConnectTimePlugin extends AbstractConnectionPlugin {
   private static readonly subscribedMethods: Set<string> = new Set<string>(["connect", "forceConnect"]);
@@ -31,25 +31,35 @@ export class ConnectTimePlugin extends AbstractConnectionPlugin {
     return ConnectTimePlugin.subscribedMethods;
   }
 
-  public override async connect<T>(hostInfo: HostInfo, props: Map<string, any>, isInitialConnection: boolean, connectFunc: () => Promise<T>): Promise<T> {
+  public override async connect<T>(
+    hostInfo: HostInfo,
+    props: Map<string, any>,
+    isInitialConnection: boolean,
+    connectFunc: () => Promise<T>
+  ): Promise<T> {
     const startTime = getTimeInNanos();
-    
+
     const result = await connectFunc();
 
     const elapsedTimeNanos = getTimeInNanos() - startTime;
     ConnectTimePlugin.connectTime += elapsedTimeNanos;
-    logger.debug(Messages.get("ConnectTimePlugin.connectTime", hostInfo.host, elapsedTimeNanos.toString()));
+    logger.debug(Messages.get("ConnectTimePlugin.connectTime", hostInfo.host, (elapsedTimeNanos / 1000000n).toString()));
     return result;
   }
 
-  public override async forceConnect<T>(hostInfo: HostInfo, props: Map<string, any>, isInitialConnection: boolean, forceConnectFunc: () => Promise<T>): Promise<T> {
+  public override async forceConnect<T>(
+    hostInfo: HostInfo,
+    props: Map<string, any>,
+    isInitialConnection: boolean,
+    forceConnectFunc: () => Promise<T>
+  ): Promise<T> {
     const startTime = getTimeInNanos();
 
     const result = await forceConnectFunc();
 
     const elapsedTimeNanos = getTimeInNanos() - startTime;
     ConnectTimePlugin.connectTime += elapsedTimeNanos;
-    logger.debug(Messages.get("ConnectTimePlugin.connectTime", hostInfo.host, elapsedTimeNanos.toString()));
+    logger.debug(Messages.get("ConnectTimePlugin.connectTime", hostInfo.host, (elapsedTimeNanos / 1000000n).toString()));
     return result;
   }
 
