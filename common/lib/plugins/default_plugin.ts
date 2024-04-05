@@ -49,9 +49,6 @@ export class DefaultPlugin extends AbstractConnectionPlugin {
 
   override execute<Type>(methodName: string, methodFunc: () => Type): Type {
     logger.debug(Messages.get("DefaultPlugin.executingMethod", methodName));
-    const start = performance.now();
-    const res = methodFunc();
-    logger.debug(Messages.get("ExecutionTimePlugin.executionTime", this.id, (performance.now() - start).toString()));
-    return res;
+    return methodFunc();
   }
 }

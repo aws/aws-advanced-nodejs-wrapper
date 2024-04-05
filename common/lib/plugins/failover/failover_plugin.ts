@@ -98,13 +98,10 @@ export class FailoverPlugin extends AbstractConnectionPlugin {
 
   override async execute<T>(methodName: string, methodFunc: () => Promise<T>): Promise<T> {
     try {
-      const start = performance.now();
       if (this.canUpdateTopology(methodName)) {
         await this.updateTopology(false);
       }
-      const res = methodFunc();
-      logger.debug(Messages.get("ExecutionTimePlugin.executionTime", this.id, (performance.now() - start).toString()));
-      return res;
+      return methodFunc();
     } catch (e) {
       logger.debug(e);
       throw e;

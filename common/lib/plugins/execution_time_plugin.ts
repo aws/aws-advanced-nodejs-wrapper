@@ -25,7 +25,7 @@ import { getTimeInNanos } from "../utils/utils";
 export class ExecutionTimePlugin extends AbstractConnectionPlugin {
   private static readonly subscribedMethods: Set<string> = new Set<string>(["*"]);
   private static executionTime: bigint = 0n;
-  
+
   public override getSubscribedMethods(): Set<string> {
     return ExecutionTimePlugin.subscribedMethods;
   }
@@ -36,7 +36,7 @@ export class ExecutionTimePlugin extends AbstractConnectionPlugin {
     const result = await methodFunc();
 
     const elapsedTimeNanos = getTimeInNanos() - startTime;
-    
+
     // Convert from ns to ms
     logger.debug(Messages.get("ExecutionTimePlugin.executionTime", methodName, (elapsedTimeNanos / 1000000n).toString()));
     ExecutionTimePlugin.executionTime += elapsedTimeNanos;
