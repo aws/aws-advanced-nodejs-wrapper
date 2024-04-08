@@ -22,12 +22,12 @@ import { PluginService } from "../plugin_service";
 import { Messages } from "../utils/messages";
 import { getTimeInNanos } from "../utils/utils";
 
-export class ExecutionTimePlugin extends AbstractConnectionPlugin {
+export class ExecuteTimePlugin extends AbstractConnectionPlugin {
   private static readonly subscribedMethods: Set<string> = new Set<string>(["*"]);
-  private static executionTime: bigint = 0n;
+  private static executeTime: bigint = 0n;
 
   public override getSubscribedMethods(): Set<string> {
-    return ExecutionTimePlugin.subscribedMethods;
+    return ExecuteTimePlugin.subscribedMethods;
   }
 
   public override async execute<T>(methodName: string, methodFunc: () => Promise<T>, methodArgs: any[]): Promise<T> {
@@ -38,22 +38,22 @@ export class ExecutionTimePlugin extends AbstractConnectionPlugin {
     const elapsedTimeNanos = getTimeInNanos() - startTime;
 
     // Convert from ns to ms
-    logger.debug(Messages.get("ExecutionTimePlugin.executionTime", methodName, (elapsedTimeNanos / 1000000n).toString()));
-    ExecutionTimePlugin.executionTime += elapsedTimeNanos;
+    logger.debug(Messages.get("ExecuteTimePlugin.executeTime", methodName, (elapsedTimeNanos / 1000000n).toString()));
+    ExecuteTimePlugin.executeTime += elapsedTimeNanos;
     return result;
   }
 
-  public static resetExecutionTime(): void {
-    ExecutionTimePlugin.executionTime = 0n;
+  public static resetExecuteTime(): void {
+    ExecuteTimePlugin.executeTime = 0n;
   }
 
-  public static getTotalExecutionTime(): bigint {
-    return ExecutionTimePlugin.executionTime;
+  public static getTotalExecuteTime(): bigint {
+    return ExecuteTimePlugin.executeTime;
   }
 }
 
-export class ExecutionTimePluginFactory implements ConnectionPluginFactory {
+export class ExecuteTimePluginFactory implements ConnectionPluginFactory {
   getInstance(pluginService: PluginService, properties: Map<string, any>): ConnectionPlugin {
-    return new ExecutionTimePlugin();
+    return new ExecuteTimePlugin();
   }
 }

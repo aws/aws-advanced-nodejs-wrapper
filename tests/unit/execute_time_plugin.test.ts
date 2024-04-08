@@ -14,31 +14,31 @@
   limitations under the License.
 */
 
-import { ExecutionTimePlugin } from "aws-wrapper-common-lib/lib/plugins/execution_time_plugin";
+import { ExecuteTimePlugin } from "aws-wrapper-common-lib/lib/plugins/execute_time_plugin";
 import { sleep } from "aws-wrapper-common-lib/lib/utils/utils";
 
 const mockCallable = jest.fn();
 const timeToSleepMs = 1000;
 const timeToSleepNs = timeToSleepMs * 1000000;
 
-describe("executionTimePluginTest", () => {
+describe("executeTimePluginTest", () => {
   it("test_executeTime", async () => {
     mockCallable.mockImplementation(async () => {
       await sleep(timeToSleepMs);
       return null;
     });
 
-    const plugin = new ExecutionTimePlugin();
+    const plugin = new ExecuteTimePlugin();
 
     await plugin.execute("query", mockCallable, []);
 
-    expect(ExecutionTimePlugin.getTotalExecutionTime()).toBeGreaterThan(timeToSleepNs);
+    expect(ExecuteTimePlugin.getTotalExecuteTime()).toBeGreaterThan(timeToSleepNs);
 
     await plugin.execute("query", mockCallable, []);
 
-    expect(ExecutionTimePlugin.getTotalExecutionTime()).toBeGreaterThan(timeToSleepNs * 2);
+    expect(ExecuteTimePlugin.getTotalExecuteTime()).toBeGreaterThan(timeToSleepNs * 2);
 
-    ExecutionTimePlugin.resetExecutionTime();
-    expect(ExecutionTimePlugin.getTotalExecutionTime()).toEqual(0n);
+    ExecuteTimePlugin.resetExecuteTime();
+    expect(ExecuteTimePlugin.getTotalExecuteTime()).toEqual(0n);
   });
 });
