@@ -98,7 +98,12 @@ export class WrapperProperties {
 
   static removeWrapperProperties<T>(config: T): T {
     const copy = Object.assign({}, config);
-    const persistingProperties = [WrapperProperties.USER.name, WrapperProperties.PASSWORD.name, WrapperProperties.DATABASE.name, WrapperProperties.PORT.name];
+    const persistingProperties = [
+      WrapperProperties.USER.name,
+      WrapperProperties.PASSWORD.name,
+      WrapperProperties.DATABASE.name,
+      WrapperProperties.PORT.name
+    ];
 
     Object.values(WrapperProperties).forEach((prop) => {
       if (prop instanceof WrapperProperty) {

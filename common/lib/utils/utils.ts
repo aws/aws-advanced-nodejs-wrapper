@@ -38,7 +38,7 @@ export function logTopology(hosts: HostInfo[], msgPrefix: string) {
 }
 
 export function getTimeInNanos() {
-  return performance.now();
+  return process.hrtime.bigint();
 }
 
 export function maskProperties(props: Map<string, any>) {
