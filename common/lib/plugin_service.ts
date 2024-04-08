@@ -186,8 +186,11 @@ export class PluginService implements ErrorHandler, HostListProviderService {
 
     if (changes.size > 0) {
       this.hosts = newHosts ? newHosts : [];
-      // TODO: uncomment once notifyHostListChanged is implemented.
-      // this.pluginServiceManagerContainer.pluginManager.notifyHostListChanged(changes);
+      if (this.pluginServiceManagerContainer.pluginManager) {
+        this.pluginServiceManagerContainer.pluginManager.notifyHostListChanged(changes);
+      } else {
+        throw new AwsWrapperError("Connection Plugin Manager was not detected."); // This should not be reached
+      }
     }
   }
 

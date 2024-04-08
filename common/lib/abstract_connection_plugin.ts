@@ -45,10 +45,8 @@ export abstract class AbstractConnectionPlugin implements ConnectionPlugin {
   }
 
   notifyConnectionChanged(changes: Set<HostChangeOptions>): OldConnectionSuggestionAction {
-    throw new Error("Method not implemented.");
+    return OldConnectionSuggestionAction.NO_OPINION;
   }
 
-  notifyNodeListChanged(changes: Map<string, Set<HostChangeOptions>>): void {
-    throw new Error("Method not implemented.");
-  }
+  notifyHostListChanged(changes: Map<string, Set<HostChangeOptions>>): void {}
 }

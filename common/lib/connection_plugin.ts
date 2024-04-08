@@ -37,5 +37,5 @@ export interface ConnectionPlugin {
 
   notifyConnectionChanged(changes: Set<HostChangeOptions>): OldConnectionSuggestionAction;
 
-  notifyNodeListChanged(changes: Map<string, Set<HostChangeOptions>>): void;
+  notifyHostListChanged(changes: Map<string, Set<HostChangeOptions>>): void;
 }

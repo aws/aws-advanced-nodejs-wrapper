@@ -37,7 +37,7 @@ export class FailoverPlugin extends AbstractConnectionPlugin {
     "forceConnect",
     "query",
     "notifyConnectionChanged",
-    "notifyNodeListChanged"
+    "notifyHostListChanged"
   ]);
   id: string = uniqueId("_failoverPlugin");
   readerFailoverHandler: ClusterAwareReaderFailoverHandler;
@@ -74,10 +74,10 @@ export class FailoverPlugin extends AbstractConnectionPlugin {
   }
 
   override notifyConnectionChanged(changes: Set<HostChangeOptions>): OldConnectionSuggestionAction {
-    throw new Error("Method not implemented.");
+    return OldConnectionSuggestionAction.NO_OPINION;
   }
 
-  override notifyNodeListChanged(changes: Map<string, Set<HostChangeOptions>>): void {}
+  override notifyHostListChanged(changes: Map<string, Set<HostChangeOptions>>): void {}
 
   override connect<Type>(hostInfo: HostInfo, props: Map<string, any>, isInitialConnection: boolean, connectFunc: () => Type): Type {
     logger.debug(`Start connect for test plugin: ${this.id}`);

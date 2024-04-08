@@ -21,6 +21,8 @@ import { Messages } from "../utils/messages";
 import { HostListProviderService } from "../host_list_provider_service";
 import { HostInfo } from "../host_info";
 import { AbstractConnectionPlugin } from "../abstract_connection_plugin";
+import { HostChangeOptions } from "../host_change_options";
+import { OldConnectionSuggestionAction } from "../old_connection_suggestion_action";
 
 export class DefaultPlugin extends AbstractConnectionPlugin {
   id: string = uniqueId("_defaultPlugin");
@@ -53,5 +55,13 @@ export class DefaultPlugin extends AbstractConnectionPlugin {
     const res = methodFunc();
     logger.debug(`Execution time for plugin ${this.id}: ${performance.now() - start} ms`);
     return res;
+  }
+
+  override notifyConnectionChanged(changes: Set<HostChangeOptions>): OldConnectionSuggestionAction {
+    return OldConnectionSuggestionAction.NO_OPINION;
+  }
+
+  override notifyHostListChanged(changes: Map<string, Set<HostChangeOptions>>): void {
+    // do nothing
   }
 }

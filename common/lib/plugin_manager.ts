@@ -23,6 +23,8 @@ import { PluginServiceManagerContainer } from "./plugin_service_manager_containe
 import { HostListProviderService } from "./host_list_provider_service";
 import { AwsClient } from "./aws_client";
 import { PluginService } from "./plugin_service";
+import { HostChangeOptions } from "./host_change_options";
+import { OldConnectionSuggestionAction } from "./old_connection_suggestion_action";
 
 type PluginFunc<T> = (plugin: ConnectionPlugin, targetFunc: () => Promise<T>) => Promise<T>;
 
@@ -61,6 +63,9 @@ class PluginChain<T> {
 
 export class PluginManager {
   private static readonly PLUGIN_CHAIN_CACHE = new Map<[string, HostInfo], PluginChain<any>>();
+  private static readonly ALL_METHODS = "*";
+  private static readonly NOTIFY_HOST_LIST_CHANGED_METHOD = "notifyHostListChanged";
+  private static readonly NOTIFY_CONNECTION_CHANGED_METHOD = "notifyConnectionChanged";
   private readonly _plugins: ConnectionPlugin[] = [];
   private pluginServiceManagerContainer: PluginServiceManagerContainer;
   private props: Map<string, any>;
@@ -175,6 +180,21 @@ export class PluginManager {
     return chain;
   }
 
+  protected notifySubscribedPlugins(methodName: string, pluginFunc: PluginFunc<void>, skipNotificationForThisPlugin: ConnectionPlugin | null): void {
+    if (pluginFunc == null) {
+      throw new AwsWrapperError("pluginFunc not found.");
+    }
+    for (let i = 0; i < this._plugins.length; i++) {
+      const plugin = this._plugins[i];
+      if (plugin == skipNotificationForThisPlugin) {
+        continue;
+      }
+      if (plugin.getSubscribedMethods().has(PluginManager.ALL_METHODS) || plugin.getSubscribedMethods().has(methodName)) {
+        pluginFunc(plugin, () => Promise.resolve());
+      }
+    }
+  }
+
   async initHostProvider(hostInfo: HostInfo, props: Map<string, any>, hostListProviderService: HostListProviderService): Promise<void> {
     return await this.executeWithSubscribedPlugins(
       hostInfo,
@@ -184,6 +204,31 @@ export class PluginManager {
       () => {
         throw new AwsWrapperError("Shouldn't be called");
       }
+    );
+  }
+
+  notifyConnectionChanged(changes: Set<HostChangeOptions>, skipNotificationForThisPlugin: ConnectionPlugin) {
+    const result = new Set<OldConnectionSuggestionAction>();
+
+    this.notifySubscribedPlugins(
+      PluginManager.NOTIFY_CONNECTION_CHANGED_METHOD,
+      (plugin, func) => {
+        const pluginOpinion: OldConnectionSuggestionAction = plugin.notifyConnectionChanged(changes);
+        result.add(pluginOpinion);
+        return Promise.resolve();
+      },
+      skipNotificationForThisPlugin
+    );
+  }
+
+  notifyHostListChanged(changes: Map<string, Set<HostChangeOptions>>): void {
+    this.notifySubscribedPlugins(
+      PluginManager.NOTIFY_HOST_LIST_CHANGED_METHOD,
+      (plugin, func) => {
+        plugin.notifyHostListChanged(changes);
+        return Promise.resolve();
+      },
+      null
     );
   }
 }
