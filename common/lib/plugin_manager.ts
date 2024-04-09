@@ -206,13 +206,13 @@ export class PluginManager {
     }
   }
 
-  notifyConnectionChanged(
+  async notifyConnectionChanged(
     changes: Set<HostChangeOptions>,
     skipNotificationForThisPlugin: ConnectionPlugin | null
-  ): Set<OldConnectionSuggestionAction> {
+  ): Promise<Set<OldConnectionSuggestionAction>> {
     const result = new Set<OldConnectionSuggestionAction>();
 
-    this.notifySubscribedPlugins(
+    await this.notifySubscribedPlugins(
       PluginManager.NOTIFY_CONNECTION_CHANGED_METHOD,
       (plugin, func) => {
         const pluginOpinion: OldConnectionSuggestionAction = plugin.notifyConnectionChanged(changes);
