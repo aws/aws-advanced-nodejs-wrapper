@@ -180,6 +180,18 @@ export class PluginManager {
     return chain;
   }
 
+  async initHostProvider(hostInfo: HostInfo, props: Map<string, any>, hostListProviderService: HostListProviderService): Promise<void> {
+    return await this.executeWithSubscribedPlugins(
+      hostInfo,
+      props,
+      "initHostProvider",
+      (plugin, nextPluginFunc) => Promise.resolve(plugin.initHostProvider(hostInfo, props, hostListProviderService, nextPluginFunc)),
+      () => {
+        throw new AwsWrapperError("Shouldn't be called");
+      }
+    );
+  }
+
   protected notifySubscribedPlugins(methodName: string, pluginFunc: PluginFunc<void>, skipNotificationForThisPlugin: ConnectionPlugin | null): void {
     if (pluginFunc == null) {
       throw new AwsWrapperError("pluginFunc not found.");
@@ -195,19 +207,10 @@ export class PluginManager {
     }
   }
 
-  async initHostProvider(hostInfo: HostInfo, props: Map<string, any>, hostListProviderService: HostListProviderService): Promise<void> {
-    return await this.executeWithSubscribedPlugins(
-      hostInfo,
-      props,
-      "initHostProvider",
-      (plugin, nextPluginFunc) => Promise.resolve(plugin.initHostProvider(hostInfo, props, hostListProviderService, nextPluginFunc)),
-      () => {
-        throw new AwsWrapperError("Shouldn't be called");
-      }
-    );
-  }
-
-  notifyConnectionChanged(changes: Set<HostChangeOptions>, skipNotificationForThisPlugin: ConnectionPlugin) {
+  notifyConnectionChanged(
+    changes: Set<HostChangeOptions>,
+    skipNotificationForThisPlugin: ConnectionPlugin | null
+  ): Set<OldConnectionSuggestionAction> {
     const result = new Set<OldConnectionSuggestionAction>();
 
     this.notifySubscribedPlugins(
@@ -219,6 +222,7 @@ export class PluginManager {
       },
       skipNotificationForThisPlugin
     );
+    return result;
   }
 
   notifyHostListChanged(changes: Map<string, Set<HostChangeOptions>>): void {

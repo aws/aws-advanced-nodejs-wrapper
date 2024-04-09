@@ -29,6 +29,7 @@ import { ClusterAwareReaderFailoverHandler } from "./reader_failover_handler";
 import { SubscribedMethodHelper } from "../../utils/subsribed_method_helper";
 import { HostChangeOptions } from "../../host_change_options";
 import { ClusterAwareWriterFailoverHandler } from "./writer_failover_handler";
+import { Messages } from "../../utils/messages";
 
 export class FailoverPlugin extends AbstractConnectionPlugin {
   private static readonly subscribedMethods: Set<string> = new Set([
@@ -77,7 +78,53 @@ export class FailoverPlugin extends AbstractConnectionPlugin {
     return OldConnectionSuggestionAction.NO_OPINION;
   }
 
-  override notifyHostListChanged(changes: Map<string, Set<HostChangeOptions>>): void {}
+  override notifyHostListChanged(changes: Map<string, Set<HostChangeOptions>>): void {
+    if (!this.enableFailoverSetting) {
+      return;
+    }
+
+    // Log changes
+    if (logger.level == "debug") {
+      let str = "Changes:";
+      for (const [key, values] of changes.entries()) {
+        if (str.length > 0) {
+          str = str.concat("\n");
+        }
+        // Convert from int back into enum
+        const valStr = Array.from(values)
+          .map((x) => HostChangeOptions[x])
+          .join(", ");
+        str = str.concat(`\tHost '${key}': ${valStr}`);
+      }
+      logger.debug(str);
+    }
+
+    const currentHost = this.pluginService.getCurrentHostInfo();
+    if (currentHost) {
+      const url = currentHost.url;
+      if (this.isHostStillValid(url, changes)) {
+        return;
+      }
+
+      for (const alias in currentHost.allAliases) {
+        if (this.isHostStillValid(alias + "/", changes)) {
+          return;
+        }
+      }
+    }
+    // TODO uncomment with failover changes
+    // logger.info(Messages.get("Failover.invalidNode"), currentHost);
+  }
+
+  private isHostStillValid(host: string, changes: Map<string, Set<HostChangeOptions>>): boolean {
+    if (changes.has(host)) {
+      const options = changes.get(host);
+      if (options) {
+        return !options.has(HostChangeOptions.HOST_DELETED) && !options.has(HostChangeOptions.WENT_DOWN);
+      }
+    }
+    return true;
+  }
 
   override connect<Type>(hostInfo: HostInfo, props: Map<string, any>, isInitialConnection: boolean, connectFunc: () => Type): Type {
     logger.debug(`Start connect for test plugin: ${this.id}`);
