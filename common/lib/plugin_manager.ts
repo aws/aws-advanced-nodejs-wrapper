@@ -196,8 +196,7 @@ export class PluginManager {
     if (pluginFunc == null) {
       throw new AwsWrapperError("pluginFunc not found.");
     }
-    for (let i = 0; i < this._plugins.length; i++) {
-      const plugin = this._plugins[i];
+    for (const plugin of this._plugins) {
       if (plugin == skipNotificationForThisPlugin) {
         continue;
       }

@@ -106,7 +106,7 @@ export class FailoverPlugin extends AbstractConnectionPlugin {
         return;
       }
 
-      for (const alias in currentHost.allAliases) {
+      for (const alias of currentHost.allAliases) {
         if (this.isHostStillValid(alias + "/", changes)) {
           return;
         }
