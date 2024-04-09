@@ -26,7 +26,6 @@ export class AwsMySQLClient extends AwsClient {
   constructor(config: any) {
     super(config, new MySQLErrorHandler(), new AuroraMySQLDatabaseDialect(), new MySQLConnectionUrlParser());
     this.config = config;
-    this.targetClient = createConnection(WrapperProperties.removeWrapperProperties(config));
     this._createClientFunc = (config: any) => {
       return createConnection(WrapperProperties.removeWrapperProperties(config));
     };
@@ -43,18 +42,27 @@ export class AwsMySQLClient extends AwsClient {
 
   async connect(): Promise<Connection> {
     await this.internalConnect();
-    let conn: Promise<Connection> = this.pluginManager.connect(this.pluginService.getCurrentHostInfo(), this.properties, true, async () => {
+    const conn: Promise<Connection> = this.pluginManager.connect(this.pluginService.getCurrentHostInfo(), this.properties, true, async () => {
+      this.targetClient = createConnection(WrapperProperties.removeWrapperProperties(this.config));
       return this.targetClient.promise().connect();
     });
     this.isConnected = true;
     return conn;
   }
 
-  executeQuery(props: Map<string, any>, sql: string): Promise<Query> {
+  async executeQuery(props: Map<string, any>, sql: string): Promise<Query> {
+    if (!this.isConnected) {
+      await this.connect(); // client.connect is not required for MySQL clients
+      this.isConnected = true;
+    }
     return this.targetClient.promise().query({ sql: sql });
   }
 
-  query(options: QueryOptions, callback?: any): Promise<Query> {
+  async query(options: QueryOptions, callback?: any): Promise<Query> {
+    if (!this.isConnected) {
+      await this.connect(); // client.connect is not required for MySQL clients
+      this.isConnected = true;
+    }
     const host = this.pluginService.getCurrentHostInfo();
     return this.pluginManager.execute(
       host,

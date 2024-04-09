@@ -66,6 +66,10 @@ export class WrapperProperties {
     WrapperProperties.DEFAULT_TOKEN_EXPIRATION_SEC
   );
 
+  static readonly SECRET_ID = new WrapperProperty<string>("secretId", "The name or the ARN of the secret to retrieve.", null);
+  static readonly SECRET_REGION = new WrapperProperty<string>("secretRegion", "The region of the secret to retrieve.", null);
+  static readonly SECRET_ENDPOINT = new WrapperProperty<string>("secretEndpoint", "The endpoint of the secret to retrieve.", null);
+
   static readonly CLUSTER_TOPOLOGY_REFRESH_RATE_MS = new WrapperProperty<number>(
     "clusterTopologyRefreshRateMs",
     "Cluster topology refresh rate in millis. " +
@@ -98,7 +102,12 @@ export class WrapperProperties {
 
   static removeWrapperProperties<T>(config: T): T {
     const copy = Object.assign({}, config);
-    const persistingProperties = [WrapperProperties.USER.name, WrapperProperties.PASSWORD.name, WrapperProperties.DATABASE.name, WrapperProperties.PORT.name];
+    const persistingProperties = [
+      WrapperProperties.USER.name,
+      WrapperProperties.PASSWORD.name,
+      WrapperProperties.DATABASE.name,
+      WrapperProperties.PORT.name
+    ];
 
     Object.values(WrapperProperties).forEach((prop) => {
       if (prop instanceof WrapperProperty) {

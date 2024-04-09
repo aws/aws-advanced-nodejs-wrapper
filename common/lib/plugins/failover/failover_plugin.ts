@@ -26,7 +26,7 @@ import { PluginService } from "../../plugin_service";
 import { ConnectionPlugin } from "../../connection_plugin";
 import { HostListProviderService } from "../../host_list_provider_service";
 import { ClusterAwareReaderFailoverHandler } from "./reader_failover_handler";
-import { SubscribedMethodHelper } from "../../utils/subsribed_method_helper";
+import { SubscribedMethodHelper } from "../../utils/subscribed_method_helper";
 import { HostChangeOptions } from "../../host_change_options";
 import { ClusterAwareWriterFailoverHandler } from "./writer_failover_handler";
 import { Messages } from "../../utils/messages";
