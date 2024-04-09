@@ -65,10 +65,10 @@ export class AwsPGClient extends AwsClient {
   async setReadOnly(readOnly: boolean): Promise<QueryResult | void> {
     if (readOnly && this.isReadOnly() === false) {
       this._isReadOnly = true;
-      return await this.targetClient.query({ sql: "SET SESSION CHARACTERISTICS AS TRANSACTION READ ONLY" });
+      return await this.query("SET SESSION CHARACTERISTICS AS TRANSACTION READ ONLY");
     } else if (!readOnly && this.isReadOnly() === true) {
       this._isReadOnly = false;
-      return await this.targetClient.query({ sql: "SET SESSION CHARACTERISTICS AS TRANSACTION READ WRITE" });
+      return await this.query("SET SESSION CHARACTERISTICS AS TRANSACTION READ WRITE");
     }
     // already set to desired read-only state, do nothing
   }

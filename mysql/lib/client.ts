@@ -80,10 +80,10 @@ export class AwsMySQLClient extends AwsClient {
   async setReadOnly(readOnly: boolean): Promise<Query | void> {
     if (readOnly && this.isReadOnly() === false) {
       this._isReadOnly = true;
-      return await this.targetClient.promise().query({ sql: "SET SESSION TRANSACTION READ ONLY;" });
+      return await this.query({ sql: "SET SESSION TRANSACTION READ ONLY;" });
     } else if (!readOnly && this.isReadOnly() === true) {
       this._isReadOnly = false;
-      return await this.targetClient.promise().query({ sql: "SET SESSION TRANSACTION READ WRITE;" });
+      return await this.query({ sql: "SET SESSION TRANSACTION READ WRITE;" });
     }
     // already set to desired read-only state, do nothing
   }
