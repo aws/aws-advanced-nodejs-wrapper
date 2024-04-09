@@ -79,9 +79,9 @@ export class IamAuthenticationPlugin extends AbstractConnectionPlugin {
       const token = await this.generateAuthenticationToken(hostInfo, props, host, port, region);
       logger.debug(Messages.get("IamAuthenticationPlugin.generatedNewIamToken", token));
       WrapperProperties.PASSWORD.set(props, token);
-      this.pluginService.updateCredentials(props);
       IamAuthenticationPlugin.tokenCache.set(cacheKey, new TokenInfo(token, tokenExpiry));
     }
+    this.pluginService.updateConfigWithProperties(props);
 
     try {
       return connectFunc();
@@ -98,7 +98,6 @@ export class IamAuthenticationPlugin extends AbstractConnectionPlugin {
       const token = await this.generateAuthenticationToken(hostInfo, props, host, port, region);
       logger.debug(Messages.get("IamAuthenticationPlugin.generatedNewIamToken", token));
       WrapperProperties.PASSWORD.set(props, token);
-      this.pluginService.updateCredentials(props);
       IamAuthenticationPlugin.tokenCache.set(cacheKey, new TokenInfo(token, tokenExpiry));
       return connectFunc();
     }

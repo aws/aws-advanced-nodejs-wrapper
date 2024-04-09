@@ -81,10 +81,6 @@ export class PluginService implements ErrorHandler, HostListProviderService {
     return this._currentClient;
   }
 
-  updateCredentials(properties: Map<string, any>) {
-    this.getCurrentClient().updateCredentials(properties);
-  }
-
   getConnectionUrlParser(): ConnectionUrlParser {
     return this.getCurrentClient().connectionUrlParser;
   }
@@ -197,6 +193,24 @@ export class PluginService implements ErrorHandler, HostListProviderService {
 
   setAvailability(hostAliases: Set<string>, availability: HostAvailability) {}
 
+  updateConfigWithProperties(props: Map<string, any>) {
+    this._currentClient.config = Object.fromEntries(props.entries());
+  }
+
+  replaceTargetClient(props: Map<string, any>): void {
+    const createClientFunc = this.getCurrentClient().getCreateClientFunc();
+    if (createClientFunc) {
+      if (this.getCurrentClient().targetClient) {
+        this.getCurrentClient().end();
+      }
+      const newTargetClient = createClientFunc(Object.fromEntries(props));
+      this.getCurrentClient().targetClient = newTargetClient;
+      return;
+    }
+    throw new AwsWrapperError("AwsClient is missing create target client function."); // This should not be reached
+  }
+
+  // TODO: use replaceTargetClient method instead
   async createTargetClientAndConnect(hostInfo: HostInfo, props: Map<string, any>, forceConnect: boolean): Promise<AwsClient> {
     if (this.pluginServiceManagerContainer.pluginManager) {
       return await this.pluginServiceManagerContainer.pluginManager.createTargetClientAndConnect(hostInfo, props, this._currentClient, forceConnect);
@@ -210,7 +224,7 @@ export class PluginService implements ErrorHandler, HostListProviderService {
     if (connectFunc) {
       return this.pluginServiceManagerContainer.pluginManager?.connect(hostInfo, props, false, connectFunc);
     }
-    throw new AwsWrapperError("AwsClient is missing target client connect functions."); // This should not be reached
+    throw new AwsWrapperError("AwsClient is missing target client connect function."); // This should not be reached
   }
 
   forceConnect(hostInfo: HostInfo, props: Map<string, any>) {
@@ -218,6 +232,6 @@ export class PluginService implements ErrorHandler, HostListProviderService {
     if (connectFunc) {
       return this.pluginServiceManagerContainer.pluginManager?.forceConnect(hostInfo, props, false, connectFunc);
     }
-    throw new AwsWrapperError("AwsClient is missing target client connect functions."); // This should not be reached
+    throw new AwsWrapperError("AwsClient is missing target client connect function."); // This should not be reached
   }
 }
