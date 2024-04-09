@@ -25,23 +25,21 @@ export class AwsPGClient extends AwsClient {
   constructor(config: any) {
     super(config, new PgErrorHandler(), new AuroraPgDatabaseDialect(), new PgConnectionUrlParser());
     this.config = config;
-    this.targetClient = new Client(WrapperProperties.removeWrapperProperties(config));
     this.isConnected = false;
     this._createClientFunc = (config: any) => {
       return new Client(WrapperProperties.removeWrapperProperties(config));
     };
-    this._connectFunc = async () => {
-      return await this.targetClient.connect().catch((error: any) => {
-        throw error;
-      });
+    this._connectFunc = () => {
+      return this.targetClient.connect();
     };
   }
 
   async connect(): Promise<void> {
     await this.internalConnect();
-    let res: Promise<void> = this.pluginManager.connect(this.pluginService.getCurrentHostInfo(), this.properties, true, () =>
-      this.targetClient.connect()
-    );
+    const res: Promise<void> = this.pluginManager.connect(this.pluginService.getCurrentHostInfo(), this.properties, true, () => {
+      this.targetClient = new Client(WrapperProperties.removeWrapperProperties(this.config));
+      return this.targetClient.connect();
+    });
     this.isConnected = true;
     return res;
   }
