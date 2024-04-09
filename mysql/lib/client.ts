@@ -16,6 +16,7 @@
 
 import { QueryOptions } from "mysql2/typings/mysql/lib/protocol/sequences/Query";
 import { AwsClient } from "aws-wrapper-common-lib/lib/aws_client";
+import { logger } from "aws-wrapper-common-lib/logutils";
 import { WrapperProperties } from "aws-wrapper-common-lib/lib/wrapper_property";
 import { Connection, createConnection, Query } from "mysql2";
 import { MySQLErrorHandler } from "./mysql_error_handler";
@@ -30,6 +31,7 @@ export class AwsMySQLClient extends AwsClient {
       return createConnection(WrapperProperties.removeWrapperProperties(config));
     };
     this.isConnected = false;
+    this._isReadOnly = false;
     this._connectFunc = async () => {
       return await this.targetClient
         .promise()
@@ -73,6 +75,21 @@ export class AwsMySQLClient extends AwsClient {
       },
       options
     );
+  }
+
+  async setReadOnly(readOnly: boolean): Promise<Query | void> {
+    if (readOnly && this.isReadOnly() === false) {
+      this._isReadOnly = true;
+      return await this.targetClient.promise().query({ sql: "SET SESSION TRANSACTION READ ONLY;" });
+    } else if (!readOnly && this.isReadOnly() === true) {
+      this._isReadOnly = false;
+      return await this.targetClient.promise().query({ sql: "SET SESSION TRANSACTION READ WRITE;" });
+    }
+    // already set to desired read-only state, do nothing
+  }
+
+  isReadOnly(): boolean {
+    return this._isReadOnly;
   }
 
   end() {

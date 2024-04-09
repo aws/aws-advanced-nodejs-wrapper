@@ -30,6 +30,7 @@ export abstract class AwsClient {
   private _defaultPort: number = -1;
   private _config: any;
   protected isConnected: boolean = false;
+  protected _isReadOnly: boolean = false;
   private readonly _properties: Map<string, any>;
   private _targetClient: any;
   protected _errorHandler: ErrorHandler;
@@ -112,6 +113,10 @@ export abstract class AwsClient {
   }
 
   abstract executeQuery(props: Map<string, any>, sql: string): Promise<any>;
+
+  abstract setReadOnly(readOnly: boolean): Promise<any | void>;
+
+  abstract isReadOnly(): boolean;
 
   abstract end(): Promise<any>;
 

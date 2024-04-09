@@ -16,6 +16,7 @@
 
 import { Client, QueryResult } from "pg";
 import { AwsClient } from "aws-wrapper-common-lib/lib/aws_client";
+import { logger } from "aws-wrapper-common-lib/logutils";
 import { WrapperProperties } from "aws-wrapper-common-lib/lib/wrapper_property";
 import { PgErrorHandler } from "./pg_error_handler";
 import { PgConnectionUrlParser } from "./pg_connection_url_parser";
@@ -26,6 +27,7 @@ export class AwsPGClient extends AwsClient {
     super(config, new PgErrorHandler(), new AuroraPgDatabaseDialect(), new PgConnectionUrlParser());
     this.config = config;
     this.isConnected = false;
+    this._isReadOnly = false;
     this._createClientFunc = (config: any) => {
       return new Client(WrapperProperties.removeWrapperProperties(config));
     };
@@ -58,6 +60,21 @@ export class AwsPGClient extends AwsClient {
       },
       text
     );
+  }
+
+  async setReadOnly(readOnly: boolean): Promise<QueryResult | void> {
+    if (readOnly && this.isReadOnly() === false) {
+      this._isReadOnly = true;
+      return await this.targetClient.query({ sql: "SET SESSION CHARACTERISTICS AS TRANSACTION READ ONLY" });
+    } else if (!readOnly && this.isReadOnly() === true) {
+      this._isReadOnly = false;
+      return await this.targetClient.query({ sql: "SET SESSION CHARACTERISTICS AS TRANSACTION READ WRITE" });
+    }
+    // already set to desired read-only state, do nothing
+  }
+
+  isReadOnly(): boolean {
+    return this._isReadOnly;
   }
 
   end(): Promise<void> {
