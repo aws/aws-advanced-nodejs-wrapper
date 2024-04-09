@@ -16,7 +16,6 @@
 
 import { Client, QueryResult } from "pg";
 import { AwsClient } from "aws-wrapper-common-lib/lib/aws_client";
-import { logger } from "aws-wrapper-common-lib/logutils";
 import { WrapperProperties } from "aws-wrapper-common-lib/lib/wrapper_property";
 import { PgErrorHandler } from "./pg_error_handler";
 import { PgConnectionUrlParser } from "./pg_connection_url_parser";

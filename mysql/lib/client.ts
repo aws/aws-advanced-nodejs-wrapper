@@ -16,7 +16,6 @@
 
 import { QueryOptions } from "mysql2/typings/mysql/lib/protocol/sequences/Query";
 import { AwsClient } from "aws-wrapper-common-lib/lib/aws_client";
-import { logger } from "aws-wrapper-common-lib/logutils";
 import { WrapperProperties } from "aws-wrapper-common-lib/lib/wrapper_property";
 import { Connection, createConnection, Query } from "mysql2";
 import { MySQLErrorHandler } from "./mysql_error_handler";
