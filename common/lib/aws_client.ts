@@ -111,19 +111,6 @@ export abstract class AwsClient {
     return this._connectFunc;
   }
 
-  updateCredentials(properties: Map<string, any>): void {
-    const user = WrapperProperties.USER.get(properties);
-    const pass = WrapperProperties.PASSWORD.get(properties);
-
-    if (this.targetClient.user != user) {
-      this.targetClient.user = user;
-    }
-
-    if (this.targetClient.password != pass) {
-      this.targetClient.password = pass;
-    }
-  }
-
   abstract executeQuery(props: Map<string, any>, sql: string): Promise<any>;
 
   abstract end(): Promise<any>;
