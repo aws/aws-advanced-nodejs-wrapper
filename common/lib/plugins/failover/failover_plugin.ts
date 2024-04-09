@@ -29,6 +29,7 @@ import { ClusterAwareReaderFailoverHandler } from "./reader_failover_handler";
 import { SubscribedMethodHelper } from "../../utils/subscribed_method_helper";
 import { HostChangeOptions } from "../../host_change_options";
 import { ClusterAwareWriterFailoverHandler } from "./writer_failover_handler";
+import { Messages } from "../../utils/messages";
 
 export class FailoverPlugin extends AbstractConnectionPlugin {
   private static readonly subscribedMethods: Set<string> = new Set([
@@ -97,13 +98,10 @@ export class FailoverPlugin extends AbstractConnectionPlugin {
 
   override async execute<T>(methodName: string, methodFunc: () => Promise<T>): Promise<T> {
     try {
-      const start = performance.now();
       if (this.canUpdateTopology(methodName)) {
         await this.updateTopology(false);
       }
-      const res = methodFunc();
-      logger.debug(`Execution time for plugin ${this.id}: ${performance.now() - start} ms`);
-      return res;
+      return methodFunc();
     } catch (e) {
       logger.debug(e);
       throw e;
