@@ -84,6 +84,7 @@ export class AwsMySQLClient extends AwsClient {
     if (this.isReadOnly()) {
       return await this.query({ sql: "SET SESSION TRANSACTION READ ONLY;" });
     }
+
     return await this.query({ sql: "SET SESSION TRANSACTION READ WRITE;" });
   }
 
