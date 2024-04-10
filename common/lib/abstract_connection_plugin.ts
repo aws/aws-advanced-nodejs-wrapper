@@ -24,11 +24,11 @@ export abstract class AbstractConnectionPlugin implements ConnectionPlugin {
   abstract getSubscribedMethods(): Set<string>;
 
   connect<T>(hostInfo: HostInfo, props: Map<string, any>, isInitialConnection: boolean, connectFunc: () => Promise<T>): Promise<T> {
-    throw new Error("Method not implemented.");
+    return connectFunc();
   }
 
   forceConnect<T>(hostInfo: HostInfo, props: Map<string, any>, isInitialConnection: boolean, forceConnectFunc: () => Promise<T>): Promise<T> {
-    throw new Error("Method not implemented.");
+    return forceConnectFunc();
   }
 
   execute<T>(methodName: string, methodFunc: () => Promise<T>, methodArgs: any[]): Promise<T> {
@@ -41,7 +41,7 @@ export abstract class AbstractConnectionPlugin implements ConnectionPlugin {
     hostListProviderService: HostListProviderService,
     initHostProviderFunc: () => void
   ): void {
-    throw new Error("Method not implemented.");
+    initHostProviderFunc();
   }
 
   notifyConnectionChanged(changes: Set<HostChangeOptions>): OldConnectionSuggestionAction {

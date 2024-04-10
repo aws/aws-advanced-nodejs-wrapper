@@ -54,6 +54,7 @@
     "ts-mockito": "^2.6.1",
     "ts-node": "^10.9.1",
     "tsx": "^3.12.7",
-    "typescript": "^4.2.3"
+    "typescript": "^4.2.3",
+    "@aws-sdk/client-secrets-manager": "^3.511.0"
   }
 }

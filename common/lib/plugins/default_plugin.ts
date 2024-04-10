@@ -51,10 +51,7 @@ export class DefaultPlugin extends AbstractConnectionPlugin {
 
   override execute<Type>(methodName: string, methodFunc: () => Type): Type {
     logger.debug(Messages.get("DefaultPlugin.executingMethod", methodName));
-    const start = performance.now();
-    const res = methodFunc();
-    logger.debug(`Execution time for plugin ${this.id}: ${performance.now() - start} ms`);
-    return res;
+    return methodFunc();
   }
 
   override notifyConnectionChanged(changes: Set<HostChangeOptions>): OldConnectionSuggestionAction {

@@ -22,6 +22,9 @@ import { WrapperProperties } from "./wrapper_property";
 import { AwsWrapperError } from "./utils/aws_wrapper_error";
 import { Messages } from "./utils/messages";
 import { DefaultPlugin } from "./plugins/default_plugin";
+import { ExecuteTimePluginFactory } from "./plugins/execute_time_plugin";
+import { ConnectTimePluginFactory } from "./plugins/connect_time_plugin";
+import { AwsSecretsManagerPluginFactory } from "./authentication/aws_secrets_manager_plugin";
 
 export class PluginFactoryInfo {}
 
@@ -33,6 +36,9 @@ export class ConnectionPluginChainBuilder {
 
   static readonly PLUGIN_FACTORIES = new Map<string, FactoryClass>([
     ["iam", IamAuthenticationPluginFactory],
+    ["executeTime", ExecuteTimePluginFactory],
+    ["connectTime", ConnectTimePluginFactory],
+    ["secretsManager", AwsSecretsManagerPluginFactory],
     ["failover", FailoverPluginFactory]
   ]);
 

@@ -25,23 +25,22 @@ export class AwsPGClient extends AwsClient {
   constructor(config: any) {
     super(config, new PgErrorHandler(), new AuroraPgDatabaseDialect(), new PgConnectionUrlParser());
     this.config = config;
-    this.targetClient = new Client(WrapperProperties.removeWrapperProperties(config));
     this.isConnected = false;
+    this._isReadOnly = false;
     this._createClientFunc = (config: any) => {
       return new Client(WrapperProperties.removeWrapperProperties(config));
     };
-    this._connectFunc = async () => {
-      return await this.targetClient.connect().catch((error: any) => {
-        throw error;
-      });
+    this._connectFunc = () => {
+      return this.targetClient.connect();
     };
   }
 
   async connect(): Promise<void> {
     await this.internalConnect();
-    let res: Promise<void> = this.pluginManager.connect(this.pluginService.getCurrentHostInfo(), this.properties, true, () =>
-      this.targetClient.connect()
-    );
+    const res: Promise<void> = this.pluginManager.connect(this.pluginService.getCurrentHostInfo(), this.properties, true, () => {
+      this.targetClient = new Client(WrapperProperties.removeWrapperProperties(this.config));
+      return this.targetClient.connect();
+    });
     this.isConnected = true;
     return res;
   }
@@ -60,6 +59,21 @@ export class AwsPGClient extends AwsClient {
       },
       text
     );
+  }
+
+  async setReadOnly(readOnly: boolean): Promise<QueryResult | void> {
+    if (readOnly === this.isReadOnly()) {
+      return Promise.resolve();
+    }
+    this._isReadOnly = readOnly;
+    if (this.isReadOnly()) {
+      return await this.query("SET SESSION CHARACTERISTICS AS TRANSACTION READ ONLY");
+    }
+    return await this.query("SET SESSION CHARACTERISTICS AS TRANSACTION READ WRITE");
+  }
+
+  isReadOnly(): boolean {
+    return this._isReadOnly;
   }
 
   end(): Promise<void> {
