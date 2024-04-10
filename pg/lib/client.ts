@@ -26,6 +26,7 @@ export class AwsPGClient extends AwsClient {
     super(config, new PgErrorHandler(), new AuroraPgDatabaseDialect(), new PgConnectionUrlParser());
     this.config = config;
     this.isConnected = false;
+    this._isReadOnly = false;
     this._createClientFunc = (config: any) => {
       return new Client(WrapperProperties.removeWrapperProperties(config));
     };
@@ -58,6 +59,21 @@ export class AwsPGClient extends AwsClient {
       },
       text
     );
+  }
+
+  async setReadOnly(readOnly: boolean): Promise<QueryResult | void> {
+    if (readOnly === this.isReadOnly()) {
+      return Promise.resolve();
+    }
+    this._isReadOnly = readOnly;
+    if (this.isReadOnly()) {
+      return await this.query("SET SESSION CHARACTERISTICS AS TRANSACTION READ ONLY");
+    }
+    return await this.query("SET SESSION CHARACTERISTICS AS TRANSACTION READ WRITE");
+  }
+
+  isReadOnly(): boolean {
+    return this._isReadOnly;
   }
 
   end(): Promise<void> {

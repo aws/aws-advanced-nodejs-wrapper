@@ -30,6 +30,7 @@ export class AwsMySQLClient extends AwsClient {
       return createConnection(WrapperProperties.removeWrapperProperties(config));
     };
     this.isConnected = false;
+    this._isReadOnly = false;
     this._connectFunc = async () => {
       return await this.targetClient
         .promise()
@@ -73,6 +74,22 @@ export class AwsMySQLClient extends AwsClient {
       },
       options
     );
+  }
+
+  async setReadOnly(readOnly: boolean): Promise<Query | void> {
+    if (readOnly === this.isReadOnly()) {
+      return Promise.resolve();
+    }
+    this._isReadOnly = readOnly;
+    if (this.isReadOnly()) {
+      return await this.query({ sql: "SET SESSION TRANSACTION READ ONLY;" });
+    }
+
+    return await this.query({ sql: "SET SESSION TRANSACTION READ WRITE;" });
+  }
+
+  isReadOnly(): boolean {
+    return this._isReadOnly;
   }
 
   end() {
