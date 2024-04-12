@@ -21,7 +21,7 @@ import { AwsClient } from "aws-wrapper-common-lib/lib/aws_client";
 import { HostAvailability } from "aws-wrapper-common-lib/lib/host_availability/host_availability";
 import { HostRole } from "aws-wrapper-common-lib/lib/host_role";
 import { sleep } from "aws-wrapper-common-lib/lib/utils/utils";
-import { AwsWrapperError } from "aws-wrapper-common-lib/lib/utils/aws_wrapper_error";
+import { AwsWrapperError } from "aws-wrapper-common-lib/lib/utils/errors";
 import { mock, instance, when, anything, verify, reset } from "ts-mockito";
 
 const host1 = new HostInfo("writer", 1234);

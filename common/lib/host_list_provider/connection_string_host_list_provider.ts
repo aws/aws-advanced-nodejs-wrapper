@@ -19,7 +19,7 @@ import { HostAvailability } from "../host_availability/host_availability";
 import { HostInfo } from "../host_info";
 import { HostListProviderService } from "../host_list_provider_service";
 import { HostRole } from "../host_role";
-import { AwsWrapperError } from "../utils/aws_wrapper_error";
+import { AwsWrapperError } from "../utils/errors";
 import { ConnectionUrlParser } from "../utils/connection_url_parser";
 import { Messages } from "../utils/messages";
 import { WrapperProperties } from "../wrapper_property";

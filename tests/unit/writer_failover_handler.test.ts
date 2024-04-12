@@ -17,7 +17,7 @@
 import { SimpleHostAvailabilityStrategy } from "aws-wrapper-common-lib/lib/host_availability/simple_host_availability_strategy";
 import { HostInfoBuilder } from "aws-wrapper-common-lib/lib/host_info_builder";
 import { PluginService } from "aws-wrapper-common-lib/lib/plugin_service";
-import { AwsWrapperError } from "aws-wrapper-common-lib/lib/utils/aws_wrapper_error";
+import { AwsWrapperError } from "aws-wrapper-common-lib/lib/utils/errors";
 import { ClusterAwareReaderFailoverHandler } from "aws-wrapper-common-lib/lib/plugins/failover/reader_failover_handler";
 import { ClusterAwareWriterFailoverHandler } from "aws-wrapper-common-lib/lib/plugins/failover/writer_failover_handler";
 import { mock, instance, when, anything, verify, reset } from "ts-mockito";

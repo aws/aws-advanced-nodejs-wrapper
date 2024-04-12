@@ -19,7 +19,7 @@ import { HostListProviderService } from "aws-wrapper-common-lib/lib/host_list_pr
 import { HostListProvider } from "aws-wrapper-common-lib/lib/host_list_provider/host_list_provider";
 import { ConnectionStringHostListProvider } from "aws-wrapper-common-lib/lib/host_list_provider/connection_string_host_list_provider";
 import { AwsClient } from "aws-wrapper-common-lib/lib/aws_client";
-import { AwsWrapperError } from "aws-wrapper-common-lib/lib/utils/aws_wrapper_error";
+import { AwsWrapperError } from "aws-wrapper-common-lib/lib/utils/errors";
 
 export class MySQLDatabaseDialect implements DatabaseDialect {
   getDefaultPort(): number {

@@ -17,7 +17,7 @@
 import { ConnectionPlugin } from "./connection_plugin";
 import { HostInfo } from "./host_info";
 import { ConnectionPluginChainBuilder } from "./connection_plugin_chain_builder";
-import { AwsWrapperError } from "./utils/aws_wrapper_error";
+import { AwsWrapperError } from "./utils/errors";
 import { Messages } from "./utils/messages";
 import { PluginServiceManagerContainer } from "./plugin_service_manager_container";
 import { HostListProviderService } from "./host_list_provider_service";

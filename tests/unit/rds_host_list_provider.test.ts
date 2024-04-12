@@ -24,7 +24,7 @@ import { HostInfoBuilder } from "aws-wrapper-common-lib/lib/host_info_builder";
 import { SimpleHostAvailabilityStrategy } from "aws-wrapper-common-lib/lib/host_availability/simple_host_availability_strategy";
 import { ConnectionUrlParser } from "aws-wrapper-common-lib/lib/utils/connection_url_parser";
 import { AwsPGClient } from "pg-wrapper";
-import { AwsWrapperError } from "aws-wrapper-common-lib/lib/utils/aws_wrapper_error";
+import { AwsWrapperError } from "aws-wrapper-common-lib/lib/utils/errors";
 import { sleep } from "aws-wrapper-common-lib/lib/utils/utils";
 import { HostRole } from "aws-wrapper-common-lib/lib/host_role";
 import { AuroraPgDatabaseDialect } from "pg-wrapper/lib/dialect/aurora_pg_database_dialect";
