@@ -24,7 +24,7 @@ import { ConnectionUrlParser } from "./utils/connection_url_parser";
 import { DatabaseDialect } from "./database_dialect";
 import { HostInfoBuilder } from "./host_info_builder";
 import { SimpleHostAvailabilityStrategy } from "./host_availability/simple_host_availability_strategy";
-import { AwsWrapperError } from "./utils/aws_wrapper_error";
+import { AwsWrapperError } from "./utils/errors";
 import { HostAvailability } from "./host_availability/host_availability";
 import { CacheMap } from "./utils/cache_map";
 import { HostChangeOptions } from "./host_change_options";

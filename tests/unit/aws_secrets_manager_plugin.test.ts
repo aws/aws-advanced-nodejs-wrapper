@@ -21,7 +21,7 @@ import { SimpleHostAvailabilityStrategy } from "aws-wrapper-common-lib/lib/host_
 import { HostInfo } from "aws-wrapper-common-lib/lib/host_info";
 import { HostInfoBuilder } from "aws-wrapper-common-lib/lib/host_info_builder";
 import { PluginService } from "aws-wrapper-common-lib/lib/plugin_service";
-import { AwsWrapperError } from "aws-wrapper-common-lib/lib/utils/aws_wrapper_error";
+import { AwsWrapperError } from "aws-wrapper-common-lib/lib/utils/errors";
 import { Messages } from "aws-wrapper-common-lib/lib/utils/messages";
 import { WrapperProperties } from "aws-wrapper-common-lib/lib/wrapper_property";
 import { anything, instance, mock, reset, verify, when } from "ts-mockito";

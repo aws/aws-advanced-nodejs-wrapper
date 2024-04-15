@@ -14,4 +14,22 @@
   limitations under the License.
 */
 
-export class AwsWrapperError extends Error {}
+export class AwsWrapperError extends Error {
+  constructor(message?: string, cause?: any) {
+    super(message);
+    this.name = this.constructor.name;
+    this.cause = cause;
+  }
+}
+
+export class FailoverError extends AwsWrapperError {}
+
+export class FailoverSuccessError extends FailoverError {}
+
+export class FailoverFailedError extends FailoverError {}
+
+export class TransactionResolutionUnknownError extends FailoverError {}
+
+export class ReadWriteSplittingError extends AwsWrapperError {}
+
+export class LoginError extends AwsWrapperError {}

@@ -20,7 +20,7 @@ import { ReaderFailoverResult } from "./reader_failover_result";
 import { sleep, shuffleList } from "../../utils/utils";
 import { HostRole } from "../../host_role";
 import { HostAvailability } from "../../host_availability/host_availability";
-import { AwsWrapperError } from "../../utils/aws_wrapper_error";
+import { AwsWrapperError } from "../../utils/errors";
 import { logger } from "../../../logutils";
 import { Messages } from "../../utils/messages";
 

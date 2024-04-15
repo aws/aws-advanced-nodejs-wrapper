@@ -26,7 +26,7 @@ import { ConnectionPlugin } from "../connection_plugin";
 import { HostInfo } from "../host_info";
 import { ConnectionPluginFactory } from "../plugin_factory";
 import { PluginService } from "../plugin_service";
-import { AwsWrapperError } from "../utils/aws_wrapper_error";
+import { AwsWrapperError } from "../utils/errors";
 import { Messages } from "../utils/messages";
 import { WrapperProperties } from "../wrapper_property";
 

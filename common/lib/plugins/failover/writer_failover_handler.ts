@@ -20,7 +20,7 @@ import { ClusterAwareReaderFailoverHandler } from "./reader_failover_handler";
 import { AwsClient } from "../../aws_client";
 import { PluginService } from "../../plugin_service";
 import { HostAvailability } from "../../host_availability/host_availability";
-import { AwsWrapperError } from "../../utils/aws_wrapper_error";
+import { AwsWrapperError } from "../../utils/errors";
 import { maskProperties, sleep } from "../../utils/utils";
 import { ReaderFailoverResult } from "./reader_failover_result";
 import { HostRole } from "../../host_role";
