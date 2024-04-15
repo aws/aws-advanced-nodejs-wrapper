@@ -56,4 +56,24 @@ export class PgDatabaseDialect implements DatabaseDialect {
   getHostListProvider(props: Map<string, any>, originalUrl: string, hostListProviderService: HostListProviderService): HostListProvider {
     return new ConnectionStringHostListProvider(props, originalUrl, this.getDefaultPort(), hostListProviderService);
   }
+
+  async tryClosingTargetClient(targetClient: any) {
+    await targetClient.end().catch((error: any) => {
+      // ignore
+    });
+  }
+
+  async isClientValid(targetClient: any): Promise<boolean> {
+    try {
+      return Promise.resolve(targetClient._connected || targetClient._connecting);
+    } catch (error) {
+      return false;
+    }
+  }
+
+  getConnectFunc(targetClient: any): () => Promise<any> {
+    return async () => {
+      return await targetClient.connect();
+    };
+  }
 }

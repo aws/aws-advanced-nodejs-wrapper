@@ -43,12 +43,19 @@ export class DefaultPlugin extends AbstractConnectionPlugin {
     // do nothing
   }
 
-  override connect<Type>(hostInfo: HostInfo, props: Map<string, any>, isInitialConnection: boolean, connectFunc: () => Type): Type {
+  override async connect<Type>(
+    hostInfo: HostInfo,
+    props: Map<string, any>,
+    isInitialConnection: boolean,
+    connectFunc: () => Promise<Type>
+  ): Promise<Type> {
     logger.debug(`Start connect for test plugin: ${this.id}`);
-    return connectFunc();
+    return connectFunc().catch((error: any) => {
+      throw error;
+    });
   }
 
-  override execute<Type>(methodName: string, methodFunc: () => Type): Type {
+  override async execute<Type>(methodName: string, methodFunc: () => Promise<Type>): Promise<Type> {
     logger.debug(Messages.get("DefaultPlugin.executingMethod", methodName));
     return methodFunc();
   }

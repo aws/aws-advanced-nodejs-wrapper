@@ -20,7 +20,7 @@ import { HostListProvider } from "./host_list_provider/host_list_provider";
 import { HostRole } from "./host_role";
 
 export interface TopologyAwareDatabaseDialect {
-  queryForTopology(client: AwsClient, props: Map<string, any>, hostListProvider: HostListProvider): Promise<HostInfo[]>;
+  queryForTopology(client: AwsClient, hostListProvider: HostListProvider): Promise<HostInfo[]>;
 
   identifyConnection(client: AwsClient, props: Map<string, any>): Promise<string>;
 

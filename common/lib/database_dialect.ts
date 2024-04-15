@@ -19,6 +19,9 @@ import { HostListProvider } from "./host_list_provider/host_list_provider";
 import { HostListProviderService } from "./host_list_provider_service";
 
 export interface DatabaseDialect {
+  getConnectFunc(newTargetClient: AwsClient): () => Promise<any>;
+  tryClosingTargetClient(targetClient: any): Promise<void>;
+  isClientValid(targetClient: any): Promise<boolean>;
   getDefaultPort(): number;
   getHostAliasQuery(): string;
   getHostAliasAndParseResults(client: AwsClient): Promise<string>;

@@ -25,23 +25,23 @@ export class AwsPGClient extends AwsClient {
   constructor(config: any) {
     super(config, new PgErrorHandler(), new AuroraPgDatabaseDialect(), new PgConnectionUrlParser());
     this.config = config;
-    this.isConnected = false;
     this._isReadOnly = false;
     this._createClientFunc = (config: any) => {
-      return new Client(WrapperProperties.removeWrapperProperties(config));
-    };
-    this._connectFunc = () => {
-      return this.targetClient.connect();
+      const targetClient: Client = new Client(WrapperProperties.removeWrapperProperties(config));
+      targetClient.on("error", (error: any) => {
+        this.emit("error", error);
+      });
+      return targetClient;
     };
   }
 
   async connect(): Promise<void> {
     await this.internalConnect();
-    const res: Promise<void> = this.pluginManager.connect(this.pluginService.getCurrentHostInfo(), this.properties, true, () => {
-      this.targetClient = new Client(WrapperProperties.removeWrapperProperties(this.config));
-      return this.targetClient.connect();
+    const res: void = await this.pluginManager.connect(this.pluginService.getCurrentHostInfo(), this.properties, true, async () => {
+      this.targetClient = this.pluginService.createTargetClient(this.properties);
+      await this.targetClient.connect();
     });
-    this.isConnected = true;
+    await this.internalPostConnect();
     return res;
   }
 
@@ -80,7 +80,5 @@ export class AwsPGClient extends AwsClient {
     return this.pluginManager.execute(this.pluginService.getCurrentHostInfo(), this.properties, "end", () => this.targetClient.end(), null);
   }
 
-  isValid(): boolean {
-    return this.isConnected && this.targetClient.connection._connecting;
-  }
+  rollback() {}
 }

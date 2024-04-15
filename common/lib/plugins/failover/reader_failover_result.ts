@@ -18,12 +18,12 @@ import { AwsClient } from "../../aws_client";
 import { HostInfo } from "../../host_info";
 
 export class ReaderFailoverResult {
-  private readonly _client: AwsClient | null;
+  private readonly _client: any | null;
   private readonly _newHost: HostInfo | null;
   private readonly _isConnected: boolean;
   private readonly _exception?: Error;
 
-  constructor(client: AwsClient | null, newHost: HostInfo | null, isConnected: boolean, exception?: Error) {
+  constructor(client: any | null, newHost: HostInfo | null, isConnected: boolean, exception?: Error) {
     this._client = client;
     this._newHost = newHost;
     this._isConnected = isConnected;

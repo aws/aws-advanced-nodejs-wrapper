@@ -93,38 +93,6 @@ export class PluginManager {
     );
   }
 
-  // TODO: change function so the target client is not altered here.
-  async createTargetClientAndConnect(
-    hostInfo: HostInfo,
-    props: Map<string, any>,
-    currentClient: AwsClient,
-    forceConnect: boolean
-  ): Promise<AwsClient> {
-    const currentTargetClient = currentClient.targetClient;
-    const createClientFunc = currentClient.getCreateClientFunc();
-    const connectFunc = currentClient.getConnectFunc();
-    if (createClientFunc && connectFunc) {
-      try {
-        props.set("host", hostInfo?.host);
-        const newTargetClient = createClientFunc(Object.fromEntries(props)) as AwsClient;
-        currentClient.targetClient = newTargetClient;
-        if (forceConnect) {
-          await this.forceConnect(hostInfo, props, false, connectFunc);
-        } else {
-          await this.connect(hostInfo, props, false, connectFunc);
-        }
-        currentTargetClient.end();
-        return currentClient;
-      } catch (error) {
-        currentClient.targetClient = currentTargetClient;
-        throw new AwsWrapperError(Messages.get("PluginManager.failedToConnectWithNewTargetClient", hostInfo?.host ?? "Undefined"));
-      }
-    } else {
-      currentClient.targetClient = currentTargetClient;
-      throw new AwsWrapperError("AwsClient is missing create target client or target client connect functions."); // This should not be reached
-    }
-  }
-
   connect<T>(hostInfo: HostInfo | null, props: Map<string, any>, isInitialConnection: boolean, methodFunc: () => Promise<T>): Promise<T> {
     if (hostInfo == null) {
       throw new AwsWrapperError("HostInfo was not provided.");

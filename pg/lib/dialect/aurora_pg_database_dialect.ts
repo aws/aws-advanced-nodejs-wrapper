@@ -43,8 +43,8 @@ export class AuroraPgDatabaseDialect extends PgDatabaseDialect implements Topolo
     return new RdsHostListProvider(props, originalUrl, hostListProviderService);
   }
 
-  async queryForTopology(client: AwsClient, props: Map<string, any>, hostListProvider: HostListProvider): Promise<HostInfo[]> {
-    const res = await client.executeQuery(props, AuroraPgDatabaseDialect.TOPOLOGY_QUERY);
+  async queryForTopology(targetClient: any, hostListProvider: HostListProvider): Promise<HostInfo[]> {
+    const res = await targetClient.query(AuroraPgDatabaseDialect.TOPOLOGY_QUERY);
     const hosts: HostInfo[] = [];
     const rows: any[] = res.rows;
     rows.forEach((row) => {
