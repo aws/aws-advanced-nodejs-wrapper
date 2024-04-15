@@ -23,6 +23,7 @@ import { PluginServiceManagerContainer } from "./plugin_service_manager_containe
 import { HostListProviderService } from "./host_list_provider_service";
 import { AwsClient } from "./aws_client";
 import { PluginService } from "./plugin_service";
+import { HostRole } from "./host_role";
 
 type PluginFunc<T> = (plugin: ConnectionPlugin, targetFunc: () => Promise<T>) => Promise<T>;
 
@@ -61,6 +62,9 @@ class PluginChain<T> {
 
 export class PluginManager {
   private static readonly PLUGIN_CHAIN_CACHE = new Map<[string, HostInfo], PluginChain<any>>();
+  private static readonly ALL_METHODS: string = "*";
+  private static readonly ACCEPTS_STRATEGY_METHOD: string = "acceptsStrategy";
+  private static readonly GET_HOST_INFO_BY_STRATEGY_METHOD: string = "getHostInfoByStrategy";
   private readonly _plugins: ConnectionPlugin[] = [];
   private pluginServiceManagerContainer: PluginServiceManagerContainer;
   private props: Map<string, any>;
@@ -185,5 +189,40 @@ export class PluginManager {
         throw new AwsWrapperError("Shouldn't be called");
       }
     );
+  }
+
+  acceptsStrategy(role: HostRole, strategy: string) {
+    for (const plugin of this._plugins) {
+      const pluginSubscribedMethods = plugin.getSubscribedMethods();
+      const isSubscribed =
+        pluginSubscribedMethods.has(PluginManager.ALL_METHODS) || pluginSubscribedMethods.has(PluginManager.ACCEPTS_STRATEGY_METHOD);
+
+      if (isSubscribed && plugin.acceptsStrategy(role, strategy)) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  getHostInfoByStrategy(role: HostRole, strategy: string): HostInfo {
+    for (const plugin of this._plugins) {
+      const pluginSubscribedMethods = plugin.getSubscribedMethods();
+      const isSubscribed =
+        pluginSubscribedMethods.has(PluginManager.ALL_METHODS) || pluginSubscribedMethods.has(PluginManager.GET_HOST_INFO_BY_STRATEGY_METHOD);
+
+      if (isSubscribed) {
+        try {
+          const host = plugin.getHostInfoByStrategy(role, strategy);
+          if (host) {
+            return host;
+          }
+        } catch (error) {
+          // This plugin does not support the provided strategy, ignore the exception and move on
+        }
+      }
+    }
+
+    throw new AwsWrapperError("The driver does not support the requested host selection strategy: " + strategy);
   }
 }

@@ -2,6 +2,8 @@
   "ConnectionPluginManager.unknownPluginCode": "Unknown plugin code: '%s'",
   "ConnectionPluginManager.failedToConnectWithNewTargetClient": "Failed to connect with a new target for host: '%s'",
   "DefaultPlugin.executingMethod": "Executing method: %s",
+  "DefaultConnectionPlugin.unknownRoleRequested": "A HostInfo with a role of HostRole.UNKNOWN was requested via getHostInfoByStrategy. The requested role must be either HostRole.WRITER or HostRole.READER",
+  "DefaultConnectionPlugin.noHostsAvailable": "The default connection plugin received an empty host list from the plugin service.",
   "IamAuthenticationPlugin.unsupportedHostname": "Unsupported AWS hostname %s. Amazon domain name in format *.AWS-Region.rds.amazonaws.com or *.rds.AWS-Region.amazonaws.com.cn is expected.",
   "IamAuthenticationPlugin.useCachedIamToken": "Use cached IAM token = '%s'",
   "IamAuthenticationPlugin.generatedNewIamToken": "Generated new IAM token = %s",
