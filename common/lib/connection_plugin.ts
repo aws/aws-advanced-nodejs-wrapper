@@ -18,6 +18,7 @@ import { HostListProviderService } from "./host_list_provider_service";
 import { HostInfo } from "./host_info";
 import { HostChangeOptions } from "./host_change_options";
 import { OldConnectionSuggestionAction } from "./old_connection_suggestion_action";
+import { HostRole } from "./host_role";
 
 export interface ConnectionPlugin {
   getSubscribedMethods(): Set<string>;
@@ -38,4 +39,8 @@ export interface ConnectionPlugin {
   notifyConnectionChanged(changes: Set<HostChangeOptions>): OldConnectionSuggestionAction;
 
   notifyNodeListChanged(changes: Map<string, Set<HostChangeOptions>>): void;
+
+  acceptsStrategy(role: HostRole, strategy: string): boolean;
+
+  getHostInfoByStrategy(role: HostRole, strategy: string): HostInfo | undefined;
 }

@@ -21,6 +21,7 @@ import { Messages } from "../utils/messages";
 import { HostListProviderService } from "../host_list_provider_service";
 import { HostInfo } from "../host_info";
 import { AbstractConnectionPlugin } from "../abstract_connection_plugin";
+import { HostRole } from "../host_role";
 
 export class DefaultPlugin extends AbstractConnectionPlugin {
   id: string = uniqueId("_defaultPlugin");
@@ -50,5 +51,36 @@ export class DefaultPlugin extends AbstractConnectionPlugin {
   override execute<Type>(methodName: string, methodFunc: () => Type): Type {
     logger.debug(Messages.get("DefaultPlugin.executingMethod", methodName));
     return methodFunc();
+  }
+
+  override acceptsStrategy(role: HostRole, strategy: string): boolean {
+    // TODO: uncomment once connection providers are set up
+    // if (role === HostRole.UNKNOWN) {
+    //   // Users must request either a writer or a reader role.
+    //   return false;
+    // }
+    //
+    // if (this.effectiveConnProvider) {
+    //   return this.effectiveConnProvider.acceptsStrategy(role, strategy);
+    // }
+    // return this.connProviderManager.acceptsStrategy(role, strategy);
+    return super.acceptsStrategy(role, strategy);
+  }
+
+  override getHostInfoByStrategy(role: HostRole, strategy: string): HostInfo {
+    // TODO: uncomment once connection providers are set up
+    // if (role === HostRole.UNKNOWN) {
+    //   throw new AwsWrapperError(Messages.get("DefaultConnectionPlugin.unknownRoleRequested"));
+    // }
+    //
+    // const hosts = this.pluginService.getHosts();
+    // if (hosts.length < 1) {
+    //   throw new AwsWrapperError(Messages.get("DefaultConnectionPlugin.noHostsAvailable"));
+    // }
+    //
+    // if (this.effectiveConnProvider) {
+    //   return this.effectiveConnProvider.getHostInfoByStrategy(hosts, role, strategy, this.pluginService.props);
+    // }
+    return super.getHostInfoByStrategy(role, strategy);
   }
 }
