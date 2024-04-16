@@ -22,6 +22,6 @@ export class PgErrorHandler implements ErrorHandler {
   }
 
   isNetworkError(e: Error): boolean {
-    return false;
+    return e.message.includes("Connection terminated unexpectedly");
   }
 }

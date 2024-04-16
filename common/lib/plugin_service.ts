@@ -29,12 +29,14 @@ import { HostAvailability } from "./host_availability/host_availability";
 import { CacheMap } from "./utils/cache_map";
 import { HostChangeOptions } from "./host_change_options";
 import { HostRole } from "./host_role";
+import { WrapperProperties } from "./wrapper_property";
 
 export class PluginService implements ErrorHandler, HostListProviderService {
   private _currentHostInfo?: HostInfo;
   private _currentClient: AwsClient;
   private _hostListProvider?: HostListProvider;
   private _initialConnectionHostInfo?: HostInfo;
+  private _isInTransaction: boolean = false;
   private pluginServiceManagerContainer: PluginServiceManagerContainer;
   protected hosts: HostInfo[] = [];
   protected static readonly hostAvailabilityExpiringCache: CacheMap<string, HostAvailability> = new CacheMap<string, HostAvailability>();
@@ -43,6 +45,14 @@ export class PluginService implements ErrorHandler, HostListProviderService {
     this._currentClient = client;
     this.pluginServiceManagerContainer = container;
     container.pluginService = this;
+  }
+
+  isInTransaction(): boolean {
+    return this._isInTransaction;
+  }
+
+  setInTransaction(inTransaction: boolean): void {
+    this._isInTransaction = inTransaction;
   }
 
   isLoginError(e: Error): boolean {
@@ -210,28 +220,45 @@ export class PluginService implements ErrorHandler, HostListProviderService {
     throw new AwsWrapperError("AwsClient is missing create target client function."); // This should not be reached
   }
 
-  // TODO: use replaceTargetClient method instead
-  async createTargetClientAndConnect(hostInfo: HostInfo, props: Map<string, any>, forceConnect: boolean): Promise<AwsClient> {
-    if (this.pluginServiceManagerContainer.pluginManager) {
-      return await this.pluginServiceManagerContainer.pluginManager.createTargetClientAndConnect(hostInfo, props, this._currentClient, forceConnect);
-    } else {
-      throw new AwsWrapperError("Connection Plugin Manager was not detected."); // This should not be reached
+  createTargetClient(props: Map<string, any>): any {
+    const createClientFunc = this.getCurrentClient().getCreateClientFunc();
+    const copy = WrapperProperties.removeWrapperProperties(Object.fromEntries(props.entries()));
+    if (createClientFunc) {
+      return createClientFunc(Object.fromEntries(new Map(Object.entries(copy))));
     }
+    throw new AwsWrapperError("AwsClient is missing create target client function."); // This should not be reached
   }
 
-  connect(hostInfo: HostInfo, props: Map<string, any>) {
-    const connectFunc = this._currentClient.getConnectFunc();
+  connect<T>(hostInfo: HostInfo, props: Map<string, any>, connectFunc: () => Promise<T>) {
     if (connectFunc) {
       return this.pluginServiceManagerContainer.pluginManager?.connect(hostInfo, props, false, connectFunc);
     }
     throw new AwsWrapperError("AwsClient is missing target client connect function."); // This should not be reached
   }
 
-  forceConnect(hostInfo: HostInfo, props: Map<string, any>) {
-    const connectFunc = this._currentClient.getConnectFunc();
+  forceConnect<T>(hostInfo: HostInfo, props: Map<string, any>, connectFunc: () => Promise<T>) {
     if (connectFunc) {
       return this.pluginServiceManagerContainer.pluginManager?.forceConnect(hostInfo, props, false, connectFunc);
     }
     throw new AwsWrapperError("AwsClient is missing target client connect function."); // This should not be reached
+  }
+
+  setCurrentClient(newClient: any, hostInfo: HostInfo) {
+    this.getCurrentClient().targetClient = newClient;
+    this._currentHostInfo = hostInfo;
+  }
+
+  async isClientValid(targetClient: any): Promise<boolean> {
+    return await this.getDialect().isClientValid(targetClient);
+  }
+
+  async tryClosingTargetClient(): Promise<void>;
+  async tryClosingTargetClient(targetClient: any): Promise<void>;
+  async tryClosingTargetClient(targetClient?: any): Promise<void> {
+    await this.getDialect().tryClosingTargetClient(targetClient ?? this._currentClient.targetClient);
+  }
+
+  getConnectFunc(targetClient: any) {
+    return this.getDialect().getConnectFunc(targetClient);
   }
 }

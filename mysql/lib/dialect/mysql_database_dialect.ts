@@ -57,4 +57,35 @@ export class MySQLDatabaseDialect implements DatabaseDialect {
   getHostListProvider(props: Map<string, any>, originalUrl: string, hostListProviderService: HostListProviderService): HostListProvider {
     return new ConnectionStringHostListProvider(props, originalUrl, this.getDefaultPort(), hostListProviderService);
   }
+
+  async tryClosingTargetClient(targetClient: any) {
+    try {
+      await targetClient.promise().end();
+    } catch (error) {
+      // ignore
+    }
+  }
+
+  async isClientValid(targetClient: any): Promise<boolean> {
+    return await targetClient
+      .promise()
+      .query({ sql: "SELECT 1" })
+      .then((result: number) => {
+        return true;
+      })
+      .catch(() => {
+        return false;
+      });
+  }
+
+  getConnectFunc(targetClient: any): () => Promise<any> {
+    return async () => {
+      return await targetClient
+        .promise()
+        .connect()
+        .catch((error: any) => {
+          throw error;
+        });
+    };
+  }
 }

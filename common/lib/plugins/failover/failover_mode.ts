@@ -17,5 +17,17 @@
 export enum FailoverMode {
   STRICT_WRITER,
   STRICT_READER,
-  READER_OR_WRITER
+  READER_OR_WRITER,
+  UNKNOWN
+}
+
+const nameToValue = new Map([
+  ["strict-writer", FailoverMode.STRICT_WRITER],
+  ["strict-reader", FailoverMode.STRICT_READER],
+  ["reader-or-writer", FailoverMode.READER_OR_WRITER],
+  ["unknown", FailoverMode.UNKNOWN]
+]);
+
+export function failoverModeFromValue(name: string): FailoverMode {
+  return nameToValue.get(name.toLowerCase()) ?? FailoverMode.UNKNOWN;
 }

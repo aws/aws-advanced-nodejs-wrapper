@@ -21,11 +21,11 @@ export class WriterFailoverResult {
   private readonly _isConnected: boolean;
   private readonly _isNewHost: boolean;
   private readonly _topology: HostInfo[];
-  private readonly _client: AwsClient | null;
+  private readonly _client: any | null;
   private readonly _taskName: string;
   private readonly _exception: Error | undefined;
 
-  constructor(isConnected: boolean, isNewHost: boolean, topology: HostInfo[], client: AwsClient | null, taskName: string, exception?: Error) {
+  constructor(isConnected: boolean, isNewHost: boolean, topology: HostInfo[], taskName: string, client: any | null, exception?: Error) {
     this._isConnected = isConnected;
     this._isNewHost = isNewHost;
     this._topology = topology;

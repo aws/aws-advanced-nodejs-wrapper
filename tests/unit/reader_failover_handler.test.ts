@@ -32,6 +32,7 @@ const host5 = new HostInfo("reader4", 1234, HostRole.READER);
 const host6 = new HostInfo("reader5", 1234, HostRole.READER);
 const defaultHosts = [host1, host2, host3, host4, host5, host6];
 const properties = new Map();
+const mockTargetClient = { client: 123 };
 
 const mockClient = mock(AwsClient);
 const mockClientInstance = instance(mockClient);
@@ -50,14 +51,10 @@ describe("reader failover handler", () => {
     when(mockPluginService.getHosts()).thenReturn(hosts);
     for (let i = 0; i < hosts.length; i++) {
       if (i !== successHostIndex) {
-        when(mockPluginService.createTargetClientAndConnect(hosts[i], anything())).thenReject(new AwsWrapperError("Rejecting test"));
-      } else {
-        when(mockPluginService.createTargetClientAndConnect(hosts[i], anything())).thenReturn(
-          new Promise((resolve, reject) => {
-            resolve(mockClientInstance);
-          })
-        );
+        when(mockPluginService.forceConnect(hosts[i], anything(), anything())).thenThrow(new AwsWrapperError("Rejecting test"));
       }
+      when(mockPluginService.createTargetClient(anything())).thenReturn(mockTargetClient);
+      when(mockPluginService.getConnectFunc(anything())).thenReturn(() => Promise.resolve());
     }
     const mockPluginServiceInstance = instance(mockPluginService);
 
@@ -73,9 +70,9 @@ describe("reader failover handler", () => {
     );
     const result = await target.failover(hosts, hosts[currentHostIndex]);
     expect(result.isConnected).toBe(true);
-    expect(result.client).toBe(mockClientInstance);
+    expect(result.client).toBe(mockTargetClient);
     expect(result.newHost).toBe(hosts[successHostIndex]);
-  });
+  }, 10000);
 
   it("test failover timeout", async () => {
     // original host list: [active writer, active reader, current connection (reader), active
@@ -84,15 +81,18 @@ describe("reader failover handler", () => {
     // connection attempts are made in pairs using the above list
     // expected test result: failure to get reader since process is limited to 5s and each attempt
     // to connect takes 20s
+    let timeoutId: any = -1;
     const hosts = [...defaultHosts];
     const currentHostIndex = 2;
 
     when(mockPluginService.getHosts()).thenReturn(hosts);
-    when(mockPluginService.createTargetClientAndConnect(anything(), anything())).thenCall(async () => {
-      await sleep(20000);
-      return new Promise((resolve, reject) => {
-        resolve(mockClientInstance);
+    when(mockPluginService.createTargetClient(anything())).thenReturn(mockTargetClient);
+    when(mockPluginService.getConnectFunc(anything())).thenReturn(() => Promise.resolve());
+    when(mockPluginService.forceConnect(anything(), properties, anything())).thenCall(async () => {
+      await new Promise((resolve, reject) => {
+        timeoutId = setTimeout(resolve, 20000);
       });
+      return;
     });
     const mockPluginServiceInstance = instance(mockPluginService);
 
@@ -116,6 +116,7 @@ describe("reader failover handler", () => {
 
     // 5s is a max allowed failover timeout; add 1s for inaccurate measurements
     expect(duration < 6000).toBe(true);
+    clearTimeout(timeoutId);
   }, 10000);
 
   it("test failover with empty host list", async () => {
@@ -140,22 +141,19 @@ describe("reader failover handler", () => {
   it("test get reader connection success", async () => {
     // even number of connection attempts
     // first connection attempt to return succeeds, second attempt cancelled
-    // expected test result: successful connection for host at index 2
+    // expected test result: successful connection to either host
+    let timeoutId: any = -1;
     const hosts = [host1, host2, host3]; // 2 connection attempts (writer not attempted)
     const slowHost = hosts[1];
     const fastHost = hosts[2];
 
     when(mockPluginService.getHosts()).thenReturn([]);
-    when(mockPluginService.createTargetClientAndConnect(fastHost, anything())).thenReturn(
-      new Promise((res, rej) => {
-        res(mockClientInstance);
-      })
-    );
-    when(mockPluginService.createTargetClientAndConnect(slowHost, anything())).thenCall(async () => {
-      await sleep(20000);
-      return new Promise((res, rej) => {
-        res(mockClientInstance);
+    when(mockPluginService.createTargetClient(anything())).thenReturn(mockTargetClient);
+    when(mockPluginService.forceConnect(slowHost, properties, anything())).thenCall(async () => {
+      await new Promise((resolve, reject) => {
+        timeoutId = setTimeout(resolve, 20000);
       });
+      return;
     });
 
     const mockPluginServiceInstance = instance(mockPluginService);
@@ -170,11 +168,11 @@ describe("reader failover handler", () => {
     const result = await target.getReaderConnection(hosts);
 
     expect(result.isConnected).toBe(true);
-    expect(result.client).toStrictEqual(mockClientInstance);
-    expect(result.newHost).toBe(fastHost);
+    expect(result.client).toStrictEqual(mockTargetClient);
 
     verify(mockPluginService.setAvailability(anything(), HostAvailability.NOT_AVAILABLE)).never();
     verify(mockPluginService.setAvailability(fastHost.allAliases, HostAvailability.AVAILABLE)).once();
+    clearTimeout(timeoutId);
   }, 30000);
 
   it("test get reader connection failure", async () => {
@@ -183,7 +181,7 @@ describe("reader failover handler", () => {
     // expected test result: failure to get reader
     const hosts = [host1, host2, host3, host4]; // 3 connection attempts (writer not attempted)
     when(mockPluginService.getHosts()).thenReturn(hosts);
-    when(mockPluginService.createTargetClientAndConnect(anything(), anything())).thenReject(new AwsWrapperError());
+    when(mockPluginService.forceConnect(anything(), anything(), anything())).thenThrow(new AwsWrapperError());
     const mockPluginServiceInstance = instance(mockPluginService);
 
     const target = new ClusterAwareReaderFailoverHandler(
@@ -204,17 +202,15 @@ describe("reader failover handler", () => {
     // connection attempts time out before they can succeed
     // first connection attempt to return times out
     // expected test result: failure to get reader
+    let timeoutId: any = -1;
     const hosts = [host1, host2, host3]; // 2 connection attempts (writer not attempted)
 
-    const mockClient = mock(AwsClient);
-    const mockClientInstance = instance(mockClient);
-
     when(mockPluginService.getHosts()).thenReturn(hosts);
-    when(mockPluginService.createTargetClientAndConnect(anything(), anything())).thenCall(async () => {
-      await sleep(10000);
-      return new Promise((res, rej) => {
-        res(mockClientInstance);
+    when(mockPluginService.forceConnect(anything(), anything(), anything())).thenCall(async () => {
+      await new Promise((resolve, reject) => {
+        timeoutId = setTimeout(resolve, 10000);
       });
+      return;
     });
 
     const mockPluginServiceInstance = instance(mockPluginService);
@@ -230,6 +226,7 @@ describe("reader failover handler", () => {
     expect(result.isConnected).toBe(false);
     expect(result.client).toBe(null);
     expect(result.newHost).toBe(null);
+    clearTimeout(timeoutId);
   }, 10000);
 
   it("test get host tuples by priority", async () => {

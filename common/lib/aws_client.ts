@@ -23,8 +23,9 @@ import { DatabaseDialect } from "./database_dialect";
 import { ConnectionUrlParser } from "./utils/connection_url_parser";
 import { HostListProvider } from "./host_list_provider/host_list_provider";
 import { PluginManager } from "./plugin_manager";
+import { EventEmitter } from "stream";
 
-export abstract class AwsClient {
+export abstract class AwsClient extends EventEmitter {
   protected pluginManager: PluginManager;
   protected pluginService: PluginService;
   private _defaultPort: number = -1;
@@ -40,6 +41,7 @@ export abstract class AwsClient {
   protected _connectionUrlParser: ConnectionUrlParser;
 
   protected constructor(config: any, errorHandler: ErrorHandler, dialect: DatabaseDialect, parser: ConnectionUrlParser) {
+    super();
     this._errorHandler = errorHandler;
     this._connectionUrlParser = parser;
 
@@ -60,12 +62,18 @@ export abstract class AwsClient {
   protected async internalConnect() {
     const hostListProvider: HostListProvider = this.dialect.getHostListProvider(this._properties, this._properties.get("host"), this.pluginService);
     this.pluginService.setHostListProvider(hostListProvider);
-
     const info = this.pluginService.getCurrentHostInfo();
     if (info != null) {
       await this.pluginManager.initHostProvider(info, this.properties, this.pluginService);
+    }
+  }
+
+  protected async internalPostConnect() {
+    const info = this.pluginService.getCurrentHostInfo();
+    if (info != null) {
       await this.pluginService.refreshHostList();
     }
+    this.isConnected = true;
   }
 
   get properties(): Map<string, any> {
@@ -108,10 +116,6 @@ export abstract class AwsClient {
     return this._createClientFunc;
   }
 
-  getConnectFunc<Type>(): (() => Promise<Type>) | undefined {
-    return this._connectFunc;
-  }
-
   abstract executeQuery(props: Map<string, any>, sql: string): Promise<any>;
 
   abstract setReadOnly(readOnly: boolean): Promise<any | void>;
@@ -120,5 +124,12 @@ export abstract class AwsClient {
 
   abstract end(): Promise<any>;
 
-  abstract isValid(): boolean;
+  abstract rollback(): void;
+
+  async isValid(): Promise<boolean> {
+    if (!this.targetClient) {
+      return Promise.resolve(false);
+    }
+    return await this.dialect.isClientValid(this.targetClient);
+  }
 }
