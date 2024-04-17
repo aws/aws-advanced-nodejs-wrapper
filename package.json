@@ -43,7 +43,7 @@
     "husky": "^8.0.3",
     "i18n": "^0.15.1",
     "jest-html-reporter": "^3.10.2",
-    "lint-staged": "^15.1.0",
+    "lint-staged": "^15.2.2",
     "lodash": "^4.17.21",
     "mysql2": "^3.9.4",
     "node-fetch": "^2.6.7",
