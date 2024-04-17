@@ -192,16 +192,20 @@ export class PluginManager {
     );
   }
 
-  protected notifySubscribedPlugins(methodName: string, pluginFunc: PluginFunc<void>, skipNotificationForThisPlugin: ConnectionPlugin | null): void {
-    if (pluginFunc == null) {
+  protected async notifySubscribedPlugins(
+    methodName: string,
+    pluginFunc: PluginFunc<void>,
+    skipNotificationForThisPlugin: ConnectionPlugin | null
+  ): Promise<void> {
+    if (pluginFunc === null) {
       throw new AwsWrapperError("pluginFunc not found.");
     }
     for (const plugin of this._plugins) {
-      if (plugin == skipNotificationForThisPlugin) {
+      if (plugin === skipNotificationForThisPlugin) {
         continue;
       }
       if (plugin.getSubscribedMethods().has(PluginManager.ALL_METHODS) || plugin.getSubscribedMethods().has(methodName)) {
-        pluginFunc(plugin, () => Promise.resolve());
+        await pluginFunc(plugin, () => Promise.resolve());
       }
     }
   }
@@ -215,8 +219,7 @@ export class PluginManager {
     this.notifySubscribedPlugins(
       PluginManager.NOTIFY_CONNECTION_CHANGED_METHOD,
       (plugin, func) => {
-        const pluginOpinion: OldConnectionSuggestionAction = plugin.notifyConnectionChanged(changes);
-        result.add(pluginOpinion);
+        result.add(plugin.notifyConnectionChanged(changes));
         return Promise.resolve();
       },
       skipNotificationForThisPlugin

@@ -84,12 +84,10 @@ export class FailoverPlugin extends AbstractConnectionPlugin {
     }
 
     // Log changes
-    if (logger.level == "debug") {
+    if (logger.level === "debug") {
       let str = "Changes:";
       for (const [key, values] of changes.entries()) {
-        if (str.length > 0) {
-          str = str.concat("\n");
-        }
+        str = str.concat("\n");
         // Convert from int back into enum
         const valStr = Array.from(values)
           .map((x) => HostChangeOptions[x])
@@ -112,8 +110,7 @@ export class FailoverPlugin extends AbstractConnectionPlugin {
         }
       }
     }
-    // TODO uncomment with failover changes
-    // logger.info(Messages.get("Failover.invalidNode"), currentHost);
+    logger.info(Messages.get("Failover.invalidNode"), currentHost);
   }
 
   private isHostStillValid(host: string, changes: Map<string, Set<HostChangeOptions>>): boolean {

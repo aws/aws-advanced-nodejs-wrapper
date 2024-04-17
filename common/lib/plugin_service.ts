@@ -196,6 +196,37 @@ export class PluginService implements ErrorHandler, HostListProviderService {
 
   setAvailability(hostAliases: Set<string>, availability: HostAvailability) {}
 
+  // TODO: uncomment when ready to be implemented
+  // setCurrentConnection(hostInfo: HostInfo, skipNotificationForPlugin: ConnectionPlugin | null): Set<HostChangeOptions> {
+  //   try {
+  //     if (this.currentConnection === null) {
+  //       this._currentHostInfo = hostInfo;
+  //       const changes = new Set<HostChangeOptions>([HostChangeOptions.INITIAL_CONNECTION]);
+  //       this.pluginManager.notifyConnectionChanged(changes, skipNotificationForPlugin);
+  //       return changes;
+  //     } else {
+  //       if (this._currentHostInfo) {
+  //         const changes: Set<HostChangeOptions> = this.compare(this._currentHostInfo, hostInfo);
+  //         if (changes.size > 0) {
+  //           try {
+  //             const pluginOpinions: Set<OldConnectionSuggestionAction> = this.pluginManager.notifyConnectionChanged(
+  //               changes,
+  //               skipNotificationForPlugin
+  //             );
+  //             const shouldCloseConnection =
+  //               changes.has(HostChangeOptions.CONNECTION_OBJECT_CHANGED) && !pluginOpinions.has(OldConnectionSuggestionAction.PRESERVE);
+  //           } finally {
+  //             /* empty */
+  //           }
+  //         }
+  //         return changes;
+  //       }
+  //     }
+  //   } finally {
+  //     /* empty */
+  //   }
+  // }
+
   updateConfigWithProperties(props: Map<string, any>) {
     this._currentClient.config = Object.fromEntries(props.entries());
   }
