@@ -17,45 +17,52 @@
 import { HostChangeOptions } from "aws-wrapper-common-lib/lib/host_change_options";
 import { OldConnectionSuggestionAction } from "aws-wrapper-common-lib/lib/old_connection_suggestion_action";
 import { PluginManager } from "aws-wrapper-common-lib/lib/plugin_manager";
+import { PluginServiceManagerContainer } from "aws-wrapper-common-lib/lib/plugin_service_manager_container";
 import { DefaultPlugin } from "aws-wrapper-common-lib/lib/plugins/default_plugin";
-import { AwsPGClient } from "pg-wrapper";
 import { mock } from "ts-mockito";
 
-const mockClient: AwsPGClient = mock(AwsPGClient);
+class TestPlugin extends DefaultPlugin {
+  counter: number = 0;
 
-const user = "user";
-const password = "password";
-const host = "test";
-const database = "postgres";
+  notifyConnectionChanged(changes: Set<HostChangeOptions>): OldConnectionSuggestionAction {
+    this.counter++;
+    return OldConnectionSuggestionAction.NO_OPINION;
+  }
 
-const client = new AwsPGClient({
-  user: user,
-  password: password,
-  host: host,
-  database: database,
-  port: 5432
-});
+  notifyHostListChanged(changes: Map<string, Set<HostChangeOptions>>): void {
+    this.counter++;
+    return;
+  }
+
+  resetCounter() {
+    this.counter = 0;
+  }
+}
+
+const plugin: TestPlugin = new TestPlugin();
+
+const container: PluginServiceManagerContainer = new PluginServiceManagerContainer();
+
+const props: Map<string, any> = mock(Map<string, any>);
+const hostListChanges: Map<string, Set<HostChangeOptions>> = mock(Map<string, Set<HostChangeOptions>>);
+const connectionChanges: Set<HostChangeOptions> = mock(Set<HostChangeOptions>);
+
+const pluginManager: PluginManager = new PluginManager(container, props);
+// Replace default plugins with only TestPlugin
+pluginManager["_plugins"] = [plugin];
 
 describe("notificationPipelineTest", () => {
-  it("test_notifyConnectionChangedReturn", async () => {
-    const plugin = new DefaultPlugin();
-    const mockChanges = new Set<HostChangeOptions>();
-    const suggestion = plugin.notifyConnectionChanged(mockChanges);
-
-    expect(suggestion).toBe(OldConnectionSuggestionAction.NO_OPINION);
+  afterEach(() => {
+    plugin.resetCounter();
   });
-  it("test_notifyHostListChangedConnect", async () => {
-    const spy = jest.spyOn(PluginManager.prototype, "notifyHostListChanged").mockReturnValue();
-
-    // Supposed to fail
-    try {
-      await client.connect();
-    } catch (e) {
-      // do nothing
-    }
-
-    await mockClient.end();
-
-    expect(spy).toHaveBeenCalled();
+  it("test_notifyConnectionChanged", async () => {
+    const result: Set<OldConnectionSuggestionAction> = await pluginManager.notifyConnectionChanged(connectionChanges, null);
+    expect(plugin.counter).toBeGreaterThan(0);
+    expect(result).toBeTruthy();
+    expect(result.size).toBeGreaterThan(0);
+  });
+  it("test_notifyHostListChanged", async () => {
+    await pluginManager.notifyHostListChanged(hostListChanges);
+    expect(plugin.counter).toBeGreaterThan(0);
   });
 });

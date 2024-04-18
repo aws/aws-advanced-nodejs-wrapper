@@ -210,13 +210,12 @@ export class PluginManager {
     }
   }
 
-  notifyConnectionChanged(
+  async notifyConnectionChanged(
     changes: Set<HostChangeOptions>,
     skipNotificationForThisPlugin: ConnectionPlugin | null
-  ): Set<OldConnectionSuggestionAction> {
+  ): Promise<Set<OldConnectionSuggestionAction>> {
     const result = new Set<OldConnectionSuggestionAction>();
-
-    this.notifySubscribedPlugins(
+    await this.notifySubscribedPlugins(
       PluginManager.NOTIFY_CONNECTION_CHANGED_METHOD,
       (plugin, func) => {
         result.add(plugin.notifyConnectionChanged(changes));
@@ -227,8 +226,8 @@ export class PluginManager {
     return result;
   }
 
-  notifyHostListChanged(changes: Map<string, Set<HostChangeOptions>>): void {
-    this.notifySubscribedPlugins(
+  async notifyHostListChanged(changes: Map<string, Set<HostChangeOptions>>): Promise<void> {
+    await this.notifySubscribedPlugins(
       PluginManager.NOTIFY_HOST_LIST_CHANGED_METHOD,
       (plugin, func) => {
         plugin.notifyHostListChanged(changes);
