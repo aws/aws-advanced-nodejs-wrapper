@@ -206,6 +206,7 @@ export class PluginManager {
       },
       null
     );
+  }
 
   acceptsStrategy(role: HostRole, strategy: string) {
     for (const plugin of this._plugins) {
