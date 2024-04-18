@@ -83,12 +83,12 @@ export class HostInfo {
     });
   }
 
-  removeAlias(...alias: string[]) {
-    if (!alias || alias.length < 1) {
+  removeAlias(aliases: string[]) {
+    if (!aliases || aliases.length < 1) {
       return;
     }
 
-    alias.forEach((x) => {
+    aliases.forEach((x) => {
       this.aliases.delete(x);
       this._allAliases.delete(x);
     });
@@ -149,7 +149,17 @@ export class HostInfo {
     return this.port === other.port && this.availability === other.availability && this.role === other.role && this.weight === other.weight;
   }
 
-  getAvailability() {}
+  getAvailability(): HostAvailability {
+    if (this._hostAvailabilityStrategy) {
+      return this._hostAvailabilityStrategy.getHostAvailability(this._availability);
+    }
+
+    return this._availability;
+  }
+
+  getRawAvailability(): HostAvailability {
+    return this._availability;
+  }
 
   setAvailability(availability: HostAvailability) {}
 

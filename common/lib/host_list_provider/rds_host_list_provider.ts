@@ -22,7 +22,7 @@ import { RdsUrlType } from "../utils/rds_url_type";
 import { RdsUtils } from "../utils/rds_utils";
 import { HostListProviderService } from "../host_list_provider_service";
 import { ConnectionUrlParser } from "../utils/connection_url_parser";
-import { AwsWrapperError } from "../utils/aws_wrapper_error";
+import { AwsWrapperError } from "../utils/errors";
 import { Messages } from "../utils/messages";
 import { WrapperProperties } from "../wrapper_property";
 import { logger } from "../../logutils";
@@ -30,6 +30,7 @@ import { HostAvailability } from "../host_availability/host_availability";
 import { CacheMap } from "../utils/cache_map";
 import { logTopology } from "../utils/utils";
 import { TopologyAwareDatabaseDialect } from "../topology_aware_database_dialect";
+import { DatabaseDialect } from "../database_dialect";
 
 export class RdsHostListProvider implements DynamicHostListProvider {
   private readonly hostListProviderService: HostListProviderService;
@@ -116,15 +117,17 @@ export class RdsHostListProvider implements DynamicHostListProvider {
   }
 
   async forceRefresh(): Promise<HostInfo[]>;
-  async forceRefresh(client: AwsClient): Promise<HostInfo[]>;
-  async forceRefresh(client?: AwsClient): Promise<HostInfo[]> {
+  async forceRefresh(targetClient: any): Promise<HostInfo[]>;
+  async forceRefresh(targetClient?: any): Promise<HostInfo[]> {
     this.init();
 
-    const currentClient = client ? client : this.hostListProviderService.getCurrentClient();
-    const results: FetchTopologyResult = await this.getTopology(currentClient, true);
-
-    this.hostList = results.hosts;
-    return Array.from(this.hostList);
+    const currentClient = targetClient ?? this.hostListProviderService.getCurrentClient().targetClient;
+    if (currentClient) {
+      const results: FetchTopologyResult = await this.getTopology(currentClient, true);
+      this.hostList = results.hosts;
+      return Array.from(this.hostList);
+    }
+    throw new AwsWrapperError("Could not retrieve targetClient.");
   }
 
   async getHostRole(client: AwsClient): Promise<HostRole> {
@@ -148,19 +151,22 @@ export class RdsHostListProvider implements DynamicHostListProvider {
   }
 
   async refresh(): Promise<HostInfo[]>;
-  async refresh(client: AwsClient): Promise<HostInfo[]>;
-  async refresh(client?: AwsClient): Promise<HostInfo[]> {
+  async refresh(targetClient: any): Promise<HostInfo[]>;
+  async refresh(targetClient?: any): Promise<HostInfo[]> {
     this.init();
 
-    const currentClient = client ? client : this.hostListProviderService.getCurrentClient();
-    const results: FetchTopologyResult = await this.getTopology(currentClient, false);
-    logger.debug(logTopology(results.hosts, results.isCachedData ? "[From cache]" : ""));
+    const currentClient = targetClient ?? this.hostListProviderService.getCurrentClient().targetClient;
+    if (currentClient) {
+      const results: FetchTopologyResult = await this.getTopology(currentClient, false);
+      logger.debug(logTopology(results.hosts, results.isCachedData ? "[From cache]" : ""));
 
-    this.hostList = results.hosts;
-    return Array.from(this.hostList);
+      this.hostList = results.hosts;
+      return this.hostList;
+    }
+    throw new AwsWrapperError("Could not retrieve targetClient.");
   }
 
-  async getTopology(client: AwsClient, forceUpdate: boolean): Promise<FetchTopologyResult> {
+  async getTopology(targetClient: any, forceUpdate: boolean): Promise<FetchTopologyResult> {
     this.init();
 
     if (!this.clusterId) {
@@ -182,11 +188,11 @@ export class RdsHostListProvider implements DynamicHostListProvider {
     if (!cachedHosts || forceUpdate) {
       // need to re-fetch the topology.
 
-      if (!client.isValid()) {
+      if (!(await this.hostListProviderService.isClientValid(targetClient))) {
         return new FetchTopologyResult(false, this.initialHostList);
       }
 
-      const hosts = await this.queryForTopology(client);
+      const hosts = await this.queryForTopology(targetClient, this.hostListProviderService.getDialect());
       if (hosts && hosts.length > 0) {
         RdsHostListProvider.topologyCache.put(this.clusterId, hosts, this.refreshRateNano);
         if (needToSuggest) {
@@ -256,12 +262,12 @@ export class RdsHostListProvider implements DynamicHostListProvider {
     return arg;
   }
 
-  async queryForTopology(client: AwsClient): Promise<HostInfo[]> {
-    if (!this.isTopologyAwareDatabaseDialect(client.dialect)) {
+  async queryForTopology(targetClient: any, dialect: DatabaseDialect): Promise<HostInfo[]> {
+    if (!this.isTopologyAwareDatabaseDialect(dialect)) {
       throw new TypeError(Messages.get("RdsHostListProvider.incorrectDialect"));
     }
 
-    return client.dialect.queryForTopology(client, this.properties, this).then((res) => this.processQueryResults(res));
+    return await dialect.queryForTopology(targetClient, this).then((res: any) => this.processQueryResults(res));
   }
 
   private async processQueryResults(result: HostInfo[]): Promise<HostInfo[]> {
@@ -362,6 +368,10 @@ export class RdsHostListProvider implements DynamicHostListProvider {
       logger.error(message);
       throw new AwsWrapperError(message);
     }
+  }
+
+  getRdsUrlType(): RdsUrlType {
+    return this.rdsUrlType;
   }
 }
 

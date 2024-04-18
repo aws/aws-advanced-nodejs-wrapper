@@ -41,8 +41,8 @@ export class AuroraMySQLDatabaseDialect extends MySQLDatabaseDialect implements 
     return new RdsHostListProvider(props, originalUrl, hostListProviderService);
   }
 
-  async queryForTopology(client: AwsClient, props: Map<string, any>, hostListProvider: HostListProvider): Promise<HostInfo[]> {
-    const res = await client.executeQuery(props, AuroraMySQLDatabaseDialect.TOPOLOGY_QUERY);
+  async queryForTopology(targetClient: any, hostListProvider: HostListProvider): Promise<HostInfo[]> {
+    const res = await targetClient.promise().query(AuroraMySQLDatabaseDialect.TOPOLOGY_QUERY);
     const hosts: HostInfo[] = [];
     const rows: any[] = res[0];
     rows.forEach((row) => {

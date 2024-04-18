@@ -19,6 +19,7 @@ import { HostListProviderService } from "./host_list_provider_service";
 import { HostInfo } from "./host_info";
 import { HostChangeOptions } from "./host_change_options";
 import { OldConnectionSuggestionAction } from "./old_connection_suggestion_action";
+import { HostRole } from "./host_role";
 
 export abstract class AbstractConnectionPlugin implements ConnectionPlugin {
   abstract getSubscribedMethods(): Set<string>;
@@ -49,4 +50,12 @@ export abstract class AbstractConnectionPlugin implements ConnectionPlugin {
   }
 
   notifyHostListChanged(changes: Map<string, Set<HostChangeOptions>>): void {}
+
+  acceptsStrategy(role: HostRole, strategy: string): boolean {
+    return false;
+  }
+
+  getHostInfoByStrategy(role: HostRole, strategy: string): HostInfo | undefined {
+    throw new Error("getHostInfoByStrategy is not supported by this plugin.");
+  }
 }

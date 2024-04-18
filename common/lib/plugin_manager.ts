@@ -17,7 +17,7 @@
 import { ConnectionPlugin } from "./connection_plugin";
 import { HostInfo } from "./host_info";
 import { ConnectionPluginChainBuilder } from "./connection_plugin_chain_builder";
-import { AwsWrapperError } from "./utils/aws_wrapper_error";
+import { AwsWrapperError } from "./utils/errors";
 import { Messages } from "./utils/messages";
 import { PluginServiceManagerContainer } from "./plugin_service_manager_container";
 import { HostListProviderService } from "./host_list_provider_service";
@@ -25,6 +25,7 @@ import { AwsClient } from "./aws_client";
 import { PluginService } from "./plugin_service";
 import { HostChangeOptions } from "./host_change_options";
 import { OldConnectionSuggestionAction } from "./old_connection_suggestion_action";
+import { HostRole } from "./host_role";
 
 type PluginFunc<T> = (plugin: ConnectionPlugin, targetFunc: () => Promise<T>) => Promise<T>;
 
@@ -66,6 +67,8 @@ export class PluginManager {
   private static readonly ALL_METHODS = "*";
   private static readonly NOTIFY_HOST_LIST_CHANGED_METHOD = "notifyHostListChanged";
   private static readonly NOTIFY_CONNECTION_CHANGED_METHOD = "notifyConnectionChanged";
+  private static readonly ACCEPTS_STRATEGY_METHOD: string = "acceptsStrategy";
+  private static readonly GET_HOST_INFO_BY_STRATEGY_METHOD: string = "getHostInfoByStrategy";
   private readonly _plugins: ConnectionPlugin[] = [];
   private pluginServiceManagerContainer: PluginServiceManagerContainer;
   private props: Map<string, any>;
@@ -92,38 +95,6 @@ export class PluginManager {
       (plugin, nextPluginFunc) => plugin.execute(methodName, nextPluginFunc, options),
       methodFunc
     );
-  }
-
-  // TODO: change function so the target client is not altered here.
-  async createTargetClientAndConnect(
-    hostInfo: HostInfo,
-    props: Map<string, any>,
-    currentClient: AwsClient,
-    forceConnect: boolean
-  ): Promise<AwsClient> {
-    const currentTargetClient = currentClient.targetClient;
-    const createClientFunc = currentClient.getCreateClientFunc();
-    const connectFunc = currentClient.getConnectFunc();
-    if (createClientFunc && connectFunc) {
-      try {
-        props.set("host", hostInfo?.host);
-        const newTargetClient = createClientFunc(Object.fromEntries(props)) as AwsClient;
-        currentClient.targetClient = newTargetClient;
-        if (forceConnect) {
-          await this.forceConnect(hostInfo, props, false, connectFunc);
-        } else {
-          await this.connect(hostInfo, props, false, connectFunc);
-        }
-        currentTargetClient.end();
-        return currentClient;
-      } catch (error) {
-        currentClient.targetClient = currentTargetClient;
-        throw new AwsWrapperError(Messages.get("PluginManager.failedToConnectWithNewTargetClient", hostInfo?.host ?? "Undefined"));
-      }
-    } else {
-      currentClient.targetClient = currentTargetClient;
-      throw new AwsWrapperError("AwsClient is missing create target client or target client connect functions."); // This should not be reached
-    }
   }
 
   connect<T>(hostInfo: HostInfo | null, props: Map<string, any>, isInitialConnection: boolean, methodFunc: () => Promise<T>): Promise<T> {
@@ -235,5 +206,39 @@ export class PluginManager {
       },
       null
     );
+
+  acceptsStrategy(role: HostRole, strategy: string) {
+    for (const plugin of this._plugins) {
+      const pluginSubscribedMethods = plugin.getSubscribedMethods();
+      const isSubscribed =
+        pluginSubscribedMethods.has(PluginManager.ALL_METHODS) || pluginSubscribedMethods.has(PluginManager.ACCEPTS_STRATEGY_METHOD);
+
+      if (isSubscribed && plugin.acceptsStrategy(role, strategy)) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  getHostInfoByStrategy(role: HostRole, strategy: string): HostInfo {
+    for (const plugin of this._plugins) {
+      const pluginSubscribedMethods = plugin.getSubscribedMethods();
+      const isSubscribed =
+        pluginSubscribedMethods.has(PluginManager.ALL_METHODS) || pluginSubscribedMethods.has(PluginManager.GET_HOST_INFO_BY_STRATEGY_METHOD);
+
+      if (isSubscribed) {
+        try {
+          const host = plugin.getHostInfoByStrategy(role, strategy);
+          if (host) {
+            return host;
+          }
+        } catch (error) {
+          // This plugin does not support the provided strategy, ignore the exception and move on
+        }
+      }
+    }
+
+    throw new AwsWrapperError("The driver does not support the requested host selection strategy: " + strategy);
   }
 }

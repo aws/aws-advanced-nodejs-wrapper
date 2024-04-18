@@ -29,7 +29,6 @@ export class AwsMySQLClient extends AwsClient {
     this._createClientFunc = (config: any) => {
       return createConnection(WrapperProperties.removeWrapperProperties(config));
     };
-    this.isConnected = false;
     this._isReadOnly = false;
     this._connectFunc = async () => {
       return await this.targetClient
@@ -44,10 +43,10 @@ export class AwsMySQLClient extends AwsClient {
   async connect(): Promise<Connection> {
     await this.internalConnect();
     const conn: Promise<Connection> = this.pluginManager.connect(this.pluginService.getCurrentHostInfo(), this.properties, true, async () => {
-      this.targetClient = createConnection(WrapperProperties.removeWrapperProperties(this.config));
+      this.targetClient = this.pluginService.createTargetClient(this.properties);
       return this.targetClient.promise().connect();
     });
-    this.isConnected = true;
+    await this.internalPostConnect();
     return conn;
   }
 
@@ -104,7 +103,5 @@ export class AwsMySQLClient extends AwsClient {
     );
   }
 
-  isValid(): boolean {
-    return this.isConnected && this.targetClient.stream.connecting;
-  }
+  rollback() {}
 }

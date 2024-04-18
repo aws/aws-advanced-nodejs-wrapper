@@ -19,7 +19,7 @@ import { HostListProviderService } from "aws-wrapper-common-lib/lib/host_list_pr
 import { HostListProvider } from "aws-wrapper-common-lib/lib/host_list_provider/host_list_provider";
 import { ConnectionStringHostListProvider } from "aws-wrapper-common-lib/lib/host_list_provider/connection_string_host_list_provider";
 import { AwsClient } from "aws-wrapper-common-lib/lib/aws_client";
-import { AwsWrapperError } from "aws-wrapper-common-lib/lib/utils/aws_wrapper_error";
+import { AwsWrapperError } from "aws-wrapper-common-lib/lib/utils/errors";
 
 export class PgDatabaseDialect implements DatabaseDialect {
   getDefaultPort(): number {
@@ -55,5 +55,25 @@ export class PgDatabaseDialect implements DatabaseDialect {
 
   getHostListProvider(props: Map<string, any>, originalUrl: string, hostListProviderService: HostListProviderService): HostListProvider {
     return new ConnectionStringHostListProvider(props, originalUrl, this.getDefaultPort(), hostListProviderService);
+  }
+
+  async tryClosingTargetClient(targetClient: any) {
+    await targetClient.end().catch((error: any) => {
+      // ignore
+    });
+  }
+
+  async isClientValid(targetClient: any): Promise<boolean> {
+    try {
+      return Promise.resolve(targetClient._connected || targetClient._connecting);
+    } catch (error) {
+      return false;
+    }
+  }
+
+  getConnectFunc(targetClient: any): () => Promise<any> {
+    return async () => {
+      return await targetClient.connect();
+    };
   }
 }

@@ -41,4 +41,10 @@ export interface HostListProviderService {
   getHostInfoBuilder(): HostInfoBuilder;
 
   getConnectionUrlParser(): ConnectionUrlParser;
+
+  isInTransaction(): boolean;
+
+  setInTransaction(inTransaction: boolean): void;
+
+  isClientValid(targetClient: any): Promise<boolean>;
 }

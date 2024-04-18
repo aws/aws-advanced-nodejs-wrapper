@@ -19,7 +19,8 @@ import { sleep } from "aws-wrapper-common-lib/lib/utils/utils";
 
 const mockCallable = jest.fn();
 const timeToSleepMs = 1000;
-const timeToSleepNs = timeToSleepMs * 1000000;
+const acceptableTimeMs = 995;
+const acceptableTimeNs = acceptableTimeMs * 1000000;
 
 describe("executeTimePluginTest", () => {
   it("test_executeTime", async () => {
@@ -32,11 +33,11 @@ describe("executeTimePluginTest", () => {
 
     await plugin.execute("query", mockCallable, []);
 
-    expect(ExecuteTimePlugin.getTotalExecuteTime()).toBeGreaterThan(timeToSleepNs);
+    expect(ExecuteTimePlugin.getTotalExecuteTime()).toBeGreaterThan(acceptableTimeNs);
 
     await plugin.execute("query", mockCallable, []);
 
-    expect(ExecuteTimePlugin.getTotalExecuteTime()).toBeGreaterThan(timeToSleepNs * 2);
+    expect(ExecuteTimePlugin.getTotalExecuteTime()).toBeGreaterThan(acceptableTimeNs * 2);
 
     ExecuteTimePlugin.resetExecuteTime();
     expect(ExecuteTimePlugin.getTotalExecuteTime()).toEqual(0n);

@@ -19,7 +19,7 @@ import { FailoverPluginFactory } from "./plugins/failover/failover_plugin";
 import { PluginService } from "./plugin_service";
 import { ConnectionPlugin } from "./connection_plugin";
 import { WrapperProperties } from "./wrapper_property";
-import { AwsWrapperError } from "./utils/aws_wrapper_error";
+import { AwsWrapperError } from "./utils/errors";
 import { Messages } from "./utils/messages";
 import { DefaultPlugin } from "./plugins/default_plugin";
 import { ExecuteTimePluginFactory } from "./plugins/execute_time_plugin";

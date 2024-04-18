@@ -14,6 +14,8 @@
   limitations under the License.
 */
 
+import { FailoverMode } from "./plugins/failover/failover_mode";
+
 export class WrapperProperty<T> {
   name: string;
   description: string;
@@ -69,6 +71,32 @@ export class WrapperProperties {
   static readonly SECRET_ID = new WrapperProperty<string>("secretId", "The name or the ARN of the secret to retrieve.", null);
   static readonly SECRET_REGION = new WrapperProperty<string>("secretRegion", "The region of the secret to retrieve.", null);
   static readonly SECRET_ENDPOINT = new WrapperProperty<string>("secretEndpoint", "The endpoint of the secret to retrieve.", null);
+
+  static readonly FAILOVER_CLUSTER_TOPOLOGY_REFRESH_RATE_MS = new WrapperProperty<number>(
+    "failoverClusterTopologyRefreshRateMs",
+    "Cluster topology refresh rate in millis during a writer failover process. " +
+      "During the writer failover process, " +
+      "cluster topology may be refreshed at a faster pace than normal to speed up " +
+      "discovery of the newly promoted writer.",
+    2000
+  );
+  static readonly FAILOVER_TIMEOUT_MS = new WrapperProperty<number>("failoverTimeoutMs", "Maximum allowed time for the failover process.", 300000);
+  static readonly FAILOVER_WRITER_RECONNECT_INTERVAL_MS = new WrapperProperty<number>(
+    "failoverWriterReconnectIntervalMs",
+    "Interval of time to wait between attempts to reconnect to a failed writer during a writer failover process.",
+    2000
+  );
+  static readonly FAILOVER_READER_CONNECT_TIMEOUT_MS = new WrapperProperty<number>(
+    "failoverReaderConnectTimeoutMs",
+    "Reader connection attempt timeout during a reader failover process.",
+    30000
+  );
+  static readonly ENABLE_CLUSTER_AWARE_FAILOVER = new WrapperProperty<boolean>(
+    "enableClusterAwareFailover",
+    "Enable/disable cluster-aware failover logic.",
+    true
+  );
+  static readonly FAILOVER_MODE = new WrapperProperty<string>("failoverMode", "Set node role to follow during failover.", "");
 
   static readonly CLUSTER_TOPOLOGY_REFRESH_RATE_MS = new WrapperProperty<number>(
     "clusterTopologyRefreshRateMs",
