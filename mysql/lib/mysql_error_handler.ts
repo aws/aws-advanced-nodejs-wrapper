@@ -22,6 +22,10 @@ export class MySQLErrorHandler implements ErrorHandler {
   }
 
   isNetworkError(e: Error): boolean {
-    return e.message.includes("Connection lost: The server closed the connection.");
+    return (
+      e.message.includes("Connection lost: The server closed the connection.") ||
+      e.message.includes("Query inactivity timeout") ||
+      e.message.includes("Can't add new command when connection is in closed state")
+    );
   }
 }

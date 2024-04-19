@@ -70,7 +70,7 @@ export class MySQLDatabaseDialect implements DatabaseDialect {
     return await targetClient
       .promise()
       .query({ sql: "SELECT 1" })
-      .then((result: number) => {
+      .then(() => {
         return true;
       })
       .catch(() => {

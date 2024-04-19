@@ -17,11 +17,18 @@
 import { TestEnvironment } from "./test_environment";
 import { ProxyInfo } from "./proxy_info";
 import { Bandwidth, ICreateToxicBody } from "toxiproxy-node-client";
+import { DatabaseEngine } from "./database_engine";
 
 export class ProxyHelper {
-  static async disableAllConnectivity() {
+  static async disableAllConnectivity(engine: DatabaseEngine) {
     const env = await TestEnvironment.getCurrent();
-    env.proxyInfos.forEach((p) => ProxyHelper.disableProxyConnectivity(p));
+    switch (engine) {
+      case DatabaseEngine.MYSQL:
+        break;
+      default:
+        env.proxyInfos.forEach((p) => ProxyHelper.disableProxyConnectivity(p));
+        break;
+    }
   }
 
   static async enableAllConnectivity() {
@@ -29,9 +36,15 @@ export class ProxyHelper {
     env.proxyInfos.forEach((p) => ProxyHelper.enableProxyConnectivity(p));
   }
 
-  static async disableConnectivity(instanceName: string) {
+  static async disableConnectivity(engine: DatabaseEngine, instanceName: string) {
     const env = await TestEnvironment.getCurrent();
-    await ProxyHelper.disableProxyConnectivity(env.getProxyInfo(instanceName));
+    switch (engine) {
+      case DatabaseEngine.MYSQL:
+        break;
+      default:
+        await ProxyHelper.disableProxyConnectivity(env.getProxyInfo(instanceName));
+        break;
+    }
   }
 
   static async enableConnectivity(instanceName: string) {

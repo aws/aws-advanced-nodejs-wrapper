@@ -18,6 +18,7 @@ import { TestDriver } from "./test_driver";
 import { AwsMySQLClient } from "mysql-wrapper/lib/client";
 import { AwsPGClient } from "pg-wrapper/lib/client";
 import { DatabaseEngine } from "./database_engine";
+import { AwsClient } from "aws-wrapper-common-lib/lib/aws_client";
 
 export class DriverHelper {
   static getClient(driver: TestDriver) {
@@ -53,13 +54,39 @@ export class DriverHelper {
     }
   }
 
-  static executeInstanceQuery(engine: DatabaseEngine, client: AwsPGClient | AwsMySQLClient) {
+  static async executeInstanceQuery(engine: DatabaseEngine, client: AwsClient) {
     const sql = DriverHelper.getInstanceIdSql(engine);
+    let result;
     switch (engine) {
       case DatabaseEngine.PG:
-        return (client as AwsPGClient).query(sql);
+        return await (client as AwsPGClient).query(sql).then((result) => {
+          return result.rows[0]["aurora_db_instance_identifier"];
+        });
       case DatabaseEngine.MYSQL:
-        return (client as AwsMySQLClient).query({ sql: sql, timeout: 10000 });
+        result = await (client as AwsMySQLClient).query({ sql: sql, timeout: 10000 });
+        return JSON.parse(JSON.stringify(result))[0][0]["id"];
+      default:
+        throw new Error("invalid engine");
+    }
+  }
+
+  static getSleepQuery(engine: DatabaseEngine, seconds: number) {
+    switch (engine) {
+      case DatabaseEngine.PG:
+        return `select pg_sleep(${seconds})`;
+      case DatabaseEngine.MYSQL:
+        return `select sleep(${seconds})`;
+      default:
+        throw new Error("invalid engine");
+    }
+  }
+
+  static async executeQuery(engine: DatabaseEngine, client: AwsClient, sql: string) {
+    switch (engine) {
+      case DatabaseEngine.PG:
+        return await (client as AwsPGClient).query(sql);
+      case DatabaseEngine.MYSQL:
+        return await (client as AwsMySQLClient).query({ sql: sql, timeout: 10000 });
       default:
         throw new Error("invalid engine");
     }
@@ -71,6 +98,7 @@ export class DriverHelper {
         props["query_timeout"] = 10000;
         break;
       case DatabaseEngine.MYSQL:
+        break;
       default:
         break;
     }
