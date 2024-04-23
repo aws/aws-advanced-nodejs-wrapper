@@ -113,7 +113,7 @@ export class DriverConnectionProvider implements ConnectionProvider {
   getHostInfoByStrategy(hosts: HostInfo[], role: HostRole, strategy: string, props?: Map<string, any>): HostInfo {
     const acceptedStrategy = DriverConnectionProvider.acceptedStrategies.get(strategy);
     if (!acceptedStrategy) {
-      throw new AwsWrapperError(Messages.get("ConnectionProvider.unsupportedHostInfoSelectorStrategy", strategy, "DriverConnectionProvider"));
+      throw new AwsWrapperError(Messages.get("ConnectionProvider.unsupportedHostSelectorStrategy", strategy, "DriverConnectionProvider"));
     }
     return acceptedStrategy.getHost(hosts, role, props);
   }
