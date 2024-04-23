@@ -70,7 +70,7 @@ function getRdsHostListProvider(originalHost: string): RdsHostListProvider {
 
 describe("testRdsHostListProvider", () => {
   beforeEach(() => {
-    when(mockClient.dialect).thenReturn(instance(mockDialect));
+    when(mockPluginService.getDialect()).thenReturn(instance(mockDialect));
     when(mockClient.isValid()).thenResolve(true);
     when(mockPluginService.getCurrentClient()).thenReturn(instance(mockClient));
     when(mockPluginService.getCurrentHostInfo()).thenReturn(currentHostInfo);
@@ -408,7 +408,7 @@ describe("testRdsHostListProvider", () => {
     when(mockDialect.queryForTopology(anything(), anything())).thenThrow(new AwsWrapperError("bad things"));
 
     const rdsHostListProvider = getRdsHostListProvider("foo");
-    await expect(rdsHostListProvider.identifyConnection(instance(mockClient))).rejects.toThrow(AwsWrapperError);
+    await expect(rdsHostListProvider.identifyConnection(instance(mockClient), instance(mockDialect))).rejects.toThrow(AwsWrapperError);
   });
 
   it("testIdentifyConnectionHostInTopology", async () => {
@@ -428,7 +428,7 @@ describe("testRdsHostListProvider", () => {
     }).build();
 
     when(spiedProvider.refresh()).thenReturn(Promise.resolve([]));
-    const res = await rdsHostListProvider.identifyConnection(instance(mockClient));
+    const res = await rdsHostListProvider.identifyConnection(instance(mockClient), instance(mockDialect));
     expect(res).toBeNull();
   });
 

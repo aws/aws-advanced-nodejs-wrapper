@@ -14,20 +14,24 @@
   limitations under the License.
 */
 
-import { DatabaseDialect } from "aws-wrapper-common-lib/lib/database_dialect";
+import { DatabaseDialect, DatabaseType } from "aws-wrapper-common-lib/lib/database_dialect/database_dialect";
 import { HostListProviderService } from "aws-wrapper-common-lib/lib/host_list_provider_service";
 import { HostListProvider } from "aws-wrapper-common-lib/lib/host_list_provider/host_list_provider";
 import { ConnectionStringHostListProvider } from "aws-wrapper-common-lib/lib/host_list_provider/connection_string_host_list_provider";
 import { AwsClient } from "aws-wrapper-common-lib/lib/aws_client";
 import { AwsWrapperError } from "aws-wrapper-common-lib/lib/utils/errors";
+import { DatabaseDialectCodes } from "aws-wrapper-common-lib/lib/database_dialect/database_dialect_codes";
 
 export class MySQLDatabaseDialect implements DatabaseDialect {
+  protected dialectName: string = "MySQLDatabaseDialect";
+  protected defaultPort: number = 3306;
+
   getDefaultPort(): number {
-    return 3306;
+    return this.defaultPort;
   }
 
   getDialectUpdateCandidates(): string[] {
-    return [];
+    return [DatabaseDialectCodes.AURORA_MYSQL, DatabaseDialectCodes.RDS_MYSQL];
   }
 
   getHostAliasQuery(): string {
@@ -50,8 +54,16 @@ export class MySQLDatabaseDialect implements DatabaseDialect {
     return "SHOW VARIABLES LIKE 'version_comment'";
   }
 
-  isDialect<Connection>(conn: Connection): boolean {
-    return false;
+  async isDialect(targetClient: any): Promise<boolean> {
+    return await targetClient
+      .promise()
+      .query(this.getServerVersionQuery())
+      .then(([rows]: any) => {
+        return rows[0]["Value"].toLowerCase().includes("mysql");
+      })
+      .catch((error: any) => {
+        return false;
+      });
   }
 
   getHostListProvider(props: Map<string, any>, originalUrl: string, hostListProviderService: HostListProviderService): HostListProvider {
@@ -87,5 +99,13 @@ export class MySQLDatabaseDialect implements DatabaseDialect {
           throw error;
         });
     };
+  }
+
+  getDatabaseType(): DatabaseType {
+    return DatabaseType.MYSQL;
+  }
+
+  getDialectName(): string {
+    return this.dialectName;
   }
 }

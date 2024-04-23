@@ -20,11 +20,21 @@ import { WrapperProperties } from "aws-wrapper-common-lib/lib/wrapper_property";
 import { Connection, createConnection, Query } from "mysql2";
 import { MySQLErrorHandler } from "./mysql_error_handler";
 import { MySQLConnectionUrlParser } from "./mysql_connection_url_parser";
+import { DatabaseDialect, DatabaseType } from "aws-wrapper-common-lib/lib/database_dialect/database_dialect";
+import { DatabaseDialectCodes } from "aws-wrapper-common-lib/lib/database_dialect/database_dialect_codes";
+import { MySQLDatabaseDialect } from "./dialect/mysql_database_dialect";
 import { AuroraMySQLDatabaseDialect } from "./dialect/aurora_mysql_database_dialect";
+import { RdsMySQLDatabaseDialect } from "./dialect/rds_mysql_database_dialect";
 
 export class AwsMySQLClient extends AwsClient {
+  private static readonly knownDialectsByCode: Map<string, DatabaseDialect> = new Map([
+    [DatabaseDialectCodes.MYSQL, new MySQLDatabaseDialect()],
+    [DatabaseDialectCodes.RDS_MYSQL, new RdsMySQLDatabaseDialect()],
+    [DatabaseDialectCodes.AURORA_MYSQL, new AuroraMySQLDatabaseDialect()]
+  ]);
+
   constructor(config: any) {
-    super(config, new MySQLErrorHandler(), new AuroraMySQLDatabaseDialect(), new MySQLConnectionUrlParser());
+    super(config, new MySQLErrorHandler(), DatabaseType.MYSQL, AwsMySQLClient.knownDialectsByCode, new MySQLConnectionUrlParser());
     this.config = config;
     this._createClientFunc = (config: any) => {
       return createConnection(WrapperProperties.removeWrapperProperties(config));
@@ -37,7 +47,7 @@ export class AwsMySQLClient extends AwsClient {
 
   async connect(): Promise<Connection> {
     await this.internalConnect();
-    const conn: Promise<Connection> = this.pluginManager.connect(this.pluginService.getCurrentHostInfo(), this.properties, true, async () => {
+    const conn: Promise<Connection> = await this.pluginManager.connect(this.pluginService.getCurrentHostInfo(), this.properties, true, async () => {
       this.targetClient = this.pluginService.createTargetClient(this.properties);
       return this.targetClient.promise().connect();
     });

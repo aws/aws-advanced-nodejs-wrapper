@@ -56,6 +56,8 @@ export class WrapperProperties {
   static readonly PORT = new WrapperProperty<number>("port", "Database port", -1);
   static readonly HOST = new WrapperProperty<string>("host", "Database host", null);
 
+  static readonly DIALECT = new WrapperProperty<string>("dialect", "A unique identifier for the supported database dialect.", "");
+
   static readonly IAM_HOST = new WrapperProperty<string>("iamHost", "Overrides the host that is used to generate the IAM token", null);
   static readonly IAM_DEFAULT_PORT = new WrapperProperty<number>(
     "iamDefaultPort",

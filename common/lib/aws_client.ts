@@ -19,7 +19,7 @@ import { PluginService } from "./plugin_service";
 import { HostInfo } from "./host_info";
 import { WrapperProperties } from "./wrapper_property";
 import { ErrorHandler } from "./error_handler";
-import { DatabaseDialect } from "./database_dialect";
+import { DatabaseDialect, DatabaseType } from "./database_dialect/database_dialect";
 import { ConnectionUrlParser } from "./utils/connection_url_parser";
 import { HostListProvider } from "./host_list_provider/host_list_provider";
 import { PluginManager } from "./plugin_manager";
@@ -36,17 +36,21 @@ export abstract class AwsClient extends EventEmitter {
   private readonly _properties: Map<string, any>;
   private _targetClient: any;
   protected _errorHandler: ErrorHandler;
-  protected _dialect: DatabaseDialect;
   protected _createClientFunc?: (config: any) => any;
   protected _connectFunc?: () => Promise<any>;
   protected _connectionUrlParser: ConnectionUrlParser;
 
-  protected constructor(config: any, errorHandler: ErrorHandler, dialect: DatabaseDialect, parser: ConnectionUrlParser) {
+  protected constructor(
+    config: any,
+    errorHandler: ErrorHandler,
+    dbType: DatabaseType,
+    knownDialectsByCode: Map<string, DatabaseDialect>,
+    parser: ConnectionUrlParser
+  ) {
     super();
     this._errorHandler = errorHandler;
     this._connectionUrlParser = parser;
 
-    this._dialect = dialect;
     this._properties = new Map<string, any>(Object.entries(config));
 
     const defaultConnProvider = new DriverConnectionProvider();
@@ -54,7 +58,7 @@ export abstract class AwsClient extends EventEmitter {
     // TODO: check for configuration profile to update the effectiveConnProvider
 
     const container = new PluginServiceManagerContainer();
-    this.pluginService = new PluginService(container, this, this._properties);
+    this.pluginService = new PluginService(container, this, dbType, knownDialectsByCode, this.properties);
     this.pluginManager = new PluginManager(container, this._properties, defaultConnProvider, effectiveConnProvider);
 
     // TODO: properly set up host info
@@ -65,7 +69,9 @@ export abstract class AwsClient extends EventEmitter {
   }
 
   protected async internalConnect() {
-    const hostListProvider: HostListProvider = this.dialect.getHostListProvider(this._properties, this._properties.get("host"), this.pluginService);
+    const hostListProvider: HostListProvider = this.pluginService
+      .getDialect()
+      .getHostListProvider(this._properties, this._properties.get("host"), this.pluginService);
     this.pluginService.setHostListProvider(hostListProvider);
     const info = this.pluginService.getCurrentHostInfo();
     if (info != null) {
@@ -109,10 +115,6 @@ export abstract class AwsClient extends EventEmitter {
     return this._errorHandler;
   }
 
-  get dialect(): DatabaseDialect {
-    return this._dialect;
-  }
-
   get connectionUrlParser(): ConnectionUrlParser {
     return this._connectionUrlParser;
   }
@@ -135,6 +137,6 @@ export abstract class AwsClient extends EventEmitter {
     if (!this.targetClient) {
       return Promise.resolve(false);
     }
-    return await this.dialect.isClientValid(this.targetClient);
+    return await this.pluginService.getDialect().isClientValid(this.targetClient);
   }
 }

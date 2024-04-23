@@ -30,7 +30,7 @@ import { HostAvailability } from "../host_availability/host_availability";
 import { CacheMap } from "../utils/cache_map";
 import { logTopology } from "../utils/utils";
 import { TopologyAwareDatabaseDialect } from "../topology_aware_database_dialect";
-import { DatabaseDialect } from "../database_dialect";
+import { DatabaseDialect } from "../database_dialect/database_dialect";
 
 export class RdsHostListProvider implements DynamicHostListProvider {
   private readonly hostListProviderService: HostListProviderService;
@@ -130,19 +130,19 @@ export class RdsHostListProvider implements DynamicHostListProvider {
     throw new AwsWrapperError("Could not retrieve targetClient.");
   }
 
-  async getHostRole(client: AwsClient): Promise<HostRole> {
-    if (!this.isTopologyAwareDatabaseDialect(client.dialect)) {
+  async getHostRole(client: AwsClient, dialect: DatabaseDialect): Promise<HostRole> {
+    if (!this.isTopologyAwareDatabaseDialect(dialect)) {
       throw new TypeError(Messages.get("RdsHostListProvider.incorrectDialect"));
     }
 
-    return client.dialect.getHostRole(client, this.properties);
+    return dialect.getHostRole(client, this.properties);
   }
 
-  async identifyConnection(client: AwsClient): Promise<HostInfo | null> {
-    if (!this.isTopologyAwareDatabaseDialect(client.dialect)) {
+  async identifyConnection(client: AwsClient, dialect: DatabaseDialect): Promise<HostInfo | null> {
+    if (!this.isTopologyAwareDatabaseDialect(dialect)) {
       throw new TypeError(Messages.get("RdsHostListProvider.incorrectDialect"));
     }
-    const instanceName = await client.dialect.identifyConnection(client, this.properties);
+    const instanceName = await dialect.identifyConnection(client, this.properties);
 
     return this.refresh().then((topology) => {
       const matches = topology.filter((host) => host.hostId === instanceName);
