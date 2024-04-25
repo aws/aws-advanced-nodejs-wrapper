@@ -62,6 +62,5 @@
   "StaleDnsHelper.staleDnsDetected": "Stale DNS data detected. Opening a connection to '%s'.",
   "StaleDnsHelper.writerHostInfo": "Writer host: '%s'.",
   "StaleDnsHelper.reset": "Reset stored writer host.",
-  "StaleDnsPlugin.requireDynamicProvider": "Dynamic host list provider is required.",
-  "PluginManager.unknownPluginCode": "PluginManager.unknownPluginCode"
+  "StaleDnsPlugin.requireDynamicProvider": "Dynamic host list provider is required."
 }
