@@ -58,10 +58,10 @@
   "Failover.transactionResolutionUnknownError": "Failover.transactionResolutionUnknownError",
   "StaleDnsHelper.writerHostSpec": "Writer host: '%s'.",
   "StaleDnsPlugin.requireDynamicProvider": "Dynamic host list provider is required.",
-	"StaleDnsHelper.clusterEndpointDns": "Cluster endpoint resolves to '%s'.",
-	"StaleDnsHelper.writerHostInfo": "Writer host: '%s'.",
-	"StaleDnsHelper.writerInetAddress": "Writer host address: '%s'",
-	"StaleDnsHelper.staleDnsDetected": "Stale DNS data detected. Opening a connection to '%s'.",
+  "StaleDnsHelper.clusterEndpointDns": "Cluster endpoint resolves to '%s'.",
+  "StaleDnsHelper.writerHostInfo": "Writer host: '%s'.",
+  "StaleDnsHelper.writerInetAddress": "Writer host address: '%s'",
+  "StaleDnsHelper.staleDnsDetected": "Stale DNS data detected. Opening a connection to '%s'.",
   "StaleDnsHelper.reset": "Reset stored writer host.",
-	"PluginManager.unknownPluginCode": "PluginManager.unknownPluginCode"
+  "PluginManager.unknownPluginCode": "PluginManager.unknownPluginCode"
 }
