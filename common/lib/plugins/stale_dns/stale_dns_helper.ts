@@ -14,22 +14,24 @@
   limitations under the License.
 */
 
-import { logger } from "../../logutils";
-import { HostInfo } from "../host_info";
-import { HostListProviderService } from "../host_list_provider_service";
-import { HostRole } from "../host_role";
-import { PluginService } from "../plugin_service";
-import { Messages } from "../utils/messages";
-import { RdsUtils } from "../utils/rds_utils";
-import { lookup } from "dns";
+import { logger } from "../../../logutils";
+import { HostInfo } from "../../host_info";
+import { HostListProviderService } from "../../host_list_provider_service";
+import { HostRole } from "../../host_role";
+import { PluginService } from "../../plugin_service";
+import { Messages } from "../../utils/messages";
+import { RdsUtils } from "../../utils/rds_utils";
+import { LookupAddress, lookup } from "dns";
 import { promisify } from "util";
-import { AwsWrapperError } from "../utils/errors";
+import { AwsWrapperError } from "../../utils/errors";
+import { HostChangeOptions } from "../../host_change_options";
 
 export class StaleDnsHelper {
   private readonly pluginService: PluginService;
   private readonly rdsUtils: RdsUtils = new RdsUtils();
   private writerHostInfo: HostInfo | null = null;
   private writerHostAddress: string = "";
+  private clusterInetAddress: string = "";
 
   constructor(pluginService: PluginService) {
     this.pluginService = pluginService;
@@ -46,93 +48,71 @@ export class StaleDnsHelper {
       return connectFunc();
     }
 
-    const currentHostInfo = this.pluginService.getCurrentHostInfo();
-    if (!currentHostInfo) {
-      throw new AwsWrapperError("Could not find current hostInfo");
-    }
+    let result = await connectFunc();
 
-    let result;
-    let currentTargetClient;
     try {
-      result = await connectFunc();
-      currentTargetClient = this.pluginService.getCurrentClient().targetClient;
-    } catch (error: any) {
-      await this.pluginService.tryClosingTargetClient(currentTargetClient);
-      throw error;
-    }
-
-    if (!currentTargetClient) {
-      throw new Error("Could not find current targetClient");
-    }
-
-    let clusterInetAddress = "";
-    try {
-      const lookupResult = await promisify(lookup)(host, {});
-      clusterInetAddress = lookupResult.address;
+      const lookupResult = await this.lookupResult(host);
+      this.clusterInetAddress = lookupResult.address;
     } catch (error) {
       // ignore
     }
 
-    const hostInetAddress = clusterInetAddress;
-    logger.debug(Messages.get("AuroraStaleDnsHelper.clusterEndpointDns", hostInetAddress));
+    const hostInetAddress = this.clusterInetAddress;
+    logger.debug(Messages.get("StaleDnsHelper.clusterEndpointDns", hostInetAddress));
 
-    if (!clusterInetAddress) {
-      this.pluginService.setCurrentClient(currentTargetClient, currentHostInfo);
+    if (!this.clusterInetAddress) {
       return result;
     }
 
+    const currentHostInfo = this.pluginService.getCurrentHostInfo();
     if (currentHostInfo && currentHostInfo.role === HostRole.READER) {
       // This is if-statement is only reached if the connection url is a writer cluster endpoint.
       // If the new connection resolves to a reader instance, this means the topology is outdated.
       // Force refresh to update the topology.
-      await this.pluginService.forceRefreshHostList(currentTargetClient);
+      await this.pluginService.forceRefreshHostList();
     } else {
-      await this.pluginService.refreshHostList(currentTargetClient);
+      await this.pluginService.refreshHostList();
     }
 
     logger.debug(this.pluginService.getHosts());
+
     if (!this.writerHostInfo) {
       const writerCandidate = this.getWriter();
       if (writerCandidate && this.rdsUtils.isRdsClusterDns(writerCandidate.host)) {
-        this.pluginService.setCurrentClient(currentTargetClient, currentHostInfo);
         return result;
       }
       this.writerHostInfo = writerCandidate;
     }
 
-    logger.debug(Messages.get("AuroraStaleDnsHelper.writerHostSpec", this.writerHostInfo?.host ?? ""));
+    logger.debug(Messages.get("StaleDnsHelper.writerHostInfo", this.writerHostInfo?.host ?? ""));
 
     if (!this.writerHostInfo) {
-      this.pluginService.setCurrentClient(currentTargetClient, currentHostInfo);
       return result;
     }
 
     if (!this.writerHostAddress) {
       try {
-        const lookupResult = await promisify(lookup)(this.writerHostInfo.host, {});
+        const lookupResult = await this.lookupResult(this.writerHostInfo.host);
         this.writerHostAddress = lookupResult.address;
       } catch (error) {
         // ignore
       }
     }
 
-    logger.debug(Messages.get("AuroraStaleDnsHelper.writerInetAddress", this.writerHostAddress));
+    logger.debug(Messages.get("StaleDnsHelper.writerInetAddress", this.writerHostAddress));
 
     if (!this.writerHostAddress) {
-      this.pluginService.setCurrentClient(currentTargetClient, currentHostInfo);
       return result;
     }
 
-    if (this.writerHostAddress !== clusterInetAddress) {
+    if (this.writerHostAddress !== this.clusterInetAddress) {
       // DNS resolves a cluster endpoint to a wrong writer
       // opens a connection to a proper writer node
-      logger.debug(Messages.get("AuroraStaleDnsHelper.staleDnsDetected", this.writerHostInfo.toString()));
+      logger.debug(Messages.get("StaleDnsHelper.staleDnsDetected", this.writerHostInfo.toString()));
 
       const targetClient = this.pluginService.createTargetClient(props);
-
       try {
         result = await this.pluginService.connect(this.writerHostInfo, props, this.pluginService.getDialect().getConnectFunc(targetClient));
-        await this.pluginService.tryClosingTargetClient(currentTargetClient);
         this.pluginService.setCurrentClient(targetClient, this.writerHostInfo);
         return result;
       } catch (error: any) {
@@ -144,7 +124,6 @@ export class StaleDnsHelper {
       }
     }
 
-    this.pluginService.setCurrentClient(currentTargetClient, currentHostInfo);
     return result;
   }
 
@@ -156,6 +135,28 @@ export class StaleDnsHelper {
     }
     return null;
   }
-}
 
-export class StaleDnsPlugin {}
+  notifyNodeListChanged(changes: Map<string, Set<HostChangeOptions>>): void {
+    if (!this.writerHostInfo) {
+      return;
+    }
+
+    for (const [key, values] of changes.entries()) {
+      const valStr = Array.from(values)
+        .map((x) => HostChangeOptions[x])
+        .join(", ");
+      logger.debug(`[${key}]: ${valStr}`);
+      if (this.writerHostInfo) {
+        if (key === this.writerHostInfo.url && values.has(HostChangeOptions.PROMOTED_TO_READER)) {
+          logger.debug(Messages.get("StaleDnsHelper.reset"));
+          this.writerHostInfo = null;
+          this.writerHostAddress = "";
+        }
+      }
+    }
+  }
+
+  lookupResult(host: string): Promise<LookupAddress> {
+    return promisify(lookup)(host, {});
+  }
+}
