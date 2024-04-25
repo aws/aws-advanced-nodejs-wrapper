@@ -56,12 +56,12 @@
   "Failover.invalidNode": "Node is no longer available in the topology: %s",
   "Failover.noOperationsAfterConnectionClosed": "No operations allowed after cliend ended.",
   "Failover.transactionResolutionUnknownError": "Failover.transactionResolutionUnknownError",
-  "StaleDnsHelper.writerHostSpec": "Writer host: '%s'.",
-  "StaleDnsPlugin.requireDynamicProvider": "Dynamic host list provider is required.",
   "StaleDnsHelper.clusterEndpointDns": "Cluster endpoint resolves to '%s'.",
-  "StaleDnsHelper.writerHostInfo": "Writer host: '%s'.",
+  "StaleDnsHelper.writerHostSpec": "Writer host: '%s'.",
   "StaleDnsHelper.writerInetAddress": "Writer host address: '%s'",
   "StaleDnsHelper.staleDnsDetected": "Stale DNS data detected. Opening a connection to '%s'.",
+  "StaleDnsHelper.writerHostInfo": "Writer host: '%s'.",
   "StaleDnsHelper.reset": "Reset stored writer host.",
+  "StaleDnsPlugin.requireDynamicProvider": "Dynamic host list provider is required.",
   "PluginManager.unknownPluginCode": "PluginManager.unknownPluginCode"
 }
