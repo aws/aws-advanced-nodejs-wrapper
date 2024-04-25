@@ -57,10 +57,9 @@
   "Failover.noOperationsAfterConnectionClosed": "No operations allowed after cliend ended.",
   "Failover.transactionResolutionUnknownError": "Failover.transactionResolutionUnknownError",
   "StaleDnsHelper.clusterEndpointDns": "Cluster endpoint resolves to '%s'.",
-  "StaleDnsHelper.writerHostSpec": "Writer host: '%s'.",
+  "StaleDnsHelper.writerHostInfo": "Writer host: '%s'.",
   "StaleDnsHelper.writerInetAddress": "Writer host address: '%s'",
   "StaleDnsHelper.staleDnsDetected": "Stale DNS data detected. Opening a connection to '%s'.",
-  "StaleDnsHelper.writerHostInfo": "Writer host: '%s'.",
   "StaleDnsHelper.reset": "Reset stored writer host.",
   "StaleDnsPlugin.requireDynamicProvider": "Dynamic host list provider is required."
 }
