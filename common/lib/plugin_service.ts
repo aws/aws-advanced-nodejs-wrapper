@@ -206,37 +206,6 @@ export class PluginService implements ErrorHandler, HostListProviderService {
 
   setAvailability(hostAliases: Set<string>, availability: HostAvailability) {}
 
-  // TODO: uncomment when ready to be implemented
-  // setCurrentConnection(hostInfo: HostInfo, skipNotificationForPlugin: ConnectionPlugin | null): Set<HostChangeOptions> {
-  //   try {
-  //     if (this.currentConnection === null) {
-  //       this._currentHostInfo = hostInfo;
-  //       const changes = new Set<HostChangeOptions>([HostChangeOptions.INITIAL_CONNECTION]);
-  //       this.pluginManager.notifyConnectionChanged(changes, skipNotificationForPlugin);
-  //       return changes;
-  //     } else {
-  //       if (this._currentHostInfo) {
-  //         const changes: Set<HostChangeOptions> = this.compare(this._currentHostInfo, hostInfo);
-  //         if (changes.size > 0) {
-  //           try {
-  //             const pluginOpinions: Set<OldConnectionSuggestionAction> = this.pluginManager.notifyConnectionChanged(
-  //               changes,
-  //               skipNotificationForPlugin
-  //             );
-  //             const shouldCloseConnection =
-  //               changes.has(HostChangeOptions.CONNECTION_OBJECT_CHANGED) && !pluginOpinions.has(OldConnectionSuggestionAction.PRESERVE);
-  //           } finally {
-  //             /* empty */
-  //           }
-  //         }
-  //         return changes;
-  //       }
-  //     }
-  //   } finally {
-  //     /* empty */
-  //   }
-  // }
-
   updateConfigWithProperties(props: Map<string, any>) {
     this._currentClient.config = Object.fromEntries(props.entries());
   }
@@ -277,9 +246,42 @@ export class PluginService implements ErrorHandler, HostListProviderService {
     throw new AwsWrapperError("AwsClient is missing target client connect function."); // This should not be reached
   }
 
+  // TODO: implement later
   setCurrentClient(newClient: any, hostInfo: HostInfo) {
     this.getCurrentClient().targetClient = newClient;
     this._currentHostInfo = hostInfo;
+    // try {
+    //   if (this.getCurrentClient() === null) {
+    //     this.getCurrentClient().targetClient = newClient;
+    //     this._currentHostInfo = hostInfo;
+    //     const changes = new Set<HostChangeOptions>([HostChangeOptions.INITIAL_CONNECTION]);
+    //     this.pluginManager.notifyConnectionChanged(changes, null);
+    //     return changes;
+    //   } else {
+    //     if (this._currentHostInfo) {
+    //       const changes: Set<HostChangeOptions> = this.compare(this._currentHostInfo, hostInfo);
+    //       if (changes.size > 0) {
+    //         const oldClient: AwsClient = this.getCurrentClient().targetClient;
+    //         const isInTransaction = this.isInTransaction;
+    //         try {
+    //           this.getCurrentClient().targetClient = newClient;
+    //           this._currentHostInfo = hostInfo;
+    //           this.setInTransaction(false);
+    //           const pluginOpinions: Set<OldConnectionSuggestionAction> = await this.pluginManager.notifyConnectionChanged(changes, null);
+    //           const shouldCloseConnection =
+    //             changes.has(HostChangeOptions.CONNECTION_OBJECT_CHANGED) &&
+    //             !pluginOpinions.has(OldConnectionSuggestionAction.PRESERVE) &&
+    //             !oldClient.isValid();
+    //         } finally {
+    //           /* empty */
+    //         }
+    //       }
+    //       return changes;
+    //     }
+    //   }
+    // } finally {
+    //   /* empty */
+    // }
   }
 
   async isClientValid(targetClient: any): Promise<boolean> {
