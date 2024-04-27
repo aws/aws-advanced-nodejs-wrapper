@@ -158,7 +158,7 @@ export class RdsHostListProvider implements DynamicHostListProvider {
     const currentClient = targetClient ?? this.hostListProviderService.getCurrentClient().targetClient;
     if (currentClient) {
       const results: FetchTopologyResult = await this.getTopology(currentClient, false);
-      logger.debug(logTopology(results.hosts, results.isCachedData ? "[From cache]" : ""));
+      logger.debug(logTopology(results.hosts, results.isCachedData ? "[From cache] " : ""));
 
       this.hostList = results.hosts;
       return this.hostList;

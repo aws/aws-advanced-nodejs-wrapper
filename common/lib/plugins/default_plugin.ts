@@ -22,9 +22,16 @@ import { HostListProviderService } from "../host_list_provider_service";
 import { HostInfo } from "../host_info";
 import { AbstractConnectionPlugin } from "../abstract_connection_plugin";
 import { HostRole } from "../host_role";
+import { PluginService } from "../plugin_service";
 
 export class DefaultPlugin extends AbstractConnectionPlugin {
+  private pluginService: PluginService;
   id: string = uniqueId("_defaultPlugin");
+
+  constructor(pluginService: PluginService) {
+    super();
+    this.pluginService = pluginService;
+  }
 
   override getSubscribedMethods(): Set<string> {
     return new Set<string>(["*"]);
@@ -50,14 +57,12 @@ export class DefaultPlugin extends AbstractConnectionPlugin {
     connectFunc: () => Promise<Type>
   ): Promise<Type> {
     logger.debug(`Start connect for test plugin: ${this.id}`);
-    return connectFunc().catch((error: any) => {
-      throw error;
-    });
+    return await connectFunc();
   }
 
   override async execute<Type>(methodName: string, methodFunc: () => Promise<Type>): Promise<Type> {
     logger.debug(Messages.get("DefaultPlugin.executingMethod", methodName));
-    return methodFunc();
+    return await methodFunc();
   }
 
   override acceptsStrategy(role: HostRole, strategy: string): boolean {
@@ -74,7 +79,7 @@ export class DefaultPlugin extends AbstractConnectionPlugin {
     return super.acceptsStrategy(role, strategy);
   }
 
-  override getHostInfoByStrategy(role: HostRole, strategy: string): HostInfo {
+  override getHostInfoByStrategy(role: HostRole, strategy: string): HostInfo | undefined {
     // TODO: uncomment once connection providers are set up
     // if (role === HostRole.UNKNOWN) {
     //   throw new AwsWrapperError(Messages.get("DefaultConnectionPlugin.unknownRoleRequested"));

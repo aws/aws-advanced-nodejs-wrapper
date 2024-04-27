@@ -70,7 +70,7 @@ export class ConnectionPluginChainBuilder {
       });
     }
 
-    plugins.push(new DefaultPlugin());
+    plugins.push(new DefaultPlugin(pluginService));
 
     return plugins;
   }

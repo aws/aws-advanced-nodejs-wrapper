@@ -27,6 +27,11 @@ import { TestEnvironment } from "./test_environment";
 import * as dns from "dns";
 import { DBInstance } from "@aws-sdk/client-rds/dist-types/models/models_0";
 import { DatabaseEngine } from "./database_engine";
+import { FailoverSuccessError } from "aws-wrapper-common-lib/lib/utils/errors";
+import { AwsClient } from "aws-wrapper-common-lib/lib/aws_client";
+import { TopologyAwareDatabaseDialect } from "aws-wrapper-common-lib/lib/topology_aware_database_dialect";
+import { DatabaseDialect } from "aws-wrapper-common-lib/lib/database_dialect";
+import { DriverHelper } from "./driver_helper";
 
 export class AuroraTestUtility {
   private client: RDSClient;
@@ -170,14 +175,10 @@ export class AuroraTestUtility {
     }
 
     let clusterAddress: dns.LookupAddress = await dns.promises.lookup(clusterEndpoint);
-    const startTime = new Date();
-    const stopTime = startTime.setMinutes(startTime.getMinutes() + 5 * 60);
-    setTimeout(async () => {
-      while (clusterAddress === initialClusterAddress) {
-        this.sleep(1000);
-        clusterAddress = await dns.promises.lookup(clusterEndpoint);
-      }
-    }, stopTime);
+    while (clusterAddress === initialClusterAddress) {
+      this.sleep(1000);
+      clusterAddress = await dns.promises.lookup(clusterEndpoint);
+    }
   }
 
   async failoverCluster(clusterId?: string) {
@@ -219,7 +220,10 @@ export class AuroraTestUtility {
     return initialWriter !== currentWriterId;
   }
 
-  async assertFirstQueryThrows() {}
+  async queryInstanceId(client: AwsClient) {
+    const engine = (await TestEnvironment.getCurrent()).engine;
+    return await DriverHelper.executeInstanceQuery(engine, client);
+  }
 
   async isDbInstanceWriter(instanceId: string, clusterId?: string) {
     if (clusterId === undefined) {
@@ -274,6 +278,6 @@ export class AuroraTestUtility {
   }
 
   sleep(waitTime: number) {
-    setTimeout(() => console.log("sleep"), waitTime);
+    setTimeout(() => {}, waitTime);
   }
 }

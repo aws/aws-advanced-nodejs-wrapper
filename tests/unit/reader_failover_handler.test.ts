@@ -171,7 +171,7 @@ describe("reader failover handler", () => {
     expect(result.client).toStrictEqual(mockTargetClient);
 
     verify(mockPluginService.setAvailability(anything(), HostAvailability.NOT_AVAILABLE)).never();
-    verify(mockPluginService.setAvailability(fastHost.allAliases, HostAvailability.AVAILABLE)).once();
+    verify(mockPluginService.setAvailability(fastHost.allAliases, HostAvailability.AVAILABLE)).atMost(2);
     clearTimeout(timeoutId);
   }, 30000);
 

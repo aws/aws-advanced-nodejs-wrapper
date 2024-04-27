@@ -31,12 +31,7 @@ export class AwsMySQLClient extends AwsClient {
     };
     this._isReadOnly = false;
     this._connectFunc = async () => {
-      return await this.targetClient
-        .promise()
-        .connect()
-        .catch((error: any) => {
-          throw error;
-        });
+      return await this.targetClient.promise().connect();
     };
   }
 
@@ -68,8 +63,9 @@ export class AwsMySQLClient extends AwsClient {
       host,
       this.properties,
       "query",
-      () => {
-        return this.targetClient.promise().query(options, callback);
+      async () => {
+        this.pluginService.updateInTransaction(options.sql);
+        return await this.targetClient.promise().query(options, callback);
       },
       options
     );
