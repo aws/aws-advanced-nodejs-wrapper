@@ -76,11 +76,11 @@ export class StaleDnsPlugin extends AbstractConnectionPlugin {
 
   override async execute<T>(methodName: string, methodFunc: () => Promise<T>, methodArgs: any[]): Promise<T> {
     try {
-      this.pluginService.refreshHostList();
+      await this.pluginService.refreshHostList();
     } catch (e) {
       throw new AwsWrapperError("Error refreshing Host List", e);
     }
-    return methodFunc();
+    return await methodFunc();
   }
 
   override notifyNodeListChanged(changes: Map<string, Set<HostChangeOptions>>): void {

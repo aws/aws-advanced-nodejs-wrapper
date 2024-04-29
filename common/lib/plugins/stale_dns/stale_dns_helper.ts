@@ -108,7 +108,7 @@ export class StaleDnsHelper {
     if (this.writerHostAddress !== this.clusterInetAddress) {
       // DNS resolves a cluster endpoint to a wrong writer
       // opens a connection to a proper writer node
-      logger.debug(Messages.get("StaleDnsHelper.staleDnsDetected", this.writerHostInfo.toString()));
+      logger.debug(Messages.get("StaleDnsHelper.staleDnsDetected", this.writerHostInfo.host));
 
       const targetClient = this.pluginService.createTargetClient(props);
       try {
@@ -142,10 +142,12 @@ export class StaleDnsHelper {
     }
 
     for (const [key, values] of changes.entries()) {
-      const valStr = Array.from(values)
-        .map((x) => HostChangeOptions[x])
-        .join(", ");
-      logger.debug(`[${key}]: ${valStr}`);
+      if (logger.level === "debug") {
+        const valStr = Array.from(values)
+          .map((x) => HostChangeOptions[x])
+          .join(", ");
+        logger.debug(`[${key}]: ${valStr}`);
+      }
       if (this.writerHostInfo) {
         if (key === this.writerHostInfo.url && values.has(HostChangeOptions.PROMOTED_TO_READER)) {
           logger.debug(Messages.get("StaleDnsHelper.reset"));

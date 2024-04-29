@@ -30,14 +30,9 @@ const mockPluginService: PluginService = mock(PluginService);
 const mockHostListProviderService = mock<HostListProviderService>();
 const props: Map<string, any> = mock(Map<string, any>);
 
-const writerInstance = new HostInfo("writer-host.XYZ.us-west-2.rds.amazonaws.com", 1234, HostRole.WRITER, HostAvailability.AVAILABLE);
-const writerCluster = new HostInfo("my-cluster.cluster-XYZ.us-west-2.rds.amazonaws.com", 1234, HostRole.WRITER, HostAvailability.AVAILABLE);
-const writerClusterInvalidClusterInetAddress = new HostInfo(
-  "my-cluster.cluster-invalid.us-west-2.rds.amazonaws.com",
-  1234,
-  HostRole.WRITER,
-  HostAvailability.AVAILABLE
-);
+const writerInstance = new HostInfo("writer-host.XYZ.us-west-2.rds.amazonaws.com", 1234);
+const writerCluster = new HostInfo("my-cluster.cluster-XYZ.us-west-2.rds.amazonaws.com", 1234);
+const writerClusterInvalidClusterInetAddress = new HostInfo("my-cluster.cluster-invalid.us-west-2.rds.amazonaws.com", 1234);
 const readerA = new HostInfo("reader-a-host.XYZ.us-west-2.rds.amazonaws.com", 1234, HostRole.READER, HostAvailability.AVAILABLE);
 const readerB = new HostInfo("reader-b-host.XYZ.us-west-2.rds.amazonaws.com", 1234, HostRole.READER, HostAvailability.AVAILABLE);
 
@@ -55,16 +50,17 @@ describe("test_stale_dns_helper", () => {
   beforeEach(() => {
     when(mockPluginService.getCurrentClient()).thenReturn(mockInitialConn);
     when(mockPluginService.connect(anything(), anything(), anything())).thenResolve();
-    when(mockPluginService.setCurrentClient(anything(), anything())).thenReturn();
     when(mockPluginService.tryClosingTargetClient(anything())).thenResolve();
     when(mockPluginService.getDialect()).thenReturn(mockDialect);
   });
+
   afterEach(() => {
     reset(mockInitialConn);
     reset(props);
     reset(mockHostListProviderService);
     reset(mockPluginService);
   });
+
   it("test_get_verified_connection_is_writer_cluster_dns_false", async () => {
     const target: StaleDnsHelper = spy(new StaleDnsHelper(instance(mockPluginService)));
     const targetInstance = instance(target);
@@ -82,7 +78,8 @@ describe("test_stale_dns_helper", () => {
     expect(mockConnectFunc).toHaveBeenCalled();
     expect(returnConn).toBe(mockInitialConn);
   });
-  it("test_get_verified_connection__cluster_inet_address_none", async () => {
+
+  it("test_get_verified_connection_cluster_inet_address_none", async () => {
     const target: StaleDnsHelper = spy(new StaleDnsHelper(instance(mockPluginService)));
     const targetInstance = instance(target);
 
@@ -101,6 +98,7 @@ describe("test_stale_dns_helper", () => {
     expect(mockInitialConn).toBe(returnConn);
     expect(mockConnectFunc).toHaveBeenCalled();
   });
+
   it("test_get_verified_connection__no_writer_hostinfo", async () => {
     const target: StaleDnsHelper = spy(new StaleDnsHelper(instance(mockPluginService)));
     const targetInstance = instance(target);
@@ -124,6 +122,7 @@ describe("test_stale_dns_helper", () => {
     verify(mockPluginService.forceRefreshHostList()).once();
     expect(mockInitialConn).toBe(returnConn);
   });
+
   it("test_get_verified_connection__writer_rds_cluster_dns_true", async () => {
     const target: StaleDnsHelper = spy(new StaleDnsHelper(instance(mockPluginService)));
     const targetInstance = instance(target);
@@ -147,6 +146,7 @@ describe("test_stale_dns_helper", () => {
     verify(mockPluginService.refreshHostList()).once();
     expect(mockInitialConn).toBe(returnConn);
   });
+
   it("test_get_verified_connection__writer_host_address_none", async () => {
     const target: StaleDnsHelper = spy(new StaleDnsHelper(instance(mockPluginService)));
     const targetInstance = instance(target);
@@ -173,6 +173,7 @@ describe("test_stale_dns_helper", () => {
     expect(mockConnectFunc).toHaveBeenCalled();
     expect(mockInitialConn).toBe(returnConn);
   });
+
   it("test_get_verified_connection__writer_host_info_none", async () => {
     const target: StaleDnsHelper = spy(new StaleDnsHelper(instance(mockPluginService)));
     const targetInstance = instance(target);
@@ -199,6 +200,7 @@ describe("test_stale_dns_helper", () => {
     expect(mockInitialConn).toBe(returnConn);
     verify(mockPluginService.connect(anything(), anything(), anything())).never();
   });
+
   it("test_get_verified_connection__writer_host_address_equals_cluster_inet_address", async () => {
     const target: StaleDnsHelper = spy(new StaleDnsHelper(instance(mockPluginService)));
     const targetInstance = instance(target);
@@ -225,6 +227,7 @@ describe("test_stale_dns_helper", () => {
     expect(mockInitialConn).toBe(returnConn);
     verify(mockPluginService.connect(anything(), anything(), anything())).never();
   });
+
   it("test_get_verified_connection__writer_host_address_not_equals_cluster_inet_address", async () => {
     const target: StaleDnsHelper = spy(new StaleDnsHelper(instance(mockPluginService)));
     const targetInstance = instance(target);
@@ -253,6 +256,7 @@ describe("test_stale_dns_helper", () => {
     expect(mockConnectFunc).toHaveBeenCalled();
     verify(mockPluginService.connect(anything(), anything(), anything())).once();
   });
+
   it("test_get_verified_connection__initial_connection_writer_host_address_not_equals_cluster_inet_address", async () => {
     const target: StaleDnsHelper = spy(new StaleDnsHelper(instance(mockPluginService)));
     const targetInstance = instance(target);
@@ -282,6 +286,7 @@ describe("test_stale_dns_helper", () => {
     expect(targetInstance["writerHostInfo"]).toBe(mockHostListProviderServiceInstance.getInitialConnectionHostInfo());
     expect(mockInitialConn).not.toBe(returnConn);
   });
+
   it("test_notify_host_list_changed", () => {
     const target: StaleDnsHelper = spy(new StaleDnsHelper(instance(mockPluginService)));
     const targetInstance = instance(target);
@@ -293,7 +298,7 @@ describe("test_stale_dns_helper", () => {
 
     targetInstance.notifyNodeListChanged(changes);
 
-    expect(targetInstance["writerHostInfo"]).toBeFalsy();
-    expect(targetInstance["writerHostAddress"]).toBeFalsy();
+    expect(targetInstance["writerHostInfo"]).toBeNull();
+    expect(targetInstance["writerHostAddress"]).toBe("");
   });
 });
