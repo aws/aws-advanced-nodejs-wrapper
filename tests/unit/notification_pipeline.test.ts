@@ -55,12 +55,14 @@ describe("notificationPipelineTest", () => {
   afterEach(() => {
     plugin.resetCounter();
   });
+
   it("test_notifyConnectionChanged", async () => {
     const result: Set<OldConnectionSuggestionAction> = await pluginManager.notifyConnectionChanged(connectionChanges, null);
     expect(plugin.counter).toBeGreaterThan(0);
     expect(result).toBeTruthy();
     expect(result.size).toBeGreaterThan(0);
   });
+
   it("test_notifyHostListChanged", async () => {
     await pluginManager.notifyHostListChanged(hostListChanges);
     expect(plugin.counter).toBeGreaterThan(0);

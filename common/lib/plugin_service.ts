@@ -251,44 +251,40 @@ export class PluginService implements ErrorHandler, HostListProviderService {
 
   // TODO: Add more to this later
   async setCurrentClient(newClient: any, hostInfo: HostInfo): Promise<Set<HostChangeOptions> | undefined> {
-    try {
-      if (this.getCurrentClient() === null) {
-        this.getCurrentClient().targetClient = newClient;
-        this._currentHostInfo = hostInfo;
-        const changes = new Set<HostChangeOptions>([HostChangeOptions.INITIAL_CONNECTION]);
-        if (this.pluginServiceManagerContainer.pluginManager) {
-          this.pluginServiceManagerContainer.pluginManager.notifyConnectionChanged(changes, null);
+    if (this.getCurrentClient().targetClient === null) {
+      this.getCurrentClient().targetClient = newClient;
+      this._currentHostInfo = hostInfo;
+      const changes = new Set<HostChangeOptions>([HostChangeOptions.INITIAL_CONNECTION]);
+      if (this.pluginServiceManagerContainer.pluginManager) {
+        this.pluginServiceManagerContainer.pluginManager.notifyConnectionChanged(changes, null);
+      }
+      return changes;
+    } else {
+      if (this._currentHostInfo) {
+        const changes: Set<HostChangeOptions> = this.compare(this._currentHostInfo, hostInfo);
+        if (changes.size > 0) {
+          const oldClient: any = this.getCurrentClient().targetClient;
+          const isInTransaction = this.isInTransaction;
+          try {
+            this.getCurrentClient().targetClient = newClient;
+            this._currentHostInfo = hostInfo;
+            this.setInTransaction(false);
+
+            if (this.pluginServiceManagerContainer.pluginManager) {
+              const pluginOpinions: Set<OldConnectionSuggestionAction> =
+                await this.pluginServiceManagerContainer.pluginManager.notifyConnectionChanged(changes, null);
+
+              const shouldCloseConnection =
+                changes.has(HostChangeOptions.CONNECTION_OBJECT_CHANGED) &&
+                !pluginOpinions.has(OldConnectionSuggestionAction.PRESERVE) &&
+                oldClient.isValid();
+            }
+          } finally {
+            /* empty */
+          }
         }
         return changes;
-      } else {
-        if (this._currentHostInfo) {
-          const changes: Set<HostChangeOptions> = this.compare(this._currentHostInfo, hostInfo);
-          if (changes.size > 0) {
-            const oldClient: AwsClient = this.getCurrentClient().targetClient;
-            const isInTransaction = this.isInTransaction;
-            try {
-              this.getCurrentClient().targetClient = newClient;
-              this._currentHostInfo = hostInfo;
-              this.setInTransaction(false);
-
-              if (this.pluginServiceManagerContainer.pluginManager) {
-                const pluginOpinions: Set<OldConnectionSuggestionAction> =
-                  await this.pluginServiceManagerContainer.pluginManager.notifyConnectionChanged(changes, null);
-
-                const shouldCloseConnection =
-                  changes.has(HostChangeOptions.CONNECTION_OBJECT_CHANGED) &&
-                  !pluginOpinions.has(OldConnectionSuggestionAction.PRESERVE) &&
-                  oldClient.isValid();
-              }
-            } finally {
-              /* empty */
-            }
-          }
-          return changes;
-        }
       }
-    } finally {
-      /* empty */
     }
   }
 
