@@ -70,4 +70,8 @@ export class AuroraPgDatabaseDialect extends PgDatabaseDialect implements Topolo
     const res = await client.executeQuery(props, AuroraPgDatabaseDialect.IS_READER_QUERY);
     return Promise.resolve(res.rows[0]["is_reader"] === "true" ? HostRole.READER : HostRole.WRITER);
   }
+
+  getTopologyQuery(): string {
+    return AuroraPgDatabaseDialect.TOPOLOGY_QUERY;
+  }
 }

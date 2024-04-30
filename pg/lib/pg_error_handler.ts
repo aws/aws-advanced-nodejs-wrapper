@@ -22,6 +22,10 @@ export class PgErrorHandler implements ErrorHandler {
   }
 
   isNetworkError(e: Error): boolean {
-    return e.message.includes("Connection terminated unexpectedly");
+    return (
+      e.message.includes("Connection terminated unexpectedly") ||
+      e.message.includes("Client has encountered a connection error and is not queryable") ||
+      e.message.includes("Query read timeout")
+    );
   }
 }

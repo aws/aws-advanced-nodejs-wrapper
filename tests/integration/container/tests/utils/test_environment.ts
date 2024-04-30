@@ -22,6 +22,7 @@ import { TestInstanceInfo } from "./test_instance_info";
 import { TestProxyDatabaseInfo } from "./test_proxy_database_info";
 import { TestDatabaseInfo } from "./test_database_info";
 import { DatabaseEngine } from "./database_engine";
+import { TestDriver } from "./test_driver";
 
 export class TestEnvironment {
   private static env?: TestEnvironment;

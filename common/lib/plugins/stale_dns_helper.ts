@@ -46,7 +46,24 @@ export class StaleDnsHelper {
       return connectFunc();
     }
 
-    let result = await connectFunc();
+    const currentHostInfo = this.pluginService.getCurrentHostInfo();
+    if (!currentHostInfo) {
+      throw new AwsWrapperError("Could not find current hostInfo");
+    }
+
+    let result;
+    let currentTargetClient;
+    try {
+      result = await connectFunc();
+      currentTargetClient = this.pluginService.getCurrentClient().targetClient;
+    } catch (error: any) {
+      await this.pluginService.tryClosingTargetClient(currentTargetClient);
+      throw error;
+    }
+
+    if (!currentTargetClient) {
+      throw new Error("Could not find current targetClient");
+    }
 
     let clusterInetAddress = "";
     try {
@@ -60,24 +77,24 @@ export class StaleDnsHelper {
     logger.debug(Messages.get("AuroraStaleDnsHelper.clusterEndpointDns", hostInetAddress));
 
     if (!clusterInetAddress) {
+      this.pluginService.setCurrentClient(currentTargetClient, currentHostInfo);
       return result;
     }
 
-    const currentHostInfo = this.pluginService.getCurrentHostInfo();
     if (currentHostInfo && currentHostInfo.role === HostRole.READER) {
       // This is if-statement is only reached if the connection url is a writer cluster endpoint.
       // If the new connection resolves to a reader instance, this means the topology is outdated.
       // Force refresh to update the topology.
-      await this.pluginService.forceRefreshHostList();
+      await this.pluginService.forceRefreshHostList(currentTargetClient);
     } else {
-      await this.pluginService.refreshHostList();
+      await this.pluginService.refreshHostList(currentTargetClient);
     }
 
     logger.debug(this.pluginService.getHosts());
-
     if (!this.writerHostInfo) {
       const writerCandidate = this.getWriter();
       if (writerCandidate && this.rdsUtils.isRdsClusterDns(writerCandidate.host)) {
+        this.pluginService.setCurrentClient(currentTargetClient, currentHostInfo);
         return result;
       }
       this.writerHostInfo = writerCandidate;
@@ -86,6 +103,7 @@ export class StaleDnsHelper {
     logger.debug(Messages.get("AuroraStaleDnsHelper.writerHostSpec", this.writerHostInfo?.host ?? ""));
 
     if (!this.writerHostInfo) {
+      this.pluginService.setCurrentClient(currentTargetClient, currentHostInfo);
       return result;
     }
 
@@ -101,6 +119,7 @@ export class StaleDnsHelper {
     logger.debug(Messages.get("AuroraStaleDnsHelper.writerInetAddress", this.writerHostAddress));
 
     if (!this.writerHostAddress) {
+      this.pluginService.setCurrentClient(currentTargetClient, currentHostInfo);
       return result;
     }
 
@@ -113,6 +132,7 @@ export class StaleDnsHelper {
 
       try {
         result = await this.pluginService.connect(this.writerHostInfo, props, this.pluginService.getDialect().getConnectFunc(targetClient));
+        await this.pluginService.tryClosingTargetClient(currentTargetClient);
         await this.pluginService.setCurrentClient(targetClient, this.writerHostInfo);
         return result;
       } catch (error: any) {
@@ -124,6 +144,7 @@ export class StaleDnsHelper {
       }
     }
 
+    this.pluginService.setCurrentClient(currentTargetClient, currentHostInfo);
     return result;
   }
 

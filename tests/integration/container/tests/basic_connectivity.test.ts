@@ -31,7 +31,8 @@ describe("basic_connectivity", () => {
       host: env.databaseInfo.instances[0].host,
       database: env.databaseInfo.default_db_name,
       password: env.databaseInfo.password,
-      port: env.databaseInfo.clusterEndpointPort
+      port: env.databaseInfo.clusterEndpointPort,
+      plugins: ""
     };
     const client: AwsPGClient | AwsMySQLClient = initClientFunc(props);
     await client.connect();
@@ -52,17 +53,19 @@ describe("basic_connectivity", () => {
       host: env.proxyDatabaseInfo.instances[0].host,
       database: env.databaseInfo.default_db_name,
       password: env.databaseInfo.password,
-      port: env.proxyDatabaseInfo.clusterEndpointPort
+      port: env.proxyDatabaseInfo.clusterEndpointPort,
+      plugins: ""
     };
     props = DriverHelper.addDriverSpecificConfiguration(props, env.engine);
 
     const client: AwsPGClient | AwsMySQLClient = initClientFunc(props);
+
     await client.connect();
 
-    await ProxyHelper.disableAllConnectivity();
+    await ProxyHelper.disableAllConnectivity(env.engine);
 
     await expect(async () => {
-      await DriverHelper.executeInstanceQuery(env.engine, client);
+      await DriverHelper.executeQuery(env.engine, client, DriverHelper.getSleepQuery(env.engine, 15));
     }).rejects.toThrow();
 
     await ProxyHelper.enableAllConnectivity();

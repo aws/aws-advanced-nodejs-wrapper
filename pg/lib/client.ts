@@ -20,6 +20,7 @@ import { WrapperProperties } from "aws-wrapper-common-lib/lib/wrapper_property";
 import { PgErrorHandler } from "./pg_error_handler";
 import { PgConnectionUrlParser } from "./pg_connection_url_parser";
 import { AuroraPgDatabaseDialect } from "./dialect/aurora_pg_database_dialect";
+import { Utils } from "mysql-wrapper/lib/utils";
 
 export class AwsPGClient extends AwsClient {
   constructor(config: any) {
@@ -38,8 +39,10 @@ export class AwsPGClient extends AwsClient {
   async connect(): Promise<void> {
     await this.internalConnect();
     const res: void = await this.pluginManager.connect(this.pluginService.getCurrentHostInfo(), this.properties, true, async () => {
-      this.targetClient = this.pluginService.createTargetClient(this.properties);
-      await this.targetClient.connect();
+      if (!this.targetClient) {
+        this.targetClient = this.pluginService.createTargetClient(this.properties);
+        this.targetClient.connect();
+      }
     });
     await this.internalPostConnect();
     return res;
@@ -55,6 +58,7 @@ export class AwsPGClient extends AwsClient {
       this.properties,
       "query",
       async () => {
+        this.pluginService.updateInTransaction(text);
         return this.targetClient.query(text);
       },
       text

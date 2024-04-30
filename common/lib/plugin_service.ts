@@ -112,7 +112,7 @@ export class PluginService implements ErrorHandler, HostListProviderService {
   }
 
   async forceRefreshHostList(): Promise<void>;
-  async forceRefreshHostList(client: AwsClient): Promise<void>;
+  async forceRefreshHostList(client?: AwsClient): Promise<void>;
   async forceRefreshHostList(client?: AwsClient): Promise<void> {
     const updatedHostList = client ? await this.getHostListProvider()?.forceRefresh(client) : await this.getHostListProvider()?.forceRefresh();
     if (updatedHostList && updatedHostList !== this.hosts) {
@@ -301,5 +301,19 @@ export class PluginService implements ErrorHandler, HostListProviderService {
 
   getConnectFunc(targetClient: any) {
     return this.getDialect().getConnectFunc(targetClient);
+  }
+
+  updateInTransaction(sql: string) {
+    // TODO: revise with session state transfer
+    if (sql.toLowerCase().startsWith("start transaction") || sql.toLowerCase().startsWith("begin")) {
+      this.setInTransaction(true);
+    } else if (
+      sql.toLowerCase().startsWith("commit") ||
+      sql.toLowerCase().startsWith("rollback") ||
+      sql.toLowerCase().startsWith("end") ||
+      sql.toLowerCase().startsWith("abort")
+    ) {
+      this.setInTransaction(false);
+    }
   }
 }
