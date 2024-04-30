@@ -379,7 +379,7 @@ export class FailoverPlugin extends AbstractConnectionPlugin {
 
     this.pluginService.getCurrentHostInfo()?.removeAlias(Array.from(oldAliases));
     await this.pluginService.tryClosingTargetClient();
-    this.pluginService.setCurrentClient(result.client, result.newHost);
+    await this.pluginService.setCurrentClient(result.client, result.newHost);
     await this.updateTopology(true);
   }
 
@@ -406,7 +406,7 @@ export class FailoverPlugin extends AbstractConnectionPlugin {
     }
 
     await this.pluginService.tryClosingTargetClient();
-    this.pluginService.setCurrentClient(result.client, writerHostInfo);
+    await this.pluginService.setCurrentClient(result.client, writerHostInfo);
     logger.debug(Messages.get("Failover.establishedConnection", this.pluginService.getCurrentHostInfo()?.host ?? ""));
     await this.pluginService.refreshHostList();
   }
@@ -504,7 +504,7 @@ export class FailoverPlugin extends AbstractConnectionPlugin {
     const client = this.pluginService.createTargetClient(props);
     try {
       await this.pluginService.connect(baseHostInfo, this._properties, this.pluginService.getDialect().getConnectFunc(client));
-      this.pluginService.setCurrentClient(client, baseHostInfo);
+      await this.pluginService.setCurrentClient(client, baseHostInfo);
     } catch (error) {
       await this.pluginService.tryClosingTargetClient(client);
       throw error;

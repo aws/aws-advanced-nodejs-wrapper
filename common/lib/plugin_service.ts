@@ -250,7 +250,7 @@ export class PluginService implements ErrorHandler, HostListProviderService {
   }
 
   // TODO: Add more to this later
-  async setCurrentClient(newClient: any, hostInfo: HostInfo): Promise<Set<HostChangeOptions> | undefined> {
+  async setCurrentClient(newClient: any, hostInfo: HostInfo): Promise<Set<HostChangeOptions>> {
     if (this.getCurrentClient().targetClient === null) {
       this.getCurrentClient().targetClient = newClient;
       this._currentHostInfo = hostInfo;
@@ -285,6 +285,7 @@ export class PluginService implements ErrorHandler, HostListProviderService {
         }
         return changes;
       }
+      throw new AwsWrapperError("HostInfo not found"); // Should not be reached
     }
   }
 

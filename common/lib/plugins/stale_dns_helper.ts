@@ -113,7 +113,7 @@ export class StaleDnsHelper {
 
       try {
         result = await this.pluginService.connect(this.writerHostInfo, props, this.pluginService.getDialect().getConnectFunc(targetClient));
-        this.pluginService.setCurrentClient(targetClient, this.writerHostInfo);
+        await this.pluginService.setCurrentClient(targetClient, this.writerHostInfo);
         return result;
       } catch (error: any) {
         await this.pluginService.tryClosingTargetClient(targetClient);
