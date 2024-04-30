@@ -31,7 +31,6 @@ export class StaleDnsHelper {
   private readonly rdsUtils: RdsUtils = new RdsUtils();
   private writerHostInfo: HostInfo | null = null;
   private writerHostAddress: string = "";
-  private clusterInetAddress: string = "";
 
   constructor(pluginService: PluginService) {
     this.pluginService = pluginService;
@@ -67,17 +66,18 @@ export class StaleDnsHelper {
       throw new Error("Could not find current targetClient");
     }
 
+    let clusterInetAddress = "";
     try {
       const lookupResult = await this.lookupResult(host);
-      this.clusterInetAddress = lookupResult.address;
+      clusterInetAddress = lookupResult.address;
     } catch (error) {
       // ignore
     }
 
-    const hostInetAddress = this.clusterInetAddress;
+    const hostInetAddress = clusterInetAddress;
     logger.debug(Messages.get("StaleDnsHelper.clusterEndpointDns", hostInetAddress));
 
-    if (!this.clusterInetAddress) {
+    if (!clusterInetAddress) {
       this.pluginService.setCurrentClient(currentTargetClient, currentHostInfo);
       return result;
     }
@@ -124,7 +124,7 @@ export class StaleDnsHelper {
       return result;
     }
 
-    if (this.writerHostAddress !== this.clusterInetAddress) {
+    if (this.writerHostAddress !== clusterInetAddress) {
       // DNS resolves a cluster endpoint to a wrong writer
       // opens a connection to a proper writer node
       logger.debug(Messages.get("StaleDnsHelper.staleDnsDetected", this.writerHostInfo.host));

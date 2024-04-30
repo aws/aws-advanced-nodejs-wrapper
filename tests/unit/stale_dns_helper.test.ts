@@ -41,6 +41,7 @@ const readerHostList = [readerA, readerB];
 const instanceHostList = [writerInstance, readerA, readerB];
 
 const mockInitialConn = mock(AwsClient);
+const mockHostInfo = mock(HostInfo);
 const mockDialect = mock<DatabaseDialect>();
 const mockConnectFunc = jest.fn().mockImplementation(() => {
   return mockInitialConn;
@@ -52,6 +53,7 @@ describe("test_stale_dns_helper", () => {
     when(mockPluginService.connect(anything(), anything(), anything())).thenResolve();
     when(mockPluginService.tryClosingTargetClient(anything())).thenResolve();
     when(mockPluginService.getDialect()).thenReturn(mockDialect);
+    when(mockPluginService.getCurrentHostInfo()).thenReturn(mockHostInfo);
   });
 
   afterEach(() => {
@@ -59,6 +61,7 @@ describe("test_stale_dns_helper", () => {
     reset(props);
     reset(mockHostListProviderService);
     reset(mockPluginService);
+    reset(mockHostInfo);
   });
 
   it("test_get_verified_connection_is_writer_cluster_dns_false", async () => {
@@ -105,6 +108,7 @@ describe("test_stale_dns_helper", () => {
 
     const mockHostListProviderServiceInstance = instance(mockHostListProviderService);
     when(mockPluginService.getHosts()).thenReturn(readerHostList);
+
     when(mockPluginService.getCurrentHostInfo()).thenReturn(readerA);
 
     const lookupAddress = mock<LookupAddress>({ address: "2.2.2.2" });
@@ -119,7 +123,7 @@ describe("test_stale_dns_helper", () => {
     );
 
     expect(mockConnectFunc).toHaveBeenCalled();
-    verify(mockPluginService.forceRefreshHostList()).once();
+    verify(mockPluginService.forceRefreshHostList(anything())).once();
     expect(mockInitialConn).toBe(returnConn);
   });
 
@@ -143,7 +147,7 @@ describe("test_stale_dns_helper", () => {
     );
 
     expect(mockConnectFunc).toHaveBeenCalled();
-    verify(mockPluginService.refreshHostList()).once();
+    verify(mockPluginService.refreshHostList(anything())).once();
     expect(mockInitialConn).toBe(returnConn);
   });
 
@@ -154,13 +158,10 @@ describe("test_stale_dns_helper", () => {
 
     const mockHostListProviderServiceInstance = instance(mockHostListProviderService);
 
-    const firstCall = mock<LookupAddress>({ address: "5.5.5.5" });
-    const secondCall = mock<LookupAddress>({ address: "" });
+    const firstCall = { address: "5.5.5.5", family: 0 };
+    const secondCall = { address: "", family: 0 };
 
     when(target.lookupResult(anything())).thenResolve(firstCall, secondCall);
-    // Return string instead of mocker
-    when(target["clusterInetAddress"]).thenReturn("5.5.5.5");
-    when(target["writerHostAddress"]).thenReturn("");
 
     const returnConn = await targetInstance.getVerifiedConnection(
       writerCluster.host,
@@ -180,13 +181,10 @@ describe("test_stale_dns_helper", () => {
     when(mockPluginService.getHosts()).thenReturn(readerHostList);
     const mockHostListProviderServiceInstance = instance(mockHostListProviderService);
 
-    const firstCall = mock<LookupAddress>({ address: "5.5.5.5" });
-    const secondCall = mock<LookupAddress>({ address: "" });
+    const firstCall = { address: "5.5.5.5", family: 0 };
+    const secondCall = { address: "", family: 0 };
 
     when(target.lookupResult(anything())).thenResolve(firstCall, secondCall);
-    // Return string instead of mocker
-    when(target["clusterInetAddress"]).thenReturn("5.5.5.5");
-    when(target["writerHostAddress"]).thenReturn("");
 
     const returnConn = await targetInstance.getVerifiedConnection(
       writerCluster.host,
@@ -207,13 +205,10 @@ describe("test_stale_dns_helper", () => {
     when(mockPluginService.getHosts()).thenReturn(instanceHostList);
     const mockHostListProviderServiceInstance = instance(mockHostListProviderService);
 
-    const firstCall = mock<LookupAddress>({ address: "5.5.5.5" });
-    const secondCall = mock<LookupAddress>({ address: "5.5.5.5" });
+    const firstCall = { address: "5.5.5.5", family: 0 };
+    const secondCall = { address: "5.5.5.5", family: 0 };
 
     when(target.lookupResult(anything())).thenResolve(firstCall, secondCall);
-    // Return string instead of mocker
-    when(target["clusterInetAddress"]).thenReturn("5.5.5.5");
-    when(target["writerHostAddress"]).thenReturn("5.5.5.5");
 
     const returnConn = await targetInstance.getVerifiedConnection(
       writerCluster.host,
@@ -236,13 +231,10 @@ describe("test_stale_dns_helper", () => {
     const mockHostListProviderServiceInstance = instance(mockHostListProviderService);
     targetInstance["writerHostInfo"] = writerCluster;
 
-    const firstCall = mock<LookupAddress>({ address: "5.5.5.5" });
-    const secondCall = mock<LookupAddress>({ address: "8.8.8.8" });
+    const firstCall = { address: "5.5.5.5", family: 0 };
+    const secondCall = { address: "8.8.8.8", family: 0 };
 
     when(target.lookupResult(anything())).thenResolve(firstCall, secondCall);
-    // Return string instead of mocker
-    when(target["clusterInetAddress"]).thenReturn("5.5.5.5");
-    when(target["writerHostAddress"]).thenReturn("8.8.8.8");
 
     const returnConn = await targetInstance.getVerifiedConnection(
       writerCluster.host,
@@ -266,13 +258,10 @@ describe("test_stale_dns_helper", () => {
     targetInstance["writerHostInfo"] = writerCluster;
     when(mockHostListProviderService.getInitialConnectionHostInfo()).thenReturn(writerCluster);
 
-    const firstCall = mock<LookupAddress>({ address: "5.5.5.5" });
-    const secondCall = mock<LookupAddress>({ address: "8.8.8.8" });
+    const firstCall = { address: "5.5.5.5", family: 0 };
+    const secondCall = { address: "8.8.8.8", family: 0 };
 
     when(target.lookupResult(anything())).thenResolve(firstCall, secondCall);
-    // Return string instead of mocker
-    when(target["clusterInetAddress"]).thenReturn("5.5.5.5");
-    when(target["writerHostAddress"]).thenReturn("8.8.8.8");
 
     const returnConn = await targetInstance.getVerifiedConnection(
       writerCluster.host,
