@@ -420,8 +420,7 @@ export class FailoverPlugin extends AbstractConnectionPlugin {
     if (this.pluginService.isInTransaction()) {
       this._isInTransaction = this.pluginService.isInTransaction();
       try {
-        // TODO: rollback not implemented
-        client.rollback();
+        await client.rollback();
       } catch (error) {
         // swallow this error
       }

@@ -97,7 +97,7 @@ export class DriverConnectionProvider implements ConnectionProvider {
       const newTargetClient = pluginService.createTargetClient(props);
       const fixedConnFunc = pluginService.getConnectFunc(newTargetClient);
       result = await fixedConnFunc();
-      pluginService.setCurrentClient(newTargetClient, connectionHostInfo);
+      await pluginService.setCurrentClient(newTargetClient, connectionHostInfo);
     }
 
     return result;
@@ -106,7 +106,7 @@ export class DriverConnectionProvider implements ConnectionProvider {
   getHostInfoByStrategy(hosts: HostInfo[], role: HostRole, strategy: string, props?: Map<string, any>): HostInfo {
     const acceptedStrategy = DriverConnectionProvider.acceptedStrategies.get(strategy);
     if (!acceptedStrategy) {
-      throw new AwsWrapperError(Messages.get("ConnectionProvider.unsupportedHostSpecSelectorStrategy", strategy, "DriverConnectionProvider")); // TODO
+      throw new AwsWrapperError(Messages.get("ConnectionProvider.unsupportedHostInfoSelectorStrategy", strategy, "DriverConnectionProvider"));
     }
     return acceptedStrategy.getHost(hosts, role, props);
   }

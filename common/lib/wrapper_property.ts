@@ -58,6 +58,17 @@ export class WrapperProperties {
 
   static readonly DIALECT = new WrapperProperty<string>("dialect", "A unique identifier for the supported database dialect.", "");
 
+  static readonly TRANSFER_SESSION_STATE_ON_SWITCH = new WrapperProperty<boolean>(
+    "transferSessionStateOnSwitch",
+    "Enables session state transfer to a new connection.",
+    true
+  );
+  static readonly RESET_SESSION_STATE_ON_CLOSE = new WrapperProperty<boolean>(
+    "resetSessionStateOnClose",
+    "Enables resetting a connection's session state before closing it.",
+    true
+  );
+
   static readonly IAM_HOST = new WrapperProperty<string>("iamHost", "Overrides the host that is used to generate the IAM token", null);
   static readonly IAM_DEFAULT_PORT = new WrapperProperty<number>(
     "iamDefaultPort",

@@ -21,12 +21,12 @@ import { PgErrorHandler } from "./pg_error_handler";
 import { PgConnectionUrlParser } from "./pg_connection_url_parser";
 import { DatabaseDialect, DatabaseType } from "aws-wrapper-common-lib/lib/database_dialect/database_dialect";
 import { DatabaseDialectCodes } from "aws-wrapper-common-lib/lib/database_dialect/database_dialect_codes";
-import { MySQLDatabaseDialect } from "mysql-wrapper/lib/dialect/mysql_database_dialect";
-import { AuroraMySQLDatabaseDialect } from "mysql-wrapper/lib/dialect/aurora_mysql_database_dialect";
 import { RdsPgDatabaseDialect } from "./dialect/rds_pg_database_dialect";
 import { PgDatabaseDialect } from "./dialect/pg_database_dialect";
 import { AuroraPgDatabaseDialect } from "./dialect/aurora_pg_database_dialect";
-import { Utils } from "mysql-wrapper/lib/utils";
+import { AwsWrapperError, UnsupportedMethodError } from "aws-wrapper-common-lib/lib/utils/errors";
+import { Messages } from "aws-wrapper-common-lib/lib/utils/messages";
+import { TransactionIsolationLevel } from "aws-wrapper-common-lib/lib/utils/transaction_isolation_level";
 
 export class AwsPGClient extends AwsClient {
   private static readonly knownDialectsByCode: Map<string, DatabaseDialect> = new Map([
@@ -38,7 +38,6 @@ export class AwsPGClient extends AwsClient {
   constructor(config: any) {
     super(config, new PgErrorHandler(), DatabaseType.POSTGRES, AwsPGClient.knownDialectsByCode, new PgConnectionUrlParser());
     this.config = config;
-    this._isReadOnly = false;
     this._createClientFunc = (config: any) => {
       const targetClient: Client = new Client(WrapperProperties.removeWrapperProperties(config));
       targetClient.on("error", (error: any) => {
@@ -46,6 +45,7 @@ export class AwsPGClient extends AwsClient {
       });
       return targetClient;
     };
+    this.resetState();
   }
 
   async connect(): Promise<void> {
@@ -70,7 +70,7 @@ export class AwsPGClient extends AwsClient {
       this.properties,
       "query",
       async () => {
-        this.pluginService.updateInTransaction(text);
+        await this.pluginService.updateState(text);
         return this.targetClient.query(text);
       },
       text
@@ -81,6 +81,10 @@ export class AwsPGClient extends AwsClient {
     if (readOnly === this.isReadOnly()) {
       return Promise.resolve();
     }
+
+    this.pluginService.getSessionStateService().setupPristineReadOnly();
+    this.pluginService.getSessionStateService().setReadOnly(readOnly);
+
     this._isReadOnly = readOnly;
     if (this.isReadOnly()) {
       return await this.query("SET SESSION CHARACTERISTICS AS TRANSACTION READ ONLY");
@@ -92,9 +96,91 @@ export class AwsPGClient extends AwsClient {
     return this._isReadOnly;
   }
 
+  async setAutoCommit(autoCommit: boolean): Promise<QueryResult | void> {
+    throw new UnsupportedMethodError(Messages.get("Client.methodNotSupported"));
+  }
+
+  getAutoCommit(): boolean {
+    return this._isAutoCommit;
+  }
+
+  async setTransactionIsolation(level: number): Promise<QueryResult | void> {
+    if (level === this.getTransactionIsolation()) {
+      return;
+    }
+
+    this.pluginService.getSessionStateService().setupPristineTransactionIsolation();
+    this.pluginService.getSessionStateService().setTransactionIsolation(level);
+
+    this._isolationLevel = level;
+    switch (level) {
+      case 0:
+        await this.query("SET SESSION CHARACTERISTICS AS TRANSACTION ISOLATION LEVEL READ COMMITTED");
+        break;
+      case 1:
+        await this.query("SET SESSION CHARACTERISTICS AS TRANSACTION ISOLATION LEVEL READ COMMITTED");
+        break;
+      case 2:
+        await this.query("SET SESSION CHARACTERISTICS AS TRANSACTION ISOLATION LEVEL REPEATABLE READ");
+        break;
+      case 3:
+        await this.query("SET SESSION CHARACTERISTICS AS TRANSACTION ISOLATION LEVEL SERIALIZABLE");
+        break;
+      default:
+        throw new AwsWrapperError(Messages.get("Client.invalidTransactionIsolationLevel", String(level)));
+    }
+  }
+
+  getTransactionIsolation(): number {
+    return this._isolationLevel;
+  }
+
+  async setCatalog(catalog: string): Promise<void> {
+    throw new UnsupportedMethodError(Messages.get("Client.methodNotSupported"));
+  }
+
+  getCatalog(): string {
+    return this._catalog;
+  }
+
+  async setSchema(schema: string): Promise<QueryResult | void> {
+    if (schema === this.getSchema()) {
+      return;
+    }
+
+    this.pluginService.getSessionStateService().setupPristineSchema();
+    this.pluginService.getSessionStateService().setSchema(schema);
+
+    this._schema = schema;
+    return await this.query(`SET search_path TO ${schema};`);
+  }
+
+  getSchema(): string {
+    return this._schema;
+  }
+
   end(): Promise<void> {
     return this.pluginManager.execute(this.pluginService.getCurrentHostInfo(), this.properties, "end", () => this.targetClient.end(), null);
   }
 
-  rollback() {}
+  async rollback(): Promise<QueryResult> {
+    return this.pluginManager.execute(
+      this.pluginService.getCurrentHostInfo(),
+      this.properties,
+      "rollback",
+      async () => {
+        this.pluginService.updateInTransaction("rollback");
+        return this.targetClient.rollback();
+      },
+      null
+    );
+  }
+
+  resetState() {
+    this._isReadOnly = false;
+    this._isAutoCommit = true;
+    this._catalog = "";
+    this._schema = "";
+    this._isolationLevel = TransactionIsolationLevel.TRANSACTION_READ_COMMITTED;
+  }
 }
