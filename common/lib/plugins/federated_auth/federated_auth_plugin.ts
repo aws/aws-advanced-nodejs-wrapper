@@ -160,8 +160,8 @@ export class FederatedAuthPluginFactory extends ConnectTimePluginFactory {
   }
 
   private getCredentialsProvidorFactory(pluginService: PluginService, properties: Map<string, any>): AdfsCredentialsProviderFactory {
-    const idpName = WrapperProperties.IDP_USERNAME.get(properties);
-    if (!idpName || AdfsCredentialsProviderFactory.IDP_NAME.toUpperCase() === idpName.toUpperCase()) {
+    const idpName = WrapperProperties.IDP_NAME.get(properties);
+    if (!idpName || idpName === "adfs") {
       return new AdfsCredentialsProviderFactory(pluginService);
     }
     throw new AwsWrapperError(Messages.get("FederatedAuthPluginFactory.unsupportedIdp", idpName));

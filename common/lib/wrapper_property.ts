@@ -74,6 +74,7 @@ export class WrapperProperties {
   static readonly IDP_PASSWORD = new WrapperProperty<string>("idpPassword", "The federated user password", null);
   static readonly IDP_ENDPOINT = new WrapperProperty<string>("idpEndpoint", "The hosting URL of the Identity Provider", null);
   static readonly IDP_PORT = new WrapperProperty<number>("idpPort", "The hosting port of the Identity Provider", 443);
+  static readonly IDP_NAME = new WrapperProperty<string>("idpName", "The name of the Identity Provider implementation used", "adfs");
 
   static readonly RELAYING_PARTY_ID = new WrapperProperty<string>("rpIdentifier", "The relaying party identifier", "urn:amazon:webservices");
 
