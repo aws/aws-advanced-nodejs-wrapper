@@ -25,6 +25,7 @@ import { DefaultPlugin } from "./plugins/default_plugin";
 import { ExecuteTimePluginFactory } from "./plugins/execute_time_plugin";
 import { ConnectTimePluginFactory } from "./plugins/connect_time_plugin";
 import { AwsSecretsManagerPluginFactory } from "./authentication/aws_secrets_manager_plugin";
+import { FederatedAuthPluginFactory } from "./plugins/federated_auth/federated_auth_plugin";
 
 export class PluginFactoryInfo {}
 
@@ -39,7 +40,8 @@ export class ConnectionPluginChainBuilder {
     ["executeTime", ExecuteTimePluginFactory],
     ["connectTime", ConnectTimePluginFactory],
     ["secretsManager", AwsSecretsManagerPluginFactory],
-    ["failover", FailoverPluginFactory]
+    ["failover", FailoverPluginFactory],
+    ["federatedAuth", FederatedAuthPluginFactory]
   ]);
 
   getPlugins(pluginService: PluginService, props: Map<string, any>): ConnectionPlugin[] {

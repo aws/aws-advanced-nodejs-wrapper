@@ -15,7 +15,7 @@
 */
 
 import { PluginService } from "aws-wrapper-common-lib/lib/plugin_service";
-import { IamAuthenticationPlugin, TokenInfo } from "aws-wrapper-common-lib/lib/authentication/iam_authentication_plugin";
+import { IamAuthenticationPlugin } from "aws-wrapper-common-lib/lib/authentication/iam_authentication_plugin";
 import { HostInfoBuilder } from "aws-wrapper-common-lib/lib/host_info_builder";
 import { SimpleHostAvailabilityStrategy } from "aws-wrapper-common-lib/lib/host_availability/simple_host_availability_strategy";
 import { HostInfo } from "aws-wrapper-common-lib/lib/host_info";
@@ -24,6 +24,7 @@ import { AwsWrapperError } from "aws-wrapper-common-lib/lib/utils/errors";
 import { WrapperProperties } from "aws-wrapper-common-lib/lib/wrapper_property";
 import fetch from "node-fetch";
 import { instance, mock, when } from "ts-mockito";
+import { TokenInfo } from "aws-wrapper-common-lib/lib/utils/iam_auth_utils";
 
 const GENERATED_TOKEN: string = "generatedToken";
 const TEST_TOKEN: string = "testToken";

@@ -67,6 +67,17 @@ export class WrapperProperties {
     "IAM token cache expiration in seconds",
     WrapperProperties.DEFAULT_TOKEN_EXPIRATION_SEC
   );
+  static readonly IAM_ROLE_ARN = new WrapperProperty<string>("iamRoleArn", "The ARN of the IAM Role that is to be assumed.", null);
+  static readonly IAM_IDP_ARN = new WrapperProperty<string>("iamIdpArn", "The ARN of the identity provider", null);
+
+  static readonly IDP_USERNAME = new WrapperProperty<string>("idpUsername", "The federated user name", null);
+  static readonly IDP_PASSWORD = new WrapperProperty<string>("idpPassword", "The federated user password", null);
+  static readonly IDP_ENDPOINT = new WrapperProperty<string>("idpEndpoint", "The hosting URL of the Identity Provider", null);
+  static readonly IDP_PORT = new WrapperProperty<number>("idpPort", "The hosting port of the Identity Provider", 443);
+
+  static readonly RELAYING_PARTY_ID = new WrapperProperty<string>("rpIdentifier", "The relaying party identifier", "urn:amazon:webservices");
+
+  static readonly DB_USER = new WrapperProperty<string>("dbUser", "The database user used to access the database", null);
 
   static readonly SECRET_ID = new WrapperProperty<string>("secretId", "The name or the ARN of the secret to retrieve.", null);
   static readonly SECRET_REGION = new WrapperProperty<string>("secretRegion", "The region of the secret to retrieve.", null);
