@@ -70,7 +70,7 @@ export class FederatedAuthPlugin extends AbstractConnectionPlugin {
     const region: string = WrapperProperties.IAM_REGION.get(props) ? WrapperProperties.IAM_REGION.get(props) : this.getRdsRegion(host);
     const tokenExpirationSec = WrapperProperties.IAM_EXPIRATION.get(props);
 
-    const cacheKey = this.getCacheKey(WrapperProperties.USER.get(props), host, port, region);
+    const cacheKey = this.getCacheKey(WrapperProperties.DB_USER.get(props), host, port, region);
     const tokenInfo = FederatedAuthPlugin.tokenCache.get(cacheKey);
 
     const isCachedToken: boolean = tokenInfo != null && !tokenInfo.isExpired();
@@ -86,7 +86,7 @@ export class FederatedAuthPlugin extends AbstractConnectionPlugin {
       FederatedAuthPlugin.tokenCache.set(cacheKey, new TokenInfo(token, tokenExpiry));
     }
     this.pluginService.updateConfigWithProperties(props);
-    WrapperProperties.USER.set(props, "dbUser");
+    WrapperProperties.USER.set(props, WrapperProperties.DB_USER.get(props));
 
     try {
       return connectFunc();
@@ -133,12 +133,13 @@ export class FederatedAuthPlugin extends AbstractConnectionPlugin {
     port: number,
     region: string
   ): Promise<string> {
-    const user: string = props.get("user");
+    const user: string = WrapperProperties.DB_USER.get(props);
+    const credentialsProvider = this.credentialsProviderFactory.getAwsCredentialsProvider(hostname, region, props);
     const signer = new Signer({
       hostname: hostname,
       port: port,
       region: region,
-      credentials: AwsCredentialsManager.getProvider(hostInfo, props),
+      credentials: credentialsProvider,
       username: user
     });
 
@@ -156,10 +157,10 @@ export class FederatedAuthPlugin extends AbstractConnectionPlugin {
 
 export class FederatedAuthPluginFactory extends ConnectTimePluginFactory {
   getInstance(pluginService: PluginService, properties: Map<string, any>): ConnectionPlugin {
-    return new FederatedAuthPlugin(pluginService, this.getCredentialsProvidorFactory(pluginService, properties));
+    return new FederatedAuthPlugin(pluginService, this.getCredentialsProviderFactory(pluginService, properties));
   }
 
-  private getCredentialsProvidorFactory(pluginService: PluginService, properties: Map<string, any>): AdfsCredentialsProviderFactory {
+  private getCredentialsProviderFactory(pluginService: PluginService, properties: Map<string, any>): CredentialsProviderFactory {
     const idpName = WrapperProperties.IDP_NAME.get(properties);
     if (!idpName || idpName === "adfs") {
       return new AdfsCredentialsProviderFactory(pluginService);

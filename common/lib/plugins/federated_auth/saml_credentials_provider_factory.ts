@@ -20,7 +20,7 @@ import { AssumeRoleWithSAMLCommand, STSClient } from "@aws-sdk/client-sts";
 import { WrapperProperties } from "../../wrapper_property";
 
 export abstract class SamlCredentialsProviderFactory implements CredentialsProviderFactory {
-  async getAwsCredentials(host: string, region: string, props: Map<string, any>) {
+  async getAwsCredentialsProvider(host: string, region: string, props: Map<string, any>) {
     const samlAssertion = this.getSamlAssertion(props);
     const assumeRoleWithSamlRequest = new AssumeRoleWithSAMLCommand({
       SAMLAssertion: samlAssertion,
@@ -30,8 +30,8 @@ export abstract class SamlCredentialsProviderFactory implements CredentialsProvi
     const stsClient = new STSClient({
       region: region
     });
-    return await stsClient.send(assumeRoleWithSamlRequest);
-    // TODO change return type
+    const response = await stsClient.send(assumeRoleWithSamlRequest);
+    // TODO not sure what return type here is supposed to be?
   }
 
   abstract getSamlAssertion(props: Map<string, any>): string;

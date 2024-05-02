@@ -14,8 +14,8 @@
   limitations under the License.
 */
 
-import { AwsCredentialsManager } from "../../authentication/aws_credentials_manager";
+import { AwsCredentialIdentityProvider } from "@smithy/types/dist-types/identity/awsCredentialIdentity";
 
 export interface CredentialsProviderFactory {
-  getAwsCredentials(host: string, region: string, props: Map<string, any>): AwsCredentialsManager;
+  getAwsCredentialsProvider(host: string, region: string, props: Map<string, any>): any;
 }
