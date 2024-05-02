@@ -21,7 +21,7 @@ import { WrapperProperties } from "../../wrapper_property";
 
 export abstract class SamlCredentialsProviderFactory implements CredentialsProviderFactory {
   async getAwsCredentialsProvider(host: string, region: string, props: Map<string, any>) {
-    const samlAssertion = this.getSamlAssertion(props);
+    const samlAssertion = await this.getSamlAssertion(props);
     const assumeRoleWithSamlRequest = new AssumeRoleWithSAMLCommand({
       SAMLAssertion: samlAssertion,
       RoleArn: WrapperProperties.IAM_ROLE_ARN.get(props),
@@ -34,5 +34,5 @@ export abstract class SamlCredentialsProviderFactory implements CredentialsProvi
     // TODO not sure what return type here is supposed to be?
   }
 
-  abstract getSamlAssertion(props: Map<string, any>): string;
+  abstract getSamlAssertion(props: Map<string, any>): Promise<string>;
 }

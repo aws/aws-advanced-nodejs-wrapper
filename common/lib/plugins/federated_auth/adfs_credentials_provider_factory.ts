@@ -14,8 +14,10 @@
   limitations under the License.
 */
 
+import { logger } from "../../../logutils";
 import { PluginService } from "../../plugin_service";
 import { AwsWrapperError } from "../../utils/errors";
+import { Messages } from "../../utils/messages";
 import { WrapperProperties } from "../../wrapper_property";
 import { FederatedAuthPlugin } from "./federated_auth_plugin";
 import { SamlCredentialsProviderFactory } from "./saml_credentials_provider_factory";
@@ -25,6 +27,7 @@ export class AdfsCredentialsProviderFactory extends SamlCredentialsProviderFacto
   private static readonly TELEMETRY_FETCH_SAML = "Fetch ADFS SAML Assertion";
   private static readonly INPUT_TAG_PATTERN = new RegExp("<input(.+?)/>");
   private static readonly FORM_ACTION_PATTERN = new RegExp('<form.*?action="([^"]+)"');
+  private static readonly SAML_RESPONSE_PATTERN = new RegExp('SAMLResponse\\W+value="(?<saml>[^"]+)"');
   private pluginService: PluginService;
 
   constructor(pluginService: PluginService) {
@@ -32,8 +35,25 @@ export class AdfsCredentialsProviderFactory extends SamlCredentialsProviderFacto
     this.pluginService = pluginService;
   }
 
-  getSamlAssertion(props: Map<string, any>): string {
-    // let uri = this.getSignInPageUrl(props); TODO
+  async getSamlAssertion(props: Map<string, any>): Promise<string> {
+    try {
+      let uri = this.getSignInPageUrl(props);
+      const signInPageBody: string = await this.getSignInPageBody(uri, props);
+      const action = this.getFormActionHtmlBody(signInPageBody);
+      if (action && action.startsWith("/")) {
+        uri = this.getFormActionUrl(props, action);
+      }
+      const params = this.getParametersFromHtmlBody(signInPageBody, props);
+      const content = await this.getFormActionBody(uri, params, props);
+
+      const match = content.match(AdfsCredentialsProviderFactory.SAML_RESPONSE_PATTERN);
+      if (!match) {
+        throw new AwsWrapperError(Messages.get("AdfsCredentialsProviderFactory.FailedLogin", content));
+      }
+      return match[1];
+    } catch (e) {
+      throw new AwsWrapperError(Messages.get("AdfsCredentialsProviderFactory.getSamlAssertionFailed", (e as Error).message));
+    }
   }
 
   getSignInPageUrl(props: Map<string, any>): string {
@@ -44,6 +64,36 @@ export class AdfsCredentialsProviderFactory extends SamlCredentialsProviderFacto
       throw new AwsWrapperError("Invalid Https url");
     }
     return `https://${idpEndpoint}:${idpPort}/adfs/ls/IdpInitiatedSignOn.aspx?loginToRp=${rpId}`;
+  }
+
+  async getSignInPageBody(url: string, props: Map<string, any>) {
+    logger.debug(Messages.get("AdfsCredentialsProviderFactory.SignOnPageUrl", url));
+    this.validateUrl(url);
+    const resp = await fetch(url, {
+      method: "GET"
+    }); //TODO: ssl and timeout
+    const text = await resp.text();
+    if (resp.status / 100 != 2) {
+      throw new AwsWrapperError(
+        Messages.get("AdfsCredentialsProviderFactory.SignOnPageRequestFailed", resp.status.toString(), resp.statusText, text)
+      );
+    }
+    return text;
+  }
+
+  async getFormActionBody(uri: string, parameters: Record<string, string>, props: Map<string, any>) {
+    this.validateUrl(uri);
+    const resp = await fetch(uri, {
+      method: "POST",
+      body: JSON.stringify(parameters)
+    }); // TODO ssl and timeout
+    const text = await resp.text();
+    if (resp.status / 100 != 2) {
+      throw new AwsWrapperError(
+        Messages.get("AdfsCredentialsProviderFactory.signOnPageRequestFailed", resp.status.toString(), resp.statusText, text)
+      );
+    }
+    return text;
   }
 
   getFormActionUrl(props: Map<string, any>, action: string) {
@@ -151,5 +201,11 @@ export class AdfsCredentialsProviderFactory extends SamlCredentialsProviderFacto
     return null;
   }
 
-  private validateUrl(url: string): void {}
+  private validateUrl(url: string): void {
+    try {
+      new URL(url);
+    } catch (e) {
+      throw new AwsWrapperError(Messages.get("AdfsCredentialsProviderFactory.InvalidHttpsUrl", url));
+    }
+  }
 }
