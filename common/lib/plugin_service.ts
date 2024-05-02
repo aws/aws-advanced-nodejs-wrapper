@@ -249,7 +249,7 @@ export class PluginService implements ErrorHandler, HostListProviderService {
     throw new AwsWrapperError("AwsClient is missing target client connect function."); // This should not be reached
   }
 
-  // TODO: Add more to this later
+  // TODO: Add session state changes
   async setCurrentClient(newClient: any, hostInfo: HostInfo): Promise<Set<HostChangeOptions>> {
     if (this.getCurrentClient().targetClient === null) {
       this.getCurrentClient().targetClient = newClient;
