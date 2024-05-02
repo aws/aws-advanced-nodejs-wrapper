@@ -111,7 +111,7 @@ describe("test_stale_dns_helper", () => {
 
     when(mockPluginService.getCurrentHostInfo()).thenReturn(readerA);
 
-    const lookupAddress = mock<LookupAddress>({ address: "2.2.2.2" });
+    const lookupAddress = { address: "2.2.2.2", family: 0 };
     when(target.lookupResult(anything())).thenResolve(lookupAddress);
 
     const returnConn = await targetInstance.getVerifiedConnection(
@@ -123,6 +123,7 @@ describe("test_stale_dns_helper", () => {
     );
 
     expect(mockConnectFunc).toHaveBeenCalled();
+    expect(readerA.role).toBe(HostRole.READER);
     verify(mockPluginService.forceRefreshHostList(anything())).once();
     expect(mockInitialConn).toBe(returnConn);
   });
@@ -135,7 +136,7 @@ describe("test_stale_dns_helper", () => {
 
     when(mockPluginService.getHosts()).thenReturn(clusterHostList);
 
-    const lookupAddress = mock<LookupAddress>({ address: "5.5.5.5" });
+    const lookupAddress = { address: "5.5.5.5", family: 0 };
     when(target.lookupResult(anything())).thenResolve(lookupAddress);
 
     const returnConn = await targetInstance.getVerifiedConnection(
