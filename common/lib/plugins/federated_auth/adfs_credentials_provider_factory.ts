@@ -21,6 +21,8 @@ import { Messages } from "../../utils/messages";
 import { WrapperProperties } from "../../wrapper_property";
 import { FederatedAuthPlugin } from "./federated_auth_plugin";
 import { SamlCredentialsProviderFactory } from "./saml_credentials_provider_factory";
+import fetch from "node-fetch";
+import https from "https";
 
 export class AdfsCredentialsProviderFactory extends SamlCredentialsProviderFactory {
   static readonly IDP_NAME = "adfs";
@@ -69,8 +71,12 @@ export class AdfsCredentialsProviderFactory extends SamlCredentialsProviderFacto
   async getSignInPageBody(url: string, props: Map<string, any>) {
     logger.debug(Messages.get("AdfsCredentialsProviderFactory.SignOnPageUrl", url));
     this.validateUrl(url);
+    const httpsAgent = new https.Agent({
+      rejectUnauthorized: false
+    });
     const resp = await fetch(url, {
-      method: "GET"
+      method: "GET",
+      agent: httpsAgent
     }); //TODO: ssl and timeout
     const text = await resp.text();
     if (resp.status / 100 != 2) {
@@ -82,6 +88,7 @@ export class AdfsCredentialsProviderFactory extends SamlCredentialsProviderFacto
   }
 
   async getFormActionBody(uri: string, parameters: Record<string, string>, props: Map<string, any>) {
+    logger.debug(Messages.get("AdfsCredentialsProviderFactory.SignOnPageUrl", uri));
     this.validateUrl(uri);
     const resp = await fetch(uri, {
       method: "POST",
