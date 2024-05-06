@@ -46,7 +46,7 @@
     "lint-staged": "^15.2.2",
     "lodash": "^4.17.21",
     "mysql2": "^3.9.7",
-    "node-fetch": "^2.6.7",
+    "node-fetch": "^3.3.2",
     "pg": "^8.11.5",
     "prettier": "^3.0.3",
     "toxiproxy-node-client": "^3.0.0",
