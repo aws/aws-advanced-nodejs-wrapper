@@ -91,6 +91,18 @@ export class HostInfoBuilder {
     return this;
   }
 
+  copyFrom(hostInfo: HostInfo): HostInfoBuilder {
+    this.host = hostInfo.host;
+    this.hostId = hostInfo.hostId ?? "";
+    this.port = hostInfo.port;
+    this.availability = hostInfo.availability;
+    this.role = hostInfo.role;
+    this.weight = hostInfo.weight;
+    this.lastUpdateTime = hostInfo.lastUpdateTime;
+    this.hostAvailabilityStrategy = hostInfo.hostAvailabilityStrategy;
+    return this;
+  }
+
   build() {
     if (!this.host) {
       throw new AwsWrapperError("host parameter must be set");

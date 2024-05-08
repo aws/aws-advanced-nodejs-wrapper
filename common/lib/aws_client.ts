@@ -24,6 +24,7 @@ import { ConnectionUrlParser } from "./utils/connection_url_parser";
 import { HostListProvider } from "./host_list_provider/host_list_provider";
 import { PluginManager } from "./plugin_manager";
 import { EventEmitter } from "stream";
+import { DriverConnectionProvider } from "./driver_connection_provider";
 
 export abstract class AwsClient extends EventEmitter {
   protected pluginManager: PluginManager;
@@ -48,9 +49,13 @@ export abstract class AwsClient extends EventEmitter {
     this._dialect = dialect;
     this._properties = new Map<string, any>(Object.entries(config));
 
+    const defaultConnProvider = new DriverConnectionProvider();
+    const effectiveConnProvider = null;
+    // TODO: check for configuration profile to update the effectiveConnProvider
+
     const container = new PluginServiceManagerContainer();
-    this.pluginService = new PluginService(container, this);
-    this.pluginManager = new PluginManager(container, this.properties);
+    this.pluginService = new PluginService(container, this, this._properties);
+    this.pluginManager = new PluginManager(container, this._properties, defaultConnProvider, effectiveConnProvider);
 
     // TODO: properly set up host info
     const host: string = this._properties.get("host");
