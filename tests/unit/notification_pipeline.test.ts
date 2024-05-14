@@ -39,32 +39,30 @@ class TestPlugin extends DefaultPlugin {
   }
 }
 
-const plugin: TestPlugin = new TestPlugin();
-
 const container: PluginServiceManagerContainer = new PluginServiceManagerContainer();
-
 const props: Map<string, any> = mock(Map<string, any>);
 const hostListChanges: Map<string, Set<HostChangeOptions>> = mock(Map<string, Set<HostChangeOptions>>);
 const connectionChanges: Set<HostChangeOptions> = mock(Set<HostChangeOptions>);
 
-const pluginManager: PluginManager = new PluginManager(container, props);
-// Replace default plugins with only TestPlugin
-pluginManager["_plugins"] = [plugin];
-
 describe("notificationPipelineTest", () => {
-  afterEach(() => {
-    plugin.resetCounter();
+  let pluginManager: PluginManager;
+  let plugin: TestPlugin;
+
+  beforeEach(() => {
+    pluginManager = new PluginManager(container, props);
+    plugin = new TestPlugin();
+    pluginManager["_plugins"] = [plugin];
   });
 
   it("test_notifyConnectionChanged", async () => {
     const result: Set<OldConnectionSuggestionAction> = await pluginManager.notifyConnectionChanged(connectionChanges, null);
-    expect(plugin.counter).toBeGreaterThan(0);
+    expect(plugin.counter).toBe(1);
     expect(result).toBeTruthy();
-    expect(result.size).toBeGreaterThan(0);
+    expect(result.size).toBe(1);
   });
 
   it("test_notifyHostListChanged", async () => {
     await pluginManager.notifyHostListChanged(hostListChanges);
-    expect(plugin.counter).toBeGreaterThan(0);
+    expect(plugin.counter).toBe(1);
   });
 });
