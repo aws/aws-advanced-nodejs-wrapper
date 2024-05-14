@@ -15,7 +15,6 @@
 */
 
 import { uniqueId } from "lodash";
-import { performance } from "perf_hooks";
 import { logger } from "../../logutils";
 import { Messages } from "../utils/messages";
 import { HostListProviderService } from "../host_list_provider_service";
@@ -25,22 +24,46 @@ import { HostChangeOptions } from "../host_change_options";
 import { OldConnectionSuggestionAction } from "../old_connection_suggestion_action";
 import { HostRole } from "../host_role";
 import { PluginService } from "../plugin_service";
+import { ConnectionProviderManager } from "../connection_provider_manager";
+import { ConnectionProvider } from "../connection_provider";
+import { AwsWrapperError } from "../utils/errors";
+import { HostAvailability } from "../host_availability/host_availability";
 
 export class DefaultPlugin extends AbstractConnectionPlugin {
-  private pluginService: PluginService;
   id: string = uniqueId("_defaultPlugin");
+  private readonly pluginService: PluginService;
+  private readonly connProviderManager: ConnectionProviderManager;
+  private readonly effectiveConnProvider: ConnectionProvider | null = null;
+  private readonly defaultConnProvider: ConnectionProvider;
 
-  constructor(pluginService: PluginService) {
+  constructor(
+    pluginService: PluginService,
+    defaultConnProvider: ConnectionProvider,
+    effectiveConnProvider: ConnectionProvider | null,
+    connectionProviderManager?: ConnectionProviderManager
+  ) {
     super();
     this.pluginService = pluginService;
+    this.defaultConnProvider = defaultConnProvider;
+    this.effectiveConnProvider = effectiveConnProvider;
+    if (connectionProviderManager) {
+      this.connProviderManager = connectionProviderManager;
+    } else {
+      this.connProviderManager = new ConnectionProviderManager(defaultConnProvider);
+    }
   }
 
   override getSubscribedMethods(): Set<string> {
     return new Set<string>(["*"]);
   }
 
-  override forceConnect<Type>(hostInfo: HostInfo, props: Map<string, any>, isInitialConnection: boolean, forceConnectFunc: () => Type): Type {
-    throw new Error("Method not implemented.");
+  override async forceConnect<Type>(
+    hostInfo: HostInfo,
+    props: Map<string, any>,
+    isInitialConnection: boolean,
+    forceConnectFunc: () => Promise<Type>
+  ): Promise<Type> {
+    return await this.connectInternal(hostInfo, props, forceConnectFunc, this.defaultConnProvider);
   }
 
   override initHostProvider(
@@ -58,8 +81,29 @@ export class DefaultPlugin extends AbstractConnectionPlugin {
     isInitialConnection: boolean,
     connectFunc: () => Promise<Type>
   ): Promise<Type> {
-    logger.debug(`Start connect for test plugin: ${this.id}`);
-    return await connectFunc();
+    let connProvider = null;
+
+    if (this.effectiveConnProvider && this.effectiveConnProvider.acceptsUrl(hostInfo, props)) {
+      connProvider = this.effectiveConnProvider;
+    }
+
+    if (!connProvider) {
+      connProvider = this.connProviderManager.getConnectionProvider(hostInfo, props);
+    }
+
+    return this.connectInternal(hostInfo, props, connectFunc, connProvider);
+  }
+
+  private async connectInternal<Type>(
+    hostInfo: HostInfo,
+    props: Map<string, any>,
+    connectFunc: () => Promise<Type>,
+    connProvider: ConnectionProvider
+  ): Promise<Type> {
+    const result = await connProvider.connect(hostInfo, this.pluginService, props, connectFunc);
+    this.pluginService.setAvailability(hostInfo.allAliases, HostAvailability.AVAILABLE);
+    // this.pluginService.updateDialect(this.pluginService.getCurrentClient().targetClient); // TODO: uncomment when dialect manager is merged
+    return result;
   }
 
   override async execute<Type>(methodName: string, methodFunc: () => Promise<Type>): Promise<Type> {
@@ -76,33 +120,31 @@ export class DefaultPlugin extends AbstractConnectionPlugin {
   }
 
   override acceptsStrategy(role: HostRole, strategy: string): boolean {
-    // TODO: uncomment once connection providers are set up
-    // if (role === HostRole.UNKNOWN) {
-    //   // Users must request either a writer or a reader role.
-    //   return false;
-    // }
-    //
-    // if (this.effectiveConnProvider) {
-    //   return this.effectiveConnProvider.acceptsStrategy(role, strategy);
-    // }
-    // return this.connProviderManager.acceptsStrategy(role, strategy);
-    return super.acceptsStrategy(role, strategy);
+    if (role === HostRole.UNKNOWN) {
+      // Users must request either a writer or a reader role.
+      return false;
+    }
+
+    if (this.effectiveConnProvider) {
+      return this.effectiveConnProvider.acceptsStrategy(role, strategy);
+    }
+    return this.connProviderManager.acceptsStrategy(role, strategy);
   }
 
-  override getHostInfoByStrategy(role: HostRole, strategy: string): HostInfo | undefined {
-    // TODO: uncomment once connection providers are set up
-    // if (role === HostRole.UNKNOWN) {
-    //   throw new AwsWrapperError(Messages.get("DefaultConnectionPlugin.unknownRoleRequested"));
-    // }
-    //
-    // const hosts = this.pluginService.getHosts();
-    // if (hosts.length < 1) {
-    //   throw new AwsWrapperError(Messages.get("DefaultConnectionPlugin.noHostsAvailable"));
-    // }
-    //
-    // if (this.effectiveConnProvider) {
-    //   return this.effectiveConnProvider.getHostInfoByStrategy(hosts, role, strategy, this.pluginService.props);
-    // }
-    return super.getHostInfoByStrategy(role, strategy);
+  override getHostInfoByStrategy(role: HostRole, strategy: string): HostInfo {
+    if (role === HostRole.UNKNOWN) {
+      throw new AwsWrapperError(Messages.get("DefaultConnectionPlugin.unknownRoleRequested"));
+    }
+
+    const hosts = this.pluginService.getHosts();
+    if (hosts.length < 1) {
+      throw new AwsWrapperError(Messages.get("DefaultConnectionPlugin.noHostsAvailable"));
+    }
+
+    if (this.effectiveConnProvider) {
+      return this.effectiveConnProvider.getHostInfoByStrategy(hosts, role, strategy, this.pluginService.props);
+    }
+
+    return this.connProviderManager.getHostInfoByStrategy(hosts, role, strategy, this.pluginService.props);
   }
 }

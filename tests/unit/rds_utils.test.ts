@@ -144,4 +144,42 @@ describe("test_rds_utils", () => {
     expect(target.getRdsClusterHostUrl(ro_endpoint)).toEqual(expected);
     expect(target.getRdsClusterHostUrl(china_ro_endpoint)).toEqual(expected2);
   });
+
+  it("test_green_instance_host_name", () => {
+    const target = new RdsUtils();
+    expect(target.isGreenInstance("test-instance")).toBeFalsy();
+    expect(target.isGreenInstance("test-instance.domain.com")).toBeFalsy();
+    expect(target.isGreenInstance("test-instance-green.domain.com")).toBeFalsy();
+    expect(target.isGreenInstance("test-instance-green-1.domain.com")).toBeFalsy();
+    expect(target.isGreenInstance("test-instance-green-12345.domain.com")).toBeFalsy();
+    expect(target.isGreenInstance("test-instance-green-abcdef.domain.com")).toBeTruthy();
+    expect(target.isGreenInstance("test-instance-green-abcdef-.domain.com")).toBeFalsy();
+    expect(target.isGreenInstance("test-instance-green-abcdef-12345.domain.com")).toBeFalsy();
+    expect(target.isGreenInstance("test-instance-green-abcdef-12345-green.domain.com")).toBeFalsy();
+    expect(target.isGreenInstance("test-instance-green-abcdef-12345-green-00000.domain.com")).toBeFalsy();
+    expect(target.isGreenInstance("test-instance-green-abcdef-12345-green-000000.domain.com")).toBeTruthy();
+  });
+
+  it("test_remove_green_instance_prefix", () => {
+    const target = new RdsUtils();
+    expect(target.removeGreenInstancePrefix("")).toBe("");
+    expect(target.removeGreenInstancePrefix("test-instance")).toBe("test-instance");
+    expect(target.removeGreenInstancePrefix("test-instance.domain.com")).toBe("test-instance.domain.com");
+    expect(target.removeGreenInstancePrefix("test-instance-green.domain.com")).toBe("test-instance-green.domain.com");
+    expect(target.removeGreenInstancePrefix("test-instance-green-1.domain.com")).toBe("test-instance-green-1.domain.com");
+    expect(target.removeGreenInstancePrefix("test-instance-green-12345.domain.com")).toBe("test-instance-green-12345.domain.com");
+    expect(target.removeGreenInstancePrefix("test-instance-green-abcdef.domain.com")).toBe("test-instance.domain.com");
+    expect(target.removeGreenInstancePrefix("test-instance-green-abcdef-.domain.com")).toBe("test-instance-green-abcdef-.domain.com");
+    expect(target.removeGreenInstancePrefix("test-instance-green-abcdef-12345.domain.com")).toBe("test-instance-green-abcdef-12345.domain.com");
+    expect(target.removeGreenInstancePrefix("test-instance-green-abcdef-12345-green.domain.com")).toBe(
+      "test-instance-green-abcdef-12345-green.domain.com"
+    );
+    expect(target.removeGreenInstancePrefix("test-instance-green-abcdef-12345-green-00000.domain.com")).toBe(
+      "test-instance-green-abcdef-12345-green-00000.domain.com"
+    );
+    expect(target.removeGreenInstancePrefix("test-instance-green-abcdef-12345-green-000000.domain.com")).toBe(
+      "test-instance-green-abcdef-12345.domain.com"
+    );
+    expect(target.removeGreenInstancePrefix("test-instance-green-123456-green-123456.domain.com")).toBe("test-instance-green-123456.domain.com");
+  });
 });

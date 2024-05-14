@@ -32,7 +32,7 @@ import { AwsWrapperError, FailoverFailedError, FailoverSuccessError, Transaction
 import { FailoverMode, failoverModeFromValue } from "./failover_mode";
 import { HostRole } from "../../host_role";
 import { HostAvailability } from "../../host_availability/host_availability";
-import { StaleDnsHelper } from "../stale_dns_helper";
+import { StaleDnsHelper } from "../stale_dns/stale_dns_helper";
 import { WrapperProperties } from "../../wrapper_property";
 import { RdsUrlType } from "../../utils/rds_url_type";
 import { RdsUtils } from "../../utils/rds_utils";
