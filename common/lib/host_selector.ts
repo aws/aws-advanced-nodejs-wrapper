@@ -14,8 +14,9 @@
   limitations under the License.
 */
 
-export enum HostRole {
-  UNKNOWN = "unknown",
-  WRITER = "writer",
-  READER = "reader"
+import { HostInfo } from "./host_info";
+import { HostRole } from "./host_role";
+
+export interface HostSelector {
+  getHost(hosts: HostInfo[], role: HostRole, props?: Map<string, any>): HostInfo;
 }

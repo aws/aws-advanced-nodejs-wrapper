@@ -24,6 +24,7 @@ import { HostListProviderService } from "./host_list_provider_service";
 import { AwsClient } from "./aws_client";
 import { PluginService } from "./plugin_service";
 import { HostRole } from "./host_role";
+import { ConnectionProvider } from "./connection_provider";
 
 type PluginFunc<T> = (plugin: ConnectionPlugin, targetFunc: () => Promise<T>) => Promise<T>;
 
@@ -69,12 +70,22 @@ export class PluginManager {
   private pluginServiceManagerContainer: PluginServiceManagerContainer;
   private props: Map<string, any>;
 
-  constructor(pluginServiceManagerContainer: PluginServiceManagerContainer, props: Map<string, any>) {
+  constructor(
+    pluginServiceManagerContainer: PluginServiceManagerContainer,
+    props: Map<string, any>,
+    defaultConnProvider: ConnectionProvider,
+    effectiveConnProvider: ConnectionProvider | null
+  ) {
     this.pluginServiceManagerContainer = pluginServiceManagerContainer;
     this.pluginServiceManagerContainer.pluginManager = this;
     this.props = props;
     if (this.pluginServiceManagerContainer.pluginService != null) {
-      this._plugins = new ConnectionPluginChainBuilder().getPlugins(this.pluginServiceManagerContainer.pluginService, props);
+      this._plugins = new ConnectionPluginChainBuilder().getPlugins(
+        this.pluginServiceManagerContainer.pluginService,
+        props,
+        defaultConnProvider,
+        effectiveConnProvider
+      );
     }
 
     // TODO: proper parsing logic

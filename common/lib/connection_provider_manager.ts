@@ -13,3 +13,58 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 */
+
+import { ConnectionProvider } from "./connection_provider";
+import { HostRole } from "./host_role";
+import { HostInfo } from "./host_info";
+import { AwsWrapperError } from "./utils/errors";
+
+export class ConnectionProviderManager {
+  private static connProvider: ConnectionProvider | null = null;
+  private readonly defaultProvider: ConnectionProvider;
+
+  constructor(defaultProvider: ConnectionProvider) {
+    this.defaultProvider = defaultProvider;
+  }
+
+  static setConnectionProvider(connProvider: ConnectionProvider) {
+    ConnectionProviderManager.connProvider = connProvider;
+  }
+
+  getConnectionProvider(hostInfo: HostInfo, props: Map<string, any>) {
+    if (ConnectionProviderManager.connProvider?.acceptsUrl(hostInfo, props)) {
+      return ConnectionProviderManager.connProvider;
+    }
+
+    return this.defaultProvider;
+  }
+
+  acceptsStrategy(role: HostRole, strategy: string) {
+    return ConnectionProviderManager.connProvider?.acceptsStrategy(role, strategy) || this.defaultProvider.acceptsStrategy(role, strategy);
+  }
+
+  getHostInfoByStrategy(hosts: HostInfo[], role: HostRole, strategy: string, props: Map<string, any>) {
+    let host;
+    if (ConnectionProviderManager.connProvider?.acceptsStrategy(role, strategy)) {
+      try {
+        host = ConnectionProviderManager.connProvider.getHostInfoByStrategy(hosts, role, strategy, props);
+      } catch (error) {
+        if (error instanceof AwsWrapperError && error.message.includes("Unsupported host selection strategy")) {
+          // Ignore and try with the default provider.
+        } else {
+          throw error;
+        }
+      }
+    }
+
+    if (!host) {
+      host = this.defaultProvider.getHostInfoByStrategy(hosts, role, strategy, props);
+    }
+
+    return host;
+  }
+
+  static resetProvider() {
+    this.connProvider = null;
+  }
+}

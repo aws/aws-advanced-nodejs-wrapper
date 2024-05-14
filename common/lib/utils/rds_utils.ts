@@ -78,6 +78,7 @@ export class RdsUtils {
     /^(([1-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){1}(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){2}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$/i;
   private static readonly IP_V6 = /^[0-9a-fA-F]{1,4}(:[0-9a-fA-F]{1,4}){7}$/i;
   private static readonly IP_V6_COMPRESSED = /^(([0-9A-Fa-f]{1,4}(:[0-9A-Fa-f]{1,4}){0,5})?)::(([0-9A-Fa-f]{1,4}(:[0-9A-Fa-f]{1,4}){0,5})?)$/i;
+  private static readonly BG_GREEN_HOST_PATTERN = /.*(?<prefix>-green-[0-9a-z]{6})\..*/i;
 
   static readonly DNS_GROUP = "dns";
   static readonly INSTANCE_GROUP = "instance";
@@ -224,5 +225,27 @@ export class RdsUtils {
       // ELB URLs will also be classified as other
       return RdsUrlType.OTHER;
     }
+  }
+
+  public isGreenInstance(host: string) {
+    return host && host.match(RdsUtils.BG_GREEN_HOST_PATTERN);
+  }
+
+  public removeGreenInstancePrefix(host: string): string {
+    if (!host) {
+      return host;
+    }
+
+    const matcher = host.match(RdsUtils.BG_GREEN_HOST_PATTERN);
+    if (!matcher || matcher.length === 0) {
+      return host;
+    }
+
+    const prefixGroup = matcher.groups?.prefix;
+    if (!prefixGroup) {
+      return host;
+    }
+
+    return host.replace(prefixGroup, "");
   }
 }

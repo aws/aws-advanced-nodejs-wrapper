@@ -38,13 +38,19 @@ export class PluginService implements ErrorHandler, HostListProviderService {
   private _initialConnectionHostInfo?: HostInfo;
   private _isInTransaction: boolean = false;
   private pluginServiceManagerContainer: PluginServiceManagerContainer;
+  private _props: Map<string, any>;
   protected hosts: HostInfo[] = [];
   protected static readonly hostAvailabilityExpiringCache: CacheMap<string, HostAvailability> = new CacheMap<string, HostAvailability>();
 
-  constructor(container: PluginServiceManagerContainer, client: AwsClient) {
+  constructor(container: PluginServiceManagerContainer, client: AwsClient, props: Map<string, any>) {
     this._currentClient = client;
     this.pluginServiceManagerContainer = container;
+    this._props = props;
     container.pluginService = this;
+  }
+
+  get props(): Map<string, any> {
+    return this._props;
   }
 
   isInTransaction(): boolean {
@@ -205,19 +211,6 @@ export class PluginService implements ErrorHandler, HostListProviderService {
 
   updateConfigWithProperties(props: Map<string, any>) {
     this._currentClient.config = Object.fromEntries(props.entries());
-  }
-
-  replaceTargetClient(props: Map<string, any>): void {
-    const createClientFunc = this.getCurrentClient().getCreateClientFunc();
-    if (createClientFunc) {
-      if (this.getCurrentClient().targetClient) {
-        this.getCurrentClient().end();
-      }
-      const newTargetClient = createClientFunc(Object.fromEntries(props));
-      this.getCurrentClient().targetClient = newTargetClient;
-      return;
-    }
-    throw new AwsWrapperError("AwsClient is missing create target client function."); // This should not be reached
   }
 
   createTargetClient(props: Map<string, any>): any {
