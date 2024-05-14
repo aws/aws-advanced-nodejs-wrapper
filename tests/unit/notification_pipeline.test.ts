@@ -19,7 +19,8 @@ import { OldConnectionSuggestionAction } from "aws-wrapper-common-lib/lib/old_co
 import { PluginManager } from "aws-wrapper-common-lib/lib/plugin_manager";
 import { PluginServiceManagerContainer } from "aws-wrapper-common-lib/lib/plugin_service_manager_container";
 import { DefaultPlugin } from "aws-wrapper-common-lib/lib/plugins/default_plugin";
-import { mock } from "ts-mockito";
+import { instance, mock } from "ts-mockito";
+import { PluginService } from "aws-wrapper-common-lib/lib/plugin_service";
 
 class TestPlugin extends DefaultPlugin {
   counter: number = 0;
@@ -43,6 +44,7 @@ const container: PluginServiceManagerContainer = new PluginServiceManagerContain
 const props: Map<string, any> = mock(Map<string, any>);
 const hostListChanges: Map<string, Set<HostChangeOptions>> = mock(Map<string, Set<HostChangeOptions>>);
 const connectionChanges: Set<HostChangeOptions> = mock(Set<HostChangeOptions>);
+const mockPluginService = mock(PluginService);
 
 describe("notificationPipelineTest", () => {
   let pluginManager: PluginManager;
@@ -50,7 +52,7 @@ describe("notificationPipelineTest", () => {
 
   beforeEach(() => {
     pluginManager = new PluginManager(container, props);
-    plugin = new TestPlugin();
+    plugin = new TestPlugin(instance(mockPluginService));
     pluginManager["_plugins"] = [plugin];
   });
 
