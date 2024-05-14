@@ -58,8 +58,10 @@
   "Failover.invalidNode": "Node is no longer available in the topology: %s",
   "Failover.noOperationsAfterConnectionClosed": "No operations allowed after cliend ended.",
   "Failover.transactionResolutionUnknownError": "Failover.transactionResolutionUnknownError",
-  "AuroraStaleDnsHelper.clusterEndpointDns": "Cluster endpoint resolves to '%s'.",
-  "AuroraStaleDnsHelper.writerHostSpec": "Writer host: '%s'.",
-  "AuroraStaleDnsHelper.writerInetAddress": "Writer host address: '%s'",
-  "AuroraStaleDnsHelper.staleDnsDetected": "Stale DNS data detected. Opening a connection to '%s'."
+  "StaleDnsHelper.clusterEndpointDns": "Cluster endpoint resolves to '%s'.",
+  "StaleDnsHelper.writerHostInfo": "Writer host: '%s'.",
+  "StaleDnsHelper.writerInetAddress": "Writer host address: '%s'",
+  "StaleDnsHelper.staleDnsDetected": "Stale DNS data detected. Opening a connection to '%s'.",
+  "StaleDnsHelper.reset": "Reset stored writer host.",
+  "StaleDnsPlugin.requireDynamicProvider": "Dynamic host list provider is required."
 }

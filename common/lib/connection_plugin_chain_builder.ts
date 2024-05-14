@@ -26,6 +26,7 @@ import { ExecuteTimePluginFactory } from "./plugins/execute_time_plugin";
 import { ConnectTimePluginFactory } from "./plugins/connect_time_plugin";
 import { AwsSecretsManagerPluginFactory } from "./authentication/aws_secrets_manager_plugin";
 import { ConnectionProvider } from "./connection_provider";
+import { StaleDnsPluginFactory } from "./plugins/stale_dns/stale_dns_plugin";
 
 export class PluginFactoryInfo {}
 
@@ -40,7 +41,8 @@ export class ConnectionPluginChainBuilder {
     ["executeTime", ExecuteTimePluginFactory],
     ["connectTime", ConnectTimePluginFactory],
     ["secretsManager", AwsSecretsManagerPluginFactory],
-    ["failover", FailoverPluginFactory]
+    ["failover", FailoverPluginFactory],
+    ["staleDns", StaleDnsPluginFactory]
   ]);
 
   getPlugins(
