@@ -23,11 +23,15 @@ import { FederatedAuthPlugin } from "./federated_auth_plugin";
 import { SamlCredentialsProviderFactory } from "./saml_credentials_provider_factory";
 import fetch from "node-fetch";
 import https from "https";
+import { Agent, setGlobalDispatcher } from 'undici';
+import { readFileSync } from "fs";
+import axios from "axios";
+import qs, { stringify } from "querystring";
 
 export class AdfsCredentialsProviderFactory extends SamlCredentialsProviderFactory {
   static readonly IDP_NAME = "adfs";
   private static readonly TELEMETRY_FETCH_SAML = "Fetch ADFS SAML Assertion";
-  private static readonly INPUT_TAG_PATTERN = new RegExp("<input(.+?)/>");
+  private static readonly INPUT_TAG_PATTERN = new RegExp("<input(.+?)/>", "gms");
   private static readonly FORM_ACTION_PATTERN = new RegExp('<form.*?action="([^"]+)"');
   private static readonly SAML_RESPONSE_PATTERN = new RegExp('SAMLResponse\\W+value="(?<saml>[^"]+)"');
   private pluginService: PluginService;
@@ -72,35 +76,73 @@ export class AdfsCredentialsProviderFactory extends SamlCredentialsProviderFacto
     logger.debug(Messages.get("AdfsCredentialsProviderFactory.SignOnPageUrl", url));
     this.validateUrl(url);
     const httpsAgent = new https.Agent({
-      rejectUnauthorized: false
+      ca: readFileSync("tests/integration/host/src/test/resources/rds-ca-2019-root.pem").toString(),
     });
-    const resp = await fetch(url, {
-      method: "GET",
-      agent: httpsAgent
-    }); //TODO: ssl and timeout
-    const text = await resp.text();
-    if (resp.status / 100 != 2) {
-      throw new AwsWrapperError(
-        Messages.get("AdfsCredentialsProviderFactory.SignOnPageRequestFailed", resp.status.toString(), resp.statusText, text)
-      );
+    let getConfig = {
+      method: "get",
+      maxBodyLength: Infinity,
+      url,
+      httpsAgent,
+      withCredentials: true
+    };
+    
+    try {
+      const resp = await axios.request(getConfig);
+      return resp.data;
+    } catch (e) {
+      throw new AwsWrapperError(Messages.get("AdfsCredentialsProviderFactory.signOnPageRequestFailed"), e);
     }
-    return text;
   }
 
   async getFormActionBody(uri: string, parameters: Record<string, string>, props: Map<string, any>) {
     logger.debug(Messages.get("AdfsCredentialsProviderFactory.SignOnPageUrl", uri));
     this.validateUrl(uri);
-    const resp = await fetch(uri, {
-      method: "POST",
-      body: JSON.stringify(parameters)
-    }); // TODO ssl and timeout
-    const text = await resp.text();
-    if (resp.status / 100 != 2) {
-      throw new AwsWrapperError(
-        Messages.get("AdfsCredentialsProviderFactory.signOnPageRequestFailed", resp.status.toString(), resp.statusText, text)
-      );
+    const httpsAgent = new https.Agent({
+      ca: readFileSync("tests/integration/host/src/test/resources/rds-ca-2019-root.pem").toString()
+    });
+
+    let cookie;
+
+    const data = stringify(parameters);
+
+    let postConfig = {
+      method: "post",
+      maxBodyLength: Infinity,
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      url: uri,
+      httpsAgent,
+      maxRedirects: 0,
+      data: parameters,
+      withCredentials: true,
+    };
+
+    let resp2;
+
+    try {
+      // First post which results in redirect
+      const resp = await axios.request(postConfig);
+      // Store cookies from post
+      cookie = resp.headers['set-cookie'];
+      console.log(JSON.stringify(resp.data));
+    } catch (e: any) {
+      // After redirect, try get request
+      cookie = e.response.headers['set-cookie'];
+      const url = e.response.headers.location;
+      let redirectConfig = {
+        maxBodyLength: Infinity,
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          "Cookie": cookie
+        },
+        httpsAgent,
+        withCredentials: true,
+      };
+      resp2 = await axios.get(url, redirectConfig);
+      return resp2.data;
     }
-    return text;
+    return "";
   }
 
   getFormActionUrl(props: Map<string, any>, action: string) {
@@ -115,15 +157,14 @@ export class AdfsCredentialsProviderFactory extends SamlCredentialsProviderFacto
   private getInputTagsFromHtml(body: string): Array<string> {
     const distinctInputTags = new Set<string>();
     const inputTags = [];
-    const results = AdfsCredentialsProviderFactory.INPUT_TAG_PATTERN.exec(body); //TODO dotall
-    if (results === null) {
-      throw new AwsWrapperError("Input tags not found");
-    }
-    for (const tag of results) {
-      const tagNameLower = this.getValueByKey(tag, "name").toLowerCase();
-      if (!(tagNameLower.length === 0) && !distinctInputTags.has(tagNameLower)) {
-        distinctInputTags.add(tagNameLower);
-        inputTags.push(tag);
+    const tags = body.matchAll(AdfsCredentialsProviderFactory.INPUT_TAG_PATTERN);
+    if (tags) {
+      for (const tag of tags) {
+        const tagNameLower = this.getValueByKey(tag[0], "name").toLowerCase();
+        if (!(tagNameLower.length === 0) && !distinctInputTags.has(tagNameLower)) {
+          distinctInputTags.add(tagNameLower);
+          inputTags.push(tag[0]);
+        }
       }
     }
     return inputTags;
@@ -165,37 +206,36 @@ export class AdfsCredentialsProviderFactory extends SamlCredentialsProviderFacto
   }
 
   private escapeHtmlEntity(html: string | undefined): string {
-    if (!html) {
-      throw new AwsWrapperError("Empty html");
-    }
     let str = "";
     let i = 0;
-    const len = html.length;
-    while (i < len) {
-      const c = html.at(i);
-      if (c !== "&") {
-        str += c;
-        i++;
-        continue;
-      }
-      if (html.startsWith("&amp;", i)) {
-        str += "&";
-        i += 5;
-      } else if (html.startsWith("&apos;", i)) {
-        str += "'";
-        i += 6;
-      } else if (html.startsWith("&quot;", i)) {
-        str += '"';
-        i += 6;
-      } else if (html.startsWith("&lt;", i)) {
-        str += "<";
-        i += 4;
-      } else if (html.startsWith("&gt;", i)) {
-        str += ">";
-        i += 4;
-      } else {
-        str += c;
-        ++i;
+    if (html) {
+      const len = html.length;
+      while (i < len) {
+        const c = html.at(i);
+        if (c !== "&") {
+          str += c;
+          i++;
+          continue;
+        }
+        if (html.startsWith("&amp;", i)) {
+          str += "&";
+          i += 5;
+        } else if (html.startsWith("&apos;", i)) {
+          str += "'";
+          i += 6;
+        } else if (html.startsWith("&quot;", i)) {
+          str += '"';
+          i += 6;
+        } else if (html.startsWith("&lt;", i)) {
+          str += "<";
+          i += 4;
+        } else if (html.startsWith("&gt;", i)) {
+          str += ">";
+          i += 4;
+        } else {
+          str += c;
+          ++i;
+        }
       }
     }
     return str;
@@ -203,7 +243,10 @@ export class AdfsCredentialsProviderFactory extends SamlCredentialsProviderFacto
 
   getFormActionHtmlBody(body: string): string | null {
     if (AdfsCredentialsProviderFactory.FORM_ACTION_PATTERN.test(body)) {
-      return this.escapeHtmlEntity(AdfsCredentialsProviderFactory.FORM_ACTION_PATTERN.exec(body)?.[0]);
+      const match = body.match(AdfsCredentialsProviderFactory.FORM_ACTION_PATTERN);
+      if (match) {
+        return this.escapeHtmlEntity(match[1]);
+      }
     }
     return null;
   }

@@ -69,6 +69,7 @@ export class WrapperProperties {
   );
   static readonly IAM_ROLE_ARN = new WrapperProperty<string>("iamRoleArn", "The ARN of the IAM Role that is to be assumed.", null);
   static readonly IAM_IDP_ARN = new WrapperProperty<string>("iamIdpArn", "The ARN of the identity provider", null);
+  static readonly IAM_TOKEN_EXPIRATION = new WrapperProperty<number>("iamTokenExpiration", "IAM token cache expiration in seconds", 870);
 
   static readonly IDP_USERNAME = new WrapperProperty<string>("idpUsername", "The federated user name", null);
   static readonly IDP_PASSWORD = new WrapperProperty<string>("idpPassword", "The federated user password", null);

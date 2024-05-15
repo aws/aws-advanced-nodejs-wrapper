@@ -30,8 +30,7 @@ export abstract class SamlCredentialsProviderFactory implements CredentialsProvi
     const stsClient = new STSClient({
       region: region
     });
-    const response = await stsClient.send(assumeRoleWithSamlRequest);
-    // TODO not sure what return type here is supposed to be?
+    return await stsClient.send(assumeRoleWithSamlRequest);
   }
 
   abstract getSamlAssertion(props: Map<string, any>): Promise<string>;

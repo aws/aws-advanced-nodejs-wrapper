@@ -58,6 +58,11 @@
     "typescript": "^4.2.3"
   },
   "dependencies": {
-    "@aws-sdk/client-sts": "^3.565.0"
+    "@aws-cdk/aws-ec2": "^1.204.0",
+    "@aws-sdk/client-sts": "^3.565.0",
+    "aws-sdk": "^2.1619.0",
+    "axios": "^1.6.8",
+    "qs": "^6.12.1",
+    "undici": "^5.0.0"
   }
 }

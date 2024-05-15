@@ -30,13 +30,13 @@ import { ConnectTimePluginFactory } from "../connect_time_plugin";
 import { ConnectionPlugin } from "../../connection_plugin";
 import { AdfsCredentialsProviderFactory } from "./adfs_credentials_provider_factory";
 import { CredentialsProviderFactory } from "./credentials_provider_factory";
+import { Credentials } from "aws-sdk";
 
 export class FederatedAuthPlugin extends AbstractConnectionPlugin {
   protected static readonly tokenCache = new Map<string, TokenInfo>();
   protected rdsUtils: RdsUtils = new RdsUtils();
   protected pluginService: PluginService;
   private static readonly subscribedMethods = new Set<string>(["connect", "forceConnect"]);
-  private static readonly DEFAULT_TOKEN_EXPIRATION_SEC = 15 * 60 - 30;
   private static readonly DEFAULT_HTTP_TIMEOUT_MILLIS = 60000;
   protected static SAML_RESPONSE_PATTERN = new RegExp('SAMLResponse\\W+value="(?<saml>[^"]+)"');
   protected static SAML_RESPONSE_PATTERN_GROUP = "saml";
@@ -134,12 +134,20 @@ export class FederatedAuthPlugin extends AbstractConnectionPlugin {
     region: string
   ): Promise<string> {
     const user: string = WrapperProperties.DB_USER.get(props);
-    const credentialsProvider = this.credentialsProviderFactory.getAwsCredentialsProvider(hostname, region, props);
+    const credentialsProvider = await this.credentialsProviderFactory.getAwsCredentialsProvider(hostname, region, props);
+
+    let credentialArray = credentialsProvider["Credentials"];
+    const accessKeyId = credentialArray["AccessKeyId"];
+    const secretAccessKey = credentialArray["SecretAccessKey"];
+    const sessionToken = credentialArray["SessionToken"];
+
+    let credentials = new Credentials(accessKeyId, secretAccessKey, sessionToken);
+
     const signer = new Signer({
       hostname: hostname,
       port: port,
       region: region,
-      credentials: credentialsProvider,
+      credentials,
       username: user
     });
 
