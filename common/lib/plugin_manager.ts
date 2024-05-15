@@ -65,9 +65,9 @@ class PluginChain<T> {
 
 export class PluginManager {
   private static readonly PLUGIN_CHAIN_CACHE = new Map<[string, HostInfo], PluginChain<any>>();
-  private static readonly ALL_METHODS = "*";
-  private static readonly NOTIFY_HOST_LIST_CHANGED_METHOD = "notifyHostListChanged";
-  private static readonly NOTIFY_CONNECTION_CHANGED_METHOD = "notifyConnectionChanged";
+  private static readonly ALL_METHODS: string = "*";
+  private static readonly NOTIFY_HOST_LIST_CHANGED_METHOD: string = "notifyHostListChanged";
+  private static readonly NOTIFY_CONNECTION_CHANGED_METHOD: string = "notifyConnectionChanged";
   private static readonly ACCEPTS_STRATEGY_METHOD: string = "acceptsStrategy";
   private static readonly GET_HOST_INFO_BY_STRATEGY_METHOD: string = "getHostInfoByStrategy";
   private readonly _plugins: ConnectionPlugin[] = [];
