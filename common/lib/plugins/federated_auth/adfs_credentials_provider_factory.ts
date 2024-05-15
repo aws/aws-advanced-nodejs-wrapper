@@ -71,6 +71,7 @@ export class AdfsCredentialsProviderFactory extends SamlCredentialsProviderFacto
   async getSignInPageBody(url: string, props: Map<string, any>) {
     logger.debug(Messages.get("AdfsCredentialsProviderFactory.SignOnPageUrl", url));
     this.validateUrl(url);
+    // TODO: remove hardcoded certificate
     const httpsAgent = new https.Agent({
       ca: readFileSync("tests/integration/host/src/test/resources/rds-ca-2019-root.pem").toString()
     });
@@ -93,6 +94,7 @@ export class AdfsCredentialsProviderFactory extends SamlCredentialsProviderFacto
   async getFormActionBody(uri: string, parameters: Record<string, string>, props: Map<string, any>) {
     logger.debug(Messages.get("AdfsCredentialsProviderFactory.SignOnPageUrl", uri));
     this.validateUrl(uri);
+    // TODO: remove hardcoded certificate
     const httpsAgent = new https.Agent({
       ca: readFileSync("tests/integration/host/src/test/resources/rds-ca-2019-root.pem").toString()
     });
@@ -114,16 +116,17 @@ export class AdfsCredentialsProviderFactory extends SamlCredentialsProviderFacto
       withCredentials: true
     };
 
-    let resp2;
+    let getResp;
 
     try {
       // First post which results in redirect
-      const resp = await axios.request(postConfig);
+      const postResp = await axios.request(postConfig);
       // Store cookies from post
-      cookie = resp.headers["set-cookie"];
-      console.log(JSON.stringify(resp.data));
+      cookie = postResp.headers["set-cookie"];
+      console.log(JSON.stringify(postResp.data));
     } catch (e: any) {
       // After redirect, try get request
+      // TODO: check for non 300 status codes
       cookie = e.response.headers["set-cookie"];
       const url = e.response.headers.location;
       const redirectConfig = {
@@ -135,8 +138,8 @@ export class AdfsCredentialsProviderFactory extends SamlCredentialsProviderFacto
         httpsAgent,
         withCredentials: true
       };
-      resp2 = await axios.get(url, redirectConfig);
-      return resp2.data;
+      getResp = await axios.get(url, redirectConfig);
+      return getResp.data;
     }
     return "";
   }

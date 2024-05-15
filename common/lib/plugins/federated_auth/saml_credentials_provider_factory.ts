@@ -20,6 +20,7 @@ import { AssumeRoleWithSAMLCommand, STSClient } from "@aws-sdk/client-sts";
 import { WrapperProperties } from "../../wrapper_property";
 
 export abstract class SamlCredentialsProviderFactory implements CredentialsProviderFactory {
+  // TODO: set type
   async getAwsCredentialsProvider(host: string, region: string, props: Map<string, any>) {
     const samlAssertion = await this.getSamlAssertion(props);
     const assumeRoleWithSamlRequest = new AssumeRoleWithSAMLCommand({
