@@ -20,6 +20,8 @@ import { Messages } from "../utils/messages";
 import { HostListProviderService } from "../host_list_provider_service";
 import { HostInfo } from "../host_info";
 import { AbstractConnectionPlugin } from "../abstract_connection_plugin";
+import { HostChangeOptions } from "../host_change_options";
+import { OldConnectionSuggestionAction } from "../old_connection_suggestion_action";
 import { HostRole } from "../host_role";
 import { PluginService } from "../plugin_service";
 import { ConnectionProviderManager } from "../connection_provider_manager";
@@ -107,6 +109,14 @@ export class DefaultPlugin extends AbstractConnectionPlugin {
   override async execute<Type>(methodName: string, methodFunc: () => Promise<Type>): Promise<Type> {
     logger.debug(Messages.get("DefaultPlugin.executingMethod", methodName));
     return await methodFunc();
+  }
+
+  override notifyConnectionChanged(changes: Set<HostChangeOptions>): OldConnectionSuggestionAction {
+    return OldConnectionSuggestionAction.NO_OPINION;
+  }
+
+  override notifyHostListChanged(changes: Map<string, Set<HostChangeOptions>>): void {
+    // do nothing
   }
 
   override acceptsStrategy(role: HostRole, strategy: string): boolean {

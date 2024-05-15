@@ -30,6 +30,9 @@ import { CacheMap } from "./utils/cache_map";
 import { HostChangeOptions } from "./host_change_options";
 import { HostRole } from "./host_role";
 import { WrapperProperties } from "./wrapper_property";
+import { PluginManager } from "./plugin_manager";
+import { OldConnectionSuggestionAction } from "./old_connection_suggestion_action";
+import { logger } from "../logutils";
 
 export class PluginService implements ErrorHandler, HostListProviderService {
   private _currentHostInfo?: HostInfo;
@@ -198,8 +201,11 @@ export class PluginService implements ErrorHandler, HostListProviderService {
 
     if (changes.size > 0) {
       this.hosts = newHosts ? newHosts : [];
-      // TODO: uncomment once notifyHostListChanged is implemented.
-      // this.pluginServiceManagerContainer.pluginManager.notifyHostListChanged(changes);
+      if (this.pluginServiceManagerContainer.pluginManager) {
+        this.pluginServiceManagerContainer.pluginManager.notifyHostListChanged(changes);
+      } else {
+        throw new AwsWrapperError("Connection Plugin Manager was not detected."); // This should not be reached
+      }
     }
   }
 
@@ -236,9 +242,44 @@ export class PluginService implements ErrorHandler, HostListProviderService {
     throw new AwsWrapperError("AwsClient is missing target client connect function."); // This should not be reached
   }
 
-  setCurrentClient(newClient: any, hostInfo: HostInfo) {
-    this.getCurrentClient().targetClient = newClient;
-    this._currentHostInfo = hostInfo;
+  // TODO: Add session state changes
+  async setCurrentClient(newClient: any, hostInfo: HostInfo): Promise<Set<HostChangeOptions>> {
+    if (this.getCurrentClient().targetClient === null) {
+      this.getCurrentClient().targetClient = newClient;
+      this._currentHostInfo = hostInfo;
+      const changes = new Set<HostChangeOptions>([HostChangeOptions.INITIAL_CONNECTION]);
+      if (this.pluginServiceManagerContainer.pluginManager) {
+        this.pluginServiceManagerContainer.pluginManager.notifyConnectionChanged(changes, null);
+      }
+      return changes;
+    } else {
+      if (this._currentHostInfo) {
+        const changes: Set<HostChangeOptions> = this.compare(this._currentHostInfo, hostInfo);
+        if (changes.size > 0) {
+          const oldClient: any = this.getCurrentClient().targetClient;
+          const isInTransaction = this.isInTransaction;
+          try {
+            this.getCurrentClient().targetClient = newClient;
+            this._currentHostInfo = hostInfo;
+            this.setInTransaction(false);
+
+            if (this.pluginServiceManagerContainer.pluginManager) {
+              const pluginOpinions: Set<OldConnectionSuggestionAction> =
+                await this.pluginServiceManagerContainer.pluginManager.notifyConnectionChanged(changes, null);
+
+              const shouldCloseConnection =
+                changes.has(HostChangeOptions.CONNECTION_OBJECT_CHANGED) &&
+                !pluginOpinions.has(OldConnectionSuggestionAction.PRESERVE) &&
+                oldClient.isValid();
+            }
+          } finally {
+            /* empty */
+          }
+        }
+        return changes;
+      }
+      throw new AwsWrapperError("HostInfo not found"); // Should not be reached
+    }
   }
 
   async isClientValid(targetClient: any): Promise<boolean> {

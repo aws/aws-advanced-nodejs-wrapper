@@ -23,6 +23,8 @@ import { PluginServiceManagerContainer } from "./plugin_service_manager_containe
 import { HostListProviderService } from "./host_list_provider_service";
 import { AwsClient } from "./aws_client";
 import { PluginService } from "./plugin_service";
+import { HostChangeOptions } from "./host_change_options";
+import { OldConnectionSuggestionAction } from "./old_connection_suggestion_action";
 import { HostRole } from "./host_role";
 import { ConnectionProvider } from "./connection_provider";
 
@@ -64,6 +66,8 @@ class PluginChain<T> {
 export class PluginManager {
   private static readonly PLUGIN_CHAIN_CACHE = new Map<[string, HostInfo], PluginChain<any>>();
   private static readonly ALL_METHODS: string = "*";
+  private static readonly NOTIFY_HOST_LIST_CHANGED_METHOD: string = "notifyHostListChanged";
+  private static readonly NOTIFY_CONNECTION_CHANGED_METHOD: string = "notifyConnectionChanged";
   private static readonly ACCEPTS_STRATEGY_METHOD: string = "acceptsStrategy";
   private static readonly GET_HOST_INFO_BY_STRATEGY_METHOD: string = "getHostInfoByStrategy";
   private readonly _plugins: ConnectionPlugin[] = [];
@@ -167,6 +171,51 @@ export class PluginManager {
       () => {
         throw new AwsWrapperError("Shouldn't be called");
       }
+    );
+  }
+
+  protected async notifySubscribedPlugins(
+    methodName: string,
+    pluginFunc: PluginFunc<void>,
+    skipNotificationForThisPlugin: ConnectionPlugin | null
+  ): Promise<void> {
+    if (pluginFunc === null) {
+      throw new AwsWrapperError("pluginFunc not found.");
+    }
+    for (const plugin of this._plugins) {
+      if (plugin === skipNotificationForThisPlugin) {
+        continue;
+      }
+      if (plugin.getSubscribedMethods().has(PluginManager.ALL_METHODS) || plugin.getSubscribedMethods().has(methodName)) {
+        await pluginFunc(plugin, () => Promise.resolve());
+      }
+    }
+  }
+
+  async notifyConnectionChanged(
+    changes: Set<HostChangeOptions>,
+    skipNotificationForThisPlugin: ConnectionPlugin | null
+  ): Promise<Set<OldConnectionSuggestionAction>> {
+    const result = new Set<OldConnectionSuggestionAction>();
+    await this.notifySubscribedPlugins(
+      PluginManager.NOTIFY_CONNECTION_CHANGED_METHOD,
+      (plugin, func) => {
+        result.add(plugin.notifyConnectionChanged(changes));
+        return Promise.resolve();
+      },
+      skipNotificationForThisPlugin
+    );
+    return result;
+  }
+
+  async notifyHostListChanged(changes: Map<string, Set<HostChangeOptions>>): Promise<void> {
+    await this.notifySubscribedPlugins(
+      PluginManager.NOTIFY_HOST_LIST_CHANGED_METHOD,
+      (plugin, func) => {
+        plugin.notifyHostListChanged(changes);
+        return Promise.resolve();
+      },
+      null
     );
   }
 

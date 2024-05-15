@@ -40,6 +40,7 @@ import { WrapperProperties } from "aws-wrapper-common-lib/lib/wrapper_property";
 import { AwsMySQLClient } from "../../mysql";
 import { anything, instance, mock, reset, resetCalls, spy, verify, when } from "ts-mockito";
 import { Messages } from "aws-wrapper-common-lib/lib/utils/messages";
+import { HostChangeOptions } from "aws-wrapper-common-lib/lib/host_change_options";
 
 const builder = new HostInfoBuilder({ hostAvailabilityStrategy: new SimpleHostAvailabilityStrategy() });
 
@@ -97,32 +98,30 @@ describe("reader failover handler", () => {
     reset(mockWriterResult);
   });
 
-  // // TODO: enable when notifyNodeListChanged is implemented
-  // it("test notify list changed with failover disabled", async () => {
-  //   properties.set(WrapperProperties.ENABLE_CLUSTER_AWARE_FAILOVER.name, false);
-  //   const changes: Map<string, Set<NodeChangeOptions>> = new Map();
+  it("test notify list changed with failover disabled", async () => {
+    properties.set(WrapperProperties.ENABLE_CLUSTER_AWARE_FAILOVER.name, false);
+    const changes: Map<string, Set<HostChangeOptions>> = new Map();
 
-  //   initializePlugin();
-  //   plugin.notifyNodeListChanged(changes);
+    initializePlugin(instance(mockPluginService));
+    plugin.notifyHostListChanged(changes);
 
-  //   verify(mockPluginService.getCurrentHostInfo()).never();
-  // });
+    verify(mockPluginService.getCurrentHostInfo()).never();
+  });
 
-  // // TODO: enable when notifyNodeListChanged is implemented
-  // it("test notify list changed with valid connection not in topology", async () => {
-  //   const changes: Map<string, Set<NodeChangeOptions>> = new Map();
-  //   changes.set("cluster-host/", new Set<NodeChangeOptions>([NodeChangeOptions.NODE_DELETED]));
-  //   changes.set("instance/", new Set<NodeChangeOptions>([NodeChangeOptions.NODE_ADDED]));
+  it("test notify list changed with valid connection not in topology", async () => {
+    const changes: Map<string, Set<HostChangeOptions>> = new Map();
+    changes.set("cluster-host/", new Set<HostChangeOptions>([HostChangeOptions.HOST_DELETED]));
+    changes.set("instance/", new Set<HostChangeOptions>([HostChangeOptions.HOST_ADDED]));
 
-  //   initializePlugin();
-  //   plugin.notifyNodeListChanged(changes);
+    initializePlugin(instance(mockPluginService));
+    plugin.notifyHostListChanged(changes);
 
-  //   when(mockHostInfo.url).thenReturn("cluster-url/");
-  //   when(mockHostInfo.allAliases).thenReturn(new Set<string>(["instance"]));
+    when(mockHostInfo.url).thenReturn("cluster-url/");
+    when(mockHostInfo.allAliases).thenReturn(new Set<string>(["instance"]));
 
-  //   verify(mockPluginService.getCurrentHostInfo()).once();
-  //   verify(mockHostInfo.allAliases).never();
-  // });
+    verify(mockPluginService.getCurrentHostInfo()).once();
+    verify(mockHostInfo.allAliases).never();
+  });
 
   it("test update topology", async () => {
     when(mockAwsClient.isValid()).thenResolve(true);

@@ -78,7 +78,7 @@ export class StaleDnsHelper {
     logger.debug(Messages.get("StaleDnsHelper.clusterEndpointDns", hostInetAddress));
 
     if (!clusterInetAddress) {
-      this.pluginService.setCurrentClient(currentTargetClient, currentHostInfo);
+      await this.pluginService.setCurrentClient(currentTargetClient, currentHostInfo);
       return result;
     }
 
@@ -95,7 +95,7 @@ export class StaleDnsHelper {
     if (!this.writerHostInfo) {
       const writerCandidate = this.getWriter();
       if (writerCandidate && this.rdsUtils.isRdsClusterDns(writerCandidate.host)) {
-        this.pluginService.setCurrentClient(currentTargetClient, currentHostInfo);
+        await this.pluginService.setCurrentClient(currentTargetClient, currentHostInfo);
         return result;
       }
       this.writerHostInfo = writerCandidate;
@@ -104,7 +104,7 @@ export class StaleDnsHelper {
     logger.debug(Messages.get("StaleDnsHelper.writerHostInfo", this.writerHostInfo?.host ?? ""));
 
     if (!this.writerHostInfo) {
-      this.pluginService.setCurrentClient(currentTargetClient, currentHostInfo);
+      await this.pluginService.setCurrentClient(currentTargetClient, currentHostInfo);
       return result;
     }
 
@@ -120,7 +120,7 @@ export class StaleDnsHelper {
     logger.debug(Messages.get("StaleDnsHelper.writerInetAddress", this.writerHostAddress));
 
     if (!this.writerHostAddress) {
-      this.pluginService.setCurrentClient(currentTargetClient, currentHostInfo);
+      await this.pluginService.setCurrentClient(currentTargetClient, currentHostInfo);
       return result;
     }
 
@@ -133,7 +133,7 @@ export class StaleDnsHelper {
       try {
         result = await this.pluginService.connect(this.writerHostInfo, props, this.pluginService.getDialect().getConnectFunc(targetClient));
         await this.pluginService.tryClosingTargetClient(currentTargetClient);
-        this.pluginService.setCurrentClient(targetClient, this.writerHostInfo);
+        await this.pluginService.setCurrentClient(targetClient, this.writerHostInfo);
         return result;
       } catch (error: any) {
         await this.pluginService.tryClosingTargetClient(targetClient);
@@ -144,7 +144,7 @@ export class StaleDnsHelper {
       }
     }
 
-    this.pluginService.setCurrentClient(currentTargetClient, currentHostInfo);
+    await this.pluginService.setCurrentClient(currentTargetClient, currentHostInfo);
     return result;
   }
 
