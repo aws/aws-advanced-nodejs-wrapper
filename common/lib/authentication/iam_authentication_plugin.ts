@@ -26,7 +26,7 @@ import { Signer } from "@aws-sdk/rds-signer";
 import { AwsCredentialsManager } from "./aws_credentials_manager";
 import { AbstractConnectionPlugin } from "../abstract_connection_plugin";
 import { WrapperProperties } from "../wrapper_property";
-import { TokenInfo } from "../utils/iam_auth_utils";
+import { IamAuthUtils, TokenInfo } from "../utils/iam_auth_utils";
 
 export class IamAuthenticationPlugin extends AbstractConnectionPlugin {
   private static readonly SUBSCRIBED_METHODS = new Set<string>(["connect", "forceConnect"]);
@@ -64,7 +64,7 @@ export class IamAuthenticationPlugin extends AbstractConnectionPlugin {
 
     const host = WrapperProperties.IAM_HOST.get(props) ? WrapperProperties.IAM_HOST.get(props) : hostInfo.host;
     const region: string = WrapperProperties.IAM_REGION.get(props) ? WrapperProperties.IAM_REGION.get(props) : this.getRdsRegion(host);
-    const port = this.getPort(props, hostInfo);
+    const port = IamAuthUtils.getIamPort(props, hostInfo, this.pluginService.getCurrentClient().defaultPort);
     const tokenExpirationSec = WrapperProperties.IAM_EXPIRATION.get(props);
 
     const cacheKey: string = this.getCacheKey(port, user, host, region);

@@ -37,11 +37,9 @@ export class FederatedAuthPlugin extends AbstractConnectionPlugin {
   protected rdsUtils: RdsUtils = new RdsUtils();
   protected pluginService: PluginService;
   private static readonly subscribedMethods = new Set<string>(["connect", "forceConnect"]);
-  private static readonly DEFAULT_HTTP_TIMEOUT_MILLIS = 60000;
   protected static SAML_RESPONSE_PATTERN = new RegExp('SAMLResponse\\W+value="(?<saml>[^"]+)"');
   protected static SAML_RESPONSE_PATTERN_GROUP = "saml";
   protected static HTTPS_URL_PATTERN = new RegExp("^(https)://[-a-zA-Z0-9+&@#/%?=~_!:,.']*[-a-zA-Z0-9+&@#/%=~_']");
-  private static TELEMETRY_FETCH_TOKEN = "fetch IAM token";
   private readonly credentialsProviderFactory: CredentialsProviderFactory;
 
   public getSubscribedMethods(): Set<string> {
@@ -136,12 +134,12 @@ export class FederatedAuthPlugin extends AbstractConnectionPlugin {
     const user: string = WrapperProperties.DB_USER.get(props);
     const credentialsProvider = await this.credentialsProviderFactory.getAwsCredentialsProvider(hostname, region, props);
 
-    let credentialArray = credentialsProvider["Credentials"];
+    const credentialArray = credentialsProvider["Credentials"];
     const accessKeyId = credentialArray["AccessKeyId"];
     const secretAccessKey = credentialArray["SecretAccessKey"];
     const sessionToken = credentialArray["SessionToken"];
 
-    let credentials = new Credentials(accessKeyId, secretAccessKey, sessionToken);
+    const credentials = new Credentials(accessKeyId, secretAccessKey, sessionToken);
 
     const signer = new Signer({
       hostname: hostname,

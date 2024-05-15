@@ -19,18 +19,14 @@ import { PluginService } from "../../plugin_service";
 import { AwsWrapperError } from "../../utils/errors";
 import { Messages } from "../../utils/messages";
 import { WrapperProperties } from "../../wrapper_property";
-import { FederatedAuthPlugin } from "./federated_auth_plugin";
 import { SamlCredentialsProviderFactory } from "./saml_credentials_provider_factory";
-import fetch from "node-fetch";
 import https from "https";
-import { Agent, setGlobalDispatcher } from 'undici';
 import { readFileSync } from "fs";
-import axios from "axios";
-import qs, { stringify } from "querystring";
+import axios, { AxiosError } from "axios";
+import { stringify } from "querystring";
 
 export class AdfsCredentialsProviderFactory extends SamlCredentialsProviderFactory {
   static readonly IDP_NAME = "adfs";
-  private static readonly TELEMETRY_FETCH_SAML = "Fetch ADFS SAML Assertion";
   private static readonly INPUT_TAG_PATTERN = new RegExp("<input(.+?)/>", "gms");
   private static readonly FORM_ACTION_PATTERN = new RegExp('<form.*?action="([^"]+)"');
   private static readonly SAML_RESPONSE_PATTERN = new RegExp('SAMLResponse\\W+value="(?<saml>[^"]+)"');
@@ -76,21 +72,21 @@ export class AdfsCredentialsProviderFactory extends SamlCredentialsProviderFacto
     logger.debug(Messages.get("AdfsCredentialsProviderFactory.SignOnPageUrl", url));
     this.validateUrl(url);
     const httpsAgent = new https.Agent({
-      ca: readFileSync("tests/integration/host/src/test/resources/rds-ca-2019-root.pem").toString(),
+      ca: readFileSync("tests/integration/host/src/test/resources/rds-ca-2019-root.pem").toString()
     });
-    let getConfig = {
+    const getConfig = {
       method: "get",
       maxBodyLength: Infinity,
       url,
       httpsAgent,
       withCredentials: true
     };
-    
+
     try {
       const resp = await axios.request(getConfig);
       return resp.data;
-    } catch (e) {
-      throw new AwsWrapperError(Messages.get("AdfsCredentialsProviderFactory.signOnPageRequestFailed"), e);
+    } catch (e: any) {
+      throw new AwsWrapperError(Messages.get("AdfsCredentialsProviderFactory.signOnPageRequestFailed", e.status, e.statusText, e.text));
     }
   }
 
@@ -105,17 +101,17 @@ export class AdfsCredentialsProviderFactory extends SamlCredentialsProviderFacto
 
     const data = stringify(parameters);
 
-    let postConfig = {
+    const postConfig = {
       method: "post",
       maxBodyLength: Infinity,
       headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
+        "Content-Type": "application/x-www-form-urlencoded"
       },
       url: uri,
       httpsAgent,
       maxRedirects: 0,
       data: parameters,
-      withCredentials: true,
+      withCredentials: true
     };
 
     let resp2;
@@ -124,20 +120,20 @@ export class AdfsCredentialsProviderFactory extends SamlCredentialsProviderFacto
       // First post which results in redirect
       const resp = await axios.request(postConfig);
       // Store cookies from post
-      cookie = resp.headers['set-cookie'];
+      cookie = resp.headers["set-cookie"];
       console.log(JSON.stringify(resp.data));
     } catch (e: any) {
       // After redirect, try get request
-      cookie = e.response.headers['set-cookie'];
+      cookie = e.response.headers["set-cookie"];
       const url = e.response.headers.location;
-      let redirectConfig = {
+      const redirectConfig = {
         maxBodyLength: Infinity,
         headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-          "Cookie": cookie
+          "Content-Type": "application/x-www-form-urlencoded",
+          Cookie: cookie
         },
         httpsAgent,
-        withCredentials: true,
+        withCredentials: true
       };
       resp2 = await axios.get(url, redirectConfig);
       return resp2.data;
@@ -206,39 +202,39 @@ export class AdfsCredentialsProviderFactory extends SamlCredentialsProviderFacto
   }
 
   private escapeHtmlEntity(html: string | undefined): string {
-    let str = "";
+    let ret = "";
     let i = 0;
     if (html) {
       const len = html.length;
       while (i < len) {
         const c = html.at(i);
         if (c !== "&") {
-          str += c;
+          ret += c;
           i++;
           continue;
         }
         if (html.startsWith("&amp;", i)) {
-          str += "&";
+          ret += "&";
           i += 5;
         } else if (html.startsWith("&apos;", i)) {
-          str += "'";
+          ret += "'";
           i += 6;
         } else if (html.startsWith("&quot;", i)) {
-          str += '"';
+          ret += '"';
           i += 6;
         } else if (html.startsWith("&lt;", i)) {
-          str += "<";
+          ret += "<";
           i += 4;
         } else if (html.startsWith("&gt;", i)) {
-          str += ">";
+          ret += ">";
           i += 4;
         } else {
-          str += c;
+          ret += c;
           ++i;
         }
       }
     }
-    return str;
+    return ret;
   }
 
   getFormActionHtmlBody(body: string): string | null {
