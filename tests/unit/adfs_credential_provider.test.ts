@@ -14,7 +14,6 @@
   limitations under the License.
 */
 
-import { FederatedAuthPlugin } from "aws-wrapper-common-lib/lib/plugins/federated_auth/federated_auth_plugin";
 import { PluginService } from "aws-wrapper-common-lib/lib/plugin_service";
 import { WrapperProperties } from "aws-wrapper-common-lib/lib/wrapper_property";
 import { readFileSync } from "fs";
@@ -25,8 +24,8 @@ const props = new Map<string, any>();
 const pluginService = mock(PluginService);
 const pluginServiceMock = instance(pluginService);
 
-describe("adfs_test", () => {
-  it("test_get_saml_assertion", async () => {
+describe("adfsTest", () => {
+  it("testGetSamlAssertion", async () => {
     WrapperProperties.IDP_ENDPOINT.set(props, "ec2amaz-ab3cdef.example.com");
     WrapperProperties.IDP_USERNAME.set(props, "someFederatedUsername@example.com");
     WrapperProperties.IDP_PASSWORD.set(props, "somePassword");

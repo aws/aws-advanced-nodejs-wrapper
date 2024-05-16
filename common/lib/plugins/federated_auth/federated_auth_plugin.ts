@@ -31,6 +31,7 @@ import { ConnectionPlugin } from "../../connection_plugin";
 import { AdfsCredentialsProviderFactory } from "./adfs_credentials_provider_factory";
 import { CredentialsProviderFactory } from "./credentials_provider_factory";
 import { Credentials } from "aws-sdk";
+import { AssumeRoleWithSAMLCommandOutput } from "@aws-sdk/client-sts";
 
 export class FederatedAuthPlugin extends AbstractConnectionPlugin {
   protected static readonly tokenCache = new Map<string, TokenInfo>();
@@ -132,12 +133,22 @@ export class FederatedAuthPlugin extends AbstractConnectionPlugin {
     region: string
   ): Promise<string> {
     const user: string = WrapperProperties.DB_USER.get(props);
-    const credentialsProvider = await this.credentialsProviderFactory.getAwsCredentialsProvider(hostname, region, props);
+    const credentialsProvider: AssumeRoleWithSAMLCommandOutput = await this.credentialsProviderFactory.getAwsCredentialsProvider(
+      hostname,
+      region,
+      props
+    );
 
-    const credentialArray = credentialsProvider["Credentials"];
-    const accessKeyId = credentialArray["AccessKeyId"];
-    const secretAccessKey = credentialArray["SecretAccessKey"];
-    const sessionToken = credentialArray["SessionToken"];
+    const credentialArr = credentialsProvider["Credentials"];
+    if (!credentialArr) {
+      throw new AwsWrapperError("Credentials from SAML requst not found");
+    }
+    const accessKeyId = credentialArr["AccessKeyId"];
+    const secretAccessKey = credentialArr["SecretAccessKey"];
+    const sessionToken = credentialArr["SessionToken"];
+    if (accessKeyId === undefined || secretAccessKey === undefined || sessionToken === undefined) {
+      throw new AwsWrapperError("Credentials undefined");
+    }
 
     const credentials = new Credentials(accessKeyId, secretAccessKey, sessionToken);
 
