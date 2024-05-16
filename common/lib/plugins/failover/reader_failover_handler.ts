@@ -23,6 +23,7 @@ import { HostAvailability } from "../../host_availability/host_availability";
 import { AwsWrapperError } from "../../utils/errors";
 import { logger } from "../../../logutils";
 import { Messages } from "../../utils/messages";
+import { WrapperProperties } from "../../wrapper_property";
 
 export interface ReaderFailoverHandler {
   failover(hosts: HostInfo[], currentHost: HostInfo): Promise<ReaderFailoverResult>;
@@ -314,7 +315,7 @@ class ConnectionAttemptTask {
       )
     );
     const copy = new Map(this.initialConnectionProps);
-    copy.set("host", this.newHost.host);
+    copy.set(WrapperProperties.HOST.name, this.newHost.host);
     try {
       this.targetClient = await this.pluginService.createTargetClient(copy);
       const connectFunc = this.pluginService.getConnectFunc(this.targetClient);

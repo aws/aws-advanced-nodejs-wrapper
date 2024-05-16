@@ -22,6 +22,7 @@ import { AwsClient } from "aws-wrapper-common-lib/lib/aws_client";
 import { HostInfo } from "aws-wrapper-common-lib/lib/host_info";
 import { TopologyAwareDatabaseDialect } from "aws-wrapper-common-lib/lib/topology_aware_database_dialect";
 import { HostRole } from "aws-wrapper-common-lib/lib/host_role";
+import { Connection } from "mysql2";
 
 export class AuroraMySQLDatabaseDialect extends MySQLDatabaseDialect implements TopologyAwareDatabaseDialect {
   private static readonly TOPOLOGY_QUERY: string =
@@ -32,9 +33,11 @@ export class AuroraMySQLDatabaseDialect extends MySQLDatabaseDialect implements 
     "WHERE time_to_sec(timediff(now(), LAST_UPDATE_TIMESTAMP)) <= 300 OR SESSION_ID = 'MASTER_SESSION_ID' ";
   private static readonly HOST_ID_QUERY: string = "SELECT @@aurora_server_id as host";
   private static readonly IS_READER_QUERY: string = "SELECT @@innodb_read_only as is_reader";
+  private static readonly AURORA_VERSION_QUERY = "SHOW VARIABLES LIKE 'aurora_version'";
 
-  getDialectUpdateCandidates(): string[] {
-    return []; // TODO
+  constructor() {
+    super();
+    this.dialectName = "AuroraMySQLDatabaseDialect";
   }
 
   getHostListProvider(props: Map<string, any>, originalUrl: string, hostListProviderService: HostListProviderService): HostListProvider {
@@ -67,5 +70,20 @@ export class AuroraMySQLDatabaseDialect extends MySQLDatabaseDialect implements 
   async getHostRole(client: AwsClient, props: Map<string, any>): Promise<HostRole> {
     const res = await client.executeQuery(props, AuroraMySQLDatabaseDialect.IS_READER_QUERY);
     return Promise.resolve(res[0]["is_reader"] === "true" ? HostRole.READER : HostRole.WRITER);
+  }
+
+  async isDialect(targetClient: any): Promise<boolean> {
+    return targetClient
+      .query(AuroraMySQLDatabaseDialect.AURORA_VERSION_QUERY)
+      .then(([rows]: any) => {
+        return !!rows[0]["Value"];
+      })
+      .catch(() => {
+        return false;
+      });
+  }
+
+  getDialectName(): string {
+    return this.dialectName;
   }
 }

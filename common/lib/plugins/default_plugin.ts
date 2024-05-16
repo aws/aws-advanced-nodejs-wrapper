@@ -102,7 +102,7 @@ export class DefaultPlugin extends AbstractConnectionPlugin {
   ): Promise<Type> {
     const result = await connProvider.connect(hostInfo, this.pluginService, props, connectFunc);
     this.pluginService.setAvailability(hostInfo.allAliases, HostAvailability.AVAILABLE);
-    // this.pluginService.updateDialect(this.pluginService.getCurrentClient().targetClient); // TODO: uncomment when dialect manager is merged
+    await this.pluginService.updateDialect(this.pluginService.getCurrentClient().targetClient);
     return result;
   }
 

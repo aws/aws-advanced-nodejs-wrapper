@@ -26,6 +26,7 @@ import { ReaderFailoverResult } from "./reader_failover_result";
 import { HostRole } from "../../host_role";
 import { Messages } from "../../utils/messages";
 import { logger } from "../../../logutils";
+import { WrapperProperties } from "../../wrapper_property";
 
 export interface WriterFailoverHandler {
   failover(currentTopology: HostInfo[]): Promise<WriterFailoverResult>;
@@ -229,7 +230,7 @@ class ReconnectToWriterHandlerTask {
 
         try {
           const props = new Map(this.initialConnectionProps);
-          props.set("host", this.originalWriterHost.host);
+          props.set(WrapperProperties.HOST.name, this.originalWriterHost.host);
           this.currentClient = await this.pluginService.createTargetClient(props);
           const connectFunc = this.pluginService.getConnectFunc(this.currentClient);
           await this.pluginService.forceConnect(this.originalWriterHost, this.initialConnectionProps, connectFunc);
@@ -419,7 +420,7 @@ class WaitForNewWriterHandlerTask {
       logger.info(Messages.get("ClusterAwareWriterFailoverHandler.taskBAttemptConnectionToNewWriter", writerCandidate.url));
       // connect to the new writer
       const props = new Map(this.initialConnectionProps);
-      props.set("host", writerCandidate.host);
+      props.set(WrapperProperties.HOST.name, writerCandidate.host);
       const targetClient = await this.pluginService.createTargetClient(props);
       try {
         this.pluginService.setAvailability(writerCandidate.allAliases, HostAvailability.AVAILABLE);

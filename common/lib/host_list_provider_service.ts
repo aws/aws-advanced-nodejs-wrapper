@@ -17,7 +17,7 @@
 import { HostListProvider } from "./host_list_provider/host_list_provider";
 import { HostInfo } from "./host_info";
 import { AwsClient } from "./aws_client";
-import { DatabaseDialect } from "./database_dialect";
+import { DatabaseDialect } from "./database_dialect/database_dialect";
 import { HostInfoBuilder } from "./host_info_builder";
 import { ConnectionUrlParser } from "./utils/connection_url_parser";
 

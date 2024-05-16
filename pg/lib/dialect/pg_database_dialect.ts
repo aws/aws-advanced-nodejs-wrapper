@@ -14,20 +14,24 @@
   limitations under the License.
 */
 
-import { DatabaseDialect } from "aws-wrapper-common-lib/lib/database_dialect";
+import { DatabaseDialect, DatabaseType } from "aws-wrapper-common-lib/lib/database_dialect/database_dialect";
 import { HostListProviderService } from "aws-wrapper-common-lib/lib/host_list_provider_service";
 import { HostListProvider } from "aws-wrapper-common-lib/lib/host_list_provider/host_list_provider";
 import { ConnectionStringHostListProvider } from "aws-wrapper-common-lib/lib/host_list_provider/connection_string_host_list_provider";
 import { AwsClient } from "aws-wrapper-common-lib/lib/aws_client";
 import { AwsWrapperError } from "aws-wrapper-common-lib/lib/utils/errors";
+import { DatabaseDialectCodes } from "aws-wrapper-common-lib/lib/database_dialect/database_dialect_codes";
 
 export class PgDatabaseDialect implements DatabaseDialect {
+  protected dialectName: string = "PgDatabaseDialect";
+  protected defaultPort: number = 5432;
+
   getDefaultPort(): number {
-    return 5432;
+    return this.defaultPort;
   }
 
   getDialectUpdateCandidates(): string[] {
-    return [];
+    return [DatabaseDialectCodes.AURORA_PG, DatabaseDialectCodes.RDS_PG];
   }
 
   getHostAliasQuery(): string {
@@ -49,8 +53,15 @@ export class PgDatabaseDialect implements DatabaseDialect {
     return "SELECT 'version', VERSION()";
   }
 
-  isDialect<Client>(conn: Client): boolean {
-    return false;
+  async isDialect(targetClient: any): Promise<boolean> {
+    return await targetClient
+      .query("SELECT 1 FROM pg_proc LIMIT 1")
+      .then((result: { rows: any }) => {
+        return !!result.rows[0];
+      })
+      .catch(() => {
+        return false;
+      });
   }
 
   getHostListProvider(props: Map<string, any>, originalUrl: string, hostListProviderService: HostListProviderService): HostListProvider {
@@ -75,5 +86,13 @@ export class PgDatabaseDialect implements DatabaseDialect {
     return async () => {
       return await targetClient.connect();
     };
+  }
+
+  getDatabaseType(): DatabaseType {
+    return DatabaseType.POSTGRES;
+  }
+
+  getDialectName(): string {
+    return this.dialectName;
   }
 }

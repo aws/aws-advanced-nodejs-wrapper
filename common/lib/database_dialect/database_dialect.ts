@@ -14,19 +14,26 @@
   limitations under the License.
 */
 
-import { AwsClient } from "./aws_client";
-import { HostListProvider } from "./host_list_provider/host_list_provider";
-import { HostListProviderService } from "./host_list_provider_service";
+import { AwsClient } from "../aws_client";
+import { HostListProvider } from "../host_list_provider/host_list_provider";
+import { HostListProviderService } from "../host_list_provider_service";
+
+export enum DatabaseType {
+  MYSQL,
+  POSTGRES
+}
 
 export interface DatabaseDialect {
-  getConnectFunc(newTargetClient: AwsClient): () => Promise<any>;
-  tryClosingTargetClient(targetClient: any): Promise<void>;
-  isClientValid(targetClient: any): Promise<boolean>;
   getDefaultPort(): number;
   getHostAliasQuery(): string;
   getHostAliasAndParseResults(client: AwsClient): Promise<string>;
   getServerVersionQuery(): string;
   getDialectUpdateCandidates(): string[];
-  isDialect<T>(conn: T): boolean;
+  isDialect<T>(targetClient: T): Promise<boolean>;
   getHostListProvider(props: Map<string, any>, originalUrl: string, hostListProviderService: HostListProviderService): HostListProvider;
+  tryClosingTargetClient(targetClient: any): Promise<void>;
+  isClientValid(targetClient: any): Promise<boolean>;
+  getConnectFunc(targetClient: any): () => Promise<any>;
+  getDatabaseType(): DatabaseType;
+  getDialectName(): string;
 }

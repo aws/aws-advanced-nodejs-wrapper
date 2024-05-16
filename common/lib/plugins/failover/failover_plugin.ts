@@ -500,7 +500,7 @@ export class FailoverPlugin extends AbstractConnectionPlugin {
 
   private async createConnectionForHost(baseHostInfo: HostInfo) {
     const props = new Map(this._properties);
-    props.set("host", baseHostInfo.host);
+    props.set(WrapperProperties.HOST.name, baseHostInfo.host);
     const client = this.pluginService.createTargetClient(props);
     try {
       await this.pluginService.connect(baseHostInfo, this._properties, this.pluginService.getDialect().getConnectFunc(client));
