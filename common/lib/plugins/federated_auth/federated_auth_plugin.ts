@@ -102,7 +102,7 @@ export class FederatedAuthPlugin extends AbstractConnectionPlugin {
   }
 
   private getRdsRegion(hostname: string): string {
-    const rdsRegion: string | null = this.rdsUtils.getRdsRegion(hostname);
+    const rdsRegion = this.rdsUtils.getRdsRegion(hostname);
 
     if (!rdsRegion) {
       const errorMessage = Messages.get("FederatedAuthPlugin.unsupportedHostname", "hostname");
@@ -113,7 +113,7 @@ export class FederatedAuthPlugin extends AbstractConnectionPlugin {
     return rdsRegion;
   }
 
-  private checkIdpCredentialsWithFallback(props: Map<string, any>) {
+  private checkIdpCredentialsWithFallback(props: Map<string, any>): void {
     if (WrapperProperties.IDP_USERNAME.get(props) === null) {
       WrapperProperties.IDP_USERNAME.set(props, WrapperProperties.USER.get(props));
     }
@@ -161,7 +161,7 @@ export class FederatedAuthPlugin extends AbstractConnectionPlugin {
     return await signer.getAuthToken();
   }
 
-  private getCacheKey(user: string, hostname: string, port: number, region: string) {
+  private getCacheKey(user: string, hostname: string, port: number, region: string): string {
     return `${region}:${hostname}:${port}:${user}`;
   }
 

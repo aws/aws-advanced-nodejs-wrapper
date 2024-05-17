@@ -73,7 +73,5 @@
   "FederatedAuthPlugin.unsupportedHostname": "Unsupported AWS hostname '%s'. Amazon domain name in format *.AWS-Region.rds.amazonaws.com or *.rds.AWS-Region.amazonaws.com.cn is expected.",
   "FederatedAuthPlugin.useCachedIamToken": "Use cached IAM token = '%s'",
   "FederatedAuthPluginFactory.failedToInitializeHttpClient": "Failed to initialize HttpClient.",
-  "FederatedAuthPluginFactory.unsupportedIdp": "Unsupported Identity Provider '%s'. Please visit to the documentation for supported Identity Providers.",
-  "AdfsCredentialsProviderFactory.SignOnPageUrl": "AdfsCredentialsProviderFactory.SignOnPageUrl",
-  "AdfsCredentialsProviderFactory.FailedLogin": "AdfsCredentialsProviderFactory.FailedLogin"
+  "FederatedAuthPluginFactory.unsupportedIdp": "Unsupported Identity Provider '%s'. Please visit to the documentation for supported Identity Providers."
 }

@@ -68,7 +68,7 @@ export class AdfsCredentialsProviderFactory extends SamlCredentialsProviderFacto
     return `https://${idpEndpoint}:${idpPort}/adfs/ls/IdpInitiatedSignOn.aspx?loginToRp=${rpId}`;
   }
 
-  async getSignInPageBody(url: string, props: Map<string, any>) {
+  async getSignInPageBody(url: string, props: Map<string, any>): Promise<string> {
     logger.debug(Messages.get("AdfsCredentialsProviderFactory.SignOnPageUrl", url));
     this.validateUrl(url);
     // TODO: remove hardcoded certificate
@@ -93,7 +93,7 @@ export class AdfsCredentialsProviderFactory extends SamlCredentialsProviderFacto
     }
   }
 
-  async getFormActionBody(uri: string, parameters: Record<string, string>, props: Map<string, any>) {
+  async getFormActionBody(uri: string, parameters: Record<string, string>, props: Map<string, any>): Promise<string> {
     logger.debug(Messages.get("AdfsCredentialsProviderFactory.SignOnPageUrl", uri));
     this.validateUrl(uri);
     // TODO: remove hardcoded certificate
@@ -101,7 +101,7 @@ export class AdfsCredentialsProviderFactory extends SamlCredentialsProviderFacto
       ca: readFileSync("tests/integration/host/src/test/resources/rds-ca-2019-root.pem").toString()
     });
 
-    let cookie;
+    let cookies;
 
     const data = stringify(parameters);
 
@@ -124,7 +124,7 @@ export class AdfsCredentialsProviderFactory extends SamlCredentialsProviderFacto
       // First post which results in redirect
       const postResp = await axios.request(postConfig);
       // Store cookies from post
-      cookie = postResp.headers["set-cookie"];
+      cookies = postResp.headers["set-cookie"];
       console.log(JSON.stringify(postResp.data));
     } catch (e: any) {
       // After redirect, try get request, fail if not redirect
@@ -133,13 +133,13 @@ export class AdfsCredentialsProviderFactory extends SamlCredentialsProviderFacto
           Messages.get("AdfsCredentialsProviderFactory.signOnPagePostActionRequestFailed", e.response.status, e.response.statusText, e.message)
         );
       }
-      cookie = e.response.headers["set-cookie"];
+      cookies = e.response.headers["set-cookie"];
       const url = e.response.headers.location;
       const redirectConfig = {
         maxBodyLength: Infinity,
         headers: {
           "Content-Type": "application/x-www-form-urlencoded",
-          Cookie: cookie
+          Cookie: cookies
         },
         httpsAgent,
         withCredentials: true
@@ -150,7 +150,7 @@ export class AdfsCredentialsProviderFactory extends SamlCredentialsProviderFacto
     return "";
   }
 
-  getFormActionUrl(props: Map<string, any>, action: string) {
+  getFormActionUrl(props: Map<string, any>, action: string): string {
     const idpEndpoint = WrapperProperties.IDP_ENDPOINT.get(props);
     const idpPort = WrapperProperties.IDP_PORT.get(props);
     if (!idpEndpoint) {
@@ -206,11 +206,11 @@ export class AdfsCredentialsProviderFactory extends SamlCredentialsProviderFacto
     return "";
   }
 
-  private escapeRegExp(input: string) {
+  private escapeRegExp(input: string): string {
     return input.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   }
 
-  private escapeHtmlEntity(html: string | undefined): string {
+  private escapeHtmlEntity(html?: string): string {
     let ret = "";
     let i = 0;
     if (html) {
