@@ -14,12 +14,9 @@
   limitations under the License.
 */
 
-import { AwsCredentialsManager } from "../../authentication/aws_credentials_manager";
 import { CredentialsProviderFactory } from "./credentials_provider_factory";
 import { AssumeRoleWithSAMLCommand, STSClient, AssumeRoleWithSAMLCommandOutput } from "@aws-sdk/client-sts";
 import { WrapperProperties } from "../../wrapper_property";
-import { AwsWrapperError } from "../../utils/errors";
-import { Credentials } from "aws-sdk";
 
 export abstract class SamlCredentialsProviderFactory implements CredentialsProviderFactory {
   async getAwsCredentialsProvider(host: string, region: string, props: Map<string, any>): Promise<AssumeRoleWithSAMLCommandOutput> {

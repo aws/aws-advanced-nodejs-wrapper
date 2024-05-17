@@ -22,7 +22,7 @@ import { WrapperProperties } from "../../wrapper_property";
 import { SamlCredentialsProviderFactory } from "./saml_credentials_provider_factory";
 import https from "https";
 import { readFileSync } from "fs";
-import axios, { AxiosError } from "axios";
+import axios from "axios";
 import { stringify } from "querystring";
 
 export class AdfsCredentialsProviderFactory extends SamlCredentialsProviderFactory {
@@ -87,7 +87,9 @@ export class AdfsCredentialsProviderFactory extends SamlCredentialsProviderFacto
       const resp = await axios.request(getConfig);
       return resp.data;
     } catch (e: any) {
-      throw new AwsWrapperError(Messages.get("AdfsCredentialsProviderFactory.signOnPageRequestFailed", e.status, e.statusText, e.text));
+      throw new AwsWrapperError(
+        Messages.get("AdfsCredentialsProviderFactory.signOnPageRequestFailed", e.response.status, e.response.statusText, e.message)
+      );
     }
   }
 
@@ -112,7 +114,7 @@ export class AdfsCredentialsProviderFactory extends SamlCredentialsProviderFacto
       url: uri,
       httpsAgent,
       maxRedirects: 0,
-      data: parameters,
+      data,
       withCredentials: true
     };
 
@@ -125,8 +127,12 @@ export class AdfsCredentialsProviderFactory extends SamlCredentialsProviderFacto
       cookie = postResp.headers["set-cookie"];
       console.log(JSON.stringify(postResp.data));
     } catch (e: any) {
-      // After redirect, try get request
-      // TODO: check for non 300 status codes
+      // After redirect, try get request, fail if not redirect
+      if (e.response.status / 100 !== 3) {
+        throw new AwsWrapperError(
+          Messages.get("AdfsCredentialsProviderFactory.signOnPagePostActionRequestFailed", e.response.status, e.response.statusText, e.message)
+        );
+      }
       cookie = e.response.headers["set-cookie"];
       const url = e.response.headers.location;
       const redirectConfig = {

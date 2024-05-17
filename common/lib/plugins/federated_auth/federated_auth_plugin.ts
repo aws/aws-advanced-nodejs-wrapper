@@ -17,14 +17,12 @@
 import { AbstractConnectionPlugin } from "../../abstract_connection_plugin";
 import { PluginService } from "../../plugin_service";
 import { RdsUtils } from "../../utils/rds_utils";
-import { AwsCredentialIdentityProvider } from "@smithy/types/dist-types/identity/awsCredentialIdentity";
 import { HostInfo } from "../../host_info";
 import { IamAuthUtils, TokenInfo } from "../../utils/iam_auth_utils";
 import { WrapperProperties } from "../../wrapper_property";
 import { logger } from "../../../logutils";
 import { AwsWrapperError } from "../../utils/errors";
 import { Messages } from "../../utils/messages";
-import { AwsCredentialsManager } from "../../authentication/aws_credentials_manager";
 import { Signer } from "@aws-sdk/rds-signer";
 import { ConnectTimePluginFactory } from "../connect_time_plugin";
 import { ConnectionPlugin } from "../../connection_plugin";
