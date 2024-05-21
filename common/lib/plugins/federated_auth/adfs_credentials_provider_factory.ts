@@ -30,6 +30,7 @@ export class AdfsCredentialsProviderFactory extends SamlCredentialsProviderFacto
   private static readonly INPUT_TAG_PATTERN = new RegExp("<input(.+?)/>", "gms");
   private static readonly FORM_ACTION_PATTERN = new RegExp('<form.*?action="([^"]+)"');
   private static readonly SAML_RESPONSE_PATTERN = new RegExp('SAMLResponse\\W+value="(?<saml>[^"]+)"');
+  private static readonly HTTPS_URL_PATTERN = new RegExp("^(https)://[-a-zA-Z0-9+&@#/%?=~_!:,.']*[-a-zA-Z0-9+&@#/%=~_']");
   private pluginService: PluginService;
 
   constructor(pluginService: PluginService) {
@@ -50,7 +51,7 @@ export class AdfsCredentialsProviderFactory extends SamlCredentialsProviderFacto
 
       const match = content.match(AdfsCredentialsProviderFactory.SAML_RESPONSE_PATTERN);
       if (!match) {
-        throw new AwsWrapperError(Messages.get("AdfsCredentialsProviderFactory.FailedLogin", content));
+        throw new AwsWrapperError(Messages.get("AdfsCredentialsProviderFactory.failedLogin", content));
       }
       return match[1];
     } catch (e) {
@@ -69,12 +70,9 @@ export class AdfsCredentialsProviderFactory extends SamlCredentialsProviderFacto
   }
 
   async getSignInPageBody(url: string, props: Map<string, any>): Promise<string> {
-    logger.debug(Messages.get("AdfsCredentialsProviderFactory.SignOnPageUrl", url));
+    logger.debug(Messages.get("AdfsCredentialsProviderFactory.signOnPageUrl", url));
     this.validateUrl(url);
-    // TODO: remove hardcoded certificate
-    const httpsAgent = new https.Agent({
-      ca: readFileSync("tests/integration/host/src/test/resources/rds-ca-2019-root.pem").toString()
-    });
+    const httpsAgent = new https.Agent(WrapperProperties.HTTPS_AGENT_OPTIONS.get(props));
     const getConfig = {
       method: "get",
       maxBodyLength: Infinity,
@@ -87,6 +85,9 @@ export class AdfsCredentialsProviderFactory extends SamlCredentialsProviderFacto
       const resp = await axios.request(getConfig);
       return resp.data;
     } catch (e: any) {
+      if (!e.response) {
+        throw e;
+      }
       throw new AwsWrapperError(
         Messages.get("AdfsCredentialsProviderFactory.signOnPageRequestFailed", e.response.status, e.response.statusText, e.message)
       );
@@ -94,12 +95,9 @@ export class AdfsCredentialsProviderFactory extends SamlCredentialsProviderFacto
   }
 
   async getFormActionBody(uri: string, parameters: Record<string, string>, props: Map<string, any>): Promise<string> {
-    logger.debug(Messages.get("AdfsCredentialsProviderFactory.SignOnPageUrl", uri));
+    logger.debug(Messages.get("AdfsCredentialsProviderFactory.signOnPageUrl", uri));
     this.validateUrl(uri);
-    // TODO: remove hardcoded certificate
-    const httpsAgent = new https.Agent({
-      ca: readFileSync("tests/integration/host/src/test/resources/rds-ca-2019-root.pem").toString()
-    });
+    const httpsAgent = new https.Agent(WrapperProperties.HTTPS_AGENT_OPTIONS.get(props));
 
     let cookies;
 
@@ -127,8 +125,11 @@ export class AdfsCredentialsProviderFactory extends SamlCredentialsProviderFacto
       cookies = postResp.headers["set-cookie"];
       console.log(JSON.stringify(postResp.data));
     } catch (e: any) {
+      if (!e.response) {
+        throw e;
+      }
       // After redirect, try get request, fail if not redirect
-      if (e.response.status / 100 !== 3) {
+      if (Math.floor(e.response.status / 100) !== 3) {
         throw new AwsWrapperError(
           Messages.get("AdfsCredentialsProviderFactory.signOnPagePostActionRequestFailed", e.response.status, e.response.statusText, e.message)
         );
@@ -259,8 +260,11 @@ export class AdfsCredentialsProviderFactory extends SamlCredentialsProviderFacto
   private validateUrl(url: string): void {
     try {
       new URL(url);
+      if (!url.match(AdfsCredentialsProviderFactory.HTTPS_URL_PATTERN)) {
+        throw new AwsWrapperError(Messages.get("AdfsCredentialsProviderFactory.invalidHttpsUrl", url));
+      }
     } catch (e) {
-      throw new AwsWrapperError(Messages.get("AdfsCredentialsProviderFactory.InvalidHttpsUrl", url));
+      throw new AwsWrapperError(Messages.get("AdfsCredentialsProviderFactory.invalidHttpsUrl", url));
     }
   }
 }

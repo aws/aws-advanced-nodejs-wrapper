@@ -81,6 +81,12 @@ export class WrapperProperties {
 
   static readonly DB_USER = new WrapperProperty<string>("dbUser", "The database user used to access the database", null);
 
+  static readonly HTTPS_AGENT_OPTIONS = new WrapperProperty<Record<string, any>>(
+    "httpsAgentOptions",
+    "The options to be passed into the httpsAgent",
+    null
+  );
+
   static readonly SECRET_ID = new WrapperProperty<string>("secretId", "The name or the ARN of the secret to retrieve.", null);
   static readonly SECRET_REGION = new WrapperProperty<string>("secretRegion", "The region of the secret to retrieve.", null);
   static readonly SECRET_ENDPOINT = new WrapperProperty<string>("secretEndpoint", "The endpoint of the secret to retrieve.", null);
