@@ -68,10 +68,8 @@
   "AdfsCredentialsProviderFactory.signOnPageRequestFailed": "ADFS SignOn Page Request Failed with HTTP status '%s', reason phrase '%s', and response '%s'",
   "AdfsCredentialsProviderFactory.signOnPageUrl": "ADFS SignOn URL: '%s'",
   "FederatedAuthPlugin.generatedNewIamToken": "Generated new IAM token = '%s'",
-  "FederatedAuthPlugin.javaStsSdkNotInClasspath": "Required dependency 'AWS Java SDK for AWS Secret Token Service' is not on the classpath.",
   "FederatedAuthPlugin.unhandledException": "Unhandled exception: '%s'",
   "FederatedAuthPlugin.unsupportedHostname": "Unsupported AWS hostname '%s'. Amazon domain name in format *.AWS-Region.rds.amazonaws.com or *.rds.AWS-Region.amazonaws.com.cn is expected.",
   "FederatedAuthPlugin.useCachedIamToken": "Use cached IAM token = '%s'",
-  "FederatedAuthPluginFactory.failedToInitializeHttpClient": "Failed to initialize HttpClient.",
   "FederatedAuthPluginFactory.unsupportedIdp": "Unsupported Identity Provider '%s'. Please visit to the documentation for supported Identity Providers."
 }

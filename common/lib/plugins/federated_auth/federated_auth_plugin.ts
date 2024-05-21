@@ -88,16 +88,18 @@ export class FederatedAuthPlugin extends AbstractConnectionPlugin {
     try {
       return connectFunc();
     } catch (e) {
-      logger.debug(Messages.get("FederatedAuthPlugin.connectException", (e as Error).message));
       if (!this.pluginService.isLoginError(e as Error) || !isCachedToken) {
         throw e;
       }
-
-      const tokenExpiry = Date.now() + tokenExpirationSec * 1000;
-      const token = await this.generateAuthenticationToken(hostInfo, props, host, port, region);
-      WrapperProperties.PASSWORD.set(props, token);
-      FederatedAuthPlugin.tokenCache.set(cacheKey, new TokenInfo(token, tokenExpiry));
-      return connectFunc();
+      try {
+        const tokenExpiry = Date.now() + tokenExpirationSec * 1000;
+        const token = await this.generateAuthenticationToken(hostInfo, props, host, port, region);
+        WrapperProperties.PASSWORD.set(props, token);
+        FederatedAuthPlugin.tokenCache.set(cacheKey, new TokenInfo(token, tokenExpiry));
+        return connectFunc();
+      } catch (e) {
+        throw new AwsWrapperError("FederatedAuthPlugin.unhandledException", e);
+      }
     }
   }
 
@@ -139,7 +141,7 @@ export class FederatedAuthPlugin extends AbstractConnectionPlugin {
 
     const credentialArr = credentialsProvider["Credentials"];
     if (!credentialArr) {
-      throw new AwsWrapperError("Credentials from SAML requst not found");
+      throw new AwsWrapperError("Credentials from SAML request not found");
     }
     const accessKeyId = credentialArr["AccessKeyId"];
     const secretAccessKey = credentialArr["SecretAccessKey"];
