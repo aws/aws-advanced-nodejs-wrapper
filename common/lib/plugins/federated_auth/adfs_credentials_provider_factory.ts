@@ -99,6 +99,7 @@ export class AdfsCredentialsProviderFactory extends SamlCredentialsProviderFacto
     this.validateUrl(uri);
     const httpsAgent = new https.Agent(WrapperProperties.HTTPS_AGENT_OPTIONS.get(props));
 
+    // TODO: use library instead of manual cookie storing
     let cookies;
 
     const data = stringify(parameters);
