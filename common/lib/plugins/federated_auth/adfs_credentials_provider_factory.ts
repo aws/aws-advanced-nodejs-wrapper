@@ -21,9 +21,11 @@ import { Messages } from "../../utils/messages";
 import { WrapperProperties } from "../../wrapper_property";
 import { SamlCredentialsProviderFactory } from "./saml_credentials_provider_factory";
 import https from "https";
-import { readFileSync } from "fs";
 import axios from "axios";
 import { stringify } from "querystring";
+import tough from "tough-cookie";
+import { wrapper } from "axios-cookiejar-support";
+import { HttpsCookieAgent } from "http-cookie-agent/http";
 
 export class AdfsCredentialsProviderFactory extends SamlCredentialsProviderFactory {
   static readonly IDP_NAME = "adfs";
@@ -97,9 +99,11 @@ export class AdfsCredentialsProviderFactory extends SamlCredentialsProviderFacto
   async getFormActionBody(uri: string, parameters: Record<string, string>, props: Map<string, any>): Promise<string> {
     logger.debug(Messages.get("AdfsCredentialsProviderFactory.signOnPageUrl", uri));
     this.validateUrl(uri);
-    const httpsAgent = new https.Agent(WrapperProperties.HTTPS_AGENT_OPTIONS.get(props));
+    wrapper(axios);
+    const jar = new tough.CookieJar();
+    const httpsAgentOptions = { ...WrapperProperties.HTTPS_AGENT_OPTIONS.get(props), ...{ cookies: { jar } } };
+    const httpsAgent = new HttpsCookieAgent(httpsAgentOptions);
 
-    // TODO: use library instead of manual cookie storing
     let cookies;
 
     const data = stringify(parameters);
@@ -140,8 +144,8 @@ export class AdfsCredentialsProviderFactory extends SamlCredentialsProviderFacto
       const redirectConfig = {
         maxBodyLength: Infinity,
         headers: {
-          "Content-Type": "application/x-www-form-urlencoded",
-          Cookie: cookies
+          "Content-Type": "application/x-www-form-urlencoded"
+          // Cookie: cookies
         },
         httpsAgent,
         withCredentials: true

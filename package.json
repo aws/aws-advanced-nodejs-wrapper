@@ -25,7 +25,9 @@
     ]
   },
   "devDependencies": {
+    "@aws-cdk/aws-ec2": "^1.204.0",
     "@aws-sdk/client-secrets-manager": "^3.574.0",
+    "@aws-sdk/client-sts": "^3.577.0",
     "@aws-sdk/credential-providers": "^3.556.0",
     "@aws-sdk/rds-signer": "^3.461.0",
     "@types/i18n": "^0.13.10",
@@ -34,13 +36,19 @@
     "@types/node": "^20.12.10",
     "@types/node-fetch": "^2.6.9",
     "@types/pg": "^8.11.6",
+    "@types/tough-cookie": "^4.0.5",
     "@typescript-eslint/eslint-plugin": "^6.12.0",
+    "aws-sdk": "^2.1625.0",
+    "axios": "^1.7.2",
+    "axios-cookiejar-support": "^5.0.2",
     "benny": "^3.7.1",
     "dotenv": "^16.0.3",
     "eslint": "^8.54.0",
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-header": "^3.1.1",
     "eslint-plugin-prettier": "^5.0.1",
+    "http-cookie-agent": "^6.0.5",
+    "https": "^1.0.0",
     "husky": "^8.0.3",
     "i18n": "^0.15.1",
     "jest-html-reporter": "^3.10.2",
@@ -50,17 +58,12 @@
     "node-fetch": "^2.6.7",
     "pg": "^8.11.5",
     "prettier": "^3.0.3",
+    "querystring": "^0.2.1",
     "toxiproxy-node-client": "^3.0.0",
     "ts-jest": "^29.0.0",
     "ts-mockito": "^2.6.1",
     "ts-node": "^10.9.2",
     "tsx": "^3.12.7",
     "typescript": "^4.2.3"
-  },
-  "dependencies": {
-    "@aws-cdk/aws-ec2": "^1.204.0",
-    "@aws-sdk/client-sts": "^3.577.0",
-    "aws-sdk": "^2.1621.0",
-    "axios": "^1.6.8"
   }
 }
