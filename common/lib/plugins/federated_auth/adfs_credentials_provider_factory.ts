@@ -143,8 +143,14 @@ export class AdfsCredentialsProviderFactory extends SamlCredentialsProviderFacto
         httpsAgent,
         withCredentials: true
       };
-      getResp = await axios.get(url, redirectConfig);
-      return getResp.data;
+      try {
+        getResp = await axios.get(url, redirectConfig);
+        return getResp.data;
+      } catch (e: any) {
+        throw new AwsWrapperError(
+          Messages.get("AdfsCredentialsProviderFactory.signOnPagePostActionRequestFailed", e.response.status, e.response.statusText, e.message)
+        );
+      }
     }
     return "";
   }
