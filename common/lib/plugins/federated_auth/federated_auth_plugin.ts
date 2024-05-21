@@ -107,7 +107,7 @@ export class FederatedAuthPlugin extends AbstractConnectionPlugin {
     const rdsRegion = this.rdsUtils.getRdsRegion(hostname);
 
     if (!rdsRegion) {
-      const errorMessage = Messages.get("FederatedAuthPlugin.unsupportedHostname", "hostname");
+      const errorMessage = Messages.get("FederatedAuthPlugin.unsupportedHostname", hostname);
       logger.debug(errorMessage);
       throw new AwsWrapperError(errorMessage);
     }

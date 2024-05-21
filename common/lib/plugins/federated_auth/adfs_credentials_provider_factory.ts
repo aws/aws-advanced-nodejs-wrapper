@@ -66,7 +66,7 @@ export class AdfsCredentialsProviderFactory extends SamlCredentialsProviderFacto
     const idpPort = WrapperProperties.IDP_PORT.get(props);
     const rpId = WrapperProperties.RELAYING_PARTY_ID.get(props);
     if (!idpPort || !rpId) {
-      throw new AwsWrapperError("Invalid Https url");
+      throw new AwsWrapperError("Invalid sign in page URL.");
     }
     return `https://${idpEndpoint}:${idpPort}/adfs/ls/IdpInitiatedSignOn.aspx?loginToRp=${rpId}`;
   }
@@ -74,7 +74,7 @@ export class AdfsCredentialsProviderFactory extends SamlCredentialsProviderFacto
   async getSignInPageBody(url: string, props: Map<string, any>): Promise<string> {
     logger.debug(Messages.get("AdfsCredentialsProviderFactory.signOnPageUrl", url));
     this.validateUrl(url);
-    const httpsAgent = new https.Agent(WrapperProperties.HTTPS_AGENT_OPTIONS.get(props));
+    const httpsAgent = new HttpsCookieAgent(WrapperProperties.HTTPS_AGENT_OPTIONS.get(props));
     const getConfig = {
       method: "get",
       maxBodyLength: Infinity,
