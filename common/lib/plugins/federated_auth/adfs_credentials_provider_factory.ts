@@ -104,8 +104,6 @@ export class AdfsCredentialsProviderFactory extends SamlCredentialsProviderFacto
     const httpsAgentOptions = { ...WrapperProperties.HTTPS_AGENT_OPTIONS.get(props), ...{ cookies: { jar } } };
     const httpsAgent = new HttpsCookieAgent(httpsAgentOptions);
 
-    let cookies;
-
     const data = stringify(parameters);
 
     const postConfig = {
@@ -126,9 +124,6 @@ export class AdfsCredentialsProviderFactory extends SamlCredentialsProviderFacto
     try {
       // First post which results in redirect
       const postResp = await axios.request(postConfig);
-      // Store cookies from post
-      cookies = postResp.headers["set-cookie"];
-      console.log(JSON.stringify(postResp.data));
     } catch (e: any) {
       if (!e.response) {
         throw e;
@@ -139,13 +134,11 @@ export class AdfsCredentialsProviderFactory extends SamlCredentialsProviderFacto
           Messages.get("AdfsCredentialsProviderFactory.signOnPagePostActionRequestFailed", e.response.status, e.response.statusText, e.message)
         );
       }
-      cookies = e.response.headers["set-cookie"];
       const url = e.response.headers.location;
       const redirectConfig = {
         maxBodyLength: Infinity,
         headers: {
           "Content-Type": "application/x-www-form-urlencoded"
-          // Cookie: cookies
         },
         httpsAgent,
         withCredentials: true
