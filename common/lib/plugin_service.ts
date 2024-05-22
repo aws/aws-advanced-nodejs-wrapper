@@ -21,7 +21,7 @@ import { AwsClient } from "./aws_client";
 import { HostListProviderService } from "./host_list_provider_service";
 import { HostListProvider } from "./host_list_provider/host_list_provider";
 import { ConnectionUrlParser } from "./utils/connection_url_parser";
-import { DatabaseDialect } from "./database_dialect";
+import { DatabaseDialect, DatabaseType } from "./database_dialect/database_dialect";
 import { HostInfoBuilder } from "./host_info_builder";
 import { SimpleHostAvailabilityStrategy } from "./host_availability/simple_host_availability_strategy";
 import { AwsWrapperError } from "./utils/errors";
@@ -30,21 +30,43 @@ import { CacheMap } from "./utils/cache_map";
 import { HostChangeOptions } from "./host_change_options";
 import { HostRole } from "./host_role";
 import { WrapperProperties } from "./wrapper_property";
+import { OldConnectionSuggestionAction } from "./old_connection_suggestion_action";
+import { DatabaseDialectProvider } from "./database_dialect/database_dialect_provider";
+import { DatabaseDialectManager } from "./database_dialect/database_dialect_manager";
 
 export class PluginService implements ErrorHandler, HostListProviderService {
+  private readonly _currentClient: AwsClient;
   private _currentHostInfo?: HostInfo;
-  private _currentClient: AwsClient;
   private _hostListProvider?: HostListProvider;
   private _initialConnectionHostInfo?: HostInfo;
   private _isInTransaction: boolean = false;
   private pluginServiceManagerContainer: PluginServiceManagerContainer;
+  private _props: Map<string, any>;
   protected hosts: HostInfo[] = [];
+  private dbDialectProvider: DatabaseDialectProvider;
+  private initialHost: string;
+  private dialect: DatabaseDialect;
   protected static readonly hostAvailabilityExpiringCache: CacheMap<string, HostAvailability> = new CacheMap<string, HostAvailability>();
 
-  constructor(container: PluginServiceManagerContainer, client: AwsClient) {
+  constructor(
+    container: PluginServiceManagerContainer,
+    client: AwsClient,
+    dbType: DatabaseType,
+    knownDialectsByCode: Map<string, DatabaseDialect>,
+    props: Map<string, any>
+  ) {
     this._currentClient = client;
     this.pluginServiceManagerContainer = container;
+    this._props = props;
+    this.dbDialectProvider = new DatabaseDialectManager(knownDialectsByCode, dbType, this._props);
+    this.initialHost = props.get(WrapperProperties.HOST.name);
     container.pluginService = this;
+
+    this.dialect = this.dbDialectProvider.getDialect(this._props);
+  }
+
+  get props(): Map<string, any> {
+    return this._props;
   }
 
   isInTransaction(): boolean {
@@ -96,7 +118,7 @@ export class PluginService implements ErrorHandler, HostListProviderService {
   }
 
   getDialect(): DatabaseDialect {
-    return this.getCurrentClient().dialect;
+    return this.dialect;
   }
 
   getHostInfoBuilder(): HostInfoBuilder {
@@ -109,9 +131,11 @@ export class PluginService implements ErrorHandler, HostListProviderService {
   }
 
   async forceRefreshHostList(): Promise<void>;
-  async forceRefreshHostList(client: AwsClient): Promise<void>;
+  async forceRefreshHostList(client?: AwsClient): Promise<void>;
   async forceRefreshHostList(client?: AwsClient): Promise<void> {
-    const updatedHostList = client ? await this.getHostListProvider()?.forceRefresh(client) : await this.getHostListProvider()?.forceRefresh();
+    const updatedHostList = client
+      ? await this.getHostListProvider()?.forceRefresh(client.targetClient)
+      : await this.getHostListProvider()?.forceRefresh();
     if (updatedHostList && updatedHostList !== this.hosts) {
       this.updateHostAvailability(updatedHostList);
       this.setHostList(this.hosts, updatedHostList);
@@ -121,7 +145,7 @@ export class PluginService implements ErrorHandler, HostListProviderService {
   async refreshHostList(): Promise<void>;
   async refreshHostList(client: AwsClient): Promise<void>;
   async refreshHostList(client?: AwsClient): Promise<void> {
-    const updatedHostList = client ? await this.getHostListProvider()?.refresh(client) : await this.getHostListProvider()?.refresh();
+    const updatedHostList = client ? await this.getHostListProvider()?.refresh(client.targetClient) : await this.getHostListProvider()?.refresh();
     if (updatedHostList && updatedHostList !== this.hosts) {
       this.updateHostAvailability(updatedHostList);
       this.setHostList(this.hosts, updatedHostList);
@@ -192,8 +216,11 @@ export class PluginService implements ErrorHandler, HostListProviderService {
 
     if (changes.size > 0) {
       this.hosts = newHosts ? newHosts : [];
-      // TODO: uncomment once notifyHostListChanged is implemented.
-      // this.pluginServiceManagerContainer.pluginManager.notifyHostListChanged(changes);
+      if (this.pluginServiceManagerContainer.pluginManager) {
+        this.pluginServiceManagerContainer.pluginManager.notifyHostListChanged(changes);
+      } else {
+        throw new AwsWrapperError("Connection Plugin Manager was not detected."); // This should not be reached
+      }
     }
   }
 
@@ -205,19 +232,6 @@ export class PluginService implements ErrorHandler, HostListProviderService {
 
   updateConfigWithProperties(props: Map<string, any>) {
     this._currentClient.config = Object.fromEntries(props.entries());
-  }
-
-  replaceTargetClient(props: Map<string, any>): void {
-    const createClientFunc = this.getCurrentClient().getCreateClientFunc();
-    if (createClientFunc) {
-      if (this.getCurrentClient().targetClient) {
-        this.getCurrentClient().end();
-      }
-      const newTargetClient = createClientFunc(Object.fromEntries(props));
-      this.getCurrentClient().targetClient = newTargetClient;
-      return;
-    }
-    throw new AwsWrapperError("AwsClient is missing create target client function."); // This should not be reached
   }
 
   createTargetClient(props: Map<string, any>): any {
@@ -243,9 +257,44 @@ export class PluginService implements ErrorHandler, HostListProviderService {
     throw new AwsWrapperError("AwsClient is missing target client connect function."); // This should not be reached
   }
 
-  setCurrentClient(newClient: any, hostInfo: HostInfo) {
-    this.getCurrentClient().targetClient = newClient;
-    this._currentHostInfo = hostInfo;
+  // TODO: Add session state changes
+  async setCurrentClient(newClient: any, hostInfo: HostInfo): Promise<Set<HostChangeOptions>> {
+    if (this.getCurrentClient().targetClient === null) {
+      this.getCurrentClient().targetClient = newClient;
+      this._currentHostInfo = hostInfo;
+      const changes = new Set<HostChangeOptions>([HostChangeOptions.INITIAL_CONNECTION]);
+      if (this.pluginServiceManagerContainer.pluginManager) {
+        await this.pluginServiceManagerContainer.pluginManager.notifyConnectionChanged(changes, null);
+      }
+      return changes;
+    } else {
+      if (this._currentHostInfo) {
+        const changes: Set<HostChangeOptions> = this.compare(this._currentHostInfo, hostInfo);
+        if (changes.size > 0) {
+          const oldClient: any = this.getCurrentClient().targetClient;
+          const isInTransaction = this.isInTransaction;
+          try {
+            this.getCurrentClient().targetClient = newClient;
+            this._currentHostInfo = hostInfo;
+            this.setInTransaction(false);
+
+            if (this.pluginServiceManagerContainer.pluginManager) {
+              const pluginOpinions: Set<OldConnectionSuggestionAction> =
+                await this.pluginServiceManagerContainer.pluginManager.notifyConnectionChanged(changes, null);
+
+              const shouldCloseConnection =
+                changes.has(HostChangeOptions.CONNECTION_OBJECT_CHANGED) &&
+                !pluginOpinions.has(OldConnectionSuggestionAction.PRESERVE) &&
+                (await oldClient.isValid());
+            }
+          } finally {
+            /* empty */
+          }
+        }
+        return changes;
+      }
+      throw new AwsWrapperError("HostInfo not found"); // Should not be reached
+    }
   }
 
   async isClientValid(targetClient: any): Promise<boolean> {
@@ -258,7 +307,32 @@ export class PluginService implements ErrorHandler, HostListProviderService {
     await this.getDialect().tryClosingTargetClient(targetClient ?? this._currentClient.targetClient);
   }
 
-  getConnectFunc(targetClient: any) {
+  getConnectFunc(targetClient: any): () => Promise<any> {
     return this.getDialect().getConnectFunc(targetClient);
+  }
+
+  updateInTransaction(sql: string) {
+    // TODO: revise with session state transfer
+    if (sql.toLowerCase().startsWith("start transaction") || sql.toLowerCase().startsWith("begin")) {
+      this.setInTransaction(true);
+    } else if (
+      sql.toLowerCase().startsWith("commit") ||
+      sql.toLowerCase().startsWith("rollback") ||
+      sql.toLowerCase().startsWith("end") ||
+      sql.toLowerCase().startsWith("abort")
+    ) {
+      this.setInTransaction(false);
+    }
+  }
+
+  async updateDialect(targetClient: any) {
+    const originalDialect = this.dialect;
+    this.dialect = await this.dbDialectProvider.getDialectForUpdate(targetClient, this.initialHost, this._props.get(WrapperProperties.HOST.name));
+
+    if (originalDialect === this.dialect) {
+      return;
+    }
+
+    this._hostListProvider = this.dialect.getHostListProvider(this._props, this._props.get(WrapperProperties.HOST.name), this);
   }
 }

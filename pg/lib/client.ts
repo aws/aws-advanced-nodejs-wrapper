@@ -19,11 +19,24 @@ import { AwsClient } from "aws-wrapper-common-lib/lib/aws_client";
 import { WrapperProperties } from "aws-wrapper-common-lib/lib/wrapper_property";
 import { PgErrorHandler } from "./pg_error_handler";
 import { PgConnectionUrlParser } from "./pg_connection_url_parser";
+import { DatabaseDialect, DatabaseType } from "aws-wrapper-common-lib/lib/database_dialect/database_dialect";
+import { DatabaseDialectCodes } from "aws-wrapper-common-lib/lib/database_dialect/database_dialect_codes";
+import { MySQLDatabaseDialect } from "mysql-wrapper/lib/dialect/mysql_database_dialect";
+import { AuroraMySQLDatabaseDialect } from "mysql-wrapper/lib/dialect/aurora_mysql_database_dialect";
+import { RdsPgDatabaseDialect } from "./dialect/rds_pg_database_dialect";
+import { PgDatabaseDialect } from "./dialect/pg_database_dialect";
 import { AuroraPgDatabaseDialect } from "./dialect/aurora_pg_database_dialect";
+import { Utils } from "mysql-wrapper/lib/utils";
 
 export class AwsPGClient extends AwsClient {
+  private static readonly knownDialectsByCode: Map<string, DatabaseDialect> = new Map([
+    [DatabaseDialectCodes.PG, new PgDatabaseDialect()],
+    [DatabaseDialectCodes.RDS_PG, new RdsPgDatabaseDialect()],
+    [DatabaseDialectCodes.AURORA_PG, new AuroraPgDatabaseDialect()]
+  ]);
+
   constructor(config: any) {
-    super(config, new PgErrorHandler(), new AuroraPgDatabaseDialect(), new PgConnectionUrlParser());
+    super(config, new PgErrorHandler(), DatabaseType.POSTGRES, AwsPGClient.knownDialectsByCode, new PgConnectionUrlParser());
     this.config = config;
     this._isReadOnly = false;
     this._createClientFunc = (config: any) => {
@@ -38,8 +51,10 @@ export class AwsPGClient extends AwsClient {
   async connect(): Promise<void> {
     await this.internalConnect();
     const res: void = await this.pluginManager.connect(this.pluginService.getCurrentHostInfo(), this.properties, true, async () => {
-      this.targetClient = this.pluginService.createTargetClient(this.properties);
-      await this.targetClient.connect();
+      if (!this.targetClient) {
+        this.targetClient = this.pluginService.createTargetClient(this.properties);
+        this.targetClient.connect();
+      }
     });
     await this.internalPostConnect();
     return res;
@@ -55,6 +70,7 @@ export class AwsPGClient extends AwsClient {
       this.properties,
       "query",
       async () => {
+        this.pluginService.updateInTransaction(text);
         return this.targetClient.query(text);
       },
       text

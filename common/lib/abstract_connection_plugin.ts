@@ -49,7 +49,7 @@ export abstract class AbstractConnectionPlugin implements ConnectionPlugin {
     return OldConnectionSuggestionAction.NO_OPINION;
   }
 
-  notifyNodeListChanged(changes: Map<string, Set<HostChangeOptions>>): void {}
+  notifyHostListChanged(changes: Map<string, Set<HostChangeOptions>>): void {}
 
   acceptsStrategy(role: HostRole, strategy: string): boolean {
     return false;

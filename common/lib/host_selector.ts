@@ -14,18 +14,9 @@
   limitations under the License.
 */
 
-import { ErrorHandler } from "aws-wrapper-common-lib/lib/error_handler";
+import { HostInfo } from "./host_info";
+import { HostRole } from "./host_role";
 
-export class PgErrorHandler implements ErrorHandler {
-  isLoginError(e: Error): boolean {
-    return false;
-  }
-
-  isNetworkError(e: Error): boolean {
-    return (
-      e.message.includes("Connection terminated unexpectedly") ||
-      e.message.includes("Client has encountered a connection error and is not queryable") ||
-      e.message.includes("Query read timeout")
-    );
-  }
+export interface HostSelector {
+  getHost(hosts: HostInfo[], role: HostRole, props?: Map<string, any>): HostInfo;
 }

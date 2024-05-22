@@ -17,6 +17,7 @@
 import { AwsClient } from "../aws_client";
 import { HostInfo } from "../host_info";
 import { HostRole } from "../host_role";
+import { DatabaseDialect } from "../database_dialect/database_dialect";
 
 export interface DynamicHostListProvider extends HostListProvider {}
 
@@ -31,9 +32,9 @@ export interface HostListProvider {
 
   forceRefresh(client: AwsClient): Promise<HostInfo[]>;
 
-  getHostRole(client: AwsClient): Promise<HostRole>;
+  getHostRole(client: AwsClient, dialect: DatabaseDialect): Promise<HostRole>;
 
-  identifyConnection(client: AwsClient): Promise<HostInfo | void | null>;
+  identifyConnection(client: AwsClient, dialect: DatabaseDialect): Promise<HostInfo | void | null>;
 
   createHost(host: string, isWriter: boolean, weight: number, lastUpdateTime: number): HostInfo;
 }

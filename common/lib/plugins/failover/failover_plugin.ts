@@ -32,7 +32,7 @@ import { AwsWrapperError, FailoverFailedError, FailoverSuccessError, Transaction
 import { FailoverMode, failoverModeFromValue } from "./failover_mode";
 import { HostRole } from "../../host_role";
 import { HostAvailability } from "../../host_availability/host_availability";
-import { StaleDnsHelper } from "../stale_dns_helper";
+import { StaleDnsHelper } from "../stale_dns/stale_dns_helper";
 import { WrapperProperties } from "../../wrapper_property";
 import { RdsUrlType } from "../../utils/rds_url_type";
 import { RdsUtils } from "../../utils/rds_utils";
@@ -46,7 +46,7 @@ export class FailoverPlugin extends AbstractConnectionPlugin {
     "forceConnect",
     "query",
     "notifyConnectionChanged",
-    "notifyNodeListChanged"
+    "notifyHostListChanged"
   ]);
   private readonly _staleDnsHelper: StaleDnsHelper;
   private readonly _properties: Map<string, any>;
@@ -140,10 +140,53 @@ export class FailoverPlugin extends AbstractConnectionPlugin {
   }
 
   override notifyConnectionChanged(changes: Set<HostChangeOptions>): OldConnectionSuggestionAction {
-    throw OldConnectionSuggestionAction.NO_OPINION;
+    return OldConnectionSuggestionAction.NO_OPINION;
   }
 
-  override notifyNodeListChanged(changes: Map<string, Set<HostChangeOptions>>): void {}
+  override notifyHostListChanged(changes: Map<string, Set<HostChangeOptions>>): void {
+    if (!this.enableFailoverSetting) {
+      return;
+    }
+
+    // Log changes
+    if (logger.level === "debug") {
+      let str = "Changes:";
+      for (const [key, values] of changes.entries()) {
+        str = str.concat("\n");
+        // Convert from int back into enum
+        const valStr = Array.from(values)
+          .map((x) => HostChangeOptions[x])
+          .join(", ");
+        str = str.concat(`\tHost '${key}': ${valStr}`);
+      }
+      logger.debug(str);
+    }
+
+    const currentHost = this.pluginService.getCurrentHostInfo();
+    if (currentHost) {
+      const url = currentHost.url;
+      if (this.isHostStillValid(url, changes)) {
+        return;
+      }
+
+      for (const alias of currentHost.allAliases) {
+        if (this.isHostStillValid(alias + "/", changes)) {
+          return;
+        }
+      }
+    }
+    logger.info(Messages.get("Failover.invalidNode"), currentHost);
+  }
+
+  private isHostStillValid(host: string, changes: Map<string, Set<HostChangeOptions>>): boolean {
+    if (changes.has(host)) {
+      const options = changes.get(host);
+      if (options) {
+        return !options.has(HostChangeOptions.HOST_DELETED) && !options.has(HostChangeOptions.WENT_DOWN);
+      }
+    }
+    return true;
+  }
 
   isFailoverEnabled(): boolean {
     return (
@@ -336,7 +379,7 @@ export class FailoverPlugin extends AbstractConnectionPlugin {
 
     this.pluginService.getCurrentHostInfo()?.removeAlias(Array.from(oldAliases));
     await this.pluginService.tryClosingTargetClient();
-    this.pluginService.setCurrentClient(result.client, result.newHost);
+    await this.pluginService.setCurrentClient(result.client, result.newHost);
     await this.updateTopology(true);
   }
 
@@ -363,7 +406,7 @@ export class FailoverPlugin extends AbstractConnectionPlugin {
     }
 
     await this.pluginService.tryClosingTargetClient();
-    this.pluginService.setCurrentClient(result.client, writerHostInfo);
+    await this.pluginService.setCurrentClient(result.client, writerHostInfo);
     logger.debug(Messages.get("Failover.establishedConnection", this.pluginService.getCurrentHostInfo()?.host ?? ""));
     await this.pluginService.refreshHostList();
   }
@@ -457,11 +500,11 @@ export class FailoverPlugin extends AbstractConnectionPlugin {
 
   private async createConnectionForHost(baseHostInfo: HostInfo) {
     const props = new Map(this._properties);
-    props.set("host", baseHostInfo.host);
+    props.set(WrapperProperties.HOST.name, baseHostInfo.host);
     const client = this.pluginService.createTargetClient(props);
     try {
       await this.pluginService.connect(baseHostInfo, this._properties, this.pluginService.getDialect().getConnectFunc(client));
-      this.pluginService.setCurrentClient(client, baseHostInfo);
+      await this.pluginService.setCurrentClient(client, baseHostInfo);
     } catch (error) {
       await this.pluginService.tryClosingTargetClient(client);
       throw error;

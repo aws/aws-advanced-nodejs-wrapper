@@ -14,18 +14,12 @@
   limitations under the License.
 */
 
-import { ErrorHandler } from "aws-wrapper-common-lib/lib/error_handler";
-
-export class PgErrorHandler implements ErrorHandler {
-  isLoginError(e: Error): boolean {
-    return false;
-  }
-
-  isNetworkError(e: Error): boolean {
-    return (
-      e.message.includes("Connection terminated unexpectedly") ||
-      e.message.includes("Client has encountered a connection error and is not queryable") ||
-      e.message.includes("Query read timeout")
-    );
-  }
+export class DatabaseDialectCodes {
+  static readonly AURORA_MYSQL: string = "aurora-mysql";
+  static readonly RDS_MYSQL: string = "rds-mysql";
+  static readonly MYSQL: string = "mysql";
+  static readonly AURORA_PG: string = "aurora-pg";
+  static readonly RDS_PG: string = "rds-pg";
+  static readonly PG: string = "pg";
+  static readonly CUSTOM: string = "custom";
 }

@@ -54,6 +54,9 @@ export class WrapperProperties {
   static readonly PASSWORD = new WrapperProperty<string>("password", "Database password", null);
   static readonly DATABASE = new WrapperProperty<string>("database", "Database name", null);
   static readonly PORT = new WrapperProperty<number>("port", "Database port", -1);
+  static readonly HOST = new WrapperProperty<string>("host", "Database host", null);
+
+  static readonly DIALECT = new WrapperProperty<string>("dialect", "A unique identifier for the supported database dialect.", "");
 
   static readonly IAM_HOST = new WrapperProperty<string>("iamHost", "Overrides the host that is used to generate the IAM token", null);
   static readonly IAM_DEFAULT_PORT = new WrapperProperty<number>(
@@ -147,13 +150,20 @@ export class WrapperProperties {
     "false"
   );
 
+  static readonly ENABLE_GREEN_NODE_REPLACEMENT = new WrapperProperty<boolean>(
+    "enableGreenNodeReplacement",
+    "Enables replacing a green node host name with the original hostname after a blue/green switchover and the green name no longer resolves.",
+    "false"
+  );
+
   static removeWrapperProperties<T>(config: T): T {
     const copy = Object.assign({}, config);
     const persistingProperties = [
       WrapperProperties.USER.name,
       WrapperProperties.PASSWORD.name,
       WrapperProperties.DATABASE.name,
-      WrapperProperties.PORT.name
+      WrapperProperties.PORT.name,
+      WrapperProperties.HOST.name
     ];
 
     Object.values(WrapperProperties).forEach((prop) => {

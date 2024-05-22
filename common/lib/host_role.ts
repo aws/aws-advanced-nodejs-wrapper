@@ -15,7 +15,7 @@
 */
 
 export enum HostRole {
-  UNKNOWN,
-  WRITER,
-  READER
+  UNKNOWN = "unknown",
+  WRITER = "writer",
+  READER = "reader"
 }

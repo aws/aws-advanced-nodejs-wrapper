@@ -31,12 +31,14 @@ export class AuroraPgDatabaseDialect extends PgDatabaseDialect implements Topolo
     // filter out nodes that haven't been updated in the last 5 minutes
     "WHERE EXTRACT(EPOCH FROM(NOW() - LAST_UPDATE_TIMESTAMP)) <= 300 OR SESSION_ID = 'MASTER_SESSION_ID' " +
     "OR LAST_UPDATE_TIMESTAMP IS NULL";
-
+  private static readonly EXTENSIONS_SQL: string =
+    "SELECT (setting LIKE '%aurora_stat_utils%') AS aurora_stat_utils FROM pg_settings WHERE name='rds.extensions'";
   private static readonly HOST_ID_QUERY: string = "SELECT aurora_db_instance_identifier() as host";
   private static readonly IS_READER_QUERY: string = "SELECT pg_is_in_recovery() as is_reader";
 
-  getDialectUpdateCandidates(): string[] {
-    return []; // TODO
+  constructor() {
+    super();
+    this.dialectName = "AuroraPgDatabaseDialect";
   }
 
   getHostListProvider(props: Map<string, any>, originalUrl: string, hostListProviderService: HostListProviderService): HostListProvider {
@@ -69,5 +71,24 @@ export class AuroraPgDatabaseDialect extends PgDatabaseDialect implements Topolo
   async getHostRole(client: AwsClient, props: Map<string, any>): Promise<HostRole> {
     const res = await client.executeQuery(props, AuroraPgDatabaseDialect.IS_READER_QUERY);
     return Promise.resolve(res.rows[0]["is_reader"] === "true" ? HostRole.READER : HostRole.WRITER);
+  }
+
+  async isDialect(targetClient: any): Promise<boolean> {
+    if (!(await super.isDialect(targetClient))) {
+      return false;
+    }
+
+    return await targetClient
+      .query(AuroraPgDatabaseDialect.EXTENSIONS_SQL)
+      .then((result: any) => {
+        return result.rows[0]["aurora_stat_utils"];
+      })
+      .catch(() => {
+        return false;
+      });
+  }
+
+  getDialectName() {
+    return this.dialectName;
   }
 }
