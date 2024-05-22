@@ -20,7 +20,6 @@ import { AwsWrapperError } from "../../utils/errors";
 import { Messages } from "../../utils/messages";
 import { WrapperProperties } from "../../wrapper_property";
 import { SamlCredentialsProviderFactory } from "./saml_credentials_provider_factory";
-import https from "https";
 import axios from "axios";
 import { stringify } from "querystring";
 import tough from "tough-cookie";
