@@ -22,7 +22,6 @@ import { AdfsCredentialsProviderFactory } from "../../common/lib/plugins/federat
 
 const props = new Map<string, any>();
 const pluginService = mock(PluginService);
-const pluginServiceMock = instance(pluginService);
 
 describe("adfsTest", () => {
   it("testGetSamlAssertion", async () => {
@@ -38,7 +37,7 @@ describe("adfsTest", () => {
     const adfsSaml = readFileSync(adfsSamlHtml, "utf8");
     const expectedSamlAssertion = readFileSync(samlAssertionTxt, "utf8").trimEnd();
 
-    const plugin = spy(new AdfsCredentialsProviderFactory(pluginServiceMock));
+    const plugin = spy(new AdfsCredentialsProviderFactory());
     const pluginInstance = instance(plugin);
     when(plugin.getSignInPageBody(anything(), anything())).thenResolve(signInPage);
     when(plugin.getFormActionBody(anything(), anything(), anything())).thenResolve(adfsSaml);

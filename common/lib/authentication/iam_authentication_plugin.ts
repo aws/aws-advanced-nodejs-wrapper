@@ -65,12 +65,12 @@ export class IamAuthenticationPlugin extends AbstractConnectionPlugin {
     const host = WrapperProperties.IAM_HOST.get(props) ? WrapperProperties.IAM_HOST.get(props) : hostInfo.host;
     const region: string = WrapperProperties.IAM_REGION.get(props) ? WrapperProperties.IAM_REGION.get(props) : this.getRdsRegion(host);
     const port = IamAuthUtils.getIamPort(props, hostInfo, this.pluginService.getCurrentClient().defaultPort);
-    const tokenExpirationSec = WrapperProperties.IAM_EXPIRATION.get(props);
+    const tokenExpirationSec = WrapperProperties.IAM_TOKEN_EXPIRATION.get(props);
 
     const cacheKey: string = this.getCacheKey(port, user, host, region);
 
     const tokenInfo = IamAuthenticationPlugin.tokenCache.get(cacheKey);
-    const isCachedToken: boolean = tokenInfo != null && !tokenInfo.isExpired();
+    const isCachedToken: boolean = tokenInfo !== undefined && !tokenInfo.isExpired();
 
     if (isCachedToken && tokenInfo) {
       logger.debug(Messages.get("IamAuthenticationPlugin.useCachedIamToken", tokenInfo.token));
@@ -125,21 +125,6 @@ export class IamAuthenticationPlugin extends AbstractConnectionPlugin {
 
   private getCacheKey(port: number, user?: string, hostname?: string, region?: string): string {
     return `${region}:${hostname}:${port}:${user}`;
-  }
-
-  private getPort(props: Map<string, any>, hostInfo: HostInfo): number {
-    const port = WrapperProperties.IAM_DEFAULT_PORT.get(props);
-    if (port > 0) {
-      return port;
-    } else {
-      logger.debug(Messages.get("IamAuthenticationPlugin.invalidPort", isNaN(port) ? "-1" : String(port)));
-    }
-
-    if (hostInfo.isPortSpecified()) {
-      return hostInfo.port;
-    } else {
-      return this.pluginService.getCurrentClient().defaultPort;
-    }
   }
 
   private getRdsRegion(hostname: string): string {

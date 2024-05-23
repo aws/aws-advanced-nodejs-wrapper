@@ -27,16 +27,13 @@ import { wrapper } from "axios-cookiejar-support";
 import { HttpsCookieAgent } from "http-cookie-agent/http";
 
 export class AdfsCredentialsProviderFactory extends SamlCredentialsProviderFactory {
-  static readonly IDP_NAME = "adfs";
   private static readonly INPUT_TAG_PATTERN = new RegExp("<input(.+?)/>", "gms");
   private static readonly FORM_ACTION_PATTERN = new RegExp('<form.*?action="([^"]+)"');
   private static readonly SAML_RESPONSE_PATTERN = new RegExp('SAMLResponse\\W+value="(?<saml>[^"]+)"');
   private static readonly HTTPS_URL_PATTERN = new RegExp("^(https)://[-a-zA-Z0-9+&@#/%?=~_!:,.']*[-a-zA-Z0-9+&@#/%=~_']");
-  private pluginService: PluginService;
 
-  constructor(pluginService: PluginService) {
+  constructor() {
     super();
-    this.pluginService = pluginService;
   }
 
   async getSamlAssertion(props: Map<string, any>): Promise<string> {
@@ -96,7 +93,7 @@ export class AdfsCredentialsProviderFactory extends SamlCredentialsProviderFacto
   }
 
   async getFormActionBody(uri: string, parameters: Record<string, string>, props: Map<string, any>): Promise<string> {
-    logger.debug(Messages.get("AdfsCredentialsProviderFactory.signOnPageUrl", uri));
+    logger.debug(Messages.get("AdfsCredentialsProviderFactory.signOnPagePostActionUrl", uri));
     this.validateUrl(uri);
     wrapper(axios);
     const jar = new tough.CookieJar();
@@ -118,11 +115,10 @@ export class AdfsCredentialsProviderFactory extends SamlCredentialsProviderFacto
       withCredentials: true
     };
 
-    let getResp;
-
     try {
       // First post which results in redirect
-      const postResp = await axios.request(postConfig);
+      await axios.request(postConfig);
+      return "";
     } catch (e: any) {
       if (!e.response) {
         throw e;
@@ -143,7 +139,7 @@ export class AdfsCredentialsProviderFactory extends SamlCredentialsProviderFacto
         withCredentials: true
       };
       try {
-        getResp = await axios.get(url, redirectConfig);
+        const getResp = await axios.get(url, redirectConfig);
         return getResp.data;
       } catch (e: any) {
         throw new AwsWrapperError(
@@ -151,7 +147,6 @@ export class AdfsCredentialsProviderFactory extends SamlCredentialsProviderFacto
         );
       }
     }
-    return "";
   }
 
   getFormActionUrl(props: Map<string, any>, action: string): string {
@@ -170,7 +165,7 @@ export class AdfsCredentialsProviderFactory extends SamlCredentialsProviderFacto
     if (tags) {
       for (const tag of tags) {
         const tagNameLower = this.getValueByKey(tag[0], "name").toLowerCase();
-        if (!(tagNameLower.length === 0) && !distinctInputTags.has(tagNameLower)) {
+        if (tagNameLower.length !== 0 && !distinctInputTags.has(tagNameLower)) {
           distinctInputTags.add(tagNameLower);
           inputTags.push(tag[0]);
         }
@@ -189,12 +184,12 @@ export class AdfsCredentialsProviderFactory extends SamlCredentialsProviderFacto
       if (nameLower.includes("username")) {
         parameters[name] = WrapperProperties.IDP_USERNAME.get(props);
       } else if (nameLower.includes("authmethod")) {
-        if (!(value.length === 0)) {
+        if (value.length !== 0) {
           parameters[name] = value;
         }
       } else if (nameLower.includes("password")) {
         parameters[name] = WrapperProperties.IDP_PASSWORD.get(props);
-      } else if (!(name.length === 0)) {
+      } else if (name.length !== 0) {
         parameters[name] = value;
       }
     }
@@ -261,11 +256,11 @@ export class AdfsCredentialsProviderFactory extends SamlCredentialsProviderFacto
   }
 
   private validateUrl(url: string): void {
+    if (!url.match(AdfsCredentialsProviderFactory.HTTPS_URL_PATTERN)) {
+      throw new AwsWrapperError(Messages.get("AdfsCredentialsProviderFactory.invalidHttpsUrl", url));
+    }
     try {
       new URL(url);
-      if (!url.match(AdfsCredentialsProviderFactory.HTTPS_URL_PATTERN)) {
-        throw new AwsWrapperError(Messages.get("AdfsCredentialsProviderFactory.invalidHttpsUrl", url));
-      }
     } catch (e) {
       throw new AwsWrapperError(Messages.get("AdfsCredentialsProviderFactory.invalidHttpsUrl", url));
     }

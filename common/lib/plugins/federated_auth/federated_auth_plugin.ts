@@ -24,21 +24,18 @@ import { logger } from "../../../logutils";
 import { AwsWrapperError } from "../../utils/errors";
 import { Messages } from "../../utils/messages";
 import { Signer } from "@aws-sdk/rds-signer";
-import { ConnectTimePluginFactory } from "../connect_time_plugin";
 import { ConnectionPlugin } from "../../connection_plugin";
 import { AdfsCredentialsProviderFactory } from "./adfs_credentials_provider_factory";
 import { CredentialsProviderFactory } from "./credentials_provider_factory";
 import { Credentials } from "aws-sdk";
 import { AssumeRoleWithSAMLCommandOutput } from "@aws-sdk/client-sts";
+import { ConnectionPluginFactory } from "../../plugin_factory";
 
 export class FederatedAuthPlugin extends AbstractConnectionPlugin {
   protected static readonly tokenCache = new Map<string, TokenInfo>();
   protected rdsUtils: RdsUtils = new RdsUtils();
   protected pluginService: PluginService;
   private static readonly subscribedMethods = new Set<string>(["connect", "forceConnect"]);
-  protected static SAML_RESPONSE_PATTERN = new RegExp('SAMLResponse\\W+value="(?<saml>[^"]+)"');
-  protected static SAML_RESPONSE_PATTERN_GROUP = "saml";
-  protected static HTTPS_URL_PATTERN = new RegExp("^(https)://[-a-zA-Z0-9+&@#/%?=~_!:,.']*[-a-zA-Z0-9+&@#/%=~_']");
   private readonly credentialsProviderFactory: CredentialsProviderFactory;
 
   public getSubscribedMethods(): Set<string> {
@@ -65,12 +62,12 @@ export class FederatedAuthPlugin extends AbstractConnectionPlugin {
     const host = IamAuthUtils.getIamHost(props, hostInfo);
     const port = IamAuthUtils.getIamPort(props, hostInfo, this.pluginService.getDialect().getDefaultPort());
     const region: string = WrapperProperties.IAM_REGION.get(props) ? WrapperProperties.IAM_REGION.get(props) : this.getRdsRegion(host);
-    const tokenExpirationSec = WrapperProperties.IAM_EXPIRATION.get(props);
+    const tokenExpirationSec = WrapperProperties.IAM_TOKEN_EXPIRATION.get(props);
 
     const cacheKey = this.getCacheKey(WrapperProperties.DB_USER.get(props), host, port, region);
     const tokenInfo = FederatedAuthPlugin.tokenCache.get(cacheKey);
 
-    const isCachedToken: boolean = tokenInfo != null && !tokenInfo.isExpired();
+    const isCachedToken: boolean = tokenInfo !== undefined && !tokenInfo.isExpired();
 
     if (isCachedToken && tokenInfo) {
       logger.debug(Messages.get("FederatedAuthPlugin.useCachedIamToken", tokenInfo.token));
@@ -86,7 +83,7 @@ export class FederatedAuthPlugin extends AbstractConnectionPlugin {
     WrapperProperties.USER.set(props, WrapperProperties.DB_USER.get(props));
 
     try {
-      return connectFunc();
+      return await connectFunc();
     } catch (e) {
       if (!this.pluginService.isLoginError(e as Error) || !isCachedToken) {
         throw e;
@@ -96,7 +93,7 @@ export class FederatedAuthPlugin extends AbstractConnectionPlugin {
         const token = await this.generateAuthenticationToken(hostInfo, props, host, port, region);
         WrapperProperties.PASSWORD.set(props, token);
         FederatedAuthPlugin.tokenCache.set(cacheKey, new TokenInfo(token, tokenExpiry));
-        return connectFunc();
+        return await connectFunc();
       } catch (e) {
         throw new AwsWrapperError("FederatedAuthPlugin.unhandledException", e);
       }
@@ -172,16 +169,12 @@ export class FederatedAuthPlugin extends AbstractConnectionPlugin {
   }
 }
 
-export class FederatedAuthPluginFactory extends ConnectTimePluginFactory {
+export class FederatedAuthPluginFactory implements ConnectionPluginFactory {
   getInstance(pluginService: PluginService, properties: Map<string, any>): ConnectionPlugin {
-    return new FederatedAuthPlugin(pluginService, this.getCredentialsProviderFactory(pluginService, properties));
+    return new FederatedAuthPlugin(pluginService, this.getCredentialsProviderFactory(properties));
   }
 
-  private getCredentialsProviderFactory(pluginService: PluginService, properties: Map<string, any>): CredentialsProviderFactory {
-    const idpName = WrapperProperties.IDP_NAME.get(properties);
-    if (!idpName || idpName === "adfs") {
-      return new AdfsCredentialsProviderFactory(pluginService);
-    }
-    throw new AwsWrapperError(Messages.get("FederatedAuthPluginFactory.unsupportedIdp", idpName));
+  private getCredentialsProviderFactory(properties: Map<string, any>): CredentialsProviderFactory {
+    return new AdfsCredentialsProviderFactory();
   }
 }
