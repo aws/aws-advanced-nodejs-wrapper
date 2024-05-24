@@ -84,9 +84,7 @@ describe("federatedAuthTest", () => {
 
     FederatedAuthPlugin["tokenCache"].set(expiredToken, expiredTokenInfo);
 
-    when(spyIamUtils.generateAuthenticationToken(anything(), anything(), anything(), anything(), anything(), anything(), anything())).thenResolve(
-      testToken
-    );
+    when(spyIamUtils.generateAuthenticationToken(anything(), anything(), anything(), anything(), anything())).thenResolve(testToken);
 
     await spyPluginInstance.connect(hostInfo, props, true, mockConnectFunc);
 
@@ -97,9 +95,7 @@ describe("federatedAuthTest", () => {
   it("testNoCachedToken", async () => {
     const spyPluginInstance = instance(spyPlugin);
 
-    when(spyIamUtils.generateAuthenticationToken(anything(), anything(), anything(), anything(), anything(), anything(), anything())).thenResolve(
-      testToken
-    );
+    when(spyIamUtils.generateAuthenticationToken(anything(), anything(), anything(), anything(), anything())).thenResolve(testToken);
 
     await spyPluginInstance.connect(hostInfo, props, true, mockConnectFunc);
     expect(dbUser).toBe(WrapperProperties.USER.get(props));

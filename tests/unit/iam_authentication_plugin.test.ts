@@ -23,8 +23,8 @@ import { AwsClient } from "aws-wrapper-common-lib/lib/aws_client";
 import { AwsWrapperError } from "aws-wrapper-common-lib/lib/utils/errors";
 import { WrapperProperties } from "aws-wrapper-common-lib/lib/wrapper_property";
 import fetch from "node-fetch";
-import { instance, mock, when } from "ts-mockito";
-import { TokenInfo } from "aws-wrapper-common-lib/lib/utils/iam_auth_utils";
+import { anything, instance, mock, spy, when } from "ts-mockito";
+import { IamAuthUtils, TokenInfo } from "aws-wrapper-common-lib/lib/utils/iam_auth_utils";
 
 const GENERATED_TOKEN: string = "generatedToken";
 const TEST_TOKEN: string = "testToken";
@@ -59,6 +59,7 @@ const props = new Map<string, any>();
 
 const mockPluginService: PluginService = mock(PluginService);
 const mockClient: AwsClient = mock(AwsClient);
+const spyIamAuthUtils = spy(IamAuthUtils);
 
 class IamAuthenticationPluginTestClass extends IamAuthenticationPlugin {
   put(key: string, token: TokenInfo) {
@@ -109,6 +110,7 @@ describe("testIamAuth", () => {
     props.set(WrapperProperties.PLUGINS.name, "iam");
 
     when(mockPluginService.getCurrentClient()).thenReturn(instance(mockClient));
+    when(spyIamAuthUtils.generateAuthenticationToken(anything(), anything(), anything(), anything(), anything())).thenResolve(GENERATED_TOKEN);
   });
 
   it("testPostgresConnectValidTokenInCache", async () => {
