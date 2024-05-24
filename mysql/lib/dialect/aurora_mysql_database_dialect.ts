@@ -74,6 +74,7 @@ export class AuroraMySQLDatabaseDialect extends MySQLDatabaseDialect implements 
 
   async isDialect(targetClient: any): Promise<boolean> {
     return targetClient
+      .promise()
       .query(AuroraMySQLDatabaseDialect.AURORA_VERSION_QUERY)
       .then(([rows]: any) => {
         return !!rows[0]["Value"];

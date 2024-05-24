@@ -128,8 +128,8 @@ export class PluginManager {
     return this.executeWithSubscribedPlugins(
       hostInfo,
       props,
-      "connect",
-      (plugin, nextPluginFunc) => plugin.connect(hostInfo, props, isInitialConnection, nextPluginFunc),
+      "forceConnect",
+      (plugin, nextPluginFunc) => plugin.forceConnect(hostInfo, props, isInitialConnection, nextPluginFunc),
       methodFunc
     );
   }

@@ -36,4 +36,9 @@ export interface DatabaseDialect {
   getConnectFunc(targetClient: any): () => Promise<any>;
   getDatabaseType(): DatabaseType;
   getDialectName(): string;
+  doesStatementSetReadOnly(statement: string): boolean | undefined;
+  doesStatementSetTransactionIsolation(statement: string): number | undefined;
+  doesStatementSetAutoCommit(statement: string): boolean | undefined;
+  doesStatementSetSchema(statement: string): string | undefined;
+  doesStatementSetCatalog(statement: string): string | undefined;
 }
