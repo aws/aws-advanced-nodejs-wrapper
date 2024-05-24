@@ -15,21 +15,43 @@
 */
 
 import { CredentialsProviderFactory } from "./credentials_provider_factory";
-import { AssumeRoleWithSAMLCommand, STSClient, AssumeRoleWithSAMLCommandOutput } from "@aws-sdk/client-sts";
+import { AssumeRoleWithSAMLCommand, STSClient } from "@aws-sdk/client-sts";
 import { WrapperProperties } from "../../wrapper_property";
+import { Credentials } from "aws-sdk";
+import { AwsWrapperError } from "../../utils/errors";
+import { AwsCredentialIdentityProvider, AwsCredentialIdentity } from "@smithy/types/dist-types/identity/awsCredentialIdentity";
 
 export abstract class SamlCredentialsProviderFactory implements CredentialsProviderFactory {
-  async getAwsCredentialsProvider(host: string, region: string, props: Map<string, any>): Promise<AssumeRoleWithSAMLCommandOutput> {
+  async getAwsCredentialsProvider(
+    host: string,
+    region: string,
+    props: Map<string, any>
+  ): Promise<AwsCredentialIdentity | AwsCredentialIdentityProvider> {
     const samlAssertion = await this.getSamlAssertion(props);
     const assumeRoleWithSamlRequest = new AssumeRoleWithSAMLCommand({
       SAMLAssertion: samlAssertion,
       RoleArn: WrapperProperties.IAM_ROLE_ARN.get(props),
       PrincipalArn: WrapperProperties.IAM_IDP_ARN.get(props)
     });
+
     const stsClient = new STSClient({
       region: region
     });
-    return await stsClient.send(assumeRoleWithSamlRequest);
+
+    const results = await stsClient.send(assumeRoleWithSamlRequest);
+    const credentials = results["Credentials"];
+
+    if (credentials) {
+      if (credentials.AccessKeyId && credentials.SecretAccessKey && credentials.SessionToken) {
+        return new Credentials({
+          accessKeyId: credentials.AccessKeyId,
+          secretAccessKey: credentials.SecretAccessKey,
+          sessionToken: credentials.SessionToken
+        });
+      }
+      throw new AwsWrapperError("Credentials undefined");
+    }
+    throw new AwsWrapperError("Credentials from SAML request not found");
   }
 
   abstract getSamlAssertion(props: Map<string, any>): Promise<string>;

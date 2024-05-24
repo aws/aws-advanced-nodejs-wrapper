@@ -14,14 +14,12 @@
   limitations under the License.
 */
 
-import { PluginService } from "aws-wrapper-common-lib/lib/plugin_service";
 import { WrapperProperties } from "aws-wrapper-common-lib/lib/wrapper_property";
 import { readFileSync } from "fs";
 import { anything, instance, mock, spy, when } from "ts-mockito";
 import { AdfsCredentialsProviderFactory } from "../../common/lib/plugins/federated_auth/adfs_credentials_provider_factory";
 
 const props = new Map<string, any>();
-const pluginService = mock(PluginService);
 
 describe("adfsTest", () => {
   it("testGetSamlAssertion", async () => {
@@ -29,23 +27,23 @@ describe("adfsTest", () => {
     WrapperProperties.IDP_USERNAME.set(props, "someFederatedUsername@example.com");
     WrapperProperties.IDP_PASSWORD.set(props, "somePassword");
 
-    const signInPageHtml = "tests/integration/host/src/test/resources/federated_auth/adfs-sign-in-page.html";
-    const adfsSamlHtml = "tests/integration/host/src/test/resources/federated_auth/adfs-saml.html";
-    const samlAssertionTxt = "tests/integration/host/src/test/resources/federated_auth/saml-assertion.txt";
+    const signInPageHtml = "tests/unit/resources/federated_auth/adfs-sign-in-page.html";
+    const adfsSamlHtml = "tests/unit/resources/federated_auth/adfs-saml.html";
+    const samlAssertionTxt = "tests/unit/resources/federated_auth/saml-assertion.txt";
 
     const signInPage = readFileSync(signInPageHtml, "utf8");
     const adfsSaml = readFileSync(adfsSamlHtml, "utf8");
     const expectedSamlAssertion = readFileSync(samlAssertionTxt, "utf8").trimEnd();
 
-    const plugin = spy(new AdfsCredentialsProviderFactory());
-    const pluginInstance = instance(plugin);
-    when(plugin.getSignInPageBody(anything(), anything())).thenResolve(signInPage);
-    when(plugin.getFormActionBody(anything(), anything(), anything())).thenResolve(adfsSaml);
+    const mockPlugin = spy(new AdfsCredentialsProviderFactory());
+    const mockPluginInstance = instance(mockPlugin);
+    when(mockPlugin.getSignInPageBody(anything(), anything())).thenResolve(signInPage);
+    when(mockPlugin.getFormActionBody(anything(), anything(), anything())).thenResolve(adfsSaml);
 
-    const samlAssertion = await pluginInstance.getSamlAssertion(props);
+    const samlAssertion = await mockPluginInstance.getSamlAssertion(props);
     expect(samlAssertion).toBe(expectedSamlAssertion);
 
-    const params = pluginInstance["getParametersFromHtmlBody"](signInPage, props);
+    const params = mockPluginInstance["getParametersFromHtmlBody"](signInPage, props);
     expect(params["UserName"]).toBe("someFederatedUsername@example.com");
     expect(params["Password"]).toBe("somePassword");
     expect(params["Kmsi"]).toBe("true");

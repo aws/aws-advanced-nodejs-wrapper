@@ -17,12 +17,12 @@
 import { HostInfo } from "aws-wrapper-common-lib/lib/host_info";
 import { FederatedAuthPlugin } from "aws-wrapper-common-lib/lib/plugins/federated_auth/federated_auth_plugin";
 import { PluginService } from "aws-wrapper-common-lib/lib/plugin_service";
-import { TokenInfo } from "aws-wrapper-common-lib/lib/utils/iam_auth_utils";
+import { IamAuthUtils, TokenInfo } from "aws-wrapper-common-lib/lib/utils/iam_auth_utils";
 import { WrapperProperties } from "aws-wrapper-common-lib/lib/wrapper_property";
 import { anything, instance, mock, spy, when } from "ts-mockito";
 import { CredentialsProviderFactory } from "../../common/lib/plugins/federated_auth/credentials_provider_factory";
-import { AssumeRoleWithSAMLCommandOutput } from "@aws-sdk/client-sts";
 import { DatabaseDialect } from "aws-wrapper-common-lib/lib/database_dialect/database_dialect";
+import { Credentials } from "aws-sdk";
 
 const testToken = "testToken";
 const defaultPort = 5432;
@@ -34,27 +34,28 @@ const tokenCache = new Map<string, TokenInfo>();
 const hostInfo = new HostInfo("pg.testdb.us-east-2.rds.amazonaws.com", defaultPort);
 const testTokenInfo = new TokenInfo(testToken, Date.now() + expirationFiveMinutes);
 
-const dialect = mock<DatabaseDialect>();
-const mockDialect = instance(dialect);
-const pluginService = mock(PluginService);
-const credentialProviderFactory = mock<CredentialsProviderFactory>();
-const samlOutput = mock<AssumeRoleWithSAMLCommandOutput>();
+const mockDialect = mock<DatabaseDialect>();
+const mockDialectInstance = instance(mockDialect);
+const mockPluginService = mock(PluginService);
+const mockCredentialProviderFactory = mock<CredentialsProviderFactory>();
+const spyIamUtils = spy(IamAuthUtils);
+const mockCredentials = mock(Credentials);
 const mockConnectFunc = jest.fn().mockImplementation(() => {
   return;
 });
 
 describe("federatedAuthTest", () => {
-  let plugin: FederatedAuthPlugin;
+  let spyPlugin: FederatedAuthPlugin;
   let props: Map<string, any>;
 
   beforeEach(() => {
     props = new Map<string, any>();
     WrapperProperties.PLUGINS.set(props, "federatedAuth");
     WrapperProperties.DB_USER.set(props, dbUser);
-    plugin = spy(new FederatedAuthPlugin(instance(pluginService), instance(credentialProviderFactory)));
-    when(pluginService.getDialect()).thenReturn(mockDialect);
-    when(dialect.getDefaultPort()).thenReturn(defaultPort);
-    when(credentialProviderFactory.getAwsCredentialsProvider(anything(), anything(), anything())).thenResolve(instance(samlOutput));
+    spyPlugin = spy(new FederatedAuthPlugin(instance(mockPluginService), instance(mockCredentialProviderFactory)));
+    when(mockPluginService.getDialect()).thenReturn(mockDialectInstance);
+    when(mockDialect.getDefaultPort()).thenReturn(defaultPort);
+    when(mockCredentialProviderFactory.getAwsCredentialsProvider(anything(), anything(), anything())).thenResolve(instance(mockCredentials));
   });
 
   afterEach(() => {
@@ -62,20 +63,20 @@ describe("federatedAuthTest", () => {
   });
 
   it("testCachedToken", async () => {
-    const pluginInstance = instance(plugin);
+    const spyPluginInstance = instance(spyPlugin);
     FederatedAuthPlugin["tokenCache"].set(pgCacheKey, testTokenInfo);
 
     const key = `us-east-2:pg.testdb.us-east-2.rds.amazonaws.com:${defaultPort}:iamUser`;
     tokenCache.set(key, testTokenInfo);
 
-    await pluginInstance.connect(hostInfo, props, true, mockConnectFunc);
+    await spyPluginInstance.connect(hostInfo, props, true, mockConnectFunc);
 
     expect(dbUser).toBe(WrapperProperties.USER.get(props));
     expect(testToken).toBe(WrapperProperties.PASSWORD.get(props));
   });
 
   it("testExpiredCachedToken", async () => {
-    const pluginInstance: FederatedAuthPlugin = instance(plugin);
+    const spyPluginInstance: FederatedAuthPlugin = instance(spyPlugin);
 
     const key = `us-east-2:pg.testdb.us-east-2.rds.amazonaws.com:${defaultPort}:iamUser`;
     const expiredToken = "expiredToken";
@@ -83,20 +84,24 @@ describe("federatedAuthTest", () => {
 
     FederatedAuthPlugin["tokenCache"].set(expiredToken, expiredTokenInfo);
 
-    when(plugin["generateAuthenticationToken"](anything(), anything(), anything(), anything(), anything())).thenResolve(testToken);
+    when(spyIamUtils.generateAuthenticationToken(anything(), anything(), anything(), anything(), anything(), anything(), anything())).thenResolve(
+      testToken
+    );
 
-    await pluginInstance.connect(hostInfo, props, true, mockConnectFunc);
+    await spyPluginInstance.connect(hostInfo, props, true, mockConnectFunc);
 
     expect(dbUser).toBe(WrapperProperties.USER.get(props));
     expect(testToken).toBe(WrapperProperties.PASSWORD.get(props));
   });
 
   it("testNoCachedToken", async () => {
-    const pluginInstance = instance(plugin);
+    const spyPluginInstance = instance(spyPlugin);
 
-    when(plugin["generateAuthenticationToken"](anything(), anything(), anything(), anything(), anything())).thenResolve(testToken);
+    when(spyIamUtils.generateAuthenticationToken(anything(), anything(), anything(), anything(), anything(), anything(), anything())).thenResolve(
+      testToken
+    );
 
-    await pluginInstance.connect(hostInfo, props, true, mockConnectFunc);
+    await spyPluginInstance.connect(hostInfo, props, true, mockConnectFunc);
     expect(dbUser).toBe(WrapperProperties.USER.get(props));
     expect(testToken).toBe(WrapperProperties.PASSWORD.get(props));
   });
@@ -113,9 +118,9 @@ describe("federatedAuthTest", () => {
     const key = `us-west-2:pg.testdb.us-west-2.rds.amazonaws.com:${expectedPort}:iamUser`;
     FederatedAuthPlugin["tokenCache"].set(key, testTokenInfo);
 
-    const pluginInstance = instance(plugin);
+    const spyPluginInstance = instance(spyPlugin);
 
-    await pluginInstance.connect(hostInfo, props, true, mockConnectFunc);
+    await spyPluginInstance.connect(hostInfo, props, true, mockConnectFunc);
 
     expect(dbUser).toBe(WrapperProperties.USER.get(props));
     expect(testToken).toBe(WrapperProperties.PASSWORD.get(props));
@@ -127,12 +132,12 @@ describe("federatedAuthTest", () => {
     WrapperProperties.USER.set(props, expectedUser);
     WrapperProperties.PASSWORD.set(props, expectedPassword);
 
-    const pluginInstance = instance(plugin);
+    const spyPluginInstance = instance(spyPlugin);
 
     const key = `us-east-2:pg.testdb.us-east-2.rds.amazonaws.com:${defaultPort}:iamUser`;
     FederatedAuthPlugin["tokenCache"].set(key, testTokenInfo);
 
-    await pluginInstance.connect(hostInfo, props, true, mockConnectFunc);
+    await spyPluginInstance.connect(hostInfo, props, true, mockConnectFunc);
 
     expect(dbUser).toBe(WrapperProperties.USER.get(props));
     expect(testToken).toBe(WrapperProperties.PASSWORD.get(props));

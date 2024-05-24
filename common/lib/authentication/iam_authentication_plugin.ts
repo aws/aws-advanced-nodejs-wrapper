@@ -62,12 +62,12 @@ export class IamAuthenticationPlugin extends AbstractConnectionPlugin {
       throw new AwsWrapperError(`${WrapperProperties.USER} is null or empty`);
     }
 
-    const host = WrapperProperties.IAM_HOST.get(props) ? WrapperProperties.IAM_HOST.get(props) : hostInfo.host;
-    const region: string = WrapperProperties.IAM_REGION.get(props) ? WrapperProperties.IAM_REGION.get(props) : this.getRdsRegion(host);
+    const host = IamAuthUtils.getIamHost(props, hostInfo);
+    const region: string = IamAuthUtils.getRdsRegion(host, this.rdsUtil, props);
     const port = IamAuthUtils.getIamPort(props, hostInfo, this.pluginService.getCurrentClient().defaultPort);
     const tokenExpirationSec = WrapperProperties.IAM_TOKEN_EXPIRATION.get(props);
 
-    const cacheKey: string = this.getCacheKey(port, user, host, region);
+    const cacheKey: string = IamAuthUtils.getCacheKey(port, user, host, region);
 
     const tokenInfo = IamAuthenticationPlugin.tokenCache.get(cacheKey);
     const isCachedToken: boolean = tokenInfo !== undefined && !tokenInfo.isExpired();
@@ -121,22 +121,6 @@ export class IamAuthenticationPlugin extends AbstractConnectionPlugin {
     });
 
     return await signer.getAuthToken();
-  }
-
-  private getCacheKey(port: number, user?: string, hostname?: string, region?: string): string {
-    return `${region}:${hostname}:${port}:${user}`;
-  }
-
-  private getRdsRegion(hostname: string): string {
-    const rdsRegion: string | null = this.rdsUtil.getRdsRegion(hostname);
-
-    if (!rdsRegion) {
-      const errorMessage = Messages.get("IamAuthenticationPlugin.unsupportedHostname", "hostname");
-      logger.debug(errorMessage);
-      throw new AwsWrapperError(errorMessage);
-    }
-
-    return rdsRegion;
   }
 
   static clearCache(): void {

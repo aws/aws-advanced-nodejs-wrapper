@@ -17,7 +17,11 @@
 import { logger } from "../../logutils";
 import { HostInfo } from "../host_info";
 import { WrapperProperties } from "../wrapper_property";
+import { AwsWrapperError } from "./errors";
 import { Messages } from "./messages";
+import { RdsUtils } from "./rds_utils";
+import { Signer } from "@aws-sdk/rds-signer";
+import { AwsCredentialIdentityProvider, AwsCredentialIdentity } from "@smithy/types/dist-types/identity/awsCredentialIdentity";
 
 export class IamAuthUtils {
   public static getIamHost(props: Map<string, any>, hostInfo: HostInfo): string {
@@ -37,6 +41,42 @@ export class IamAuthUtils {
     } else {
       return defaultPort;
     }
+  }
+
+  public static getRdsRegion(hostname: string, rdsUtils: RdsUtils, props: Map<string, any>): string {
+    const rdsRegion = rdsUtils.getRdsRegion(hostname);
+
+    if (!rdsRegion) {
+      const errorMessage = Messages.get("FederatedAuthPlugin.unsupportedHostname", hostname);
+      logger.debug(errorMessage);
+      throw new AwsWrapperError(errorMessage);
+    }
+
+    return WrapperProperties.IAM_REGION.get(props) ? WrapperProperties.IAM_REGION.get(props) : rdsRegion;
+  }
+
+  public static getCacheKey(port: number, user?: string, hostname?: string, region?: string): string {
+    return `${region}:${hostname}:${port}:${user}`;
+  }
+
+  public static async generateAuthenticationToken(
+    hostInfo: HostInfo,
+    props: Map<string, any>,
+    hostname: string,
+    port: number,
+    region: string,
+    user: string,
+    credentials: AwsCredentialIdentity | AwsCredentialIdentityProvider
+  ): Promise<string> {
+    const signer = new Signer({
+      hostname: hostname,
+      port: port,
+      region: region,
+      credentials,
+      username: user
+    });
+
+    return await signer.getAuthToken();
   }
 }
 

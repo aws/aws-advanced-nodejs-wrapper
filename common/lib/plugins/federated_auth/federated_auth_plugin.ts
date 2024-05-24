@@ -27,8 +27,6 @@ import { Signer } from "@aws-sdk/rds-signer";
 import { ConnectionPlugin } from "../../connection_plugin";
 import { AdfsCredentialsProviderFactory } from "./adfs_credentials_provider_factory";
 import { CredentialsProviderFactory } from "./credentials_provider_factory";
-import { Credentials } from "aws-sdk";
-import { AssumeRoleWithSAMLCommandOutput } from "@aws-sdk/client-sts";
 import { ConnectionPluginFactory } from "../../plugin_factory";
 
 export class FederatedAuthPlugin extends AbstractConnectionPlugin {
@@ -61,10 +59,10 @@ export class FederatedAuthPlugin extends AbstractConnectionPlugin {
 
     const host = IamAuthUtils.getIamHost(props, hostInfo);
     const port = IamAuthUtils.getIamPort(props, hostInfo, this.pluginService.getDialect().getDefaultPort());
-    const region: string = WrapperProperties.IAM_REGION.get(props) ? WrapperProperties.IAM_REGION.get(props) : this.getRdsRegion(host);
+    const region: string = IamAuthUtils.getRdsRegion(host, this.rdsUtils, props);
     const tokenExpirationSec = WrapperProperties.IAM_TOKEN_EXPIRATION.get(props);
 
-    const cacheKey = this.getCacheKey(WrapperProperties.DB_USER.get(props), host, port, region);
+    const cacheKey = IamAuthUtils.getCacheKey(port, WrapperProperties.DB_USER.get(props), host, region);
     const tokenInfo = FederatedAuthPlugin.tokenCache.get(cacheKey);
 
     const isCachedToken: boolean = tokenInfo !== undefined && !tokenInfo.isExpired();
@@ -74,7 +72,15 @@ export class FederatedAuthPlugin extends AbstractConnectionPlugin {
       WrapperProperties.PASSWORD.set(props, tokenInfo.token);
     } else {
       const tokenExpiry: number = Date.now() + tokenExpirationSec * 1000;
-      const token = await this.generateAuthenticationToken(hostInfo, props, host, port, region);
+      const token = await IamAuthUtils.generateAuthenticationToken(
+        hostInfo,
+        props,
+        host,
+        port,
+        region,
+        WrapperProperties.DB_USER.get(props),
+        await this.credentialsProviderFactory.getAwsCredentialsProvider(host, region, props)
+      );
       logger.debug(Messages.get("FederatedAuthPlugin.generatedNewIamToken", token));
       WrapperProperties.PASSWORD.set(props, token);
       FederatedAuthPlugin.tokenCache.set(cacheKey, new TokenInfo(token, tokenExpiry));
@@ -90,7 +96,15 @@ export class FederatedAuthPlugin extends AbstractConnectionPlugin {
       }
       try {
         const tokenExpiry = Date.now() + tokenExpirationSec * 1000;
-        const token = await this.generateAuthenticationToken(hostInfo, props, host, port, region);
+        const token = await IamAuthUtils.generateAuthenticationToken(
+          hostInfo,
+          props,
+          host,
+          port,
+          region,
+          WrapperProperties.DB_USER.get(props),
+          await this.credentialsProviderFactory.getAwsCredentialsProvider(host, region, props)
+        );
         WrapperProperties.PASSWORD.set(props, token);
         FederatedAuthPlugin.tokenCache.set(cacheKey, new TokenInfo(token, tokenExpiry));
         return await connectFunc();
@@ -98,18 +112,6 @@ export class FederatedAuthPlugin extends AbstractConnectionPlugin {
         throw new AwsWrapperError("FederatedAuthPlugin.unhandledException", e);
       }
     }
-  }
-
-  private getRdsRegion(hostname: string): string {
-    const rdsRegion = this.rdsUtils.getRdsRegion(hostname);
-
-    if (!rdsRegion) {
-      const errorMessage = Messages.get("FederatedAuthPlugin.unsupportedHostname", hostname);
-      logger.debug(errorMessage);
-      throw new AwsWrapperError(errorMessage);
-    }
-
-    return rdsRegion;
   }
 
   private checkIdpCredentialsWithFallback(props: Map<string, any>): void {
@@ -120,48 +122,6 @@ export class FederatedAuthPlugin extends AbstractConnectionPlugin {
     if (WrapperProperties.IDP_PASSWORD.get(props) === null) {
       WrapperProperties.IDP_PASSWORD.set(props, WrapperProperties.PASSWORD.get(props));
     }
-  }
-
-  protected async generateAuthenticationToken(
-    hostInfo: HostInfo,
-    props: Map<string, any>,
-    hostname: string,
-    port: number,
-    region: string
-  ): Promise<string> {
-    const user: string = WrapperProperties.DB_USER.get(props);
-    const credentialsProvider: AssumeRoleWithSAMLCommandOutput = await this.credentialsProviderFactory.getAwsCredentialsProvider(
-      hostname,
-      region,
-      props
-    );
-
-    const credentialArr = credentialsProvider["Credentials"];
-    if (!credentialArr) {
-      throw new AwsWrapperError("Credentials from SAML request not found");
-    }
-    const accessKeyId = credentialArr["AccessKeyId"];
-    const secretAccessKey = credentialArr["SecretAccessKey"];
-    const sessionToken = credentialArr["SessionToken"];
-    if (accessKeyId === undefined || secretAccessKey === undefined || sessionToken === undefined) {
-      throw new AwsWrapperError("Credentials undefined");
-    }
-
-    const credentials = new Credentials(accessKeyId, secretAccessKey, sessionToken);
-
-    const signer = new Signer({
-      hostname: hostname,
-      port: port,
-      region: region,
-      credentials,
-      username: user
-    });
-
-    return await signer.getAuthToken();
-  }
-
-  private getCacheKey(user: string, hostname: string, port: number, region: string): string {
-    return `${region}:${hostname}:${port}:${user}`;
   }
 
   public static clearCache(): void {

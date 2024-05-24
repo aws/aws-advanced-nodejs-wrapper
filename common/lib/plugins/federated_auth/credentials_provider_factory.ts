@@ -14,8 +14,8 @@
   limitations under the License.
 */
 
-import { AssumeRoleWithSAMLCommandOutput } from "@aws-sdk/client-sts";
+import { AwsCredentialIdentityProvider, AwsCredentialIdentity } from "@smithy/types/dist-types/identity/awsCredentialIdentity";
 
 export interface CredentialsProviderFactory {
-  getAwsCredentialsProvider(host: string, region: string, props: Map<string, any>): Promise<AssumeRoleWithSAMLCommandOutput>;
+  getAwsCredentialsProvider(host: string, region: string, props: Map<string, any>): Promise<AwsCredentialIdentity | AwsCredentialIdentityProvider>;
 }
