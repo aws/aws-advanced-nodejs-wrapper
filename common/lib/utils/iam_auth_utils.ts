@@ -60,8 +60,6 @@ export class IamAuthUtils {
   }
 
   public static async generateAuthenticationToken(
-    hostInfo: HostInfo,
-    props: Map<string, any>,
     hostname: string,
     port: number,
     region: string,

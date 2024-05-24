@@ -71,19 +71,7 @@ export class FederatedAuthPlugin extends AbstractConnectionPlugin {
       logger.debug(Messages.get("FederatedAuthPlugin.useCachedIamToken", tokenInfo.token));
       WrapperProperties.PASSWORD.set(props, tokenInfo.token);
     } else {
-      const tokenExpiry: number = Date.now() + tokenExpirationSec * 1000;
-      const token = await IamAuthUtils.generateAuthenticationToken(
-        hostInfo,
-        props,
-        host,
-        port,
-        region,
-        WrapperProperties.DB_USER.get(props),
-        await this.credentialsProviderFactory.getAwsCredentialsProvider(host, region, props)
-      );
-      logger.debug(Messages.get("FederatedAuthPlugin.generatedNewIamToken", token));
-      WrapperProperties.PASSWORD.set(props, token);
-      FederatedAuthPlugin.tokenCache.set(cacheKey, new TokenInfo(token, tokenExpiry));
+      await this.updateAuthenticationToken(hostInfo, props, region, cacheKey);
     }
     this.pluginService.updateConfigWithProperties(props);
     WrapperProperties.USER.set(props, WrapperProperties.DB_USER.get(props));
@@ -95,18 +83,7 @@ export class FederatedAuthPlugin extends AbstractConnectionPlugin {
         throw e;
       }
       try {
-        const tokenExpiry = Date.now() + tokenExpirationSec * 1000;
-        const token = await IamAuthUtils.generateAuthenticationToken(
-          hostInfo,
-          props,
-          host,
-          port,
-          region,
-          WrapperProperties.DB_USER.get(props),
-          await this.credentialsProviderFactory.getAwsCredentialsProvider(host, region, props)
-        );
-        WrapperProperties.PASSWORD.set(props, token);
-        FederatedAuthPlugin.tokenCache.set(cacheKey, new TokenInfo(token, tokenExpiry));
+        await this.updateAuthenticationToken(hostInfo, props, region, cacheKey);
         return await connectFunc();
       } catch (e) {
         throw new AwsWrapperError("FederatedAuthPlugin.unhandledException", e);
@@ -122,6 +99,22 @@ export class FederatedAuthPlugin extends AbstractConnectionPlugin {
     if (WrapperProperties.IDP_PASSWORD.get(props) === null) {
       WrapperProperties.IDP_PASSWORD.set(props, WrapperProperties.PASSWORD.get(props));
     }
+  }
+
+  public async updateAuthenticationToken(hostInfo: HostInfo, props: Map<string, any>, region: string, cacheKey: string) {
+    const tokenExpirationSec = WrapperProperties.IAM_TOKEN_EXPIRATION.get(props);
+    const tokenExpiry: number = Date.now() + tokenExpirationSec * 1000;
+    const port = IamAuthUtils.getIamPort(props, hostInfo, this.pluginService.getDialect().getDefaultPort());
+    const token = await IamAuthUtils.generateAuthenticationToken(
+      hostInfo.host,
+      port,
+      region,
+      WrapperProperties.DB_USER.get(props),
+      await this.credentialsProviderFactory.getAwsCredentialsProvider(hostInfo.host, region, props)
+    );
+    logger.debug(Messages.get("FederatedAuthPlugin.generatedNewIamToken", token));
+    WrapperProperties.PASSWORD.set(props, token);
+    FederatedAuthPlugin.tokenCache.set(cacheKey, new TokenInfo(token, tokenExpiry));
   }
 
   public static clearCache(): void {

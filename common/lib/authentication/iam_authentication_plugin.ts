@@ -77,7 +77,13 @@ export class IamAuthenticationPlugin extends AbstractConnectionPlugin {
       WrapperProperties.PASSWORD.set(props, tokenInfo.token);
     } else {
       const tokenExpiry: number = Date.now() + tokenExpirationSec * 1000;
-      const token = await this.generateAuthenticationToken(hostInfo, props, host, port, region);
+      const token = await IamAuthUtils.generateAuthenticationToken(
+        host,
+        port,
+        region,
+        WrapperProperties.USER.get(props),
+        AwsCredentialsManager.getProvider(hostInfo, props)
+      );
       logger.debug(Messages.get("IamAuthenticationPlugin.generatedNewIamToken", token));
       WrapperProperties.PASSWORD.set(props, token);
       IamAuthenticationPlugin.tokenCache.set(cacheKey, new TokenInfo(token, tokenExpiry));
@@ -96,31 +102,18 @@ export class IamAuthenticationPlugin extends AbstractConnectionPlugin {
       // Try to generate a new token and try to connect again
 
       const tokenExpiry: number = Date.now() + tokenExpirationSec * 1000;
-      const token = await this.generateAuthenticationToken(hostInfo, props, host, port, region);
+      const token = await IamAuthUtils.generateAuthenticationToken(
+        host,
+        port,
+        region,
+        WrapperProperties.USER.get(props),
+        AwsCredentialsManager.getProvider(hostInfo, props)
+      );
       logger.debug(Messages.get("IamAuthenticationPlugin.generatedNewIamToken", token));
       WrapperProperties.PASSWORD.set(props, token);
       IamAuthenticationPlugin.tokenCache.set(cacheKey, new TokenInfo(token, tokenExpiry));
       return connectFunc();
     }
-  }
-
-  protected async generateAuthenticationToken(
-    hostInfo: HostInfo,
-    props: Map<string, any>,
-    hostname: string,
-    port: number,
-    region: string
-  ): Promise<string> {
-    const user: string = props.get("user");
-    const signer = new Signer({
-      hostname: hostname,
-      port: port,
-      region: region,
-      credentials: AwsCredentialsManager.getProvider(hostInfo, props),
-      username: user
-    });
-
-    return await signer.getAuthToken();
   }
 
   static clearCache(): void {
