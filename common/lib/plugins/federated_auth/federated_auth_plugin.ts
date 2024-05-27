@@ -60,7 +60,6 @@ export class FederatedAuthPlugin extends AbstractConnectionPlugin {
     const host = IamAuthUtils.getIamHost(props, hostInfo);
     const port = IamAuthUtils.getIamPort(props, hostInfo, this.pluginService.getDialect().getDefaultPort());
     const region: string = IamAuthUtils.getRdsRegion(host, this.rdsUtils, props);
-    const tokenExpirationSec = WrapperProperties.IAM_TOKEN_EXPIRATION.get(props);
 
     const cacheKey = IamAuthUtils.getCacheKey(port, WrapperProperties.DB_USER.get(props), host, region);
     const tokenInfo = FederatedAuthPlugin.tokenCache.get(cacheKey);
