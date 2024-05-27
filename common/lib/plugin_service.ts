@@ -33,6 +33,9 @@ import { WrapperProperties } from "./wrapper_property";
 import { OldConnectionSuggestionAction } from "./old_connection_suggestion_action";
 import { DatabaseDialectProvider } from "./database_dialect/database_dialect_provider";
 import { DatabaseDialectManager } from "./database_dialect/database_dialect_manager";
+import { SqlMethodUtils } from "./utils/sql_method_utils";
+import { SessionStateService } from "./session_state_service";
+import { SessionStateServiceImpl } from "./session_state_service_impl";
 
 export class PluginService implements ErrorHandler, HostListProviderService {
   private readonly _currentClient: AwsClient;
@@ -40,12 +43,13 @@ export class PluginService implements ErrorHandler, HostListProviderService {
   private _hostListProvider?: HostListProvider;
   private _initialConnectionHostInfo?: HostInfo;
   private _isInTransaction: boolean = false;
+  private readonly _props: Map<string, any>;
   private pluginServiceManagerContainer: PluginServiceManagerContainer;
-  private _props: Map<string, any>;
   protected hosts: HostInfo[] = [];
   private dbDialectProvider: DatabaseDialectProvider;
   private initialHost: string;
   private dialect: DatabaseDialect;
+  protected readonly sessionStateService: SessionStateService;
   protected static readonly hostAvailabilityExpiringCache: CacheMap<string, HostAvailability> = new CacheMap<string, HostAvailability>();
 
   constructor(
@@ -60,6 +64,7 @@ export class PluginService implements ErrorHandler, HostListProviderService {
     this._props = props;
     this.dbDialectProvider = new DatabaseDialectManager(knownDialectsByCode, dbType, this._props);
     this.initialHost = props.get(WrapperProperties.HOST.name);
+    this.sessionStateService = new SessionStateServiceImpl(this, this._props);
     container.pluginService = this;
 
     this.dialect = this.dbDialectProvider.getDialect(this._props);
@@ -131,10 +136,10 @@ export class PluginService implements ErrorHandler, HostListProviderService {
   }
 
   async forceRefreshHostList(): Promise<void>;
-  async forceRefreshHostList(client?: AwsClient): Promise<void>;
-  async forceRefreshHostList(client?: AwsClient): Promise<void> {
-    const updatedHostList = client
-      ? await this.getHostListProvider()?.forceRefresh(client.targetClient)
+  async forceRefreshHostList(targetClient?: any): Promise<void>;
+  async forceRefreshHostList(targetClient?: any): Promise<void> {
+    const updatedHostList = targetClient
+      ? await this.getHostListProvider()?.forceRefresh(targetClient)
       : await this.getHostListProvider()?.forceRefresh();
     if (updatedHostList && updatedHostList !== this.hosts) {
       this.updateHostAvailability(updatedHostList);
@@ -143,9 +148,9 @@ export class PluginService implements ErrorHandler, HostListProviderService {
   }
 
   async refreshHostList(): Promise<void>;
-  async refreshHostList(client: AwsClient): Promise<void>;
-  async refreshHostList(client?: AwsClient): Promise<void> {
-    const updatedHostList = client ? await this.getHostListProvider()?.refresh(client.targetClient) : await this.getHostListProvider()?.refresh();
+  async refreshHostList(targetClient: any): Promise<void>;
+  async refreshHostList(targetClient?: any): Promise<void> {
+    const updatedHostList = targetClient ? await this.getHostListProvider()?.refresh(targetClient) : await this.getHostListProvider()?.refresh();
     if (updatedHostList && updatedHostList !== this.hosts) {
       this.updateHostAvailability(updatedHostList);
       this.setHostList(this.hosts, updatedHostList);
@@ -257,25 +262,32 @@ export class PluginService implements ErrorHandler, HostListProviderService {
     throw new AwsWrapperError("AwsClient is missing target client connect function."); // This should not be reached
   }
 
-  // TODO: Add session state changes
   async setCurrentClient(newClient: any, hostInfo: HostInfo): Promise<Set<HostChangeOptions>> {
     if (this.getCurrentClient().targetClient === null) {
       this.getCurrentClient().targetClient = newClient;
       this._currentHostInfo = hostInfo;
+      this.sessionStateService.reset();
       const changes = new Set<HostChangeOptions>([HostChangeOptions.INITIAL_CONNECTION]);
+
       if (this.pluginServiceManagerContainer.pluginManager) {
         await this.pluginServiceManagerContainer.pluginManager.notifyConnectionChanged(changes, null);
       }
+
       return changes;
     } else {
       if (this._currentHostInfo) {
         const changes: Set<HostChangeOptions> = this.compare(this._currentHostInfo, hostInfo);
+
         if (changes.size > 0) {
           const oldClient: any = this.getCurrentClient().targetClient;
           const isInTransaction = this.isInTransaction;
+          this.sessionStateService.begin();
+
           try {
+            this.getCurrentClient().resetState();
             this.getCurrentClient().targetClient = newClient;
             this._currentHostInfo = hostInfo;
+            await this.sessionStateService.applyCurrentSessionState(this.getCurrentClient());
             this.setInTransaction(false);
 
             if (this.pluginServiceManagerContainer.pluginManager) {
@@ -288,7 +300,7 @@ export class PluginService implements ErrorHandler, HostListProviderService {
                 (await oldClient.isValid());
             }
           } finally {
-            /* empty */
+            this.sessionStateService.complete();
           }
         }
         return changes;
@@ -311,16 +323,25 @@ export class PluginService implements ErrorHandler, HostListProviderService {
     return this.getDialect().getConnectFunc(targetClient);
   }
 
+  getSessionStateService() {
+    return this.sessionStateService;
+  }
+
+  async updateState(sql: string) {
+    this.updateInTransaction(sql);
+
+    const statements = SqlMethodUtils.parseMultiStatementQueries(sql);
+    await this.updateReadOnly(statements);
+    await this.updateAutoCommit(statements);
+    await this.updateCatalog(statements);
+    await this.updateSchema(statements);
+    await this.updateTransactionIsolation(statements);
+  }
+
   updateInTransaction(sql: string) {
-    // TODO: revise with session state transfer
-    if (sql.toLowerCase().startsWith("start transaction") || sql.toLowerCase().startsWith("begin")) {
+    if (SqlMethodUtils.doesOpenTransaction(sql)) {
       this.setInTransaction(true);
-    } else if (
-      sql.toLowerCase().startsWith("commit") ||
-      sql.toLowerCase().startsWith("rollback") ||
-      sql.toLowerCase().startsWith("end") ||
-      sql.toLowerCase().startsWith("abort")
-    ) {
+    } else if (SqlMethodUtils.doesCloseTransaction(sql)) {
       this.setInTransaction(false);
     }
   }
@@ -334,5 +355,40 @@ export class PluginService implements ErrorHandler, HostListProviderService {
     }
 
     this._hostListProvider = this.dialect.getHostListProvider(this._props, this._props.get(WrapperProperties.HOST.name), this);
+  }
+
+  private async updateReadOnly(statements: string[]) {
+    const updateReadOnly = SqlMethodUtils.doesSetReadOnly(statements, this.getDialect());
+    if (updateReadOnly !== undefined) {
+      await this.getCurrentClient().setReadOnly(updateReadOnly);
+    }
+  }
+
+  private async updateAutoCommit(statements: string[]) {
+    const updateAutoCommit = SqlMethodUtils.doesSetAutoCommit(statements, this.getDialect());
+    if (updateAutoCommit !== undefined) {
+      await this.getCurrentClient().setAutoCommit(updateAutoCommit);
+    }
+  }
+
+  private async updateCatalog(statements: string[]) {
+    const updateCatalog = SqlMethodUtils.doesSetCatalog(statements, this.getDialect());
+    if (updateCatalog !== undefined) {
+      await this.getCurrentClient().setCatalog(updateCatalog);
+    }
+  }
+
+  private async updateSchema(statements: string[]) {
+    const updateSchema = SqlMethodUtils.doesSetSchema(statements, this.getDialect());
+    if (updateSchema !== undefined) {
+      await this.getCurrentClient().setSchema(updateSchema);
+    }
+  }
+
+  private async updateTransactionIsolation(statements: string[]) {
+    const updateTransactionIsolation = SqlMethodUtils.doesSetTransactionIsolation(statements, this.getDialect());
+    if (updateTransactionIsolation !== undefined) {
+      await this.getCurrentClient().setTransactionIsolation(updateTransactionIsolation);
+    }
   }
 }

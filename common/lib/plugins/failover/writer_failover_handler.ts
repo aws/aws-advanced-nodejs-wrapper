@@ -113,10 +113,10 @@ export class ClusterAwareWriterFailoverHandler implements WriterFailoverHandler 
       }, this.maxFailoverTimeoutMs);
     });
 
-    const task1 = reconnectToWriterHandlerTask.call();
-    const task2 = waitForNewWriterHandlerTask.call();
+    const taskA = reconnectToWriterHandlerTask.call();
+    const taskB = waitForNewWriterHandlerTask.call();
 
-    const failoverTask = Promise.any([task1, task2])
+    const failoverTask = Promise.any([taskA, taskB])
       .then((result) => {
         this.test = true;
         if (result.isConnected || result.exception) {
@@ -124,9 +124,9 @@ export class ClusterAwareWriterFailoverHandler implements WriterFailoverHandler 
         }
 
         if (reconnectToWriterHandlerTask.taskComplete) {
-          return task2;
+          return taskB;
         } else if (waitForNewWriterHandlerTask.taskComplete) {
-          return task1;
+          return taskA;
         }
         return ClusterAwareWriterFailoverHandler.DEFAULT_RESULT;
       })

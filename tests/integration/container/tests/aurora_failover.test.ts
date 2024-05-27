@@ -167,7 +167,6 @@ describe("aurora failover", () => {
     try {
       await DriverHelper.executeQuery(env.engine, client, "INSERT INTO test3_3 VALUES (2, 'test field string 2')");
     } catch (error) {
-      console.log(error);
       if (!(error instanceof TransactionResolutionUnknownError)) {
         throw new Error("Resulting error type incorrect");
       }
@@ -195,6 +194,37 @@ describe("aurora failover", () => {
     await client.end();
   }, 1000000);
 
-  // TODO: when session state transfer is implemented
-  // it("fail from writer where keep session state on failover is true", async () => {});
+  it("fail from writer and transfer session state", async () => {
+    const config = await initDefaultConfig(env.databaseInfo.clusterEndpoint, env.databaseInfo.clusterEndpointPort, false);
+    const client = initClientFunc(config);
+
+    client.on("error", (error: any) => {
+      console.log(error);
+    });
+
+    await client.connect();
+    await client.setReadOnly(true);
+
+    const initialWriterId = await auroraTestUtility.queryInstanceId(client);
+
+    // Crash instance 1 and nominate a new writer
+    await auroraTestUtility.failoverClusterAndWaitUntilWriterChanged();
+
+    try {
+      await auroraTestUtility.queryInstanceId(client);
+      throw new Error("Failover did not occur");
+    } catch (error: any) {
+      if (!(error instanceof FailoverSuccessError)) {
+        throw new Error("Failover failed");
+      }
+    }
+
+    expect(client.isReadOnly()).toBe(true);
+
+    // Assert that we are connected to the new writer after failover happens
+    const currentConnectionId = await auroraTestUtility.queryInstanceId(client);
+    expect(await auroraTestUtility.isDbInstanceWriter(currentConnectionId)).toBe(true);
+    expect(currentConnectionId).not.toBe(initialWriterId);
+    await client.end();
+  }, 1000000);
 });
