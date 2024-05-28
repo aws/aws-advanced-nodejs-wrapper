@@ -19,6 +19,7 @@ import { DriverHelper } from "./utils/driver_helper";
 import { AuroraTestUtility } from "./utils/aurora_test_utility";
 import { AwsWrapperError } from "aws-wrapper-common-lib/lib/utils/errors";
 import { ProxyHelper } from "./utils/proxy_helper";
+import { logger } from "aws-wrapper-common-lib/logutils";
 
 let env: TestEnvironment;
 let driver;
@@ -58,11 +59,13 @@ describe("iamTests", () => {
   it("testIamWrongDatabaseUsername", async () => {
     const config = await initDefaultConfig(env.databaseInfo.clusterEndpoint, env.databaseInfo.clusterEndpointPort, false);
     config["user"] = `WRONG_${config}_USER`;
+    logger.error(config);
     const client = initClientFunc(config);
 
     expect(async () => {
       await client.connect();
     }).toThrow(AwsWrapperError);
+    await client.end();
   }, 1000000);
 
   it("testIamNoDatabaseUsername", async () => {
@@ -73,6 +76,8 @@ describe("iamTests", () => {
     expect(async () => {
       await client.connect();
     }).toThrow(AwsWrapperError);
+
+    await client.end();
   }, 1000000);
 
   it("testIamInvalidHost", async () => {
@@ -83,5 +88,15 @@ describe("iamTests", () => {
     expect(async () => {
       await client.connect();
     }).toThrow(AwsWrapperError);
+
+    await client.end();
   }, 1000000);
+
+  it("testIamUsingIpAddress", async () => {
+    const config = await initDefaultConfig(env.databaseInfo.clusterEndpoint, env.databaseInfo.clusterEndpointPort, false);
+    const instance = env.writer;
+    const ip_address = instance.host;
+
+    config["host"] = ip_address;
+  });
 });
