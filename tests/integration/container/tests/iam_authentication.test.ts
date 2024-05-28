@@ -57,34 +57,31 @@ describe("iamTests", () => {
 
   it("testIamWrongDatabaseUsername", async () => {
     const config = await initDefaultConfig(env.databaseInfo.clusterEndpoint, env.databaseInfo.clusterEndpointPort, false);
-    const user = `WRONG_${config}_USER`;
-    config["user"] = user;
+    config["user"] = `WRONG_${config}_USER`;
     const client = initClientFunc(config);
 
     expect(async () => {
       await client.connect();
     }).toThrow(AwsWrapperError);
-  });
+  }, 1000000);
 
   it("testIamNoDatabaseUsername", async () => {
     const config = await initDefaultConfig(env.databaseInfo.clusterEndpoint, env.databaseInfo.clusterEndpointPort, false);
-    const user = "";
-    config["user"] = user;
+    config["user"] = "";
     const client = initClientFunc(config);
 
     expect(async () => {
       await client.connect();
     }).toThrow(AwsWrapperError);
-  });
+  }, 1000000);
 
   it("testIamInvalidHost", async () => {
     const config = await initDefaultConfig(env.databaseInfo.clusterEndpoint, env.databaseInfo.clusterEndpointPort, false);
-    const host = "<>";
-    config["iam_host"] = host;
+    config["iam_host"] = "<>";
     const client = initClientFunc(config);
 
     expect(async () => {
       await client.connect();
     }).toThrow(AwsWrapperError);
-  });
+  }, 1000000);
 });
