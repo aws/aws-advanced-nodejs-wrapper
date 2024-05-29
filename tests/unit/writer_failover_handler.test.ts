@@ -57,8 +57,8 @@ describe("writer failover handler", () => {
   });
 
   it("test reconnect to writer - task B reader exception", async () => {
-    when(mockPluginService.forceConnect(readerA, properties, anything())).thenThrow(new AwsWrapperError());
-    when(mockPluginService.forceConnect(readerB, properties, anything())).thenThrow(new AwsWrapperError());
+    when(mockPluginService.forceConnect(readerA, properties)).thenThrow(new AwsWrapperError());
+    when(mockPluginService.forceConnect(readerB, properties)).thenThrow(new AwsWrapperError());
     when(mockPluginService.getHosts()).thenReturn(topology);
     when(mockPluginService.createTargetClient(anything())).thenReturn(mockTargetClient);
     when(mockReaderFailover.getReaderConnection(anything())).thenThrow(new AwsWrapperError());
@@ -77,7 +77,7 @@ describe("writer failover handler", () => {
 
   it("test reconnect to writer - slow reader A", async () => {
     let timeoutId: any = -1;
-    when(mockPluginService.forceConnect(readerB, properties, anything())).thenThrow(new AwsWrapperError());
+    when(mockPluginService.forceConnect(readerB, properties)).thenThrow(new AwsWrapperError());
     when(mockPluginService.getHosts()).thenReturn(topology).thenReturn(newTopology);
     when(mockPluginService.createTargetClient(anything())).thenReturn(mockTargetClient);
     when(mockReaderFailover.getReaderConnection(anything())).thenCall(async () => {
@@ -102,14 +102,14 @@ describe("writer failover handler", () => {
 
   it("test reconnect to writer - task B defers", async () => {
     let timeoutId: any = -1;
-    when(mockPluginService.forceConnect(writer, properties, anything())).thenCall(async () => {
+    when(mockPluginService.forceConnect(writer, properties)).thenCall(async () => {
       await new Promise((resolve, reject) => {
         timeoutId = setTimeout(resolve, 5000);
       });
       return;
     });
     when(mockPluginService.getCurrentClient()).thenReturn(mockClientInstance);
-    when(mockPluginService.forceConnect(readerB, properties, anything())).thenThrow(new AwsWrapperError());
+    when(mockPluginService.forceConnect(readerB, properties)).thenThrow(new AwsWrapperError());
     when(mockPluginService.getHosts()).thenReturn(topology);
     when(mockPluginService.createTargetClient(anything())).thenReturn(mockTargetClient);
     when(mockReaderFailover.getReaderConnection(anything())).thenResolve(new ReaderFailoverResult(mockTargetClient, readerA, true));
@@ -129,7 +129,7 @@ describe("writer failover handler", () => {
 
   it("test connect to reader A - slow writer", async () => {
     let timeoutId: any = -1;
-    when(mockPluginService.forceConnect(writer, properties, anything())).thenCall(async () => {
+    when(mockPluginService.forceConnect(writer, properties)).thenCall(async () => {
       await new Promise((resolve, reject) => {
         timeoutId = setTimeout(resolve, 5000);
       });
@@ -157,7 +157,7 @@ describe("writer failover handler", () => {
 
   it("test connect to reader A - task A defers", async () => {
     let timeoutId: any = -1;
-    when(mockPluginService.forceConnect(newWriterHost, properties, anything())).thenCall(async () => {
+    when(mockPluginService.forceConnect(newWriterHost, properties)).thenCall(async () => {
       await new Promise((resolve, reject) => {
         timeoutId = setTimeout(resolve, 5000);
       });
@@ -189,13 +189,13 @@ describe("writer failover handler", () => {
   it("test failed to connect - failover timeout", async () => {
     let writerTimeoutId: any = -1;
     let newWriterTimeoutId: any = -1;
-    when(mockPluginService.forceConnect(writer, anything(), anything())).thenCall(async () => {
+    when(mockPluginService.forceConnect(writer, anything())).thenCall(async () => {
       await new Promise((resolve, reject) => {
         writerTimeoutId = setTimeout(resolve, 30000);
       });
       return;
     });
-    when(mockPluginService.forceConnect(newWriterHost, anything(), anything())).thenCall(async () => {
+    when(mockPluginService.forceConnect(newWriterHost, anything())).thenCall(async () => {
       await new Promise((resolve, reject) => {
         newWriterTimeoutId = setTimeout(resolve, 30000);
       });
@@ -226,8 +226,8 @@ describe("writer failover handler", () => {
 
   it("test failed to connect - task A exception, task B writer exception", async () => {
     const error = new AwsWrapperError();
-    when(mockPluginService.forceConnect(writer, anything(), anything())).thenThrow(error);
-    when(mockPluginService.forceConnect(newWriterHost, anything(), anything())).thenThrow(error);
+    when(mockPluginService.forceConnect(writer, anything())).thenThrow(error);
+    when(mockPluginService.forceConnect(newWriterHost, anything())).thenThrow(error);
     when(mockPluginService.isNetworkError(error)).thenReturn(true);
     when(mockPluginService.getHosts()).thenReturn(newTopology);
     when(mockPluginService.createTargetClient(anything())).thenReturn(mockTargetClient);

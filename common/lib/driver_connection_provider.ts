@@ -42,12 +42,20 @@ export class DriverConnectionProvider implements ConnectionProvider {
     return true;
   }
 
-  async connect<T>(hostInfo: HostInfo, pluginService: PluginService, props: Map<string, any>, connectFunc: () => Promise<T>): Promise<T> {
+  async connect<T>(hostInfo: HostInfo, pluginService: PluginService, props: Map<string, any>): Promise<T> {
     let result;
     try {
-      result = await connectFunc();
-    } catch (e) {
-      await pluginService.tryClosingTargetClient();
+      let targetClient : any = pluginService.createTargetClient(props);
+      const connFunc = pluginService.getConnectFunc(targetClient);
+      await connFunc();
+      result = targetClient;
+    } catch (e) { 
+      // TODO revisit - The call below is trying to close a current target client. Why here? Maybe because create target client was setting a current one right away?
+      // Or maybe this connect call happens during a failover?
+      // Is this call premature, in case the code below fails?
+      // It seems that pluginService.setCurrentClient should call tryClosingTargetClient() or close it so that other places do not have have to 
+      // other than for temp connections that were not passed to plugin service. 
+      await pluginService.tryClosingTargetClient();  
 
       if (!WrapperProperties.ENABLE_GREEN_NODE_REPLACEMENT.get(props)) {
         throw e;
@@ -96,8 +104,8 @@ export class DriverConnectionProvider implements ConnectionProvider {
 
       const newTargetClient = pluginService.createTargetClient(props);
       const fixedConnFunc = pluginService.getConnectFunc(newTargetClient);
-      result = await fixedConnFunc();
-      await pluginService.setCurrentClient(newTargetClient, connectionHostInfo);
+      await fixedConnFunc();
+      result = newTargetClient
     }
 
     return result;

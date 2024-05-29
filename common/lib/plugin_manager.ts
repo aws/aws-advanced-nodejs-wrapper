@@ -66,6 +66,8 @@ class PluginChain<T> {
 export class PluginManager {
   private static readonly PLUGIN_CHAIN_CACHE = new Map<[string, HostInfo], PluginChain<any>>();
   private static readonly ALL_METHODS: string = "*";
+  private static readonly CONNECT_METHOD = "connect";
+  private static readonly FORCE_CONNECT_METHOD = "forceConnect";
   private static readonly NOTIFY_HOST_LIST_CHANGED_METHOD: string = "notifyHostListChanged";
   private static readonly NOTIFY_CONNECTION_CHANGED_METHOD: string = "notifyConnectionChanged";
   private static readonly ACCEPTS_STRATEGY_METHOD: string = "acceptsStrategy";
@@ -108,29 +110,33 @@ export class PluginManager {
     );
   }
 
-  connect<T>(hostInfo: HostInfo | null, props: Map<string, any>, isInitialConnection: boolean, methodFunc: () => Promise<T>): Promise<T> {
+  connect<T>(hostInfo: HostInfo | null, props: Map<string, any>, isInitialConnection: boolean): Promise<T> {
     if (hostInfo == null) {
       throw new AwsWrapperError("HostInfo was not provided.");
     }
     return this.executeWithSubscribedPlugins(
       hostInfo,
       props,
-      "connect",
+      PluginManager.CONNECT_METHOD,
       (plugin, nextPluginFunc) => plugin.connect(hostInfo, props, isInitialConnection, nextPluginFunc),
-      methodFunc
+      async () => {
+        throw new AwsWrapperError("Shouldn't be called.");
+      } 
     );
   }
 
-  forceConnect<T>(hostInfo: HostInfo | null, props: Map<string, any>, isInitialConnection: boolean, methodFunc: () => Promise<T>): Promise<T> {
+  forceConnect<T>(hostInfo: HostInfo | null, props: Map<string, any>, isInitialConnection: boolean): Promise<T> {
     if (hostInfo == null) {
       throw new AwsWrapperError("HostInfo was not provided.");
     }
     return this.executeWithSubscribedPlugins(
       hostInfo,
       props,
-      "forceConnect",
+      PluginManager.FORCE_CONNECT_METHOD,
       (plugin, nextPluginFunc) => plugin.forceConnect(hostInfo, props, isInitialConnection, nextPluginFunc),
-      methodFunc
+      async () => {
+        throw new AwsWrapperError("Shouldn't be called.");
+      } 
     );
   }
 

@@ -36,6 +36,9 @@ export class StaleDnsHelper {
     this.pluginService = pluginService;
   }
 
+  // TODO review changes/implementation
+  // Note important difference!!! This function was calling pluginService.setCurrentClient. Now it just returns the connection/target client
+  // Follow the returns and throws
   async getVerifiedConnection<Type>(
     host: string,
     isInitialConnection: boolean,
@@ -47,23 +50,24 @@ export class StaleDnsHelper {
       return connectFunc();
     }
 
+    // TODO review: the currentHostInfo variable is only used starting with the 
+    // if (currentHostInfo && currentHostInfo.role === HostRole.READER) below around line 88
+    // should this call and check be done just before that if statement or the code leading to that should also be not executed
+    // in the event where !currentHostInfo?
     const currentHostInfo = this.pluginService.getCurrentHostInfo();
     if (!currentHostInfo) {
       throw new AwsWrapperError("Could not find current hostInfo");
     }
 
-    let result;
     let currentTargetClient;
     try {
-      result = await connectFunc();
-      currentTargetClient = this.pluginService.getCurrentClient().targetClient;
+      currentTargetClient = await connectFunc();
     } catch (error: any) {
-      await this.pluginService.tryClosingTargetClient(currentTargetClient);
       throw error;
     }
 
     if (!currentTargetClient) {
-      throw new Error("Could not find current targetClient");
+      throw new Error("Connect failed");
     }
 
     let clusterInetAddress = "";
@@ -78,8 +82,7 @@ export class StaleDnsHelper {
     logger.debug(Messages.get("StaleDnsHelper.clusterEndpointDns", hostInetAddress));
 
     if (!clusterInetAddress) {
-      await this.pluginService.setCurrentClient(currentTargetClient, currentHostInfo);
-      return result;
+      return currentTargetClient;
     }
 
     if (currentHostInfo && currentHostInfo.role === HostRole.READER) {
@@ -94,9 +97,8 @@ export class StaleDnsHelper {
     logger.debug(this.pluginService.getHosts());
     if (!this.writerHostInfo) {
       const writerCandidate = this.getWriter();
-      if (writerCandidate && this.rdsUtils.isRdsClusterDns(writerCandidate.host)) {
-        await this.pluginService.setCurrentClient(currentTargetClient, currentHostInfo);
-        return result;
+      if (writerCandidate && this.rdsUtils.isRdsClusterDns(writerCandidate.host)) { 
+        return currentTargetClient;
       }
       this.writerHostInfo = writerCandidate;
     }
@@ -104,8 +106,7 @@ export class StaleDnsHelper {
     logger.debug(Messages.get("StaleDnsHelper.writerHostInfo", this.writerHostInfo?.host ?? ""));
 
     if (!this.writerHostInfo) {
-      await this.pluginService.setCurrentClient(currentTargetClient, currentHostInfo);
-      return result;
+      return currentTargetClient;
     }
 
     if (!this.writerHostAddress) {
@@ -120,8 +121,7 @@ export class StaleDnsHelper {
     logger.debug(Messages.get("StaleDnsHelper.writerInetAddress", this.writerHostAddress));
 
     if (!this.writerHostAddress) {
-      await this.pluginService.setCurrentClient(currentTargetClient, currentHostInfo);
-      return result;
+      return currentTargetClient;
     }
 
     if (this.writerHostAddress !== clusterInetAddress) {
@@ -129,23 +129,26 @@ export class StaleDnsHelper {
       // opens a connection to a proper writer node
       logger.debug(Messages.get("StaleDnsHelper.staleDnsDetected", this.writerHostInfo.host));
 
-      const targetClient = this.pluginService.createTargetClient(props);
+      let targetClient;
       try {
-        result = await this.pluginService.connect(this.writerHostInfo, props, this.pluginService.getDialect().getConnectFunc(targetClient));
-        await this.pluginService.tryClosingTargetClient(currentTargetClient);
-        await this.pluginService.setCurrentClient(targetClient, this.writerHostInfo);
-        return result;
+        // Just note, the call below will trigger the plugin chain again and will invoke this function from top  todo: delete this comment later.
+        targetClient = await this.pluginService.connect(this.writerHostInfo, props);
+        await this.pluginService.tryClosingTargetClient(currentTargetClient);  
+        //await this.pluginService.setCurrentClient(targetClient, this.writerHostInfo);
+
+        // TODO review: Since we're not calling the pluginService.setCurrentClient here any more, just returning new targetClient
+        // the pluginService.setCurrentClient is called later. However! The pluginService.setCurrentClient takes the HostInfo as parameter
+        // and sets this._currentHostInfo = hostInfo; internally.  
+        // This means that the this.writerHostInfo would not be properly set later because we're not returning it, thus loosing the correct hostInfo information?
+        if (isInitialConnection) {
+          hostListProviderService.setInitialConnectionHostInfo(this.writerHostInfo);
+        }
+        return targetClient;
       } catch (error: any) {
         await this.pluginService.tryClosingTargetClient(targetClient);
       }
-
-      if (isInitialConnection) {
-        hostListProviderService.setInitialConnectionHostInfo(this.writerHostInfo);
-      }
     }
-
-    await this.pluginService.setCurrentClient(currentTargetClient, currentHostInfo);
-    return result;
+    return currentTargetClient;
   }
 
   private getWriter(): HostInfo | null {
@@ -157,7 +160,7 @@ export class StaleDnsHelper {
     return null;
   }
 
-  notifyNodeListChanged(changes: Map<string, Set<HostChangeOptions>>): void {
+  notifyHostListChanged(changes: Map<string, Set<HostChangeOptions>>): void {
     if (!this.writerHostInfo) {
       return;
     }

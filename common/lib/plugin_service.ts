@@ -248,18 +248,12 @@ export class PluginService implements ErrorHandler, HostListProviderService {
     throw new AwsWrapperError("AwsClient is missing create target client function."); // This should not be reached
   }
 
-  connect<T>(hostInfo: HostInfo, props: Map<string, any>, connectFunc: () => Promise<T>) {
-    if (connectFunc) {
-      return this.pluginServiceManagerContainer.pluginManager?.connect(hostInfo, props, false, connectFunc);
-    }
-    throw new AwsWrapperError("AwsClient is missing target client connect function."); // This should not be reached
+  connect<T>(hostInfo: HostInfo, props: Map<string, any>) : any {
+      return this.pluginServiceManagerContainer.pluginManager?.connect(hostInfo, props, false);
   }
 
-  forceConnect<T>(hostInfo: HostInfo, props: Map<string, any>, connectFunc: () => Promise<T>) {
-    if (connectFunc) {
-      return this.pluginServiceManagerContainer.pluginManager?.forceConnect(hostInfo, props, false, connectFunc);
-    }
-    throw new AwsWrapperError("AwsClient is missing target client connect function."); // This should not be reached
+  forceConnect<T>(hostInfo: HostInfo, props: Map<string, any>) : any {
+      return this.pluginServiceManagerContainer.pluginManager?.forceConnect(hostInfo, props, false);
   }
 
   async setCurrentClient(newClient: any, hostInfo: HostInfo): Promise<Set<HostChangeOptions>> {
@@ -298,6 +292,7 @@ export class PluginService implements ErrorHandler, HostListProviderService {
                 changes.has(HostChangeOptions.CONNECTION_OBJECT_CHANGED) &&
                 !pluginOpinions.has(OldConnectionSuggestionAction.PRESERVE) &&
                 (await oldClient.isValid());
+              // TODO: Review should tryClosingTargetClient(oldClient) be called here, or at some point in this setCurrentClient method?
             }
           } finally {
             this.sessionStateService.complete();

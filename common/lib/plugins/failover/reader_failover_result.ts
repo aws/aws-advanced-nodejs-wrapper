@@ -14,7 +14,6 @@
   limitations under the License.
 */
 
-import { AwsClient } from "../../aws_client";
 import { HostInfo } from "../../host_info";
 
 export class ReaderFailoverResult {
@@ -30,7 +29,7 @@ export class ReaderFailoverResult {
     this._exception = exception;
   }
 
-  get client(): AwsClient | null {
+  get client(): any | null {
     return this._client;
   }
 

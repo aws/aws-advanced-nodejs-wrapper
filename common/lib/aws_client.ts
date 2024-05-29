@@ -38,7 +38,7 @@ export abstract class AwsClient extends EventEmitter {
   protected _schema: string = "";
   protected _isolationLevel: number = 0;
   private readonly _properties: Map<string, any>;
-  private _targetClient: any;
+  private _targetClient: any = null;
   protected _errorHandler: ErrorHandler;
   protected _createClientFunc?: (config: any) => any;
   protected _connectFunc?: () => Promise<any>;
