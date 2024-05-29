@@ -50,7 +50,7 @@ export class StaleDnsHelper {
       return connectFunc();
     }
 
-    // TODO review: the currentHostInfo variable is only used starting with the 
+    // TODO review: the currentHostInfo variable is only used starting with the
     // if (currentHostInfo && currentHostInfo.role === HostRole.READER) below around line 88
     // should this call and check be done just before that if statement or the code leading to that should also be not executed
     // in the event where !currentHostInfo?
@@ -59,12 +59,7 @@ export class StaleDnsHelper {
       throw new AwsWrapperError("Could not find current hostInfo");
     }
 
-    let currentTargetClient;
-    try {
-      currentTargetClient = await connectFunc();
-    } catch (error: any) {
-      throw error;
-    }
+    const currentTargetClient = await connectFunc();
 
     if (!currentTargetClient) {
       throw new Error("Connect failed");
@@ -97,7 +92,7 @@ export class StaleDnsHelper {
     logger.debug(this.pluginService.getHosts());
     if (!this.writerHostInfo) {
       const writerCandidate = this.getWriter();
-      if (writerCandidate && this.rdsUtils.isRdsClusterDns(writerCandidate.host)) { 
+      if (writerCandidate && this.rdsUtils.isRdsClusterDns(writerCandidate.host)) {
         return currentTargetClient;
       }
       this.writerHostInfo = writerCandidate;
@@ -133,12 +128,12 @@ export class StaleDnsHelper {
       try {
         // Just note, the call below will trigger the plugin chain again and will invoke this function from top  todo: delete this comment later.
         targetClient = await this.pluginService.connect(this.writerHostInfo, props);
-        await this.pluginService.tryClosingTargetClient(currentTargetClient);  
+        await this.pluginService.tryClosingTargetClient(currentTargetClient);
         //await this.pluginService.setCurrentClient(targetClient, this.writerHostInfo);
 
         // TODO review: Since we're not calling the pluginService.setCurrentClient here any more, just returning new targetClient
         // the pluginService.setCurrentClient is called later. However! The pluginService.setCurrentClient takes the HostInfo as parameter
-        // and sets this._currentHostInfo = hostInfo; internally.  
+        // and sets this._currentHostInfo = hostInfo; internally.
         // This means that the this.writerHostInfo would not be properly set later because we're not returning it, thus loosing the correct hostInfo information?
         if (isInitialConnection) {
           hostListProviderService.setInitialConnectionHostInfo(this.writerHostInfo);

@@ -121,7 +121,7 @@ export class PluginManager {
       (plugin, nextPluginFunc) => plugin.connect(hostInfo, props, isInitialConnection, nextPluginFunc),
       async () => {
         throw new AwsWrapperError("Shouldn't be called.");
-      } 
+      }
     );
   }
 
@@ -136,7 +136,7 @@ export class PluginManager {
       (plugin, nextPluginFunc) => plugin.forceConnect(hostInfo, props, isInitialConnection, nextPluginFunc),
       async () => {
         throw new AwsWrapperError("Shouldn't be called.");
-      } 
+      }
     );
   }
 

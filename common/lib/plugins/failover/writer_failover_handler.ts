@@ -230,7 +230,7 @@ class ReconnectToWriterHandlerTask {
         try {
           const props = new Map(this.initialConnectionProps);
           props.set(WrapperProperties.HOST.name, this.originalWriterHost.host);
-          this.currentClient =  await this.pluginService.forceConnect(this.originalWriterHost, props);
+          this.currentClient = await this.pluginService.forceConnect(this.originalWriterHost, props);
           await this.pluginService.forceRefreshHostList(this.currentClient);
           latestTopology = this.pluginService.getHosts();
         } catch (error) {
@@ -418,7 +418,7 @@ class WaitForNewWriterHandlerTask {
       // connect to the new writer
       const props = new Map(this.initialConnectionProps);
       props.set(WrapperProperties.HOST.name, writerCandidate.host);
-      
+
       let targetClient;
       try {
         this.pluginService.setAvailability(writerCandidate.allAliases, HostAvailability.AVAILABLE);

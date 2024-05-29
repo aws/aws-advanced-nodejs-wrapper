@@ -51,7 +51,7 @@ export class AwsPGClient extends AwsClient {
   async connect(): Promise<void> {
     await this.internalConnect();
 
-    let hostInfo = this.pluginService.getCurrentHostInfo();
+    const hostInfo = this.pluginService.getCurrentHostInfo();
     if (hostInfo == null) {
       throw new AwsWrapperError("HostInfo was not provided.");
     }
@@ -59,7 +59,7 @@ export class AwsPGClient extends AwsClient {
     await this.pluginService.setCurrentClient(conn, hostInfo);
     // TODO review the this.isConnected  usage. Perhaps we don't need this variable at all.
     // This could be determined based on the state of _targetClient, e.g. is it set or not.
-    this.isConnected = true; 
+    this.isConnected = true;
     await this.internalPostConnect();
     return;
   }

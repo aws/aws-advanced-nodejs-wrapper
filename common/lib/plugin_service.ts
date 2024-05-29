@@ -248,12 +248,12 @@ export class PluginService implements ErrorHandler, HostListProviderService {
     throw new AwsWrapperError("AwsClient is missing create target client function."); // This should not be reached
   }
 
-  connect<T>(hostInfo: HostInfo, props: Map<string, any>) : any {
-      return this.pluginServiceManagerContainer.pluginManager?.connect(hostInfo, props, false);
+  connect<T>(hostInfo: HostInfo, props: Map<string, any>): any {
+    return this.pluginServiceManagerContainer.pluginManager?.connect(hostInfo, props, false);
   }
 
-  forceConnect<T>(hostInfo: HostInfo, props: Map<string, any>) : any {
-      return this.pluginServiceManagerContainer.pluginManager?.forceConnect(hostInfo, props, false);
+  forceConnect<T>(hostInfo: HostInfo, props: Map<string, any>): any {
+    return this.pluginServiceManagerContainer.pluginManager?.forceConnect(hostInfo, props, false);
   }
 
   async setCurrentClient(newClient: any, hostInfo: HostInfo): Promise<Set<HostChangeOptions>> {
