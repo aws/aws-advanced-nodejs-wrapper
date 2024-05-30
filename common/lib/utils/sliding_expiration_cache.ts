@@ -18,16 +18,12 @@ import { MapUtils } from "./map_utils";
 import { getTimeInNanos } from "aws-wrapper-common-lib/lib/utils/utils";
 
 class CacheItem<V> {
-  private _item: V;
+  readonly item: V;
   private _expirationTimeNanos: bigint;
 
   constructor(item: V, expirationTimeNanos: bigint) {
-    this._item = item;
+    this.item = item;
     this._expirationTimeNanos = expirationTimeNanos;
-  }
-
-  get item(): V {
-    return this._item;
   }
 
   get expirationTimeNs(): bigint {

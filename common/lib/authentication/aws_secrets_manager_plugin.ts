@@ -167,20 +167,12 @@ export class SecretCacheKey {
 }
 
 export class Secret {
-  private readonly _username: string;
-  private readonly _password: string;
+  readonly username: string;
+  readonly password: string;
 
   constructor(username: string, password: string) {
-    this._username = username;
-    this._password = password;
-  }
-
-  get username(): string {
-    return this._username;
-  }
-
-  get password(): string | null {
-    return this._password;
+    this.username = username;
+    this.password = password;
   }
 }
 

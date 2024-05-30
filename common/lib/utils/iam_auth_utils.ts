@@ -79,23 +79,15 @@ export class IamAuthUtils {
 }
 
 export class TokenInfo {
-  private readonly _token: string;
-  private readonly _expiration: number;
+  readonly token: string;
+  readonly expiration: number;
 
   constructor(token: string, expiration: number) {
-    this._token = token;
-    this._expiration = expiration;
-  }
-
-  get token(): string {
-    return this._token;
-  }
-
-  get expiration(): number {
-    return this._expiration;
+    this.token = token;
+    this.expiration = expiration;
   }
 
   isExpired(): boolean {
-    return Date.now() > this._expiration;
+    return Date.now() > this.expiration;
   }
 }

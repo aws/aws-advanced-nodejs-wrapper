@@ -21,8 +21,6 @@ import { AwsWrapperError } from "./utils/errors";
 import { Messages } from "./utils/messages";
 import { PluginServiceManagerContainer } from "./plugin_service_manager_container";
 import { HostListProviderService } from "./host_list_provider_service";
-import { AwsClient } from "./aws_client";
-import { PluginService } from "./plugin_service";
 import { HostChangeOptions } from "./host_change_options";
 import { OldConnectionSuggestionAction } from "./old_connection_suggestion_action";
 import { HostRole } from "./host_role";

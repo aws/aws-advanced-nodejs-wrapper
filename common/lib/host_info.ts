@@ -23,16 +23,16 @@ export class HostInfo {
   public static readonly NO_PORT: number = -1;
   public static readonly DEFAULT_WEIGHT: number = 100;
 
-  private readonly _host: string;
-  private readonly _port: number;
-  private _availability: HostAvailability;
-  private readonly _role: HostRole;
+  readonly host: string;
+  readonly port: number;
+  readonly role: HostRole;
+  readonly weight: number; // Greater or equal 0. Lesser the weight, the healthier node.
+  readonly lastUpdateTime: number;
+  availability: HostAvailability;
+  allAliases: Set<string> = new Set<string>();
+  hostId?: string;
+  hostAvailabilityStrategy: HostAvailabilityStrategy;
   protected aliases: Set<string> = new Set<string>();
-  private _allAliases: Set<string> = new Set<string>();
-  private readonly _weight: number; // Greater or equal 0. Lesser the weight, the healthier node.
-  private _hostId?: string;
-  private readonly _lastUpdateTime: number;
-  private _hostAvailabilityStrategy: HostAvailabilityStrategy;
 
   constructor(
     host: string,
@@ -43,33 +43,17 @@ export class HostInfo {
     lastUpdateTime: number = Date.now(),
     hostAvailabilityStrategy: HostAvailabilityStrategy = new SimpleHostAvailabilityStrategy()
   ) {
-    this._host = host;
-    this._port = port;
-    this._availability = availability;
-    this._role = role;
-    this._weight = weight;
-    this._lastUpdateTime = lastUpdateTime;
-    this._hostAvailabilityStrategy = hostAvailabilityStrategy;
-  }
-
-  get host(): string {
-    return this._host;
-  }
-
-  get port(): number {
-    return this._port;
-  }
-
-  get hostId(): string | undefined {
-    return this._hostId;
-  }
-
-  set hostId(id: string | undefined) {
-    this._hostId = id;
+    this.host = host;
+    this.port = port;
+    this.availability = availability;
+    this.role = role;
+    this.weight = weight;
+    this.lastUpdateTime = lastUpdateTime;
+    this.hostAvailabilityStrategy = hostAvailabilityStrategy;
   }
 
   isPortSpecified(): boolean {
-    return this._port != HostInfo.NO_PORT;
+    return this.port != HostInfo.NO_PORT;
   }
 
   addAlias(...alias: string[]) {
@@ -79,7 +63,7 @@ export class HostInfo {
 
     alias.forEach((x) => {
       this.aliases.add(x);
-      this._allAliases.add(x);
+      this.allAliases.add(x);
     });
   }
 
@@ -90,7 +74,7 @@ export class HostInfo {
 
     aliases.forEach((x) => {
       this.aliases.delete(x);
-      this._allAliases.delete(x);
+      this.allAliases.delete(x);
     });
   }
 
@@ -101,11 +85,11 @@ export class HostInfo {
   }
 
   get asAlias() {
-    return this.isPortSpecified() ? `${this._host}:${this.port}` : this.host;
+    return this.isPortSpecified() ? `${this.host}:${this.port}` : this.host;
   }
 
   get url() {
-    let url = this.isPortSpecified() ? `${this._host}:${this.port}` : this.host;
+    let url = this.isPortSpecified() ? `${this.host}:${this.port}` : this.host;
     if (!url.endsWith("/")) {
       url += "/";
     }
@@ -113,52 +97,20 @@ export class HostInfo {
     return url;
   }
 
-  get availability(): HostAvailability {
-    return this._availability;
-  }
-
-  set availability(availability: HostAvailability) {
-    this._availability = availability;
-  }
-
-  set hostAvailabilityStrategy(value: HostAvailabilityStrategy) {
-    this._hostAvailabilityStrategy = value;
-  }
-
-  get role(): HostRole {
-    return this._role;
-  }
-
-  get allAliases(): Set<string> {
-    return this._allAliases;
-  }
-
-  get weight(): number {
-    return this._weight;
-  }
-
-  get lastUpdateTime(): number {
-    return this._lastUpdateTime;
-  }
-
-  get hostAvailabilityStrategy(): HostAvailabilityStrategy {
-    return this._hostAvailabilityStrategy;
-  }
-
   equals(other: HostInfo): boolean {
     return this.port === other.port && this.availability === other.availability && this.role === other.role && this.weight === other.weight;
   }
 
   getAvailability(): HostAvailability {
-    if (this._hostAvailabilityStrategy) {
-      return this._hostAvailabilityStrategy.getHostAvailability(this._availability);
+    if (this.hostAvailabilityStrategy) {
+      return this.hostAvailabilityStrategy.getHostAvailability(this.availability);
     }
 
-    return this._availability;
+    return this.availability;
   }
 
   getRawAvailability(): HostAvailability {
-    return this._availability;
+    return this.availability;
   }
 
   setAvailability(availability: HostAvailability) {}

@@ -22,6 +22,7 @@ export class Messages {
     locales: ["en"],
     directory: path.join(__dirname, "locales")
   });
+
   static get(key: string, ...val: string[]) {
     return Messages.i18n.__(key, ...val);
   }
