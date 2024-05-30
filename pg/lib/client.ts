@@ -53,7 +53,7 @@ export class AwsPGClient extends AwsClient {
     const res: void = await this.pluginManager.connect(this.pluginService.getCurrentHostInfo(), this.properties, true, async () => {
       if (!this.targetClient) {
         this.targetClient = this.pluginService.createTargetClient(this.properties);
-        this.targetClient.connect();
+        await this.targetClient.connect();
       }
     });
     await this.internalPostConnect();

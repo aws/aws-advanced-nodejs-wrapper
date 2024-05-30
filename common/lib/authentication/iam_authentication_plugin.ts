@@ -84,7 +84,7 @@ export class IamAuthenticationPlugin extends AbstractConnectionPlugin {
     this.pluginService.updateConfigWithProperties(props);
 
     try {
-      return connectFunc();
+      return await connectFunc();
     } catch (e) {
       logger.debug(Messages.get("IamAuthenticationPlugin.connectException", (e as Error).message));
       if (!this.pluginService.isLoginError(e as Error) || !isCachedToken) {
