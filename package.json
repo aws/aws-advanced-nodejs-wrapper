@@ -45,7 +45,7 @@
     "jest-html-reporter": "^3.10.2",
     "lint-staged": "^15.2.2",
     "lodash": "^4.17.21",
-    "mysql2": "^3.9.7",
+    "mysql2": "^3.9.8",
     "node-fetch": "^2.6.7",
     "pg": "^8.11.5",
     "prettier": "^3.0.3",
