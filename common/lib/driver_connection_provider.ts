@@ -47,7 +47,7 @@ export class DriverConnectionProvider implements ConnectionProvider {
     try {
       result = await connectFunc();
     } catch (e) {
-      await pluginService.tryClosingTargetClient();
+
 
       if (!WrapperProperties.ENABLE_GREEN_NODE_REPLACEMENT.get(props)) {
         throw e;
@@ -94,6 +94,7 @@ export class DriverConnectionProvider implements ConnectionProvider {
           JSON.stringify(maskProperties(props))
       );
 
+      await pluginService.tryClosingTargetClient();
       const newTargetClient = pluginService.createTargetClient(props);
       const fixedConnFunc = pluginService.getConnectFunc(newTargetClient);
       result = await fixedConnFunc();
