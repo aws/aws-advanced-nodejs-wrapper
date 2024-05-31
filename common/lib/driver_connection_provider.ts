@@ -50,13 +50,6 @@ export class DriverConnectionProvider implements ConnectionProvider {
       await connFunc();
       result = targetClient;
     } catch (e) {
-      // TODO revisit - The call below is trying to close a current target client. Why here? Maybe because create target client was setting a current one right away?
-      // Or maybe this connect call happens during a failover?
-      // Is this call premature, in case the code below fails?
-      // It seems that pluginService.setCurrentClient should call tryClosingTargetClient() or close it so that other places do not have have to
-      // other than for temp connections that were not passed to plugin service.
-      await pluginService.tryClosingTargetClient();
-
       if (!WrapperProperties.ENABLE_GREEN_NODE_REPLACEMENT.get(props)) {
         throw e;
       }
@@ -106,6 +99,12 @@ export class DriverConnectionProvider implements ConnectionProvider {
       const fixedConnFunc = pluginService.getConnectFunc(newTargetClient);
       await fixedConnFunc();
       result = newTargetClient;
+
+      // Note keeping this here temporarily for current functionality.
+      // TODO revisit - Follow the paths that the driver_connection_provider.connect is called from
+      // and make sure pluginService.tryClosingTargetClient() and pluginService.setCurrentClient are called appropriately.
+      // The driver_connection_provider should have no knowledge of setting/closing clients
+      await pluginService.tryClosingTargetClient();
     }
 
     return result;

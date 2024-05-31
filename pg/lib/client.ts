@@ -57,9 +57,6 @@ export class AwsPGClient extends AwsClient {
     }
     const conn: any = await this.pluginManager.connect(hostInfo, this.properties, true);
     await this.pluginService.setCurrentClient(conn, hostInfo);
-    // TODO review the this.isConnected  usage. Perhaps we don't need this variable at all.
-    // This could be determined based on the state of _targetClient, e.g. is it set or not.
-    this.isConnected = true;
     await this.internalPostConnect();
     return;
   }

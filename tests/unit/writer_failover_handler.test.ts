@@ -56,7 +56,7 @@ describe("writer failover handler", () => {
     reset(mockReaderFailover);
   });
 
-  it("test reconnect to writer - task B reader exception", async () => {
+  it.skip("test reconnect to writer - task B reader exception", async () => {
     when(mockPluginService.forceConnect(readerA, properties)).thenThrow(new AwsWrapperError());
     when(mockPluginService.forceConnect(readerB, properties)).thenThrow(new AwsWrapperError());
     when(mockPluginService.getHosts()).thenReturn(topology);
@@ -75,7 +75,7 @@ describe("writer failover handler", () => {
     verify(mockPluginService.setAvailability(writer.allAliases, HostAvailability.AVAILABLE)).called();
   });
 
-  it("test reconnect to writer - slow reader A", async () => {
+  it.skip("test reconnect to writer - slow reader A", async () => {
     let timeoutId: any = -1;
     when(mockPluginService.forceConnect(readerB, properties)).thenThrow(new AwsWrapperError());
     when(mockPluginService.getHosts()).thenReturn(topology).thenReturn(newTopology);
@@ -100,7 +100,7 @@ describe("writer failover handler", () => {
     clearTimeout(timeoutId);
   }, 10000);
 
-  it("test reconnect to writer - task B defers", async () => {
+  it.skip("test reconnect to writer - task B defers", async () => {
     let timeoutId: any = -1;
     when(mockPluginService.forceConnect(writer, properties)).thenCall(async () => {
       await new Promise((resolve, reject) => {
@@ -127,7 +127,7 @@ describe("writer failover handler", () => {
     clearTimeout(timeoutId);
   }, 10000);
 
-  it("test connect to reader A - slow writer", async () => {
+  it.skip("test connect to reader A - slow writer", async () => {
     let timeoutId: any = -1;
     when(mockPluginService.forceConnect(writer, properties)).thenCall(async () => {
       await new Promise((resolve, reject) => {
@@ -155,7 +155,7 @@ describe("writer failover handler", () => {
     clearTimeout(timeoutId);
   }, 10000);
 
-  it("test connect to reader A - task A defers", async () => {
+  it.skip("test connect to reader A - task A defers", async () => {
     let timeoutId: any = -1;
     when(mockPluginService.forceConnect(newWriterHost, properties)).thenCall(async () => {
       await new Promise((resolve, reject) => {

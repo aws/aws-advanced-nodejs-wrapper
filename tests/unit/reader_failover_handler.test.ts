@@ -52,9 +52,9 @@ describe("reader failover handler", () => {
     for (let i = 0; i < hosts.length; i++) {
       if (i !== successHostIndex) {
         when(mockPluginService.forceConnect(hosts[i], anything())).thenThrow(new AwsWrapperError("Rejecting test"));
+      } else {
+        when(mockPluginService.forceConnect(hosts[i], anything())).thenReturn(mockTargetClient);
       }
-      when(mockPluginService.createTargetClient(anything())).thenReturn(mockTargetClient);
-      when(mockPluginService.getConnectFunc(anything())).thenReturn(() => Promise.resolve());
     }
     const mockPluginServiceInstance = instance(mockPluginService);
 
@@ -148,13 +148,13 @@ describe("reader failover handler", () => {
     const fastHost = hosts[2];
 
     when(mockPluginService.getHosts()).thenReturn([]);
-    when(mockPluginService.createTargetClient(anything())).thenReturn(mockTargetClient);
-    when(mockPluginService.forceConnect(slowHost, properties)).thenCall(async () => {
+    when(mockPluginService.forceConnect(slowHost, anything())).thenCall(async () => {
       await new Promise((resolve, reject) => {
         timeoutId = setTimeout(resolve, 20000);
       });
-      return;
+      return mockTargetClient;
     });
+    when(mockPluginService.forceConnect(fastHost, anything())).thenReturn(mockTargetClient);
 
     const mockPluginServiceInstance = instance(mockPluginService);
     const target = new ClusterAwareReaderFailoverHandler(
