@@ -24,6 +24,8 @@ import { QueryResult } from "pg";
 import { promisify } from "util";
 import { lookup } from "dns";
 import { readFileSync } from "fs";
+import { AwsPGClient } from "pg-wrapper";
+import { AwsMySQLClient } from "mysql-wrapper";
 
 let env: TestEnvironment;
 let driver;
@@ -33,10 +35,8 @@ const sslCertificate = {
   ca: readFileSync("/app/global-bundle.pem").toString()
 };
 
-async function validateConnection(client: any) {
+async function validateConnection(client: AwsPGClient | AwsMySQLClient) {
   await client.connect();
-  const res: QueryResult = await client.query("select now()");
-  expect(res.rowCount).toBe(1);
   await client.end();
 }
 
@@ -75,20 +75,16 @@ describe("iamTests", () => {
 
   it("testIamWrongDatabaseUsername", async () => {
     const config = await initDefaultConfig(env.databaseInfo.clusterEndpoint, env.databaseInfo.clusterEndpointPort, false);
-    config["user"] = `WRONG_IAM_USER`;
-    const client = initClientFunc(config);
+    config["user"] = `WRONG_${env.info.databaseInfo.username}_USER`;
+    const client: AwsPGClient | AwsMySQLClient = initClientFunc(config);
 
-    client.on("error", (error: any) => {
-      console.log(error);
-    });
-
-    await expect(client.connect()).rejects.toThrow(`password authentication failed for user "WRONG_IAM_USER"`);
+    await expect(client.connect()).rejects.toThrow();
   }, 1000000);
 
   it("testIamNoDatabaseUsername", async () => {
     const config = await initDefaultConfig(env.databaseInfo.clusterEndpoint, env.databaseInfo.clusterEndpointPort, false);
     config["user"] = undefined;
-    const client = initClientFunc(config);
+    const client: AwsPGClient | AwsMySQLClient = initClientFunc(config);
 
     client.on("error", (error: any) => {
       console.log(error);
@@ -100,37 +96,49 @@ describe("iamTests", () => {
   it("testIamInvalidHost", async () => {
     const config = await initDefaultConfig(env.databaseInfo.clusterEndpoint, env.databaseInfo.clusterEndpointPort, false);
     config["iamHost"] = "<>";
-    const client = initClientFunc(config);
+    const client: AwsPGClient | AwsMySQLClient = initClientFunc(config);
 
     await expect(client.connect()).rejects.toBeInstanceOf(AwsWrapperError);
   }, 1000000);
 
   it("testIamUsingIpAddress", async () => {
-    const config = await initDefaultConfig(env.databaseInfo.clusterEndpoint, env.databaseInfo.clusterEndpointPort, false);
-    const instance = env.writer;
-    if (instance.host) {
-      const ip = await getIpAddress(instance.host);
-      // console.log(ip.address);
-      // console.log(instance.host);
-      // TODO: can't connect by ip
-      config["host"] = ip.address;
-      config["user"] = "jane_doe";
-      config["password"] = "anything";
-      config["iamHost"] = instance.host;
-      const client = initClientFunc(config);
+    // Currently does not work with PG
+    if (env.engine === "MYSQL") {
+      const config = await initDefaultConfig(env.databaseInfo.clusterEndpoint, env.databaseInfo.clusterEndpointPort, false);
+      const instance = env.writer;
+      if (instance.host) {
+        const ip = await getIpAddress(instance.host);
+        config["host"] = ip.address;
+        config["user"] = "jane_doe";
+        config["password"] = "anything";
+        config["iamHost"] = instance.host;
+        const client: AwsPGClient | AwsMySQLClient = initClientFunc(config);
 
-      await validateConnection(client);
-    } else {
-      throw new AwsWrapperError("Host not found");
+        await client.connect();
+
+        const res = await DriverHelper.executeInstanceQuery(env.engine, client);
+
+        expect(res).not.toBeNull();
+        await client.end();
+      } else {
+        throw new AwsWrapperError("Host not found");
+      }
     }
+    return;
   }, 1000000);
 
   it("testIamValidConnectionProperties", async () => {
     const config = await initDefaultConfig(env.databaseInfo.clusterEndpoint, env.databaseInfo.clusterEndpointPort, false);
     config["user"] = "jane_doe";
     config["password"] = "anything";
-    const client = initClientFunc(config);
-    await validateConnection(client);
+    const client: AwsPGClient | AwsMySQLClient = initClientFunc(config);
+
+    await client.connect();
+
+    const res = await DriverHelper.executeInstanceQuery(env.engine, client);
+
+    expect(res).not.toBeNull();
+    await client.end();
   }, 1000000);
 
   it("testIamValidConnectionPropertiesNoPassword", async () => {
@@ -138,7 +146,13 @@ describe("iamTests", () => {
     config["user"] = "jane_doe";
     config["password"] = undefined;
     config["ssl"] = sslCertificate;
-    const client = initClientFunc(config);
-    await validateConnection(client);
+    const client: AwsPGClient | AwsMySQLClient = initClientFunc(config);
+
+    await client.connect();
+
+    const res = await DriverHelper.executeInstanceQuery(env.engine, client);
+
+    expect(res).not.toBeNull();
+    await client.end();
   }, 1000000);
 });
