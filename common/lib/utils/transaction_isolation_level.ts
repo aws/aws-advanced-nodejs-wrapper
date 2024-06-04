@@ -14,24 +14,9 @@
   limitations under the License.
 */
 
-export class AwsWrapperError extends Error {
-  constructor(message?: string, cause?: any) {
-    super(message);
-    this.name = this.constructor.name;
-    this.cause = cause;
-  }
+export enum TransactionIsolationLevel {
+  TRANSACTION_READ_UNCOMMITTED,
+  TRANSACTION_READ_COMMITTED,
+  TRANSACTION_REPEATABLE_READ,
+  TRANSACTION_SERIALIZABLE
 }
-
-export class UnsupportedMethodError extends AwsWrapperError {}
-
-export class FailoverError extends AwsWrapperError {}
-
-export class FailoverSuccessError extends FailoverError {}
-
-export class FailoverFailedError extends FailoverError {}
-
-export class TransactionResolutionUnknownError extends FailoverError {}
-
-export class ReadWriteSplittingError extends AwsWrapperError {}
-
-export class LoginError extends AwsWrapperError {}

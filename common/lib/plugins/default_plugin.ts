@@ -63,7 +63,7 @@ export class DefaultPlugin extends AbstractConnectionPlugin {
     isInitialConnection: boolean,
     forceConnectFunc: () => Promise<Type>
   ): Promise<Type> {
-    return await this.connectInternal(hostInfo, props, forceConnectFunc, this.defaultConnProvider);
+    return await this.connectInternal(hostInfo, props, this.defaultConnProvider);
   }
 
   override initHostProvider(
@@ -91,18 +91,15 @@ export class DefaultPlugin extends AbstractConnectionPlugin {
       connProvider = this.connProviderManager.getConnectionProvider(hostInfo, props);
     }
 
-    return this.connectInternal(hostInfo, props, connectFunc, connProvider);
+    return this.connectInternal(hostInfo, props, connProvider);
   }
 
-  private async connectInternal<Type>(
-    hostInfo: HostInfo,
-    props: Map<string, any>,
-    connectFunc: () => Promise<Type>,
-    connProvider: ConnectionProvider
-  ): Promise<Type> {
-    const result = await connProvider.connect(hostInfo, this.pluginService, props, connectFunc);
+  private async connectInternal<Type>(hostInfo: HostInfo, props: Map<string, any>, connProvider: ConnectionProvider): Promise<Type> {
+    const result: any = await connProvider.connect(hostInfo, this.pluginService, props);
     this.pluginService.setAvailability(hostInfo.allAliases, HostAvailability.AVAILABLE);
-    await this.pluginService.updateDialect(this.pluginService.getCurrentClient().targetClient);
+    // TODO: review this probably should not be called here, but probably in pluginService.setCurrentClient
+    // as the pluginService.setCurrentClient has not been called yet
+    await this.pluginService.updateDialect(result);
     return result;
   }
 

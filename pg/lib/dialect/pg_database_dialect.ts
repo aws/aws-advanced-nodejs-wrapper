@@ -21,6 +21,7 @@ import { ConnectionStringHostListProvider } from "aws-wrapper-common-lib/lib/hos
 import { AwsClient } from "aws-wrapper-common-lib/lib/aws_client";
 import { AwsWrapperError } from "aws-wrapper-common-lib/lib/utils/errors";
 import { DatabaseDialectCodes } from "aws-wrapper-common-lib/lib/database_dialect/database_dialect_codes";
+import { TransactionIsolationLevel } from "aws-wrapper-common-lib/lib/utils/transaction_isolation_level";
 
 export class PgDatabaseDialect implements DatabaseDialect {
   protected dialectName: string = "PgDatabaseDialect";
@@ -94,5 +95,53 @@ export class PgDatabaseDialect implements DatabaseDialect {
 
   getDialectName(): string {
     return this.dialectName;
+  }
+
+  doesStatementSetAutoCommit(statement: string): boolean | undefined {
+    return undefined;
+  }
+
+  doesStatementSetCatalog(statement: string): string | undefined {
+    return undefined;
+  }
+
+  doesStatementSetReadOnly(statement: string): boolean | undefined {
+    if (statement.toLowerCase().includes("set session characteristics as transaction read only")) {
+      return true;
+    }
+
+    if (statement.toLowerCase().includes("set session characteristics as transaction read write")) {
+      return false;
+    }
+
+    return undefined;
+  }
+
+  doesStatementSetSchema(statement: string): string | undefined {
+    if (statement.toLowerCase().includes("set search_path to ")) {
+      return statement.split(" ")[3];
+    }
+
+    return undefined;
+  }
+
+  doesStatementSetTransactionIsolation(statement: string): number | undefined {
+    if (statement.toLowerCase().includes("set session characteristics as transaction isolation level read uncommitted")) {
+      return TransactionIsolationLevel.TRANSACTION_READ_COMMITTED;
+    }
+
+    if (statement.toLowerCase().includes("set session characteristics as transaction isolation level read committed")) {
+      return TransactionIsolationLevel.TRANSACTION_READ_COMMITTED;
+    }
+
+    if (statement.toLowerCase().includes("set session characteristics as transaction isolation level repeatable read")) {
+      return TransactionIsolationLevel.TRANSACTION_REPEATABLE_READ;
+    }
+
+    if (statement.toLowerCase().includes("set session characteristics as transaction isolation level serializable")) {
+      return TransactionIsolationLevel.TRANSACTION_SERIALIZABLE;
+    }
+
+    return undefined;
   }
 }

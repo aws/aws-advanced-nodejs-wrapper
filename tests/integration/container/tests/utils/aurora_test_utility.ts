@@ -27,11 +27,9 @@ import { TestEnvironment } from "./test_environment";
 import * as dns from "dns";
 import { DBInstance } from "@aws-sdk/client-rds/dist-types/models/models_0";
 import { DatabaseEngine } from "./database_engine";
-import { FailoverSuccessError } from "aws-wrapper-common-lib/lib/utils/errors";
 import { AwsClient } from "aws-wrapper-common-lib/lib/aws_client";
-import { TopologyAwareDatabaseDialect } from "aws-wrapper-common-lib/lib/topology_aware_database_dialect";
-import { DatabaseDialect } from "aws-wrapper-common-lib/lib/database_dialect";
 import { DriverHelper } from "./driver_helper";
+import { sleep } from "aws-wrapper-common-lib/lib/utils/utils";
 
 export class AuroraTestUtility {
   private client: RDSClient;
@@ -116,7 +114,7 @@ export class AuroraTestUtility {
         }
       }
 
-      this.sleep(1000);
+      await sleep(1000);
     }
 
     throw new Error("instance description timed out");
@@ -129,7 +127,7 @@ export class AuroraTestUtility {
     }
     let status = clusterInfo["Status"];
     while (status !== desiredStatus) {
-      this.sleep(1000);
+      await sleep(1000);
       clusterInfo = await this.getDbCluster(clusterId);
       if (clusterInfo !== null) {
         status = clusterInfo["Status"];
@@ -176,7 +174,7 @@ export class AuroraTestUtility {
 
     let clusterAddress: dns.LookupAddress = await dns.promises.lookup(clusterEndpoint);
     while (clusterAddress === initialClusterAddress) {
-      this.sleep(1000);
+      await sleep(1000);
       clusterAddress = await dns.promises.lookup(clusterEndpoint);
     }
   }
@@ -199,9 +197,9 @@ export class AuroraTestUtility {
           return;
         }
 
-        this.sleep(1000);
+        await sleep(1000);
       } catch (e) {
-        this.sleep(1);
+        await sleep(1);
       }
     }
   }
@@ -213,7 +211,7 @@ export class AuroraTestUtility {
     let currentWriterId = await this.getClusterWriterInstanceId(clusterId);
 
     while (initialWriter === currentWriterId && new Date().getTime() < stopTime) {
-      this.sleep(3000);
+      await sleep(3000);
       currentWriterId = await this.getClusterWriterInstanceId(clusterId);
     }
 
@@ -275,9 +273,5 @@ export class AuroraTestUtility {
 
   isNullOrUndefined(value: any): boolean {
     return value === undefined || value === null;
-  }
-
-  sleep(waitTime: number) {
-    setTimeout(() => {}, waitTime);
   }
 }

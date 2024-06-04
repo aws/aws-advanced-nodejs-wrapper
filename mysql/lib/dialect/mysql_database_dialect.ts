@@ -21,6 +21,7 @@ import { ConnectionStringHostListProvider } from "aws-wrapper-common-lib/lib/hos
 import { AwsClient } from "aws-wrapper-common-lib/lib/aws_client";
 import { AwsWrapperError } from "aws-wrapper-common-lib/lib/utils/errors";
 import { DatabaseDialectCodes } from "aws-wrapper-common-lib/lib/database_dialect/database_dialect_codes";
+import { TransactionIsolationLevel } from "aws-wrapper-common-lib/lib/utils/transaction_isolation_level";
 
 export class MySQLDatabaseDialect implements DatabaseDialect {
   protected dialectName: string = "MySQLDatabaseDialect";
@@ -107,5 +108,65 @@ export class MySQLDatabaseDialect implements DatabaseDialect {
 
   getDialectName(): string {
     return this.dialectName;
+  }
+
+  doesStatementSetReadOnly(statement: string): boolean | undefined {
+    if (statement.includes("set session transaction read only")) {
+      return true;
+    }
+
+    if (statement.includes("set session transaction read write")) {
+      return false;
+    }
+
+    return undefined;
+  }
+
+  doesStatementSetAutoCommit(statement: string): boolean | undefined {
+    if (statement.includes("set autocommit")) {
+      const statementSections = statement.split("=");
+      const value = statementSections[1].trim();
+      if (value === "0") {
+        return false;
+      }
+
+      if (value === "1") {
+        return true;
+      }
+    }
+
+    return undefined;
+  }
+
+  doesStatementSetTransactionIsolation(statement: string): TransactionIsolationLevel | undefined {
+    if (statement.includes("set session transaction isolation level read uncommitted")) {
+      return TransactionIsolationLevel.TRANSACTION_READ_UNCOMMITTED;
+    }
+
+    if (statement.includes("set session transaction isolation level read committed")) {
+      return TransactionIsolationLevel.TRANSACTION_READ_COMMITTED;
+    }
+
+    if (statement.includes("set session transaction isolation level repeatable read")) {
+      return TransactionIsolationLevel.TRANSACTION_REPEATABLE_READ;
+    }
+
+    if (statement.includes("set session transaction isolation level serializable")) {
+      return TransactionIsolationLevel.TRANSACTION_SERIALIZABLE;
+    }
+
+    return undefined;
+  }
+
+  doesStatementSetCatalog(statement: string): string | undefined {
+    if (statement.includes("use")) {
+      return statement.split(" ")[1];
+    }
+
+    return undefined;
+  }
+
+  doesStatementSetSchema(statement: string): string | undefined {
+    return undefined;
   }
 }

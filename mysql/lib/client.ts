@@ -25,6 +25,9 @@ import { DatabaseDialectCodes } from "aws-wrapper-common-lib/lib/database_dialec
 import { MySQLDatabaseDialect } from "./dialect/mysql_database_dialect";
 import { AuroraMySQLDatabaseDialect } from "./dialect/aurora_mysql_database_dialect";
 import { RdsMySQLDatabaseDialect } from "./dialect/rds_mysql_database_dialect";
+import { TransactionIsolationLevel } from "aws-wrapper-common-lib/lib/utils/transaction_isolation_level";
+import { AwsWrapperError, UnsupportedMethodError } from "aws-wrapper-common-lib/lib/utils/errors";
+import { Messages } from "aws-wrapper-common-lib/lib/utils/messages";
 
 export class AwsMySQLClient extends AwsClient {
   private static readonly knownDialectsByCode: Map<string, DatabaseDialect> = new Map([
@@ -39,20 +42,25 @@ export class AwsMySQLClient extends AwsClient {
     this._createClientFunc = (config: any) => {
       return createConnection(WrapperProperties.removeWrapperProperties(config));
     };
-    this._isReadOnly = false;
     this._connectFunc = async () => {
       return await this.targetClient.promise().connect();
     };
+    this.resetState();
   }
 
-  async connect(): Promise<Connection> {
+  async connect(): Promise<void> {
     await this.internalConnect();
-    const conn: Promise<Connection> = await this.pluginManager.connect(this.pluginService.getCurrentHostInfo(), this.properties, true, async () => {
-      this.targetClient = this.pluginService.createTargetClient(this.properties);
-      return this.targetClient.promise().connect();
-    });
+    const hostInfo = this.pluginService.getCurrentHostInfo();
+    if (hostInfo == null) {
+      throw new AwsWrapperError("HostInfo was not provided.");
+    }
+    const conn: any = await this.pluginManager.connect(hostInfo, this.properties, true);
+    await this.pluginService.setCurrentClient(conn, hostInfo);
+    // TODO review the this.isConnected  usage. Perhaps we don't need this variable at all.
+    // This could be determined based on the state of _targetClient, e.g. is it set or not.
+    this.isConnected = true;
     await this.internalPostConnect();
-    return conn;
+    return;
   }
 
   async executeQuery(props: Map<string, any>, sql: string): Promise<Query> {
@@ -74,7 +82,7 @@ export class AwsMySQLClient extends AwsClient {
       this.properties,
       "query",
       async () => {
-        this.pluginService.updateInTransaction(options.sql);
+        await this.pluginService.updateState(options.sql);
         return await this.targetClient.promise().query(options, callback);
       },
       options
@@ -85,6 +93,10 @@ export class AwsMySQLClient extends AwsClient {
     if (readOnly === this.isReadOnly()) {
       return Promise.resolve();
     }
+
+    this.pluginService.getSessionStateService().setupPristineReadOnly();
+    this.pluginService.getSessionStateService().setReadOnly(readOnly);
+
     this._isReadOnly = readOnly;
     if (this.isReadOnly()) {
       return await this.query({ sql: "SET SESSION TRANSACTION READ ONLY;" });
@@ -95,6 +107,83 @@ export class AwsMySQLClient extends AwsClient {
 
   isReadOnly(): boolean {
     return this._isReadOnly;
+  }
+
+  async setAutoCommit(autoCommit: boolean): Promise<Query | void> {
+    if (autoCommit === this.getAutoCommit()) {
+      return;
+    }
+
+    this.pluginService.getSessionStateService().setupPristineAutoCommit();
+    this.pluginService.getSessionStateService().setAutoCommit(autoCommit);
+
+    this._isAutoCommit = autoCommit;
+    let setting = "1";
+    if (!autoCommit) {
+      setting = "0";
+    }
+    return await this.query({ sql: `SET AUTOCOMMIT=${setting}` });
+  }
+
+  getAutoCommit(): boolean {
+    return this._isAutoCommit;
+  }
+
+  async setCatalog(catalog: string): Promise<Query | void> {
+    if (catalog === this.getCatalog()) {
+      return;
+    }
+
+    this.pluginService.getSessionStateService().setupPristineCatalog();
+    this.pluginService.getSessionStateService().setCatalog(catalog);
+
+    this._catalog = catalog;
+    await this.query({ sql: `USE ${catalog}` });
+  }
+
+  getCatalog(): string {
+    return this._catalog;
+  }
+
+  async setSchema(schema: string): Promise<Query | void> {
+    throw new UnsupportedMethodError(Messages.get("Client.methodNotSupported"));
+  }
+
+  getSchema(): string {
+    return this._schema;
+  }
+
+  async setTransactionIsolation(level: TransactionIsolationLevel): Promise<Query | void> {
+    if (level === this.getTransactionIsolation()) {
+      return;
+    }
+
+    this.pluginService.getSessionStateService().setupPristineTransactionIsolation();
+    this.pluginService.getSessionStateService().setTransactionIsolation(level);
+
+    this._isolationLevel = level;
+    switch (level) {
+      case 0:
+        await this.query({ sql: "SET SESSION TRANSACTION ISOLATION LEVEL READ UNCOMMITTED" });
+        break;
+      case 1:
+        await this.query({ sql: "SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED" });
+        break;
+      case 2:
+        await this.query({ sql: "SET SESSION TRANSACTION ISOLATION LEVEL REPEATABLE READ" });
+        break;
+      case 3:
+        await this.query({ sql: "SET SESSION TRANSACTION ISOLATION LEVEL SERIALIZABLE" });
+        break;
+      default:
+        throw new AwsWrapperError(Messages.get("Client.invalidTransactionIsolationLevel", String(level)));
+    }
+
+    this._isolationLevel = level;
+  }
+
+  getTransactionIsolation(): number {
+    return this._isolationLevel;
   }
 
   end() {
@@ -109,5 +198,24 @@ export class AwsMySQLClient extends AwsClient {
     );
   }
 
-  rollback() {}
+  async rollback(): Promise<Query> {
+    return this.pluginManager.execute(
+      this.pluginService.getCurrentHostInfo(),
+      this.properties,
+      "rollback",
+      () => {
+        this.pluginService.updateInTransaction("rollback");
+        return this.targetClient.promise().rollback();
+      },
+      null
+    );
+  }
+
+  resetState() {
+    this._isReadOnly = false;
+    this._isAutoCommit = true;
+    this._catalog = "";
+    this._schema = "";
+    this._isolationLevel = TransactionIsolationLevel.TRANSACTION_REPEATABLE_READ;
+  }
 }

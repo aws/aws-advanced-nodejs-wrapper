@@ -33,8 +33,12 @@ export abstract class AwsClient extends EventEmitter {
   private _config: any;
   protected isConnected: boolean = false;
   protected _isReadOnly: boolean = false;
+  protected _isAutoCommit: boolean = true;
+  protected _catalog: string = "";
+  protected _schema: string = "";
+  protected _isolationLevel: number = 0;
   private readonly _properties: Map<string, any>;
-  private _targetClient: any;
+  private _targetClient: any = null;
   protected _errorHandler: ErrorHandler;
   protected _createClientFunc?: (config: any) => any;
   protected _connectFunc?: () => Promise<any>;
@@ -129,9 +133,27 @@ export abstract class AwsClient extends EventEmitter {
 
   abstract isReadOnly(): boolean;
 
+  abstract setAutoCommit(autoCommit: boolean): Promise<any | void>;
+
+  abstract getAutoCommit(): boolean;
+
+  abstract setTransactionIsolation(transactionIsolation: number): Promise<any | void>;
+
+  abstract getTransactionIsolation(): number;
+
+  abstract setSchema(schema: any): Promise<any | void>;
+
+  abstract getSchema(): string;
+
+  abstract setCatalog(catalog: string): Promise<any | void>;
+
+  abstract getCatalog(): string;
+
   abstract end(): Promise<any>;
 
-  abstract rollback(): void;
+  abstract rollback(): Promise<any>;
+
+  abstract resetState(): void;
 
   async isValid(): Promise<boolean> {
     if (!this.targetClient) {
