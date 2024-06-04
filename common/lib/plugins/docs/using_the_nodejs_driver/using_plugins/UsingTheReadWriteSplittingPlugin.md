@@ -43,15 +43,15 @@ To indicate which connection strategy to use, the `readerHostSelectorStrategy` p
 ```typescript
 params = {
     "readerHostSelectorStrategy": "random",
-    # Add other connection properties below...
+    // Add other connection properties below...
 }
 
-# If using MySQL:
+// If using MySQL:
 
 const client = new AwsMySQLClient(params);
 await client.connect();
 
-# If using Postgres:
+// If using Postgres:
 
 const client = new AwsPGClient(params);
 await client.connect();
