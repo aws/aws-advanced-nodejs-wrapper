@@ -7,22 +7,20 @@ The Read/Write Splitting Plugin adds functionality to switch between writer and 
 The Read/Write Splitting Plugin is not loaded by default. To load the plugin, include `readWriteSplitting` in the [`plugins`](../UsingTheNodejsDriver.md#connection-plugin-manager-parameters) connection parameter:
 
 ```typescript
-
 params = {
     plugins: "readWriteSplitting,failover,hostMonitoring" 
-     # Add other connection properties below...
+    // Add other connection properties below...
 }
 
-# If using MySQL:
+// If using MySQL:
 
 const client = new AwsMySQLClient(params);
 await client.connect();
 
-# If using Postgres:
+// If using Postgres:
 
 const client = new AwsPGClient(params);
 await client.connect();
-```
 
 ### Supplying the connection string
 
