@@ -6,11 +6,11 @@ The Read/Write Splitting Plugin adds functionality to switch between writer and 
 
 The Read/Write Splitting Plugin is not loaded by default. To load the plugin, include `readWriteSplitting` in the [`plugins`](../UsingTheNodejsDriver.md#connection-plugin-manager-parameters) connection parameter:
 
-````typescript
+```typescript
 params = {
-    plugins: "readWriteSplitting,failover,hostMonitoring"
-    // Add other connection properties below...
-}
+  plugins: "readWriteSplitting,failover,hostMonitoring"
+  // Add other connection properties below...
+};
 
 // If using MySQL:
 
@@ -21,6 +21,7 @@ await client.connect();
 
 const client = new AwsPGClient(params);
 await client.connect();
+```
 
 ### Supplying the connection string
 
@@ -34,15 +35,16 @@ When using the Read/Write Splitting Plugin against Aurora clusters, you do not h
 The Read/Write Splitting Plugin is not currently supported for non-Aurora clusters.
 
 ### Connection Strategies
+
 By default, the Read/Write Splitting Plugin randomly selects a reader instance the first time `setReadOnly(true)` is called. To balance connections to reader instances more evenly, different connection strategies can be used. The following table describes the currently available connection strategies and any relevant configuration parameters for each strategy.
 
 To indicate which connection strategy to use, the `readerHostSelectorStrategy` parameter can be set to one of the connection strategies in the table below. The following is an example of enabling the `random` strategy:
 
 ```typescript
 params = {
-    "readerHostSelectorStrategy": "random",
-    // Add other connection properties below...
-}
+  readerHostSelectorStrategy: "random"
+  // Add other connection properties below...
+};
 
 // If using MySQL:
 
@@ -53,7 +55,7 @@ await client.connect();
 
 const client = new AwsPGClient(params);
 await client.connect();
-````
+```
 
 | Connection Strategy | Description                                                                                                                                                                       | Default Value |
 | ------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------- |

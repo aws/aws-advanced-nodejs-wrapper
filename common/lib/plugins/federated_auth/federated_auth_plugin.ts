@@ -23,7 +23,6 @@ import { WrapperProperties } from "../../wrapper_property";
 import { logger } from "../../../logutils";
 import { AwsWrapperError } from "../../utils/errors";
 import { Messages } from "../../utils/messages";
-import { Signer } from "@aws-sdk/rds-signer";
 import { ConnectionPlugin } from "../../connection_plugin";
 import { AdfsCredentialsProviderFactory } from "./adfs_credentials_provider_factory";
 import { CredentialsProviderFactory } from "./credentials_provider_factory";

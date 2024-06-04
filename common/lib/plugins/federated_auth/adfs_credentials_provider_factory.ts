@@ -15,7 +15,6 @@
 */
 
 import { logger } from "../../../logutils";
-import { PluginService } from "../../plugin_service";
 import { AwsWrapperError } from "../../utils/errors";
 import { Messages } from "../../utils/messages";
 import { WrapperProperties } from "../../wrapper_property";
