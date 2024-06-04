@@ -36,7 +36,7 @@ When using the Read/Write Splitting Plugin against Aurora clusters, you do not h
 The Read/Write Splitting Plugin is not currently supported for non-Aurora clusters.
 
 ### Connection Strategies
-By default, the Read/Write Splitting Plugin randomly selects a reader instance the first time that `setReadOnly(true)` is called. To balance connections to reader instances more evenly, different connection strategies can be used. The following table describes the currently available connection strategies and any relevant configuration parameters for each strategy.
+By default, the Read/Write Splitting Plugin randomly selects a reader instance the first time `setReadOnly(true)` is called. To balance connections to reader instances more evenly, different connection strategies can be used. The following table describes the currently available connection strategies and any relevant configuration parameters for each strategy.
 
 To indicate which connection strategy to use, the `readerHostSelectorStrategy` parameter can be set to one of the connection strategies in the table below. The following is an example of enabling the `random` strategy:
 
