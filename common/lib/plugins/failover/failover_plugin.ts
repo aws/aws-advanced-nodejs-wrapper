@@ -281,7 +281,7 @@ export class FailoverPlugin extends AbstractConnectionPlugin {
       throw new AwsWrapperError("Host list provider service not found."); // this should not be reached
     }
 
-    const result = await this._staleDnsHelper.getVerifiedConnection(
+    const targetClient = await this._staleDnsHelper.getVerifiedConnection(
       hostInfo.host,
       isInitialConnection,
       this.hostListProviderService,
@@ -290,10 +290,11 @@ export class FailoverPlugin extends AbstractConnectionPlugin {
     );
 
     if (isInitialConnection) {
-      await this.pluginService.refreshHostList();
+      // Todo review: should this be called here or later when the target client is set in plugin service?
+      await this.pluginService.refreshHostList(targetClient);
     }
 
-    return result;
+    return targetClient;
   }
 
   override async execute<T>(methodName: string, methodFunc: () => Promise<T>): Promise<T> {
@@ -500,9 +501,11 @@ export class FailoverPlugin extends AbstractConnectionPlugin {
   private async createConnectionForHost(baseHostInfo: HostInfo) {
     const props = new Map(this._properties);
     props.set(WrapperProperties.HOST.name, baseHostInfo.host);
-    const client = this.pluginService.createTargetClient(props);
+
+    let client;
     try {
-      await this.pluginService.connect(baseHostInfo, this._properties, this.pluginService.getDialect().getConnectFunc(client));
+      client = await this.pluginService.connect(baseHostInfo, props);
+      // TODO: review usage of the createConnectionForHost, should we be calling pluginService.setCurrentClient here?
       await this.pluginService.setCurrentClient(client, baseHostInfo);
     } catch (error) {
       await this.pluginService.tryClosingTargetClient(client);

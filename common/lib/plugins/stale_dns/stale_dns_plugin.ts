@@ -83,8 +83,8 @@ export class StaleDnsPlugin extends AbstractConnectionPlugin {
     return await methodFunc();
   }
 
-  override notifyNodeListChanged(changes: Map<string, Set<HostChangeOptions>>): void {
-    this.staleDnsHelper.notifyNodeListChanged(changes);
+  override notifyHostListChanged(changes: Map<string, Set<HostChangeOptions>>): void {
+    this.staleDnsHelper.notifyHostListChanged(changes);
   }
 }
 
