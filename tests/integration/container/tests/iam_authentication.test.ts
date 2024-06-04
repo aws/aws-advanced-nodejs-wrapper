@@ -39,7 +39,7 @@ async function getIpAddress(host: string) {
 async function initDefaultConfig(host: string, port: number): Promise<any> {
   const env = await TestEnvironment.getCurrent();
 
-  return {
+  let props = {
     user: env.databaseInfo.username,
     host: host,
     database: env.databaseInfo.default_db_name,
@@ -48,6 +48,8 @@ async function initDefaultConfig(host: string, port: number): Promise<any> {
     plugins: "iam",
     ssl: sslCertificate
   };
+  props = DriverHelper.addDriverSpecificConfiguration(props, env.engine);
+  return props;
 }
 
 async function validateConnection(client: AwsPGClient | AwsMySQLClient) {
@@ -97,7 +99,7 @@ describe("iamTests", () => {
   }, 1000000);
 
   it("testIamUsingIpAddress", async () => {
-    // Currently does not work with PG
+    // Currently, PG cannot connect to an IP address with SSL enabled, skip if PG
     if (env.engine === "MYSQL") {
       const config = await initDefaultConfig(env.databaseInfo.clusterEndpoint, env.databaseInfo.clusterEndpointPort);
       const instance = env.writer;
@@ -125,7 +127,7 @@ describe("iamTests", () => {
     config["password"] = "anything";
     const client: AwsPGClient | AwsMySQLClient = initClientFunc(config);
 
-    validateConnection(client);
+    await validateConnection(client);
   }, 1000000);
 
   it("testIamValidConnectionPropertiesNoPassword", async () => {
@@ -135,6 +137,6 @@ describe("iamTests", () => {
     config["ssl"] = sslCertificate;
     const client: AwsPGClient | AwsMySQLClient = initClientFunc(config);
 
-    validateConnection(client);
+    await validateConnection(client);
   }, 1000000);
 });
