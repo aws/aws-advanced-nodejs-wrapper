@@ -33,7 +33,7 @@ const sslCertificate = {
   ca: readFileSync("/app/global-bundle.pem").toString()
 };
 
-async function getIpAddress(host: string) {
+function getIpAddress(host: string) {
   return promisify(lookup)(host, {});
 }
 
@@ -149,7 +149,6 @@ describe("iamTests", () => {
   it("testIamValidConnectionPropertiesNoPassword", async () => {
     const config = await initDefaultConfig(env.databaseInfo.clusterEndpoint, env.databaseInfo.clusterEndpointPort);
     config["password"] = undefined;
-    config["ssl"] = sslCertificate;
     const client: AwsPGClient | AwsMySQLClient = initClientFunc(config);
 
     client.on("error", (error: any) => {
