@@ -23,6 +23,7 @@ import { lookup } from "dns";
 import { readFileSync } from "fs";
 import { AwsPGClient } from "pg-wrapper";
 import { AwsMySQLClient } from "mysql-wrapper";
+import { IamAuthenticationPlugin } from "aws-wrapper-common-lib/lib/authentication/iam_authentication_plugin";
 
 let env: TestEnvironment;
 let driver;
@@ -40,7 +41,7 @@ async function initDefaultConfig(host: string, port: number): Promise<any> {
   const env = await TestEnvironment.getCurrent();
 
   let props = {
-    user: env.databaseInfo.username,
+    user: "jane_doe",
     host: host,
     database: env.databaseInfo.default_db_name,
     password: env.databaseInfo.password,
@@ -68,6 +69,7 @@ describe("iamTests", () => {
 
   beforeEach(async () => {
     await ProxyHelper.enableAllConnectivity();
+    IamAuthenticationPlugin.clearCache();
   });
 
   it("testIamWrongDatabaseUsername", async () => {
@@ -75,8 +77,12 @@ describe("iamTests", () => {
     config["user"] = `WRONG_${env.info.databaseInfo.username}_USER`;
     const client: AwsPGClient | AwsMySQLClient = initClientFunc(config);
 
+    client.on("error", (error: any) => {
+      console.log(error);
+    });
+
     await expect(client.connect()).rejects.toThrow();
-  }, 1000000);
+  }, 100000);
 
   it("testIamNoDatabaseUsername", async () => {
     const config = await initDefaultConfig(env.databaseInfo.clusterEndpoint, env.databaseInfo.clusterEndpointPort);
@@ -88,18 +94,22 @@ describe("iamTests", () => {
     });
 
     await expect(client.connect()).rejects.toBeInstanceOf(AwsWrapperError);
-  }, 1000000);
+  }, 100000);
 
   it("testIamInvalidHost", async () => {
     const config = await initDefaultConfig(env.databaseInfo.clusterEndpoint, env.databaseInfo.clusterEndpointPort);
     config["iamHost"] = "<>";
     const client: AwsPGClient | AwsMySQLClient = initClientFunc(config);
 
-    await expect(client.connect()).rejects.toBeInstanceOf(AwsWrapperError);
-  }, 1000000);
+    client.on("error", (error: any) => {
+      console.log(error);
+    });
 
+    await expect(client.connect()).rejects.toBeInstanceOf(AwsWrapperError);
+  }, 100000);
+
+  // Currently, PG cannot connect to an IP address with SSL enabled, skip if PG
   it("testIamUsingIpAddress", async () => {
-    // Currently, PG cannot connect to an IP address with SSL enabled, skip if PG
     if (env.engine === "MYSQL") {
       const config = await initDefaultConfig(env.databaseInfo.clusterEndpoint, env.databaseInfo.clusterEndpointPort);
       const instance = env.writer;
@@ -107,11 +117,14 @@ describe("iamTests", () => {
         const ip = await getIpAddress(instance.host);
 
         config["host"] = ip.address;
-        config["user"] = "jane_doe";
         config["password"] = "anything";
         config["iamHost"] = instance.host;
 
         const client: AwsPGClient | AwsMySQLClient = initClientFunc(config);
+
+        client.on("error", (error: any) => {
+          console.log(error);
+        });
 
         await validateConnection(client);
       } else {
@@ -119,24 +132,30 @@ describe("iamTests", () => {
       }
     }
     return;
-  }, 1000000);
+  }, 100000);
 
   it("testIamValidConnectionProperties", async () => {
     const config = await initDefaultConfig(env.databaseInfo.clusterEndpoint, env.databaseInfo.clusterEndpointPort);
-    config["user"] = "jane_doe";
     config["password"] = "anything";
     const client: AwsPGClient | AwsMySQLClient = initClientFunc(config);
 
+    client.on("error", (error: any) => {
+      console.log(error);
+    });
+
     await validateConnection(client);
-  }, 1000000);
+  }, 100000);
 
   it("testIamValidConnectionPropertiesNoPassword", async () => {
     const config = await initDefaultConfig(env.databaseInfo.clusterEndpoint, env.databaseInfo.clusterEndpointPort);
-    config["user"] = "jane_doe";
     config["password"] = undefined;
     config["ssl"] = sslCertificate;
     const client: AwsPGClient | AwsMySQLClient = initClientFunc(config);
 
+    client.on("error", (error: any) => {
+      console.log(error);
+    });
+
     await validateConnection(client);
-  }, 1000000);
+  }, 100000);
 });
