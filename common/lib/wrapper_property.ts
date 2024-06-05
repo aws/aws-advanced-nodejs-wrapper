@@ -14,8 +14,6 @@
   limitations under the License.
 */
 
-import { FailoverMode } from "./plugins/failover/failover_mode";
-
 export class WrapperProperty<T> {
   name: string;
   description: string;

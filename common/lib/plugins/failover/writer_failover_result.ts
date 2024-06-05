@@ -14,47 +14,22 @@
   limitations under the License.
 */
 
-import { AwsClient } from "../../aws_client";
 import { HostInfo } from "../../host_info";
 
 export class WriterFailoverResult {
-  private readonly _isConnected: boolean;
-  private readonly _isNewHost: boolean;
-  private readonly _topology: HostInfo[];
-  private readonly _client: any | null;
-  private readonly _taskName: string;
-  private readonly _exception: Error | undefined;
+  readonly isConnected: boolean;
+  readonly isNewHost: boolean;
+  readonly topology: HostInfo[];
+  readonly client: any | null;
+  readonly taskName: string;
+  readonly exception: Error | undefined;
 
   constructor(isConnected: boolean, isNewHost: boolean, topology: HostInfo[], taskName: string, client: any | null, exception?: Error) {
-    this._isConnected = isConnected;
-    this._isNewHost = isNewHost;
-    this._topology = topology;
-    this._client = client;
-    this._taskName = taskName;
-    this._exception = exception;
-  }
-
-  get isConnected(): boolean {
-    return this._isConnected;
-  }
-
-  get isNewHost(): boolean {
-    return this._isNewHost;
-  }
-
-  get topology(): HostInfo[] {
-    return this._topology;
-  }
-
-  get client(): AwsClient | null {
-    return this._client;
-  }
-
-  get taskName(): string {
-    return this._taskName;
-  }
-
-  get exception(): Error | undefined {
-    return this._exception;
+    this.isConnected = isConnected;
+    this.isNewHost = isNewHost;
+    this.topology = topology;
+    this.client = client;
+    this.taskName = taskName;
+    this.exception = exception;
   }
 }

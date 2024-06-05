@@ -22,7 +22,6 @@ import { AwsClient } from "aws-wrapper-common-lib/lib/aws_client";
 import { HostInfo } from "aws-wrapper-common-lib/lib/host_info";
 import { TopologyAwareDatabaseDialect } from "aws-wrapper-common-lib/lib/topology_aware_database_dialect";
 import { HostRole } from "aws-wrapper-common-lib/lib/host_role";
-import { Connection } from "mysql2";
 
 export class AuroraMySQLDatabaseDialect extends MySQLDatabaseDialect implements TopologyAwareDatabaseDialect {
   private static readonly TOPOLOGY_QUERY: string =

@@ -43,7 +43,6 @@ export class PluginService implements ErrorHandler, HostListProviderService {
   private _hostListProvider?: HostListProvider;
   private _initialConnectionHostInfo?: HostInfo;
   private _isInTransaction: boolean = false;
-  private readonly _props: Map<string, any>;
   private pluginServiceManagerContainer: PluginServiceManagerContainer;
   protected hosts: HostInfo[] = [];
   private dbDialectProvider: DatabaseDialectProvider;
@@ -51,6 +50,7 @@ export class PluginService implements ErrorHandler, HostListProviderService {
   private dialect: DatabaseDialect;
   protected readonly sessionStateService: SessionStateService;
   protected static readonly hostAvailabilityExpiringCache: CacheMap<string, HostAvailability> = new CacheMap<string, HostAvailability>();
+  readonly props: Map<string, any>;
 
   constructor(
     container: PluginServiceManagerContainer,
@@ -61,17 +61,13 @@ export class PluginService implements ErrorHandler, HostListProviderService {
   ) {
     this._currentClient = client;
     this.pluginServiceManagerContainer = container;
-    this._props = props;
-    this.dbDialectProvider = new DatabaseDialectManager(knownDialectsByCode, dbType, this._props);
+    this.props = props;
+    this.dbDialectProvider = new DatabaseDialectManager(knownDialectsByCode, dbType, this.props);
     this.initialHost = props.get(WrapperProperties.HOST.name);
-    this.sessionStateService = new SessionStateServiceImpl(this, this._props);
+    this.sessionStateService = new SessionStateServiceImpl(this, this.props);
     container.pluginService = this;
 
-    this.dialect = this.dbDialectProvider.getDialect(this._props);
-  }
-
-  get props(): Map<string, any> {
-    return this._props;
+    this.dialect = this.dbDialectProvider.getDialect(this.props);
   }
 
   isInTransaction(): boolean {
@@ -343,13 +339,13 @@ export class PluginService implements ErrorHandler, HostListProviderService {
 
   async updateDialect(targetClient: any) {
     const originalDialect = this.dialect;
-    this.dialect = await this.dbDialectProvider.getDialectForUpdate(targetClient, this.initialHost, this._props.get(WrapperProperties.HOST.name));
+    this.dialect = await this.dbDialectProvider.getDialectForUpdate(targetClient, this.initialHost, this.props.get(WrapperProperties.HOST.name));
 
     if (originalDialect === this.dialect) {
       return;
     }
 
-    this._hostListProvider = this.dialect.getHostListProvider(this._props, this._props.get(WrapperProperties.HOST.name), this);
+    this._hostListProvider = this.dialect.getHostListProvider(this.props, this.props.get(WrapperProperties.HOST.name), this);
   }
 
   private async updateReadOnly(statements: string[]) {

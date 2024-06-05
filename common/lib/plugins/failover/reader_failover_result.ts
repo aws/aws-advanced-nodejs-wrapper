@@ -17,31 +17,15 @@
 import { HostInfo } from "../../host_info";
 
 export class ReaderFailoverResult {
-  private readonly _client: any | null;
-  private readonly _newHost: HostInfo | null;
-  private readonly _isConnected: boolean;
-  private readonly _exception?: Error;
+  readonly client: any | null;
+  readonly newHost: HostInfo | null;
+  readonly isConnected: boolean;
+  readonly exception?: Error;
 
   constructor(client: any | null, newHost: HostInfo | null, isConnected: boolean, exception?: Error) {
-    this._client = client;
-    this._newHost = newHost;
-    this._isConnected = isConnected;
-    this._exception = exception;
-  }
-
-  get client(): any | null {
-    return this._client;
-  }
-
-  get newHost(): HostInfo | null {
-    return this._newHost;
-  }
-
-  get isConnected(): boolean {
-    return this._isConnected;
-  }
-
-  get exception(): Error | undefined {
-    return this._exception;
+    this.client = client;
+    this.newHost = newHost;
+    this.isConnected = isConnected;
+    this.exception = exception;
   }
 }
