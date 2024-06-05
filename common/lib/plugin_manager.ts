@@ -70,9 +70,11 @@ export class PluginManager {
   private static readonly NOTIFY_CONNECTION_CHANGED_METHOD: string = "notifyConnectionChanged";
   private static readonly ACCEPTS_STRATEGY_METHOD: string = "acceptsStrategy";
   private static readonly GET_HOST_INFO_BY_STRATEGY_METHOD: string = "getHostInfoByStrategy";
-  private readonly _plugins: ConnectionPlugin[] = [];
+  private readonly defaultConnProvider;
+  private readonly effectiveConnProvider;
+  private readonly props: Map<string, any>;
+  private _plugins: ConnectionPlugin[] = [];
   private pluginServiceManagerContainer: PluginServiceManagerContainer;
-  private props: Map<string, any>;
 
   constructor(
     pluginServiceManagerContainer: PluginServiceManagerContainer,
@@ -83,16 +85,21 @@ export class PluginManager {
     this.pluginServiceManagerContainer = pluginServiceManagerContainer;
     this.pluginServiceManagerContainer.pluginManager = this;
     this.props = props;
-    if (this.pluginServiceManagerContainer.pluginService != null) {
-      this._plugins = new ConnectionPluginChainBuilder().getPlugins(
-        this.pluginServiceManagerContainer.pluginService,
-        props,
-        defaultConnProvider,
-        effectiveConnProvider
-      );
-    }
+    this.defaultConnProvider = defaultConnProvider;
+    this.effectiveConnProvider = effectiveConnProvider;
 
     // TODO: proper parsing logic
+  }
+
+  async init() {
+    if (this.pluginServiceManagerContainer.pluginService != null) {
+      this._plugins = await new ConnectionPluginChainBuilder().getPlugins(
+        this.pluginServiceManagerContainer.pluginService,
+        this.props,
+        this.defaultConnProvider,
+        this.effectiveConnProvider
+      );
+    }
   }
 
   execute<T>(hostInfo: HostInfo | null, props: Map<string, any>, methodName: string, methodFunc: () => Promise<T>, options: any): Promise<T> {

@@ -18,5 +18,5 @@ import { PluginService } from "./plugin_service";
 import { ConnectionPlugin } from "./connection_plugin";
 
 export interface ConnectionPluginFactory {
-  getInstance(pluginService: PluginService, properties: object): ConnectionPlugin;
+  getInstance(pluginService: PluginService, properties: object): Promise<ConnectionPlugin>;
 }

@@ -530,9 +530,3 @@ export class FailoverPlugin extends AbstractConnectionPlugin {
     return false;
   }
 }
-
-export class FailoverPluginFactory implements ConnectionPluginFactory {
-  getInstance(pluginService: PluginService, properties: Map<string, any>): ConnectionPlugin {
-    return new FailoverPlugin(pluginService, properties, new RdsUtils());
-  }
-}

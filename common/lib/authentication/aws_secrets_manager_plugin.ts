@@ -22,9 +22,7 @@ import {
 } from "@aws-sdk/client-secrets-manager";
 import { logger } from "../../logutils";
 import { AbstractConnectionPlugin } from "../abstract_connection_plugin";
-import { ConnectionPlugin } from "../connection_plugin";
 import { HostInfo } from "../host_info";
-import { ConnectionPluginFactory } from "../plugin_factory";
 import { PluginService } from "../plugin_service";
 import { AwsWrapperError } from "../utils/errors";
 import { Messages } from "../utils/messages";
@@ -173,11 +171,5 @@ export class Secret {
   constructor(username: string, password: string) {
     this.username = username;
     this.password = password;
-  }
-}
-
-export class AwsSecretsManagerPluginFactory implements ConnectionPluginFactory {
-  getInstance(pluginService: PluginService, properties: Map<string, any>): ConnectionPlugin {
-    return new AwsSecretsManagerPlugin(pluginService, new Map(properties));
   }
 }

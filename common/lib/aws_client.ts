@@ -70,7 +70,12 @@ export abstract class AwsClient extends EventEmitter {
     this.pluginService.setCurrentHostInfo(new HostInfo(host, port));
   }
 
+  private async setup() {
+    await this.pluginManager.init();
+  }
+
   protected async internalConnect() {
+    await this.setup();
     const hostListProvider: HostListProvider = this.pluginService
       .getDialect()
       .getHostListProvider(this.properties, this.properties.get("host"), this.pluginService);
