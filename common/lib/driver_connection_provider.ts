@@ -54,9 +54,9 @@ export class DriverConnectionProvider implements ConnectionProvider {
         throw e;
       }
 
-      // if (!JSON.stringify(e).includes("Error: getaddrinfo ENOTFOUND")) {
-      //   throw e;
-      // }
+      if (!JSON.stringify(e).includes("Error: getaddrinfo ENOTFOUND")) {
+        throw e;
+      }
 
       if (!this.rdsUtils.isRdsDns(hostInfo.host) || !this.rdsUtils.isGreenInstance(hostInfo.host)) {
         throw e;
@@ -95,7 +95,6 @@ export class DriverConnectionProvider implements ConnectionProvider {
           JSON.stringify(maskProperties(props))
       );
 
-      await pluginService.tryClosingTargetClient();
       const newTargetClient = pluginService.createTargetClient(props);
       const fixedConnFunc = pluginService.getConnectFunc(newTargetClient);
       await fixedConnFunc();
