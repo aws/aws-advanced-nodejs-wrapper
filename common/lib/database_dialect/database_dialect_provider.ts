@@ -14,7 +14,7 @@
   limitations under the License.
 */
 
-import { DatabaseDialect, DatabaseType } from "./database_dialect";
+import { DatabaseDialect } from "./database_dialect";
 
 export interface DatabaseDialectProvider {
   getDialect(props: Map<string, any>): DatabaseDialect;

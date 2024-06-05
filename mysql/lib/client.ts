@@ -42,9 +42,6 @@ export class AwsMySQLClient extends AwsClient {
     this._createClientFunc = (config: any) => {
       return createConnection(WrapperProperties.removeWrapperProperties(config));
     };
-    this._connectFunc = async () => {
-      return await this.targetClient.promise().connect();
-    };
     this.resetState();
   }
 

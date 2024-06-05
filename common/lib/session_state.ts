@@ -15,31 +15,15 @@
 */
 
 class SessionStateField<Type> {
-  private _value?: Type | undefined;
-  private _pristineValue?: Type | undefined;
-
-  get value(): Type | undefined {
-    return this._value;
-  }
-
-  set value(value: Type | undefined) {
-    this._value = value;
-  }
-
-  get pristineValue(): Type | undefined {
-    return this._pristineValue;
-  }
-
-  set pristineValue(value: Type | undefined) {
-    this._pristineValue = value;
-  }
+  value?: Type;
+  pristineValue?: Type;
 
   resetValue(): void {
-    this._value = undefined;
+    this.value = undefined;
   }
 
   resetPristineValue(): void {
-    this._pristineValue = undefined;
+    this.pristineValue = undefined;
   }
 
   reset(): void {

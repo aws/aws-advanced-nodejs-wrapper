@@ -22,7 +22,6 @@ import { Messages } from "../utils/messages";
 import { logger } from "../../logutils";
 import { AwsWrapperError } from "../utils/errors";
 import { HostInfo } from "../host_info";
-import { Signer } from "@aws-sdk/rds-signer";
 import { AwsCredentialsManager } from "./aws_credentials_manager";
 import { AbstractConnectionPlugin } from "../abstract_connection_plugin";
 import { WrapperProperties } from "../wrapper_property";

@@ -22,7 +22,6 @@ import { HostRole } from "aws-wrapper-common-lib/lib/host_role";
 import { HostAvailability } from "aws-wrapper-common-lib/lib/host_availability/host_availability";
 import { StaleDnsHelper } from "aws-wrapper-common-lib/lib/plugins/stale_dns/stale_dns_helper";
 import { AwsClient } from "aws-wrapper-common-lib/lib/aws_client";
-import { LookupAddress } from "dns";
 import { HostChangeOptions } from "aws-wrapper-common-lib/lib/host_change_options";
 import { DatabaseDialect } from "aws-wrapper-common-lib/lib/database_dialect/database_dialect";
 

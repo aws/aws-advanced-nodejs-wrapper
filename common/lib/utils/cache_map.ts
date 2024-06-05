@@ -15,16 +15,12 @@
 */
 
 class CacheItem<V> {
-  private _item: V;
-  private expirationTimeNanos: bigint;
+  readonly item: V;
+  private readonly expirationTimeNanos: bigint;
 
   constructor(item: V, expirationTimeNanos: bigint) {
-    this._item = item;
+    this.item = item;
     this.expirationTimeNanos = expirationTimeNanos;
-  }
-
-  get item(): V {
-    return this._item;
   }
 
   isExpired(): boolean {
