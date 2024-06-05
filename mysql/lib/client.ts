@@ -48,14 +48,19 @@ export class AwsMySQLClient extends AwsClient {
     this.resetState();
   }
 
-  async connect(): Promise<Connection> {
+  async connect(): Promise<void> {
     await this.internalConnect();
-    const conn: Promise<Connection> = await this.pluginManager.connect(this.pluginService.getCurrentHostInfo(), this.properties, true, async () => {
-      this.targetClient = this.pluginService.createTargetClient(this.properties);
-      return await this.targetClient.promise().connect();
-    });
+    const hostInfo = this.pluginService.getCurrentHostInfo();
+    if (hostInfo == null) {
+      throw new AwsWrapperError("HostInfo was not provided.");
+    }
+    const conn: any = await this.pluginManager.connect(hostInfo, this.properties, true);
+    await this.pluginService.setCurrentClient(conn, hostInfo);
+    // TODO review the this.isConnected  usage. Perhaps we don't need this variable at all.
+    // This could be determined based on the state of _targetClient, e.g. is it set or not.
+    this.isConnected = true;
     await this.internalPostConnect();
-    return conn;
+    return;
   }
 
   async executeQuery(props: Map<string, any>, sql: string): Promise<Query> {

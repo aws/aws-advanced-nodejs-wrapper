@@ -17,7 +17,6 @@
 import { HostInfo } from "../../host_info";
 import { WriterFailoverResult } from "./writer_failover_result";
 import { ClusterAwareReaderFailoverHandler } from "./reader_failover_handler";
-import { AwsClient } from "../../aws_client";
 import { PluginService } from "../../plugin_service";
 import { HostAvailability } from "../../host_availability/host_availability";
 import { AwsWrapperError } from "../../utils/errors";
@@ -183,7 +182,7 @@ class ReconnectToWriterHandlerTask {
   originalWriterHost: HostInfo | null;
   initialConnectionProps: Map<string, any>;
   reconnectionWriterIntervalMs: number;
-  currentClient?: AwsClient;
+  currentClient?: any;
   endTime: number;
   failoverCompleted: boolean = false;
   timeoutId: any = -1;
@@ -231,9 +230,7 @@ class ReconnectToWriterHandlerTask {
         try {
           const props = new Map(this.initialConnectionProps);
           props.set(WrapperProperties.HOST.name, this.originalWriterHost.host);
-          this.currentClient = await this.pluginService.createTargetClient(props);
-          const connectFunc = this.pluginService.getConnectFunc(this.currentClient);
-          await this.pluginService.forceConnect(this.originalWriterHost, this.initialConnectionProps, connectFunc);
+          this.currentClient = await this.pluginService.forceConnect(this.originalWriterHost, props);
           await this.pluginService.forceRefreshHostList(this.currentClient);
           latestTopology = this.pluginService.getHosts();
         } catch (error) {
@@ -421,11 +418,11 @@ class WaitForNewWriterHandlerTask {
       // connect to the new writer
       const props = new Map(this.initialConnectionProps);
       props.set(WrapperProperties.HOST.name, writerCandidate.host);
-      const targetClient = await this.pluginService.createTargetClient(props);
+
+      let targetClient;
       try {
         this.pluginService.setAvailability(writerCandidate.allAliases, HostAvailability.AVAILABLE);
-        const connectFunc = this.pluginService.getConnectFunc(targetClient);
-        await this.pluginService.forceConnect(writerCandidate, props, connectFunc);
+        targetClient = await this.pluginService.forceConnect(writerCandidate, props);
         await this.pluginService.tryClosingTargetClient(this.currentReaderTargetClient);
         await this.pluginService.tryClosingTargetClient(this.currentClient);
         this.currentClient = targetClient;

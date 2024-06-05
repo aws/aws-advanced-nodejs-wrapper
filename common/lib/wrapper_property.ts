@@ -76,10 +76,27 @@ export class WrapperProperties {
     null
   );
   static readonly IAM_REGION = new WrapperProperty<string>("iamRegion", "Overrides AWS region that is used to generate the IAM token", null);
-  static readonly IAM_EXPIRATION = new WrapperProperty<number>(
-    "iamExpiration",
+  static readonly IAM_ROLE_ARN = new WrapperProperty<string>("iamRoleArn", "The ARN of the IAM Role that is to be assumed.", null);
+  static readonly IAM_IDP_ARN = new WrapperProperty<string>("iamIdpArn", "The ARN of the identity provider", null);
+  static readonly IAM_TOKEN_EXPIRATION = new WrapperProperty<number>(
+    "iamTokenExpiration",
     "IAM token cache expiration in seconds",
-    WrapperProperties.DEFAULT_TOKEN_EXPIRATION_SEC
+    this.DEFAULT_TOKEN_EXPIRATION_SEC
+  );
+
+  static readonly IDP_USERNAME = new WrapperProperty<string>("idpUsername", "The federated user name", null);
+  static readonly IDP_PASSWORD = new WrapperProperty<string>("idpPassword", "The federated user password", null);
+  static readonly IDP_ENDPOINT = new WrapperProperty<string>("idpEndpoint", "The hosting URL of the Identity Provider", null);
+  static readonly IDP_PORT = new WrapperProperty<number>("idpPort", "The hosting port of the Identity Provider", 443);
+
+  static readonly RELAYING_PARTY_ID = new WrapperProperty<string>("rpIdentifier", "The relaying party identifier", "urn:amazon:webservices");
+
+  static readonly DB_USER = new WrapperProperty<string>("dbUser", "The IAM user used to access the database", null);
+
+  static readonly HTTPS_AGENT_OPTIONS = new WrapperProperty<Record<string, any>>(
+    "httpsAgentOptions",
+    "The options to be passed into the httpsAgent",
+    null
   );
 
   static readonly SECRET_ID = new WrapperProperty<string>("secretId", "The name or the ARN of the secret to retrieve.", null);

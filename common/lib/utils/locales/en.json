@@ -67,5 +67,17 @@
   "StaleDnsHelper.reset": "Reset stored writer host.",
   "StaleDnsPlugin.requireDynamicProvider": "Dynamic host list provider is required.",
   "Client.methodNotSupported": "Method not supported.",
-  "Client.invalidTransactionIsolationLevel": "An invalid transaction isolation level was provided: '%s'."
+  "Client.invalidTransactionIsolationLevel": "An invalid transaction isolation level was provided: '%s'.",
+  "AdfsCredentialsProviderFactory.failedLogin": "Failed login. Could not obtain SAML Assertion from ADFS SignOn Page POST response: \n '%s'",
+  "AdfsCredentialsProviderFactory.getSamlAssertionFailed": "Failed to get SAML Assertion due to exception:  '%s'",
+  "AdfsCredentialsProviderFactory.invalidHttpsUrl": "Invalid HTTPS URL: '%s'",
+  "AdfsCredentialsProviderFactory.signOnPagePostActionUrl": "ADFS SignOn Action URL: '%s'",
+  "AdfsCredentialsProviderFactory.signOnPagePostActionRequestFailed": "ADFS SignOn Page POST action failed with HTTP status '%s', reason phrase '%s', and response '%s'",
+  "AdfsCredentialsProviderFactory.signOnPageRequestFailed": "ADFS SignOn Page Request Failed with HTTP status '%s', reason phrase '%s', and response '%s'",
+  "AdfsCredentialsProviderFactory.signOnPageUrl": "ADFS SignOn URL: '%s'",
+  "FederatedAuthPlugin.generatedNewIamToken": "Generated new IAM token = '%s'",
+  "FederatedAuthPlugin.unhandledException": "Unhandled exception: '%s'",
+  "FederatedAuthPlugin.unsupportedHostname": "Unsupported AWS hostname '%s'. Amazon domain name in format *.AWS-Region.rds.amazonaws.com or *.rds.AWS-Region.amazonaws.com.cn is expected.",
+  "FederatedAuthPlugin.useCachedIamToken": "Use cached IAM token = '%s'",
+  "FederatedAuthPluginFactory.unsupportedIdp": "Unsupported Identity Provider '%s'. Please visit to the documentation for supported Identity Providers."
 }

@@ -14,9 +14,8 @@
   limitations under the License.
 */
 
-export enum TransactionIsolationLevel {
-  TRANSACTION_READ_UNCOMMITTED,
-  TRANSACTION_READ_COMMITTED,
-  TRANSACTION_REPEATABLE_READ,
-  TRANSACTION_SERIALIZABLE
+import { AwsCredentialIdentityProvider, AwsCredentialIdentity } from "@smithy/types/dist-types/identity/awsCredentialIdentity";
+
+export interface CredentialsProviderFactory {
+  getAwsCredentialsProvider(host: string, region: string, props: Map<string, any>): Promise<AwsCredentialIdentity | AwsCredentialIdentityProvider>;
 }

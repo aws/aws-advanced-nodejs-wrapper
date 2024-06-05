@@ -24,7 +24,7 @@ import { StaleDnsHelper } from "aws-wrapper-common-lib/lib/plugins/stale_dns/sta
 import { AwsClient } from "aws-wrapper-common-lib/lib/aws_client";
 import { LookupAddress } from "dns";
 import { HostChangeOptions } from "aws-wrapper-common-lib/lib/host_change_options";
-import { DatabaseDialect } from "aws-wrapper-common-lib/lib/database_dialect";
+import { DatabaseDialect } from "aws-wrapper-common-lib/lib/database_dialect/database_dialect";
 
 const mockPluginService: PluginService = mock(PluginService);
 const mockHostListProviderService = mock<HostListProviderService>();
@@ -50,7 +50,7 @@ const mockConnectFunc = jest.fn().mockImplementation(() => {
 describe("test_stale_dns_helper", () => {
   beforeEach(() => {
     when(mockPluginService.getCurrentClient()).thenReturn(mockInitialConn);
-    when(mockPluginService.connect(anything(), anything(), anything())).thenResolve();
+    when(mockPluginService.connect(anything(), anything())).thenResolve();
     when(mockPluginService.tryClosingTargetClient(anything())).thenResolve();
     when(mockPluginService.getDialect()).thenReturn(mockDialect);
     when(mockPluginService.getCurrentHostInfo()).thenReturn(mockHostInfo);
@@ -197,7 +197,7 @@ describe("test_stale_dns_helper", () => {
 
     expect(mockConnectFunc).toHaveBeenCalled();
     expect(mockInitialConn).toBe(returnConn);
-    verify(mockPluginService.connect(anything(), anything(), anything())).never();
+    verify(mockPluginService.connect(anything(), anything())).never();
   });
 
   it("test_get_verified_connection__writer_host_address_equals_cluster_inet_address", async () => {
@@ -221,7 +221,7 @@ describe("test_stale_dns_helper", () => {
 
     expect(mockConnectFunc).toHaveBeenCalled();
     expect(mockInitialConn).toBe(returnConn);
-    verify(mockPluginService.connect(anything(), anything(), anything())).never();
+    verify(mockPluginService.connect(anything(), anything())).never();
   });
 
   it("test_get_verified_connection__writer_host_address_not_equals_cluster_inet_address", async () => {
@@ -247,7 +247,7 @@ describe("test_stale_dns_helper", () => {
 
     expect(mockInitialConn).not.toBe(returnConn);
     expect(mockConnectFunc).toHaveBeenCalled();
-    verify(mockPluginService.connect(anything(), anything(), anything())).once();
+    verify(mockPluginService.connect(anything(), anything())).once();
   });
 
   it("test_get_verified_connection__initial_connection_writer_host_address_not_equals_cluster_inet_address", async () => {
@@ -272,7 +272,7 @@ describe("test_stale_dns_helper", () => {
       mockConnectFunc
     );
 
-    verify(mockPluginService.connect(anything(), anything(), anything())).once();
+    verify(mockPluginService.connect(anything(), anything())).once();
     expect(targetInstance["writerHostInfo"]).toBe(mockHostListProviderServiceInstance.getInitialConnectionHostInfo());
     expect(mockInitialConn).not.toBe(returnConn);
   });
@@ -286,7 +286,7 @@ describe("test_stale_dns_helper", () => {
     const change = new Set<HostChangeOptions>([HostChangeOptions.PROMOTED_TO_READER]);
     const changes: Map<string, Set<HostChangeOptions>> = new Map<string, Set<HostChangeOptions>>().set(hostInfoUrl, change);
 
-    targetInstance.notifyNodeListChanged(changes);
+    targetInstance.notifyHostListChanged(changes);
 
     expect(targetInstance["writerHostInfo"]).toBeNull();
     expect(targetInstance["writerHostAddress"]).toBe("");

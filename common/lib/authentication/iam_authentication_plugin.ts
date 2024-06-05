@@ -26,6 +26,7 @@ import { Signer } from "@aws-sdk/rds-signer";
 import { AwsCredentialsManager } from "./aws_credentials_manager";
 import { AbstractConnectionPlugin } from "../abstract_connection_plugin";
 import { WrapperProperties } from "../wrapper_property";
+import { IamAuthUtils, TokenInfo } from "../utils/iam_auth_utils";
 
 export class IamAuthenticationPlugin extends AbstractConnectionPlugin {
   private static readonly SUBSCRIBED_METHODS = new Set<string>(["connect", "forceConnect"]);
@@ -61,22 +62,28 @@ export class IamAuthenticationPlugin extends AbstractConnectionPlugin {
       throw new AwsWrapperError(`${WrapperProperties.USER} is null or empty`);
     }
 
-    const host = WrapperProperties.IAM_HOST.get(props) ? WrapperProperties.IAM_HOST.get(props) : hostInfo.host;
-    const region: string = WrapperProperties.IAM_REGION.get(props) ? WrapperProperties.IAM_REGION.get(props) : this.getRdsRegion(host);
-    const port = this.getPort(props, hostInfo);
-    const tokenExpirationSec = WrapperProperties.IAM_EXPIRATION.get(props);
+    const host = IamAuthUtils.getIamHost(props, hostInfo);
+    const region: string = IamAuthUtils.getRdsRegion(host, this.rdsUtil, props);
+    const port = IamAuthUtils.getIamPort(props, hostInfo, this.pluginService.getCurrentClient().defaultPort);
+    const tokenExpirationSec = WrapperProperties.IAM_TOKEN_EXPIRATION.get(props);
 
-    const cacheKey: string = this.getCacheKey(port, user, host, region);
+    const cacheKey: string = IamAuthUtils.getCacheKey(port, user, host, region);
 
     const tokenInfo = IamAuthenticationPlugin.tokenCache.get(cacheKey);
-    const isCachedToken: boolean = tokenInfo != null && !tokenInfo.isExpired();
+    const isCachedToken: boolean = tokenInfo !== undefined && !tokenInfo.isExpired();
 
     if (isCachedToken && tokenInfo) {
       logger.debug(Messages.get("IamAuthenticationPlugin.useCachedIamToken", tokenInfo.token));
       WrapperProperties.PASSWORD.set(props, tokenInfo.token);
     } else {
       const tokenExpiry: number = Date.now() + tokenExpirationSec * 1000;
-      const token = await this.generateAuthenticationToken(hostInfo, props, host, port, region);
+      const token = await IamAuthUtils.generateAuthenticationToken(
+        host,
+        port,
+        region,
+        WrapperProperties.USER.get(props),
+        AwsCredentialsManager.getProvider(hostInfo, props)
+      );
       logger.debug(Messages.get("IamAuthenticationPlugin.generatedNewIamToken", token));
       WrapperProperties.PASSWORD.set(props, token);
       IamAuthenticationPlugin.tokenCache.set(cacheKey, new TokenInfo(token, tokenExpiry));
@@ -95,7 +102,13 @@ export class IamAuthenticationPlugin extends AbstractConnectionPlugin {
       // Try to generate a new token and try to connect again
 
       const tokenExpiry: number = Date.now() + tokenExpirationSec * 1000;
-      const token = await this.generateAuthenticationToken(hostInfo, props, host, port, region);
+      const token = await IamAuthUtils.generateAuthenticationToken(
+        host,
+        port,
+        region,
+        WrapperProperties.USER.get(props),
+        AwsCredentialsManager.getProvider(hostInfo, props)
+      );
       logger.debug(Messages.get("IamAuthenticationPlugin.generatedNewIamToken", token));
       WrapperProperties.PASSWORD.set(props, token);
       IamAuthenticationPlugin.tokenCache.set(cacheKey, new TokenInfo(token, tokenExpiry));
@@ -103,80 +116,8 @@ export class IamAuthenticationPlugin extends AbstractConnectionPlugin {
     }
   }
 
-  protected async generateAuthenticationToken(
-    hostInfo: HostInfo,
-    props: Map<string, any>,
-    hostname: string,
-    port: number,
-    region: string
-  ): Promise<string> {
-    const user: string = props.get("user");
-    const signer = new Signer({
-      hostname: hostname,
-      port: port,
-      region: region,
-      credentials: AwsCredentialsManager.getProvider(hostInfo, props),
-      username: user
-    });
-
-    return await signer.getAuthToken();
-  }
-
-  private getCacheKey(port: number, user?: string, hostname?: string, region?: string): string {
-    return `${region}:${hostname}:${port}:${user}`;
-  }
-
-  private getPort(props: Map<string, any>, hostInfo: HostInfo): number {
-    const port = WrapperProperties.IAM_DEFAULT_PORT.get(props);
-    if (port > 0) {
-      return port;
-    } else {
-      logger.debug(Messages.get("IamAuthenticationPlugin.invalidPort", isNaN(port) ? "-1" : String(port)));
-    }
-
-    if (hostInfo.isPortSpecified()) {
-      return hostInfo.port;
-    } else {
-      return this.pluginService.getCurrentClient().defaultPort;
-    }
-  }
-
-  private getRdsRegion(hostname: string): string {
-    const rdsRegion: string | null = this.rdsUtil.getRdsRegion(hostname);
-
-    if (!rdsRegion) {
-      const errorMessage = Messages.get("IamAuthenticationPlugin.unsupportedHostname", "hostname");
-      logger.debug(errorMessage);
-      throw new AwsWrapperError(errorMessage);
-    }
-
-    return rdsRegion;
-  }
-
   static clearCache(): void {
     this.tokenCache.clear();
-  }
-}
-
-export class TokenInfo {
-  private readonly _token: string;
-  private readonly _expiration: number;
-
-  constructor(token: string, expiration: number) {
-    this._token = token;
-    this._expiration = expiration;
-  }
-
-  get token(): string {
-    return this._token;
-  }
-
-  get expiration(): number {
-    return this._expiration;
-  }
-
-  isExpired(): boolean {
-    return Date.now() > this._expiration;
   }
 }
 
