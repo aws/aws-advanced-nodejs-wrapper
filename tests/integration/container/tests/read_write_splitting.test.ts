@@ -156,7 +156,6 @@ describe("aurora read write splitting", () => {
   it("test set read only true in transaction", async () => {
     const config = await initDefaultConfig(env.databaseInfo.clusterEndpoint, env.databaseInfo.clusterEndpointPort, false);
     const client = initClientFunc(config);
-    console.log("test set read only true in transaction");
 
     client.on("error", (error: any) => {
       console.log(error);
