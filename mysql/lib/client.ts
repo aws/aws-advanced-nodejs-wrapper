@@ -93,13 +93,14 @@ export class AwsMySQLClient extends AwsClient {
 
     this.pluginService.getSessionStateService().setupPristineReadOnly();
     this.pluginService.getSessionStateService().setReadOnly(readOnly);
-
-    this._isReadOnly = readOnly;
+    let result;
     if (this.isReadOnly()) {
-      return await this.query({ sql: "SET SESSION TRANSACTION READ ONLY;" });
+      result = await this.query({ sql: "SET SESSION TRANSACTION READ ONLY;" });
+    } else {
+      result = await this.query({ sql: "SET SESSION TRANSACTION READ WRITE;" });
     }
-
-    return await this.query({ sql: "SET SESSION TRANSACTION READ WRITE;" });
+    this._isReadOnly = readOnly;
+    return result;
   }
 
   isReadOnly(): boolean {

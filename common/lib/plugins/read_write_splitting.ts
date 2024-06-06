@@ -153,13 +153,14 @@ export class ReadWriteSplittingPlugin extends AbstractConnectionPlugin {
 
     const updateReadOnly: boolean | undefined = SqlMethodUtils.doesSetReadOnly(statements, this.pluginService.getDialect());
 
-    if (updateReadOnly !== undefined)
+    if (updateReadOnly !== undefined) {
       try {
         await this.switchClientIfRequired(updateReadOnly);
       } catch (error) {
         await this.closeIdleClients();
         throw error;
       }
+    }
 
     try {
       return await executeFunc();
