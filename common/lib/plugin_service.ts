@@ -253,7 +253,7 @@ export class PluginService implements ErrorHandler, HostListProviderService {
   }
 
   async setCurrentClient(newClient: any, hostInfo: HostInfo): Promise<Set<HostChangeOptions>> {
-    if (this.getCurrentClient().targetClient === null) {
+    if (!this.getCurrentClient().targetClient) {
       this.getCurrentClient().targetClient = newClient;
       this._currentHostInfo = hostInfo;
       this.sessionStateService.reset();
