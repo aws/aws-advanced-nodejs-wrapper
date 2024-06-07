@@ -89,7 +89,7 @@ describe("aurora read write splitting", () => {
 
     await client.connect();
     const initialWriterId = await auroraTestUtility.queryInstanceId(client);
-    expect(await auroraTestUtility.isDbInstanceWriter(initialWriterId)).toBe(true);
+    expect(await auroraTestUtility.isDbInstanceWriter(initialWriterId)).toStrictEqual(true);
 
     await client.setReadOnly(true);
     const readerId = await auroraTestUtility.queryInstanceId(client);
@@ -97,20 +97,20 @@ describe("aurora read write splitting", () => {
 
     await client.setReadOnly(true);
     const currentId0 = await auroraTestUtility.queryInstanceId(client);
-    expect(currentId0).toBe(readerId);
+    expect(currentId0).toStrictEqual(readerId);
 
     await client.setReadOnly(false);
     const currentId1 = await auroraTestUtility.queryInstanceId(client);
-    expect(currentId1).toBe(initialWriterId);
+    expect(currentId1).toStrictEqual(initialWriterId);
 
     await client.setReadOnly(false);
     const currentId2 = await auroraTestUtility.queryInstanceId(client);
-    expect(currentId2).toBe(initialWriterId);
+    expect(currentId2).toStrictEqual(initialWriterId);
 
     await client.setReadOnly(true);
     const currentId3 = await auroraTestUtility.queryInstanceId(client);
-    expect(currentId3).toBe(readerId);
-    expect(await auroraTestUtility.isDbInstanceWriter(currentId3)).toBe(false);
+    expect(currentId3).toStrictEqual(readerId);
+    expect(await auroraTestUtility.isDbInstanceWriter(currentId3)).toStrictEqual(false);
 
     await client.end();
   }, 9000000);
@@ -142,13 +142,13 @@ describe("aurora read write splitting", () => {
       }
     }
     const currentConnectionId0 = await auroraTestUtility.queryInstanceId(client);
-    expect(currentConnectionId0).toBe(initialReaderId);
+    expect(currentConnectionId0).toStrictEqual(initialReaderId);
 
     await DriverHelper.executeQuery(env.engine, client, "COMMIT");
 
     await client.setReadOnly(false);
     const currentConnectionId1 = await auroraTestUtility.queryInstanceId(client);
-    expect(currentConnectionId1).toBe(initialWriterId);
+    expect(currentConnectionId1).toStrictEqual(initialWriterId);
 
     await client.end();
   }, 9000000);
@@ -172,7 +172,7 @@ describe("aurora read write splitting", () => {
 
     await client.setReadOnly(true);
     const currentReaderId = await auroraTestUtility.queryInstanceId(client);
-    expect(currentReaderId).toBe(initialWriterId);
+    expect(currentReaderId).toStrictEqual(initialWriterId);
 
     await DriverHelper.executeQuery(env.engine, client, "COMMIT");
 
@@ -185,8 +185,8 @@ describe("aurora read write splitting", () => {
     }
     await client.setReadOnly(false);
     const currentConnectionId1 = await auroraTestUtility.queryInstanceId(client);
-    expect(await auroraTestUtility.isDbInstanceWriter(currentConnectionId1)).toBe(true);
-    expect(currentConnectionId1).toBe(initialWriterId);
+    expect(await auroraTestUtility.isDbInstanceWriter(currentConnectionId1)).toStrictEqual(true);
+    expect(currentConnectionId1).toStrictEqual(initialWriterId);
 
     await DriverHelper.executeQuery(env.engine, client, "DROP TABLE IF EXISTS test3_3");
 
@@ -203,7 +203,7 @@ describe("aurora read write splitting", () => {
 
     await client.connect();
     const writerId = await auroraTestUtility.queryInstanceId(client);
-    expect(await auroraTestUtility.isDbInstanceWriter(writerId)).toBe(true);
+    expect(await auroraTestUtility.isDbInstanceWriter(writerId)).toStrictEqual(true);
 
     // Kill all reader instances
     for (const host of env.proxyDatabaseInfo.instances) {
@@ -214,11 +214,11 @@ describe("aurora read write splitting", () => {
 
     await client.setReadOnly(true);
     const currentReaderId0 = await auroraTestUtility.queryInstanceId(client);
-    expect(currentReaderId0).toBe(writerId);
+    expect(currentReaderId0).toStrictEqual(writerId);
 
     await client.setReadOnly(false);
     const currentReaderId1 = await auroraTestUtility.queryInstanceId(client);
-    expect(currentReaderId1).toBe(writerId);
+    expect(currentReaderId1).toStrictEqual(writerId);
 
     await ProxyHelper.enableAllConnectivity();
     await client.setReadOnly(true);
@@ -280,7 +280,7 @@ describe("aurora read write splitting", () => {
   //   // Force internal reader connection to the writer instance
   //   await writerClient.setReadOnly(true);
   //   const currentReaderId0 = await auroraTestUtility.queryInstanceId(writerClient);
-  //   expect(currentReaderId0).toBe(initialWriterId);
+  //   expect(currentReaderId0).toStrictEqual(initialWriterId);
   //
   //   await writerClient.setReadOnly(false);
   //
@@ -298,7 +298,7 @@ describe("aurora read write splitting", () => {
   //     }
   //   }
   //   const newWriterId = await auroraTestUtility.queryInstanceId(writerClient);
-  //   expect(await auroraTestUtility.isDbInstanceWriter(newWriterId)).toBe(true);
+  //   expect(await auroraTestUtility.isDbInstanceWriter(newWriterId)).toStrictEqual(true);
   //   expect(newWriterId).not.toBe(initialWriterId);
   //
   //   await writerClient.setReadOnly(true);
@@ -307,7 +307,7 @@ describe("aurora read write splitting", () => {
   //
   //   await writerClient.setReadOnly(false);
   //   const currentId = await auroraTestUtility.queryInstanceId(writerClient);
-  //   expect(currentId).toBe(newWriterId);
+  //   expect(currentId).toStrictEqual(newWriterId);
   //
   //   await writerClient.end();
   // }, 1000000);
@@ -360,18 +360,18 @@ describe("aurora read write splitting", () => {
   //   }
   //
   //   const currentReaderId0 = await auroraTestUtility.queryInstanceId(writerClient);
-  //   expect(currentReaderId0).toBe(otherReaderId);
+  //   expect(currentReaderId0).toStrictEqual(otherReaderId);
   //   expect(currentReaderId0).not.toBe(readerInstanceHostId);
   //
   //   await ProxyHelper.enableAllConnectivity();
   //
   //   await writerClient.setReadOnly(false);
   //   const currentReaderId1 = await auroraTestUtility.queryInstanceId(writerClient);
-  //   expect(currentReaderId1).toBe(initialWriterId);
+  //   expect(currentReaderId1).toStrictEqual(initialWriterId);
   //
   //   await writerClient.setReadOnly(true);
   //   const currentReaderId2 = await auroraTestUtility.queryInstanceId(writerClient);
-  //   expect(currentReaderId2).toBe(otherReaderId);
+  //   expect(currentReaderId2).toStrictEqual(otherReaderId);
   //
   //   await writerClient.end();
   // }, 1000000);
@@ -407,7 +407,7 @@ describe("aurora read write splitting", () => {
   //   }
   //
   //   const currentId0 = await auroraTestUtility.queryInstanceId(writerClient);
-  //   expect(currentId0).toBe(initialWriterId);
+  //   expect(currentId0).toStrictEqual(initialWriterId);
   //
   //   await ProxyHelper.enableAllConnectivity();
   //
@@ -417,7 +417,7 @@ describe("aurora read write splitting", () => {
   //
   //   await writerClient.setReadOnly(false);
   //   const currentId2 = await auroraTestUtility.queryInstanceId(writerClient);
-  //   expect(currentId2).toBe(initialWriterId);
+  //   expect(currentId2).toStrictEqual(initialWriterId);
   //
   //   await writerClient.end();
   // }, 1000000);
