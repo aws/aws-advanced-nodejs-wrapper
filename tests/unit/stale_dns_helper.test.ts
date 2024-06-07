@@ -14,16 +14,16 @@
   limitations under the License.
 */
 
-import { PluginService } from "aws-wrapper-common-lib/lib/plugin_service";
+import { PluginService } from "../../common/lib/plugin_service";
 import { anything, instance, mock, reset, spy, verify, when } from "ts-mockito";
 import { HostListProviderService } from "../../common/lib/host_list_provider_service";
-import { HostInfo } from "aws-wrapper-common-lib/lib/host_info";
-import { HostRole } from "aws-wrapper-common-lib/lib/host_role";
-import { HostAvailability } from "aws-wrapper-common-lib/lib/host_availability/host_availability";
-import { StaleDnsHelper } from "aws-wrapper-common-lib/lib/plugins/stale_dns/stale_dns_helper";
-import { AwsClient } from "aws-wrapper-common-lib/lib/aws_client";
-import { HostChangeOptions } from "aws-wrapper-common-lib/lib/host_change_options";
-import { DatabaseDialect } from "aws-wrapper-common-lib/lib/database_dialect/database_dialect";
+import { HostInfo } from "../../common/lib/host_info";
+import { HostRole } from "../../common/lib/host_role";
+import { HostAvailability } from "../../common/lib/host_availability/host_availability";
+import { StaleDnsHelper } from "../../common/lib/plugins/stale_dns/stale_dns_helper";
+import { AwsClient } from "../../common/lib/aws_client";
+import { HostChangeOptions } from "../../common/lib/host_change_options";
+import { DatabaseDialect } from "../../common/lib/database_dialect/database_dialect";
 
 const mockPluginService: PluginService = mock(PluginService);
 const mockHostListProviderService = mock<HostListProviderService>();

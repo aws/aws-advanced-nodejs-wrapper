@@ -17,8 +17,8 @@
 import dotenv from "dotenv";
 import { add, complete, cycle, save, suite } from "benny";
 import { Client } from "pg";
-import AwsPGClient from "pg-wrapper/lib/client";
-import AwsMySQLClient from "mysql-wrapper/lib/client";
+import { AwsPGClient } from "../pg/lib";
+import { AwsMySQLClient } from "../mysql/lib";
 import { createConnection } from "mysql2";
 
 dotenv.config();
@@ -85,7 +85,7 @@ suite(
   }),
 
   add("mysql execute pipeline", async () => {
-    await mysqlWrapperClient.query("select 1");
+    await mysqlWrapperClient.query({ sql: "select 1" });
   }),
 
   cycle(),

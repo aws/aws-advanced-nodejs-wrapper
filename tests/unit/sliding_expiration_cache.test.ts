@@ -14,8 +14,8 @@
   limitations under the License.
 */
 
-import { SlidingExpirationCache } from "aws-wrapper-common-lib/lib/utils/sliding_expiration_cache";
-import { sleep } from "aws-wrapper-common-lib/lib/utils/utils";
+import { SlidingExpirationCache } from "../../common/lib/utils/sliding_expiration_cache";
+import { sleep } from "../../common/lib/utils/utils";
 
 class DisposableItem {
   shouldDispose: boolean;

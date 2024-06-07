@@ -1,5 +1,6 @@
 {
-  "name": "aws-wrapper",
+  "name": "aws-advanced-nodejs-wrapper",
+  "version": "0.0.1",
   "private": true,
   "workspaces": [
     "common",
@@ -24,11 +25,17 @@
       "prettier --config .prettierrc"
     ]
   },
+  "files": [
+    "common/*",
+    "mysql/*",
+    "pg/*"
+  ],
   "devDependencies": {
     "@aws-sdk/client-secrets-manager": "^3.600.0",
     "@aws-sdk/client-sts": "^3.598.0",
     "@aws-sdk/credential-providers": "^3.598.0",
     "@aws-sdk/rds-signer": "^3.600.0",
+    "@aws-sdk/client-rds": "^3.569.0",
     "@types/i18n": "^0.13.12",
     "@types/jest": "^29.5.12",
     "@types/lodash": "^4.17.5",
@@ -62,7 +69,8 @@
     "ts-mockito": "^2.6.1",
     "ts-node": "^10.9.2",
     "tsx": "^4.15.7",
-    "typescript": "^5.4.5"
+    "typescript": "^5.4.5",
+    "winston": "3.11.0"
   },
   "overrides": {
     "braces": "^3.0.3"

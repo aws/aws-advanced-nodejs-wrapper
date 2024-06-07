@@ -27,9 +27,9 @@ import { TestEnvironment } from "./test_environment";
 import * as dns from "dns";
 import { DBInstance } from "@aws-sdk/client-rds/dist-types/models/models_0";
 import { DatabaseEngine } from "./database_engine";
-import { AwsClient } from "aws-wrapper-common-lib/lib/aws_client";
+import { AwsClient } from "../../../../../common/lib/aws_client";
 import { DriverHelper } from "./driver_helper";
-import { sleep } from "aws-wrapper-common-lib/lib/utils/utils";
+import { sleep } from "../../../../../common/lib/utils/utils";
 
 export class AuroraTestUtility {
   private client: RDSClient;

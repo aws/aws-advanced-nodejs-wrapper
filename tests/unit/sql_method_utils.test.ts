@@ -14,10 +14,10 @@
   limitations under the License.
 */
 
-import { SqlMethodUtils } from "aws-wrapper-common-lib/lib/utils/sql_method_utils";
-import { MySQLDatabaseDialect } from "mysql-wrapper/lib/dialect/mysql_database_dialect";
-import { PgDatabaseDialect } from "pg-wrapper/lib/dialect/pg_database_dialect";
-import { TransactionIsolationLevel } from "aws-wrapper-common-lib/lib/utils/transaction_isolation_level";
+import { SqlMethodUtils } from "../../common/lib/utils/sql_method_utils";
+import { MySQLDatabaseDialect } from "../../mysql/lib/dialect/mysql_database_dialect";
+import { PgDatabaseDialect } from "../../pg/lib/dialect/pg_database_dialect";
+import { TransactionIsolationLevel } from "../../common/lib/utils/transaction_isolation_level";
 
 describe("test sql method utils", () => {
   it.each([

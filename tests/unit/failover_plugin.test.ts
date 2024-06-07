@@ -14,33 +14,28 @@
   limitations under the License.
 */
 
-import { AwsClient } from "aws-wrapper-common-lib/lib/aws_client";
-import { HostAvailability } from "aws-wrapper-common-lib/lib/host_availability/host_availability";
-import { SimpleHostAvailabilityStrategy } from "aws-wrapper-common-lib/lib/host_availability/simple_host_availability_strategy";
-import { HostInfo } from "aws-wrapper-common-lib/lib/host_info";
-import { HostInfoBuilder } from "aws-wrapper-common-lib/lib/host_info_builder";
-import { RdsHostListProvider } from "aws-wrapper-common-lib/lib/host_list_provider/rds_host_list_provider";
-import { HostRole } from "aws-wrapper-common-lib/lib/host_role";
-import { PluginService } from "aws-wrapper-common-lib/lib/plugin_service";
-import { FailoverMode } from "aws-wrapper-common-lib/lib/plugins/failover/failover_mode";
-import { FailoverPlugin } from "aws-wrapper-common-lib/lib/plugins/failover/failover_plugin";
-import { ClusterAwareReaderFailoverHandler } from "aws-wrapper-common-lib/lib/plugins/failover/reader_failover_handler";
-import { ReaderFailoverResult } from "aws-wrapper-common-lib/lib/plugins/failover/reader_failover_result";
-import { ClusterAwareWriterFailoverHandler } from "aws-wrapper-common-lib/lib/plugins/failover/writer_failover_handler";
-import { WriterFailoverResult } from "aws-wrapper-common-lib/lib/plugins/failover/writer_failover_result";
-import {
-  AwsWrapperError,
-  FailoverFailedError,
-  FailoverSuccessError,
-  TransactionResolutionUnknownError
-} from "aws-wrapper-common-lib/lib/utils/errors";
-import { RdsUrlType } from "aws-wrapper-common-lib/lib/utils/rds_url_type";
-import { RdsUtils } from "aws-wrapper-common-lib/lib/utils/rds_utils";
-import { WrapperProperties } from "aws-wrapper-common-lib/lib/wrapper_property";
-import { AwsMySQLClient } from "../../mysql";
+import { AwsClient } from "../../common/lib/aws_client";
+import { HostAvailability } from "../../common/lib/host_availability/host_availability";
+import { SimpleHostAvailabilityStrategy } from "../../common/lib/host_availability/simple_host_availability_strategy";
+import { HostInfo } from "../../common/lib/host_info";
+import { HostInfoBuilder } from "../../common/lib/host_info_builder";
+import { RdsHostListProvider } from "../../common/lib/host_list_provider/rds_host_list_provider";
+import { HostRole } from "../../common/lib/host_role";
+import { PluginService } from "../../common/lib/plugin_service";
+import { FailoverMode } from "../../common/lib/plugins/failover/failover_mode";
+import { FailoverPlugin } from "../../common/lib/plugins/failover/failover_plugin";
+import { ClusterAwareReaderFailoverHandler } from "../../common/lib/plugins/failover/reader_failover_handler";
+import { ReaderFailoverResult } from "../../common/lib/plugins/failover/reader_failover_result";
+import { ClusterAwareWriterFailoverHandler } from "../../common/lib/plugins/failover/writer_failover_handler";
+import { WriterFailoverResult } from "../../common/lib/plugins/failover/writer_failover_result";
+import { AwsWrapperError, FailoverFailedError, FailoverSuccessError, TransactionResolutionUnknownError } from "../../common/lib/utils/errors";
+import { RdsUrlType } from "../../common/lib/utils/rds_url_type";
+import { RdsUtils } from "../../common/lib/utils/rds_utils";
+import { WrapperProperties } from "../../common/lib/wrapper_property";
+import { AwsMySQLClient } from "../../mysql/lib";
 import { anything, instance, mock, reset, resetCalls, spy, verify, when } from "ts-mockito";
-import { Messages } from "aws-wrapper-common-lib/lib/utils/messages";
-import { HostChangeOptions } from "aws-wrapper-common-lib/lib/host_change_options";
+import { Messages } from "../../common/lib/utils/messages";
+import { HostChangeOptions } from "../../common/lib/host_change_options";
 
 const builder = new HostInfoBuilder({ hostAvailabilityStrategy: new SimpleHostAvailabilityStrategy() });
 

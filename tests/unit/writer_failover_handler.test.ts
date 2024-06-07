@@ -14,16 +14,16 @@
   limitations under the License.
 */
 
-import { SimpleHostAvailabilityStrategy } from "aws-wrapper-common-lib/lib/host_availability/simple_host_availability_strategy";
-import { HostInfoBuilder } from "aws-wrapper-common-lib/lib/host_info_builder";
-import { PluginService } from "aws-wrapper-common-lib/lib/plugin_service";
-import { AwsWrapperError } from "aws-wrapper-common-lib/lib/utils/errors";
-import { ClusterAwareReaderFailoverHandler } from "aws-wrapper-common-lib/lib/plugins/failover/reader_failover_handler";
-import { ClusterAwareWriterFailoverHandler } from "aws-wrapper-common-lib/lib/plugins/failover/writer_failover_handler";
+import { SimpleHostAvailabilityStrategy } from "../../common/lib/host_availability/simple_host_availability_strategy";
+import { HostInfoBuilder } from "../../common/lib/host_info_builder";
+import { PluginService } from "../../common/lib/plugin_service";
+import { AwsWrapperError } from "../../common/lib/utils/errors";
+import { ClusterAwareReaderFailoverHandler } from "../../common/lib/plugins/failover/reader_failover_handler";
+import { ClusterAwareWriterFailoverHandler } from "../../common/lib/plugins/failover/writer_failover_handler";
 import { mock, instance, when, anything, verify, reset } from "ts-mockito";
-import { HostAvailability } from "aws-wrapper-common-lib/lib/host_availability/host_availability";
-import { ReaderFailoverResult } from "aws-wrapper-common-lib/lib/plugins/failover/reader_failover_result";
-import { AwsPGClient } from "pg-wrapper/lib/client";
+import { HostAvailability } from "../../common/lib/host_availability/host_availability";
+import { ReaderFailoverResult } from "../../common/lib/plugins/failover/reader_failover_result";
+import { AwsPGClient } from "../../pg/lib";
 
 const builder = new HostInfoBuilder({ hostAvailabilityStrategy: new SimpleHostAvailabilityStrategy() });
 

@@ -14,10 +14,10 @@
   limitations under the License.
 */
 
-import { HostInfo } from "aws-wrapper-common-lib/lib/host_info";
-import { HostInfoBuilder } from "aws-wrapper-common-lib/lib/host_info_builder";
-import { SimpleHostAvailabilityStrategy } from "aws-wrapper-common-lib/lib/host_availability/simple_host_availability_strategy";
-import { PgConnectionUrlParser } from "pg-wrapper/lib/pg_connection_url_parser";
+import { HostInfo } from "../../common/lib/host_info";
+import { HostInfoBuilder } from "../../common/lib/host_info_builder";
+import { SimpleHostAvailabilityStrategy } from "../../common/lib/host_availability/simple_host_availability_strategy";
+import { PgConnectionUrlParser } from "../../pg/lib/pg_connection_url_parser";
 import { describe, expect, it } from "@jest/globals";
 
 describe("connectionUrlParserTest", () => {

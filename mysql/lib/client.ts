@@ -15,19 +15,19 @@
 */
 
 import { QueryOptions } from "mysql2/typings/mysql/lib/protocol/sequences/Query";
-import { AwsClient } from "aws-wrapper-common-lib/lib/aws_client";
-import { WrapperProperties } from "aws-wrapper-common-lib/lib/wrapper_property";
-import { Connection, createConnection, Query } from "mysql2";
+import { AwsClient } from "../../common/lib/aws_client";
+import { WrapperProperties } from "../../common/lib/wrapper_property";
+import { createConnection, Query } from "mysql2";
 import { MySQLErrorHandler } from "./mysql_error_handler";
 import { MySQLConnectionUrlParser } from "./mysql_connection_url_parser";
-import { DatabaseDialect, DatabaseType } from "aws-wrapper-common-lib/lib/database_dialect/database_dialect";
-import { DatabaseDialectCodes } from "aws-wrapper-common-lib/lib/database_dialect/database_dialect_codes";
+import { DatabaseDialect, DatabaseType } from "../../common/lib/database_dialect/database_dialect";
+import { DatabaseDialectCodes } from "../../common/lib/database_dialect/database_dialect_codes";
 import { MySQLDatabaseDialect } from "./dialect/mysql_database_dialect";
 import { AuroraMySQLDatabaseDialect } from "./dialect/aurora_mysql_database_dialect";
 import { RdsMySQLDatabaseDialect } from "./dialect/rds_mysql_database_dialect";
-import { TransactionIsolationLevel } from "aws-wrapper-common-lib/lib/utils/transaction_isolation_level";
-import { AwsWrapperError, UnsupportedMethodError } from "aws-wrapper-common-lib/lib/utils/errors";
-import { Messages } from "aws-wrapper-common-lib/lib/utils/messages";
+import { TransactionIsolationLevel } from "../../common/lib/utils/transaction_isolation_level";
+import { AwsWrapperError, UnsupportedMethodError } from "../../common/lib/utils/errors";
+import { Messages } from "../../common/lib/utils/messages";
 
 export class AwsMySQLClient extends AwsClient {
   private static readonly knownDialectsByCode: Map<string, DatabaseDialect> = new Map([

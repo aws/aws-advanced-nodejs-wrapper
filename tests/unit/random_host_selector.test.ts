@@ -14,11 +14,11 @@
   limitations under the License.
 */
 
-import { HostRole } from "aws-wrapper-common-lib/lib/host_role";
-import { HostInfoBuilder } from "aws-wrapper-common-lib/lib/host_info_builder";
-import { HostAvailability } from "aws-wrapper-common-lib/lib/host_availability/host_availability";
-import { SimpleHostAvailabilityStrategy } from "aws-wrapper-common-lib/lib/host_availability/simple_host_availability_strategy";
-import { RandomHostSelector } from "aws-wrapper-common-lib/lib/random_host_selector";
+import { HostRole } from "../../common/lib/host_role";
+import { HostInfoBuilder } from "../../common/lib/host_info_builder";
+import { HostAvailability } from "../../common/lib/host_availability/host_availability";
+import { SimpleHostAvailabilityStrategy } from "../../common/lib/host_availability/simple_host_availability_strategy";
+import { RandomHostSelector } from "../../common/lib/random_host_selector";
 
 const unavailableHostName = "someUnavailableHost";
 const availableHostName = "someAvailableHost";

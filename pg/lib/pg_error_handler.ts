@@ -14,7 +14,7 @@
   limitations under the License.
 */
 
-import { ErrorHandler } from "aws-wrapper-common-lib/lib/error_handler";
+import { ErrorHandler } from "../../common/lib/error_handler";
 
 export class PgErrorHandler implements ErrorHandler {
   isLoginError(e: Error): boolean {
