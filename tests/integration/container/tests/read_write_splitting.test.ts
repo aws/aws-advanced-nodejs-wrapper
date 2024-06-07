@@ -80,8 +80,6 @@ describe("aurora read write splitting", () => {
   });
 
   it("test connect to writer switch set read only", async () => {
-
-    console.log("test1");
     const config = await initDefaultConfig(env.databaseInfo.clusterEndpoint, env.databaseInfo.clusterEndpointPort, false);
     const client = initClientFunc(config);
 
@@ -120,8 +118,6 @@ describe("aurora read write splitting", () => {
   it("test set read only false in read only transaction", async () => {
     const config = await initDefaultConfig(env.databaseInfo.clusterEndpoint, env.databaseInfo.clusterEndpointPort, false);
     const client = initClientFunc(config);
-    console.log("test2");
-
 
     client.on("error", (error: any) => {
       console.log(error);
@@ -157,46 +153,45 @@ describe("aurora read write splitting", () => {
     await client.end();
   }, 9000000);
 
-  // it("test set read only true in transaction", async () => {
-  //   const config = await initDefaultConfig(env.databaseInfo.clusterEndpoint, env.databaseInfo.clusterEndpointPort, false);
-  //   const client = initClientFunc(config);
-  //   console.log("test3");
-  //
-  //   client.on("error", (error: any) => {
-  //     console.log(error);
-  //   });
-  //
-  //   await client.connect();
-  //   const initialWriterId = await auroraTestUtility.queryInstanceId(client);
-  //
-  //   await DriverHelper.executeQuery(env.engine, client, "DROP TABLE IF EXISTS test3_3");
-  //   await DriverHelper.executeQuery(env.engine, client, "CREATE TABLE test3_3 (id int not null primary key, test3_3_field varchar(255) not null)");
-  //
-  //   await DriverHelper.executeQuery(env.engine, client, "START TRANSACTION"); // start transaction
-  //   await DriverHelper.executeQuery(env.engine, client, "INSERT INTO test3_3 VALUES (1, 'test field string 1')");
-  //
-  //   await client.setReadOnly(true);
-  //   const currentReaderId = await auroraTestUtility.queryInstanceId(client);
-  //   expect(currentReaderId).toBe(initialWriterId);
-  //
-  //   await DriverHelper.executeQuery(env.engine, client, "COMMIT");
-  //
-  //   // Assert that 1 row has been inserted to the table.
-  //   const result = await DriverHelper.executeQuery(env.engine, client, "SELECT count(*) from test3_3");
-  //   if (env.engine === DatabaseEngine.PG) {
-  //     expect((result as QueryResult).rows[0]["count"]).toBe("1");
-  //   } else if (env.engine === DatabaseEngine.MYSQL) {
-  //     expect(JSON.parse(JSON.stringify(result))[0][0]["count(*)"]).toBe(1);
-  //   }
-  //   await client.setReadOnly(false);
-  //   const currentConnectionId1 = await auroraTestUtility.queryInstanceId(client);
-  //   expect(await auroraTestUtility.isDbInstanceWriter(currentConnectionId1)).toBe(true);
-  //   expect(currentConnectionId1).toBe(initialWriterId);
-  //
-  //   await DriverHelper.executeQuery(env.engine, client, "DROP TABLE IF EXISTS test3_3");
-  //
-  //   await client.end();
-  // }, 9000000);
+  it("test set read only true in transaction", async () => {
+    const config = await initDefaultConfig(env.databaseInfo.clusterEndpoint, env.databaseInfo.clusterEndpointPort, false);
+    const client = initClientFunc(config);
+
+    client.on("error", (error: any) => {
+      console.log(error);
+    });
+
+    await client.connect();
+    const initialWriterId = await auroraTestUtility.queryInstanceId(client);
+
+    await DriverHelper.executeQuery(env.engine, client, "DROP TABLE IF EXISTS test3_3");
+    await DriverHelper.executeQuery(env.engine, client, "CREATE TABLE test3_3 (id int not null primary key, test3_3_field varchar(255) not null)");
+
+    await DriverHelper.executeQuery(env.engine, client, "START TRANSACTION"); // start transaction
+    await DriverHelper.executeQuery(env.engine, client, "INSERT INTO test3_3 VALUES (1, 'test field string 1')");
+
+    await client.setReadOnly(true);
+    const currentReaderId = await auroraTestUtility.queryInstanceId(client);
+    expect(currentReaderId).toBe(initialWriterId);
+
+    await DriverHelper.executeQuery(env.engine, client, "COMMIT");
+
+    // Assert that 1 row has been inserted to the table.
+    const result = await DriverHelper.executeQuery(env.engine, client, "SELECT count(*) from test3_3");
+    if (env.engine === DatabaseEngine.PG) {
+      expect((result as QueryResult).rows[0]["count"]).toBe("1");
+    } else if (env.engine === DatabaseEngine.MYSQL) {
+      expect(JSON.parse(JSON.stringify(result))[0][0]["count(*)"]).toBe(1);
+    }
+    await client.setReadOnly(false);
+    const currentConnectionId1 = await auroraTestUtility.queryInstanceId(client);
+    expect(await auroraTestUtility.isDbInstanceWriter(currentConnectionId1)).toBe(true);
+    expect(currentConnectionId1).toBe(initialWriterId);
+
+    await DriverHelper.executeQuery(env.engine, client, "DROP TABLE IF EXISTS test3_3");
+
+    await client.end();
+  }, 9000000);
 
   it("test set read only all readers down", async () => {
     // Connect to writer instance
@@ -205,7 +200,6 @@ describe("aurora read write splitting", () => {
     client.on("error", (err: any) => {
       console.log(err);
     });
-    console.log("test4");
 
     await client.connect();
     const writerId = await auroraTestUtility.queryInstanceId(client);
