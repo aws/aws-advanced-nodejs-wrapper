@@ -228,36 +228,36 @@ describe("aurora read write splitting", () => {
     await client.end();
   }, 9000000);
 
-  // it("test set read only all instances down", async () => {
-  //   const config = await initDefaultConfig(env.databaseInfo.clusterEndpoint, env.databaseInfo.clusterEndpointPort, false);
-  //   const client = initClientFunc(config);
-  //   console.log("test5");
-  //
-  //
-  //   client.on("error", (error: any) => {
-  //     console.log(error);
-  //   });
-  //   await client.connect();
-  //   const writerId = await auroraTestUtility.queryInstanceId(client);
-  //
-  //   await client.setReadOnly(true);
-  //   const currentReaderId0 = await auroraTestUtility.queryInstanceId(client);
-  //   expect(currentReaderId0).not.toBe(writerId);
-  //
-  //   // Kill all  instances
-  //   await ProxyHelper.disableAllConnectivity(env.engine);
-  //
-  //   try {
-  //     await client.setReadOnly(false);
-  //   } catch (error) {
-  //     console.log(error);
-  //
-  //     if (!(error instanceof AwsWrapperError)) {
-  //       throw new Error("read write splitting all instances down failed");
-  //     }
-  //   }
-  //   await client.end();
-  // }, 9000000);
+  it("test set read only all instances down", async () => {
+    const config = await initDefaultConfig(env.databaseInfo.clusterEndpoint, env.databaseInfo.clusterEndpointPort, false);
+    const client = initClientFunc(config);
+    console.log("test5");
+
+
+    client.on("error", (error: any) => {
+      console.log(error);
+    });
+    await client.connect();
+    const writerId = await auroraTestUtility.queryInstanceId(client);
+
+    await client.setReadOnly(true);
+    const currentReaderId0 = await auroraTestUtility.queryInstanceId(client);
+    expect(currentReaderId0).not.toBe(writerId);
+
+    // Kill all  instances
+    await ProxyHelper.disableAllConnectivity(env.engine);
+
+    try {
+      await client.setReadOnly(false);
+    } catch (error) {
+      console.log(error);
+
+      if (!(error instanceof AwsWrapperError)) {
+        throw new Error("read write splitting all instances down failed");
+      }
+    }
+    await client.end();
+  }, 9000000);
 
   // Uncomment these tests when failover implementation is complete
   // it("test failover to new writer set read only true false", async () => {
