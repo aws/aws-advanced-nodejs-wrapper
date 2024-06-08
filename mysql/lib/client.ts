@@ -90,14 +90,20 @@ export class AwsMySQLClient extends AwsClient {
     if (readOnly === this.isReadOnly()) {
       return Promise.resolve();
     }
-
+    const previousReadOnly: boolean = this.isReadOnly();
     let result;
-    if (this.isReadOnly()) {
-      result = await this.query({ sql: "SET SESSION TRANSACTION READ ONLY;" });
-    } else {
-      result = await this.query({ sql: "SET SESSION TRANSACTION READ WRITE;" });
+    try {
+      this._isReadOnly = readOnly;
+      if (this.isReadOnly()) {
+        result = await this.query({ sql: "SET SESSION TRANSACTION READ ONLY;" });
+      } else {
+        result = await this.query({ sql: "SET SESSION TRANSACTION READ WRITE;" });
+      }
+    } catch (error) {
+      // revert
+      this._isReadOnly = previousReadOnly;
+      throw error;
     }
-    this._isReadOnly = readOnly;
     this.pluginService.getSessionStateService().setupPristineReadOnly();
     this.pluginService.getSessionStateService().setReadOnly(readOnly);
     return result;

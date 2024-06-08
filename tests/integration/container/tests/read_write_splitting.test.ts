@@ -113,7 +113,7 @@ describe("aurora read write splitting", () => {
     expect(await auroraTestUtility.isDbInstanceWriter(currentId3)).toStrictEqual(false);
 
     await client.end();
-  }, 9000000);
+  }, 3000000);
 
   it("test set read only false in read only transaction", async () => {
     const config = await initDefaultConfig(env.databaseInfo.clusterEndpoint, env.databaseInfo.clusterEndpointPort, false);
@@ -151,7 +151,7 @@ describe("aurora read write splitting", () => {
     expect(currentConnectionId1).toStrictEqual(initialWriterId);
 
     await client.end();
-  }, 9000000);
+  }, 3000000);
 
   it("test set read only true in transaction", async () => {
     const config = await initDefaultConfig(env.databaseInfo.clusterEndpoint, env.databaseInfo.clusterEndpointPort, false);
@@ -191,7 +191,7 @@ describe("aurora read write splitting", () => {
     await DriverHelper.executeQuery(env.engine, client, "DROP TABLE IF EXISTS test3_3");
 
     await client.end();
-  }, 9000000);
+  }, 3000000);
 
   it("test set read only all readers down", async () => {
     // Connect to writer instance
@@ -226,13 +226,11 @@ describe("aurora read write splitting", () => {
     expect(currentReaderId2).not.toBe(writerId);
 
     await client.end();
-  }, 9000000);
+  }, 3000000);
 
   it("test set read only all instances down", async () => {
     const config = await initDefaultConfig(env.databaseInfo.clusterEndpoint, env.databaseInfo.clusterEndpointPort, false);
     const client = initClientFunc(config);
-    console.log("test5");
-
 
     client.on("error", (error: any) => {
       console.log(error);
@@ -257,7 +255,7 @@ describe("aurora read write splitting", () => {
       }
     }
     await client.end();
-  }, 9000000);
+  }, 3000000);
 
   // Uncomment these tests when failover implementation is complete
   // it("test failover to new writer set read only true false", async () => {
