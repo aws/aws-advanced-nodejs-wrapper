@@ -245,7 +245,7 @@ describe("reader failover handler", () => {
     initializePlugin(mockPluginServiceInstance, mockReaderFailoverHandlerInstance, mockWriterFailoverHandlerInstance);
     plugin.initHostProvider(mockHostInfoInstance, properties, mockPluginServiceInstance, () => {});
 
-    expect(plugin.failoverReader(failedHost)).rejects.toThrow(test);
+    await expect(plugin.failoverReader(failedHost)).rejects.toThrow(test);
     verify(mockReaderFailoverHandlerInstance.failover(anything(), anything()));
   });
 
@@ -267,7 +267,7 @@ describe("reader failover handler", () => {
     initializePlugin(mockPluginServiceInstance, mockReaderFailoverHandlerInstance, mockWriterFailoverHandlerInstance);
     plugin.initHostProvider(mockHostInfoInstance, properties, mockPluginServiceInstance, () => {});
 
-    expect(plugin.failoverWriter()).rejects.toThrow(test);
+    await expect(plugin.failoverWriter()).rejects.toThrow(test);
     verify(mockWriterFailoverHandler.failover(hosts)).once();
   });
 
