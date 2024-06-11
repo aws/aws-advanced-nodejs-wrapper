@@ -25,7 +25,6 @@
     ]
   },
   "devDependencies": {
-    "@aws-cdk/aws-ec2": "^1.204.0",
     "@aws-sdk/client-secrets-manager": "^3.574.0",
     "@aws-sdk/client-sts": "^3.577.0",
     "@aws-sdk/credential-providers": "^3.556.0",
@@ -64,5 +63,13 @@
     "ts-node": "^10.9.2",
     "tsx": "^3.12.7",
     "typescript": "^4.2.3"
+  },
+  "dependencies": {
+    "cssesc": "^3.0.0",
+    "entities": "^4.5.0",
+    "he": "^1.2.0",
+    "punycode": "^2.3.1",
+    "saml-encoder-decoder-js": "^1.0.2",
+    "underscore": "^1.13.6"
   }
 }

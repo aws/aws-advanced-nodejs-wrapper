@@ -87,6 +87,8 @@ export class WrapperProperties {
   static readonly IDP_ENDPOINT = new WrapperProperty<string>("idpEndpoint", "The hosting URL of the Identity Provider", null);
   static readonly IDP_PORT = new WrapperProperty<number>("idpPort", "The hosting port of the Identity Provider", 443);
 
+  static readonly APP_ID = new WrapperProperty<string>("appId", "The ID of the AWS application configured on Okta", null);
+
   static readonly RELAYING_PARTY_ID = new WrapperProperty<string>("rpIdentifier", "The relaying party identifier", "urn:amazon:webservices");
 
   static readonly DB_USER = new WrapperProperty<string>("dbUser", "The IAM user used to access the database", null);

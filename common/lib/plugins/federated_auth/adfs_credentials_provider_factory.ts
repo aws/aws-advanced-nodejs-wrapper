@@ -24,12 +24,12 @@ import { stringify } from "querystring";
 import tough from "tough-cookie";
 import { wrapper } from "axios-cookiejar-support";
 import { HttpsCookieAgent } from "http-cookie-agent/http";
+import { SamlUtils } from "../../utils/saml_utils";
 
 export class AdfsCredentialsProviderFactory extends SamlCredentialsProviderFactory {
   private static readonly INPUT_TAG_PATTERN = new RegExp("<input(.+?)/>", "gms");
   private static readonly FORM_ACTION_PATTERN = new RegExp('<form.*?action="([^"]+)"');
   private static readonly SAML_RESPONSE_PATTERN = new RegExp('SAMLResponse\\W+value="(?<saml>[^"]+)"');
-  private static readonly HTTPS_URL_PATTERN = new RegExp("^(https)://[-a-zA-Z0-9+&@#/%?=~_!:,.']*[-a-zA-Z0-9+&@#/%=~_']");
 
   constructor() {
     super();
@@ -68,7 +68,7 @@ export class AdfsCredentialsProviderFactory extends SamlCredentialsProviderFacto
 
   async getSignInPageBody(url: string, props: Map<string, any>): Promise<string> {
     logger.debug(Messages.get("AdfsCredentialsProviderFactory.signOnPageUrl", url));
-    this.validateUrl(url);
+    SamlUtils.validateUrl(url);
     const httpsAgent = new HttpsCookieAgent(WrapperProperties.HTTPS_AGENT_OPTIONS.get(props));
     const getConfig = {
       method: "get",
@@ -93,7 +93,7 @@ export class AdfsCredentialsProviderFactory extends SamlCredentialsProviderFacto
 
   async getFormActionBody(uri: string, parameters: Record<string, string>, props: Map<string, any>): Promise<string> {
     logger.debug(Messages.get("AdfsCredentialsProviderFactory.signOnPagePostActionUrl", uri));
-    this.validateUrl(uri);
+    SamlUtils.validateUrl(uri);
     wrapper(axios);
     const jar = new tough.CookieJar();
     const httpsAgentOptions = { ...WrapperProperties.HTTPS_AGENT_OPTIONS.get(props), ...{ cookies: { jar } } };
@@ -252,16 +252,5 @@ export class AdfsCredentialsProviderFactory extends SamlCredentialsProviderFacto
       }
     }
     return null;
-  }
-
-  private validateUrl(url: string): void {
-    if (!url.match(AdfsCredentialsProviderFactory.HTTPS_URL_PATTERN)) {
-      throw new AwsWrapperError(Messages.get("AdfsCredentialsProviderFactory.invalidHttpsUrl", url));
-    }
-    try {
-      new URL(url);
-    } catch (e) {
-      throw new AwsWrapperError(Messages.get("AdfsCredentialsProviderFactory.invalidHttpsUrl", url));
-    }
   }
 }

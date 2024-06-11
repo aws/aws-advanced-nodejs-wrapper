@@ -28,6 +28,7 @@ import { AwsSecretsManagerPluginFactory } from "./authentication/aws_secrets_man
 import { ConnectionProvider } from "./connection_provider";
 import { StaleDnsPluginFactory } from "./plugins/stale_dns/stale_dns_plugin";
 import { FederatedAuthPluginFactory } from "./plugins/federated_auth/federated_auth_plugin";
+import { OktaAuthPluginFactory } from "./plugins/federated_auth/okta_auth_plugin_factory";
 
 export class PluginFactoryInfo {}
 
@@ -44,7 +45,8 @@ export class ConnectionPluginChainBuilder {
     ["secretsManager", AwsSecretsManagerPluginFactory],
     ["failover", FailoverPluginFactory],
     ["staleDns", StaleDnsPluginFactory],
-    ["federatedAuth", FederatedAuthPluginFactory]
+    ["federatedAuth", FederatedAuthPluginFactory],
+    ["okta", OktaAuthPluginFactory]
   ]);
 
   getPlugins(
