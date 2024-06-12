@@ -20,7 +20,7 @@ import { ClusterAwareReaderFailoverHandler } from "./reader_failover_handler";
 import { PluginService } from "../../plugin_service";
 import { HostAvailability } from "../../host_availability/host_availability";
 import { AwsWrapperError } from "../../utils/errors";
-import { maskProperties, sleep } from "../../utils/utils";
+import { maskProperties } from "../../utils/utils";
 import { ReaderFailoverResult } from "./reader_failover_result";
 import { HostRole } from "../../host_role";
 import { Messages } from "../../utils/messages";
@@ -62,7 +62,6 @@ export class ClusterAwareWriterFailoverHandler implements WriterFailoverHandler 
   maxFailoverTimeoutMs = 60000; // 60 sec
   readTopologyIntervalMs = 5000; // 5 sec
   reconnectionWriterIntervalMs = 5000; // 5 sec
-  test = false;
 
   constructor(
     pluginService: PluginService,
@@ -83,7 +82,7 @@ export class ClusterAwareWriterFailoverHandler implements WriterFailoverHandler 
   async failover(currentTopology: HostInfo[]): Promise<WriterFailoverResult> {
     if (!currentTopology || currentTopology.length == 0) {
       logger.error(Messages.get("ClusterAwareWriterFailoverHandler.failoverCalledWithInvalidTopology"));
-      return Promise.resolve(ClusterAwareWriterFailoverHandler.DEFAULT_RESULT);
+      return ClusterAwareWriterFailoverHandler.DEFAULT_RESULT;
     }
 
     const reconnectToWriterHandlerTask = new ReconnectToWriterHandlerTask(
@@ -117,7 +116,6 @@ export class ClusterAwareWriterFailoverHandler implements WriterFailoverHandler 
 
     const failoverTask = Promise.any([taskA, taskB])
       .then((result) => {
-        this.test = true;
         if (result.isConnected || result.exception) {
           return result;
         }
@@ -310,9 +308,6 @@ class WaitForNewWriterHandlerTask {
     logger.info(
       Messages.get("ClusterAwareWriterFailoverHandler.taskBAttemptConnectionToNewWriterInstance", JSON.stringify(this.initialConnectionProps))
     );
-    if (!this.originalWriterHost) {
-      return new WriterFailoverResult(false, false, [], "TaskB", null);
-    }
 
     try {
       let success = false;
@@ -391,28 +386,28 @@ class WaitForNewWriterHandlerTask {
             if (writerCandidate && !this.isSame(writerCandidate, this.originalWriterHost)) {
               // new writer is available, and it's different from the previous writer
               if (await this.connectToWriter(writerCandidate)) {
-                return Promise.resolve(true);
+                return true;
               }
             }
           }
         }
       } catch (error) {
         logger.info(Messages.get("ClusterAwareWriterFailoverHandler.taskBEncounteredException", JSON.stringify(error)));
-        return Promise.resolve(false);
+        return false;
       }
 
       await new Promise((resolve) => {
         this.connectToReaderTimeoutId = setTimeout(resolve, this.readTopologyIntervalMs);
       });
     }
-    return Promise.resolve(false);
+    return false;
   }
 
   async connectToWriter(writerCandidate: HostInfo): Promise<boolean> {
     if (this.isSame(writerCandidate, this.currentReaderHost)) {
       logger.info(Messages.get("ClusterAwareWriterFailoverHandler.alreadyWriter"));
       this.currentClient = this.currentReaderTargetClient;
-      return Promise.resolve(true);
+      return true;
     } else {
       logger.info(Messages.get("ClusterAwareWriterFailoverHandler.taskBAttemptConnectionToNewWriter", writerCandidate.url));
       // connect to the new writer
@@ -421,16 +416,16 @@ class WaitForNewWriterHandlerTask {
 
       let targetClient;
       try {
-        this.pluginService.setAvailability(writerCandidate.allAliases, HostAvailability.AVAILABLE);
         targetClient = await this.pluginService.forceConnect(writerCandidate, props);
+        this.pluginService.setAvailability(writerCandidate.allAliases, HostAvailability.AVAILABLE);
         await this.pluginService.tryClosingTargetClient(this.currentReaderTargetClient);
         await this.pluginService.tryClosingTargetClient(this.currentClient);
         this.currentClient = targetClient;
-        return Promise.resolve(true);
+        return true;
       } catch (error) {
         this.pluginService.setAvailability(writerCandidate.allAliases, HostAvailability.NOT_AVAILABLE);
         await this.pluginService.tryClosingTargetClient(targetClient);
-        return Promise.resolve(false);
+        return false;
       }
     }
   }

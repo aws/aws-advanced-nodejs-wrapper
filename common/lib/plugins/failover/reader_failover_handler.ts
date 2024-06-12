@@ -68,7 +68,7 @@ export class ClusterAwareReaderFailoverHandler implements ReaderFailoverHandler 
       logger.info(Messages.get("ClusterAwareReaderFailoverHandler.invalidTopology", "failover"));
       return ClusterAwareReaderFailoverHandler.FAILED_READER_FAILOVER_RESULT;
     }
-    return this.failoverTask(hosts, currentHost).catch((error) => {
+    return await this.failoverTask(hosts, currentHost).catch((error) => {
       return new ReaderFailoverResult(null, null, false, error);
     });
   }
@@ -92,7 +92,7 @@ export class ClusterAwareReaderFailoverHandler implements ReaderFailoverHandler 
     const timeoutTask = this.getTimeoutTask(timer, "Internal failover task timed out.", this.maxFailoverTimeoutMs);
     const failoverTask = this.internalFailoverTask(hosts, currentHost, endTime);
 
-    return Promise.race([timeoutTask, failoverTask])
+    return await Promise.race([timeoutTask, failoverTask])
       .then((result) => {
         if (result instanceof ReaderFailoverResult) {
           return result;
@@ -162,7 +162,7 @@ export class ClusterAwareReaderFailoverHandler implements ReaderFailoverHandler 
       try {
         const result = await this.getResultFromNextTaskBatch(hosts, i);
         if (result && (result.isConnected || result.exception)) {
-          return Promise.resolve(result);
+          return result;
         }
       } catch (error) {
         if (error instanceof AggregateError && error.message.includes("All promises were rejected")) {
@@ -175,7 +175,7 @@ export class ClusterAwareReaderFailoverHandler implements ReaderFailoverHandler 
       await sleep(1000);
     }
 
-    return Promise.resolve(new ReaderFailoverResult(null, null, false));
+    return new ReaderFailoverResult(null, null, false);
   }
 
   async getResultFromNextTaskBatch(hosts: HostInfo[], i: number): Promise<ReaderFailoverResult> {
@@ -322,6 +322,7 @@ class ConnectionAttemptTask {
       logger.info(Messages.get("ClusterAwareReaderFailoverHandler.successfulReaderConnection", this.newHost.host));
       return new ReaderFailoverResult(this.targetClient, this.newHost, true);
     } catch (error) {
+      this.pluginService.setAvailability(this.newHost.allAliases, HostAvailability.NOT_AVAILABLE);
       if (error instanceof Error) {
         // Propagate exceptions that are not caused by network errors.
         if (!this.pluginService.isNetworkError(error)) {
