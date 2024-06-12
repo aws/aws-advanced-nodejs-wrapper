@@ -20,12 +20,7 @@ import { WrapperProperties } from "../../wrapper_property";
 import { Credentials } from "aws-sdk";
 import { AwsWrapperError } from "../../utils/errors";
 import { AwsCredentialIdentityProvider, AwsCredentialIdentity } from "@smithy/types/dist-types/identity/awsCredentialIdentity";
-
-import { decode } from "punycode";
-// import cssesc from "cssesc";
-// import _, { map } from "underscore";
-import unescape from "querystring";
-import * as querystring from "node:querystring";
+import { decode } from "entities";
 
 export abstract class SamlCredentialsProviderFactory implements CredentialsProviderFactory {
   async getAwsCredentialsProvider(
@@ -34,7 +29,6 @@ export abstract class SamlCredentialsProviderFactory implements CredentialsProvi
     props: Map<string, any>
   ): Promise<AwsCredentialIdentity | AwsCredentialIdentityProvider> {
     const samlAssertion = await this.getSamlAssertion(props);
-    const { decode } = require("entities");
     const test = decode(samlAssertion);
     const assumeRoleWithSamlRequest = new AssumeRoleWithSAMLCommand({
       SAMLAssertion: test,

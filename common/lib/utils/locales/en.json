@@ -80,9 +80,13 @@
 	"FederatedAuthPlugin.unsupportedHostname": "Unsupported AWS hostname '%s'. Amazon domain name in format *.AWS-Region.rds.amazonaws.com or *.rds.AWS-Region.amazonaws.com.cn is expected.",
 	"FederatedAuthPlugin.useCachedIamToken": "Use cached IAM token = '%s'",
 	"FederatedAuthPluginFactory.unsupportedIdp": "Unsupported Identity Provider '%s'. Please visit to the documentation for supported Identity Providers.",
-	"OktaCredentialsProviderFactory.SamlAssertionUrl": "OktaCredentialsProviderFactory.SamlAssertionUrl",
-	"AdfsCredentialsProviderFactory.FailedLogin": "AdfsCredentialsProviderFactory.FailedLogin",
-	"OktaCredentialsProviderFactory.failedLogin": "OktaCredentialsProviderFactory.failedLogin",
+	"OktaCredentialsProviderFactory.samlAssertionUrl": "OktaCredentialsProviderFactory.SamlAssertionUrl",
 	"AuthenticationToken.useCachedToken": "AuthenticationToken.useCachedToken",
-	"PluginManager.unknownPluginCode": "PluginManager.unknownPluginCode"
+	"OktaCredentialsProviderFactory.sessionTokenRequestFailed": "Failed to retrieve session token from Okta, please ensure the provided Okta username, password and endpoint are correct.",
+	"OktaCredentialsProviderFactory.invalidSessionToken": "Invalid response from session token request to Okta.",
+	"OktaCredentialsProviderFactory.invalidSamlResponse": "The SAML Assertion request did not return a valid response containing a SAMLResponse.",
+	"OktaCredentialsProviderFactory.samlRequestFailed": "Okta SAML Assertion request failed with HTTP status '%s', reason phrase '%s', and response '%s'",
+	"SAMLCredentialsProviderFactory.getSamlAssertionFailed": "Failed to get SAML Assertion due to exception: '%s'",
+	"SamlAuthPlugin.unhandledException": "Unhandled exception: '%s'",
+	"OktaCredentialsProviderFactory.SamlAssertionUrl": "OktaCredentialsProviderFactory.SamlAssertionUrl"
 }

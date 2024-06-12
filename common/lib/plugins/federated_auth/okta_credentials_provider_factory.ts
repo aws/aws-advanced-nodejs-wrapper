@@ -17,12 +17,9 @@
 import { SamlCredentialsProviderFactory } from "./saml_credentials_provider_factory";
 import { WrapperProperties } from "../../wrapper_property";
 import { SamlUtils } from "../../utils/saml_utils";
-import { stringify } from "querystring";
 import axios from "axios";
-import { wrapper } from "axios-cookiejar-support";
 import { logger } from "../../../logutils";
 import { Messages } from "../../utils/messages";
-import tough from "tough-cookie";
 import { HttpsCookieAgent } from "http-cookie-agent/http";
 import { AwsWrapperError } from "../../utils/errors";
 
@@ -72,9 +69,17 @@ export class OktaCredentialsProviderFactory extends SamlCredentialsProviderFacto
 
     try {
       const resp = await axios.request(postConfig);
+      if (!resp.data[OktaCredentialsProviderFactory.SESSION_TOKEN]) {
+        throw new AwsWrapperError(Messages.get("OktaCredentialsProviderFactory.invalidSamlResponse"));
+      }
       return resp.data[OktaCredentialsProviderFactory.SESSION_TOKEN];
     } catch (e: any) {
-      console.error(e);
+      if (!e.response) {
+        throw e;
+      }
+      throw new AwsWrapperError(
+        Messages.get("OktaCredentialsProviderFactory.samlRequestFailed", e.response.status, e.response.statusText, e.message)
+      );
     }
   }
 
@@ -103,7 +108,7 @@ export class OktaCredentialsProviderFactory extends SamlCredentialsProviderFacto
       const data: string = resp.data;
       const match = data.match(OktaCredentialsProviderFactory.SAML_RESPONSE_PATTERN);
       if (!match) {
-        throw new AwsWrapperError(Messages.get("AdfsCredentialsProviderFactory.failedLogin", data));
+        throw new AwsWrapperError(Messages.get("OktaCredentialsProviderFactory.invalidSessionToken"));
       }
       return match[1];
       // TODO: this catch block
@@ -111,7 +116,7 @@ export class OktaCredentialsProviderFactory extends SamlCredentialsProviderFacto
       if (!e.response) {
         throw e;
       }
-      throw new AwsWrapperError(Messages.get("OktaCredentialsProviderFactory.failedLogin", e.response.status, e.response.statusText, e.message));
+      throw new AwsWrapperError(Messages.get("SamlAuthPlugin.unhandledException", e.message));
     }
   }
 }
