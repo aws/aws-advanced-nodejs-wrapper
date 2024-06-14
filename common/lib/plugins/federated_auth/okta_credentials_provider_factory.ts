@@ -31,7 +31,7 @@ export class OktaCredentialsProviderFactory extends SamlCredentialsProviderFacto
     super();
   }
 
-  private getSamlUrl(props: Map<string, any>) {
+  getSamlUrl(props: Map<string, any>) {
     const idpHost = WrapperProperties.IDP_ENDPOINT.get(props);
     const appId = WrapperProperties.APP_ID.get(props);
     const baseUri = `https://${idpHost}/app/${OktaCredentialsProviderFactory.OKTA_AWS_APP_NAME}/${appId}/sso/saml`;
@@ -39,8 +39,7 @@ export class OktaCredentialsProviderFactory extends SamlCredentialsProviderFacto
     return baseUri;
   }
 
-  // POST REQUEST
-  private async getSessionToken(props: Map<string, any>): Promise<string> {
+  async getSessionToken(props: Map<string, any>): Promise<string> {
     const idpHost = WrapperProperties.IDP_ENDPOINT.get(props);
     const idpUser = WrapperProperties.IDP_USERNAME.get(props);
     const idpPassword = WrapperProperties.IDP_PASSWORD.get(props);
@@ -83,7 +82,6 @@ export class OktaCredentialsProviderFactory extends SamlCredentialsProviderFacto
     }
   }
 
-  // GET REQUEST
   async getSamlAssertion(props: Map<string, any>): Promise<string> {
     const oneTimeToken = await this.getSessionToken(props);
     const uri = this.getSamlUrl(props);
@@ -111,7 +109,6 @@ export class OktaCredentialsProviderFactory extends SamlCredentialsProviderFacto
         throw new AwsWrapperError(Messages.get("OktaCredentialsProviderFactory.invalidSessionToken"));
       }
       return match[1];
-      // TODO: this catch block
     } catch (e: any) {
       if (!e.response) {
         throw e;
