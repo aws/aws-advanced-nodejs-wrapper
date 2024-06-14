@@ -67,7 +67,7 @@ export class FederatedAuthPlugin extends AbstractConnectionPlugin {
     const isCachedToken: boolean = tokenInfo !== undefined && !tokenInfo.isExpired();
 
     if (isCachedToken && tokenInfo) {
-      logger.debug(Messages.get("FederatedAuthPlugin.useCachedIamToken", tokenInfo.token));
+      logger.debug(Messages.get("AuthenticationToken.useCachedToken", tokenInfo.token));
       WrapperProperties.PASSWORD.set(props, tokenInfo.token);
     } else {
       await this.updateAuthenticationToken(hostInfo, props, region, cacheKey);
@@ -85,7 +85,7 @@ export class FederatedAuthPlugin extends AbstractConnectionPlugin {
         await this.updateAuthenticationToken(hostInfo, props, region, cacheKey);
         return await connectFunc();
       } catch (e: any) {
-        throw new AwsWrapperError(Messages.get("FederatedAuthPlugin.unhandledException", e));
+        throw new AwsWrapperError(Messages.get("SamlAuthPlugin.unhandledException", e));
       }
     }
   }

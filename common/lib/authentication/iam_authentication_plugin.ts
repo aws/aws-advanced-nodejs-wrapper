@@ -72,7 +72,7 @@ export class IamAuthenticationPlugin extends AbstractConnectionPlugin {
     const isCachedToken: boolean = tokenInfo !== undefined && !tokenInfo.isExpired();
 
     if (isCachedToken && tokenInfo) {
-      logger.debug(Messages.get("IamAuthenticationPlugin.useCachedIamToken", tokenInfo.token));
+      logger.debug(Messages.get("AuthenticationToken.useCachedToken", tokenInfo.token));
       WrapperProperties.PASSWORD.set(props, tokenInfo.token);
     } else {
       const tokenExpiry: number = Date.now() + tokenExpirationSec * 1000;

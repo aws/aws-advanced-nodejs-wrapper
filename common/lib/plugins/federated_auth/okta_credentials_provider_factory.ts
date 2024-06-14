@@ -69,16 +69,14 @@ export class OktaCredentialsProviderFactory extends SamlCredentialsProviderFacto
     try {
       const resp = await axios.request(postConfig);
       if (!resp.data[OktaCredentialsProviderFactory.SESSION_TOKEN]) {
-        throw new AwsWrapperError(Messages.get("OktaCredentialsProviderFactory.invalidSamlResponse"));
+        throw new AwsWrapperError(Messages.get("OktaCredentialsProviderFactory.invalidSessionToken"));
       }
       return resp.data[OktaCredentialsProviderFactory.SESSION_TOKEN];
     } catch (e: any) {
       if (!e.response) {
         throw e;
       }
-      throw new AwsWrapperError(
-        Messages.get("OktaCredentialsProviderFactory.samlRequestFailed", e.response.status, e.response.statusText, e.message)
-      );
+      throw new AwsWrapperError(Messages.get("OktaCredentialsProviderFactory.sessionTokenRequestFailed"));
     }
   }
 
@@ -87,7 +85,7 @@ export class OktaCredentialsProviderFactory extends SamlCredentialsProviderFacto
     const uri = this.getSamlUrl(props);
     SamlUtils.validateUrl(uri);
 
-    logger.debug(Messages.get("OktaCredentialsProviderFactory.SamlAssertionUrl", uri));
+    logger.debug(Messages.get("OktaCredentialsProviderFactory.samlAssertionUrl", uri));
 
     const httpsAgent = new HttpsCookieAgent(WrapperProperties.HTTPS_AGENT_OPTIONS.get(props));
     const getConfig = {
@@ -106,14 +104,19 @@ export class OktaCredentialsProviderFactory extends SamlCredentialsProviderFacto
       const data: string = resp.data;
       const match = data.match(OktaCredentialsProviderFactory.SAML_RESPONSE_PATTERN);
       if (!match) {
-        throw new AwsWrapperError(Messages.get("OktaCredentialsProviderFactory.invalidSessionToken"));
+        throw new AwsWrapperError(Messages.get("OktaCredentialsProviderFactory.invalidSamlResponse"));
       }
       return match[1];
     } catch (e: any) {
       if (!e.response) {
         throw e;
       }
-      throw new AwsWrapperError(Messages.get("SamlAuthPlugin.unhandledException", e.message));
+      if (e.response.status / 100 != 2) {
+        throw new AwsWrapperError(
+          Messages.get("OktaCredentialsProviderFactory.samlRequestFailed", e.response.status, e.response.statusText, e.message)
+        );
+      }
+      throw new AwsWrapperError(Messages.get("SAMLCredentialsProviderFactory.getSamlAssertionFailed", e.message));
     }
   }
 }
