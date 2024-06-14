@@ -102,6 +102,11 @@ export class PluginService implements ErrorHandler, HostListProviderService {
     this._initialConnectionHostInfo = initialConnectionHostInfo;
   }
 
+  getHostInfoByStrategy(role: HostRole, strategy: string): HostInfo | undefined {
+    const pluginManager = this.pluginServiceManagerContainer.pluginManager;
+    return pluginManager?.getHostInfoByStrategy(role, strategy);
+  }
+
   getCurrentHostInfo(): HostInfo | null {
     return this._currentHostInfo ? this._currentHostInfo : null;
   }
@@ -129,6 +134,10 @@ export class PluginService implements ErrorHandler, HostListProviderService {
 
   isStaticHostListProvider(): boolean {
     return false;
+  }
+
+  acceptsStrategy(role: HostRole, strategy: string): boolean {
+    return this.pluginServiceManagerContainer.pluginManager?.acceptsStrategy(role, strategy) ?? false;
   }
 
   async forceRefreshHostList(): Promise<void>;

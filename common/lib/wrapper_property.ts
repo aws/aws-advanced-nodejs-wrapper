@@ -165,6 +165,12 @@ export class WrapperProperties {
     "false"
   );
 
+  static readonly READER_HOST_SELECTOR_STRATEGY = new WrapperProperty<string>(
+    "readerHostSelectorStrategy",
+    "The strategy that should be used to select a new reader host.",
+    "random"
+  );
+
   static removeWrapperProperties<T>(config: T): T {
     const copy = Object.assign({}, config);
     const persistingProperties = [
