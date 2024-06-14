@@ -1,6 +1,6 @@
 {
 	"ConnectionPluginManager.unknownPluginCode": "Unknown plugin code: '%s'",
-	"ConnectionPluginManager.failedToConnectWithNewTargetClient": "Failed to connect with a new target for host: '%s'",
+  "ConnectionPluginManager.failedToConnectWithNewTargetClient": "Failed to connect with a new target for host: '%s'",
 	"ConnectionProvider.unsupportedHostInfoSelectorStrategy": "Unsupported host selection strategy '%s' specified for this connection provider '%s'. Please visit the documentation for all supported strategies.",
 	"DialectManager.unknownDialectCode": "Unknown dialect code: '%s'.",
 	"DialectManager.getDialectError": "Was not able to get a database dialect.",
