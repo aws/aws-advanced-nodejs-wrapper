@@ -57,7 +57,6 @@ async function validateConnection(client: AwsPGClient | AwsMySQLClient) {
     await client.connect();
     const res = await DriverHelper.executeQuery(env.engine, client, "select 1");
     expect(res).not.toBeNull();
-    await client.end();
   } finally {
     await client.end();
   }
