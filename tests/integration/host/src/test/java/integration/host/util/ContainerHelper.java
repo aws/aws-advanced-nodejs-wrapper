@@ -160,6 +160,7 @@ public class ContainerHelper {
         .withFixedExposedPort(5005, 5005);
 
     return container
+        .withEnv("LOG_LEVEL", "silly")
         .withFileSystemBind("../../../pg", "/app/pg", BindMode.READ_ONLY)
         .withFileSystemBind("../../../mysql", "/app/mysql", BindMode.READ_ONLY)
         .withFileSystemBind("../../../common", "/app/common", BindMode.READ_ONLY)

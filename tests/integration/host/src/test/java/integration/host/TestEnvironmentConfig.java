@@ -194,7 +194,7 @@ public class TestEnvironmentConfig implements AutoCloseable {
     env.info.setAuroraRegion(
         !StringUtils.isNullOrEmpty(System.getenv("AURORA_DB_REGION"))
             ? System.getenv("AURORA_DB_REGION")
-            : "us-east-2");
+            : "us-east-1");
 
     env.reuseAuroraDbCluster =
         !StringUtils.isNullOrEmpty(System.getenv("REUSE_AURORA_CLUSTER"))

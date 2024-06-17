@@ -82,15 +82,23 @@ export class AwsPGClient extends AwsClient {
     if (readOnly === this.isReadOnly()) {
       return Promise.resolve();
     }
-
+    const previousReadOnly: boolean = this.isReadOnly();
+    let result;
+    try {
+      this._isReadOnly = readOnly;
+      if (this.isReadOnly()) {
+        result = await this.query("SET SESSION CHARACTERISTICS AS TRANSACTION READ ONLY");
+      } else {
+        result = await this.query("SET SESSION CHARACTERISTICS AS TRANSACTION READ WRITE");
+      }
+    } catch (error) {
+      // revert
+      this._isReadOnly = previousReadOnly;
+      throw error;
+    }
     this.pluginService.getSessionStateService().setupPristineReadOnly();
     this.pluginService.getSessionStateService().setReadOnly(readOnly);
-
-    this._isReadOnly = readOnly;
-    if (this.isReadOnly()) {
-      return await this.query("SET SESSION CHARACTERISTICS AS TRANSACTION READ ONLY");
-    }
-    return await this.query("SET SESSION CHARACTERISTICS AS TRANSACTION READ WRITE");
+    return result;
   }
 
   isReadOnly(): boolean {
