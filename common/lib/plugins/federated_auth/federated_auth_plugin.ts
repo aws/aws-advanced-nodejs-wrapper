@@ -101,7 +101,7 @@ export class FederatedAuthPlugin extends AbstractConnectionPlugin {
       WrapperProperties.DB_USER.get(props),
       await this.credentialsProviderFactory.getAwsCredentialsProvider(hostInfo.host, region, props)
     );
-    logger.debug(Messages.get("FederatedAuthPlugin.generatedNewIamToken", token));
+    logger.debug(Messages.get("AuthenticationToken.generatedNewToken", token));
     WrapperProperties.PASSWORD.set(props, token);
     FederatedAuthPlugin.tokenCache.set(cacheKey, new TokenInfo(token, tokenExpiry));
   }

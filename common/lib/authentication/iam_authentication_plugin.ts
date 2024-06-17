@@ -83,14 +83,14 @@ export class IamAuthenticationPlugin extends AbstractConnectionPlugin {
         WrapperProperties.USER.get(props),
         AwsCredentialsManager.getProvider(hostInfo, props)
       );
-      logger.debug(Messages.get("IamAuthenticationPlugin.generatedNewIamToken", token));
+      logger.debug(Messages.get("AuthenticationToken.generatedNewToken", token));
       WrapperProperties.PASSWORD.set(props, token);
       IamAuthenticationPlugin.tokenCache.set(cacheKey, new TokenInfo(token, tokenExpiry));
     }
     this.pluginService.updateConfigWithProperties(props);
 
     try {
-      return connectFunc();
+      return await connectFunc();
     } catch (e) {
       logger.debug(Messages.get("IamAuthenticationPlugin.connectException", (e as Error).message));
       if (!this.pluginService.isLoginError(e as Error) || !isCachedToken) {
@@ -108,7 +108,7 @@ export class IamAuthenticationPlugin extends AbstractConnectionPlugin {
         WrapperProperties.USER.get(props),
         AwsCredentialsManager.getProvider(hostInfo, props)
       );
-      logger.debug(Messages.get("IamAuthenticationPlugin.generatedNewIamToken", token));
+      logger.debug(Messages.get("AuthenticationToken.generatedNewToken", token));
       WrapperProperties.PASSWORD.set(props, token);
       IamAuthenticationPlugin.tokenCache.set(cacheKey, new TokenInfo(token, tokenExpiry));
       return connectFunc();
