@@ -27,7 +27,7 @@ const applicationId = "example.okta.com";
 
 const sessionTokenJson = JSON.parse(readFileSync("tests/unit/resources/okta/session-token.json", "utf8"));
 const samlAssertionHtml = readFileSync("tests/unit/resources/okta/saml-assertion.html", "utf8");
-const expectedSamlAssertion = readFileSync("tests/unit/resources/okta/assertion.txt", "utf8");
+const expectedSamlAssertion = readFileSync("tests/unit/resources/okta/expected-assertion.txt", "utf8");
 const expectedSessionToken = readFileSync("tests/unit/resources/okta/expected-session-token.txt", "utf8");
 
 const postResponse = { data: sessionTokenJson };

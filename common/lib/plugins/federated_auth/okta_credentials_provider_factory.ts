@@ -27,6 +27,7 @@ export class OktaCredentialsProviderFactory extends SamlCredentialsProviderFacto
   private static readonly OKTA_AWS_APP_NAME = "amazon_aws";
   private static readonly SESSION_TOKEN = "sessionToken";
   private static readonly SAML_RESPONSE_PATTERN = new RegExp('SAMLResponse.*value="(?<saml>[^"]+)"');
+
   constructor() {
     super();
   }

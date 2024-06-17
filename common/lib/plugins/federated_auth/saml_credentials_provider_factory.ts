@@ -29,9 +29,8 @@ export abstract class SamlCredentialsProviderFactory implements CredentialsProvi
     props: Map<string, any>
   ): Promise<AwsCredentialIdentity | AwsCredentialIdentityProvider> {
     const samlAssertion = await this.getSamlAssertion(props);
-    const test = decode(samlAssertion);
     const assumeRoleWithSamlRequest = new AssumeRoleWithSAMLCommand({
-      SAMLAssertion: test,
+      SAMLAssertion: decode(samlAssertion),
       RoleArn: WrapperProperties.IAM_ROLE_ARN.get(props),
       PrincipalArn: WrapperProperties.IAM_IDP_ARN.get(props)
     });
