@@ -42,17 +42,15 @@ export abstract class SamlCredentialsProviderFactory implements CredentialsProvi
     const results = await stsClient.send(assumeRoleWithSamlRequest);
     const credentials = results["Credentials"];
 
-    if (credentials) {
-      if (credentials.AccessKeyId && credentials.SecretAccessKey && credentials.SessionToken) {
-        return new Credentials({
-          accessKeyId: credentials.AccessKeyId,
-          secretAccessKey: credentials.SecretAccessKey,
-          sessionToken: credentials.SessionToken
-        });
-      }
-      throw new AwsWrapperError("Credentials undefined");
+    if (credentials && credentials.AccessKeyId && credentials.SecretAccessKey && credentials.SessionToken) {
+      return new Credentials({
+        accessKeyId: credentials.AccessKeyId,
+        secretAccessKey: credentials.SecretAccessKey,
+        sessionToken: credentials.SessionToken
+      });
+    } else {
+      throw new AwsWrapperError("Credentials from SAML request not found");
     }
-    throw new AwsWrapperError("Credentials from SAML request not found");
   }
 
   abstract getSamlAssertion(props: Map<string, any>): Promise<string>;
