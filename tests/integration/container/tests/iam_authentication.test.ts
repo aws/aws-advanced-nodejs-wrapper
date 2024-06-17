@@ -17,7 +17,6 @@
 import { TestEnvironment } from "./utils/test_environment";
 import { DriverHelper } from "./utils/driver_helper";
 import { AwsWrapperError } from "aws-wrapper-common-lib/lib/utils/errors";
-import { ProxyHelper } from "./utils/proxy_helper";
 import { promisify } from "util";
 import { lookup } from "dns";
 import { readFileSync } from "fs";
@@ -37,7 +36,7 @@ function getIpAddress(host: string) {
   return promisify(lookup)(host, {});
 }
 
-async function initDefaultConfig(host: string, port: number): Promise<any> {
+async function initDefaultConfig(host: string): Promise<any> {
   const env = await TestEnvironment.getCurrent();
 
   let props = {
@@ -45,7 +44,7 @@ async function initDefaultConfig(host: string, port: number): Promise<any> {
     host: host,
     database: env.databaseInfo.default_db_name,
     password: env.databaseInfo.password,
-    port: port,
+    port: env.databaseInfo.clusterEndpointPort,
     plugins: "iam",
     ssl: sslCertificate
   };
@@ -54,10 +53,14 @@ async function initDefaultConfig(host: string, port: number): Promise<any> {
 }
 
 async function validateConnection(client: AwsPGClient | AwsMySQLClient) {
-  await client.connect();
-  const res = await DriverHelper.executeQuery(env.engine, client, "select 1");
-  expect(res).not.toBeNull();
-  await client.end();
+  try {
+    await client.connect();
+    const res = await DriverHelper.executeQuery(env.engine, client, "select 1");
+    expect(res).not.toBeNull();
+    await client.end();
+  } finally {
+    await client.end();
+  }
 }
 
 describe("iamTests", () => {
@@ -68,12 +71,11 @@ describe("iamTests", () => {
   });
 
   beforeEach(async () => {
-    await ProxyHelper.enableAllConnectivity();
     IamAuthenticationPlugin.clearCache();
   });
 
   it("testIamWrongDatabaseUsername", async () => {
-    const config = await initDefaultConfig(env.databaseInfo.clusterEndpoint, env.databaseInfo.clusterEndpointPort);
+    const config = await initDefaultConfig(env.databaseInfo.clusterEndpoint);
     config["user"] = `WRONG_${env.info.databaseInfo.username}_USER`;
     const client: AwsPGClient | AwsMySQLClient = initClientFunc(config);
 
@@ -85,7 +87,7 @@ describe("iamTests", () => {
   }, 100000);
 
   it("testIamNoDatabaseUsername", async () => {
-    const config = await initDefaultConfig(env.databaseInfo.clusterEndpoint, env.databaseInfo.clusterEndpointPort);
+    const config = await initDefaultConfig(env.databaseInfo.clusterEndpoint);
     config["user"] = undefined;
     const client: AwsPGClient | AwsMySQLClient = initClientFunc(config);
 
@@ -97,7 +99,7 @@ describe("iamTests", () => {
   }, 100000);
 
   it("testIamInvalidHost", async () => {
-    const config = await initDefaultConfig(env.databaseInfo.clusterEndpoint, env.databaseInfo.clusterEndpointPort);
+    const config = await initDefaultConfig(env.databaseInfo.clusterEndpoint);
     config["iamHost"] = "<>";
     const client: AwsPGClient | AwsMySQLClient = initClientFunc(config);
 
@@ -111,12 +113,11 @@ describe("iamTests", () => {
   // Currently, PG cannot connect to an IP address with SSL enabled, skip if PG
   it("testIamUsingIpAddress", async () => {
     if (env.engine === "MYSQL") {
-      const config = await initDefaultConfig(env.databaseInfo.clusterEndpoint, env.databaseInfo.clusterEndpointPort);
       const instance = env.writer;
       if (instance.host) {
         const ip = await getIpAddress(instance.host);
+        const config = await initDefaultConfig(ip.address);
 
-        config["host"] = ip.address;
         config["password"] = "anything";
         config["iamHost"] = instance.host;
 
@@ -135,7 +136,7 @@ describe("iamTests", () => {
   }, 100000);
 
   it("testIamValidConnectionProperties", async () => {
-    const config = await initDefaultConfig(env.databaseInfo.clusterEndpoint, env.databaseInfo.clusterEndpointPort);
+    const config = await initDefaultConfig(env.databaseInfo.clusterEndpoint);
     config["password"] = "anything";
     const client: AwsPGClient | AwsMySQLClient = initClientFunc(config);
 
@@ -147,7 +148,7 @@ describe("iamTests", () => {
   }, 100000);
 
   it("testIamValidConnectionPropertiesNoPassword", async () => {
-    const config = await initDefaultConfig(env.databaseInfo.clusterEndpoint, env.databaseInfo.clusterEndpointPort);
+    const config = await initDefaultConfig(env.databaseInfo.clusterEndpoint);
     config["password"] = undefined;
     const client: AwsPGClient | AwsMySQLClient = initClientFunc(config);
 
