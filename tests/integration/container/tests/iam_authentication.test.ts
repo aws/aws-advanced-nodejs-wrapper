@@ -24,6 +24,9 @@ import { AwsPGClient } from "pg-wrapper";
 import { AwsMySQLClient } from "mysql-wrapper";
 import { IamAuthenticationPlugin } from "aws-wrapper-common-lib/lib/authentication/iam_authentication_plugin";
 import { logger } from "aws-wrapper-common-lib/logutils";
+import { AuroraTestUtility } from "./utils/aurora_test_utility";
+
+const auroraTestUtility = new AuroraTestUtility();
 
 let env: TestEnvironment;
 let driver;
@@ -56,14 +59,16 @@ async function initDefaultConfig(host: string): Promise<any> {
 async function validateConnection(client: AwsPGClient | AwsMySQLClient) {
   try {
     await client.connect();
-    const res = await DriverHelper.executeInstanceQuery(env.engine, client);
-    expect(res).toEqual(env.writer.host);
+    const currentConnectionId = await auroraTestUtility.queryInstanceId(client);
+    expect(await auroraTestUtility.isDbInstanceWriter(currentConnectionId)).toBe(true);
   } finally {
     await client.end();
   }
 }
 
 describe("iamTests", () => {
+  let client: AwsPGClient | AwsMySQLClient;
+
   beforeAll(async () => {
     env = await TestEnvironment.getCurrent();
     driver = DriverHelper.getDriverForDatabaseEngine(env.engine);
@@ -74,10 +79,16 @@ describe("iamTests", () => {
     IamAuthenticationPlugin.clearCache();
   });
 
+  afterEach(async () => {
+    if (client !== null) {
+      await client.end();
+    }
+  });
+
   it("testIamWrongDatabaseUsername", async () => {
     const config = await initDefaultConfig(env.databaseInfo.clusterEndpoint);
     config["user"] = `WRONG_${env.info.databaseInfo.username}_USER`;
-    const client: AwsPGClient | AwsMySQLClient = initClientFunc(config);
+    client = initClientFunc(config);
 
     client.on("error", (error: any) => {
       logger.error(error);
@@ -89,7 +100,7 @@ describe("iamTests", () => {
   it("testIamNoDatabaseUsername", async () => {
     const config = await initDefaultConfig(env.databaseInfo.clusterEndpoint);
     config["user"] = undefined;
-    const client: AwsPGClient | AwsMySQLClient = initClientFunc(config);
+    client = initClientFunc(config);
 
     client.on("error", (error: any) => {
       logger.error(error);
@@ -101,7 +112,7 @@ describe("iamTests", () => {
   it("testIamInvalidHost", async () => {
     const config = await initDefaultConfig(env.databaseInfo.clusterEndpoint);
     config["iamHost"] = "<>";
-    const client: AwsPGClient | AwsMySQLClient = initClientFunc(config);
+    client = initClientFunc(config);
 
     client.on("error", (error: any) => {
       logger.error(error);
@@ -121,7 +132,7 @@ describe("iamTests", () => {
         config["password"] = "anything";
         config["iamHost"] = instance.host;
 
-        const client: AwsPGClient | AwsMySQLClient = initClientFunc(config);
+        client = initClientFunc(config);
 
         client.on("error", (error: any) => {
           logger.error(error);
@@ -137,7 +148,7 @@ describe("iamTests", () => {
   it("testIamValidConnectionProperties", async () => {
     const config = await initDefaultConfig(env.databaseInfo.clusterEndpoint);
     config["password"] = "anything";
-    const client: AwsPGClient | AwsMySQLClient = initClientFunc(config);
+    client = initClientFunc(config);
 
     client.on("error", (error: any) => {
       logger.error(error);
@@ -149,7 +160,7 @@ describe("iamTests", () => {
   it("testIamValidConnectionPropertiesNoPassword", async () => {
     const config = await initDefaultConfig(env.databaseInfo.clusterEndpoint);
     config["password"] = undefined;
-    const client: AwsPGClient | AwsMySQLClient = initClientFunc(config);
+    client = initClientFunc(config);
 
     client.on("error", (error: any) => {
       logger.error(error);
