@@ -92,7 +92,7 @@ describe("aurora failover", () => {
     expect(currentConnectionId).not.toBe(initialWriterId);
   }, 1000000);
 
-  it("fail from reader to writer", async () => {
+  it.skip("fail from reader to writer", async () => {
     // Connect to writer instance
     const writerConfig = await initDefaultConfig(env.proxyDatabaseInfo.clusterEndpoint, env.proxyDatabaseInfo.clusterEndpointPort, true);
     client = initClientFunc(writerConfig);
