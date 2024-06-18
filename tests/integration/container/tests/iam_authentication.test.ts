@@ -23,6 +23,7 @@ import { readFileSync } from "fs";
 import { AwsPGClient } from "pg-wrapper";
 import { AwsMySQLClient } from "mysql-wrapper";
 import { IamAuthenticationPlugin } from "aws-wrapper-common-lib/lib/authentication/iam_authentication_plugin";
+import { logger } from "aws-wrapper-common-lib/logutils";
 
 let env: TestEnvironment;
 let driver;
@@ -55,8 +56,8 @@ async function initDefaultConfig(host: string): Promise<any> {
 async function validateConnection(client: AwsPGClient | AwsMySQLClient) {
   try {
     await client.connect();
-    const res = await DriverHelper.executeQuery(env.engine, client, "select 1");
-    expect(res).not.toBeNull();
+    const res = await DriverHelper.executeInstanceQuery(env.engine, client);
+    expect(res).toEqual(env.writer.host);
   } finally {
     await client.end();
   }
@@ -79,7 +80,7 @@ describe("iamTests", () => {
     const client: AwsPGClient | AwsMySQLClient = initClientFunc(config);
 
     client.on("error", (error: any) => {
-      console.log(error);
+      logger.error(error);
     });
 
     await expect(client.connect()).rejects.toThrow();
@@ -91,7 +92,7 @@ describe("iamTests", () => {
     const client: AwsPGClient | AwsMySQLClient = initClientFunc(config);
 
     client.on("error", (error: any) => {
-      console.log(error);
+      logger.error(error);
     });
 
     await expect(client.connect()).rejects.toBeInstanceOf(AwsWrapperError);
@@ -103,7 +104,7 @@ describe("iamTests", () => {
     const client: AwsPGClient | AwsMySQLClient = initClientFunc(config);
 
     client.on("error", (error: any) => {
-      console.log(error);
+      logger.error(error);
     });
 
     await expect(client.connect()).rejects.toBeInstanceOf(AwsWrapperError);
@@ -123,7 +124,7 @@ describe("iamTests", () => {
         const client: AwsPGClient | AwsMySQLClient = initClientFunc(config);
 
         client.on("error", (error: any) => {
-          console.log(error);
+          logger.error(error);
         });
 
         await validateConnection(client);
@@ -131,7 +132,6 @@ describe("iamTests", () => {
         throw new AwsWrapperError("Host not found");
       }
     }
-    return;
   }, 100000);
 
   it("testIamValidConnectionProperties", async () => {
@@ -140,7 +140,7 @@ describe("iamTests", () => {
     const client: AwsPGClient | AwsMySQLClient = initClientFunc(config);
 
     client.on("error", (error: any) => {
-      console.log(error);
+      logger.error(error);
     });
 
     await validateConnection(client);
@@ -152,7 +152,7 @@ describe("iamTests", () => {
     const client: AwsPGClient | AwsMySQLClient = initClientFunc(config);
 
     client.on("error", (error: any) => {
-      console.log(error);
+      logger.error(error);
     });
 
     await validateConnection(client);
