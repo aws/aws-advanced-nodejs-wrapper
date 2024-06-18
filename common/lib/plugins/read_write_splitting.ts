@@ -184,7 +184,7 @@ export class ReadWriteSplittingPlugin extends AbstractConnectionPlugin {
   setReaderClient(readerTargetClient: any, readerHost: HostInfo): void {
     this.readerTargetClient = readerTargetClient;
     this._readerHostInfo = readerHost;
-    logger.debug(Messages.get("ReadWriteSplittingPlugin.setReaderConnection", readerHost.url));
+    logger.debug(Messages.get("ReadWriteSplittingPlugin.setReaderClient", readerHost.url));
   }
 
   async getNewWriterClient(writerHost: HostInfo) {
@@ -202,7 +202,7 @@ export class ReadWriteSplittingPlugin extends AbstractConnectionPlugin {
   async switchClientIfRequired(readOnly: boolean) {
     const currentClient = this.pluginService.getCurrentClient();
     if (!(await currentClient.isValid())) {
-      this.logAndThrowError(Messages.get("ReadWriteSplittingPlugin.setReadOnlyOnClosedConnection"));
+      this.logAndThrowError(Messages.get("ReadWriteSplittingPlugin.setReadOnlyOnClosedClient"));
     }
     try {
       await this.pluginService.refreshHostList();
@@ -250,7 +250,7 @@ export class ReadWriteSplittingPlugin extends AbstractConnectionPlugin {
     if (newClientHost) {
       try {
         await this.pluginService.setCurrentClient(newTargetClient, newClientHost);
-        logger.debug("ReadWriteSplittingPlugin.settingCurrentClient", newClientHost.url);
+        logger.debug(Messages.get("ReadWriteSplittingPlugin.settingCurrentClient", newClientHost.url));
       } catch (error) {
         // pass
       }
