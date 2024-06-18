@@ -36,7 +36,7 @@
     "@types/node-fetch": "^2.6.11",
     "@types/pg": "^8.11.6",
     "@types/tough-cookie": "^4.0.5",
-    "@typescript-eslint/eslint-plugin": "^7.13.0",
+    "@typescript-eslint/eslint-plugin": "^7.13.1",
     "aws-sdk": "^2.1642.0",
     "axios": "^1.7.2",
     "axios-cookiejar-support": "^5.0.2",
