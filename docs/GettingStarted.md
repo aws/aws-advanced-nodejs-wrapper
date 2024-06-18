@@ -7,8 +7,8 @@ Before using the AWS Advanced NodeJS Wrapper, you must install:
 - Node 21.0.0+
 - The AWS Advanced NodeJS Wrapper.
 - Your choice of underlying Node driver.
-    - To use the wrapper with Aurora with PostgreSQL compatibility, install the [PostgreSQL Client](https://github.com/brianc/node-postgres).
-    - To use the wrapper with Aurora with MySQL compatibility, install the [MySQL2 Client](https://github.com/sidorares/node-mysql2).
+  - To use the wrapper with Aurora with PostgreSQL compatibility, install the [PostgreSQL Client](https://github.com/brianc/node-postgres).
+  - To use the wrapper with Aurora with MySQL compatibility, install the [MySQL2 Client](https://github.com/sidorares/node-mysql2).
 
 If you are using the AWS NodeJS Wrapper as part of a Node project, include the wrapper and underlying driver as dependencies.
 
