@@ -30,6 +30,7 @@ const auroraTestUtility = new AuroraTestUtility();
 
 let env: TestEnvironment;
 let driver;
+let client: any;
 let initClientFunc: (props: any) => any;
 
 const sslCertificate = {
@@ -74,55 +75,50 @@ describe("iamTests", () => {
   });
 
   beforeEach(async () => {
+    client = null;
     IamAuthenticationPlugin.clearCache();
+  });
+
+  afterEach(async () => {
+    if (client !== null) {
+      await client.end();
+    }
   });
 
   it("testIamWrongDatabaseUsername", async () => {
     const config = await initDefaultConfig(env.databaseInfo.clusterEndpoint);
     config["user"] = `WRONG_${env.info.databaseInfo.username}_USER`;
-    const client: AwsPGClient | AwsMySQLClient = initClientFunc(config);
+    client = initClientFunc(config);
 
     client.on("error", (error: any) => {
       logger.error(error);
     });
 
     await expect(client.connect()).rejects.toThrow();
-
-    if (client !== null) {
-      await client.end();
-    }
   }, 100000);
 
   it("testIamNoDatabaseUsername", async () => {
     const config = await initDefaultConfig(env.databaseInfo.clusterEndpoint);
     config["user"] = undefined;
-    const client: AwsPGClient | AwsMySQLClient = initClientFunc(config);
+    client = initClientFunc(config);
 
     client.on("error", (error: any) => {
       logger.error(error);
     });
 
     await expect(client.connect()).rejects.toBeInstanceOf(AwsWrapperError);
-
-    if (client !== null) {
-      await client.end();
-    }
   }, 100000);
 
   it("testIamInvalidHost", async () => {
     const config = await initDefaultConfig(env.databaseInfo.clusterEndpoint);
     config["iamHost"] = "<>";
-    const client = initClientFunc(config);
+    client = initClientFunc(config);
 
     client.on("error", (error: any) => {
       logger.error(error);
     });
 
     await expect(client.connect()).rejects.toBeInstanceOf(AwsWrapperError);
-
-    if (client !== null) {
-      await client.end();
-    }
   }, 100000);
 
   // Currently, PG cannot connect to an IP address with SSL enabled, skip if PG
@@ -136,7 +132,7 @@ describe("iamTests", () => {
         config["password"] = "anything";
         config["iamHost"] = instance.host;
 
-        const client: AwsPGClient | AwsMySQLClient = initClientFunc(config);
+        client = initClientFunc(config);
 
         client.on("error", (error: any) => {
           logger.error(error);
@@ -152,7 +148,7 @@ describe("iamTests", () => {
   it("testIamValidConnectionProperties", async () => {
     const config = await initDefaultConfig(env.databaseInfo.clusterEndpoint);
     config["password"] = "anything";
-    const client: AwsPGClient | AwsMySQLClient = initClientFunc(config);
+    client = initClientFunc(config);
 
     client.on("error", (error: any) => {
       logger.error(error);
@@ -164,7 +160,7 @@ describe("iamTests", () => {
   it("testIamValidConnectionPropertiesNoPassword", async () => {
     const config = await initDefaultConfig(env.databaseInfo.clusterEndpoint);
     config["password"] = undefined;
-    const client: AwsPGClient | AwsMySQLClient = initClientFunc(config);
+    client = initClientFunc(config);
 
     client.on("error", (error: any) => {
       logger.error(error);
