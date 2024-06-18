@@ -26,7 +26,7 @@ import { AwsWrapperError } from "../../utils/errors";
 export class OktaCredentialsProviderFactory extends SamlCredentialsProviderFactory {
   private static readonly OKTA_AWS_APP_NAME = "amazon_aws";
   private static readonly SESSION_TOKEN = "sessionToken";
-  private static readonly SAML_RESPONSE_PATTERN = new RegExp('SAMLResponse.*value="(?<saml>[^"]+)"');
+  private static readonly SAML_RESPONSE_PATTERN = new RegExp('SAMLResponse(?:.|\\n)*value="(?<saml>[^"]+)"');
 
   constructor() {
     super();
