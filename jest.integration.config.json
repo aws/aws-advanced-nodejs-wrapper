@@ -14,6 +14,7 @@
   },
   "globalSetup": "<rootDir>/tests/integration/container/tests/setup.ts",
   "globalTeardown": "<rootDir>/tests/integration/container/tests/teardown.ts",
+  "setupFilesAfterEnv": ["<rootDir>/tests/integration/container/tests/config.ts"],
   "testEnvironment": "node",
   "reporters": ["default", "./node_modules/jest-html-reporter"]
 }
