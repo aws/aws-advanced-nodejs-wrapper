@@ -85,7 +85,7 @@ describe("aurora read write splitting", () => {
     if (client !== null) {
       await client.end();
     }
-  });
+  }, 1000000);
 
   it("test connect to writer switch set read only", async () => {
     const config = await initDefaultConfig(env.databaseInfo.clusterEndpoint, env.databaseInfo.clusterEndpointPort, false);
@@ -196,7 +196,7 @@ describe("aurora read write splitting", () => {
   }, 1000000);
 
   // TODO: enable tests when failover is implemented
-  it.skip("test set read only all instances down", async () => {
+  it("test set read only all instances down", async () => {
     const config = await initDefaultConfig(env.databaseInfo.clusterEndpoint, env.databaseInfo.clusterEndpointPort, false);
     client = initClientFunc(config);
 
@@ -215,9 +215,9 @@ describe("aurora read write splitting", () => {
     await expect(async () => {
       await client.setReadOnly(false);
     }).rejects.toThrow(AwsWrapperError);
-  }, 1000000);
+  }, 9000000);
 
-  it.skip("test set read only all readers down", async () => {
+  it("test set read only all readers down", async () => {
     // Connect to writer instance
     const config = await initDefaultConfig(env.proxyDatabaseInfo.clusterEndpoint, env.proxyDatabaseInfo.clusterEndpointPort, true);
     client = initClientFunc(config);

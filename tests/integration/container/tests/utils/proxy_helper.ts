@@ -22,13 +22,7 @@ import { DatabaseEngine } from "./database_engine";
 export class ProxyHelper {
   static async disableAllConnectivity(engine: DatabaseEngine) {
     const env = await TestEnvironment.getCurrent();
-    switch (engine) {
-      case DatabaseEngine.MYSQL:
-        break;
-      default:
-        env.proxyInfos.forEach((p) => ProxyHelper.disableProxyConnectivity(p));
-        break;
-    }
+    env.proxyInfos.forEach((p) => ProxyHelper.disableProxyConnectivity(p));
   }
 
   static async enableAllConnectivity() {
@@ -38,13 +32,7 @@ export class ProxyHelper {
 
   static async disableConnectivity(engine: DatabaseEngine, instanceName: string) {
     const env = await TestEnvironment.getCurrent();
-    switch (engine) {
-      case DatabaseEngine.MYSQL:
-        break;
-      default:
-        await ProxyHelper.disableProxyConnectivity(env.getProxyInfo(instanceName));
-        break;
-    }
+    await ProxyHelper.disableProxyConnectivity(env.getProxyInfo(instanceName));
   }
 
   static async enableConnectivity(instanceName: string) {
