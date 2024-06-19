@@ -315,13 +315,17 @@ class ConnectionAttemptTask {
       )
     );
     const copy = new Map(this.initialConnectionProps);
+    let targetClient;
     copy.set(WrapperProperties.HOST.name, this.newHost.host);
     try {
-      this.targetClient = await this.pluginService.forceConnect(this.newHost, copy);
+      targetClient = await this.pluginService.forceConnect(this.newHost, copy);
       this.pluginService.setAvailability(this.newHost.allAliases, HostAvailability.AVAILABLE);
       logger.info(Messages.get("ClusterAwareReaderFailoverHandler.successfulReaderConnection", this.newHost.host));
-      return new ReaderFailoverResult(this.targetClient, this.newHost, true);
+      return new ReaderFailoverResult(targetClient, this.newHost, true);
     } catch (error) {
+      if (targetClient) {
+        await this.pluginService.tryClosingTargetClient(targetClient);
+      }
       this.pluginService.setAvailability(this.newHost.allAliases, HostAvailability.NOT_AVAILABLE);
       if (error instanceof Error) {
         // Propagate exceptions that are not caused by network errors.
@@ -343,6 +347,6 @@ class ConnectionAttemptTask {
   // ReaderFailoverResult and eventually may get it's way to pluginService.setCurrentClient
   // In this case we should not be clearing it here. And again don't need to store it in class member.
   async performFinalCleanup() {
-    await this.pluginService.tryClosingTargetClient(this.targetClient);
+    // await this.pluginService.tryClosingTargetClient(this.targetClient);
   }
 }
