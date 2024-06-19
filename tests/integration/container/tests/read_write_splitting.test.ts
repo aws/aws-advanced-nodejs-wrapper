@@ -69,7 +69,7 @@ async function initConfigWithFailover(host: string, port: number, connectToProxy
   return config;
 }
 
-describe("aurora read write splitting", () => {
+describe("aurora read write splitting", async () => {
   beforeAll(async () => {
     env = await TestEnvironment.getCurrent();
     driver = DriverHelper.getDriverForDatabaseEngine(env.engine);

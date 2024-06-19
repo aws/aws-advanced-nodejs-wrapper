@@ -34,7 +34,7 @@ afterEach(async () => {
   }
 }, 1000000);
 
-describe("basic_connectivity", () => {
+describe("basic_connectivity", async () => {
   it("wrapper", async () => {
     const env = await TestEnvironment.getCurrent();
     const driver = DriverHelper.getDriverForDatabaseEngine(env.engine);
