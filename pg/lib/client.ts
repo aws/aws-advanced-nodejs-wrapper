@@ -82,7 +82,6 @@ export class AwsPGClient extends AwsClient {
     if (readOnly === this.isReadOnly()) {
       return Promise.resolve();
     }
-    const previousReadOnly: boolean = this.isReadOnly();
     let result;
     if (this.isReadOnly()) {
       result = await this.query("SET SESSION CHARACTERISTICS AS TRANSACTION READ ONLY");
