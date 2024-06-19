@@ -68,7 +68,6 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ env.TEMP_AWS_SECRET_ACCESS_KEY }}
           AWS_SESSION_TOKEN: ${{ env.TEMP_AWS_SESSION_TOKEN }}
           NUM_INSTANCES: 5
-          NODE_OPTIONS: --max_old_space_size=4096
 
       - name: Archive results
         if: always()
