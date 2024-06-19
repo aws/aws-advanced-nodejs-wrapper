@@ -92,7 +92,7 @@ describe("aurora failover", () => {
     expect(currentConnectionId).not.toBe(initialWriterId);
   }, 1000000);
 
-  it.skip("fail from reader to writer", async () => {
+  it("fail from reader to writer", async () => {
     // Connect to writer instance
     const writerConfig = await initDefaultConfig(env.proxyDatabaseInfo.clusterEndpoint, env.proxyDatabaseInfo.clusterEndpointPort, true);
     client = initClientFunc(writerConfig);
@@ -144,7 +144,7 @@ describe("aurora failover", () => {
     }
   }, 1000000);
 
-  it.skip("writer fail within transaction", async () => {
+  it("writer fail within transaction", async () => {
     const config = await initDefaultConfig(env.databaseInfo.clusterEndpoint, env.databaseInfo.clusterEndpointPort, false);
     client = initClientFunc(config);
 
@@ -189,7 +189,7 @@ describe("aurora failover", () => {
     await DriverHelper.executeQuery(env.engine, client, "DROP TABLE IF EXISTS test3_3");
   }, 1000000);
 
-  it.skip("fail from writer and transfer session state", async () => {
+  it("fail from writer and transfer session state", async () => {
     const config = await initDefaultConfig(env.databaseInfo.clusterEndpoint, env.databaseInfo.clusterEndpointPort, false);
     client = initClientFunc(config);
 

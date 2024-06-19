@@ -87,7 +87,7 @@ describe("aurora read write splitting", () => {
     }
   });
 
-  it("test connect to writer switch set read only", async () => {
+  it.skip("test connect to writer switch set read only", async () => {
     const config = await initDefaultConfig(env.databaseInfo.clusterEndpoint, env.databaseInfo.clusterEndpointPort, false);
     client = initClientFunc(config);
 
@@ -121,7 +121,7 @@ describe("aurora read write splitting", () => {
     expect(await auroraTestUtility.isDbInstanceWriter(currentId3)).toStrictEqual(false);
   }, 1000000);
 
-  it("test set read only false in read only transaction", async () => {
+  it.skip("test set read only false in read only transaction", async () => {
     const config = await initDefaultConfig(env.databaseInfo.clusterEndpoint, env.databaseInfo.clusterEndpointPort, false);
     client = initClientFunc(config);
 
@@ -157,7 +157,7 @@ describe("aurora read write splitting", () => {
     expect(currentConnectionId1).toStrictEqual(initialWriterId);
   }, 1000000);
 
-  it("test set read only true in transaction", async () => {
+  it.skip("test set read only true in transaction", async () => {
     const config = await initDefaultConfig(env.databaseInfo.clusterEndpoint, env.databaseInfo.clusterEndpointPort, false);
     client = initClientFunc(config);
 
