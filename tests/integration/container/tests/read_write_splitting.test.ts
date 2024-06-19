@@ -212,9 +212,8 @@ describe("aurora read write splitting", async () => {
 
     // Kill all instances
     await ProxyHelper.disableAllConnectivity(env.engine);
-    await client.setReadOnly(false);
     await expect(async () => {
-      await auroraTestUtility.queryInstanceId(client);
+      await client.setReadOnly(false);
     }).rejects.toThrow(AwsWrapperError);
   }, 9000000);
 
@@ -231,8 +230,11 @@ describe("aurora read write splitting", async () => {
     expect(await auroraTestUtility.isDbInstanceWriter(writerId)).toStrictEqual(true);
 
     // Kill all reader instances
-    await ProxyHelper.disableAllConnectivity(env.engine);
-    await ProxyHelper.enableConnectivity(writerId);
+    for (const host of env.proxyDatabaseInfo.instances) {
+      if (host.instanceId && host.instanceId !== writerId) {
+        await ProxyHelper.disableConnectivity(env.engine, host.instanceId);
+      }
+    }
 
     await client.setReadOnly(true); // failing here
     const currentReaderId0 = await auroraTestUtility.queryInstanceId(client);
