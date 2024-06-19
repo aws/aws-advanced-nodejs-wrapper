@@ -17,9 +17,11 @@
 import { TestEnvironment } from "./utils/test_environment";
 import { ProxyHelper } from "./utils/proxy_helper";
 import { DriverHelper } from "./utils/driver_helper";
+import { AuroraTestUtility } from "./utils/aurora_test_utility";
 import { logger } from "aws-wrapper-common-lib/logutils";
 
 let client: any;
+const auroraTestUtility = new AuroraTestUtility();
 
 beforeEach(async () => {
   await ProxyHelper.enableAllConnectivity();
@@ -30,7 +32,7 @@ afterEach(async () => {
   if (client !== null) {
     await client.end();
   }
-}, 500000);
+}, 1000000);
 
 describe("basic_connectivity", () => {
   it("wrapper", async () => {
@@ -84,7 +86,7 @@ describe("basic_connectivity", () => {
     await ProxyHelper.disableAllConnectivity(env.engine);
 
     await expect(async () => {
-      await DriverHelper.executeQuery(env.engine, client, DriverHelper.getSleepQuery(env.engine, 15));
+      await auroraTestUtility.queryInstanceId(client);
     }).rejects.toThrow();
 
     await ProxyHelper.enableAllConnectivity();

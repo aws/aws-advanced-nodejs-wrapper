@@ -66,7 +66,7 @@ describe("aurora failover", () => {
     if (client !== null) {
       await client.end();
     }
-  });
+  }, 1000000);
 
   it("fail from writer to new writer on connection invocation", async () => {
     const config = await initDefaultConfig(env.databaseInfo.clusterEndpoint, env.databaseInfo.clusterEndpointPort, false);
@@ -83,7 +83,7 @@ describe("aurora failover", () => {
     await auroraTestUtility.failoverClusterAndWaitUntilWriterChanged();
 
     await expect(async () => {
-      await DriverHelper.executeQuery(env.engine, client, DriverHelper.getSleepQuery(env.engine, 15));
+      await auroraTestUtility.queryInstanceId(client);
     }).rejects.toThrow(FailoverSuccessError);
 
     // Assert that we are connected to the new writer after failover happens
@@ -129,7 +129,7 @@ describe("aurora failover", () => {
         await ProxyHelper.disableConnectivity(env.engine, readerInstanceId);
 
         await expect(async () => {
-          await DriverHelper.executeQuery(env.engine, client, DriverHelper.getSleepQuery(env.engine, 15));
+          await auroraTestUtility.queryInstanceId(readerClient);
         }).rejects.toThrow(FailoverSuccessError);
 
         await ProxyHelper.enableConnectivity(readerInstanceId);
@@ -206,7 +206,7 @@ describe("aurora failover", () => {
     await auroraTestUtility.failoverClusterAndWaitUntilWriterChanged();
 
     await expect(async () => {
-      await DriverHelper.executeQuery(env.engine, client, DriverHelper.getSleepQuery(env.engine, 15));
+      await auroraTestUtility.queryInstanceId(client);
     }).rejects.toThrow(FailoverSuccessError);
 
     expect(client.isReadOnly()).toBe(true);
