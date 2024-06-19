@@ -83,7 +83,7 @@ export class AwsPGClient extends AwsClient {
       return Promise.resolve();
     }
     let result;
-    if (this.isReadOnly()) {
+    if (readOnly) {
       result = await this.query("SET SESSION CHARACTERISTICS AS TRANSACTION READ ONLY");
     } else {
       result = await this.query("SET SESSION CHARACTERISTICS AS TRANSACTION READ WRITE");
