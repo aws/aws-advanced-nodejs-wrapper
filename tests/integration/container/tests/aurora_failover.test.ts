@@ -50,7 +50,7 @@ async function initDefaultConfig(host: string, port: number, connectToProxy: boo
   return config;
 }
 
-describe("aurora failover", async () => {
+describe("aurora failover", () => {
   beforeAll(async () => {
     env = await TestEnvironment.getCurrent();
     driver = DriverHelper.getDriverForDatabaseEngine(env.engine);
