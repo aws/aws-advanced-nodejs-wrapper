@@ -77,7 +77,7 @@ describe("iamTests", () => {
   it("testIamWrongDatabaseUsername", async () => {
     const config = await initDefaultConfig(env.databaseInfo.clusterEndpoint);
     config["user"] = `WRONG_${env.info.databaseInfo.username}_USER`;
-    const client = initClientFunc(config);
+    const client: AwsPGClient | AwsMySQLClient = initClientFunc(config);
 
     client.on("error", (error: any) => {
       logger.error(error);
@@ -89,7 +89,7 @@ describe("iamTests", () => {
   it("testIamNoDatabaseUsername", async () => {
     const config = await initDefaultConfig(env.databaseInfo.clusterEndpoint);
     config["user"] = undefined;
-    const client = initClientFunc(config);
+    const client: AwsPGClient | AwsMySQLClient = initClientFunc(config);
 
     client.on("error", (error: any) => {
       logger.error(error);
@@ -101,7 +101,7 @@ describe("iamTests", () => {
   it("testIamInvalidHost", async () => {
     const config = await initDefaultConfig(env.databaseInfo.clusterEndpoint);
     config["iamHost"] = "<>";
-    const client = initClientFunc(config);
+    const client: AwsPGClient | AwsMySQLClient = initClientFunc(config);
 
     client.on("error", (error: any) => {
       logger.error(error);
@@ -121,7 +121,7 @@ describe("iamTests", () => {
         config["password"] = "anything";
         config["iamHost"] = instance.host;
 
-        const client = initClientFunc(config);
+        const client: AwsPGClient | AwsMySQLClient = initClientFunc(config);
 
         client.on("error", (error: any) => {
           logger.error(error);
@@ -137,7 +137,7 @@ describe("iamTests", () => {
   it("testIamValidConnectionProperties", async () => {
     const config = await initDefaultConfig(env.databaseInfo.clusterEndpoint);
     config["password"] = "anything";
-    const client = initClientFunc(config);
+    const client: AwsPGClient | AwsMySQLClient = initClientFunc(config);
 
     client.on("error", (error: any) => {
       logger.error(error);
@@ -149,7 +149,7 @@ describe("iamTests", () => {
   it("testIamValidConnectionPropertiesNoPassword", async () => {
     const config = await initDefaultConfig(env.databaseInfo.clusterEndpoint);
     config["password"] = undefined;
-    const client = initClientFunc(config);
+    const client: AwsPGClient | AwsMySQLClient = initClientFunc(config);
 
     client.on("error", (error: any) => {
       logger.error(error);
