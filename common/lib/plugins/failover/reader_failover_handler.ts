@@ -228,11 +228,11 @@ export class ClusterAwareReaderFailoverHandler implements ReaderFailoverHandler 
         }
         return tasks[0];
       })
-      .finally(() => {
+      .finally(async () => {
         if (selectedTask === 0) {
-          secondTask.performFinalCleanup();
+          await secondTask.performFinalCleanup();
         } else if (selectedTask === 1) {
-          firstTask.performFinalCleanup();
+          await firstTask.performFinalCleanup();
         }
       });
   }

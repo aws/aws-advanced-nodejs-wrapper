@@ -16,9 +16,23 @@
 
 import { TestEnvironment } from "./utils/test_environment";
 import { ProxyHelper } from "./utils/proxy_helper";
-import { AwsPGClient } from "pg-wrapper/lib/client";
-import { AwsMySQLClient } from "mysql-wrapper/lib/client";
 import { DriverHelper } from "./utils/driver_helper";
+import { AuroraTestUtility } from "./utils/aurora_test_utility";
+import { logger } from "aws-wrapper-common-lib/logutils";
+
+let client: any;
+const auroraTestUtility = new AuroraTestUtility();
+
+beforeEach(async () => {
+  await ProxyHelper.enableAllConnectivity();
+  client = null;
+});
+
+afterEach(async () => {
+  if (client !== null) {
+    await client.end();
+  }
+}, 1000000);
 
 describe("basic_connectivity", () => {
   it("wrapper", async () => {
@@ -26,7 +40,7 @@ describe("basic_connectivity", () => {
     const driver = DriverHelper.getDriverForDatabaseEngine(env.engine);
     const initClientFunc = DriverHelper.getClient(driver);
 
-    const props = {
+    let props = {
       user: env.databaseInfo.username,
       host: env.databaseInfo.instances[0].host,
       database: env.databaseInfo.default_db_name,
@@ -34,13 +48,17 @@ describe("basic_connectivity", () => {
       port: env.databaseInfo.clusterEndpointPort,
       plugins: ""
     };
-    const client: AwsPGClient | AwsMySQLClient = initClientFunc(props);
+    props = DriverHelper.addDriverSpecificConfiguration(props, env.engine);
+
+    client = initClientFunc(props);
+    client.on("error", (error: any) => {
+      logger.debug(error);
+    });
     await client.connect();
 
     const res = await DriverHelper.executeInstanceQuery(env.engine, client);
 
     expect(res).not.toBeNull();
-    await client.end();
   }, 1000000);
 
   it("wrapper_proxy", async () => {
@@ -58,17 +76,19 @@ describe("basic_connectivity", () => {
     };
     props = DriverHelper.addDriverSpecificConfiguration(props, env.engine);
 
-    const client: AwsPGClient | AwsMySQLClient = initClientFunc(props);
+    client = initClientFunc(props);
+    client.on("error", (error: any) => {
+      logger.debug(error);
+    });
 
     await client.connect();
 
     await ProxyHelper.disableAllConnectivity(env.engine);
 
     await expect(async () => {
-      await DriverHelper.executeQuery(env.engine, client, DriverHelper.getSleepQuery(env.engine, 15));
+      await auroraTestUtility.queryInstanceId(client);
     }).rejects.toThrow();
 
     await ProxyHelper.enableAllConnectivity();
-    await client.end();
   }, 1000000);
 });
