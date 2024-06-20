@@ -21,11 +21,13 @@ export class ReaderFailoverResult {
   readonly newHost: HostInfo | null;
   readonly isConnected: boolean;
   readonly exception?: Error;
+  readonly taskId?: number;
 
-  constructor(client: any | null, newHost: HostInfo | null, isConnected: boolean, exception?: Error) {
+  constructor(client: any | null, newHost: HostInfo | null, isConnected: boolean, exception?: Error, taskId?: number) {
     this.client = client;
     this.newHost = newHost;
     this.isConnected = isConnected;
     this.exception = exception;
+    this.taskId = taskId;
   }
 }
