@@ -384,6 +384,9 @@ class WaitForNewWriterHandlerTask {
             const writerCandidate = getWriter(this.currentTopology);
 
             if (writerCandidate && !this.isSame(writerCandidate, this.originalWriterHost)) {
+              logger.debug(
+                `writerHost: ${writerCandidate.host}, originalWriterHost: ${this.originalWriterHost == null ? "" : this.originalWriterHost.host}`
+              );
               // new writer is available, and it's different from the previous writer
               if (await this.connectToWriter(writerCandidate)) {
                 return true;
