@@ -382,11 +382,9 @@ class WaitForNewWriterHandlerTask {
           } else {
             this.currentTopology = topology;
             const writerCandidate = getWriter(this.currentTopology);
-
+            logger.debug(`writerCandidateHost: ${writerCandidate?.host} has role ${writerCandidate?.role}`);
+            logger.debug(`originalWriterHost: ${this.originalWriterHost?.host} has role ${this.originalWriterHost?.role}`);
             if (writerCandidate && !this.isSame(writerCandidate, this.originalWriterHost)) {
-              logger.debug(
-                `writerHost: ${writerCandidate.host}, originalWriterHost: ${this.originalWriterHost == null ? "" : this.originalWriterHost.host}`
-              );
               // new writer is available, and it's different from the previous writer
               if (await this.connectToWriter(writerCandidate)) {
                 return true;
