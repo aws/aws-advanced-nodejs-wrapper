@@ -34,10 +34,5 @@ export class SamlUtils {
     if (!url.match(SamlUtils.HTTPS_URL_PATTERN)) {
       throw new AwsWrapperError(Messages.get("AdfsCredentialsProviderFactory.invalidHttpsUrl", url));
     }
-    try {
-      new URL(url);
-    } catch (e) {
-      throw new AwsWrapperError(Messages.get("AdfsCredentialsProviderFactory.invalidHttpsUrl", url));
-    }
   }
 }

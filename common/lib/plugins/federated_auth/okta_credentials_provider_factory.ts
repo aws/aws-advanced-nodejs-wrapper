@@ -67,18 +67,17 @@ export class OktaCredentialsProviderFactory extends SamlCredentialsProviderFacto
       withCredentials: true
     };
 
+    let resp;
     try {
-      const resp = await axios.request(postConfig);
-      if (!resp.data[OktaCredentialsProviderFactory.SESSION_TOKEN]) {
-        throw new AwsWrapperError(Messages.get("OktaCredentialsProviderFactory.invalidSessionToken"));
-      }
-      return resp.data[OktaCredentialsProviderFactory.SESSION_TOKEN];
+      resp = await axios.request(postConfig);
     } catch (e: any) {
-      if (!e.response) {
-        throw e;
-      }
       throw new AwsWrapperError(Messages.get("OktaCredentialsProviderFactory.sessionTokenRequestFailed"));
     }
+    const token = resp.data[OktaCredentialsProviderFactory.SESSION_TOKEN];
+    if (!token) {
+      throw new AwsWrapperError(Messages.get("OktaCredentialsProviderFactory.invalidSessionToken"));
+    }
+    return token;
   }
 
   async getSamlAssertion(props: Map<string, any>): Promise<string> {
@@ -100,18 +99,10 @@ export class OktaCredentialsProviderFactory extends SamlCredentialsProviderFacto
       withCredentials: true
     };
 
+    let resp;
     try {
-      const resp = await axios.request(getConfig);
-      const data: string = resp.data;
-      const match = data.match(OktaCredentialsProviderFactory.SAML_RESPONSE_PATTERN);
-      if (!match) {
-        throw new AwsWrapperError(Messages.get("OktaCredentialsProviderFactory.invalidSamlResponse"));
-      }
-      return match[1];
+      resp = await axios.request(getConfig);
     } catch (e: any) {
-      if (!e.response) {
-        throw e;
-      }
       if (e.response.status / 100 != 2) {
         throw new AwsWrapperError(
           Messages.get("OktaCredentialsProviderFactory.samlRequestFailed", e.response.status, e.response.statusText, e.message)
@@ -119,5 +110,11 @@ export class OktaCredentialsProviderFactory extends SamlCredentialsProviderFacto
       }
       throw new AwsWrapperError(Messages.get("SAMLCredentialsProviderFactory.getSamlAssertionFailed", e.message));
     }
+    const data: string = resp.data;
+    const match = data.match(OktaCredentialsProviderFactory.SAML_RESPONSE_PATTERN);
+    if (!match) {
+      throw new AwsWrapperError(Messages.get("OktaCredentialsProviderFactory.invalidSamlResponse"));
+    }
+    return match[1];
   }
 }

@@ -48,9 +48,8 @@ export abstract class SamlCredentialsProviderFactory implements CredentialsProvi
         secretAccessKey: credentials.SecretAccessKey,
         sessionToken: credentials.SessionToken
       });
-    } else {
-      throw new AwsWrapperError("Credentials from SAML request not found");
     }
+    throw new AwsWrapperError("Credentials from SAML request not found");
   }
 
   abstract getSamlAssertion(props: Map<string, any>): Promise<string>;
