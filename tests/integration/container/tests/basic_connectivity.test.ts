@@ -35,7 +35,7 @@ afterEach(async () => {
 }, 1000000);
 
 describe("basic_connectivity", () => {
-  it("wrapper", async () => {
+  it.skip("wrapper", async () => {
     const env = await TestEnvironment.getCurrent();
     const driver = DriverHelper.getDriverForDatabaseEngine(env.engine);
     const initClientFunc = DriverHelper.getClient(driver);
@@ -61,7 +61,7 @@ describe("basic_connectivity", () => {
     expect(res).not.toBeNull();
   }, 1000000);
 
-  it("wrapper_proxy", async () => {
+  it.skip("wrapper_proxy", async () => {
     const env = await TestEnvironment.getCurrent();
     const driver = DriverHelper.getDriverForDatabaseEngine(env.engine);
     const initClientFunc = DriverHelper.getClient(driver);

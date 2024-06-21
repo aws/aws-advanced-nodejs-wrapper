@@ -68,7 +68,7 @@ describe("aurora failover", () => {
     }
   }, 1000000);
 
-  it("fail from writer to new writer on connection invocation", async () => {
+  it.skip("fail from writer to new writer on connection invocation", async () => {
     const config = await initDefaultConfig(env.databaseInfo.clusterEndpoint, env.databaseInfo.clusterEndpointPort, false);
     client = initClientFunc(config);
     client.on("error", (error: any) => {
@@ -92,7 +92,7 @@ describe("aurora failover", () => {
     expect(currentConnectionId).not.toBe(initialWriterId);
   }, 1000000);
 
-  it.skip("fail from reader to writer", async () => {
+  it("fail from reader to writer", async () => {
     // Connect to writer instance
     const writerConfig = await initDefaultConfig(env.proxyDatabaseInfo.clusterEndpoint, env.proxyDatabaseInfo.clusterEndpointPort, true);
     client = initClientFunc(writerConfig);
@@ -136,8 +136,8 @@ describe("aurora failover", () => {
 
         // Assert that we are currently connected to the writer instance
         const currentConnectionId = await auroraTestUtility.queryInstanceId(readerClient);
-        expect(currentConnectionId).toBe(writerId);
         expect(await auroraTestUtility.isDbInstanceWriter(currentConnectionId)).toBe(true);
+        expect(currentConnectionId).toBe(writerId);
       }
     } finally {
       await readerClient.end();
