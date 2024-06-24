@@ -54,7 +54,7 @@ export class ConnectionPluginChainBuilder {
     ["iam", { factory: IamAuthenticationPluginFactory, weight: 1000 }],
     ["secretsManager", { factory: AwsSecretsManagerPluginFactory, weight: 1100 }],
     ["federatedAuth", { factory: FederatedAuthPluginFactory, weight: 1200 }],
-    ["okta", { factory: OktaAuthPluginFactory, weight: 1200 }],
+    ["okta", { factory: OktaAuthPluginFactory, weight: 1300 }],
     ["connectTime", { factory: ConnectTimePluginFactory, weight: ConnectionPluginChainBuilder.WEIGHT_RELATIVE_TO_PRIOR_PLUGIN }],
     ["executeTime", { factory: ExecuteTimePluginFactory, weight: ConnectionPluginChainBuilder.WEIGHT_RELATIVE_TO_PRIOR_PLUGIN }]
   ]);
