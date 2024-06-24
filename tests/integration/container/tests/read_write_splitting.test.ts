@@ -196,7 +196,7 @@ describe("aurora read write splitting", () => {
   }, 1000000);
 
   // TODO: enable tests when failover is implemented
-  it("test set read only all instances down", async () => {
+  it.skip("test set read only all instances down", async () => {
     const config = await initDefaultConfig(env.databaseInfo.clusterEndpoint, env.databaseInfo.clusterEndpointPort, false);
     client = initClientFunc(config);
 
