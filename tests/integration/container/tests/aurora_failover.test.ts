@@ -33,8 +33,6 @@ let initClientFunc: (props: any) => any;
 const auroraTestUtility = new AuroraTestUtility();
 
 async function initDefaultConfig(host: string, port: number, connectToProxy: boolean): Promise<any> {
-  const env = await TestEnvironment.getCurrent();
-
   let config: any = {
     user: env.databaseInfo.username,
     host: host,
@@ -52,13 +50,11 @@ async function initDefaultConfig(host: string, port: number, connectToProxy: boo
 }
 
 describe("aurora failover", () => {
-  beforeAll(async () => {
+  beforeEach(async () => {
+    logger.info(`Test started: ${expect.getState().currentTestName}`);
     env = await TestEnvironment.getCurrent();
     driver = DriverHelper.getDriverForDatabaseEngine(env.engine);
     initClientFunc = DriverHelper.getClient(driver);
-  });
-
-  beforeEach(async () => {
     await ProxyHelper.enableAllConnectivity();
     client = null;
     secondaryClient = null;
@@ -71,9 +67,11 @@ describe("aurora failover", () => {
     if (secondaryClient !== null) {
       await secondaryClient.end();
     }
+    await TestEnvironment.resetCurrent();
+    logger.info(`Test finished: ${expect.getState().currentTestName}`);
   }, 1000000);
 
-  it("fail from writer to new writer on connection invocation", async () => {
+  it("fails from writer to new writer on connection invocation", async () => {
     const config = await initDefaultConfig(env.databaseInfo.clusterEndpoint, env.databaseInfo.clusterEndpointPort, false);
     client = initClientFunc(config);
     client.on("error", (error: any) => {
@@ -97,7 +95,7 @@ describe("aurora failover", () => {
     expect(currentConnectionId).not.toBe(initialWriterId);
   }, 1000000);
 
-  it("fail from reader to writer", async () => {
+  it("fails from reader to writer", async () => {
     // Connect to writer instance
     const writerConfig = await initDefaultConfig(env.proxyDatabaseInfo.clusterEndpoint, env.proxyDatabaseInfo.clusterEndpointPort, true);
     client = initClientFunc(writerConfig);
@@ -117,7 +115,6 @@ describe("aurora failover", () => {
     if (!readerInstanceHost) {
       throw new Error("Could not find a reader instance");
     }
-
     const readerConfig = await initDefaultConfig(readerInstanceHost, env.proxyDatabaseInfo.clusterEndpointPort, true);
 
     secondaryClient = initClientFunc(readerConfig);
@@ -147,7 +144,7 @@ describe("aurora failover", () => {
     }
   }, 1000000);
 
-  it("writer fail within transaction", async () => {
+  it("writer fails within transaction", async () => {
     const config = await initDefaultConfig(env.databaseInfo.clusterEndpoint, env.databaseInfo.clusterEndpointPort, false);
     client = initClientFunc(config);
 
@@ -192,7 +189,7 @@ describe("aurora failover", () => {
     await DriverHelper.executeQuery(env.engine, client, "DROP TABLE IF EXISTS test3_3");
   }, 1000000);
 
-  it("fail from writer and transfer session state", async () => {
+  it("fails from writer and transfers session state", async () => {
     const config = await initDefaultConfig(env.databaseInfo.clusterEndpoint, env.databaseInfo.clusterEndpointPort, false);
     client = initClientFunc(config);
 
@@ -201,11 +198,13 @@ describe("aurora failover", () => {
     });
 
     await client.connect();
-    await client.setReadOnly(true);
-
     const initialWriterId = await auroraTestUtility.queryInstanceId(client);
+    expect(await auroraTestUtility.isDbInstanceWriter(initialWriterId)).toBe(true);
 
-    // Crash instance 1 and nominate a new writer
+    await client.setReadOnly(true);
+    const writerId = await auroraTestUtility.queryInstanceId(client);
+
+    // Failover cluster and nominate a new writer
     await auroraTestUtility.failoverClusterAndWaitUntilWriterChanged();
 
     await expect(async () => {

@@ -23,6 +23,7 @@ import { TestProxyDatabaseInfo } from "./test_proxy_database_info";
 import { TestDatabaseInfo } from "./test_database_info";
 import { DatabaseEngine } from "./database_engine";
 import { TestDriver } from "./test_driver";
+import { logger } from "aws-wrapper-common-lib/logutils";
 
 export class TestEnvironment {
   private static env?: TestEnvironment;
@@ -40,6 +41,10 @@ export class TestEnvironment {
     }
 
     return TestEnvironment.env;
+  }
+
+  static async resetCurrent() {
+    TestEnvironment.env = undefined;
   }
 
   static async create() {

@@ -47,7 +47,7 @@ export class MySQLDatabaseDialect implements DatabaseDialect {
         return rows[0]["CONCAT(@@hostname, ':', @@port)"];
       })
       .catch((error: any) => {
-        throw new AwsWrapperError("Unable to fetch host alias or could not parse results: ", error);
+        throw new AwsWrapperError("Unable to fetch host alias or could not parse results: ", error.message);
       });
   }
 

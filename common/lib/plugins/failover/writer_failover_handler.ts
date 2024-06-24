@@ -245,8 +245,8 @@ class ReconnectToWriterHandlerTask {
           });
         }
       }
-
       success = isCurrentHostWriter(latestTopology, this.originalWriterHost);
+
       this.pluginService.setAvailability(this.originalWriterHost.allAliases, HostAvailability.AVAILABLE);
       return new WriterFailoverResult(success, false, latestTopology, "TaskA", success ? this.currentClient : null);
     } catch (error) {
