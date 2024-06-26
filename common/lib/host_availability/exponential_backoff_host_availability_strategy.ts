@@ -63,7 +63,7 @@ export class ExponentialBackoffHostAvailabilityStrategy implements HostAvailabil
     }
 
     const retryDelayMillis = Math.pow(2, this.notAvailableCount) * this.initialBackoffTimeSeconds * 1000;
-    const earliestRetry = new Date(this.lastChanged.getTime() + Math.round(retryDelayMillis));
+    const earliestRetry = new Date(this.lastChanged.getTime() + retryDelayMillis);
     const now = new Date();
     if (earliestRetry.getTime() < now.getTime()) {
       return HostAvailability.AVAILABLE;
