@@ -52,6 +52,7 @@ describe("reader failover handler", () => {
     for (let i = 0; i < hosts.length; i++) {
       if (i !== successHostIndex) {
         when(mockPluginService.forceConnect(hosts[i], anything())).thenThrow(new AwsWrapperError("Rejecting test"));
+        when(mockPluginService.isNetworkError(anything())).thenReturn(true);
       } else {
         when(mockPluginService.forceConnect(hosts[i], anything())).thenReturn(mockTargetClient);
       }

@@ -23,7 +23,6 @@ import { HostListProvider } from "./host_list_provider/host_list_provider";
 import { ConnectionUrlParser } from "./utils/connection_url_parser";
 import { DatabaseDialect, DatabaseType } from "./database_dialect/database_dialect";
 import { HostInfoBuilder } from "./host_info_builder";
-import { SimpleHostAvailabilityStrategy } from "./host_availability/simple_host_availability_strategy";
 import { AwsWrapperError } from "./utils/errors";
 import { HostAvailability } from "./host_availability/host_availability";
 import { CacheMap } from "./utils/cache_map";
@@ -36,6 +35,7 @@ import { DatabaseDialectManager } from "./database_dialect/database_dialect_mana
 import { SqlMethodUtils } from "./utils/sql_method_utils";
 import { SessionStateService } from "./session_state_service";
 import { SessionStateServiceImpl } from "./session_state_service_impl";
+import { HostAvailabilityStrategyFactory } from "./host_availability/host_availability_strategy_factory";
 
 export class PluginService implements ErrorHandler, HostListProviderService {
   private readonly _currentClient: AwsClient;
@@ -128,8 +128,7 @@ export class PluginService implements ErrorHandler, HostListProviderService {
   }
 
   getHostInfoBuilder(): HostInfoBuilder {
-    // TODO: use the availability factory to create the strategy
-    return new HostInfoBuilder({ hostAvailabilityStrategy: new SimpleHostAvailabilityStrategy() });
+    return new HostInfoBuilder({ hostAvailabilityStrategy: new HostAvailabilityStrategyFactory().create(this.props) });
   }
 
   isStaticHostListProvider(): boolean {
@@ -201,7 +200,7 @@ export class PluginService implements ErrorHandler, HostListProviderService {
     return changes;
   }
 
-  private setHostList(oldHosts: HostInfo[], newHosts: HostInfo[]) {
+  private async setHostList(oldHosts: HostInfo[], newHosts: HostInfo[]) {
     const oldHostMap: Map<string, HostInfo> = new Map(oldHosts.map((e) => [e.url, e]));
     const newHostMap: Map<string, HostInfo> = new Map(newHosts.map((e) => [e.url, e]));
 

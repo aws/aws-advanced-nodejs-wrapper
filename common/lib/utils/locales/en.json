@@ -106,5 +106,7 @@
   "FederatedAuthPlugin.unhandledException": "Unhandled exception: '%s'",
   "FederatedAuthPlugin.unsupportedHostname": "Unsupported AWS hostname '%s'. Amazon domain name in format *.AWS-Region.rds.amazonaws.com or *.rds.AWS-Region.amazonaws.com.cn is expected.",
   "FederatedAuthPlugin.useCachedIamToken": "Use cached IAM token = '%s'",
-  "FederatedAuthPluginFactory.unsupportedIdp": "Unsupported Identity Provider '%s'. Please visit to the documentation for supported Identity Providers."
+  "FederatedAuthPluginFactory.unsupportedIdp": "Unsupported Identity Provider '%s'. Please visit to the documentation for supported Identity Providers.",
+  "HostAvailabilityStrategy.invalidMaxRetries": "Invalid value of '%s' for configuration parameter `hostAvailabilityStrategyMaxRetries`. It must be an integer greater than 1.",
+  "HostAvailabilityStrategy.invalidInitialBackoffTime": "Invalid value of '%s'  for configuration parameter `hostAvailabilityStrategyInitialBackoffTime`. It must be an integer greater than 1."
 }

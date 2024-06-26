@@ -74,6 +74,22 @@ export class WrapperProperties {
     true
   );
 
+  static readonly DEFAULT_HOST_AVAILABILITY_STRATEGY = new WrapperProperty<string>(
+    "defaultHostAvailabilityStrategy",
+    "An override for specifying the default host availability change strategy.",
+    null
+  );
+  static readonly HOST_AVAILABILITY_STRATEGY_MAX_RETRIES = new WrapperProperty<number>(
+    "hostAvailabilityStrategyMaxRetries",
+    "Max number of retries for checking a host's availability.",
+    5
+  );
+  static readonly HOST_AVAILABILITY_STRATEGY_INITIAL_BACKOFF_TIME = new WrapperProperty<number>(
+    "hostAvailabilityStrategyInitialBackoffTime",
+    "The initial backoff time in seconds.",
+    30
+  );
+
   static readonly IAM_HOST = new WrapperProperty<string>("iamHost", "Overrides the host that is used to generate the IAM token", null);
   static readonly IAM_DEFAULT_PORT = new WrapperProperty<number>(
     "iamDefaultPort",
