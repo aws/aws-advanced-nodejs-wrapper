@@ -200,7 +200,7 @@ export class PluginService implements ErrorHandler, HostListProviderService {
     return changes;
   }
 
-  private async setHostList(oldHosts: HostInfo[], newHosts: HostInfo[]) {
+  private setHostList(oldHosts: HostInfo[], newHosts: HostInfo[]) {
     const oldHostMap: Map<string, HostInfo> = new Map(oldHosts.map((e) => [e.url, e]));
     const newHostMap: Map<string, HostInfo> = new Map(newHosts.map((e) => [e.url, e]));
 
