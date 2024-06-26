@@ -25,14 +25,14 @@
     ]
   },
   "devDependencies": {
-    "@aws-sdk/client-secrets-manager": "^3.598.0",
+    "@aws-sdk/client-secrets-manager": "^3.600.0",
     "@aws-sdk/client-sts": "^3.598.0",
     "@aws-sdk/credential-providers": "^3.598.0",
-    "@aws-sdk/rds-signer": "^3.598.0",
+    "@aws-sdk/rds-signer": "^3.600.0",
     "@types/i18n": "^0.13.12",
     "@types/jest": "^29.5.12",
     "@types/lodash": "^4.17.5",
-    "@types/node": "^20.14.2",
+    "@types/node": "^20.14.8",
     "@types/node-fetch": "^2.6.11",
     "@types/pg": "^8.11.6",
     "@types/tough-cookie": "^4.0.5",
@@ -62,7 +62,7 @@
     "ts-jest": "^29.1.4",
     "ts-mockito": "^2.6.1",
     "ts-node": "^10.9.2",
-    "tsx": "^4.15.4",
+    "tsx": "^4.15.7",
     "typescript": "^5.4.5"
   },
   "overrides": {
