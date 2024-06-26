@@ -69,8 +69,8 @@ export class OktaAuthPlugin extends AbstractConnectionPlugin {
     } else {
       await this.updateAuthenticationToken(hostInfo, props, region, cacheKey);
     }
-    this.pluginService.updateConfigWithProperties(props);
     WrapperProperties.USER.set(props, WrapperProperties.DB_USER.get(props));
+    this.pluginService.updateConfigWithProperties(props);
 
     try {
       return await connectFunc();
@@ -82,7 +82,7 @@ export class OktaAuthPlugin extends AbstractConnectionPlugin {
         await this.updateAuthenticationToken(hostInfo, props, region, cacheKey);
         return await connectFunc();
       } catch (e: any) {
-        throw new AwsWrapperError(Messages.get("SamlAuthPlugin.unhandledException", e));
+        throw new AwsWrapperError(Messages.get("SamlAuthPlugin.unhandledException", e.message));
       }
     }
   }
@@ -93,7 +93,7 @@ export class OktaAuthPlugin extends AbstractConnectionPlugin {
     const port = IamAuthUtils.getIamPort(props, hostInfo, this.pluginService.getDialect().getDefaultPort());
     const token = await IamAuthUtils.generateAuthenticationToken(
       hostInfo.host,
-      port,
+      port + 1,
       region,
       WrapperProperties.DB_USER.get(props),
       await this.credentialsProviderFactory.getAwsCredentialsProvider(hostInfo.host, region, props)

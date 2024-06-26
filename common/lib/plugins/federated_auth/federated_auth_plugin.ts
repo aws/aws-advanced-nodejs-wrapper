@@ -72,8 +72,8 @@ export class FederatedAuthPlugin extends AbstractConnectionPlugin {
     } else {
       await this.updateAuthenticationToken(hostInfo, props, region, cacheKey);
     }
-    this.pluginService.updateConfigWithProperties(props);
     WrapperProperties.USER.set(props, WrapperProperties.DB_USER.get(props));
+    this.pluginService.updateConfigWithProperties(props);
 
     try {
       return await connectFunc();
@@ -85,7 +85,7 @@ export class FederatedAuthPlugin extends AbstractConnectionPlugin {
         await this.updateAuthenticationToken(hostInfo, props, region, cacheKey);
         return await connectFunc();
       } catch (e: any) {
-        throw new AwsWrapperError(Messages.get("SamlAuthPlugin.unhandledException", e));
+        throw new AwsWrapperError(Messages.get("SamlAuthPlugin.unhandledException", e.message));
       }
     }
   }

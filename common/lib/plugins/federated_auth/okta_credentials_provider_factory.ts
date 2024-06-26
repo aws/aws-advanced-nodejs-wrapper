@@ -28,10 +28,6 @@ export class OktaCredentialsProviderFactory extends SamlCredentialsProviderFacto
   private static readonly SESSION_TOKEN = "sessionToken";
   private static readonly SAML_RESPONSE_PATTERN = new RegExp('SAMLResponse(?:.|\\n)*value="(?<saml>[^"]+)"');
 
-  constructor() {
-    super();
-  }
-
   getSamlUrl(props: Map<string, any>) {
     const idpHost = WrapperProperties.IDP_ENDPOINT.get(props);
     const appId = WrapperProperties.APP_ID.get(props);
@@ -103,7 +99,7 @@ export class OktaCredentialsProviderFactory extends SamlCredentialsProviderFacto
     try {
       resp = await axios.request(getConfig);
     } catch (e: any) {
-      if (e.response.status / 100 != 2) {
+      if (Math.floor(e.response.status / 100) !== 2) {
         throw new AwsWrapperError(
           Messages.get("OktaCredentialsProviderFactory.samlRequestFailed", e.response.status, e.response.statusText, e.message)
         );

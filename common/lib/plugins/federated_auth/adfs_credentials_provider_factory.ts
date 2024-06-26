@@ -31,10 +31,6 @@ export class AdfsCredentialsProviderFactory extends SamlCredentialsProviderFacto
   private static readonly FORM_ACTION_PATTERN = new RegExp('<form.*?action="([^"]+)"');
   private static readonly SAML_RESPONSE_PATTERN = new RegExp('SAMLResponse\\W+value="(?<saml>[^"]+)"');
 
-  constructor() {
-    super();
-  }
-
   async getSamlAssertion(props: Map<string, any>): Promise<string> {
     try {
       let uri = this.getSignInPageUrl(props);
