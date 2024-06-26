@@ -21,11 +21,12 @@ import { ExponentialBackoffHostAvailabilityStrategy } from "./exponential_backof
 
 export class HostAvailabilityStrategyFactory {
   public create(props: Map<string, any>): HostAvailabilityStrategy {
-    if (!props || !WrapperProperties.DEFAULT_HOST_AVAILABILITY_STRATEGY.get(props)) {
+    const defaultStrategy = WrapperProperties.DEFAULT_HOST_AVAILABILITY_STRATEGY.get(props);
+    const exponentialName = ExponentialBackoffHostAvailabilityStrategy.NAME;
+
+    if (!props || !defaultStrategy) {
       return new SimpleHostAvailabilityStrategy();
-    } else if (
-      ExponentialBackoffHostAvailabilityStrategy.NAME.toUpperCase() === WrapperProperties.DEFAULT_HOST_AVAILABILITY_STRATEGY.get(props).toUpperCase()
-    ) {
+    } else if (exponentialName.toUpperCase() === defaultStrategy.toUpperCase()) {
       return new ExponentialBackoffHostAvailabilityStrategy(props);
     }
     return new SimpleHostAvailabilityStrategy();

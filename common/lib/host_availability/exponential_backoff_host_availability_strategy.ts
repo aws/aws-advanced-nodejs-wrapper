@@ -30,6 +30,7 @@ export class ExponentialBackoffHostAvailabilityStrategy implements HostAvailabil
   constructor(props: Map<string, any>) {
     const retries = WrapperProperties.HOST_AVAILABILITY_STRATEGY_MAX_RETRIES.get(props);
     const backoffTime = WrapperProperties.HOST_AVAILABILITY_STRATEGY_INITIAL_BACKOFF_TIME.get(props);
+
     if (retries < 1) {
       throw new IllegalArgumentError(Messages.get("HostAvailabilityStrategy.invalidMaxRetries", retries.toString()));
     }
@@ -38,8 +39,8 @@ export class ExponentialBackoffHostAvailabilityStrategy implements HostAvailabil
     if (backoffTime < 1) {
       throw new IllegalArgumentError(Messages.get("HostAvailabilityStrategy.invalidInitialBackoffTime", backoffTime.toString()));
     }
-    this.initialBackoffTimeSeconds = backoffTime;
 
+    this.initialBackoffTimeSeconds = backoffTime;
     this.lastChanged = new Date();
   }
 

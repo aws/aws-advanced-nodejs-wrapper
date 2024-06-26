@@ -32,7 +32,7 @@ describe("exponentialBackoffTests", () => {
     const actualHostAvailability = availabilityStrategy.getHostAvailability(HostAvailability.AVAILABLE);
     const expectedHostAvailability = HostAvailability.AVAILABLE;
 
-    expect(expectedHostAvailability).toBe(actualHostAvailability);
+    expect(actualHostAvailability).toBe(expectedHostAvailability);
   });
 
   it("testGetHostAvailabilityMaxRetriesExceeded", async () => {
@@ -48,7 +48,7 @@ describe("exponentialBackoffTests", () => {
     const actualHostAvailability = availabilityStrategy.getHostAvailability(HostAvailability.NOT_AVAILABLE);
     const expectedHostAvailability = HostAvailability.NOT_AVAILABLE;
 
-    expect(expectedHostAvailability).toBe(actualHostAvailability);
+    expect(actualHostAvailability).toBe(expectedHostAvailability);
   });
 
   it("testGetHostAvailabilityPastThreshold", async () => {
@@ -60,7 +60,7 @@ describe("exponentialBackoffTests", () => {
     const actualHostAvailability = availabilityStrategy.getHostAvailability(HostAvailability.NOT_AVAILABLE);
     const expectedHostAvailability = HostAvailability.AVAILABLE;
 
-    expect(expectedHostAvailability).toBe(actualHostAvailability);
+    expect(actualHostAvailability).toBe(expectedHostAvailability);
   });
 
   it("testGetHostAvailabilityBeforeThreshold", async () => {
@@ -72,7 +72,7 @@ describe("exponentialBackoffTests", () => {
     const actualHostAvailability = availabilityStrategy.getHostAvailability(HostAvailability.NOT_AVAILABLE);
     const expectedHostAvailability = HostAvailability.NOT_AVAILABLE;
 
-    expect(expectedHostAvailability).toBe(actualHostAvailability);
+    expect(actualHostAvailability).toBe(expectedHostAvailability);
   });
 
   it("testConstructorThrowsWhenInvalidMaxRetries", async () => {

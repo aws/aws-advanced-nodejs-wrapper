@@ -29,6 +29,7 @@ const hostUrl = "someHostUrl";
 
 describe("testHostInfoBuilder", () => {
   let availabilityStrategy: HostAvailabilityStrategy;
+
   beforeEach(() => {
     availabilityStrategy = new SimpleHostAvailabilityStrategy();
   });
