@@ -83,7 +83,7 @@ describe("iamTests", () => {
       logger.error(error);
     });
 
-    await expect(client.connect()).rejects.toThrow("test");
+    await expect(client.connect()).rejects.toThrow("??? non valid error");
   }, 100000);
 
   it("testIamNoDatabaseUsername", async () => {
