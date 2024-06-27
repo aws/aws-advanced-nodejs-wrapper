@@ -17,7 +17,7 @@
 import { TestEnvironment } from "./utils/test_environment";
 import { DriverHelper } from "./utils/driver_helper";
 import { AuroraTestUtility } from "./utils/aurora_test_utility";
-import { FailoverSuccessError, TransactionResolutionUnknownError } from "aws-wrapper-common-lib/lib/utils/errors";
+import { FailoverFailedError, FailoverSuccessError, TransactionResolutionUnknownError } from "aws-wrapper-common-lib/lib/utils/errors";
 import { DatabaseEngine } from "./utils/database_engine";
 import { QueryResult } from "pg";
 import { ProxyHelper } from "./utils/proxy_helper";
@@ -84,7 +84,7 @@ describe("aurora failover", () => {
 
     await expect(async () => {
       await auroraTestUtility.queryInstanceId(client);
-    }).rejects.toThrow(FailoverSuccessError);
+    }).rejects.toThrow(FailoverFailedError);
 
     // Assert that we are connected to the new writer after failover happens
     const currentConnectionId = await auroraTestUtility.queryInstanceId(client);
@@ -130,7 +130,7 @@ describe("aurora failover", () => {
 
         await expect(async () => {
           await auroraTestUtility.queryInstanceId(readerClient);
-        }).rejects.toThrow(FailoverSuccessError);
+        }).rejects.toThrow(FailoverFailedError);
 
         await ProxyHelper.enableConnectivity(readerInstanceId);
 
@@ -167,7 +167,7 @@ describe("aurora failover", () => {
 
     await expect(async () => {
       await DriverHelper.executeQuery(env.engine, client, "INSERT INTO test3_3 VALUES (2, 'test field string 2')");
-    }).rejects.toThrow(TransactionResolutionUnknownError);
+    }).rejects.toThrow(FailoverFailedError);
 
     // Attempt to query the instance id.
     const currentConnectionId = await auroraTestUtility.queryInstanceId(client);
@@ -208,7 +208,7 @@ describe("aurora failover", () => {
 
     await expect(async () => {
       await auroraTestUtility.queryInstanceId(client);
-    }).rejects.toThrow(FailoverSuccessError);
+    }).rejects.toThrow(FailoverFailedError);
 
     expect(client.isReadOnly()).toBe(true);
 

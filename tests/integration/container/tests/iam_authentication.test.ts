@@ -16,7 +16,7 @@
 
 import { TestEnvironment } from "./utils/test_environment";
 import { DriverHelper } from "./utils/driver_helper";
-import { AwsWrapperError } from "aws-wrapper-common-lib/lib/utils/errors";
+import { AwsWrapperError, FailoverSuccessError } from "aws-wrapper-common-lib/lib/utils/errors";
 import { promisify } from "util";
 import { lookup } from "dns";
 import { readFileSync } from "fs";
@@ -57,7 +57,7 @@ async function validateConnection(client: AwsPGClient | AwsMySQLClient) {
   try {
     await client.connect();
     const res = await DriverHelper.executeQuery(env.engine, client, "select 1");
-    expect(res).not.toBeNull();
+    expect(res).toBeNull();
   } finally {
     await client.end();
   }
@@ -83,7 +83,7 @@ describe("iamTests", () => {
       logger.error(error);
     });
 
-    await expect(client.connect()).rejects.toThrow();
+    await expect(client.connect()).rejects.toThrow("test");
   }, 100000);
 
   it("testIamNoDatabaseUsername", async () => {
@@ -95,7 +95,7 @@ describe("iamTests", () => {
       logger.error(error);
     });
 
-    await expect(client.connect()).rejects.toBeInstanceOf(AwsWrapperError);
+    await expect(client.connect()).rejects.toBeInstanceOf(FailoverSuccessError);
   }, 100000);
 
   it("testIamInvalidHost", async () => {
@@ -107,7 +107,7 @@ describe("iamTests", () => {
       logger.error(error);
     });
 
-    await expect(client.connect()).rejects.toBeInstanceOf(AwsWrapperError);
+    await expect(client.connect()).rejects.toBeInstanceOf(FailoverSuccessError);
   }, 100000);
 
   // Currently, PG cannot connect to an IP address with SSL enabled, skip if PG

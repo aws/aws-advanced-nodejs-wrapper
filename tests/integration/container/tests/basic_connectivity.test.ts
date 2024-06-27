@@ -41,7 +41,7 @@ describe("basic_connectivity", () => {
     const initClientFunc = DriverHelper.getClient(driver);
 
     let props = {
-      user: env.databaseInfo.username,
+      user: env.databaseInfo.password,
       host: env.databaseInfo.instances[0].host,
       database: env.databaseInfo.default_db_name,
       password: env.databaseInfo.password,
@@ -67,7 +67,7 @@ describe("basic_connectivity", () => {
     const initClientFunc = DriverHelper.getClient(driver);
 
     let props = {
-      user: env.databaseInfo.username,
+      user: env.databaseInfo.password,
       host: env.proxyDatabaseInfo.instances[0].host,
       database: env.databaseInfo.default_db_name,
       password: env.databaseInfo.password,
