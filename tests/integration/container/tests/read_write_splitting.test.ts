@@ -196,7 +196,7 @@ describe("aurora read write splitting", () => {
   }, 1000000);
 
   // TODO: enable tests when failover is implemented
-  it.skip("test set read only all instances down", async () => {
+  it("test set read only all instances down", async () => {
     const config = await initDefaultConfig(env.databaseInfo.clusterEndpoint, env.databaseInfo.clusterEndpointPort, false);
     client = initClientFunc(config);
 
@@ -217,7 +217,7 @@ describe("aurora read write splitting", () => {
     }).rejects.toThrow(AwsWrapperError);
   }, 9000000);
 
-  it.skip("test set read only all readers down", async () => {
+  it("test set read only all readers down", async () => {
     // Connect to writer instance
     const config = await initDefaultConfig(env.proxyDatabaseInfo.clusterEndpoint, env.proxyDatabaseInfo.clusterEndpointPort, true);
     client = initClientFunc(config);
@@ -250,7 +250,7 @@ describe("aurora read write splitting", () => {
     expect(currentReaderId2).not.toBe(writerId);
   }, 1000000);
 
-  it.skip("test failover to new writer set read only true false", async () => {
+  it("test failover to new writer set read only true false", async () => {
     // Connect to writer instance
     const writerConfig = await initConfigWithFailover(env.proxyDatabaseInfo.clusterEndpoint, env.proxyDatabaseInfo.clusterEndpointPort, true);
     client = initClientFunc(writerConfig);
@@ -294,7 +294,7 @@ describe("aurora read write splitting", () => {
     expect(currentId).toStrictEqual(newWriterId);
   }, 1000000);
 
-  it.skip("test failover to new reader set read only false true", async () => {
+  it("test failover to new reader set read only false true", async () => {
     // Connect to writer instance
     const writerConfig = await initConfigWithFailover(env.proxyDatabaseInfo.clusterEndpoint, env.proxyDatabaseInfo.clusterEndpointPort, true);
     client = initClientFunc(writerConfig);
@@ -350,7 +350,7 @@ describe("aurora read write splitting", () => {
     expect(currentReaderId2).toStrictEqual(otherReaderId);
   }, 1000000);
 
-  it.skip("test failover to new writer set read only true false", async () => {
+  it("test failover to new writer set read only true false", async () => {
     // Connect to writer instance
     const writerConfig = await initConfigWithFailover(env.proxyDatabaseInfo.clusterEndpoint, env.proxyDatabaseInfo.clusterEndpointPort, true);
     client = initClientFunc(writerConfig);
