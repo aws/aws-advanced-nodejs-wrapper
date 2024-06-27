@@ -93,7 +93,7 @@ export class OktaAuthPlugin extends AbstractConnectionPlugin {
     const port = IamAuthUtils.getIamPort(props, hostInfo, this.pluginService.getDialect().getDefaultPort());
     const token = await IamAuthUtils.generateAuthenticationToken(
       hostInfo.host,
-      port + 1,
+      port,
       region,
       WrapperProperties.DB_USER.get(props),
       await this.credentialsProviderFactory.getAwsCredentialsProvider(hostInfo.host, region, props)
