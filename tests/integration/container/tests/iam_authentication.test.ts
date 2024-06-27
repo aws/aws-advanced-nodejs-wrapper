@@ -112,7 +112,7 @@ describe("iamTests", () => {
 
   // Currently, PG cannot connect to an IP address with SSL enabled, skip if PG
   it("testIamUsingIpAddress", async () => {
-    if (env.engine === "MYSQL") {
+    // if (env.engine === "MYSQL") {
       const instance = env.writer;
       if (instance.host) {
         const ip = await getIpAddress(instance.host);
@@ -131,7 +131,7 @@ describe("iamTests", () => {
       } else {
         throw new AwsWrapperError("Host not found");
       }
-    }
+    // }
   }, 100000);
 
   it("testIamValidConnectionProperties", async () => {
