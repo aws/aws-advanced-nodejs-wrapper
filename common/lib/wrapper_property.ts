@@ -48,6 +48,13 @@ export class WrapperProperties {
     "Comma separated list of connection plugin codes",
     WrapperProperties.DEFAULT_PLUGINS
   );
+
+  static readonly AUTO_SORT_PLUGIN_ORDER = new WrapperProperty<boolean>(
+    "autoSortWrapperPluginOrder",
+    "This flag is enabled by default, meaning that the plugins order will be automatically adjusted. Disable it at your own risk or if you really need plugins to be executed in a particular order.",
+    true
+  );
+
   static readonly USER = new WrapperProperty<string>("user", "Database user name", null);
   static readonly PASSWORD = new WrapperProperty<string>("password", "Database password", null);
   static readonly DATABASE = new WrapperProperty<string>("database", "Database name", null);

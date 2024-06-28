@@ -164,6 +164,7 @@ public class ContainerHelper {
         .withFileSystemBind("../../../pg", "/app/pg", BindMode.READ_ONLY)
         .withFileSystemBind("../../../mysql", "/app/mysql", BindMode.READ_ONLY)
         .withFileSystemBind("../../../common", "/app/common", BindMode.READ_ONLY)
+        .withFileSystemBind("../../../tests/integration/host/src/test/resources/global-bundle.pem", "/app/global-bundle.pem", BindMode.READ_ONLY)
         .withFileSystemBind("../../../jest.integration.config.json", "/app/jest.integration.config.json", BindMode.READ_ONLY)
         .withFileSystemBind("../../../tsconfig.json", "/app/tsconfig.json", BindMode.READ_ONLY)
         .withFileSystemBind("../../../package.json", "/app/package.json", BindMode.READ_ONLY)
