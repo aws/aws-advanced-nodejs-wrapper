@@ -350,7 +350,7 @@ describe("aurora read write splitting", () => {
     expect(currentReaderId2).toStrictEqual("???");
   }, 1000000);
 
-  it.skip("test failover to new writer set read only true false", async () => {
+  it("test failover to new writer set read only true false", async () => {
     // Connect to writer instance
     const writerConfig = await initConfigWithFailover(env.proxyDatabaseInfo.clusterEndpoint, env.proxyDatabaseInfo.clusterEndpointPort, true);
     client = initClientFunc(writerConfig);
