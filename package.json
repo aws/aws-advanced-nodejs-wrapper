@@ -69,7 +69,7 @@
     "ts-mockito": "^2.6.1",
     "ts-node": "^10.9.2",
     "tsx": "^4.15.7",
-    "typescript": "^5.4.5",
+    "typescript": "^5.5.2",
     "winston": "3.11.0"
   },
   "overrides": {
