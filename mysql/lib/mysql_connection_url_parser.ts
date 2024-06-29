@@ -14,7 +14,7 @@
   limitations under the License.
 */
 
-import { ConnectionUrlParser } from "aws-wrapper-common-lib/lib/utils/connection_url_parser";
+import { ConnectionUrlParser } from "../../common/lib/utils/connection_url_parser";
 
 export class MySQLConnectionUrlParser extends ConnectionUrlParser {
   /**

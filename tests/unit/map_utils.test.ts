@@ -30,7 +30,7 @@
   limitations under the License.
 */
 
-import { MapUtils as MapUtils } from "aws-wrapper-common-lib/lib/utils/map_utils";
+import { MapUtils as MapUtils } from "../../common/lib/utils/map_utils";
 import { spy, verify } from "ts-mockito";
 
 class SomeClass {

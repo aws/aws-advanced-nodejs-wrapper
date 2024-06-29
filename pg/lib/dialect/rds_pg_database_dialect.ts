@@ -15,7 +15,7 @@
 */
 
 import { PgDatabaseDialect } from "./pg_database_dialect";
-import { DatabaseDialectCodes } from "aws-wrapper-common-lib/lib/database_dialect/database_dialect_codes";
+import { DatabaseDialectCodes } from "../../../common/lib/database_dialect/database_dialect_codes";
 
 export class RdsPgDatabaseDialect extends PgDatabaseDialect {
   private static readonly EXTENSIONS_SQL: string =

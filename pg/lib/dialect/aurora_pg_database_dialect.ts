@@ -15,13 +15,13 @@
 */
 
 import { PgDatabaseDialect } from "./pg_database_dialect";
-import { HostListProviderService } from "aws-wrapper-common-lib/lib/host_list_provider_service";
-import { HostListProvider } from "aws-wrapper-common-lib/lib/host_list_provider/host_list_provider";
-import { RdsHostListProvider } from "aws-wrapper-common-lib/lib/host_list_provider/rds_host_list_provider";
-import { TopologyAwareDatabaseDialect } from "aws-wrapper-common-lib/lib/topology_aware_database_dialect";
-import { HostInfo } from "aws-wrapper-common-lib/lib/host_info";
-import { AwsClient } from "aws-wrapper-common-lib/lib/aws_client";
-import { HostRole } from "aws-wrapper-common-lib/lib/host_role";
+import { HostListProviderService } from "../../../common/lib/host_list_provider_service";
+import { HostListProvider } from "../../../common/lib/host_list_provider/host_list_provider";
+import { RdsHostListProvider } from "../../../common/lib/host_list_provider/rds_host_list_provider";
+import { TopologyAwareDatabaseDialect } from "../../../common/lib/topology_aware_database_dialect";
+import { HostInfo } from "../../../common/lib/host_info";
+import { AwsClient } from "../../../common/lib/aws_client";
+import { HostRole } from "../../../common/lib/host_role";
 
 export class AuroraPgDatabaseDialect extends PgDatabaseDialect implements TopologyAwareDatabaseDialect {
   private static readonly TOPOLOGY_QUERY: string =

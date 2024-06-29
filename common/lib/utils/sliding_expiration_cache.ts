@@ -15,7 +15,7 @@
 */
 
 import { MapUtils } from "./map_utils";
-import { getTimeInNanos } from "aws-wrapper-common-lib/lib/utils/utils";
+import { getTimeInNanos } from "./utils";
 
 class CacheItem<V> {
   readonly item: V;

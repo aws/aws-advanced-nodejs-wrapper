@@ -14,7 +14,7 @@
   limitations under the License.
 */
 
-import { WrapperProperties } from "aws-wrapper-common-lib/lib/wrapper_property";
+import { WrapperProperties } from "../../common/lib/wrapper_property";
 import { readFileSync } from "fs";
 import { anything, instance, mock, spy, when } from "ts-mockito";
 import { AdfsCredentialsProviderFactory } from "../../common/lib/plugins/federated_auth/adfs_credentials_provider_factory";

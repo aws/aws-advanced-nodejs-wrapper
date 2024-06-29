@@ -14,17 +14,17 @@
   limitations under the License.
 */
 
-import { PluginService } from "aws-wrapper-common-lib/lib/plugin_service";
-import { IamAuthenticationPlugin } from "aws-wrapper-common-lib/lib/authentication/iam_authentication_plugin";
-import { HostInfoBuilder } from "aws-wrapper-common-lib/lib/host_info_builder";
-import { SimpleHostAvailabilityStrategy } from "aws-wrapper-common-lib/lib/host_availability/simple_host_availability_strategy";
-import { HostInfo } from "aws-wrapper-common-lib/lib/host_info";
-import { AwsClient } from "aws-wrapper-common-lib/lib/aws_client";
-import { AwsWrapperError } from "aws-wrapper-common-lib/lib/utils/errors";
-import { WrapperProperties } from "aws-wrapper-common-lib/lib/wrapper_property";
+import { PluginService } from "../../common/lib/plugin_service";
+import { IamAuthenticationPlugin } from "../../common/lib/authentication/iam_authentication_plugin";
+import { HostInfoBuilder } from "../../common/lib/host_info_builder";
+import { SimpleHostAvailabilityStrategy } from "../../common/lib/host_availability/simple_host_availability_strategy";
+import { HostInfo } from "../../common/lib/host_info";
+import { AwsClient } from "../../common/lib/aws_client";
+import { AwsWrapperError } from "../../common/lib/utils/errors";
+import { WrapperProperties } from "../../common/lib/wrapper_property";
 import fetch from "node-fetch";
 import { anything, instance, mock, spy, when } from "ts-mockito";
-import { IamAuthUtils, TokenInfo } from "aws-wrapper-common-lib/lib/utils/iam_auth_utils";
+import { IamAuthUtils, TokenInfo } from "../../common/lib/utils/iam_auth_utils";
 
 const GENERATED_TOKEN: string = "generatedToken";
 const TEST_TOKEN: string = "testToken";

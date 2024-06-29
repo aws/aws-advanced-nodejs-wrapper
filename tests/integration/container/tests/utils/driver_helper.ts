@@ -15,10 +15,10 @@
 */
 
 import { TestDriver } from "./test_driver";
-import { AwsMySQLClient } from "mysql-wrapper/lib/client";
-import { AwsPGClient } from "pg-wrapper/lib/client";
+import { AwsMySQLClient } from "../../../../../mysql/lib";
+import { AwsPGClient } from "../../../../../pg/lib";
 import { DatabaseEngine } from "./database_engine";
-import { AwsClient } from "aws-wrapper-common-lib/lib/aws_client";
+import { AwsClient } from "../../../../../common/lib/aws_client";
 
 export class DriverHelper {
   static getClient(driver: TestDriver) {

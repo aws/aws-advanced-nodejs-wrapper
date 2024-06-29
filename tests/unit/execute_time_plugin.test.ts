@@ -14,8 +14,8 @@
   limitations under the License.
 */
 
-import { ExecuteTimePlugin } from "aws-wrapper-common-lib/lib/plugins/execute_time_plugin";
-import { sleep } from "aws-wrapper-common-lib/lib/utils/utils";
+import { ExecuteTimePlugin } from "../../common/lib/plugins/execute_time_plugin";
+import { sleep } from "../../common/lib/utils/utils";
 
 const mockCallable = jest.fn();
 const timeToSleepMs = 1000;
