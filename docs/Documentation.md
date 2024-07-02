@@ -5,3 +5,4 @@
   - [Plugins](./using-the-nodejs-wrapper/UsingTheNodejsWrapper.md#plugins)
     - [Okta Authentication Plugin](./using-the-nodejs-wrapper/using-plugins/UsingTheOktaAuthPlugin.md)
     - [Federated Authentication Plugin](./using-the-nodejs-wrapper/using-plugins/UsingTheFederatedAuthPlugin.md)
+    - [Iam Authentication Plugin](./using-the-nodejs-wrapper/using-plugins/UsingTheIamAuthenticationPlugin.md)
