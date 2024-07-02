@@ -23,10 +23,7 @@ import { WrapperProperties } from "../../wrapper_property";
 import { logger } from "../../../logutils";
 import { AwsWrapperError } from "../../utils/errors";
 import { Messages } from "../../utils/messages";
-import { ConnectionPlugin } from "../../connection_plugin";
-import { AdfsCredentialsProviderFactory } from "./adfs_credentials_provider_factory";
 import { CredentialsProviderFactory } from "./credentials_provider_factory";
-import { ConnectionPluginFactory } from "../../plugin_factory";
 
 export class FederatedAuthPlugin extends AbstractConnectionPlugin {
   protected static readonly tokenCache = new Map<string, TokenInfo>();
@@ -117,15 +114,5 @@ export class FederatedAuthPlugin extends AbstractConnectionPlugin {
 
   public static clearCache(): void {
     this.tokenCache.clear();
-  }
-}
-
-export class FederatedAuthPluginFactory implements ConnectionPluginFactory {
-  getInstance(pluginService: PluginService, properties: Map<string, any>): ConnectionPlugin {
-    return new FederatedAuthPlugin(pluginService, this.getCredentialsProviderFactory(properties));
-  }
-
-  private getCredentialsProviderFactory(properties: Map<string, any>): CredentialsProviderFactory {
-    return new AdfsCredentialsProviderFactory();
   }
 }
