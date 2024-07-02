@@ -11,6 +11,12 @@ The AWS Advanced NodeJS Wrapper supports Amazon AWS Identity and Access Manageme
 
 IAM database authentication use is limited to certain database engines. For more information on limitations and recommendations, please [review the IAM documentation](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/UsingWithRDS.IAMDBAuth.html).
 
+## Prerequisites
+
+This plugin requires valid AWS credentials. See more details at [AWS Credentials Configuration](../custom-configuration/AwsCredentialsConfiguration.md)
+
+To enable the IAM Authentication Connection Plugin, add the plugin code `iam` to the [`plugins`](../UsingTheNodejsWrapper.md#connection-plugin-manager-parameters) value.
+
 ## How do I use IAM with the AWS Advanced NodeJS Wrapper?
 
 1. Enable AWS IAM database authentication on an existing database or create a new database with AWS IAM database authentication on the AWS RDS Console:
@@ -18,11 +24,9 @@ IAM database authentication use is limited to certain database engines. For more
    2. If needed, review the documentation about [modifying an existing database](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/Overview.DBInstance.Modifying.html).
 2. Set up an [AWS IAM policy](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/UsingWithRDS.IAMDBAuth.IAMPolicy.html) for AWS IAM database authentication.
 3. [Create a database account](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/UsingWithRDS.IAMDBAuth.DBAccounts.html) using AWS IAM database authentication. This will be the user specified in the connection string or connection properties.
-   1. Connect to your database of choice using primary logins.
-      1. For a MySQL database, use the following command to create a new user:<br>
-         `CREATE USER example_user_name IDENTIFIED WITH AWSAuthenticationPlugin AS 'RDS';`
-      2. For a PostgreSQL database, use the following command to create a new user:<br>
-         `CREATE USER db_userx;
+   1. Connect to your database of choice using primary logins. 1. For a MySQL database, use the following command to create a new user:<br>
+      `CREATE USER example_user_name IDENTIFIED WITH AWSAuthenticationPlugin AS 'RDS';` 2. For a PostgreSQL database, use the following command to create a new user:<br>
+      `CREATE USER db_userx;
 GRANT rds_iam TO db_userx;`
 4. Add the plugin code `iam` to the [`plugins`](../UsingTheNodejsWrapper.md#connection-plugin-manager-parameters) connection parameter.
 
