@@ -33,7 +33,7 @@ export class IamAuthUtils {
     if (port > 0) {
       return port;
     } else {
-      logger.debug(Messages.get("IamAuthenticationPlugin.invalidPort", isNaN(port) ? "-1" : String(port)));
+      logger.debug(Messages.get("Authentication.invalidPort", isNaN(port) ? "-1" : String(port)));
     }
 
     if (hostInfo.isPortSpecified()) {

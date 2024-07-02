@@ -74,8 +74,9 @@ export class OktaAuthPlugin extends AbstractConnectionPlugin {
 
     try {
       return await connectFunc();
-    } catch (e) {
+    } catch (e: any) {
       if (!this.pluginService.isLoginError(e as Error) || !isCachedToken) {
+        logger.debug(Messages.get("Authentication.connectException", e.message));
         throw e;
       }
       try {
@@ -104,6 +105,6 @@ export class OktaAuthPlugin extends AbstractConnectionPlugin {
   }
 
   public static clearCache(): void {
-    this.tokenCache.clear();
+    OktaAuthPlugin.tokenCache.clear();
   }
 }
