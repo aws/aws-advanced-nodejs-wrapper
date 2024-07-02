@@ -15,9 +15,9 @@
 */
 
 import { instance, spy } from "ts-mockito";
-import { WrapperProperties } from "aws-wrapper-common-lib/lib/wrapper_property";
+import { WrapperProperties } from "../../common/lib/wrapper_property";
 import { readFileSync } from "fs";
-import { OktaCredentialsProviderFactory } from "aws-wrapper-common-lib/lib/plugins/federated_auth/okta_credentials_provider_factory";
+import { OktaCredentialsProviderFactory } from "../../common/lib/plugins/federated_auth/okta_credentials_provider_factory";
 import axios from "axios";
 
 const username = "someFederatedUsername@example.com";

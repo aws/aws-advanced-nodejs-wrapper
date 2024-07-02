@@ -14,15 +14,15 @@
   limitations under the License.
 */
 
-import { OktaAuthPlugin } from "aws-wrapper-common-lib/lib/plugins/federated_auth/okta_auth_plugin";
 import { anything, instance, mock, spy, verify, when } from "ts-mockito";
-import { PluginService } from "aws-wrapper-common-lib/lib/plugin_service";
-import { CredentialsProviderFactory } from "aws-wrapper-common-lib/lib/plugins/federated_auth/credentials_provider_factory";
-import { IamAuthUtils, TokenInfo } from "aws-wrapper-common-lib/lib/utils/iam_auth_utils";
-import { HostInfo } from "aws-wrapper-common-lib/lib/host_info";
-import { WrapperProperties } from "aws-wrapper-common-lib/lib/wrapper_property";
-import { DatabaseDialect } from "aws-wrapper-common-lib/lib/database_dialect/database_dialect";
+import { PluginService } from "../../common/lib/plugin_service";
+import { CredentialsProviderFactory } from "../../common/lib/plugins/federated_auth/credentials_provider_factory";
+import { IamAuthUtils, TokenInfo } from "../../common/lib/utils/iam_auth_utils";
+import { HostInfo } from "../../common/lib/host_info";
+import { WrapperProperties } from "../../common/lib/wrapper_property";
+import { DatabaseDialect } from "../../common/lib/database_dialect/database_dialect";
 import { Credentials } from "aws-sdk";
+import { OktaAuthPlugin } from "../../common/lib/plugins/federated_auth/okta_auth_plugin";
 
 const defaultPort = 1234;
 const hostInfo = new HostInfo("pg.testdb.us-east-2.rds.amazonaws.com", defaultPort);
