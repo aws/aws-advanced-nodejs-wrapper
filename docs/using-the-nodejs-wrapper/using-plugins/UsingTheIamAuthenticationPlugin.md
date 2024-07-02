@@ -11,12 +11,6 @@ The AWS Advanced NodeJS Wrapper supports Amazon AWS Identity and Access Manageme
 
 IAM database authentication use is limited to certain database engines. For more information on limitations and recommendations, please [review the IAM documentation](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/UsingWithRDS.IAMDBAuth.html).
 
-## Prerequisites
-
-This plugin requires valid AWS credentials. See more details at [AWS Credentials Configuration](../custom-configuration/AwsCredentialsConfiguration.md)
-
-To enable the IAM Authentication Connection Plugin, add the plugin code `iam` to the [`plugins`](../UsingTheNodejsWrapper.md#connection-plugin-manager-parameters) value.
-
 ## How do I use IAM with the AWS Advanced NodeJS Wrapper?
 
 1. Enable AWS IAM database authentication on an existing database or create a new database with AWS IAM database authentication on the AWS RDS Console:
