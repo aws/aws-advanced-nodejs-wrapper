@@ -8,7 +8,7 @@ It is possible to use the AWS Advanced NodeJS Wrapper with plain RDS databases, 
 
 ## Getting a Connection
 
-To get a connection from the AWS Advanced NodeJS Wrapper, the user application can create a client object and connect. For example, to connect to a MySQL database, an AwsMySQLClient is required:
+To get a connection from the AWS Advanced NodeJS Wrapper, the user application can create a client object and connect. Additional parameters can be specified within the client configuration. Configuration parameters defined by the supported clients can also be set here. For example, to connect to a MySQL database, an AwsMySQLClient is required:
 
 ```typescript
 const client = new AwsMySQLClient({
