@@ -149,7 +149,7 @@ describe("iamTests", () => {
     await validateConnection(client);
   }, 100000);
 
-  it.skip("testIamValidConnectionPropertiesNoPassword", async () => {
+  it("testIamValidConnectionPropertiesNoPassword", async () => {
     const config = await initDefaultConfig(env.databaseInfo.clusterEndpoint);
     config["password"] = undefined;
     const client: AwsPGClient | AwsMySQLClient = initClientFunc(config);
