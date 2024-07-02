@@ -18,10 +18,11 @@ IAM database authentication use is limited to certain database engines. For more
    2. If needed, review the documentation about [modifying an existing database](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/Overview.DBInstance.Modifying.html).
 2. Set up an [AWS IAM policy](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/UsingWithRDS.IAMDBAuth.IAMPolicy.html) for AWS IAM database authentication.
 3. [Create a database account](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/UsingWithRDS.IAMDBAuth.DBAccounts.html) using AWS IAM database authentication. This will be the user specified in the connection string or connection properties.
-   1. Connect to your database of choice using primary logins. 1. For a MySQL database, use the following command to create a new user:<br>
-      `CREATE USER example_user_name IDENTIFIED WITH AWSAuthenticationPlugin AS 'RDS';` 2. For a PostgreSQL database, use the following command to create a new user:<br>
-      `CREATE USER db_userx;
-GRANT rds_iam TO db_userx;`
+   1. Connect to your database of choice using primary logins.
+      1. For a MySQL database, use the following command to create a new user:<br>
+         `CREATE USER example_user_name IDENTIFIED WITH AWSAuthenticationPlugin AS 'RDS';`
+      2. For a PostgreSQL database, use the following command to create a new user:<br>
+         `CREATE USER db_userx; GRANT rds_iam TO db_userx;`
 4. Add the plugin code `iam` to the [`plugins`](../UsingTheNodejsWrapper.md#connection-plugin-manager-parameters) connection parameter.
 
 | Parameter            | Value    | Required | Description                                                                                                                                                                                                                                        | Default Value | Example Value                                       |
