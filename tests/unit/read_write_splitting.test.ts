@@ -14,22 +14,22 @@
   limitations under the License.
 */
 
-import { AwsClient } from "aws-wrapper-common-lib/lib/aws_client";
-import { HostInfo } from "aws-wrapper-common-lib/lib/host_info";
-import { HostInfoBuilder } from "aws-wrapper-common-lib/lib/host_info_builder";
-import { HostRole } from "aws-wrapper-common-lib/lib/host_role";
-import { PluginService } from "aws-wrapper-common-lib/lib/plugin_service";
-import { AwsWrapperError, FailoverSuccessError } from "aws-wrapper-common-lib/lib/utils/errors";
-import { AwsMySQLClient } from "../../mysql";
+import { AwsClient } from "../../common/lib/aws_client";
+import { HostInfo } from "../../common/lib/host_info";
+import { HostInfoBuilder } from "../../common/lib/host_info_builder";
+import { HostRole } from "../../common/lib/host_role";
+import { PluginService } from "../../common/lib/plugin_service";
+import { AwsWrapperError, FailoverSuccessError } from "../../common/lib/utils/errors";
+import { AwsMySQLClient } from "../../mysql/lib";
 import { anything, instance, mock, reset, verify, when } from "ts-mockito";
-import { HostListProviderService } from "aws-wrapper-common-lib/lib/host_list_provider_service";
-import { ReadWriteSplittingPlugin } from "aws-wrapper-common-lib/lib/plugins/read_write_splitting";
-import { SimpleHostAvailabilityStrategy } from "aws-wrapper-common-lib/lib/host_availability/simple_host_availability_strategy";
-import { MySQLDatabaseDialect } from "mysql-wrapper/lib/dialect/mysql_database_dialect";
-import { HostChangeOptions } from "aws-wrapper-common-lib/lib/host_change_options";
-import { OldConnectionSuggestionAction } from "aws-wrapper-common-lib/lib/old_connection_suggestion_action";
-import { HostListProvider } from "aws-wrapper-common-lib/lib/host_list_provider/host_list_provider";
-import { WrapperProperties } from "aws-wrapper-common-lib/lib/wrapper_property";
+import { HostListProviderService } from "../../common/lib/host_list_provider_service";
+import { ReadWriteSplittingPlugin } from "../../common/lib/plugins/read_write_splitting";
+import { SimpleHostAvailabilityStrategy } from "../../common/lib/host_availability/simple_host_availability_strategy";
+import { MySQLDatabaseDialect } from "../../mysql/lib/dialect/mysql_database_dialect";
+import { HostChangeOptions } from "../../common/lib/host_change_options";
+import { OldConnectionSuggestionAction } from "../../common/lib/old_connection_suggestion_action";
+import { HostListProvider } from "../../common/lib/host_list_provider/host_list_provider";
+import { WrapperProperties } from "../../common/lib/wrapper_property";
 
 const properties: Map<string, any> = new Map();
 const builder = new HostInfoBuilder({ hostAvailabilityStrategy: new SimpleHostAvailabilityStrategy() });

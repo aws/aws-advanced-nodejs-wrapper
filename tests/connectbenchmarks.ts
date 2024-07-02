@@ -18,10 +18,9 @@ import dotenv from "dotenv";
 import { add, cycle, suite, save, complete } from "benny";
 import pkg from "pg";
 const { Client } = pkg;
-// import { createConnection } from "mysql2";
 import mysql from "mysql2/promise";
-import AwsPGClient from "pg-wrapper/lib/client";
-import AwsMySQLClient from "mysql-wrapper/lib/client";
+import { AwsPGClient } from "../pg/lib";
+import { AwsMySQLClient } from "../mysql/lib";
 
 dotenv.config();
 

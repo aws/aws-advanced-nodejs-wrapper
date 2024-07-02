@@ -17,12 +17,12 @@
 import { TestEnvironment } from "./utils/test_environment";
 import { DriverHelper } from "./utils/driver_helper";
 import { AuroraTestUtility } from "./utils/aurora_test_utility";
-import { FailoverSuccessError, TransactionResolutionUnknownError } from "aws-wrapper-common-lib/lib/utils/errors";
+import { FailoverSuccessError, TransactionResolutionUnknownError } from "../../../../common/lib/utils/errors";
 import { DatabaseEngine } from "./utils/database_engine";
 import { QueryResult } from "pg";
 import { ProxyHelper } from "./utils/proxy_helper";
-import { RdsUtils } from "aws-wrapper-common-lib/lib/utils/rds_utils";
-import { logger } from "aws-wrapper-common-lib/logutils";
+import { RdsUtils } from "../../../../common/lib/utils/rds_utils";
+import { logger } from "../../../../common/logutils";
 
 let env: TestEnvironment;
 let driver;

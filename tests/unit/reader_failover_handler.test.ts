@@ -14,14 +14,13 @@
   limitations under the License.
 */
 
-import { HostInfo } from "aws-wrapper-common-lib/lib/host_info";
-import { PluginService } from "aws-wrapper-common-lib/lib/plugin_service";
-import { ClusterAwareReaderFailoverHandler } from "aws-wrapper-common-lib/lib/plugins/failover/reader_failover_handler";
-import { AwsClient } from "aws-wrapper-common-lib/lib/aws_client";
-import { HostAvailability } from "aws-wrapper-common-lib/lib/host_availability/host_availability";
-import { HostRole } from "aws-wrapper-common-lib/lib/host_role";
-import { sleep } from "aws-wrapper-common-lib/lib/utils/utils";
-import { AwsWrapperError } from "aws-wrapper-common-lib/lib/utils/errors";
+import { HostInfo } from "../../common/lib/host_info";
+import { PluginService } from "../../common/lib/plugin_service";
+import { ClusterAwareReaderFailoverHandler } from "../../common/lib/plugins/failover/reader_failover_handler";
+import { AwsClient } from "../../common/lib/aws_client";
+import { HostAvailability } from "../../common/lib/host_availability/host_availability";
+import { HostRole } from "../../common/lib/host_role";
+import { AwsWrapperError } from "../../common/lib/utils/errors";
 import { mock, instance, when, anything, verify, reset } from "ts-mockito";
 
 const host1 = new HostInfo("writer", 1234);

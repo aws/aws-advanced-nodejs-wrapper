@@ -15,12 +15,12 @@
 */
 
 import { anything, instance, mock, reset, spy, verify, when } from "ts-mockito";
-import { SessionStateServiceImpl } from "aws-wrapper-common-lib/lib/session_state_service_impl";
-import { PluginService } from "aws-wrapper-common-lib/lib/plugin_service";
-import { AwsPGClient } from "pg-wrapper";
-import { SessionStateService } from "aws-wrapper-common-lib/lib/session_state_service";
-import { AwsClient } from "aws-wrapper-common-lib/lib/aws_client";
-import { AwsMySQLClient } from "mysql-wrapper";
+import { SessionStateServiceImpl } from "../../common/lib/session_state_service_impl";
+import { PluginService } from "../../common/lib/plugin_service";
+import { AwsPGClient } from "../../pg/lib";
+import { SessionStateService } from "../../common/lib/session_state_service";
+import { AwsClient } from "../../common/lib/aws_client";
+import { AwsMySQLClient } from "../../mysql/lib";
 
 const mockPluginService = mock(PluginService);
 let awsPGClient: AwsClient;

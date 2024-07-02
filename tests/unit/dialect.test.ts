@@ -14,19 +14,19 @@
   limitations under the License.
 */
 
-import { MySQLDatabaseDialect } from "mysql-wrapper/lib/dialect/mysql_database_dialect";
-import { PgDatabaseDialect } from "pg-wrapper/lib/dialect/pg_database_dialect";
-import { AuroraPgDatabaseDialect } from "pg-wrapper/lib/dialect/aurora_pg_database_dialect";
-import { AuroraMySQLDatabaseDialect } from "mysql-wrapper/lib/dialect/aurora_mysql_database_dialect";
-import { RdsMySQLDatabaseDialect } from "mysql-wrapper/lib/dialect/rds_mysql_database_dialect";
-import { RdsPgDatabaseDialect } from "pg-wrapper/lib/dialect/rds_pg_database_dialect";
-import { DatabaseDialect, DatabaseType } from "aws-wrapper-common-lib/lib/database_dialect/database_dialect";
-import { DatabaseDialectCodes } from "aws-wrapper-common-lib/lib/database_dialect/database_dialect_codes";
-import { DatabaseDialectManager } from "aws-wrapper-common-lib/lib/database_dialect/database_dialect_manager";
-import { PluginService } from "aws-wrapper-common-lib/lib/plugin_service";
-import { PluginServiceManagerContainer } from "aws-wrapper-common-lib/lib/plugin_service_manager_container";
-import { AwsPGClient } from "pg-wrapper";
-import { WrapperProperties } from "aws-wrapper-common-lib/lib/wrapper_property";
+import { MySQLDatabaseDialect } from "../../mysql/lib/dialect/mysql_database_dialect";
+import { PgDatabaseDialect } from "../../pg/lib/dialect/pg_database_dialect";
+import { AuroraPgDatabaseDialect } from "../../pg/lib/dialect/aurora_pg_database_dialect";
+import { AuroraMySQLDatabaseDialect } from "../../mysql/lib/dialect/aurora_mysql_database_dialect";
+import { RdsMySQLDatabaseDialect } from "../../mysql/lib/dialect/rds_mysql_database_dialect";
+import { RdsPgDatabaseDialect } from "../../pg/lib/dialect/rds_pg_database_dialect";
+import { DatabaseDialect, DatabaseType } from "../../common/lib/database_dialect/database_dialect";
+import { DatabaseDialectCodes } from "../../common/lib/database_dialect/database_dialect_codes";
+import { DatabaseDialectManager } from "../../common/lib/database_dialect/database_dialect_manager";
+import { PluginService } from "../../common/lib/plugin_service";
+import { PluginServiceManagerContainer } from "../../common/lib/plugin_service_manager_container";
+import { AwsPGClient } from "../../pg/lib";
+import { WrapperProperties } from "../../common/lib/wrapper_property";
 
 const mysqlDialect = new MySQLDatabaseDialect();
 const rdsMysqlDialect = new RdsMySQLDatabaseDialect();

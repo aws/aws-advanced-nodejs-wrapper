@@ -14,20 +14,20 @@
   limitations under the License.
 */
 
-import { RdsHostListProvider } from "aws-wrapper-common-lib/lib/host_list_provider/rds_host_list_provider";
+import { RdsHostListProvider } from "../../common/lib/host_list_provider/rds_host_list_provider";
 import { anyFunction, anyString, anything, instance, mock, spy, verify, when } from "ts-mockito";
-import { HostListProviderService } from "aws-wrapper-common-lib/lib/host_list_provider_service";
-import { PluginService } from "aws-wrapper-common-lib/lib/plugin_service";
-import { AwsClient } from "aws-wrapper-common-lib/lib/aws_client";
-import { HostInfo } from "aws-wrapper-common-lib/lib/host_info";
-import { HostInfoBuilder } from "aws-wrapper-common-lib/lib/host_info_builder";
-import { SimpleHostAvailabilityStrategy } from "aws-wrapper-common-lib/lib/host_availability/simple_host_availability_strategy";
-import { ConnectionUrlParser } from "aws-wrapper-common-lib/lib/utils/connection_url_parser";
-import { AwsPGClient } from "pg-wrapper";
-import { AwsWrapperError } from "aws-wrapper-common-lib/lib/utils/errors";
-import { sleep } from "aws-wrapper-common-lib/lib/utils/utils";
-import { HostRole } from "aws-wrapper-common-lib/lib/host_role";
-import { AuroraPgDatabaseDialect } from "pg-wrapper/lib/dialect/aurora_pg_database_dialect";
+import { HostListProviderService } from "../../common/lib/host_list_provider_service";
+import { PluginService } from "../../common/lib/plugin_service";
+import { AwsClient } from "../../common/lib/aws_client";
+import { HostInfo } from "../../common/lib/host_info";
+import { HostInfoBuilder } from "../../common/lib/host_info_builder";
+import { SimpleHostAvailabilityStrategy } from "../../common/lib/host_availability/simple_host_availability_strategy";
+import { ConnectionUrlParser } from "../../common/lib/utils/connection_url_parser";
+import { AwsPGClient } from "../../pg/lib";
+import { AwsWrapperError } from "../../common/lib/utils/errors";
+import { sleep } from "../../common/lib/utils/utils";
+import { HostRole } from "../../common/lib/host_role";
+import { AuroraPgDatabaseDialect } from "../../pg/lib/dialect/aurora_pg_database_dialect";
 
 const mockClient: AwsClient = mock(AwsPGClient);
 const mockDialect: AuroraPgDatabaseDialect = mock(AuroraPgDatabaseDialect);

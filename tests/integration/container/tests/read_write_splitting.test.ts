@@ -17,11 +17,11 @@
 import { TestEnvironment } from "./utils/test_environment";
 import { DriverHelper } from "./utils/driver_helper";
 import { AuroraTestUtility } from "./utils/aurora_test_utility";
-import { AwsWrapperError, FailoverSuccessError } from "aws-wrapper-common-lib/lib/utils/errors";
+import { AwsWrapperError, FailoverSuccessError } from "../../../../common/lib/utils/errors";
 import { DatabaseEngine } from "./utils/database_engine";
 import { QueryResult } from "pg";
 import { ProxyHelper } from "./utils/proxy_helper";
-import { logger } from "aws-wrapper-common-lib/logutils";
+import { logger } from "../../../../common/logutils";
 
 let env: TestEnvironment;
 let driver;

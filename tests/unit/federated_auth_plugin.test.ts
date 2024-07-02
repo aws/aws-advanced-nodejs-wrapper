@@ -14,14 +14,14 @@
   limitations under the License.
 */
 
-import { HostInfo } from "aws-wrapper-common-lib/lib/host_info";
-import { FederatedAuthPlugin } from "aws-wrapper-common-lib/lib/plugins/federated_auth/federated_auth_plugin";
-import { PluginService } from "aws-wrapper-common-lib/lib/plugin_service";
-import { IamAuthUtils, TokenInfo } from "aws-wrapper-common-lib/lib/utils/iam_auth_utils";
-import { WrapperProperties } from "aws-wrapper-common-lib/lib/wrapper_property";
+import { HostInfo } from "../../common/lib/host_info";
+import { FederatedAuthPlugin } from "../../common/lib/plugins/federated_auth/federated_auth_plugin";
+import { PluginService } from "../../common/lib/plugin_service";
+import { IamAuthUtils, TokenInfo } from "../../common/lib/utils/iam_auth_utils";
+import { WrapperProperties } from "../../common/lib/wrapper_property";
 import { anything, instance, mock, spy, when } from "ts-mockito";
 import { CredentialsProviderFactory } from "../../common/lib/plugins/federated_auth/credentials_provider_factory";
-import { DatabaseDialect } from "aws-wrapper-common-lib/lib/database_dialect/database_dialect";
+import { DatabaseDialect } from "../../common/lib/database_dialect/database_dialect";
 import { Credentials } from "aws-sdk";
 
 const testToken = "testToken";

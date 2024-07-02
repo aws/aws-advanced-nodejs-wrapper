@@ -14,13 +14,13 @@
   limitations under the License.
 */
 
-import { HostChangeOptions } from "aws-wrapper-common-lib/lib/host_change_options";
-import { OldConnectionSuggestionAction } from "aws-wrapper-common-lib/lib/old_connection_suggestion_action";
-import { PluginManager } from "aws-wrapper-common-lib/lib/plugin_manager";
-import { PluginServiceManagerContainer } from "aws-wrapper-common-lib/lib/plugin_service_manager_container";
-import { DefaultPlugin } from "aws-wrapper-common-lib/lib/plugins/default_plugin";
+import { HostChangeOptions } from "../../common/lib/host_change_options";
+import { OldConnectionSuggestionAction } from "../../common/lib/old_connection_suggestion_action";
+import { PluginManager } from "../../common/lib";
+import { PluginServiceManagerContainer } from "../../common/lib/plugin_service_manager_container";
+import { DefaultPlugin } from "../../common/lib/plugins/default_plugin";
 import { instance, mock } from "ts-mockito";
-import { PluginService } from "aws-wrapper-common-lib/lib/plugin_service";
+import { PluginService } from "../../common/lib/plugin_service";
 
 class TestPlugin extends DefaultPlugin {
   counter: number = 0;

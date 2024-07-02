@@ -15,15 +15,15 @@
 */
 
 import { SecretsManagerServiceException, SecretsManagerClient } from "@aws-sdk/client-secrets-manager";
-import { AwsSecretsManagerPlugin, Secret, SecretCacheKey } from "aws-wrapper-common-lib/lib/authentication/aws_secrets_manager_plugin";
-import { AwsClient } from "aws-wrapper-common-lib/lib/aws_client";
-import { SimpleHostAvailabilityStrategy } from "aws-wrapper-common-lib/lib/host_availability/simple_host_availability_strategy";
-import { HostInfo } from "aws-wrapper-common-lib/lib/host_info";
-import { HostInfoBuilder } from "aws-wrapper-common-lib/lib/host_info_builder";
-import { PluginService } from "aws-wrapper-common-lib/lib/plugin_service";
-import { AwsWrapperError } from "aws-wrapper-common-lib/lib/utils/errors";
-import { Messages } from "aws-wrapper-common-lib/lib/utils/messages";
-import { WrapperProperties } from "aws-wrapper-common-lib/lib/wrapper_property";
+import { AwsSecretsManagerPlugin, Secret, SecretCacheKey } from "../../common/lib/authentication/aws_secrets_manager_plugin";
+import { AwsClient } from "../../common/lib/aws_client";
+import { SimpleHostAvailabilityStrategy } from "../../common/lib/host_availability/simple_host_availability_strategy";
+import { HostInfo } from "../../common/lib/host_info";
+import { HostInfoBuilder } from "../../common/lib/host_info_builder";
+import { PluginService } from "../../common/lib/plugin_service";
+import { AwsWrapperError } from "../../common/lib/utils/errors";
+import { Messages } from "../../common/lib/utils/messages";
+import { WrapperProperties } from "../../common/lib/wrapper_property";
 import { anything, instance, mock, reset, verify, when } from "ts-mockito";
 
 const secretsManagerClientException: SecretsManagerServiceException = new SecretsManagerServiceException({
