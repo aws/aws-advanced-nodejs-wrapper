@@ -11,6 +11,13 @@ The AWS Advanced NodeJS Wrapper supports Amazon AWS Identity and Access Manageme
 
 IAM database authentication use is limited to certain database engines. For more information on limitations and recommendations, please [review the IAM documentation](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/UsingWithRDS.IAMDBAuth.html).
 
+## Prerequisites
+
+- This plugin requires the following packages to be installed:
+  - [@aws-sdk/rds-signer](https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/Package/-aws-sdk-rds-signer/)
+  - [@smithy/types](https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/Package/-smithy-types/)
+  - [@aws-sdk/credential-providers](https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/Package/-aws-sdk-credential-providers/)
+
 ## How do I use IAM with the AWS Advanced NodeJS Wrapper?
 
 1. Enable AWS IAM database authentication on an existing database or create a new database with AWS IAM database authentication on the AWS RDS Console:
@@ -25,9 +32,14 @@ IAM database authentication use is limited to certain database engines. For more
          `CREATE USER db_userx; GRANT rds_iam TO db_userx;`
 4. Add the plugin code `iam` to the [`plugins`](../UsingTheNodejsWrapper.md#connection-plugin-manager-parameters) connection parameter.
 
-| Parameter            | Value    | Required | Description                                                                                                                                                                                                                                        | Default Value | Example Value                                       |
-| :------------------- | :------- | :------: | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :------------ | :-------------------------------------------------- |
-| `iamDefaultPort`     | `String` |    No    | This property will override the default port that is used to generate the IAM token. The default port is determined based on the underlying driver protocol. Target drivers with different protocols will require users to provide a default port. | `null`        | `1234`                                              |
-| `iamHost`            | `String` |    No    | This property will override the default hostname that is used to generate the IAM token. The default hostname is derived from the connection string. This parameter is required when users are connecting with custom endpoints.                   | `null`        | `database.cluster-hash.us-east-1.rds.amazonaws.com` |
-| `iamRegion`          | `String` |    No    | This property will override the default region that is used to generate the IAM token. The default region is parsed from the connection string.                                                                                                    | `null`        | `us-east-2`                                         |
-| `iamTokenExpiration` | `Number` |    No    | This property determines how long an IAM token is kept in the driver cache before a new one is generated. The default expiration time is set to be 15 minutes. Note that IAM database authentication tokens have a lifetime of 15 minutes.         | `900`         | `600`                                               |
+| Parameter            | Value    |                 Required                  | Description                                                                                                                                                                                                                                        | Default Value                                    | Example Value                                       |
+| :------------------- | :------- | :---------------------------------------: | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :----------------------------------------------- | :-------------------------------------------------- |
+| `iamDefaultPort`     | `String` |                    No                     | This property will override the default port that is used to generate the IAM token. The default port is determined based on the underlying driver protocol. Target drivers with different protocols will require users to provide a default port. | `null`                                           | `1234`                                              |
+| `iamHost`            | `String` | Only required when using custom endpoints | This property will override the default hostname that is used to generate the IAM token.                                                                                                                                                           | The host value from the connection configuration | `database.cluster-hash.us-east-1.rds.amazonaws.com` |
+| `iamRegion`          | `String` |                    No                     | This property will override the default region that is used to generate the IAM token. The default region is parsed from the connection string.                                                                                                    | `null`                                           | `us-east-2`                                         |
+| `iamTokenExpiration` | `Number` |                    No                     | This property determines how long an IAM token is kept in the driver cache before a new one is generated. The default expiration time is set to be 15 minutes. Note that IAM database authentication tokens have a lifetime of 15 minutes.         | `900`                                            | `600`                                               |
+
+## Sample code
+
+[aws_iam_authentication_postgresql_example.ts](../../../examples/aws_driver_example/aws_iam_authentication_postgresql_example.ts)<br>
+[aws_iam_authentication_mysql_example.ts](../../../examples/aws_driver_example/aws_iam_authentication_mysql_example.ts)
