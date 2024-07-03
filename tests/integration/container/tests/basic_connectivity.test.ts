@@ -18,12 +18,13 @@ import { TestEnvironment } from "./utils/test_environment";
 import { ProxyHelper } from "./utils/proxy_helper";
 import { DriverHelper } from "./utils/driver_helper";
 import { AuroraTestUtility } from "./utils/aurora_test_utility";
-import { logger } from "aws-wrapper-common-lib/logutils";
+import { logger } from "../../../../common/logutils";
 
 let client: any;
 const auroraTestUtility = new AuroraTestUtility();
 
 beforeEach(async () => {
+  logger.info(`Test started: ${expect.getState().currentTestName}`);
   await ProxyHelper.enableAllConnectivity();
   client = null;
 });
@@ -32,6 +33,7 @@ afterEach(async () => {
   if (client !== null) {
     await client.end();
   }
+  logger.info(`Test finished: ${expect.getState().currentTestName}`);
 }, 1000000);
 
 describe("basic_connectivity", () => {

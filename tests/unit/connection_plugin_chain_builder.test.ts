@@ -14,18 +14,18 @@
   limitations under the License.
 */
 
-import { WrapperProperties } from "aws-wrapper-common-lib/lib/wrapper_property";
+import { WrapperProperties } from "../../common/lib/wrapper_property";
 import { mock } from "ts-mockito";
-import { ConnectionPluginChainBuilder } from "aws-wrapper-common-lib/lib/connection_plugin_chain_builder";
-import { PluginService } from "aws-wrapper-common-lib/lib/plugin_service";
-import { ConnectionProvider } from "aws-wrapper-common-lib/lib/connection_provider";
-import { DriverConnectionProvider } from "aws-wrapper-common-lib/lib/driver_connection_provider";
-import { FailoverPlugin } from "aws-wrapper-common-lib/lib/plugins/failover/failover_plugin";
-import { IamAuthenticationPlugin } from "aws-wrapper-common-lib/lib/authentication/iam_authentication_plugin";
-import { DefaultPlugin } from "aws-wrapper-common-lib/lib/plugins/default_plugin";
-import { ExecuteTimePlugin } from "aws-wrapper-common-lib/lib/plugins/execute_time_plugin";
-import { ConnectTimePlugin } from "aws-wrapper-common-lib/lib/plugins/connect_time_plugin";
-import { StaleDnsPlugin } from "aws-wrapper-common-lib/lib/plugins/stale_dns/stale_dns_plugin";
+import { ConnectionPluginChainBuilder } from "../../common/lib/connection_plugin_chain_builder";
+import { PluginService } from "../../common/lib/plugin_service";
+import { ConnectionProvider } from "../../common/lib/connection_provider";
+import { DriverConnectionProvider } from "../../common/lib/driver_connection_provider";
+import { FailoverPlugin } from "../../common/lib/plugins/failover/failover_plugin";
+import { IamAuthenticationPlugin } from "../../common/lib/authentication/iam_authentication_plugin";
+import { DefaultPlugin } from "../../common/lib/plugins/default_plugin";
+import { ExecuteTimePlugin } from "../../common/lib/plugins/execute_time_plugin";
+import { ConnectTimePlugin } from "../../common/lib/plugins/connect_time_plugin";
+import { StaleDnsPlugin } from "../../common/lib/plugins/stale_dns/stale_dns_plugin";
 
 const mockPluginService: PluginService = mock(PluginService);
 const mockDefaultConnProvider: ConnectionProvider = mock(DriverConnectionProvider);
@@ -37,7 +37,7 @@ describe("testConnectionPluginChainBuilder", () => {
     const props = new Map();
     props.set(WrapperProperties.PLUGINS.name, plugins);
 
-    const result = builder.getPlugins(mockPluginService, props, mockDefaultConnProvider, mockEffectiveConnProvider);
+    const result = await builder.getPlugins(mockPluginService, props, mockDefaultConnProvider, mockEffectiveConnProvider);
 
     expect(result.length).toBe(4);
     expect(result[0]).toBeInstanceOf(StaleDnsPlugin);
@@ -52,7 +52,7 @@ describe("testConnectionPluginChainBuilder", () => {
     props.set(WrapperProperties.PLUGINS.name, "iam,staleDns,failover");
     props.set(WrapperProperties.AUTO_SORT_PLUGIN_ORDER.name, false);
 
-    const result = builder.getPlugins(mockPluginService, props, mockDefaultConnProvider, mockEffectiveConnProvider);
+    const result = await builder.getPlugins(mockPluginService, props, mockDefaultConnProvider, mockEffectiveConnProvider);
 
     expect(result.length).toBe(4);
     expect(result[0]).toBeInstanceOf(IamAuthenticationPlugin);
@@ -66,7 +66,7 @@ describe("testConnectionPluginChainBuilder", () => {
     const props = new Map();
     props.set(WrapperProperties.PLUGINS.name, "iam,executeTime,connectTime,failover");
 
-    const result = builder.getPlugins(mockPluginService, props, mockDefaultConnProvider, mockEffectiveConnProvider);
+    const result = await builder.getPlugins(mockPluginService, props, mockDefaultConnProvider, mockEffectiveConnProvider);
 
     expect(result.length).toBe(5);
     expect(result[0]).toBeInstanceOf(FailoverPlugin);

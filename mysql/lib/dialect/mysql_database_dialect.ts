@@ -14,14 +14,14 @@
   limitations under the License.
 */
 
-import { DatabaseDialect, DatabaseType } from "aws-wrapper-common-lib/lib/database_dialect/database_dialect";
-import { HostListProviderService } from "aws-wrapper-common-lib/lib/host_list_provider_service";
-import { HostListProvider } from "aws-wrapper-common-lib/lib/host_list_provider/host_list_provider";
-import { ConnectionStringHostListProvider } from "aws-wrapper-common-lib/lib/host_list_provider/connection_string_host_list_provider";
-import { AwsClient } from "aws-wrapper-common-lib/lib/aws_client";
-import { AwsWrapperError } from "aws-wrapper-common-lib/lib/utils/errors";
-import { DatabaseDialectCodes } from "aws-wrapper-common-lib/lib/database_dialect/database_dialect_codes";
-import { TransactionIsolationLevel } from "aws-wrapper-common-lib/lib/utils/transaction_isolation_level";
+import { DatabaseDialect, DatabaseType } from "../../../common/lib/database_dialect/database_dialect";
+import { HostListProviderService } from "../../../common/lib/host_list_provider_service";
+import { HostListProvider } from "../../../common/lib/host_list_provider/host_list_provider";
+import { ConnectionStringHostListProvider } from "../../../common/lib/host_list_provider/connection_string_host_list_provider";
+import { AwsClient } from "../../../common/lib/aws_client";
+import { AwsWrapperError } from "../../../common/lib/utils/errors";
+import { DatabaseDialectCodes } from "../../../common/lib/database_dialect/database_dialect_codes";
+import { TransactionIsolationLevel } from "../../../common/lib/utils/transaction_isolation_level";
 
 export class MySQLDatabaseDialect implements DatabaseDialect {
   protected dialectName: string = "MySQLDatabaseDialect";
@@ -47,7 +47,7 @@ export class MySQLDatabaseDialect implements DatabaseDialect {
         return rows[0]["CONCAT(@@hostname, ':', @@port)"];
       })
       .catch((error: any) => {
-        throw new AwsWrapperError("Unable to fetch host alias or could not parse results: ", error);
+        throw new AwsWrapperError("Unable to fetch host alias or could not parse results: ", error.message);
       });
   }
 

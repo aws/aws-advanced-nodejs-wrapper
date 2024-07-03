@@ -245,8 +245,8 @@ class ReconnectToWriterHandlerTask {
           });
         }
       }
-
       success = isCurrentHostWriter(latestTopology, this.originalWriterHost);
+
       this.pluginService.setAvailability(this.originalWriterHost.allAliases, HostAvailability.AVAILABLE);
       return new WriterFailoverResult(success, false, latestTopology, "TaskA", success ? this.currentClient : null);
     } catch (error) {
@@ -382,7 +382,8 @@ class WaitForNewWriterHandlerTask {
           } else {
             this.currentTopology = topology;
             const writerCandidate = getWriter(this.currentTopology);
-
+            logger.debug(`writerCandidateHost: ${writerCandidate?.host} has role ${writerCandidate?.role}`);
+            logger.debug(`originalWriterHost: ${this.originalWriterHost?.host} has role ${this.originalWriterHost?.role}`);
             if (writerCandidate && !this.isSame(writerCandidate, this.originalWriterHost)) {
               // new writer is available, and it's different from the previous writer
               if (await this.connectToWriter(writerCandidate)) {

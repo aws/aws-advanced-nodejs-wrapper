@@ -19,9 +19,6 @@ import { logger } from "../../logutils";
 import { HostInfo } from "../host_info";
 import { getTimeInNanos } from "../utils/utils";
 import { Messages } from "../utils/messages";
-import { ConnectionPluginFactory } from "../plugin_factory";
-import { ConnectionPlugin } from "../connection_plugin";
-import { PluginService } from "../plugin_service";
 
 export class ConnectTimePlugin extends AbstractConnectionPlugin {
   private static readonly subscribedMethods: Set<string> = new Set<string>(["connect", "forceConnect"]);
@@ -69,11 +66,5 @@ export class ConnectTimePlugin extends AbstractConnectionPlugin {
 
   public static getTotalConnectTime(): bigint {
     return ConnectTimePlugin.connectTime;
-  }
-}
-
-export class ConnectTimePluginFactory implements ConnectionPluginFactory {
-  getInstance(pluginService: PluginService, properties: Map<string, any>): ConnectionPlugin {
-    return new ConnectTimePlugin();
   }
 }

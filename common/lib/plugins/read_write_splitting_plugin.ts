@@ -26,8 +26,6 @@ import { Messages } from "../utils/messages";
 import { logger } from "../../logutils";
 import { AwsWrapperError, FailoverError } from "../utils/errors";
 import { HostRole } from "../host_role";
-import { ConnectionPluginFactory } from "../plugin_factory";
-import { ConnectionPlugin } from "../connection_plugin";
 import { SqlMethodUtils } from "../utils/sql_method_utils";
 
 export class ReadWriteSplittingPlugin extends AbstractConnectionPlugin {
@@ -386,11 +384,5 @@ export class ReadWriteSplittingPlugin extends AbstractConnectionPlugin {
   private logAndThrowError(message: string) {
     logger.error(message);
     throw new AwsWrapperError(message);
-  }
-}
-
-export class ReadWriteSplittingPluginFactory implements ConnectionPluginFactory {
-  getInstance(pluginService: PluginService, properties: Map<string, any>): ConnectionPlugin {
-    return new ReadWriteSplittingPlugin(pluginService, properties);
   }
 }

@@ -15,18 +15,18 @@
 */
 
 import { Client, QueryResult } from "pg";
-import { AwsClient } from "aws-wrapper-common-lib/lib/aws_client";
-import { WrapperProperties } from "aws-wrapper-common-lib/lib/wrapper_property";
+import { AwsClient } from "../../common/lib/aws_client";
+import { WrapperProperties } from "../../common/lib/wrapper_property";
 import { PgErrorHandler } from "./pg_error_handler";
 import { PgConnectionUrlParser } from "./pg_connection_url_parser";
-import { DatabaseDialect, DatabaseType } from "aws-wrapper-common-lib/lib/database_dialect/database_dialect";
-import { DatabaseDialectCodes } from "aws-wrapper-common-lib/lib/database_dialect/database_dialect_codes";
+import { DatabaseDialect, DatabaseType } from "../../common/lib/database_dialect/database_dialect";
+import { DatabaseDialectCodes } from "../../common/lib/database_dialect/database_dialect_codes";
 import { RdsPgDatabaseDialect } from "./dialect/rds_pg_database_dialect";
 import { PgDatabaseDialect } from "./dialect/pg_database_dialect";
 import { AuroraPgDatabaseDialect } from "./dialect/aurora_pg_database_dialect";
-import { AwsWrapperError, UnsupportedMethodError } from "aws-wrapper-common-lib/lib/utils/errors";
-import { Messages } from "aws-wrapper-common-lib/lib/utils/messages";
-import { TransactionIsolationLevel } from "aws-wrapper-common-lib/lib/utils/transaction_isolation_level";
+import { AwsWrapperError, UnsupportedMethodError } from "../../common/lib/utils/errors";
+import { Messages } from "../../common/lib/utils/messages";
+import { TransactionIsolationLevel } from "../../common/lib/utils/transaction_isolation_level";
 
 export class AwsPGClient extends AwsClient {
   private static readonly knownDialectsByCode: Map<string, DatabaseDialect> = new Map([

@@ -16,9 +16,6 @@
 
 import { logger } from "../../logutils";
 import { AbstractConnectionPlugin } from "../abstract_connection_plugin";
-import { ConnectionPlugin } from "../connection_plugin";
-import { ConnectionPluginFactory } from "../plugin_factory";
-import { PluginService } from "../plugin_service";
 import { Messages } from "../utils/messages";
 import { getTimeInNanos } from "../utils/utils";
 
@@ -49,11 +46,5 @@ export class ExecuteTimePlugin extends AbstractConnectionPlugin {
 
   public static getTotalExecuteTime(): bigint {
     return ExecuteTimePlugin.executeTime;
-  }
-}
-
-export class ExecuteTimePluginFactory implements ConnectionPluginFactory {
-  getInstance(pluginService: PluginService, properties: Map<string, any>): ConnectionPlugin {
-    return new ExecuteTimePlugin();
   }
 }

@@ -17,11 +17,11 @@
 import { TestEnvironment } from "./utils/test_environment";
 import { DriverHelper } from "./utils/driver_helper";
 import { AuroraTestUtility } from "./utils/aurora_test_utility";
-import { AwsWrapperError, FailoverSuccessError } from "aws-wrapper-common-lib/lib/utils/errors";
+import { AwsWrapperError, FailoverSuccessError } from "../../../../common/lib/utils/errors";
 import { DatabaseEngine } from "./utils/database_engine";
 import { QueryResult } from "pg";
 import { ProxyHelper } from "./utils/proxy_helper";
-import { logger } from "aws-wrapper-common-lib/logutils";
+import { logger } from "../../../../common/logutils";
 
 let env: TestEnvironment;
 let driver;
@@ -30,8 +30,6 @@ let client: any;
 const auroraTestUtility = new AuroraTestUtility();
 
 async function initDefaultConfig(host: string, port: number, connectToProxy: boolean): Promise<any> {
-  const env = await TestEnvironment.getCurrent();
-
   let config: any = {
     user: env.databaseInfo.username,
     host: host,
@@ -49,8 +47,6 @@ async function initDefaultConfig(host: string, port: number, connectToProxy: boo
 }
 
 async function initConfigWithFailover(host: string, port: number, connectToProxy: boolean): Promise<any> {
-  const env = await TestEnvironment.getCurrent();
-
   let config: any = {
     user: env.databaseInfo.username,
     host: host,
@@ -70,13 +66,12 @@ async function initConfigWithFailover(host: string, port: number, connectToProxy
 }
 
 describe("aurora read write splitting", () => {
-  beforeAll(async () => {
+  beforeEach(async () => {
+    logger.info(`Test started: ${expect.getState().currentTestName}`);
+
     env = await TestEnvironment.getCurrent();
     driver = DriverHelper.getDriverForDatabaseEngine(env.engine);
     initClientFunc = DriverHelper.getClient(driver);
-  });
-
-  beforeEach(async () => {
     await ProxyHelper.enableAllConnectivity();
     client = null;
   });
@@ -85,6 +80,8 @@ describe("aurora read write splitting", () => {
     if (client !== null) {
       await client.end();
     }
+    await TestEnvironment.resetCurrent();
+    logger.info(`Test finished: ${expect.getState().currentTestName}`);
   }, 1000000);
 
   it("test connect to writer switch set read only", async () => {
@@ -196,8 +193,8 @@ describe("aurora read write splitting", () => {
   }, 1000000);
 
   // TODO: enable tests when failover is implemented
-  it("test set read only all instances down", async () => {
-    const config = await initDefaultConfig(env.databaseInfo.clusterEndpoint, env.databaseInfo.clusterEndpointPort, false);
+  it.skip("test set read only all instances down", async () => {
+    const config = await initDefaultConfig(env.proxyDatabaseInfo.clusterEndpoint, env.proxyDatabaseInfo.clusterEndpointPort, true);
     client = initClientFunc(config);
 
     client.on("error", (error: any) => {

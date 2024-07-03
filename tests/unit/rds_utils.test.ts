@@ -14,7 +14,7 @@
   limitations under the License.
 */
 
-import { RdsUtils } from "aws-wrapper-common-lib/lib/utils/rds_utils";
+import { RdsUtils } from "../../common/lib/utils/rds_utils";
 
 const us_east_region_cluster = "database-test-name.cluster-XYZ.us-east-2.rds.amazonaws.com";
 const us_east_region_cluster_read_only = "database-test-name.cluster-ro-XYZ.us-east-2.rds.amazonaws.com";

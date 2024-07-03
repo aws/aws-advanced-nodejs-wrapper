@@ -14,22 +14,22 @@
   limitations under the License.
 */
 
-import { IamAuthenticationPluginFactory } from "./authentication/iam_authentication_plugin";
-import { FailoverPluginFactory } from "./plugins/failover/failover_plugin";
 import { PluginService } from "./plugin_service";
 import { ConnectionPlugin } from "./connection_plugin";
 import { WrapperProperties } from "./wrapper_property";
 import { AwsWrapperError } from "./utils/errors";
 import { Messages } from "./utils/messages";
-import { DefaultPlugin } from "./plugins/default_plugin";
-import { ExecuteTimePluginFactory } from "./plugins/execute_time_plugin";
-import { ConnectTimePluginFactory } from "./plugins/connect_time_plugin";
-import { AwsSecretsManagerPluginFactory } from "./authentication/aws_secrets_manager_plugin";
 import { ConnectionProvider } from "./connection_provider";
-import { ReadWriteSplittingPluginFactory } from "./plugins/read_write_splitting";
-import { StaleDnsPluginFactory } from "./plugins/stale_dns/stale_dns_plugin";
-import { FederatedAuthPluginFactory } from "./plugins/federated_auth/federated_auth_plugin";
 import { logger } from "../logutils";
+import { DefaultPlugin } from "./plugins/default_plugin";
+import { IamAuthenticationPluginFactory } from "./authentication/iam_authentication_plugin_factory";
+import { ExecuteTimePluginFactory } from "./plugins/execute_time_plugin_factory";
+import { ConnectTimePluginFactory } from "./plugins/connect_time_plugin_factory";
+import { AwsSecretsManagerPluginFactory } from "./authentication/aws_secrets_manager_plugin_factory";
+import { FailoverPluginFactory } from "./plugins/failover/failover_plugin_factory";
+import { StaleDnsPluginFactory } from "./plugins/stale_dns/stale_dns_plugin_factory";
+import { FederatedAuthPluginFactory } from "./plugins/federated_auth/federated_auth_plugin_factory";
+import { ReadWriteSplittingPluginFactory } from "./plugins/read_write_splitting_plugin_factory";
 
 /*
   Type alias used for plugin factory sorting. It holds a reference to a plugin
@@ -57,12 +57,12 @@ export class ConnectionPluginChainBuilder {
     ["executeTime", { factory: ExecuteTimePluginFactory, weight: ConnectionPluginChainBuilder.WEIGHT_RELATIVE_TO_PRIOR_PLUGIN }]
   ]);
 
-  getPlugins(
+  async getPlugins(
     pluginService: PluginService,
     props: Map<string, any>,
     defaultConnProvider: ConnectionProvider,
     effectiveConnProvider: ConnectionProvider | null
-  ): ConnectionPlugin[] {
+  ): Promise<ConnectionPlugin[]> {
     const plugins: ConnectionPlugin[] = [];
     let pluginCodes: string = props.get(WrapperProperties.PLUGINS.name);
     if (pluginCodes == null) {
@@ -104,10 +104,10 @@ export class ConnectionPluginChainBuilder {
         }
       }
 
-      pluginFactoryInfoList.forEach((pluginFactoryInfo) => {
+      for (const pluginFactoryInfo of pluginFactoryInfoList) {
         const factoryObj = new pluginFactoryInfo.factory();
-        plugins.push(factoryObj.getInstance(pluginService, props));
-      });
+        plugins.push(await factoryObj.getInstance(pluginService, props));
+      }
     }
 
     plugins.push(new DefaultPlugin(pluginService, defaultConnProvider, effectiveConnProvider));

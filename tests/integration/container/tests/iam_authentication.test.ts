@@ -16,14 +16,14 @@
 
 import { TestEnvironment } from "./utils/test_environment";
 import { DriverHelper } from "./utils/driver_helper";
-import { AwsWrapperError } from "aws-wrapper-common-lib/lib/utils/errors";
+import { AwsWrapperError } from "../../../../common/lib/utils/errors";
 import { promisify } from "util";
 import { lookup } from "dns";
 import { readFileSync } from "fs";
-import { AwsPGClient } from "pg-wrapper";
-import { AwsMySQLClient } from "mysql-wrapper";
-import { IamAuthenticationPlugin } from "aws-wrapper-common-lib/lib/authentication/iam_authentication_plugin";
-import { logger } from "aws-wrapper-common-lib/logutils";
+import { AwsPGClient } from "../../../../pg/lib";
+import { AwsMySQLClient } from "../../../../mysql/lib";
+import { IamAuthenticationPlugin } from "../../../../common/lib/authentication/iam_authentication_plugin";
+import { logger } from "../../../../common/logutils";
 
 let env: TestEnvironment;
 let driver;
@@ -38,7 +38,7 @@ function getIpAddress(host: string) {
 }
 
 async function initDefaultConfig(host: string): Promise<any> {
-  const env = await TestEnvironment.getCurrent();
+  env = await TestEnvironment.getCurrent();
 
   let props = {
     user: "jane_doe",
@@ -64,15 +64,18 @@ async function validateConnection(client: AwsPGClient | AwsMySQLClient) {
 }
 
 describe("iamTests", () => {
-  beforeAll(async () => {
+  beforeEach(async () => {
+    logger.info(`Test started: ${expect.getState().currentTestName}`);
     env = await TestEnvironment.getCurrent();
     driver = DriverHelper.getDriverForDatabaseEngine(env.engine);
     initClientFunc = DriverHelper.getClient(driver);
-  });
-
-  beforeEach(async () => {
     IamAuthenticationPlugin.clearCache();
   });
+
+  afterEach(async () => {
+    await TestEnvironment.resetCurrent();
+    logger.info(`Test finished: ${expect.getState().currentTestName}`);
+  }, 1000000);
 
   it("testIamWrongDatabaseUsername", async () => {
     const config = await initDefaultConfig(env.databaseInfo.clusterEndpoint);
