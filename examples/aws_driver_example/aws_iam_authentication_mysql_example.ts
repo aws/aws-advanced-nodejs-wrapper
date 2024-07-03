@@ -14,8 +14,8 @@
   limitations under the License.
 */
 
-import { AwsMySQLClient } from "mysql-wrapper";
 import { readFileSync } from "fs";
+import { AwsMySQLClient } from "../../mysql";
 
 const mysqlHost = "db-identifier.XYZ.us-east-2.rds.amazonaws.com";
 const username = "john_smith";
@@ -27,6 +27,7 @@ const client = new AwsMySQLClient({
   port: port,
   user: username,
   plugins: "iam",
+  iamRegion: "us-east-2",
   ssl: {
     ca: readFileSync("path/to/ssl/certificate.pem").toString()
   }

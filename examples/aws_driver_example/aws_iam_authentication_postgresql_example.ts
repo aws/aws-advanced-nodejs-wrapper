@@ -14,8 +14,8 @@
   limitations under the License.
 */
 
-import { AwsPGClient } from "pg-wrapper";
 import { readFileSync } from "fs";
+import { AwsPGClient } from "../../pg";
 
 const postgresHost = "postgresql://db-identifier.XYZ.us-east-2.rds.amazonaws.com";
 const username = "john_smith";
@@ -28,6 +28,7 @@ const client = new AwsPGClient({
   port,
   user: username,
   plugins: "iam",
+  iamRegion: "us-east-2",
   database,
   ssl: {
     ca: readFileSync("path/to/ssl/certificate.pem").toString()
