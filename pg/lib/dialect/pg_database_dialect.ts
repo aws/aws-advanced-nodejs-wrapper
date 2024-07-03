@@ -46,7 +46,7 @@ export class PgDatabaseDialect implements DatabaseDialect {
         return rows.rows[0]["concat"];
       })
       .catch((error: any) => {
-        throw new AwsWrapperError("Unable to fetch host alias or could not parse results: ", error);
+        throw new AwsWrapperError("Unable to fetch host alias or could not parse results: ", error.message);
       });
   }
 

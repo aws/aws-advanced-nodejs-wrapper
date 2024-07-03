@@ -30,8 +30,6 @@ let client: any;
 const auroraTestUtility = new AuroraTestUtility();
 
 async function initDefaultConfig(host: string, port: number, connectToProxy: boolean): Promise<any> {
-  const env = await TestEnvironment.getCurrent();
-
   let config: any = {
     user: env.databaseInfo.username,
     host: host,
@@ -49,8 +47,6 @@ async function initDefaultConfig(host: string, port: number, connectToProxy: boo
 }
 
 async function initConfigWithFailover(host: string, port: number, connectToProxy: boolean): Promise<any> {
-  const env = await TestEnvironment.getCurrent();
-
   let config: any = {
     user: env.databaseInfo.username,
     host: host,
@@ -70,13 +66,12 @@ async function initConfigWithFailover(host: string, port: number, connectToProxy
 }
 
 describe("aurora read write splitting", () => {
-  beforeAll(async () => {
+  beforeEach(async () => {
+    logger.info(`Test started: ${expect.getState().currentTestName}`);
+
     env = await TestEnvironment.getCurrent();
     driver = DriverHelper.getDriverForDatabaseEngine(env.engine);
     initClientFunc = DriverHelper.getClient(driver);
-  });
-
-  beforeEach(async () => {
     await ProxyHelper.enableAllConnectivity();
     client = null;
   });
@@ -85,6 +80,8 @@ describe("aurora read write splitting", () => {
     if (client !== null) {
       await client.end();
     }
+    await TestEnvironment.resetCurrent();
+    logger.info(`Test finished: ${expect.getState().currentTestName}`);
   }, 1000000);
 
   it("test connect to writer switch set read only", async () => {
@@ -197,7 +194,7 @@ describe("aurora read write splitting", () => {
 
   // TODO: enable tests when failover is implemented
   it.skip("test set read only all instances down", async () => {
-    const config = await initDefaultConfig(env.databaseInfo.clusterEndpoint, env.databaseInfo.clusterEndpointPort, false);
+    const config = await initDefaultConfig(env.proxyDatabaseInfo.clusterEndpoint, env.proxyDatabaseInfo.clusterEndpointPort, true);
     client = initClientFunc(config);
 
     client.on("error", (error: any) => {
