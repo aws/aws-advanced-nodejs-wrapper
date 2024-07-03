@@ -24,7 +24,7 @@ export class HostAvailabilityStrategyFactory {
     const defaultStrategy = WrapperProperties.DEFAULT_HOST_AVAILABILITY_STRATEGY.get(props);
     const exponentialName = ExponentialBackoffHostAvailabilityStrategy.NAME;
 
-    if (!props || !defaultStrategy) {
+    if (props.size === 0 || !defaultStrategy) {
       return new SimpleHostAvailabilityStrategy();
     } else if (exponentialName.toUpperCase() === defaultStrategy.toUpperCase()) {
       return new ExponentialBackoffHostAvailabilityStrategy(props);

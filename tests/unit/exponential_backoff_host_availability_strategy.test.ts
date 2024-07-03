@@ -14,11 +14,11 @@
   limitations under the License.
 */
 
-import { ExponentialBackoffHostAvailabilityStrategy } from "aws-wrapper-common-lib/lib/host_availability/exponential_backoff_host_availability_strategy";
-import { HostAvailability } from "aws-wrapper-common-lib/lib/host_availability/host_availability";
-import { WrapperProperties } from "aws-wrapper-common-lib/lib/wrapper_property";
-import { sleep } from "aws-wrapper-common-lib/lib/utils/utils";
-import { IllegalArgumentError } from "aws-wrapper-common-lib/lib/utils/errors";
+import { ExponentialBackoffHostAvailabilityStrategy } from "../../common/lib/host_availability/exponential_backoff_host_availability_strategy";
+import { HostAvailability } from "../../common/lib/host_availability/host_availability";
+import { sleep } from "../../common/lib/utils/utils";
+import { WrapperProperties } from "../../common/lib/wrapper_property";
+import { IllegalArgumentError } from "../../common/lib/utils/errors";
 
 describe("exponentialBackoffTests", () => {
   let props: Map<string, any>;
@@ -37,7 +37,7 @@ describe("exponentialBackoffTests", () => {
 
   it("testGetHostAvailabilityMaxRetriesExceeded", async () => {
     WrapperProperties.HOST_AVAILABILITY_STRATEGY_MAX_RETRIES.set(props, 1);
-    WrapperProperties.HOST_AVAILABILITY_STRATEGY_INITIAL_BACKOFF_TIME.set(props, 3);
+    WrapperProperties.HOST_AVAILABILITY_STRATEGY_INITIAL_BACKOFF_TIME_SEC.set(props, 3);
 
     const availabilityStrategy = new ExponentialBackoffHostAvailabilityStrategy(props);
     availabilityStrategy.setHostAvailability(HostAvailability.NOT_AVAILABLE);
@@ -52,7 +52,7 @@ describe("exponentialBackoffTests", () => {
   });
 
   it("testGetHostAvailabilityPastThreshold", async () => {
-    WrapperProperties.HOST_AVAILABILITY_STRATEGY_INITIAL_BACKOFF_TIME.set(props, 3);
+    WrapperProperties.HOST_AVAILABILITY_STRATEGY_INITIAL_BACKOFF_TIME_SEC.set(props, 3);
     const availabilityStrategy = new ExponentialBackoffHostAvailabilityStrategy(props);
 
     await sleep(3005);
@@ -64,7 +64,7 @@ describe("exponentialBackoffTests", () => {
   });
 
   it("testGetHostAvailabilityBeforeThreshold", async () => {
-    WrapperProperties.HOST_AVAILABILITY_STRATEGY_INITIAL_BACKOFF_TIME.set(props, 3);
+    WrapperProperties.HOST_AVAILABILITY_STRATEGY_INITIAL_BACKOFF_TIME_SEC.set(props, 3);
     const availabilityStrategy = new ExponentialBackoffHostAvailabilityStrategy(props);
 
     await sleep(2500);
@@ -83,7 +83,7 @@ describe("exponentialBackoffTests", () => {
   });
 
   it("testConstructorThrowsWhenInvalidBackoffTime", async () => {
-    WrapperProperties.HOST_AVAILABILITY_STRATEGY_INITIAL_BACKOFF_TIME.set(props, 0);
+    WrapperProperties.HOST_AVAILABILITY_STRATEGY_INITIAL_BACKOFF_TIME_SEC.set(props, 0);
     expect(() => {
       new ExponentialBackoffHostAvailabilityStrategy(props);
     }).toThrow(IllegalArgumentError);

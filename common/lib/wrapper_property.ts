@@ -84,8 +84,8 @@ export class WrapperProperties {
     "Max number of retries for checking a host's availability.",
     5
   );
-  static readonly HOST_AVAILABILITY_STRATEGY_INITIAL_BACKOFF_TIME = new WrapperProperty<number>(
-    "hostAvailabilityStrategyInitialBackoffTime",
+  static readonly HOST_AVAILABILITY_STRATEGY_INITIAL_BACKOFF_TIME_SEC = new WrapperProperty<number>(
+    "hostAvailabilityStrategyInitialBackoffTimeSec",
     "The initial backoff time in seconds.",
     30
   );

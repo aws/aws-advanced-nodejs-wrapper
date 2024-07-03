@@ -15,10 +15,10 @@
 */
 
 import { anything, instance, mock, verify } from "ts-mockito";
-import { HostAvailability } from "aws-wrapper-common-lib/lib/host_availability/host_availability";
-import { HostAvailabilityStrategy } from "aws-wrapper-common-lib/lib/host_availability/host_availability_strategy";
-import { HostInfo } from "aws-wrapper-common-lib/lib/host_info";
-import { HostInfoBuilder } from "aws-wrapper-common-lib/lib/host_info_builder";
+import { HostAvailabilityStrategy } from "../../common/lib/host_availability/host_availability_strategy";
+import { HostInfo } from "../../common/lib/host_info";
+import { HostInfoBuilder } from "../../common/lib/host_info_builder";
+import { HostAvailability } from "../../common/lib/host_availability/host_availability";
 
 const mockStrategy = mock<HostAvailabilityStrategy>();
 let hostInfo: HostInfo;

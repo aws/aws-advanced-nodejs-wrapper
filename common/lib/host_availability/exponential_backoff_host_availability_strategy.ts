@@ -23,29 +23,29 @@ import { HostAvailability } from "./host_availability";
 export class ExponentialBackoffHostAvailabilityStrategy implements HostAvailabilityStrategy {
   public static NAME = "exponentialBackoff";
   private readonly maxRetries: number = 5;
-  private readonly initialBackoffTimeSeconds: number = 30;
+  private readonly initialBackoffTimeSec: number = 30;
   private notAvailableCount: number = 0;
-  private lastChanged: Date;
+  private lastChanged: number;
 
   constructor(props: Map<string, any>) {
     const retries = WrapperProperties.HOST_AVAILABILITY_STRATEGY_MAX_RETRIES.get(props);
-    const backoffTime = WrapperProperties.HOST_AVAILABILITY_STRATEGY_INITIAL_BACKOFF_TIME.get(props);
+    const backoffTimeSec = WrapperProperties.HOST_AVAILABILITY_STRATEGY_INITIAL_BACKOFF_TIME_SEC.get(props);
 
     if (retries < 1) {
       throw new IllegalArgumentError(Messages.get("HostAvailabilityStrategy.invalidMaxRetries", retries.toString()));
     }
     this.maxRetries = retries;
 
-    if (backoffTime < 1) {
-      throw new IllegalArgumentError(Messages.get("HostAvailabilityStrategy.invalidInitialBackoffTime", backoffTime.toString()));
+    if (backoffTimeSec < 1) {
+      throw new IllegalArgumentError(Messages.get("HostAvailabilityStrategy.invalidInitialBackoffTime", backoffTimeSec.toString()));
     }
 
-    this.initialBackoffTimeSeconds = backoffTime;
-    this.lastChanged = new Date();
+    this.initialBackoffTimeSec = backoffTimeSec;
+    this.lastChanged = Date.now();
   }
 
   setHostAvailability(hostAvailability: HostAvailability): void {
-    this.lastChanged = new Date();
+    this.lastChanged = Date.now();
     if (hostAvailability === HostAvailability.AVAILABLE) {
       this.notAvailableCount = 0;
     } else {
@@ -62,10 +62,10 @@ export class ExponentialBackoffHostAvailabilityStrategy implements HostAvailabil
       return HostAvailability.NOT_AVAILABLE;
     }
 
-    const retryDelayMillis = Math.pow(2, this.notAvailableCount) * this.initialBackoffTimeSeconds * 1000;
-    const earliestRetry = new Date(this.lastChanged.getTime() + retryDelayMillis);
-    const now = new Date();
-    if (earliestRetry.getTime() < now.getTime()) {
+    const retryDelayMillis = Math.pow(2, this.notAvailableCount) * this.initialBackoffTimeSec * 1000;
+    const earliestRetryMillis = this.lastChanged + retryDelayMillis;
+    const nowMillis = Date.now();
+    if (earliestRetryMillis < nowMillis) {
       return HostAvailability.AVAILABLE;
     }
 
