@@ -21,8 +21,6 @@ import { StaleDnsHelper } from "./stale_dns_helper";
 import { HostInfo } from "../../host_info";
 import { HostChangeOptions } from "../../host_change_options";
 import { AwsWrapperError } from "../../utils/errors";
-import { ConnectionPluginFactory } from "../../plugin_factory";
-import { ConnectionPlugin } from "../../connection_plugin";
 
 export class StaleDnsPlugin extends AbstractConnectionPlugin {
   private static readonly subscribedMethods: Set<string> = new Set<string>(["initHostProvider", "connect", "forceConnect", "notifyHostListChanged"]);
@@ -85,11 +83,5 @@ export class StaleDnsPlugin extends AbstractConnectionPlugin {
 
   override notifyHostListChanged(changes: Map<string, Set<HostChangeOptions>>): void {
     this.staleDnsHelper.notifyHostListChanged(changes);
-  }
-}
-
-export class StaleDnsPluginFactory implements ConnectionPluginFactory {
-  getInstance(pluginService: PluginService, properties: Map<string, any>): ConnectionPlugin {
-    return new StaleDnsPlugin(pluginService, properties);
   }
 }

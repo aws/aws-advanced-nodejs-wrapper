@@ -14,8 +14,6 @@
   limitations under the License.
 */
 
-import { ConnectionPlugin } from "../connection_plugin";
-import { ConnectionPluginFactory } from "../plugin_factory";
 import { PluginService } from "../plugin_service";
 import { RdsUtils } from "../utils/rds_utils";
 import { Messages } from "../utils/messages";
@@ -117,11 +115,5 @@ export class IamAuthenticationPlugin extends AbstractConnectionPlugin {
 
   static clearCache(): void {
     this.tokenCache.clear();
-  }
-}
-
-export class IamAuthenticationPluginFactory implements ConnectionPluginFactory {
-  getInstance(pluginService: PluginService, properties: object): ConnectionPlugin {
-    return new IamAuthenticationPlugin(pluginService);
   }
 }

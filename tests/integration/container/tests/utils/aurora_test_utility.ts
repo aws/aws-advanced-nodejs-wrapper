@@ -194,6 +194,7 @@ export class AuroraTestUtility {
       try {
         const result = await this.client.send(command);
         if (!this.isNullOrUndefined(result["DBCluster"])) {
+          await TestEnvironment.resetCurrent();
           return;
         }
 

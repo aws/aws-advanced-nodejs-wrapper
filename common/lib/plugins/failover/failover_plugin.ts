@@ -256,8 +256,8 @@ export class FailoverPlugin extends AbstractConnectionPlugin {
     logger.debug(`Start connect for test plugin: ${this.id}`);
     try {
       return await this.connectInternal(hostInfo, props, isInitialConnection, connectFunc);
-    } catch (e) {
-      logger.debug(e);
+    } catch (e: any) {
+      logger.debug(e.message);
       throw e;
     }
   }
@@ -270,8 +270,8 @@ export class FailoverPlugin extends AbstractConnectionPlugin {
   ): Promise<Type> {
     try {
       return await this.connectInternal(hostInfo, props, isInitialConnection, forceConnectFunc);
-    } catch (e) {
-      logger.debug(e);
+    } catch (e: any) {
+      logger.debug(e.message);
       throw e;
     }
   }
@@ -299,7 +299,6 @@ export class FailoverPlugin extends AbstractConnectionPlugin {
 
   override async execute<T>(methodName: string, methodFunc: () => Promise<T>): Promise<T> {
     try {
-      const start = performance.now();
       if (!this.enableFailoverSetting || this.canDirectExecute(methodName)) {
         return await methodFunc();
       }
@@ -314,8 +313,8 @@ export class FailoverPlugin extends AbstractConnectionPlugin {
       }
 
       return await methodFunc();
-    } catch (e) {
-      logger.debug(Messages.get("Failover.detectedException", JSON.stringify(e)));
+    } catch (e: any) {
+      logger.debug(Messages.get("Failover.detectedException", e.message));
       if (this._lastError !== e && this.shouldErrorTriggerClientSwitch(e)) {
         await this.invalidateCurrentClient();
         const currentHostInfo = this.pluginService.getCurrentHostInfo();
@@ -528,11 +527,5 @@ export class FailoverPlugin extends AbstractConnectionPlugin {
     }
 
     return false;
-  }
-}
-
-export class FailoverPluginFactory implements ConnectionPluginFactory {
-  getInstance(pluginService: PluginService, properties: Map<string, any>): ConnectionPlugin {
-    return new FailoverPlugin(pluginService, properties, new RdsUtils());
   }
 }

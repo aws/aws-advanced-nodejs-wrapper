@@ -38,7 +38,7 @@ function getIpAddress(host: string) {
 }
 
 async function initDefaultConfig(host: string): Promise<any> {
-  const env = await TestEnvironment.getCurrent();
+  env = await TestEnvironment.getCurrent();
 
   let props = {
     user: "jane_doe",
@@ -64,15 +64,18 @@ async function validateConnection(client: AwsPGClient | AwsMySQLClient) {
 }
 
 describe("iamTests", () => {
-  beforeAll(async () => {
+  beforeEach(async () => {
+    logger.info(`Test started: ${expect.getState().currentTestName}`);
     env = await TestEnvironment.getCurrent();
     driver = DriverHelper.getDriverForDatabaseEngine(env.engine);
     initClientFunc = DriverHelper.getClient(driver);
-  });
-
-  beforeEach(async () => {
     IamAuthenticationPlugin.clearCache();
   });
+
+  afterEach(async () => {
+    await TestEnvironment.resetCurrent();
+    logger.info(`Test finished: ${expect.getState().currentTestName}`);
+  }, 1000000);
 
   it("testIamWrongDatabaseUsername", async () => {
     const config = await initDefaultConfig(env.databaseInfo.clusterEndpoint);

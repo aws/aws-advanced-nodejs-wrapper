@@ -23,7 +23,7 @@ import { AwsWrapperError, FailoverSuccessError } from "../../common/lib/utils/er
 import { AwsMySQLClient } from "../../mysql/lib";
 import { anything, instance, mock, reset, verify, when } from "ts-mockito";
 import { HostListProviderService } from "../../common/lib/host_list_provider_service";
-import { ReadWriteSplittingPlugin } from "../../common/lib/plugins/read_write_splitting";
+import { ReadWriteSplittingPlugin } from "../../common/lib/plugins/read_write_splitting_plugin";
 import { SimpleHostAvailabilityStrategy } from "../../common/lib/host_availability/simple_host_availability_strategy";
 import { MySQLDatabaseDialect } from "../../mysql/lib/dialect/mysql_database_dialect";
 import { HostChangeOptions } from "../../common/lib/host_change_options";
