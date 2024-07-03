@@ -94,10 +94,10 @@ export class ClusterAwareReaderFailoverHandler implements ReaderFailoverHandler 
 
     return await Promise.race([timeoutTask, failoverTask])
       .then((result) => {
-        if (result instanceof ReaderFailoverResult) {
+        if (result) {
           return result;
         }
-        throw new AwsWrapperError("Resolved result was not a ReaderFailoverResult.");
+        throw new AwsWrapperError("Internal failover task timed out.");
       })
       .catch((error) => {
         throw new AwsWrapperError(error);
@@ -187,10 +187,10 @@ export class ClusterAwareReaderFailoverHandler implements ReaderFailoverHandler 
 
     return Promise.race([timeoutTask, getResultTask])
       .then((result) => {
-        if (result instanceof ReaderFailoverResult) {
+        if (result) {
           return result;
         }
-        throw new AwsWrapperError("Resolved result was not a ReaderFailoverResult.");
+        throw new AwsWrapperError("Connection attempt task timed out.");
       })
       .catch((error) => {
         if (error instanceof AggregateError && error.message.includes("All promises were rejected")) {
@@ -207,21 +207,21 @@ export class ClusterAwareReaderFailoverHandler implements ReaderFailoverHandler 
   async getResultTask(hosts: HostInfo[], numTasks: number, i: number) {
     const tasks: Promise<ReaderFailoverResult>[] = [];
     let selectedTask = 0;
-    const firstTask = new ConnectionAttemptTask(this.initialConnectionProps, this.pluginService, hosts[i]);
+    const firstTask = new ConnectionAttemptTask(this.initialConnectionProps, this.pluginService, hosts[i], i);
     tasks.push(firstTask.call());
     let secondTask: ConnectionAttemptTask;
     if (numTasks === 2) {
-      secondTask = new ConnectionAttemptTask(this.initialConnectionProps, this.pluginService, hosts[i + 1]);
+      secondTask = new ConnectionAttemptTask(this.initialConnectionProps, this.pluginService, hosts[i + 1], i + 1);
       tasks.push(secondTask.call());
     }
 
     return Promise.any(tasks)
       .then((result) => {
         if (numTasks === 2 && !result.isConnected) {
-          if (firstTask.taskComplete) {
+          if (result.taskId === i) {
             selectedTask = 1;
             return tasks[1];
-          } else if (secondTask.taskComplete) {
+          } else if (result.taskId === i + 1) {
             selectedTask = 0;
             return tasks[0];
           }
@@ -297,13 +297,14 @@ class ConnectionAttemptTask {
   initialConnectionProps: Map<string, any>;
   pluginService: PluginService;
   newHost: HostInfo;
-  taskComplete: boolean = false;
   targetClient: any;
+  taskId: number;
 
-  constructor(initialConnectionProps: Map<string, any>, pluginService: PluginService, newHost: HostInfo) {
+  constructor(initialConnectionProps: Map<string, any>, pluginService: PluginService, newHost: HostInfo, taskId: number) {
     this.initialConnectionProps = initialConnectionProps;
     this.pluginService = pluginService;
     this.newHost = newHost;
+    this.taskId = taskId;
   }
 
   async call(): Promise<ReaderFailoverResult> {
@@ -320,20 +321,18 @@ class ConnectionAttemptTask {
       this.targetClient = await this.pluginService.forceConnect(this.newHost, copy);
       this.pluginService.setAvailability(this.newHost.allAliases, HostAvailability.AVAILABLE);
       logger.info(Messages.get("ClusterAwareReaderFailoverHandler.successfulReaderConnection", this.newHost.host));
-      return new ReaderFailoverResult(this.targetClient, this.newHost, true);
+      return new ReaderFailoverResult(this.targetClient, this.newHost, true, undefined, this.taskId);
     } catch (error) {
       this.pluginService.setAvailability(this.newHost.allAliases, HostAvailability.NOT_AVAILABLE);
       if (error instanceof Error) {
         // Propagate exceptions that are not caused by network errors.
         if (!this.pluginService.isNetworkError(error)) {
-          return new ReaderFailoverResult(null, null, false, error);
+          return new ReaderFailoverResult(null, null, false, error, this.taskId);
         }
 
         return ClusterAwareReaderFailoverHandler.FAILED_READER_FAILOVER_RESULT;
       }
       throw error;
-    } finally {
-      this.taskComplete = true;
     }
   }
 
