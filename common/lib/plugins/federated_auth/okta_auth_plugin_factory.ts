@@ -17,15 +17,21 @@
 import { ConnectionPluginFactory } from "../../plugin_factory";
 import { PluginService } from "../../plugin_service";
 import { ConnectionPlugin } from "../../connection_plugin";
-import { OktaAuthPlugin } from "./okta_auth_plugin";
-import { OktaCredentialsProviderFactory } from "./okta_credentials_provider_factory";
+import { logger } from "../../../logutils";
+import { AwsWrapperError } from "../../utils/errors";
+import { Messages } from "../../utils/messages";
 
 export class OktaAuthPluginFactory implements ConnectionPluginFactory {
-  getInstance(pluginService: PluginService, properties: Map<string, any>): ConnectionPlugin {
-    return new OktaAuthPlugin(pluginService, this.getCredentialsProviderFactory(properties));
-  }
+  async getInstance(pluginService: PluginService, properties: Map<string, any>): Promise<ConnectionPlugin> {
+    try {
+      const oktaAuthPluginImport = await import("./okta_auth_plugin");
+      const oktaCredentialsProviderFactoryImport = await import("./okta_credentials_provider_factory");
 
-  private getCredentialsProviderFactory(properties: Map<string, any>) {
-    return new OktaCredentialsProviderFactory();
+      const oktaCredentialsProviderFactory = new oktaCredentialsProviderFactoryImport.OktaCredentialsProviderFactory();
+      return new oktaAuthPluginImport.OktaAuthPlugin(pluginService, oktaCredentialsProviderFactory);
+    } catch (error: any) {
+      logger.error(error);
+      throw new AwsWrapperError(Messages.get("ConnectionPluginChainBuilder.errorImportingPlugin", "OktaAuthPlugin"));
+    }
   }
 }

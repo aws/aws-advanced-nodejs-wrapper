@@ -48,7 +48,7 @@ export class AdfsCredentialsProviderFactory extends SamlCredentialsProviderFacto
       }
       return match[1];
     } catch (e) {
-      throw new AwsWrapperError(Messages.get("SAMLCredentialsProviderFactory.getSamlAssertionFailed", (e as Error).message));
+      throw new AwsWrapperError(Messages.get("SamlCredentialsProviderFactory.getSamlAssertionFailed", (e as Error).message));
     }
   }
 

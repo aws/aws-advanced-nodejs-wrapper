@@ -104,7 +104,7 @@ export class OktaCredentialsProviderFactory extends SamlCredentialsProviderFacto
           Messages.get("OktaCredentialsProviderFactory.samlRequestFailed", e.response.status, e.response.statusText, e.message)
         );
       }
-      throw new AwsWrapperError(Messages.get("SAMLCredentialsProviderFactory.getSamlAssertionFailed", e.message));
+      throw new AwsWrapperError(Messages.get("SamlCredentialsProviderFactory.getSamlAssertionFailed", e.message));
     }
     const data: string = resp.data;
     const match = data.match(OktaCredentialsProviderFactory.SAML_RESPONSE_PATTERN);

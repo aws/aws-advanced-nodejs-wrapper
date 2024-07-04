@@ -101,6 +101,7 @@ export class OktaAuthPlugin extends AbstractConnectionPlugin {
     );
     logger.debug(Messages.get("AuthenticationToken.useCachedToken", token));
     WrapperProperties.PASSWORD.set(props, token);
+    this.pluginService.updateConfigWithProperties(props);
     OktaAuthPlugin.tokenCache.set(cacheKey, new TokenInfo(token, tokenExpiry));
   }
 

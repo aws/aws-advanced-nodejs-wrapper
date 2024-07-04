@@ -107,6 +107,6 @@
   "OktaCredentialsProviderFactory.invalidSessionToken": "Invalid response from session token request to Okta.",
   "OktaCredentialsProviderFactory.invalidSamlResponse": "The SAML Assertion request did not return a valid response containing a SAMLResponse.",
   "OktaCredentialsProviderFactory.samlRequestFailed": "Okta SAML Assertion request failed with HTTP status '%s', reason phrase '%s', and response '%s'",
-  "SAMLCredentialsProviderFactory.getSamlAssertionFailed": "Failed to get SAML Assertion due to exception: '%s'",
+  "SamlCredentialsProviderFactory.getSamlAssertionFailed": "Failed to get SAML Assertion due to exception: '%s'",
   "SamlAuthPlugin.unhandledException": "Unhandled exception: '%s'"
 }
