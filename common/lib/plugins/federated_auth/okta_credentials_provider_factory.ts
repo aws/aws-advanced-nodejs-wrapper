@@ -20,8 +20,8 @@ import { SamlUtils } from "../../utils/saml_utils";
 import axios from "axios";
 import { logger } from "../../../logutils";
 import { Messages } from "../../utils/messages";
-import { HttpsCookieAgent } from "http-cookie-agent/http";
 import { AwsWrapperError } from "../../utils/errors";
+import https from "https";
 
 export class OktaCredentialsProviderFactory extends SamlCredentialsProviderFactory {
   private static readonly OKTA_AWS_APP_NAME = "amazon_aws";
@@ -41,7 +41,7 @@ export class OktaCredentialsProviderFactory extends SamlCredentialsProviderFacto
     const idpUser = WrapperProperties.IDP_USERNAME.get(props);
     const idpPassword = WrapperProperties.IDP_PASSWORD.get(props);
 
-    const httpsAgent = new HttpsCookieAgent(WrapperProperties.HTTPS_AGENT_OPTIONS.get(props));
+    const httpsAgent = new https.Agent(WrapperProperties.HTTPS_AGENT_OPTIONS.get(props));
 
     const sessionTokenEndpoint = `https://${idpHost}/api/v1/authn`;
 
@@ -52,15 +52,13 @@ export class OktaCredentialsProviderFactory extends SamlCredentialsProviderFacto
 
     const postConfig = {
       method: "post",
-      maxBodyLength: Infinity,
       headers: {
         "Content-Type": "application/json",
         Accept: "application/json"
       },
       url: sessionTokenEndpoint,
       httpsAgent,
-      data,
-      withCredentials: true
+      data
     };
 
     let resp;
@@ -83,16 +81,14 @@ export class OktaCredentialsProviderFactory extends SamlCredentialsProviderFacto
 
     logger.debug(Messages.get("OktaCredentialsProviderFactory.samlAssertionUrl", uri));
 
-    const httpsAgent = new HttpsCookieAgent(WrapperProperties.HTTPS_AGENT_OPTIONS.get(props));
+    const httpsAgent = new https.Agent(WrapperProperties.HTTPS_AGENT_OPTIONS.get(props));
     const getConfig = {
       method: "get",
-      maxBodyLength: Infinity,
       url: uri,
       httpsAgent,
       params: {
         onetimetoken: oneTimeToken
-      },
-      withCredentials: true
+      }
     };
 
     let resp;
