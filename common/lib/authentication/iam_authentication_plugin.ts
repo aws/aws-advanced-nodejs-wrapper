@@ -70,7 +70,7 @@ export class IamAuthenticationPlugin extends AbstractConnectionPlugin {
     const isCachedToken: boolean = tokenInfo !== undefined && !tokenInfo.isExpired();
 
     if (isCachedToken && tokenInfo) {
-      logger.debug(Messages.get("IamAuthenticationPlugin.useCachedIamToken", tokenInfo.token));
+      logger.debug(Messages.get("AuthenticationToken.useCachedToken", tokenInfo.token));
       WrapperProperties.PASSWORD.set(props, tokenInfo.token);
     } else {
       const tokenExpiry: number = Date.now() + tokenExpirationSec * 1000;
@@ -81,7 +81,7 @@ export class IamAuthenticationPlugin extends AbstractConnectionPlugin {
         WrapperProperties.USER.get(props),
         AwsCredentialsManager.getProvider(hostInfo, props)
       );
-      logger.debug(Messages.get("IamAuthenticationPlugin.generatedNewIamToken", token));
+      logger.debug(Messages.get("AuthenticationToken.generatedNewToken", token));
       WrapperProperties.PASSWORD.set(props, token);
       IamAuthenticationPlugin.tokenCache.set(cacheKey, new TokenInfo(token, tokenExpiry));
     }
@@ -90,7 +90,7 @@ export class IamAuthenticationPlugin extends AbstractConnectionPlugin {
     try {
       return await connectFunc();
     } catch (e) {
-      logger.debug(Messages.get("IamAuthenticationPlugin.connectException", (e as Error).message));
+      logger.debug(Messages.get("Authentication.connectException", (e as Error).message));
       if (!this.pluginService.isLoginError(e as Error) || !isCachedToken) {
         throw e;
       }
@@ -106,7 +106,7 @@ export class IamAuthenticationPlugin extends AbstractConnectionPlugin {
         WrapperProperties.USER.get(props),
         AwsCredentialsManager.getProvider(hostInfo, props)
       );
-      logger.debug(Messages.get("IamAuthenticationPlugin.generatedNewIamToken", token));
+      logger.debug(Messages.get("AuthenticationToken.generatedNewToken", token));
       WrapperProperties.PASSWORD.set(props, token);
       IamAuthenticationPlugin.tokenCache.set(cacheKey, new TokenInfo(token, tokenExpiry));
       return connectFunc();

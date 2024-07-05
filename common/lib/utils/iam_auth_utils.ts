@@ -33,7 +33,7 @@ export class IamAuthUtils {
     if (port > 0) {
       return port;
     } else {
-      logger.debug(Messages.get("IamAuthenticationPlugin.invalidPort", isNaN(port) ? "-1" : String(port)));
+      logger.debug(Messages.get("Authentication.invalidPort", isNaN(port) ? "-1" : String(port)));
     }
 
     if (hostInfo.isPortSpecified()) {
@@ -47,7 +47,7 @@ export class IamAuthUtils {
     const rdsRegion = rdsUtils.getRdsRegion(hostname);
 
     if (!rdsRegion) {
-      const errorMessage = Messages.get("FederatedAuthPlugin.unsupportedHostname", hostname);
+      const errorMessage = Messages.get("Authentication.unsupportedHostname", hostname);
       logger.debug(errorMessage);
       throw new AwsWrapperError(errorMessage);
     }
@@ -74,7 +74,7 @@ export class IamAuthUtils {
       username: user
     });
 
-    return await signer.getAuthToken();
+    return signer.getAuthToken();
   }
 }
 
