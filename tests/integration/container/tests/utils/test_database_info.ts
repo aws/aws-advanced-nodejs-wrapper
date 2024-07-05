@@ -16,6 +16,7 @@
 
 import { TestInstanceInfo } from "./test_instance_info";
 import { DBInstance } from "@aws-sdk/client-rds/dist-types/models/models_0";
+import { logger } from "../../../../../common/logutils";
 
 export class TestDatabaseInfo {
   private readonly _username: string;
@@ -57,6 +58,14 @@ export class TestDatabaseInfo {
     return this._default_db_name;
   }
 
+  get writerInstanceEndpoint() {
+    return this._instances[0].host ? this._instances[0].host : "";
+  }
+
+  get writerInstanceId() {
+    return this._instances[0].instanceId;
+  }
+
   get clusterEndpoint(): string {
     return this._clusterEndpoint;
   }
@@ -85,11 +94,12 @@ export class TestDatabaseInfo {
     return this._instances;
   }
 
-  getInstance(instanceName: string) {
+  getInstance(instanceName: string): TestInstanceInfo {
     const instance = this._instances.find((instance) => instance.instanceId === instanceName);
     if (instance === undefined) {
       throw new Error("instance not found");
     }
+    return instance;
   }
 
   moveInstanceFirst(instanceName: string) {

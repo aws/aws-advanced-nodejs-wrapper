@@ -30,11 +30,4 @@ export default async (globalConfig: any, projectConfig: any) => {
   process.env["JEST_HTML_REPORTER_INCLUDE_CONSOLE_LOG"] = "true";
 
   await ProxyHelper.enableAllConnectivity();
-
-  // if (request.deployment === DatabaseEngineDeployment.AURORA) {
-  //   const auroraUtility = new AuroraTestUtility(info.auroraRegion);
-  //   await auroraUtility.waitUntilClusterHasDesiredStatus(info.auroraClusterName);
-  //
-  //   // TODO
-  // }
 };
