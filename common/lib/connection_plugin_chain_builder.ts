@@ -30,6 +30,7 @@ import { FailoverPluginFactory } from "./plugins/failover/failover_plugin_factor
 import { StaleDnsPluginFactory } from "./plugins/stale_dns/stale_dns_plugin_factory";
 import { FederatedAuthPluginFactory } from "./plugins/federated_auth/federated_auth_plugin_factory";
 import { ReadWriteSplittingPluginFactory } from "./plugins/read_write_splitting_plugin_factory";
+import { OktaAuthPluginFactory } from "./plugins/federated_auth/okta_auth_plugin_factory";
 
 /*
   Type alias used for plugin factory sorting. It holds a reference to a plugin
@@ -53,6 +54,7 @@ export class ConnectionPluginChainBuilder {
     ["iam", { factory: IamAuthenticationPluginFactory, weight: 1000 }],
     ["secretsManager", { factory: AwsSecretsManagerPluginFactory, weight: 1100 }],
     ["federatedAuth", { factory: FederatedAuthPluginFactory, weight: 1200 }],
+    ["okta", { factory: OktaAuthPluginFactory, weight: 1300 }],
     ["connectTime", { factory: ConnectTimePluginFactory, weight: ConnectionPluginChainBuilder.WEIGHT_RELATIVE_TO_PRIOR_PLUGIN }],
     ["executeTime", { factory: ExecuteTimePluginFactory, weight: ConnectionPluginChainBuilder.WEIGHT_RELATIVE_TO_PRIOR_PLUGIN }]
   ]);

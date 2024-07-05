@@ -16,7 +16,7 @@
 
 import { WrapperProperties } from "../../common/lib/wrapper_property";
 import { readFileSync } from "fs";
-import { anything, instance, mock, spy, when } from "ts-mockito";
+import { anything, instance, spy, when } from "ts-mockito";
 import { AdfsCredentialsProviderFactory } from "../../common/lib/plugins/federated_auth/adfs_credentials_provider_factory";
 
 const props = new Map<string, any>();
@@ -35,15 +35,15 @@ describe("adfsTest", () => {
     const adfsSaml = readFileSync(adfsSamlHtml, "utf8");
     const expectedSamlAssertion = readFileSync(samlAssertionTxt, "utf8").trimEnd();
 
-    const mockPlugin = spy(new AdfsCredentialsProviderFactory());
-    const mockPluginInstance = instance(mockPlugin);
-    when(mockPlugin.getSignInPageBody(anything(), anything())).thenResolve(signInPage);
-    when(mockPlugin.getFormActionBody(anything(), anything(), anything())).thenResolve(adfsSaml);
+    const spyCredentialsFactory = spy(new AdfsCredentialsProviderFactory());
+    const spyCredentialsFactoryInstance = instance(spyCredentialsFactory);
+    when(spyCredentialsFactory.getSignInPageBody(anything(), anything())).thenResolve(signInPage);
+    when(spyCredentialsFactory.getFormActionBody(anything(), anything(), anything())).thenResolve(adfsSaml);
 
-    const samlAssertion = await mockPluginInstance.getSamlAssertion(props);
+    const samlAssertion = await spyCredentialsFactoryInstance.getSamlAssertion(props);
     expect(samlAssertion).toBe(expectedSamlAssertion);
 
-    const params = mockPluginInstance["getParametersFromHtmlBody"](signInPage, props);
+    const params = spyCredentialsFactoryInstance["getParametersFromHtmlBody"](signInPage, props);
     expect(params["UserName"]).toBe("someFederatedUsername@example.com");
     expect(params["Password"]).toBe("somePassword");
     expect(params["Kmsi"]).toBe("true");
