@@ -9,3 +9,4 @@
     - [Okta Authentication Plugin](./using-the-nodejs-wrapper/using-plugins/UsingTheOktaAuthPlugin.md)
     - [Federated Authentication Plugin](./using-the-nodejs-wrapper/using-plugins/UsingTheFederatedAuthPlugin.md)
     - [IAM Authentication Plugin](./using-the-nodejs-wrapper/using-plugins/UsingTheIamAuthenticationPlugin.md)
+  - [Host Availability Strategy](./using-the-nodejs-wrapper/HostAvailabilityStrategy.md)
