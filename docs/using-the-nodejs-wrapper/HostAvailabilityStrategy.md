@@ -4,9 +4,9 @@
 
 The AWS Advanced NodeJS Wrapper keeps track of the availability of database hosts. A host's availability status can be either `AVAILABLE` or `NOT_AVAILABLE`. This information is used by the driver when deciding which hosts to connect to.
 
-When database hosts fail, they are marked as `NOT_AVAILABLE` and will not be checked again to see if they have recovered. Host Availability Strategies can help the driver keep host health statuses up to date by checking whether unavailable hosts have become available. For example, the Exponential Backoff strategy will let the driver retry hosts that have had their availability set to `NOT_AVAILABLE` by setting the host availability to `AVAILABLE` after a backoff period.
+When database hosts fail, they are marked as `NOT_AVAILABLE` and will not be checked again to see if they have recovered. Host Availability Strategies can help the driver keep host health statuses up to date by checking whether unavailable hosts have become available. For example, the Exponential Backoff strategy will let the wrapper retry hosts that have had their availability set to `NOT_AVAILABLE` by setting the host availability to `AVAILABLE` after a backoff period.
 
-Different strategies can be swapped out for different behaviors. The default Host Availability Strategy the driver uses can be configured as specified in the [configuration parameters table](#configuration-parameters).
+Different strategies can be swapped out for different behaviors. The default Host Availability Strategy the wrapper uses can be configured as specified in the [configuration parameters table](#configuration-parameters).
 
 ## Configuration Parameters
 
