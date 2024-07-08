@@ -113,7 +113,20 @@ export class HostInfo {
     return this.availability;
   }
 
-  setAvailability(availability: HostAvailability) {}
+  setAvailability(availability: HostAvailability) {
+    this.availability = availability;
+    if (this.hostAvailabilityStrategy !== null) {
+      this.hostAvailabilityStrategy.setHostAvailability(availability);
+    }
+  }
+
+  getHostAvailabilityStrategy(): HostAvailabilityStrategy {
+    return this.hostAvailabilityStrategy;
+  }
+
+  setHostAvailabilityStrategy(hostAvailabilityStrategy: HostAvailabilityStrategy): void {
+    this.hostAvailabilityStrategy = hostAvailabilityStrategy;
+  }
 
   toString(): string {
     return `HostInfo[host=${this.host}, port=${this.port}, ${this.role}, ${this.availability}, weight=${this.weight}, ${this.lastUpdateTime}]`;
