@@ -20,6 +20,7 @@ import { WrapperProperties } from "../../wrapper_property";
 import { Credentials } from "aws-sdk";
 import { AwsWrapperError } from "../../utils/errors";
 import { AwsCredentialIdentityProvider, AwsCredentialIdentity } from "@smithy/types/dist-types/identity/awsCredentialIdentity";
+import { decode } from "entities";
 
 export abstract class SamlCredentialsProviderFactory implements CredentialsProviderFactory {
   async getAwsCredentialsProvider(
@@ -29,7 +30,7 @@ export abstract class SamlCredentialsProviderFactory implements CredentialsProvi
   ): Promise<AwsCredentialIdentity | AwsCredentialIdentityProvider> {
     const samlAssertion = await this.getSamlAssertion(props);
     const assumeRoleWithSamlRequest = new AssumeRoleWithSAMLCommand({
-      SAMLAssertion: samlAssertion,
+      SAMLAssertion: decode(samlAssertion),
       RoleArn: WrapperProperties.IAM_ROLE_ARN.get(props),
       PrincipalArn: WrapperProperties.IAM_IDP_ARN.get(props)
     });
@@ -41,15 +42,12 @@ export abstract class SamlCredentialsProviderFactory implements CredentialsProvi
     const results = await stsClient.send(assumeRoleWithSamlRequest);
     const credentials = results["Credentials"];
 
-    if (credentials) {
-      if (credentials.AccessKeyId && credentials.SecretAccessKey && credentials.SessionToken) {
-        return new Credentials({
-          accessKeyId: credentials.AccessKeyId,
-          secretAccessKey: credentials.SecretAccessKey,
-          sessionToken: credentials.SessionToken
-        });
-      }
-      throw new AwsWrapperError("Credentials undefined");
+    if (credentials && credentials.AccessKeyId && credentials.SecretAccessKey && credentials.SessionToken) {
+      return new Credentials({
+        accessKeyId: credentials.AccessKeyId,
+        secretAccessKey: credentials.SecretAccessKey,
+        sessionToken: credentials.SessionToken
+      });
     }
     throw new AwsWrapperError("Credentials from SAML request not found");
   }

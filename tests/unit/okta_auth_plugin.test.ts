@@ -14,95 +14,94 @@
   limitations under the License.
 */
 
-import { HostInfo } from "../../common/lib/host_info";
-import { FederatedAuthPlugin } from "../../common/lib/plugins/federated_auth/federated_auth_plugin";
+import { anything, instance, mock, spy, verify, when } from "ts-mockito";
 import { PluginService } from "../../common/lib/plugin_service";
-import { IamAuthUtils, TokenInfo } from "../../common/lib/utils/iam_auth_utils";
-import { WrapperProperties } from "../../common/lib/wrapper_property";
-import { anything, instance, mock, spy, when } from "ts-mockito";
 import { CredentialsProviderFactory } from "../../common/lib/plugins/federated_auth/credentials_provider_factory";
+import { IamAuthUtils, TokenInfo } from "../../common/lib/utils/iam_auth_utils";
+import { HostInfo } from "../../common/lib/host_info";
+import { WrapperProperties } from "../../common/lib/wrapper_property";
 import { DatabaseDialect } from "../../common/lib/database_dialect/database_dialect";
 import { Credentials } from "aws-sdk";
+import { OktaAuthPlugin } from "../../common/lib/plugins/federated_auth/okta_auth_plugin";
 
-const testToken = "testToken";
-const defaultPort = 5432;
-const pgCacheKey = `us-east-2:pg.testdb.us-east-2.rds.amazonaws.com:${defaultPort}:iamUser`;
-const dbUser = "iamUser";
-const expirationFiveMinutes = 5 * 60 * 1000;
-const tokenCache = new Map<string, TokenInfo>();
-
+const defaultPort = 1234;
 const hostInfo = new HostInfo("pg.testdb.us-east-2.rds.amazonaws.com", defaultPort);
-const testTokenInfo = new TokenInfo(testToken, Date.now() + expirationFiveMinutes);
+const dbUser = "iamUser";
+const region = "us-east-2";
+const testToken = "someTestToken";
+const testTokenInfo = new TokenInfo(testToken, Date.now() + 300000);
 
+const mockPluginService = mock(PluginService);
 const mockDialect = mock<DatabaseDialect>();
 const mockDialectInstance = instance(mockDialect);
-const mockPluginService = mock(PluginService);
-const mockCredentialsProviderFactory = mock<CredentialsProviderFactory>();
-const spyIamUtils = spy(IamAuthUtils);
 const mockCredentials = mock(Credentials);
+const spyIamUtils = spy(IamAuthUtils);
+const mockCredentialsProviderFactory = mock<CredentialsProviderFactory>();
 const mockConnectFunc = jest.fn().mockImplementation(() => {
   return;
 });
 
-describe("federatedAuthTest", () => {
-  let spyPlugin: FederatedAuthPlugin;
+describe("oktaAuthTest", () => {
+  let spyPlugin: OktaAuthPlugin;
   let props: Map<string, any>;
 
   beforeEach(() => {
     props = new Map<string, any>();
-    WrapperProperties.PLUGINS.set(props, "federatedAuth");
+    WrapperProperties.PLUGINS.set(props, "okta");
     WrapperProperties.DB_USER.set(props, dbUser);
-    spyPlugin = spy(new FederatedAuthPlugin(instance(mockPluginService), instance(mockCredentialsProviderFactory)));
+    spyPlugin = spy(new OktaAuthPlugin(instance(mockPluginService), instance(mockCredentialsProviderFactory)));
     when(mockPluginService.getDialect()).thenReturn(mockDialectInstance);
     when(mockDialect.getDefaultPort()).thenReturn(defaultPort);
-    when(mockCredentialsProviderFactory.getAwsCredentialsProvider(anything(), anything(), anything())).thenResolve(instance(mockCredentials));
+    when(mockCredentialsProviderFactory.getAwsCredentialsProvider(anything(), anything(), anything())).thenResolve(mockCredentials);
   });
 
   afterEach(() => {
-    FederatedAuthPlugin.clearCache();
+    OktaAuthPlugin.clearCache();
   });
 
   it("testCachedToken", async () => {
     const spyPluginInstance = instance(spyPlugin);
-    FederatedAuthPlugin["tokenCache"].set(pgCacheKey, testTokenInfo);
-
     const key = `us-east-2:pg.testdb.us-east-2.rds.amazonaws.com:${defaultPort}:iamUser`;
-    tokenCache.set(key, testTokenInfo);
 
-    await spyPluginInstance.connect(hostInfo, props, true, mockConnectFunc);
+    OktaAuthPlugin["tokenCache"].set(key, testTokenInfo);
+
+    await spyPluginInstance.connect(hostInfo, props, false, mockConnectFunc);
 
     expect(dbUser).toBe(WrapperProperties.USER.get(props));
     expect(testToken).toBe(WrapperProperties.PASSWORD.get(props));
   });
 
   it("testExpiredCachedToken", async () => {
-    const spyPluginInstance: FederatedAuthPlugin = instance(spyPlugin);
-
+    const spyPluginInstance = instance(spyPlugin);
     const key = `us-east-2:pg.testdb.us-east-2.rds.amazonaws.com:${defaultPort}:iamUser`;
-    const expiredToken = "expiredToken";
-    const expiredTokenInfo = new TokenInfo(expiredToken, Date.now() - 300000);
 
-    FederatedAuthPlugin["tokenCache"].set(key, expiredTokenInfo);
+    const someExpiredToken = "someExpiredToken";
+    const expiredTokenInfo = new TokenInfo(someExpiredToken, Date.now() - 300000);
+
+    OktaAuthPlugin["tokenCache"].set(key, expiredTokenInfo);
 
     when(spyIamUtils.generateAuthenticationToken(anything(), anything(), anything(), anything(), anything())).thenResolve(testToken);
 
-    await spyPluginInstance.connect(hostInfo, props, true, mockConnectFunc);
+    await spyPluginInstance.connect(hostInfo, props, false, mockConnectFunc);
 
+    verify(spyIamUtils.generateAuthenticationToken(hostInfo.host, defaultPort, region, dbUser, mockCredentials)).called();
     expect(dbUser).toBe(WrapperProperties.USER.get(props));
     expect(testToken).toBe(WrapperProperties.PASSWORD.get(props));
   });
 
   it("testNoCachedToken", async () => {
     const spyPluginInstance = instance(spyPlugin);
-
     when(spyIamUtils.generateAuthenticationToken(anything(), anything(), anything(), anything(), anything())).thenResolve(testToken);
 
     await spyPluginInstance.connect(hostInfo, props, true, mockConnectFunc);
+
+    verify(spyIamUtils.generateAuthenticationToken(hostInfo.host, defaultPort, region, dbUser, mockCredentials)).called();
     expect(dbUser).toBe(WrapperProperties.USER.get(props));
     expect(testToken).toBe(WrapperProperties.PASSWORD.get(props));
   });
 
   it("testSpecifiedIamHostPortRegion", async () => {
+    const spyPluginInstance = instance(spyPlugin);
     const expectedHost = "pg.testdb.us-west-2.rds.amazonaws.com";
     const expectedPort = 9876;
     const expectedRegion = "us-west-2";
@@ -112,9 +111,8 @@ describe("federatedAuthTest", () => {
     WrapperProperties.IAM_REGION.set(props, expectedRegion);
 
     const key = `us-west-2:pg.testdb.us-west-2.rds.amazonaws.com:${expectedPort}:iamUser`;
-    FederatedAuthPlugin["tokenCache"].set(key, testTokenInfo);
 
-    const spyPluginInstance = instance(spyPlugin);
+    OktaAuthPlugin["tokenCache"].set(key, testTokenInfo);
 
     await spyPluginInstance.connect(hostInfo, props, true, mockConnectFunc);
 
@@ -123,18 +121,17 @@ describe("federatedAuthTest", () => {
   });
 
   it("testIdpCredentialsFallback", async () => {
+    const spyPluginInstance = instance(spyPlugin);
     const expectedUser = "expectedUser";
     const expectedPassword = "expectedPassword";
+
     WrapperProperties.USER.set(props, expectedUser);
     WrapperProperties.PASSWORD.set(props, expectedPassword);
 
-    const spyPluginInstance = instance(spyPlugin);
-
     const key = `us-east-2:pg.testdb.us-east-2.rds.amazonaws.com:${defaultPort}:iamUser`;
-    FederatedAuthPlugin["tokenCache"].set(key, testTokenInfo);
+    OktaAuthPlugin["tokenCache"].set(key, testTokenInfo);
 
     await spyPluginInstance.connect(hostInfo, props, true, mockConnectFunc);
-
     expect(dbUser).toBe(WrapperProperties.USER.get(props));
     expect(testToken).toBe(WrapperProperties.PASSWORD.get(props));
     expect(expectedUser).toBe(WrapperProperties.IDP_USERNAME.get(props));
