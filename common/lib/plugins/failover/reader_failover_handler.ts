@@ -17,7 +17,7 @@
 import { HostInfo } from "../../host_info";
 import { PluginService } from "../../plugin_service";
 import { ReaderFailoverResult } from "./reader_failover_result";
-import { shuffleList, sleep } from "../../utils/utils";
+import { maskProperties, shuffleList, sleep } from "../../utils/utils";
 import { HostRole } from "../../host_role";
 import { HostAvailability } from "../../host_availability/host_availability";
 import { AwsWrapperError } from "../../utils/errors";
@@ -185,7 +185,7 @@ export class ClusterAwareReaderFailoverHandler implements ReaderFailoverHandler 
     const numTasks = i + 1 < hosts.length ? 2 : 1;
     const getResultTask = this.getResultTask(hosts, numTasks, i);
 
-    return Promise.race([timeoutTask, getResultTask])
+    return await Promise.race([timeoutTask, getResultTask])
       .then((result) => {
         if (result) {
           return result;
@@ -206,7 +206,7 @@ export class ClusterAwareReaderFailoverHandler implements ReaderFailoverHandler 
 
   async getResultTask(hosts: HostInfo[], numTasks: number, i: number) {
     const tasks: Promise<ReaderFailoverResult>[] = [];
-    let selectedTask = 0;
+    let selectedTask = -1;
     const firstTask = new ConnectionAttemptTask(this.initialConnectionProps, this.pluginService, hosts[i], i);
     tasks.push(firstTask.call());
     let secondTask: ConnectionAttemptTask;
@@ -215,25 +215,22 @@ export class ClusterAwareReaderFailoverHandler implements ReaderFailoverHandler 
       tasks.push(secondTask.call());
     }
 
-    return Promise.any(tasks)
-      .then((result) => {
+    return await Promise.any(tasks)
+      .then(async (result) => {
         if (numTasks === 2 && !result.isConnected) {
           if (result.taskId === i) {
-            selectedTask = 1;
-            return tasks[1];
+            selectedTask = i;
+            return await tasks[1];
           } else if (result.taskId === i + 1) {
-            selectedTask = 0;
-            return tasks[0];
+            selectedTask = i + 1;
+            return await tasks[0];
           }
         }
-        return tasks[0];
+        return result;
       })
-      .finally(async () => {
-        if (selectedTask === 0) {
-          await secondTask.performFinalCleanup();
-        } else if (selectedTask === 1) {
-          await firstTask.performFinalCleanup();
-        }
+      .finally(() => {
+        firstTask.selectedTask = selectedTask;
+        secondTask.selectedTask = selectedTask;
       });
   }
 
@@ -299,30 +296,33 @@ class ConnectionAttemptTask {
   newHost: HostInfo;
   targetClient: any;
   taskId: number;
+  selectedTask: number;
 
   constructor(initialConnectionProps: Map<string, any>, pluginService: PluginService, newHost: HostInfo, taskId: number) {
     this.initialConnectionProps = initialConnectionProps;
     this.pluginService = pluginService;
     this.newHost = newHost;
     this.taskId = taskId;
+    this.selectedTask = taskId;
   }
 
   async call(): Promise<ReaderFailoverResult> {
+    const copy = new Map(this.initialConnectionProps);
+    copy.set(WrapperProperties.HOST.name, this.newHost.host);
     logger.info(
       Messages.get(
         "ClusterAwareReaderFailoverHandler.attemptingReaderConnection",
         this.newHost.host,
-        JSON.stringify(Object.fromEntries(this.initialConnectionProps))
+        JSON.stringify(Object.fromEntries(maskProperties(copy)))
       )
     );
-    const copy = new Map(this.initialConnectionProps);
-    copy.set(WrapperProperties.HOST.name, this.newHost.host);
     try {
       this.targetClient = await this.pluginService.forceConnect(this.newHost, copy);
       this.pluginService.setAvailability(this.newHost.allAliases, HostAvailability.AVAILABLE);
       logger.info(Messages.get("ClusterAwareReaderFailoverHandler.successfulReaderConnection", this.newHost.host));
       return new ReaderFailoverResult(this.targetClient, this.newHost, true, undefined, this.taskId);
     } catch (error) {
+      this.selectedTask = -1;
       this.pluginService.setAvailability(this.newHost.allAliases, HostAvailability.NOT_AVAILABLE);
       if (error instanceof Error) {
         // Propagate exceptions that are not caused by network errors.
@@ -330,9 +330,11 @@ class ConnectionAttemptTask {
           return new ReaderFailoverResult(null, null, false, error, this.taskId);
         }
 
-        return ClusterAwareReaderFailoverHandler.FAILED_READER_FAILOVER_RESULT;
+        return new ReaderFailoverResult(null, null, false, undefined, this.taskId);
       }
       throw error;
+    } finally {
+      await this.performFinalCleanup();
     }
   }
 
@@ -342,6 +344,8 @@ class ConnectionAttemptTask {
   // ReaderFailoverResult and eventually may get it's way to pluginService.setCurrentClient
   // In this case we should not be clearing it here. And again don't need to store it in class member.
   async performFinalCleanup() {
-    await this.pluginService.tryClosingTargetClient(this.targetClient);
+    if (this.selectedTask !== this.taskId) {
+      await this.pluginService.tryClosingTargetClient(this.targetClient);
+    }
   }
 }
