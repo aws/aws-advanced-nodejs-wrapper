@@ -14,78 +14,111 @@
   limitations under the License.
 */
 
-import dotenv from "dotenv";
 import { add, cycle, suite, save, complete } from "benny";
-import pkg from "pg";
-const { Client } = pkg;
-import mysql from "mysql2/promise";
-import { AwsPGClient } from "../pg/lib";
-import { AwsMySQLClient } from "../mysql/lib";
+import { PluginManager } from "../common/lib";
+import { PluginServiceManagerContainer } from "../common/lib/plugin_service_manager_container";
+import { instance, mock, when } from "ts-mockito";
+import { ConnectionProvider } from "../common/lib/connection_provider";
+import { HostInfoBuilder } from "../common/lib/host_info_builder";
+import { SimpleHostAvailabilityStrategy } from "../common/lib/host_availability/simple_host_availability_strategy";
+import { PluginService } from "../common/lib/plugin_service";
+import { WrapperProperties } from "../common/lib/wrapper_property";
+import { BenchmarkPlugin } from "./testplugin/benchmark_plugin";
+import { HostListProviderService } from "../common/lib/host_list_provider_service";
+import { HostChangeOptions } from "../common/lib/host_change_options";
+import { AwsClient } from "../common/lib/aws_client";
+import { DefaultPlugin } from "../common/lib/plugins/default_plugin";
 
-dotenv.config();
+const mockConnectionProvider = mock<ConnectionProvider>();
+const mockHostListProviderService = mock<HostListProviderService>();
+const mockPluginService = mock(PluginService);
+const mockClient = mock<AwsClient>();
+const pluginServiceManagerContainer = new PluginServiceManagerContainer();
+const propsWithNoPlugins = new Map<string, any>();
+const propsWithPlugins = new Map<string, any>();
+WrapperProperties.PLUGINS.set(propsWithPlugins, "benchmarkPlugin");
+const pluginManagerWithNoPlugins = new PluginManager(pluginServiceManagerContainer, propsWithNoPlugins, instance(mockConnectionProvider), null);
+const pluginManagerWithPlugins = new PluginManager(pluginServiceManagerContainer, propsWithPlugins, instance(mockConnectionProvider), null);
+// await pluginManagerWithPlugins.init();
+// await pluginManagerWithNoPlugins.init();
+const benchmarkPlugin = new BenchmarkPlugin();
+pluginManagerWithPlugins["_plugins"].push(benchmarkPlugin);
+pluginManagerWithPlugins["_plugins"].push(new DefaultPlugin(instance(mockPluginService), instance(mockConnectionProvider), null, undefined));
+pluginManagerWithNoPlugins["_plugins"].push(new DefaultPlugin(instance(mockPluginService), instance(mockConnectionProvider), null, undefined));
 
-const PG_DB_USER = process.env.PG_DB_USER;
-const PG_DB_HOST = process.env.PG_DB_HOST;
-const PG_DB_PASSWORD = process.env.PG_DB_PASSWORD;
-const PG_DB_NAME = process.env.PG_DB_NAME;
-const MYSQL_DB_USER = process.env.MYSQL_DB_USER;
-const MYSQL_DB_HOST = process.env.MYSQL_DB_HOST;
-const MYSQL_DB_PASSWORD = process.env.MYSQL_DB_PASSWORD;
-const MYSQL_DB_NAME = process.env.MYSQL_DB_NAME;
+when(mockPluginService.getCurrentClient()).thenReturn(instance(mockClient));
 
 suite(
-  "Connect Benchmarks",
+  "Connection Plugin Manager Benchmarks",
 
-  // pass
-  add("pg baseline", async () => {
-    const pgClient = new Client({
-      user: PG_DB_USER,
-      host: PG_DB_HOST,
-      database: PG_DB_NAME,
-      password: PG_DB_PASSWORD,
-      port: 5432
-    });
-    await pgClient.connect();
-    await pgClient.end();
+  add("initConnectionPluginManagerWithNoPlugins", async () => {
+    const manager = new PluginManager(pluginServiceManagerContainer, propsWithNoPlugins, instance(mockConnectionProvider), null);
+    await manager.init();
   }),
 
-  // pass with query only
-  add("pg connect pipeline", async () => {
-    const wrapperClient = new AwsPGClient({
-      user: PG_DB_USER,
-      host: PG_DB_HOST,
-      database: PG_DB_NAME,
-      password: PG_DB_PASSWORD,
-      port: 5432
-    });
-    await wrapperClient.connect();
-    await wrapperClient.end();
+  add("initConnectionPluginManagerWithPlugins", async () => {
+    const manager = new PluginManager(pluginServiceManagerContainer, propsWithPlugins, instance(mockConnectionProvider), null);
+    await manager.init();
   }),
 
-  // pass
-  add("mysql baseline", async () => {
-    const mysqlClient = await mysql.createConnection({
-      user: MYSQL_DB_USER,
-      host: MYSQL_DB_HOST,
-      database: MYSQL_DB_NAME,
-      password: MYSQL_DB_PASSWORD,
-      port: 3306
-    });
-    await mysqlClient.connect();
-    await mysqlClient.end();
+  add("connectWithNoPlugins", async () => {
+    await pluginManagerWithNoPlugins.connect(
+      new HostInfoBuilder({ hostAvailabilityStrategy: new SimpleHostAvailabilityStrategy() }).withHost("host").build(),
+      propsWithNoPlugins,
+      true
+    );
   }),
 
-  // pass
-  add("mysql connect pipeline", async () => {
-    const mysqlWrapperClient = new AwsMySQLClient({
-      user: MYSQL_DB_USER,
-      host: MYSQL_DB_HOST,
-      database: MYSQL_DB_NAME,
-      password: MYSQL_DB_PASSWORD,
-      port: 3306
-    });
-    await mysqlWrapperClient.connect();
-    await mysqlWrapperClient.end();
+  add("connectWithPlugins", async () => {
+    await pluginManagerWithPlugins.connect(
+      new HostInfoBuilder({ hostAvailabilityStrategy: new SimpleHostAvailabilityStrategy() }).withHost("host").build(),
+      propsWithPlugins,
+      true
+    );
+  }),
+
+  add("executeWithPlugins", async () => {
+    await pluginManagerWithPlugins.execute(
+      new HostInfoBuilder({ hostAvailabilityStrategy: new SimpleHostAvailabilityStrategy() }).withHost("host").build(),
+      propsWithPlugins,
+      "execute",
+      () => Promise.resolve(1),
+      null
+    );
+  }),
+
+  add("executeWithNoPlugins", async () => {
+    await pluginManagerWithNoPlugins.execute(
+      new HostInfoBuilder({ hostAvailabilityStrategy: new SimpleHostAvailabilityStrategy() }).withHost("host").build(),
+      propsWithNoPlugins,
+      "execute",
+      () => Promise.resolve(1),
+      null
+    );
+  }),
+
+  add("initHostProviderWithPlugins", async () => {
+    await pluginManagerWithPlugins.initHostProvider(
+      new HostInfoBuilder({ hostAvailabilityStrategy: new SimpleHostAvailabilityStrategy() }).withHost("host").build(),
+      propsWithPlugins,
+      instance(mockHostListProviderService)
+    );
+  }),
+
+  add("initHostProvidersWithNoPlugins", async () => {
+    await pluginManagerWithNoPlugins.initHostProvider(
+      new HostInfoBuilder({ hostAvailabilityStrategy: new SimpleHostAvailabilityStrategy() }).withHost("host").build(),
+      propsWithNoPlugins,
+      instance(mockHostListProviderService)
+    );
+  }),
+
+  add("notifyConnectionChangedWithPlugins", async () => {
+    await pluginManagerWithPlugins.notifyConnectionChanged(new Set<HostChangeOptions>([HostChangeOptions.INITIAL_CONNECTION]), null);
+  }),
+
+  add("notifyConnectionChangedWithNoPlugins", async () => {
+    await pluginManagerWithNoPlugins.notifyConnectionChanged(new Set<HostChangeOptions>([HostChangeOptions.INITIAL_CONNECTION]), null);
   }),
 
   cycle(),
