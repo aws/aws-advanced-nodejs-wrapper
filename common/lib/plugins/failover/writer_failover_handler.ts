@@ -107,9 +107,9 @@ export class ClusterAwareWriterFailoverHandler implements WriterFailoverHandler 
     );
 
     let timeoutId: any;
-    const timeoutTask: Promise<void> = new Promise((resolve, reject) => {
+    const timeoutTask: Promise<void> = new Promise((_resolve, reject) => {
       timeoutId = setTimeout(() => {
-        reject("Connection attempt task timed out.");
+        reject(new AwsWrapperError("Connection attempt task timed out."));
       }, this.maxFailoverTimeoutMs);
     });
 
@@ -147,9 +147,9 @@ export class ClusterAwareWriterFailoverHandler implements WriterFailoverHandler 
         }
         throw new AwsWrapperError("Connection attempt task timed out.");
       })
-      .catch((error) => {
-        logger.info("ClusterAwareWriterFailoverHandler.failedToConnectToWriterInstance");
-        if (JSON.stringify(error).includes("Connection attempt task timed out.")) {
+      .catch((error: any) => {
+        logger.info(Messages.get("ClusterAwareWriterFailoverHandler.failedToConnectToWriterInstance"));
+        if (error.message.includes("Connection attempt task timed out.")) {
           return new WriterFailoverResult(false, false, [], "None", null);
         }
         throw error;
@@ -247,7 +247,7 @@ class ReconnectToWriterHandlerTask {
         } catch (error) {
           // Propagate exceptions that are not caused by network errors.
           if (error instanceof AwsWrapperError && !this.pluginService.isNetworkError(error)) {
-            logger.info("ClusterAwareWriterFailoverHandler.taskAEncounteredException", JSON.stringify(error));
+            logger.info("ClusterAwareWriterFailoverHandler.taskAEncounteredException", error.message);
             return new WriterFailoverResult(false, false, [], ClusterAwareWriterFailoverHandler.RECONNECT_WRITER_TASK, null, error);
           }
         }
@@ -268,8 +268,8 @@ class ReconnectToWriterHandlerTask {
         ClusterAwareWriterFailoverHandler.RECONNECT_WRITER_TASK,
         success ? this.currentClient : null
       );
-    } catch (error) {
-      logger.error(error);
+    } catch (error: any) {
+      logger.error(error.message);
       return new WriterFailoverResult(false, false, [], ClusterAwareWriterFailoverHandler.RECONNECT_WRITER_TASK, null);
     } finally {
       if (this.currentClient && !success) {
@@ -285,6 +285,7 @@ class ReconnectToWriterHandlerTask {
 
     // Task B was returned.
     if (selectedTask && selectedTask === ClusterAwareWriterFailoverHandler.WAIT_NEW_WRITER_TASK) {
+      logger.debug("task B was returned");
       await this.pluginService.tryClosingTargetClient(this.currentClient);
     }
   }
@@ -478,6 +479,7 @@ class WaitForNewWriterHandlerTask {
 
     // Task A was returned.
     if (selectedTask && selectedTask === ClusterAwareWriterFailoverHandler.RECONNECT_WRITER_TASK) {
+      logger.debug("task A was returned");
       await this.pluginService.tryClosingTargetClient(this.currentClient);
       await this.pluginService.tryClosingTargetClient(this.currentReaderTargetClient);
     }

@@ -81,7 +81,7 @@ describe("writer failover handler", () => {
     when(mockPluginService.getHosts()).thenReturn(topology).thenReturn(newTopology);
     when(mockPluginService.createTargetClient(anything())).thenReturn(mockTargetClient);
     when(mockReaderFailover.getReaderConnection(anything())).thenCall(async () => {
-      await new Promise((resolve, reject) => {
+      await new Promise((resolve, _reject) => {
         timeoutId = setTimeout(resolve, 5000);
       });
       return Promise.resolve(new ReaderFailoverResult(mockTargetClient, readerA, true));
@@ -103,7 +103,7 @@ describe("writer failover handler", () => {
   it.skip("test reconnect to writer - task B defers", async () => {
     let timeoutId: any = -1;
     when(mockPluginService.forceConnect(writer, properties)).thenCall(async () => {
-      await new Promise((resolve, reject) => {
+      await new Promise((resolve, _reject) => {
         timeoutId = setTimeout(resolve, 5000);
       });
       return;
@@ -130,7 +130,7 @@ describe("writer failover handler", () => {
   it.skip("test connect to reader A - slow writer", async () => {
     let timeoutId: any = -1;
     when(mockPluginService.forceConnect(writer, properties)).thenCall(async () => {
-      await new Promise((resolve, reject) => {
+      await new Promise((resolve, _reject) => {
         timeoutId = setTimeout(resolve, 5000);
       });
       return;
@@ -158,7 +158,7 @@ describe("writer failover handler", () => {
   it.skip("test connect to reader A - task A defers", async () => {
     let timeoutId: any = -1;
     when(mockPluginService.forceConnect(newWriterHost, properties)).thenCall(async () => {
-      await new Promise((resolve, reject) => {
+      await new Promise((resolve, _reject) => {
         timeoutId = setTimeout(resolve, 5000);
       });
       return;
@@ -190,13 +190,13 @@ describe("writer failover handler", () => {
     let writerTimeoutId: any = -1;
     let newWriterTimeoutId: any = -1;
     when(mockPluginService.forceConnect(writer, anything())).thenCall(async () => {
-      await new Promise((resolve, reject) => {
+      await new Promise((resolve, _reject) => {
         writerTimeoutId = setTimeout(resolve, 30000);
       });
       return;
     });
     when(mockPluginService.forceConnect(newWriterHost, anything())).thenCall(async () => {
-      await new Promise((resolve, reject) => {
+      await new Promise((resolve, _reject) => {
         newWriterTimeoutId = setTimeout(resolve, 30000);
       });
       return;

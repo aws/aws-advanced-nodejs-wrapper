@@ -112,7 +112,7 @@ export abstract class AwsClient extends EventEmitter {
 
   abstract executeQuery(props: Map<string, any>, sql: string): Promise<any>;
 
-  abstract setReadOnly(readOnly: boolean): Promise<any | void>;
+  abstract setReadOnly(readOnly: boolean, timeout?: number): Promise<any | void>;
 
   abstract isReadOnly(): boolean;
 

@@ -49,12 +49,14 @@ export class DriverConnectionProvider implements ConnectionProvider {
       const connFunc = pluginService.getConnectFunc(targetClient);
       await connFunc();
       result = targetClient;
-    } catch (e) {
+      logger.info("Connecting to " + hostInfo.host + " with properties " + JSON.stringify(Object.fromEntries(maskProperties(props))));
+    } catch (e: any) {
+      logger.debug(`Driver Connection Provider Error: ${e}`);
       if (!WrapperProperties.ENABLE_GREEN_NODE_REPLACEMENT.get(props)) {
         throw e;
       }
 
-      if (!JSON.stringify(e).includes("Error: getaddrinfo ENOTFOUND")) {
+      if (!e.message.includes("Error: getaddrinfo ENOTFOUND")) {
         throw e;
       }
 
@@ -92,7 +94,7 @@ export class DriverConnectionProvider implements ConnectionProvider {
           " after correcting the hostname from " +
           originalHost +
           "\nwith properties: \n" +
-          JSON.stringify(maskProperties(props))
+          JSON.stringify(Object.fromEntries(maskProperties(props)))
       );
 
       const newTargetClient = pluginService.createTargetClient(props);

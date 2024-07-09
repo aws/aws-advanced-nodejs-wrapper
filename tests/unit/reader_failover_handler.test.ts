@@ -86,7 +86,7 @@ describe("reader failover handler", () => {
     when(mockPluginService.createTargetClient(anything())).thenReturn(mockTargetClient);
     when(mockPluginService.getConnectFunc(anything())).thenReturn(() => Promise.resolve());
     when(mockPluginService.forceConnect(anything(), properties)).thenCall(async () => {
-      await new Promise((resolve, reject) => {
+      await new Promise((resolve, _reject) => {
         timeoutId = setTimeout(resolve, 20000);
       });
       return;
@@ -146,7 +146,7 @@ describe("reader failover handler", () => {
 
     when(mockPluginService.getHosts()).thenReturn([]);
     when(mockPluginService.forceConnect(slowHost, anything())).thenCall(async () => {
-      await new Promise((resolve, reject) => {
+      await new Promise((resolve, _reject) => {
         timeoutId = setTimeout(resolve, 20000);
       });
       return mockTargetClient;
@@ -204,7 +204,7 @@ describe("reader failover handler", () => {
 
     when(mockPluginService.getHosts()).thenReturn(hosts);
     when(mockPluginService.forceConnect(anything(), anything())).thenCall(async () => {
-      await new Promise((resolve, reject) => {
+      await new Promise((resolve, _reject) => {
         timeoutId = setTimeout(resolve, 10000);
       });
       return;

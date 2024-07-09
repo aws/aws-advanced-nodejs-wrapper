@@ -36,6 +36,7 @@ import { SqlMethodUtils } from "./utils/sql_method_utils";
 import { SessionStateService } from "./session_state_service";
 import { SessionStateServiceImpl } from "./session_state_service_impl";
 import { HostAvailabilityStrategyFactory } from "./host_availability/host_availability_strategy_factory";
+import { logger } from "../logutils";
 
 export class PluginService implements ErrorHandler, HostListProviderService {
   private readonly _currentClient: AwsClient;
@@ -358,6 +359,7 @@ export class PluginService implements ErrorHandler, HostListProviderService {
 
   private async updateReadOnly(statements: string[]) {
     const updateReadOnly = SqlMethodUtils.doesSetReadOnly(statements, this.getDialect());
+    logger.debug(`updating read only in plugin service: ${updateReadOnly}`);
     if (updateReadOnly !== undefined) {
       await this.getCurrentClient().setReadOnly(updateReadOnly);
     }

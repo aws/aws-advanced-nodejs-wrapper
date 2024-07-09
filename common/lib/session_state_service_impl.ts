@@ -74,6 +74,8 @@ export class SessionStateServiceImpl implements SessionStateService {
       this.sessionState.readOnly.resetPristineValue();
       this.setupPristineReadOnly();
       try {
+        logger.debug(`updating read only in session state: ${this.sessionState.readOnly.value}`);
+
         await newClient.setReadOnly(this.sessionState.readOnly.value);
       } catch (error: any) {
         if (error instanceof UnsupportedMethodError) {
@@ -150,6 +152,8 @@ export class SessionStateServiceImpl implements SessionStateService {
 
     if (this.copySessionState?.readOnly.canRestorePristine() && this.copySessionState?.readOnly.pristineValue !== undefined) {
       try {
+        logger.debug(`updating read only in apply pristine session state: ${this.sessionState.readOnly.value}`);
+
         await client.setReadOnly(this.copySessionState?.readOnly.pristineValue);
       } catch (error: any) {
         if (error instanceof UnsupportedMethodError) {

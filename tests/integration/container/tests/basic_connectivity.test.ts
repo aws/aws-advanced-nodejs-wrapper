@@ -36,7 +36,7 @@ afterEach(async () => {
   logger.info(`Test finished: ${expect.getState().currentTestName}`);
 }, 1000000);
 
-describe("basic_connectivity", () => {
+describe("basic connectivity", () => {
   it("wrapper", async () => {
     const env = await TestEnvironment.getCurrent();
     const driver = DriverHelper.getDriverForDatabaseEngine(env.engine);
@@ -54,7 +54,7 @@ describe("basic_connectivity", () => {
 
     client = initClientFunc(props);
     client.on("error", (error: any) => {
-      logger.debug(error);
+      logger.debug(error.message);
     });
     await client.connect();
 
@@ -63,7 +63,7 @@ describe("basic_connectivity", () => {
     expect(res).not.toBeNull();
   }, 1000000);
 
-  it("wrapper_proxy", async () => {
+  it("wrapper proxy", async () => {
     const env = await TestEnvironment.getCurrent();
     const driver = DriverHelper.getDriverForDatabaseEngine(env.engine);
     const initClientFunc = DriverHelper.getClient(driver);
@@ -75,13 +75,13 @@ describe("basic_connectivity", () => {
       password: env.databaseInfo.password,
       port: env.proxyDatabaseInfo.instanceEndpointPort,
       plugins: "",
-      clusterInstanceHostPattern: "?." + env.proxyDatabaseInfo.instanceEndpointSuffix + ":" + env.proxyDatabaseInfo.instanceEndpointPort
+      clusterInstanceHostPattern: "?." + env.proxyDatabaseInfo.instanceEndpointSuffix
     };
     props = DriverHelper.addDriverSpecificConfiguration(props, env.engine);
 
     client = initClientFunc(props);
     client.on("error", (error: any) => {
-      logger.debug(error);
+      logger.debug(error.message);
     });
 
     await client.connect();

@@ -27,6 +27,7 @@ import { AuroraPgDatabaseDialect } from "./dialect/aurora_pg_database_dialect";
 import { AwsWrapperError, UnsupportedMethodError } from "../../common/lib/utils/errors";
 import { Messages } from "../../common/lib/utils/messages";
 import { TransactionIsolationLevel } from "../../common/lib/utils/transaction_isolation_level";
+import { logger } from "../../common/logutils";
 
 export class AwsPGClient extends AwsClient {
   private static readonly knownDialectsByCode: Map<string, DatabaseDialect> = new Map([
@@ -78,14 +79,21 @@ export class AwsPGClient extends AwsClient {
     );
   }
 
-  async setReadOnly(readOnly: boolean): Promise<QueryResult | void> {
+  async setReadOnly(readOnly: boolean): Promise<QueryResult | void>;
+  async setReadOnly(readOnly: boolean, timeout: number): Promise<QueryResult | void>;
+  async setReadOnly(readOnly: boolean, timeout?: number): Promise<QueryResult | void> {
     if (readOnly === this.isReadOnly()) {
       return Promise.resolve();
     }
+    if (timeout) {
+      logger.info("MySQL timeout must be set in config");
+    }
+
     const previousReadOnly: boolean = this.isReadOnly();
     let result;
     try {
       this._isReadOnly = readOnly;
+      logger.debug(`Attempting to set readOnly: ${readOnly}`);
       if (this.isReadOnly()) {
         result = await this.query("SET SESSION CHARACTERISTICS AS TRANSACTION READ ONLY");
       } else {
@@ -94,10 +102,12 @@ export class AwsPGClient extends AwsClient {
     } catch (error) {
       // revert
       this._isReadOnly = previousReadOnly;
+      logger.debug(`Unable to set readOnly: ${readOnly}`);
       throw error;
     }
+    logger.debug(`session state for readOnly: ${readOnly}`);
     this.pluginService.getSessionStateService().setupPristineReadOnly();
-    this.pluginService.getSessionStateService().setReadOnly(readOnly);
+    this.pluginService.getSessionStateService().setReadOnly(this._isReadOnly);
     return result;
   }
 

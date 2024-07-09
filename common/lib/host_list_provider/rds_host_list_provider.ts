@@ -84,8 +84,14 @@ export class RdsHostListProvider implements DynamicHostListProvider {
     const hostInfoBuilder = this.hostListProviderService.getHostInfoBuilder();
 
     this.clusterInstanceTemplate = WrapperProperties.CLUSTER_INSTANCE_HOST_PATTERN.get(this.properties)
-      ? hostInfoBuilder.withHost(WrapperProperties.CLUSTER_INSTANCE_HOST_PATTERN.get(this.properties)).build()
-      : hostInfoBuilder.withHost(this.rdsHelper.getRdsInstanceHostPattern(this.originalUrl)).build();
+      ? hostInfoBuilder
+          .withHost(WrapperProperties.CLUSTER_INSTANCE_HOST_PATTERN.get(this.properties))
+          .withPort(WrapperProperties.PORT.get(this.properties))
+          .build()
+      : hostInfoBuilder
+          .withHost(this.rdsHelper.getRdsInstanceHostPattern(this.originalUrl))
+          .withPort(WrapperProperties.PORT.get(this.properties))
+          .build();
 
     this.validateHostPatternSetting(this.clusterInstanceTemplate.host);
 

@@ -28,6 +28,7 @@ import { RdsMySQLDatabaseDialect } from "./dialect/rds_mysql_database_dialect";
 import { TransactionIsolationLevel } from "../../common/lib/utils/transaction_isolation_level";
 import { AwsWrapperError, UnsupportedMethodError } from "../../common/lib/utils/errors";
 import { Messages } from "../../common/lib/utils/messages";
+import { logger } from "../../common/logutils";
 
 export class AwsMySQLClient extends AwsClient {
   private static readonly knownDialectsByCode: Map<string, DatabaseDialect> = new Map([
@@ -86,7 +87,9 @@ export class AwsMySQLClient extends AwsClient {
     );
   }
 
-  async setReadOnly(readOnly: boolean): Promise<Query | void> {
+  async setReadOnly(readOnly: boolean): Promise<Query | void>;
+  async setReadOnly(readOnly: boolean, timeout: number): Promise<Query | void>;
+  async setReadOnly(readOnly: boolean, timeout?: number): Promise<Query | void> {
     if (readOnly === this.isReadOnly()) {
       return Promise.resolve();
     }
@@ -94,13 +97,16 @@ export class AwsMySQLClient extends AwsClient {
     let result;
     try {
       this._isReadOnly = readOnly;
+      logger.debug(`Attempting to set readOnly ${readOnly}`);
+
       if (this.isReadOnly()) {
-        result = await this.query({ sql: "SET SESSION TRANSACTION READ ONLY;" });
+        result = await this.query({ sql: "SET SESSION TRANSACTION READ ONLY;", timeout: timeout });
       } else {
-        result = await this.query({ sql: "SET SESSION TRANSACTION READ WRITE;" });
+        result = await this.query({ sql: "SET SESSION TRANSACTION READ WRITE;", timeout: timeout });
       }
     } catch (error) {
       // revert
+      logger.debug(`Unable to set readOnly ${readOnly}`);
       this._isReadOnly = previousReadOnly;
       throw error;
     }

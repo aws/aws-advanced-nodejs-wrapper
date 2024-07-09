@@ -163,6 +163,9 @@ export class ReadWriteSplittingPlugin extends AbstractConnectionPlugin {
     try {
       return await executeFunc();
     } catch (error) {
+      for (const statement of statements) {
+        logger.debug(`statement executed error: ${statement}`);
+      }
       if (error instanceof FailoverError) {
         logger.debug(Messages.get("ReadWriteSplittingPlugin.failoverExceptionWhileExecutingCommand", methodName));
         await this.closeIdleClients();
@@ -220,11 +223,11 @@ export class ReadWriteSplittingPlugin extends AbstractConnectionPlugin {
       if (!this.pluginService.isInTransaction() && currentHost.role != HostRole.READER) {
         try {
           await this.switchToReaderTargetClient(hosts);
-        } catch (error) {
+        } catch (error: any) {
           if (!(await currentClient.isValid())) {
-            this.logAndThrowError(Messages.get("ReadWriteSplittingPlugin.errorSwitchingToReader"));
+            this.logAndThrowError(Messages.get("ReadWriteSplittingPlugin.errorSwitchingToReader", error.message));
           }
-          logger.warn("ReadWriteSplittingPlugin.fallbackToWriter", currentHost.url);
+          logger.warn(Messages.get("ReadWriteSplittingPlugin.fallbackToWriter", currentHost.url));
         }
       }
     } else if (currentHost.role != HostRole.WRITER) {
@@ -233,8 +236,8 @@ export class ReadWriteSplittingPlugin extends AbstractConnectionPlugin {
       }
       try {
         await this.switchToWriterTargetClient(hosts);
-      } catch {
-        this.logAndThrowError(Messages.get("ReadWriteSplittingPlugin.errorSwitchingToWriter"));
+      } catch (error: any) {
+        this.logAndThrowError(Messages.get("ReadWriteSplittingPlugin.errorSwitchingToWriter", error.message));
       }
     }
   }
@@ -290,7 +293,7 @@ export class ReadWriteSplittingPlugin extends AbstractConnectionPlugin {
       }
     }
     if (targetClient == undefined || readerHost === undefined) {
-      logger.debug(Messages.get("ReadWriteSplittingPlugin.noReadersAvailable"));
+      this.logAndThrowError(Messages.get("ReadWriteSplittingPlugin.noReadersAvailable"));
       return;
     } else {
       logger.debug(Messages.get("ReadWriteSplittingPlugin.successfullyConnectedToReader", readerHost.url));

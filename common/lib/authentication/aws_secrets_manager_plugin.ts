@@ -79,15 +79,18 @@ export class AwsSecretsManagerPlugin extends AbstractConnectionPlugin {
   }
 
   private async connectInternal<T>(hostInfo: HostInfo, props: Map<string, any>, connectFunc: () => Promise<T>): Promise<T> {
-    let secretWasFetched = await this.updateSecret(false);
+    let secretWasFetched: boolean = await this.updateSecret(false);
     try {
       WrapperProperties.USER.set(props, this.secret?.username ?? "");
       WrapperProperties.PASSWORD.set(props, this.secret?.password ?? "");
       this.pluginService.updateConfigWithProperties(props);
       return await connectFunc();
-    } catch (error) {
+    } catch (error: any) {
       if (error instanceof Error) {
-        if ((error.message.includes("password authentication failed") || error.message.includes("Access denied")) && !secretWasFetched) {
+        if (
+          (error.message.includes("password authentication failed") || error.message.includes("Access denied")) &&
+          !secretWasFetched
+        ) {
           // Login unsuccessful with cached credentials
           // Try to re-fetch credentials and try again
 
@@ -113,13 +116,13 @@ export class AwsSecretsManagerPlugin extends AbstractConnectionPlugin {
         this.secret = await this.fetchLatestCredentials();
         fetched = true;
         AwsSecretsManagerPlugin.secretsCache.set(JSON.stringify(this.secretKey), this.secret);
-      } catch (error) {
+      } catch (error: any) {
         if (error instanceof SecretsManagerServiceException) {
           this.logAndThrowError(Messages.get("AwsSecretsManagerConnectionPlugin.failedToFetchDbCredentials"));
         } else if (error instanceof Error && error.message.includes("AWS SDK error")) {
           this.logAndThrowError(Messages.get("AwsSecretsManagerConnectionPlugin.endpointOverrideInvalidConnection", error.message));
         } else {
-          this.logAndThrowError(Messages.get("AwsSecretsManagerConnectionPlugin.unhandledException", JSON.stringify(error)));
+          this.logAndThrowError(Messages.get("AwsSecretsManagerConnectionPlugin.unhandledException", error.message));
         }
       }
     }
