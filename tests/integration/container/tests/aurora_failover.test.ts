@@ -51,6 +51,7 @@ async function initDefaultConfig(host: string, port: number, connectToProxy: boo
 
 describe("aurora failover", () => {
   beforeEach(async () => {
+    logger.info(`Test started: ${expect.getState().currentTestName}`);
     env = await TestEnvironment.getCurrent();
 
     driver = DriverHelper.getDriverForDatabaseEngine(env.engine);
@@ -68,6 +69,7 @@ describe("aurora failover", () => {
       await secondaryClient.end();
     }
     await TestEnvironment.updateWriter();
+    logger.info(`Test finished: ${expect.getState().currentTestName}`);
   }, 1000000);
 
   it("fails from writer to new writer on connection invocation", async () => {
