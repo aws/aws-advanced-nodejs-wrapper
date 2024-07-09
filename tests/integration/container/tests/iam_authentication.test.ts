@@ -63,7 +63,7 @@ async function validateConnection(client: AwsPGClient | AwsMySQLClient) {
   }
 }
 
-describe.skip("iamTests", () => {
+describe("iamTests", () => {
   beforeEach(async () => {
     logger.info(`Test started: ${expect.getState().currentTestName}`);
     env = await TestEnvironment.getCurrent();

@@ -22,7 +22,6 @@ import { DatabaseEngine } from "./utils/database_engine";
 import { QueryResult } from "pg";
 import { ProxyHelper } from "./utils/proxy_helper";
 import { logger } from "../../../../common/logutils";
-import { TestDatabaseInfo } from "./utils/test_database_info";
 
 let env: TestEnvironment;
 let driver;
@@ -30,7 +29,7 @@ let initClientFunc: (props: any) => any;
 let client: any;
 const auroraTestUtility = new AuroraTestUtility();
 
-async function initDefaultConfig(host: string | undefined, port: number, connectToProxy: boolean): Promise<any> {
+async function initDefaultConfig(host: string, port: number, connectToProxy: boolean): Promise<any> {
   let config: any = {
     user: env.databaseInfo.username,
     host: host,
