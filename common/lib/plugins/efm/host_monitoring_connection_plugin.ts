@@ -111,7 +111,14 @@ export class HostMonitoringConnectionPlugin extends AbstractConnectionPlugin imp
         failureDetectionIntervalMillis,
         failureDetectionCount
       );
-      result = await methodFunc();
+
+      result = await Promise.race([monitorContext.trackHealthStatus(), methodFunc()])
+        .then((result: any) => {
+          return result;
+        })
+        .catch((error: any) => {
+          throw error;
+        });
     } finally {
       if (monitorContext != null) {
         await this.monitorService.stopMonitoring(monitorContext);
@@ -123,13 +130,15 @@ export class HostMonitoringConnectionPlugin extends AbstractConnectionPlugin imp
           }
 
           const targetClient = this.pluginService.getCurrentClient().targetClient;
-          let isClientClosed = false;
+          let isClientValid = false;
           if (targetClient) {
-            isClientClosed = await this.pluginService.isClientValid(targetClient);
+            isClientValid = await this.pluginService.isClientValid(targetClient);
           }
 
-          if (!targetClient || !isClientClosed) {
-            await this.pluginService.getCurrentClient().end();
+          if (!targetClient || !isClientValid) {
+            if (targetClient) {
+              await this.pluginService.tryClosingTargetClient(targetClient);
+            }
             // eslint-disable-next-line no-unsafe-finally
             throw new AwsWrapperError(Messages.get("HostMonitoringConnectionPlugin.unavailableHost", monitoringHostInfo.host));
           }
@@ -192,7 +201,6 @@ export class HostMonitoringConnectionPlugin extends AbstractConnectionPlugin imp
   }
 
   async releaseResources(): Promise<void> {
-    const hostKeys = (await this.getMonitoringHostInfo())?.allAliases;
-    return this.monitorService.releaseResources(hostKeys);
+    return this.monitorService.releaseResources();
   }
 }

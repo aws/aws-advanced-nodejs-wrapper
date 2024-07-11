@@ -108,6 +108,34 @@ tasks.register<Test>("test-aurora-mysql") {
     }
 }
 
+tasks.register<Test>("test-all-aurora-performance") {
+    group = "verification"
+    filter.includeTestsMatching("integration.host.TestRunner.runTests")
+    doFirst {
+        systemProperty("exclude-docker", "true")
+    }
+}
+
+tasks.register<Test>("test-aurora-pg-performance") {
+    group = "verification"
+    filter.includeTestsMatching("integration.host.TestRunner.runTests")
+    doFirst {
+        systemProperty("exclude-docker", "true")
+        systemProperty("exclude-mysql-driver", "true")
+        systemProperty("exclude-mysql-engine", "true")
+    }
+}
+
+tasks.register<Test>("test-aurora-mysql-performance") {
+    group = "verification"
+    filter.includeTestsMatching("integration.host.TestRunner.runTests")
+    doFirst {
+        systemProperty("exclude-docker", "true")
+        systemProperty("exclude-pg-driver", "true")
+        systemProperty("exclude-pg-engine", "true")
+    }
+}
+
 // Debug
 
 tasks.register<Test>("debug-all-environments") {
@@ -157,3 +185,24 @@ tasks.register<Test>("debug-aurora-mysql") {
         systemProperty("exclude-pg-engine", "true")
     }
 }
+
+tasks.register<Test>("debug-aurora-pg-performance") {
+    group = "verification"
+    filter.includeTestsMatching("integration.host.TestRunner.debugTests")
+    doFirst {
+        systemProperty("exclude-docker", "true")
+        systemProperty("exclude-mysql-driver", "true")
+        systemProperty("exclude-mysql-engine", "true")
+    }
+}
+
+tasks.register<Test>("debug-aurora-mysql-performance") {
+    group = "verification"
+    filter.includeTestsMatching("integration.host.TestRunner.debugTests")
+    doFirst {
+        systemProperty("exclude-docker", "true")
+        systemProperty("exclude-pg-driver", "true")
+        systemProperty("exclude-pg-engine", "true")
+    }
+}
+

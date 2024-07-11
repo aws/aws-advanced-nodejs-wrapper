@@ -1,22 +1,15 @@
-name: Integration Tests
+name: Aurora Performance Tests
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - main
-    paths-ignore:
-      - "**/*.md"
-      - "**/*.jpg"
-      - "**/README.txt"
-      - "**/LICENSE.txt"
-      - "docs/**"
-      - "ISSUE_TEMPLATE/**"
-      - "**/remove-old-artifacts.yml"
 
 jobs:
   run-integration-tests:
-    name: Run Integration Tests
+    strategy:
+      matrix:
+        db: [mysql, pg]
+
+    name: Run Aurora ${{ matrix.db }} container performance tests
     runs-on: ubuntu-latest
 
     steps:
@@ -60,7 +53,7 @@ jobs:
 
       - name: Run Integration Tests
         run: |
-          ./gradlew --no-parallel --no-daemon test-aurora --info
+          ./gradlew --no-parallel --no-daemon test-aurora-${{ matrix.db }}-performance --info
         env:
           AURORA_CLUSTER_DOMAIN: ${{ secrets.DB_CONN_SUFFIX }}
           AURORA_DB_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
@@ -84,10 +77,10 @@ jobs:
             --cidr ${{ steps.ip.outputs.ipv4 }}/32 \
           2>&1 > /dev/null;
 
-      - name: Archive results
+      - name: Archive Performance results
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: integration-report
+          name: ${{ matrix.db }}-performance-results
           path: ./tests/integration/container/reports
           retention-days: 5

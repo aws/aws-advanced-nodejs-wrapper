@@ -69,48 +69,50 @@ export class TestEnvironment {
   }
 
   static async initProxies(environment: TestEnvironment) {
-    environment.proxies = {};
-    const proxyControlPort: number = environment.proxyDatabaseInfo.controlPort;
-    for (let i = 0; i < environment.proxyInstances.length; i++) {
-      const instance = environment.proxyInstances[i];
-      if (instance.host === undefined || instance.instanceId === undefined) {
-        throw new Error("no valid host");
+    if (environment.features.includes(TestEnvironmentFeatures.NETWORK_OUTAGES_ENABLED)) {
+      environment.proxies = {};
+      const proxyControlPort: number = environment.proxyDatabaseInfo.controlPort;
+      for (let i = 0; i < environment.proxyInstances.length; i++) {
+        const instance = environment.proxyInstances[i];
+        if (instance.host === undefined || instance.instanceId === undefined) {
+          throw new Error("no valid host");
+        }
+
+        const client = new Toxiproxy(TestEnvironment.createProxyUrl(instance.host, proxyControlPort));
+        const proxies = await client.getAll();
+
+        const host = environment.instances[i].host;
+        if (host === undefined) {
+          throw new Error("no host");
+        }
+
+        environment.proxies[instance.instanceId] = new ProxyInfo(proxies[environment.instances[i].url], host, proxyControlPort);
       }
 
-      const client = new Toxiproxy(TestEnvironment.createProxyUrl(instance.host, proxyControlPort));
-      const proxies = await client.getAll();
+      if (environment.proxyDatabaseInfo.clusterEndpoint !== undefined) {
+        const client = new Toxiproxy(TestEnvironment.createProxyUrl(environment.proxyDatabaseInfo.clusterEndpoint, proxyControlPort));
+        const proxy = await client.get(`${environment.databaseInfo.clusterEndpoint}:${environment.databaseInfo.clusterEndpointPort}`);
 
-      const host = environment.instances[i].host;
-      if (host === undefined) {
-        throw new Error("no host");
+        if (proxy !== undefined) {
+          environment.proxies[environment.proxyDatabaseInfo.clusterEndpoint] = new ProxyInfo(
+            proxy,
+            environment.databaseInfo.clusterEndpoint,
+            proxyControlPort
+          );
+        }
       }
 
-      environment.proxies[instance.instanceId] = new ProxyInfo(proxies[environment.instances[i].url], host, proxyControlPort);
-    }
+      if (environment.proxyDatabaseInfo.clusterReadOnlyEndpoint !== undefined) {
+        const client = new Toxiproxy(TestEnvironment.createProxyUrl(environment.proxyDatabaseInfo.clusterReadOnlyEndpoint, proxyControlPort));
+        const proxy = await client.get(`${environment.databaseInfo.clusterReadOnlyEndpoint}:${environment.databaseInfo.clusterReadOnlyEndpointPort}`);
 
-    if (environment.proxyDatabaseInfo.clusterEndpoint !== undefined) {
-      const client = new Toxiproxy(TestEnvironment.createProxyUrl(environment.proxyDatabaseInfo.clusterEndpoint, proxyControlPort));
-      const proxy = await client.get(`${environment.databaseInfo.clusterEndpoint}:${environment.databaseInfo.clusterEndpointPort}`);
-
-      if (proxy !== undefined) {
-        environment.proxies[environment.proxyDatabaseInfo.clusterEndpoint] = new ProxyInfo(
-          proxy,
-          environment.databaseInfo.clusterEndpoint,
-          proxyControlPort
-        );
-      }
-    }
-
-    if (environment.proxyDatabaseInfo.clusterReadOnlyEndpoint !== undefined) {
-      const client = new Toxiproxy(TestEnvironment.createProxyUrl(environment.proxyDatabaseInfo.clusterReadOnlyEndpoint, proxyControlPort));
-      const proxy = await client.get(`${environment.databaseInfo.clusterReadOnlyEndpoint}:${environment.databaseInfo.clusterReadOnlyEndpointPort}`);
-
-      if (proxy !== undefined) {
-        environment.proxies[environment.databaseInfo.clusterReadOnlyEndpoint] = new ProxyInfo(
-          proxy,
-          environment.databaseInfo.clusterReadOnlyEndpoint,
-          proxyControlPort
-        );
+        if (proxy !== undefined) {
+          environment.proxies[environment.databaseInfo.clusterReadOnlyEndpoint] = new ProxyInfo(
+            proxy,
+            environment.databaseInfo.clusterReadOnlyEndpoint,
+            proxyControlPort
+          );
+        }
       }
     }
   }

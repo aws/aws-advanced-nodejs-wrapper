@@ -24,3 +24,10 @@ function simpleFormatter(type: LogType, message: LogMessage): string {
 }
 
 global.console = new CustomConsole(process.stdout, process.stderr, simpleFormatter);
+
+const infoJson = process.env.TEST_ENV_INFO_JSON;
+if (infoJson === undefined) {
+  throw new Error("env var required");
+}
+const testInfo = JSON.parse(infoJson);
+export const features = testInfo.request.features;

@@ -21,6 +21,7 @@ import { logger } from "../../../logutils";
 import { Messages } from "../../utils/messages";
 import { ClientWrapper } from "../../client_wrapper";
 import { sleep } from "../../utils/utils";
+import { WrapperProperties } from "../../wrapper_property";
 
 export interface Monitor {
   startMonitoring(context: MonitorConnectionContext): void;
@@ -51,7 +52,6 @@ class ConnectionStatus {
 export class MonitorImpl implements Monitor {
   private readonly SLEEP_WHEN_INACTIVE_MILLIS: number = 100;
   private readonly MIN_CONNECTION_CHECK_TIMEOUT_MILLIS: number = 3000;
-  private readonly MONITORING_PROPERTY_PREFIX: string = "monitoring_";
 
   private readonly activeContexts: MonitorConnectionContext[] = [];
   private readonly newContexts: MonitorConnectionContext[] = [];
@@ -63,7 +63,7 @@ export class MonitorImpl implements Monitor {
   private contextLastUsedTimestampNanos: number;
   private started = false;
   private stopped: boolean = false;
-  private cancel: boolean = false;
+  private cancelled: boolean = false;
   private monitoringClient: ClientWrapper | null = null;
   private delayMillisTimeoutId: any;
   private sleepWhenInactiveTimeoutId: any;
@@ -110,8 +110,7 @@ export class MonitorImpl implements Monitor {
     logger.debug(Messages.get("MonitorImpl.startMonitoring", this.hostInfo.host));
 
     try {
-      this.stopped = false;
-      while (!this.cancel) {
+      while (!this.cancelled) {
         try {
           let newMonitorContext: MonitorConnectionContext | undefined;
           let firstAddedNewMonitorContext: MonitorConnectionContext | null = null;
@@ -234,11 +233,11 @@ export class MonitorImpl implements Monitor {
       const monitoringConnProperties: Map<string, any> = new Map(this.properties);
 
       for (const key of this.properties.keys()) {
-        if (!key.startsWith(this.MONITORING_PROPERTY_PREFIX)) {
+        if (!key.startsWith(WrapperProperties.MONITORING_PROPERTY_PREFIX)) {
           continue;
         }
 
-        monitoringConnProperties.set(key.substring(this.MONITORING_PROPERTY_PREFIX.length), this.properties.get(key));
+        monitoringConnProperties.set(key.substring(WrapperProperties.MONITORING_PROPERTY_PREFIX.length), this.properties.get(key));
         monitoringConnProperties.delete(key);
       }
 
@@ -258,7 +257,7 @@ export class MonitorImpl implements Monitor {
   }
 
   isStopped(): boolean {
-    return this.stopped;
+    return this.stopped || this.cancelled;
   }
 
   protected getCurrentTimeNano() {
@@ -266,7 +265,7 @@ export class MonitorImpl implements Monitor {
   }
 
   async releaseResources() {
-    this.cancel = true;
+    this.cancelled = true;
     clearTimeout(this.delayMillisTimeoutId);
     clearTimeout(this.sleepWhenInactiveTimeoutId);
     await this.endMonitoringClient();

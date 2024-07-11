@@ -22,7 +22,6 @@ import { AwsWrapperError } from "../../../common/lib/utils/errors";
 import { DatabaseDialectCodes } from "../../../common/lib/database_dialect/database_dialect_codes";
 import { TransactionIsolationLevel } from "../../../common/lib/utils/transaction_isolation_level";
 import { ClientWrapper } from "../../../common/lib/client_wrapper";
-import { Utils } from "../utils";
 import { ClientUtils } from "../../../common/lib/utils/client_utils";
 
 export class MySQLDatabaseDialect implements DatabaseDialect {
@@ -75,8 +74,8 @@ export class MySQLDatabaseDialect implements DatabaseDialect {
 
   async tryClosingTargetClient(targetClient: ClientWrapper) {
     try {
-      await ClientUtils.queryWithTimeout(targetClient.client.promise().end(), targetClient.properties);
-    } catch (error) {
+      await ClientUtils.queryWithTimeout(targetClient.client.promise().destroy(), targetClient.properties);
+    } catch (error: any) {
       // ignore
     }
   }

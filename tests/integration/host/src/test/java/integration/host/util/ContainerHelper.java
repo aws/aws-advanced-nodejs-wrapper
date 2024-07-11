@@ -171,6 +171,7 @@ public class ContainerHelper {
         .withFileSystemBind("../../../package-lock.json", "/app/package-lock.json", BindMode.READ_ONLY)
         .withFileSystemBind("../../../tests/integration/container",
             "/app/tests/integration/container", BindMode.READ_WRITE)
+        .withFileSystemBind("../../../tests/integration/container/reports", "/app/build/reports/tests", BindMode.READ_WRITE) // some tests may write some files here
         .withPrivilegedMode(true); // Required to control Linux core settings like TcpKeepAlive
   }
 

@@ -40,7 +40,7 @@ export class AwsMySQLClient extends AwsClient {
 
   constructor(config: any) {
     super(config, new MySQLErrorHandler(), DatabaseType.MYSQL, AwsMySQLClient.knownDialectsByCode, new MySQLConnectionUrlParser());
-    this._createClientFunc = (config: any) => {
+    this._createClientFunc = (config: Map<string, any>) => {
       return createConnection(WrapperProperties.removeWrapperProperties(config));
     };
     this.resetState();

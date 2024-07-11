@@ -15,7 +15,7 @@
 */
 
 import { AbstractConnectionPlugin } from "../../abstract_connection_plugin";
-import { uniqueId } from "lodash";
+import { method, uniqueId } from "lodash";
 import { logger } from "../../../logutils";
 import { HostInfo } from "../../host_info";
 import { OldConnectionSuggestionAction } from "../../old_connection_suggestion_action";

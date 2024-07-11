@@ -59,8 +59,6 @@ public class TestEnvironmentProvider implements TestTemplateInvocationContextPro
     final boolean excludeIam = Boolean.parseBoolean(System.getProperty("exclude-iam", "false"));
     final boolean excludeSecretsManager =
         Boolean.parseBoolean(System.getProperty("exclude-secrets-manager", "false"));
-    final boolean excludePython38 = Boolean.parseBoolean(System.getProperty("exclude-python-38", "false"));
-    final boolean excludePython311 = Boolean.parseBoolean(System.getProperty("exclude-python-311", "false"));
     final boolean testAutoscalingOnly = Boolean.parseBoolean(System.getProperty("test-autoscaling", "false"));
 
     if (!excludeDocker) {

@@ -38,7 +38,7 @@ export class AwsPGClient extends AwsClient {
 
   constructor(config: any) {
     super(config, new PgErrorHandler(), DatabaseType.POSTGRES, AwsPGClient.knownDialectsByCode, new PgConnectionUrlParser());
-    this._createClientFunc = (config: any) => {
+    this._createClientFunc = (config: Map<string, any>) => {
       const targetClient: Client = new Client(WrapperProperties.removeWrapperProperties(config));
       targetClient.on("error", (error: any) => {
         this.emit("error", error);
