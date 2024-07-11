@@ -17,12 +17,9 @@
 import { AbstractConnectionPlugin } from "../../abstract_connection_plugin";
 import { uniqueId } from "lodash";
 import { logger } from "../../../logutils";
-import { performance } from "perf_hooks";
 import { HostInfo } from "../../host_info";
 import { OldConnectionSuggestionAction } from "../../old_connection_suggestion_action";
-import { ConnectionPluginFactory } from "../../plugin_factory";
 import { PluginService } from "../../plugin_service";
-import { ConnectionPlugin } from "../../connection_plugin";
 import { HostListProviderService } from "../../host_list_provider_service";
 import { ClusterAwareReaderFailoverHandler } from "./reader_failover_handler";
 import { SubscribedMethodHelper } from "../../utils/subscribed_method_helper";

@@ -228,7 +228,7 @@ class ReconnectToWriterHandlerTask {
       Messages.get(
         "ClusterAwareWriterFailoverHandler.taskAAttemptReconnectToWriterInstance",
         this.originalWriterHost.url,
-        JSON.stringify(maskProperties(this.initialConnectionProps))
+        JSON.stringify(Object.fromEntries(maskProperties(this.initialConnectionProps)))
       )
     );
 
@@ -325,7 +325,10 @@ class WaitForNewWriterHandlerTask {
 
   async call() {
     logger.info(
-      Messages.get("ClusterAwareWriterFailoverHandler.taskBAttemptConnectionToNewWriterInstance", JSON.stringify(this.initialConnectionProps))
+      Messages.get(
+        "ClusterAwareWriterFailoverHandler.taskBAttemptConnectionToNewWriterInstance",
+        JSON.stringify(Object.fromEntries(maskProperties(this.initialConnectionProps)))
+      )
     );
 
     try {
@@ -343,8 +346,8 @@ class WaitForNewWriterHandlerTask {
       }
 
       return new WriterFailoverResult(true, true, this.currentTopology, ClusterAwareWriterFailoverHandler.WAIT_NEW_WRITER_TASK, this.currentClient);
-    } catch (error) {
-      logger.error(Messages.get("ClusterAwareWriterFailoverHandler.taskBEncounteredException", JSON.stringify(error)));
+    } catch (error: any) {
+      logger.error(Messages.get("ClusterAwareWriterFailoverHandler.taskBEncounteredException", error.message));
       throw error;
     } finally {
       logger.info(Messages.get("ClusterAwareWriterFailoverHandler.taskBFinished"));
@@ -410,8 +413,8 @@ class WaitForNewWriterHandlerTask {
             }
           }
         }
-      } catch (error) {
-        logger.info(Messages.get("ClusterAwareWriterFailoverHandler.taskBEncounteredException", JSON.stringify(error)));
+      } catch (error: any) {
+        logger.info(Messages.get("ClusterAwareWriterFailoverHandler.taskBEncounteredException", error.message));
         return false;
       }
 
@@ -462,8 +465,6 @@ class WaitForNewWriterHandlerTask {
   async closeReaderClient() {
     try {
       await this.pluginService.tryClosingTargetClient(this.currentReaderTargetClient);
-    } catch (error) {
-      // ignore
     } finally {
       this.currentReaderTargetClient = null;
       this.currentReaderHost = null;
@@ -478,6 +479,7 @@ class WaitForNewWriterHandlerTask {
     // Task A was returned.
     if (selectedTask && selectedTask === ClusterAwareWriterFailoverHandler.RECONNECT_WRITER_TASK) {
       await this.pluginService.tryClosingTargetClient(this.currentClient);
+      await this.pluginService.tryClosingTargetClient(this.currentReaderTargetClient);
     }
   }
 
