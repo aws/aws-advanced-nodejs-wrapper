@@ -148,13 +148,20 @@ export class ReadWriteSplittingPlugin extends AbstractConnectionPlugin {
   override async execute<T>(methodName: string, executeFunc: () => Promise<T>, methodArgs: any): Promise<T> {
     const statement = methodArgs.sql ?? methodArgs;
     const statements = SqlMethodUtils.parseMultiStatementQueries(statement);
+    for (const statement of statements) {
+      logger.debug(`statement: ${statement}`);
+    }
 
     const updateReadOnly: boolean | undefined = SqlMethodUtils.doesSetReadOnly(statements, this.pluginService.getDialect());
 
     if (updateReadOnly !== undefined) {
       try {
+        logger.debug(`updateReadOnly: ${updateReadOnly}`);
+
         await this.switchClientIfRequired(updateReadOnly);
       } catch (error) {
+        logger.debug(`failed, closing idle clients`);
+
         await this.closeIdleClients();
         throw error;
       }
