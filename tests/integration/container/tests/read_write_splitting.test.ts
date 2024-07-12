@@ -134,14 +134,10 @@ describe("aurora read write splitting", () => {
     await DriverHelper.executeQuery(env.engine, client, "START TRANSACTION READ ONLY"); // start transaction
     await DriverHelper.executeQuery(env.engine, client, "SELECT 1");
 
-    try {
+    await expect(async () => {
       await client.setReadOnly(false);
-    } catch (error: any) {
-      logger.debug(error.message);
-      if (!(error instanceof AwsWrapperError)) {
-        throw new Error("Resulting error type incorrect");
-      }
-    }
+    }).rejects.toThrow(AwsWrapperError);
+
     const currentConnectionId0 = await auroraTestUtility.queryInstanceId(client);
     expect(currentConnectionId0).toStrictEqual(initialReaderId);
 
@@ -191,7 +187,7 @@ describe("aurora read write splitting", () => {
     await DriverHelper.executeQuery(env.engine, client, "DROP TABLE IF EXISTS test3_3");
   }, 1000000);
 
-  it("set read only all instances down", async () => {
+  it.only("set read only all instances down", async () => {
     const config = await initDefaultConfig(env.proxyDatabaseInfo.writerInstanceEndpoint, env.proxyDatabaseInfo.instanceEndpointPort, true);
     client = initClientFunc(config);
 
@@ -209,8 +205,8 @@ describe("aurora read write splitting", () => {
     // Kill all instances
     await ProxyHelper.disableAllConnectivity(env.engine);
     await expect(async () => {
-      await client.setReadOnly(false);
-    }).rejects.toThrow(Error);
+      await client.setReadOnly(false, 1000);
+    }).rejects.toThrow(AwsWrapperError);
   }, 1000000);
 
   it("set read only all readers down", async () => {

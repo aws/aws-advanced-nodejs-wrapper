@@ -24,7 +24,7 @@ import { HostChangeOptions } from "../host_change_options";
 import { WrapperProperties } from "../wrapper_property";
 import { Messages } from "../utils/messages";
 import { logger } from "../../logutils";
-import { AwsWrapperError, FailoverError } from "../utils/errors";
+import { AwsWrapperError, FailoverError, ReadWriteSplittingError } from "../utils/errors";
 import { HostRole } from "../host_role";
 import { SqlMethodUtils } from "../utils/sql_method_utils";
 
@@ -386,6 +386,6 @@ export class ReadWriteSplittingPlugin extends AbstractConnectionPlugin {
 
   private logAndThrowError(message: string) {
     logger.error(message);
-    throw new AwsWrapperError(message);
+    throw new ReadWriteSplittingError(message);
   }
 }
