@@ -165,6 +165,7 @@ export class ReadWriteSplittingPlugin extends AbstractConnectionPlugin {
         await this.closeIdleClients();
         throw error;
       }
+      logger.debug(`finished switch client`);
     }
 
     try {
@@ -212,9 +213,13 @@ export class ReadWriteSplittingPlugin extends AbstractConnectionPlugin {
     if (!(await currentClient.isValid())) {
       this.logAndThrowError(Messages.get("ReadWriteSplittingPlugin.setReadOnlyOnClosedClient"));
     }
+    logger.debug("switch client");
     try {
       await this.pluginService.refreshHostList();
+      logger.debug("refresh");
     } catch {
+      logger.debug("could not refresh host list");
+
       // pass
     }
 
@@ -222,6 +227,7 @@ export class ReadWriteSplittingPlugin extends AbstractConnectionPlugin {
     if (hosts == null || hosts.length === 0) {
       this.logAndThrowError(Messages.get("ReadWriteSplittingPlugin.emptyHostList"));
     }
+    logger.debug("got hosts");
 
     const currentHost = this.pluginService.getCurrentHostInfo();
     if (currentHost == null) {
@@ -229,6 +235,8 @@ export class ReadWriteSplittingPlugin extends AbstractConnectionPlugin {
     } else if (readOnly) {
       if (!this.pluginService.isInTransaction() && currentHost.role != HostRole.READER) {
         try {
+          logger.debug("try switch reader target");
+
           await this.switchToReaderTargetClient(hosts);
         } catch (error: any) {
           if (!(await currentClient.isValid())) {
@@ -242,11 +250,14 @@ export class ReadWriteSplittingPlugin extends AbstractConnectionPlugin {
         this.logAndThrowError(Messages.get("ReadWriteSplittingPlugin.setReadOnlyFalseInTransaction"));
       }
       try {
+        logger.debug("try switch writer target");
+
         await this.switchToWriterTargetClient(hosts);
       } catch (error: any) {
         this.logAndThrowError(Messages.get("ReadWriteSplittingPlugin.errorSwitchingToWriter", error.message));
       }
     }
+    logger.debug("finish");
   }
 
   async switchCurrentTargetClientTo(newTargetClient: any, newClientHost: HostInfo | undefined) {
@@ -321,8 +332,11 @@ export class ReadWriteSplittingPlugin extends AbstractConnectionPlugin {
       return;
     }
     if (!(await this.isTargetClientUsable(this.writerTargetClient))) {
+      logger.debug("new writer client");
       await this.getNewWriterClient(writerHost);
     } else if (this.writerTargetClient) {
+      logger.debug("switch current client");
+
       await this.switchCurrentTargetClientTo(this.writerTargetClient, writerHost);
     }
     logger.debug(Messages.get("ReadWriteSplittingPlugin.switchedFromReaderToWriter", writerHost.url));

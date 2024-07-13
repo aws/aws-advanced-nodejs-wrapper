@@ -98,17 +98,20 @@ export class AwsMySQLClient extends AwsClient {
     try {
       this._isReadOnly = readOnly;
       logger.debug(`Attempting to set readOnly ${readOnly}`);
-
+      if (timeout) {
+        logger.debug(`Timeout time: ${timeout}`);
+      }
       if (this.isReadOnly()) {
         result = await this.query({ sql: "SET SESSION TRANSACTION READ ONLY;", timeout: timeout });
       } else {
         result = await this.query({ sql: "SET SESSION TRANSACTION READ WRITE;", timeout: timeout });
       }
-    } catch (error) {
+    } catch (error: any) {
+      logger.debug(`Error ${error.message}`);
       // revert
       logger.debug(`Unable to set readOnly ${readOnly}`);
       this._isReadOnly = previousReadOnly;
-      throw error;
+      throw new AwsWrapperError(error.message);
     }
     this.pluginService.getSessionStateService().setupPristineReadOnly();
     this.pluginService.getSessionStateService().setReadOnly(readOnly);

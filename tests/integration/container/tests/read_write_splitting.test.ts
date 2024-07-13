@@ -204,12 +204,31 @@ describe("aurora read write splitting", () => {
 
     // Kill all instances
     await ProxyHelper.disableAllConnectivity(env.engine);
-    logger.debug("host list after disabling connectivity:");
-    for (const host of env.proxyDatabaseInfo.instances) {
-      logger.debug(host.host);
-    }
     await expect(async () => {
       await client.setReadOnly(false, 1000);
+    }).rejects.toThrow(AwsWrapperError);
+    logger.debug("all instances down test success");
+  }, 100000);
+
+  it.only("set read only all instances down query", async () => {
+    const config = await initDefaultConfig(env.proxyDatabaseInfo.writerInstanceEndpoint, env.proxyDatabaseInfo.instanceEndpointPort, true);
+    client = initClientFunc(config);
+
+    client.on("error", (error: any) => {
+      logger.debug(error.message);
+    });
+    await client.connect();
+    const initialWriterId = await auroraTestUtility.queryInstanceId(client);
+    expect(await auroraTestUtility.isDbInstanceWriter(initialWriterId)).toStrictEqual(true);
+
+    await client.setReadOnly(true);
+    const currentReaderId0 = await auroraTestUtility.queryInstanceId(client);
+    expect(currentReaderId0).not.toBe(initialWriterId);
+
+    // Kill all instances
+    await ProxyHelper.disableAllConnectivity(env.engine);
+    await expect(async () => {
+      await auroraTestUtility.queryInstanceId(client);
     }).rejects.toThrow(AwsWrapperError);
     logger.debug("all instances down test success");
   }, 100000);
