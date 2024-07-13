@@ -95,44 +95,38 @@ export class AwsMySQLClient extends AwsClient {
     }
     const previousReadOnly: boolean = this.isReadOnly();
     let result;
-    try {
-      this._isReadOnly = readOnly;
-      logger.debug(`Attempting to set readOnly ${readOnly}`);
-      if (timeout) {
-        logger.debug(`Timeout time: ${timeout}`);
-      }
-      if (this.isReadOnly()) {
-        result = await this.query({ sql: "SET SESSION TRANSACTION READ ONLY;", timeout: timeout }, function (error: any) {
-          if (error && error.code === "PROTOCOL_SEQUENCE_TIMEOUT") {
-            logger.debug("timed out here!");
-            throw new Error("too long to count table rows!");
-          }
-
-          if (error) {
-            throw error;
-          }
+    this._isReadOnly = readOnly;
+    logger.debug(`Attempting to set readOnly ${readOnly}`);
+    if (timeout) {
+      logger.debug(`Timeout time: ${timeout}`);
+    }
+    if (this.isReadOnly()) {
+      await this.query({ sql: "SET SESSION TRANSACTION READ ONLY;", timeout: timeout })
+        .then((data: any) => {
+          result = data;
+        })
+        .catch((err: any) => {
+          logger.debug("read only failed with error", err);
+          this._isReadOnly = previousReadOnly;
+          throw err;
         });
-      } else {
-        result = await this.query({ sql: "SET SESSION TRANSACTION READ WRITE;", timeout: timeout }, function (error: any) {
-          if (error && error.code === "PROTOCOL_SEQUENCE_TIMEOUT") {
-            logger.debug("timed out here!");
-            throw new Error("too long to count table rows!");
+    } else {
+      await this.query({ sql: "SET SESSION TRANSACTION READ WRITE;", timeout: timeout })
+        .then((data: any) => {
+          result = data;
+        })
+        .catch((err: any) => {
+          if (err.code === "PROTOCOL_SEQUENCE_TIMEOUT") {
+            logger.debug("timeout type");
           }
-
-          if (error) {
-            throw error;
-          }
+          logger.debug("read write failed with error", err.code);
+          this._isReadOnly = previousReadOnly;
+          throw err;
         });
-      }
-    } catch (error: any) {
-      logger.debug(`Error ${error.message}`);
-      // revert
-      logger.debug(`Unable to set readOnly ${readOnly}`);
-      this._isReadOnly = previousReadOnly;
-      throw new AwsWrapperError(error.message);
     }
     this.pluginService.getSessionStateService().setupPristineReadOnly();
     this.pluginService.getSessionStateService().setReadOnly(readOnly);
+    logger.debug("success");
     return result;
   }
 

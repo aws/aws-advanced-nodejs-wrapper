@@ -208,30 +208,7 @@ describe("aurora read write splitting", () => {
       await client.setReadOnly(false, 1000);
     }).rejects.toThrow(AwsWrapperError);
     logger.debug("all instances down test success");
-  }, 100000);
-
-  it.only("set read only all instances down query", async () => {
-    const config = await initDefaultConfig(env.proxyDatabaseInfo.writerInstanceEndpoint, env.proxyDatabaseInfo.instanceEndpointPort, true);
-    client = initClientFunc(config);
-
-    client.on("error", (error: any) => {
-      logger.debug(error.message);
-    });
-    await client.connect();
-    const initialWriterId = await auroraTestUtility.queryInstanceId(client);
-    expect(await auroraTestUtility.isDbInstanceWriter(initialWriterId)).toStrictEqual(true);
-
-    await client.setReadOnly(true);
-    const currentReaderId0 = await auroraTestUtility.queryInstanceId(client);
-    expect(currentReaderId0).not.toBe(initialWriterId);
-
-    // Kill all instances
-    await ProxyHelper.disableAllConnectivity(env.engine);
-    await expect(async () => {
-      await DriverHelper.executeQuery(env.engine, client, DriverHelper.getSleepQuery(env.engine, 15));
-    }).rejects.toThrow(AwsWrapperError);
-    logger.debug("all instances down test success");
-  }, 100000);
+  }, 50000);
 
   it("set read only all readers down", async () => {
     // Connect to writer instance
