@@ -187,7 +187,7 @@ describe("aurora read write splitting", () => {
     await DriverHelper.executeQuery(env.engine, client, "DROP TABLE IF EXISTS test3_3");
   }, 1000000);
 
-  it.only("set read only all instances down", async () => {
+  it("set read only all instances down", async () => {
     const config = await initDefaultConfig(env.proxyDatabaseInfo.writerInstanceEndpoint, env.proxyDatabaseInfo.instanceEndpointPort, true);
     client = initClientFunc(config);
 
@@ -205,10 +205,10 @@ describe("aurora read write splitting", () => {
     // Kill all instances
     await ProxyHelper.disableAllConnectivity(env.engine);
     await expect(async () => {
-      await client.setReadOnly(false, 1000);
+      await client.setReadOnly(false, 2000);
     }).rejects.toThrow(Error);
     logger.debug("all instances down test success");
-  }, 1000000);
+  }, 300000);
 
   it("set read only all readers down", async () => {
     // Connect to writer instance

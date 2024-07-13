@@ -64,7 +64,7 @@ export class DriverHelper {
         });
       case DatabaseEngine.MYSQL:
         result = await (client as AwsMySQLClient).query({ sql: sql, timeout: 10000 });
-        return JSON.parse(JSON.stringify(result))[0][0]["id"];
+        return result ? JSON.parse(JSON.stringify(result))[0][0]["id"] : undefined;
       default:
         throw new Error("invalid engine");
     }

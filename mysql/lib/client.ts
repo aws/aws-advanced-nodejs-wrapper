@@ -29,6 +29,7 @@ import { TransactionIsolationLevel } from "../../common/lib/utils/transaction_is
 import { AwsWrapperError, UnsupportedMethodError } from "../../common/lib/utils/errors";
 import { Messages } from "../../common/lib/utils/messages";
 import { logger } from "../../common/logutils";
+import { error } from "winston";
 
 export class AwsMySQLClient extends AwsClient {
   private static readonly knownDialectsByCode: Map<string, DatabaseDialect> = new Map([
@@ -81,7 +82,21 @@ export class AwsMySQLClient extends AwsClient {
       "query",
       async () => {
         await this.pluginService.updateState(options.sql);
-        return await this.targetClient.promise().query(options, callback);
+        return await this.targetClient
+          .promise()
+          .query(options, callback)
+          .then((result: any) => {
+            //return your results
+            logger.debug(result);
+
+         //   return result;
+          })
+          .catch((error: any) => {
+            if (error && error.code === "PROTOCOL_SEQUENCE_TIMEOUT") {
+              logger.debug("yay~");
+              throw error;
+            }
+          });
       },
       options
     );
@@ -95,37 +110,26 @@ export class AwsMySQLClient extends AwsClient {
     }
     const previousReadOnly: boolean = this.isReadOnly();
     let result;
-    this._isReadOnly = readOnly;
-    logger.debug(`Attempting to set readOnly ${readOnly}`);
-    if (timeout) {
-      logger.debug(`Timeout time: ${timeout}`);
-    }
-    if (this.isReadOnly()) {
-      [result] = await Promise.all([
-        this.query({
-          sql: "SET SESSION TRANSACTION READ ONLY;",
-          timeout: timeout
-        }).catch((err: any) => {
-          logger.debug("read only failed with error", err);
-          this._isReadOnly = previousReadOnly;
-          throw err;
-        })
-      ]);
-    } else {
-      [result] = await Promise.all([
-        this.query({ sql: "SET SESSION TRANSACTION READ WRITE;", timeout: timeout }).catch((err: any) => {
-          if (err.code === "PROTOCOL_SEQUENCE_TIMEOUT") {
-            logger.debug("timeout type");
-          }
-          logger.debug("read write failed with error", err.code);
-          this._isReadOnly = previousReadOnly;
-          throw err;
-        })
-      ]);
+    try {
+      this._isReadOnly = readOnly;
+      logger.debug(`Attempting to set readOnly ${readOnly}`);
+      if (timeout) {
+        logger.debug(`Timeout time: ${timeout}`);
+      }
+      if (this.isReadOnly()) {
+        result = await this.query({ sql: "SET SESSION TRANSACTION READ ONLY;", timeout: timeout });
+      } else {
+        result = await this.query({ sql: "SET SESSION TRANSACTION READ WRITE;", timeout: timeout });
+      }
+    } catch (error: any) {
+      logger.debug(`Error ${error.message}`);
+      // revert
+      logger.debug(`Unable to set readOnly ${readOnly}`);
+      this._isReadOnly = previousReadOnly;
+      throw new AwsWrapperError(error.message);
     }
     this.pluginService.getSessionStateService().setupPristineReadOnly();
     this.pluginService.getSessionStateService().setReadOnly(readOnly);
-    logger.debug("success");
     return result;
   }
 

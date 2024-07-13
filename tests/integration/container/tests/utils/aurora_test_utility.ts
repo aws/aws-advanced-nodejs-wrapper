@@ -34,7 +34,7 @@ import { sleep } from "../../../../../common/lib/utils/utils";
 export class AuroraTestUtility {
   private client: RDSClient;
 
-  constructor(region: string = "us-east-1") {
+  constructor(region: string = "us-east-2") {
     this.client = new RDSClient({ region: region });
   }
 
