@@ -209,7 +209,11 @@ export class ReadWriteSplittingPlugin extends AbstractConnectionPlugin {
   }
 
   async switchClientIfRequired(readOnly: boolean) {
+    logger.debug("method switch client if required");
+
     const currentClient = this.pluginService.getCurrentClient();
+    logger.debug("got current client");
+
     if (!(await currentClient.isValid())) {
       this.logAndThrowError(Messages.get("ReadWriteSplittingPlugin.setReadOnlyOnClosedClient"));
     }

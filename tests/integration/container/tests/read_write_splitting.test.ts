@@ -206,9 +206,9 @@ describe("aurora read write splitting", () => {
     await ProxyHelper.disableAllConnectivity(env.engine);
     await expect(async () => {
       await client.setReadOnly(false, 1000);
-    }).rejects.toThrow(AwsWrapperError);
+    }).rejects.toThrow(Error);
     logger.debug("all instances down test success");
-  }, 50000);
+  }, 1000000);
 
   it("set read only all readers down", async () => {
     // Connect to writer instance

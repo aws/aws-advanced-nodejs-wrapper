@@ -101,28 +101,27 @@ export class AwsMySQLClient extends AwsClient {
       logger.debug(`Timeout time: ${timeout}`);
     }
     if (this.isReadOnly()) {
-      await this.query({ sql: "SET SESSION TRANSACTION READ ONLY;", timeout: timeout })
-        .then((data: any) => {
-          result = data;
-        })
-        .catch((err: any) => {
+      [result] = await Promise.all([
+        this.query({
+          sql: "SET SESSION TRANSACTION READ ONLY;",
+          timeout: timeout
+        }).catch((err: any) => {
           logger.debug("read only failed with error", err);
           this._isReadOnly = previousReadOnly;
           throw err;
-        });
-    } else {
-      await this.query({ sql: "SET SESSION TRANSACTION READ WRITE;", timeout: timeout })
-        .then((data: any) => {
-          result = data;
         })
-        .catch((err: any) => {
+      ]);
+    } else {
+      [result] = await Promise.all([
+        this.query({ sql: "SET SESSION TRANSACTION READ WRITE;", timeout: timeout }).catch((err: any) => {
           if (err.code === "PROTOCOL_SEQUENCE_TIMEOUT") {
             logger.debug("timeout type");
           }
           logger.debug("read write failed with error", err.code);
           this._isReadOnly = previousReadOnly;
           throw err;
-        });
+        })
+      ]);
     }
     this.pluginService.getSessionStateService().setupPristineReadOnly();
     this.pluginService.getSessionStateService().setReadOnly(readOnly);
