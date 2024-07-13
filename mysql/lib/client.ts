@@ -102,9 +102,27 @@ export class AwsMySQLClient extends AwsClient {
         logger.debug(`Timeout time: ${timeout}`);
       }
       if (this.isReadOnly()) {
-        result = await this.query({ sql: "SET SESSION TRANSACTION READ ONLY;", timeout: timeout });
+        result = await this.query({ sql: "SET SESSION TRANSACTION READ ONLY;", timeout: timeout }, function (error: any) {
+          if (error && error.code === "PROTOCOL_SEQUENCE_TIMEOUT") {
+            logger.debug("timed out here!");
+            throw new Error("too long to count table rows!");
+          }
+
+          if (error) {
+            throw error;
+          }
+        });
       } else {
-        result = await this.query({ sql: "SET SESSION TRANSACTION READ WRITE;", timeout: timeout });
+        result = await this.query({ sql: "SET SESSION TRANSACTION READ WRITE;", timeout: timeout }, function (error: any) {
+          if (error && error.code === "PROTOCOL_SEQUENCE_TIMEOUT") {
+            logger.debug("timed out here!");
+            throw new Error("too long to count table rows!");
+          }
+
+          if (error) {
+            throw error;
+          }
+        });
       }
     } catch (error: any) {
       logger.debug(`Error ${error.message}`);

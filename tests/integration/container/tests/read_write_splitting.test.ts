@@ -228,7 +228,7 @@ describe("aurora read write splitting", () => {
     // Kill all instances
     await ProxyHelper.disableAllConnectivity(env.engine);
     await expect(async () => {
-      await auroraTestUtility.queryInstanceId(client);
+      await DriverHelper.executeQuery(env.engine, client, DriverHelper.getSleepQuery(env.engine, 15));
     }).rejects.toThrow(AwsWrapperError);
     logger.debug("all instances down test success");
   }, 100000);
