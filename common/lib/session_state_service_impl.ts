@@ -152,7 +152,7 @@ export class SessionStateServiceImpl implements SessionStateService {
 
     if (this.copySessionState?.readOnly.canRestorePristine() && this.copySessionState?.readOnly.pristineValue !== undefined) {
       try {
-        logger.debug(`updating read only in apply pristine session state: ${this.sessionState.readOnly.value}`);
+        logger.debug(`updating read only in apply pristine session state: ${this.sessionState.readOnly.pristineValue}`);
 
         await client.setReadOnly(this.copySessionState?.readOnly.pristineValue);
       } catch (error: any) {

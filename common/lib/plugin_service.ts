@@ -359,8 +359,8 @@ export class PluginService implements ErrorHandler, HostListProviderService {
 
   private async updateReadOnly(statements: string[]) {
     const updateReadOnly = SqlMethodUtils.doesSetReadOnly(statements, this.getDialect());
-    logger.debug(`updating read only in plugin service: ${updateReadOnly}`);
     if (updateReadOnly !== undefined) {
+      logger.debug(`updating read only in plugin service: ${updateReadOnly}`);
       await this.getCurrentClient().setReadOnly(updateReadOnly);
     }
   }
