@@ -17,7 +17,6 @@
 import { HostInfo } from "../../common/lib/host_info";
 import { PluginService } from "../../common/lib/plugin_service";
 import { ClusterAwareReaderFailoverHandler } from "../../common/lib/plugins/failover/reader_failover_handler";
-import { AwsClient } from "../../common/lib/aws_client";
 import { HostAvailability } from "../../common/lib/host_availability/host_availability";
 import { HostRole } from "../../common/lib/host_role";
 import { AwsWrapperError } from "../../common/lib/utils/errors";
@@ -33,8 +32,6 @@ const defaultHosts = [host1, host2, host3, host4, host5, host6];
 const properties = new Map();
 const mockTargetClient = { client: 123 };
 
-const mockClient = mock(AwsClient);
-const mockClientInstance = instance(mockClient);
 const mockPluginService = mock(PluginService);
 
 describe("reader failover handler", () => {
@@ -51,6 +48,7 @@ describe("reader failover handler", () => {
     for (let i = 0; i < hosts.length; i++) {
       if (i !== successHostIndex) {
         when(mockPluginService.forceConnect(hosts[i], anything())).thenThrow(new AwsWrapperError("Rejecting test"));
+        when(mockPluginService.isNetworkError(anything())).thenReturn(true);
       } else {
         when(mockPluginService.forceConnect(hosts[i], anything())).thenReturn(mockTargetClient);
       }

@@ -24,6 +24,8 @@ export class AwsWrapperError extends Error {
 
 export class UnsupportedMethodError extends AwsWrapperError {}
 
+export class IllegalArgumentError extends AwsWrapperError {}
+
 export class FailoverError extends AwsWrapperError {}
 
 export class FailoverSuccessError extends FailoverError {}

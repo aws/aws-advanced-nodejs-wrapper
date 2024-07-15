@@ -194,7 +194,7 @@ export class AuroraTestUtility {
       try {
         const result = await this.client.send(command);
         if (!this.isNullOrUndefined(result["DBCluster"])) {
-          await TestEnvironment.resetCurrent();
+          await TestEnvironment.updateWriter();
           return;
         }
 
@@ -254,7 +254,7 @@ export class AuroraTestUtility {
     const members = clusterInfo.DBClusterMembers;
 
     const instance = members.find((m) => m.IsClusterWriter);
-    if (instance === undefined) {
+    if (instance === undefined || instance.DBInstanceIdentifier === undefined) {
       throw new Error("cant find writer");
     }
 

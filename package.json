@@ -14,7 +14,7 @@
     "bench_connect": "npx tsx tests/connect_benchmarks.ts",
     "bench_plugin": "npx tsx tests/plugin_benchmarks.ts",
     "format": "prettier . --write --config .prettierrc",
-    "integration": "jest --config=jest.integration.config.json --runInBand",
+    "integration": "jest --config=jest.integration.config.json --runInBand --verbose",
     "debug-integration": "node --inspect-brk=0.0.0.0:5005 ./node_modules/jest/bin/jest.js --config=jest.integration.config.json --runInBand",
     "lint": "eslint --fix --ext .ts .",
     "prepare": "husky install",
@@ -32,20 +32,20 @@
     "pg/*"
   ],
   "devDependencies": {
-    "@aws-sdk/client-rds": "^3.569.0",
     "@aws-sdk/client-secrets-manager": "^3.600.0",
     "@aws-sdk/client-sts": "^3.598.0",
-    "@aws-sdk/credential-providers": "^3.598.0",
-    "@aws-sdk/rds-signer": "^3.600.0",
+    "@aws-sdk/credential-providers": "^3.614.0",
+    "@aws-sdk/rds-signer": "^3.614.0",
+    "@aws-sdk/client-rds": "^3.569.0",
     "@types/i18n": "^0.13.12",
     "@types/jest": "^29.5.12",
     "@types/lodash": "^4.17.6",
-    "@types/node": "^20.14.8",
+    "@types/node": "^20.14.10",
     "@types/node-fetch": "^2.6.11",
     "@types/pg": "^8.11.6",
     "@types/tough-cookie": "^4.0.5",
     "@typescript-eslint/eslint-plugin": "^7.15.0",
-    "aws-sdk": "^2.1653.0",
+    "aws-sdk": "^2.1659.0",
     "axios": "^1.7.2",
     "axios-cookiejar-support": "^5.0.2",
     "benny": "^3.7.1",
@@ -64,20 +64,17 @@
     "mysql2": "^3.10.2",
     "node-fetch": "^2.7.0",
     "pg": "^8.12.0",
-    "prettier": "^3.3.2",
+    "prettier": "^3.3.3",
     "querystring": "^0.2.1",
     "toxiproxy-node-client": "^3.0.0",
-    "ts-jest": "^29.1.4",
+    "ts-jest": "^29.2.2",
     "ts-mockito": "^2.6.1",
     "ts-node": "^10.9.2",
-    "tsx": "^4.16.0",
+    "tsx": "^4.16.2",
     "typescript": "^5.5.2",
     "winston": "3.11.0"
   },
   "overrides": {
     "braces": "^3.0.3"
-  },
-  "dependencies": {
-    "tinybench": "^2.8.0"
   }
 }

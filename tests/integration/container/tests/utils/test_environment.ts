@@ -22,8 +22,8 @@ import { TestInstanceInfo } from "./test_instance_info";
 import { TestProxyDatabaseInfo } from "./test_proxy_database_info";
 import { TestDatabaseInfo } from "./test_database_info";
 import { DatabaseEngine } from "./database_engine";
-import { TestDriver } from "./test_driver";
-import { logger } from "aws-wrapper-common-lib/logutils";
+import { AuroraTestUtility } from "./aurora_test_utility";
+import { DatabaseEngineDeployment } from "./database_engine_deployment";
 
 export class TestEnvironment {
   private static env?: TestEnvironment;
@@ -43,8 +43,14 @@ export class TestEnvironment {
     return TestEnvironment.env;
   }
 
-  static async resetCurrent() {
-    TestEnvironment.env = undefined;
+  static async updateWriter() {
+    const info = TestEnvironment.env?.info;
+    if (info?.request.deployment === DatabaseEngineDeployment.AURORA) {
+      const auroraUtility = new AuroraTestUtility(info.auroraRegion);
+      await auroraUtility.waitUntilClusterHasDesiredStatus(info.auroraClusterName);
+      info.databaseInfo.moveInstanceFirst(await auroraUtility.getClusterWriterInstanceId(info.auroraClusterName));
+      info.proxyDatabaseInfo.moveInstanceFirst(await auroraUtility.getClusterWriterInstanceId(info.auroraClusterName));
+    }
   }
 
   static async create() {

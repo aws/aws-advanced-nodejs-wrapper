@@ -108,5 +108,7 @@
   "OktaCredentialsProviderFactory.invalidSamlResponse": "The SAML Assertion request did not return a valid response containing a SAMLResponse.",
   "OktaCredentialsProviderFactory.samlRequestFailed": "Okta SAML Assertion request failed with HTTP status '%s', reason phrase '%s', and response '%s'",
   "SamlCredentialsProviderFactory.getSamlAssertionFailed": "Failed to get SAML Assertion due to exception: '%s'",
-  "SamlAuthPlugin.unhandledException": "Unhandled exception: '%s'"
+  "SamlAuthPlugin.unhandledException": "Unhandled exception: '%s'",
+  "HostAvailabilityStrategy.invalidMaxRetries": "Invalid value of '%s' for configuration parameter `hostAvailabilityStrategyMaxRetries`. It must be an integer greater or equal to 1.",
+  "HostAvailabilityStrategy.invalidInitialBackoffTime": "Invalid value of '%s'  for configuration parameter `hostAvailabilityStrategyInitialBackoffTime`. It must be an integer greater or equal to 1."
 }

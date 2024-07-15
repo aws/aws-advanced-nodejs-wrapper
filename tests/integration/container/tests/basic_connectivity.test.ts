@@ -47,7 +47,7 @@ describe("basic_connectivity", () => {
       host: env.databaseInfo.instances[0].host,
       database: env.databaseInfo.default_db_name,
       password: env.databaseInfo.password,
-      port: env.databaseInfo.clusterEndpointPort,
+      port: env.databaseInfo.instanceEndpointPort,
       plugins: ""
     };
     props = DriverHelper.addDriverSpecificConfiguration(props, env.engine);
@@ -73,8 +73,9 @@ describe("basic_connectivity", () => {
       host: env.proxyDatabaseInfo.instances[0].host,
       database: env.databaseInfo.default_db_name,
       password: env.databaseInfo.password,
-      port: env.proxyDatabaseInfo.clusterEndpointPort,
-      plugins: ""
+      port: env.proxyDatabaseInfo.instanceEndpointPort,
+      plugins: "",
+      clusterInstanceHostPattern: "?." + env.proxyDatabaseInfo.instanceEndpointSuffix + ":" + env.proxyDatabaseInfo.instanceEndpointPort
     };
     props = DriverHelper.addDriverSpecificConfiguration(props, env.engine);
 
