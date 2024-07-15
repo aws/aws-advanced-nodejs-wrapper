@@ -18,6 +18,7 @@ import { AwsPGClient } from "../../pg/lib";
 import { PluginManager } from "../../common/lib";
 import { PluginService } from "../../common/lib/plugin_service";
 
+// TODO should there be two test wrappers for both pg and mysql?
 export class TestConnectionWrapper extends AwsPGClient {
   constructor(config: any, pluginManager: PluginManager, pluginService: PluginService) {
     super(config);

@@ -25,26 +25,26 @@ import { HostInfoBuilder } from "../../common/lib/host_info_builder";
 import { SimpleHostAvailabilityStrategy } from "../../common/lib/host_availability/simple_host_availability_strategy";
 
 export class BenchmarkPlugin implements ConnectionPlugin {
-  // Uncomment resources related changes once implemented
+  // TODO Uncomment resources related changes once releaseResources implemented
   // resources: Array<string> = new Array<string>();
 
   getSubscribedMethods(): Set<string> {
     return new Set<string>(["*"]);
   }
 
-  execute<T>(methodName: string, methodFunc: () => Promise<T>, methodArgs: any): Promise<T> {
+  async execute<T>(methodName: string, methodFunc: () => Promise<T>, methodArgs: any): Promise<T> {
     logger.debug(`execute method = ${methodName}`);
     // this.resources.push("execute");
     return methodFunc();
   }
 
-  connect<T>(hostInfo: HostInfo, props: Map<string, any>, isInitialConnection: boolean, connectFunc: () => Promise<T>): Promise<T> {
+  async connect<T>(hostInfo: HostInfo, props: Map<string, any>, isInitialConnection: boolean, connectFunc: () => Promise<T>): Promise<T> {
     logger.debug(`connect = ${hostInfo.host}`);
     // this.resources.push("connect");
     return connectFunc();
   }
 
-  forceConnect<T>(hostInfo: HostInfo, props: Map<string, any>, isInitialConnection: boolean, forceConnectFunc: () => Promise<T>): Promise<T> {
+  async forceConnect<T>(hostInfo: HostInfo, props: Map<string, any>, isInitialConnection: boolean, forceConnectFunc: () => Promise<T>): Promise<T> {
     logger.debug(`forceConnect = ${hostInfo.host}`);
     // this.resources.push("forceConnect");
     return forceConnectFunc();
