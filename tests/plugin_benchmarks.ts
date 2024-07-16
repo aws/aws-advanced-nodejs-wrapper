@@ -20,7 +20,7 @@ import { PluginService } from "../common/lib/plugin_service";
 import { PluginServiceManagerContainer } from "../common/lib/plugin_service_manager_container";
 import { WrapperProperties } from "../common/lib/wrapper_property";
 import { PluginManager } from "../common/lib";
-import { add, complete, cycle, save, suite } from "benny";
+import { add, complete, configure, cycle, save, suite } from "benny";
 import { TestConnectionWrapper } from "./testplugin/test_connection_wrapper";
 
 const mockConnectionProvider = mock<ConnectionProvider>();
@@ -46,6 +46,12 @@ const pluginManager = new PluginManager(pluginServiceManagerContainer, props, in
 
 suite(
   "Plugin benchmarks",
+
+  configure({
+    cases: {
+      delay: 0.1
+    }
+  }),
 
   add("initAndReleaseBaseline", async () => {}),
 
