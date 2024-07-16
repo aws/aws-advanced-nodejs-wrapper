@@ -14,24 +14,22 @@
   limitations under the License.
 */
 
-import { add, cycle, suite, save, complete } from "benny";
+import { add, cycle, suite, save, complete, configure } from "benny";
 import { ConnectionPlugin, PluginManager } from "../common/lib";
 import { PluginServiceManagerContainer } from "../common/lib/plugin_service_manager_container";
-import { instance, mock, when } from "ts-mockito";
+import { instance, mock } from "ts-mockito";
 import { ConnectionProvider } from "../common/lib/connection_provider";
 import { HostInfoBuilder } from "../common/lib/host_info_builder";
 import { SimpleHostAvailabilityStrategy } from "../common/lib/host_availability/simple_host_availability_strategy";
 import { PluginService } from "../common/lib/plugin_service";
 import { HostListProviderService } from "../common/lib/host_list_provider_service";
 import { HostChangeOptions } from "../common/lib/host_change_options";
-import { AwsClient } from "../common/lib/aws_client";
 import { WrapperProperties } from "../common/lib/wrapper_property";
 import { BenchmarkPluginFactory } from "./testplugin/benchmark_plugin_factory";
 
 const mockConnectionProvider = mock<ConnectionProvider>();
 const mockHostListProviderService = mock<HostListProviderService>();
 const mockPluginService = mock(PluginService);
-const mockClient = mock<AwsClient>();
 
 const pluginServiceManagerContainer = new PluginServiceManagerContainer();
 pluginServiceManagerContainer.pluginService = instance(mockPluginService);
@@ -52,10 +50,14 @@ async function createPlugins(pluginService: PluginService, props: Map<string, an
   return pluginChain;
 }
 
-when(mockPluginService.getCurrentClient()).thenReturn(instance(mockClient));
-
 suite(
   "Connection Plugin Manager Benchmarks",
+
+  configure({
+    cases: {
+      delay: 0.1
+    }
+  }),
 
   add("initConnectionPluginManagerWithPlugins", async () => {
     const manager = new PluginManager(pluginServiceManagerContainer, propsWithPlugins, instance(mockConnectionProvider), null);
