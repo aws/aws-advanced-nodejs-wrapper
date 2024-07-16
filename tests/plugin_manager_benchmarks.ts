@@ -51,7 +51,7 @@ async function createPlugins(pluginService: PluginService, props: Map<string, an
 }
 
 suite(
-  "Connection Plugin Manager Benchmarks",
+  "Plugin Manager Benchmarks",
 
   configure({
     cases: {
@@ -59,12 +59,12 @@ suite(
     }
   }),
 
-  add("initConnectionPluginManagerWithPlugins", async () => {
+  add("initPluginManagerWithPlugins", async () => {
     const manager = new PluginManager(pluginServiceManagerContainer, propsWithPlugins, instance(mockConnectionProvider), null);
     await manager.init(await createPlugins(instance(mockPluginService), propsWithPlugins));
   }),
 
-  add("initConnectionPluginManagerWithNoPlugins", async () => {
+  add("initPluginManagerWithNoPlugins", async () => {
     const manager = new PluginManager(pluginServiceManagerContainer, propsWithNoPlugins, instance(mockConnectionProvider), null);
     await manager.init();
   }),
@@ -151,6 +151,6 @@ suite(
 
   cycle(),
   complete(),
-  save({ file: "connect_benchmarks", format: "json", details: true }),
-  save({ file: "connect_benchmarks", format: "chart.html", details: true })
+  save({ file: "plugin_manager_benchmarks", format: "json", details: true }),
+  save({ file: "plugin_manager_benchmarks", format: "chart.html", details: true })
 );
