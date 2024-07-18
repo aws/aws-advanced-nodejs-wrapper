@@ -62,7 +62,7 @@ async function initConfigWithFailover(host: string, port: number, connectToProxy
   config = DriverHelper.addDriverSpecificConfiguration(config, env.engine);
   return config;
 }
-describe.skip("aurora read write splitting", () => {
+describe("aurora read write splitting", () => {
   beforeEach(async () => {
     logger.info(`Test started: ${expect.getState().currentTestName}`);
     env = await TestEnvironment.getCurrent();

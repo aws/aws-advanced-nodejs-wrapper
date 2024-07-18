@@ -49,7 +49,7 @@ async function initDefaultConfig(host: string, port: number, connectToProxy: boo
   return config;
 }
 
-describe.skip("aurora failover", () => {
+describe("aurora failover", () => {
   beforeEach(async () => {
     logger.info(`Test started: ${expect.getState().currentTestName}`);
     env = await TestEnvironment.getCurrent();
@@ -64,7 +64,7 @@ describe.skip("aurora failover", () => {
 
   afterEach(async () => {
     if (client !== null) {
-      await client.end();
+      //await client.end();
     }
     if (secondaryClient !== null) {
       await secondaryClient.end();
@@ -209,12 +209,14 @@ describe.skip("aurora failover", () => {
     const readerInstanceId = rdsUtils.getRdsInstanceId(readerInstanceHost);
     if (readerInstanceId) {
       await ProxyHelper.disableConnectivity(env.engine, readerInstanceId);
+      logger.debug("AAAA");
 
       await expect(async () => {
         await auroraTestUtility.queryInstanceId(secondaryClient);
       }).rejects.toThrow(FailoverSuccessError);
 
       await ProxyHelper.enableConnectivity(readerInstanceId);
+      logger.debug("CCC");
 
       // Assert that we are currently connected to the writer instance
       const currentConnectionId = await auroraTestUtility.queryInstanceId(secondaryClient);
