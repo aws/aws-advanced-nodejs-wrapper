@@ -22,6 +22,7 @@ import { AwsClient } from "../../../common/lib/aws_client";
 import { HostInfo } from "../../../common/lib/host_info";
 import { TopologyAwareDatabaseDialect } from "../../../common/lib/topology_aware_database_dialect";
 import { HostRole } from "../../../common/lib/host_role";
+import { logger } from "../../../common/logutils";
 
 export class AuroraMySQLDatabaseDialect extends MySQLDatabaseDialect implements TopologyAwareDatabaseDialect {
   private static readonly TOPOLOGY_QUERY: string =
@@ -44,7 +45,10 @@ export class AuroraMySQLDatabaseDialect extends MySQLDatabaseDialect implements 
   }
 
   async queryForTopology(targetClient: any, hostListProvider: HostListProvider): Promise<HostInfo[]> {
-    const res = await targetClient.promise().query(AuroraMySQLDatabaseDialect.TOPOLOGY_QUERY);
+    logger.debug("query for topology");
+    const res = await targetClient.promise().query({ sql: AuroraMySQLDatabaseDialect.TOPOLOGY_QUERY, timeout: 2000 });
+    logger.debug("query for topology finish");
+
     const hosts: HostInfo[] = [];
     const rows: any[] = res[0];
     rows.forEach((row) => {
@@ -72,9 +76,11 @@ export class AuroraMySQLDatabaseDialect extends MySQLDatabaseDialect implements 
   }
 
   async isDialect(targetClient: any): Promise<boolean> {
+    logger.debug("query is dialect");
+
     return targetClient
       .promise()
-      .query(AuroraMySQLDatabaseDialect.AURORA_VERSION_QUERY)
+      .query({ sql: AuroraMySQLDatabaseDialect.AURORA_VERSION_QUERY, timeout: 2000 })
       .then(([rows]: any) => {
         return !!rows[0]["Value"];
       })

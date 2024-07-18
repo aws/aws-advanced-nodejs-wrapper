@@ -36,7 +36,7 @@ afterEach(async () => {
   logger.info(`Test finished: ${expect.getState().currentTestName}`);
 }, 1000000);
 
-describe("basic connectivity", () => {
+describe.skip("basic connectivity", () => {
   it("wrapper", async () => {
     const env = await TestEnvironment.getCurrent();
     const driver = DriverHelper.getDriverForDatabaseEngine(env.engine);

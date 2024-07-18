@@ -66,7 +66,7 @@ export class AwsMySQLClient extends AwsClient {
       await this.connect(); // client.connect is not required for MySQL clients
       this.isConnected = true;
     }
-    return this.targetClient.promise().query({ sql: sql });
+    return this.targetClient.promise().query({ sql: sql, timeout: 2000 });
   }
 
   async query(options: QueryOptions, callback?: any): Promise<Query> {
@@ -81,6 +81,8 @@ export class AwsMySQLClient extends AwsClient {
       "query",
       async () => {
         await this.pluginService.updateState(options.sql);
+        logger.debug("query inside client");
+
         return await this.targetClient.promise().query(options, callback);
       },
       options
@@ -104,11 +106,11 @@ export class AwsMySQLClient extends AwsClient {
       if (this.isReadOnly()) {
         this.pluginService.getSessionStateService().setupPristineReadOnly();
         this.pluginService.getSessionStateService().setReadOnly(readOnly);
-        return await this.query({ sql: "SET SESSION TRANSACTION READ ONLY;", timeout: timeout });
+        return await this.query({ sql: "SET SESSION TRANSACTION READ ONLY;", timeout: 2000 });
       } else {
         this.pluginService.getSessionStateService().setupPristineReadOnly();
         this.pluginService.getSessionStateService().setReadOnly(readOnly);
-        return await this.query({ sql: "SET SESSION TRANSACTION READ WRITE;", timeout: timeout });
+        return await this.query({ sql: "SET SESSION TRANSACTION READ WRITE;", timeout: 2000 });
       }
     } catch (error: any) {
       logger.debug(`Error ${error.message}`);
@@ -138,7 +140,7 @@ export class AwsMySQLClient extends AwsClient {
     if (!autoCommit) {
       setting = "0";
     }
-    return await this.query({ sql: `SET AUTOCOMMIT=${setting}` });
+    return await this.query({ sql: `SET AUTOCOMMIT=${setting}`, timeout: 2000 });
   }
 
   getAutoCommit(): boolean {
@@ -154,7 +156,7 @@ export class AwsMySQLClient extends AwsClient {
     this.pluginService.getSessionStateService().setCatalog(catalog);
 
     this._catalog = catalog;
-    await this.query({ sql: `USE ${catalog}` });
+    await this.query({ sql: `USE ${catalog}`, timeout: 2000 });
   }
 
   getCatalog(): string {
@@ -180,16 +182,16 @@ export class AwsMySQLClient extends AwsClient {
     this._isolationLevel = level;
     switch (level) {
       case 0:
-        await this.query({ sql: "SET SESSION TRANSACTION ISOLATION LEVEL READ UNCOMMITTED" });
+        await this.query({ sql: "SET SESSION TRANSACTION ISOLATION LEVEL READ UNCOMMITTED", timeout: 2000 });
         break;
       case 1:
-        await this.query({ sql: "SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED" });
+        await this.query({ sql: "SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED", timeout: 2000 });
         break;
       case 2:
-        await this.query({ sql: "SET SESSION TRANSACTION ISOLATION LEVEL REPEATABLE READ" });
+        await this.query({ sql: "SET SESSION TRANSACTION ISOLATION LEVEL REPEATABLE READ", timeout: 2000 });
         break;
       case 3:
-        await this.query({ sql: "SET SESSION TRANSACTION ISOLATION LEVEL SERIALIZABLE" });
+        await this.query({ sql: "SET SESSION TRANSACTION ISOLATION LEVEL SERIALIZABLE", timeout: 2000 });
         break;
       default:
         throw new AwsWrapperError(Messages.get("Client.invalidTransactionIsolationLevel", String(level)));

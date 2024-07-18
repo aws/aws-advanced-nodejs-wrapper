@@ -19,6 +19,8 @@ import { AwsMySQLClient } from "../../../../../mysql/lib";
 import { AwsPGClient } from "../../../../../pg/lib";
 import { DatabaseEngine } from "./database_engine";
 import { AwsClient } from "../../../../../common/lib/aws_client";
+import { logger } from "../../../../../common/logutils";
+import { AwsWrapperError } from "../../../../../common/lib/utils/errors";
 
 export class DriverHelper {
   static getClient(driver: TestDriver) {
@@ -63,7 +65,14 @@ export class DriverHelper {
           return result.rows[0]["aurora_db_instance_identifier"];
         });
       case DatabaseEngine.MYSQL:
-        result = await (client as AwsMySQLClient).query({ sql: sql, timeout: 10000 });
+        logger.debug("Query result");
+        result = await (client as AwsMySQLClient).query({ sql: sql, timeout: 2000 }).catch((error: any) => {
+          logger.debug("query error 5 ", error);
+          throw error;
+        });
+        logger.debug("got result");
+        logger.debug(JSON.parse(JSON.stringify(result))[0][0]["id"]);
+
         return JSON.parse(JSON.stringify(result))[0][0]["id"];
       default:
         throw new Error("invalid engine");
@@ -86,7 +95,7 @@ export class DriverHelper {
       case DatabaseEngine.PG:
         return await (client as AwsPGClient).query(sql);
       case DatabaseEngine.MYSQL:
-        return await (client as AwsMySQLClient).query({ sql: sql, timeout: 10000 });
+        return await (client as AwsMySQLClient).query({ sql: sql, timeout: 2000 });
       default:
         throw new Error("invalid engine");
     }

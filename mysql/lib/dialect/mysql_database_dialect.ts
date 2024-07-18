@@ -41,9 +41,11 @@ export class MySQLDatabaseDialect implements DatabaseDialect {
   }
 
   async getHostAliasAndParseResults(client: AwsClient): Promise<string> {
+    logger.debug("get alias parse");
+
     return client.targetClient
       .promise()
-      .query(this.getHostAliasQuery())
+      .query({ sql: this.getHostAliasQuery(), timeout: 1000 })
       .then(([rows]: any) => {
         return rows[0]["CONCAT(@@hostname, ':', @@port)"];
       })
@@ -57,9 +59,11 @@ export class MySQLDatabaseDialect implements DatabaseDialect {
   }
 
   async isDialect(targetClient: any): Promise<boolean> {
+    logger.debug("query  is dialect");
+
     return await targetClient
       .promise()
-      .query(this.getServerVersionQuery())
+      .query({ sql: this.getServerVersionQuery(), timeout: 2000 })
       .then(([rows]: any) => {
         return rows[0]["Value"].toLowerCase().includes("mysql");
       })

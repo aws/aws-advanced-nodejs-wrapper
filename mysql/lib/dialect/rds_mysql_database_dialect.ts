@@ -44,7 +44,7 @@ export class RdsMySQLDatabaseDialect extends MySQLDatabaseDialect {
 
     return await targetClient
       .promise()
-      .query(this.getServerVersionQuery())
+      .query({ sql: this.getServerVersionQuery(), timeout: 2000 })
       .then(([rows]: any) => {
         return rows[0]["Value"].toLowerCase().includes("source distribution");
       })
