@@ -26,6 +26,7 @@ import { HostListProviderService } from "../common/lib/host_list_provider_servic
 import { HostChangeOptions } from "../common/lib/host_change_options";
 import { WrapperProperties } from "../common/lib/wrapper_property";
 import { BenchmarkPluginFactory } from "./testplugin/benchmark_plugin_factory";
+import { DefaultPlugin } from "../common/lib/plugins/default_plugin";
 
 const mockConnectionProvider = mock<ConnectionProvider>();
 const mockHostListProviderService = mock<HostListProviderService>();
@@ -43,11 +44,12 @@ const pluginManagerWithNoPlugins = new PluginManager(pluginServiceManagerContain
 const pluginManagerWithPlugins = new PluginManager(pluginServiceManagerContainer, propsWithPlugins, instance(mockConnectionProvider), null);
 
 async function createPlugins(pluginService: PluginService, props: Map<string, any>) {
-  const pluginChain = new Array<ConnectionPlugin>();
+  const plugins = new Array<ConnectionPlugin>();
   for (let i = 0; i < 10; i++) {
-    pluginChain.push(await new BenchmarkPluginFactory().getInstance(pluginService, props));
+    plugins.push(await new BenchmarkPluginFactory().getInstance(pluginService, props));
   }
-  return pluginChain;
+  plugins.push(new DefaultPlugin(instance(mockPluginService), instance(mockConnectionProvider), null));
+  return plugins;
 }
 
 suite(

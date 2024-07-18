@@ -25,7 +25,6 @@ import { HostChangeOptions } from "./host_change_options";
 import { OldConnectionSuggestionAction } from "./old_connection_suggestion_action";
 import { HostRole } from "./host_role";
 import { ConnectionProvider } from "./connection_provider";
-import { DefaultPlugin } from "./plugins/default_plugin";
 
 type PluginFunc<T> = (plugin: ConnectionPlugin, targetFunc: () => Promise<T>) => Promise<T>;
 
@@ -92,11 +91,10 @@ export class PluginManager {
     // TODO: proper parsing logic
   }
 
-  async init(pluginChain?: ConnectionPlugin[]) {
+  async init(plugins?: ConnectionPlugin[]) {
     if (this.pluginServiceManagerContainer.pluginService != null) {
-      if (pluginChain) {
-        this._plugins = pluginChain;
-        this._plugins.push(new DefaultPlugin(this.pluginServiceManagerContainer.pluginService, this.defaultConnProvider, this.effectiveConnProvider));
+      if (plugins) {
+        this._plugins = plugins;
       } else {
         this._plugins = await new ConnectionPluginChainBuilder().getPlugins(
           this.pluginServiceManagerContainer.pluginService,
