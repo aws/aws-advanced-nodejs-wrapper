@@ -75,7 +75,8 @@ describe("aurora read write splitting", () => {
   });
 
   afterEach(async () => {
-    if (client !== null) {
+    if (client !== null && client.isValid()) {
+      logger.debug("end client");
       await client.end();
     }
     logger.info(`Test finished: ${expect.getState().currentTestName}`);
@@ -192,6 +193,8 @@ describe("aurora read write splitting", () => {
     client = initClientFunc(config);
 
     client.on("error", (error: any) => {
+      logger.debug("error.message");
+
       logger.debug(error.message);
     });
     await client.connect();
@@ -204,11 +207,39 @@ describe("aurora read write splitting", () => {
 
     // Kill all instances
     await ProxyHelper.disableAllConnectivity(env.engine);
+    logger.debug("start setFalse");
+
     await expect(async () => {
-      await client.setReadOnly(false, 2000);
+      await client.setReadOnly(false, 20000);
     }).rejects.toThrow(Error);
     logger.debug("all instances down test success");
   }, 300000);
+
+  it("set read only all instances down query", async () => {
+    const config = await initDefaultConfig(env.proxyDatabaseInfo.writerInstanceEndpoint, env.proxyDatabaseInfo.instanceEndpointPort, true);
+    client = initClientFunc(config);
+
+    client.on("error", (error: any) => {
+      logger.debug("error.message");
+
+      logger.debug(error.message);
+    });
+    await client.connect();
+    const initialWriterId = await auroraTestUtility.queryInstanceId(client);
+    expect(await auroraTestUtility.isDbInstanceWriter(initialWriterId)).toStrictEqual(true);
+
+    await client.setReadOnly(true);
+    const currentReaderId0 = await auroraTestUtility.queryInstanceId(client);
+    expect(currentReaderId0).not.toBe(initialWriterId);
+
+    // Kill all instances
+    await ProxyHelper.disableAllConnectivity(env.engine);
+    logger.debug("execute query instanceid");
+    await expect(async () => {
+      await auroraTestUtility.queryInstanceId(client);
+    }).rejects.toThrow(AwsWrapperError);
+    logger.debug("all instances down test success");
+  }, 100000);
 
   it("set read only all readers down", async () => {
     // Connect to writer instance

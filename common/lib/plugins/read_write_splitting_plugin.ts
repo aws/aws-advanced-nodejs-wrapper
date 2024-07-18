@@ -411,6 +411,7 @@ export class ReadWriteSplittingPlugin extends AbstractConnectionPlugin {
 
   private logAndThrowError(message: string) {
     logger.error(message);
+    logger.debug("this");
     throw new ReadWriteSplittingError(message);
   }
 }

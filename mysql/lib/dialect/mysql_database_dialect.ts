@@ -22,6 +22,7 @@ import { AwsClient } from "../../../common/lib/aws_client";
 import { AwsWrapperError } from "../../../common/lib/utils/errors";
 import { DatabaseDialectCodes } from "../../../common/lib/database_dialect/database_dialect_codes";
 import { TransactionIsolationLevel } from "../../../common/lib/utils/transaction_isolation_level";
+import { logger } from "../../../common/logutils";
 
 export class MySQLDatabaseDialect implements DatabaseDialect {
   protected dialectName: string = "MySQLDatabaseDialect";
@@ -80,13 +81,18 @@ export class MySQLDatabaseDialect implements DatabaseDialect {
   }
 
   async isClientValid(targetClient: any): Promise<boolean> {
+    logger.debug("checking client valid");
     return await targetClient
       .promise()
-      .query({ sql: "SELECT 1" })
+      .query({ sql: "SELECT 1", timeout: 1000 })
       .then(() => {
+        logger.debug("client valid false");
+
         return true;
       })
       .catch(() => {
+        logger.debug("client valid false");
+
         return false;
       });
   }

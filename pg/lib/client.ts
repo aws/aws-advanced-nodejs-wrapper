@@ -103,7 +103,7 @@ export class AwsPGClient extends AwsClient {
       // revert
       this._isReadOnly = previousReadOnly;
       logger.debug(`Unable to set readOnly: ${readOnly}`);
-      throw error;
+      throw new AwsWrapperError("Unable to set readOnly value");
     }
     logger.debug(`session state for readOnly: ${readOnly}`);
     this.pluginService.getSessionStateService().setupPristineReadOnly();

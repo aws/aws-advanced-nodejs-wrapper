@@ -49,7 +49,7 @@ async function initDefaultConfig(host: string, port: number, connectToProxy: boo
   return config;
 }
 
-describe.skip("aurora failover", () => {
+describe("aurora failover", () => {
   beforeEach(async () => {
     logger.info(`Test started: ${expect.getState().currentTestName}`);
     env = await TestEnvironment.getCurrent();

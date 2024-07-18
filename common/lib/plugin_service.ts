@@ -310,7 +310,9 @@ export class PluginService implements ErrorHandler, HostListProviderService {
   }
 
   async isClientValid(targetClient: any): Promise<boolean> {
+    logger.debug("pluginservice isclientvalid")
     return await this.getDialect().isClientValid(targetClient);
+
   }
 
   async tryClosingTargetClient(): Promise<void>;

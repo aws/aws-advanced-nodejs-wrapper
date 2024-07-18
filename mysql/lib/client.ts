@@ -1,12 +1,12 @@
 /*
   Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
- 
+
   Licensed under the Apache License, Version 2.0 (the "License").
   You may not use this file except in compliance with the License.
   You may obtain a copy of the License at
- 
+
   http://www.apache.org/licenses/LICENSE-2.0
- 
+
   Unless required by applicable law or agreed to in writing, software
   distributed under the License is distributed on an "AS IS" BASIS,
   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -29,7 +29,6 @@ import { TransactionIsolationLevel } from "../../common/lib/utils/transaction_is
 import { AwsWrapperError, UnsupportedMethodError } from "../../common/lib/utils/errors";
 import { Messages } from "../../common/lib/utils/messages";
 import { logger } from "../../common/logutils";
-import { error } from "winston";
 
 export class AwsMySQLClient extends AwsClient {
   private static readonly knownDialectsByCode: Map<string, DatabaseDialect> = new Map([
@@ -82,21 +81,7 @@ export class AwsMySQLClient extends AwsClient {
       "query",
       async () => {
         await this.pluginService.updateState(options.sql);
-        return await this.targetClient
-          .promise()
-          .query(options, callback)
-          .then((result: any) => {
-            //return your results
-            logger.debug(result);
-
-         //   return result;
-          })
-          .catch((error: any) => {
-            if (error && error.code === "PROTOCOL_SEQUENCE_TIMEOUT") {
-              logger.debug("yay~");
-              throw error;
-            }
-          });
+        return await this.targetClient.promise().query(options, callback);
       },
       options
     );
@@ -117,20 +102,23 @@ export class AwsMySQLClient extends AwsClient {
         logger.debug(`Timeout time: ${timeout}`);
       }
       if (this.isReadOnly()) {
-        result = await this.query({ sql: "SET SESSION TRANSACTION READ ONLY;", timeout: timeout });
+        this.pluginService.getSessionStateService().setupPristineReadOnly();
+        this.pluginService.getSessionStateService().setReadOnly(readOnly);
+        return await this.query({ sql: "SET SESSION TRANSACTION READ ONLY;", timeout: timeout });
       } else {
-        result = await this.query({ sql: "SET SESSION TRANSACTION READ WRITE;", timeout: timeout });
+        this.pluginService.getSessionStateService().setupPristineReadOnly();
+        this.pluginService.getSessionStateService().setReadOnly(readOnly);
+        return await this.query({ sql: "SET SESSION TRANSACTION READ WRITE;", timeout: timeout });
       }
     } catch (error: any) {
       logger.debug(`Error ${error.message}`);
       // revert
       logger.debug(`Unable to set readOnly ${readOnly}`);
       this._isReadOnly = previousReadOnly;
+      this.pluginService.getSessionStateService().setupPristineReadOnly();
+      this.pluginService.getSessionStateService().setReadOnly(previousReadOnly);
       throw new AwsWrapperError(error.message);
     }
-    this.pluginService.getSessionStateService().setupPristineReadOnly();
-    this.pluginService.getSessionStateService().setReadOnly(readOnly);
-    return result;
   }
 
   isReadOnly(): boolean {
