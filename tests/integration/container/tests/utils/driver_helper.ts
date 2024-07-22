@@ -21,6 +21,7 @@ import { DatabaseEngine } from "./database_engine";
 import { AwsClient } from "../../../../../common/lib/aws_client";
 import { logger } from "../../../../../common/logutils";
 import { AwsWrapperError } from "../../../../../common/lib/utils/errors";
+import { WrapperProperties } from "../../../../../common/lib/wrapper_property";
 
 export class DriverHelper {
   static getClient(driver: TestDriver) {
@@ -66,7 +67,7 @@ export class DriverHelper {
         });
       case DatabaseEngine.MYSQL:
         logger.debug("Query result");
-        result = await (client as AwsMySQLClient).query({ sql: sql, timeout: 2000 }).catch((error: any) => {
+        return await (client as AwsMySQLClient).query({ sql: sql, timeout: WrapperProperties.QUERY_TIMEOUT_MS.defaultValue }).catch((error: any) => {
           logger.debug("query error 5 ", error);
           throw error;
         });
@@ -95,7 +96,7 @@ export class DriverHelper {
       case DatabaseEngine.PG:
         return await (client as AwsPGClient).query(sql);
       case DatabaseEngine.MYSQL:
-        return await (client as AwsMySQLClient).query({ sql: sql, timeout: 2000 });
+        return await (client as AwsMySQLClient).query({ sql: sql, timeout: WrapperProperties.QUERY_TIMEOUT_MS.defaultValue });
       default:
         throw new Error("invalid engine");
     }

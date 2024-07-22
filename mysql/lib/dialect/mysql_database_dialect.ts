@@ -23,10 +23,14 @@ import { AwsWrapperError } from "../../../common/lib/utils/errors";
 import { DatabaseDialectCodes } from "../../../common/lib/database_dialect/database_dialect_codes";
 import { TransactionIsolationLevel } from "../../../common/lib/utils/transaction_isolation_level";
 import { logger } from "../../../common/logutils";
+import { AwsMySQLClient } from "../client";
+import { WrapperProperties } from "../../../common/lib/wrapper_property";
 
 export class MySQLDatabaseDialect implements DatabaseDialect {
   protected dialectName: string = "MySQLDatabaseDialect";
   protected defaultPort: number = 3306;
+  private static readonly QUERY_TIMEOUT = WrapperProperties.QUERY_TIMEOUT_MS.defaultValue;
+
 
   getDefaultPort(): number {
     return this.defaultPort;
@@ -45,7 +49,7 @@ export class MySQLDatabaseDialect implements DatabaseDialect {
 
     return client.targetClient
       .promise()
-      .query({ sql: this.getHostAliasQuery(), timeout: 1000 })
+      .query({ sql: this.getHostAliasQuery(), timeout: WrapperProperties.QUERY_TIMEOUT_MS.defaultValue })
       .then(([rows]: any) => {
         return rows[0]["CONCAT(@@hostname, ':', @@port)"];
       })
@@ -63,7 +67,7 @@ export class MySQLDatabaseDialect implements DatabaseDialect {
 
     return await targetClient
       .promise()
-      .query({ sql: this.getServerVersionQuery(), timeout: 2000 })
+      .query({ sql: this.getServerVersionQuery(), timeout: MySQLDatabaseDialect.QUERY_TIMEOUT })
       .then(([rows]: any) => {
         return rows[0]["Value"].toLowerCase().includes("mysql");
       })
@@ -88,9 +92,9 @@ export class MySQLDatabaseDialect implements DatabaseDialect {
     logger.debug("checking client valid");
     return await targetClient
       .promise()
-      .query({ sql: "SELECT 1", timeout: 1000 })
+      .query({ sql: "SELECT 1", timeout: WrapperProperties.QUERY_TIMEOUT_MS.defaultValue })
       .then(() => {
-        logger.debug("client valid false");
+        logger.debug("client valid true");
 
         return true;
       })

@@ -63,6 +63,8 @@ export class WrapperProperties {
 
   static readonly DIALECT = new WrapperProperty<string>("dialect", "A unique identifier for the supported database dialect.", "");
 
+  static readonly QUERY_TIMEOUT_MS = new WrapperProperty<number>("timeout", "Timeout in milliseconds for executing queries.", 2000);
+
   static readonly TRANSFER_SESSION_STATE_ON_SWITCH = new WrapperProperty<boolean>(
     "transferSessionStateOnSwitch",
     "Enables session state transfer to a new connection.",

@@ -32,8 +32,8 @@ export abstract class AbstractConnectionPlugin implements ConnectionPlugin {
     return forceConnectFunc();
   }
 
-  execute<T>(methodName: string, methodFunc: () => Promise<T>, methodArgs: any[]): Promise<T> {
-    return methodFunc();
+  async execute<T>(methodName: string, methodFunc: () => Promise<T>, methodArgs: any[]): Promise<T> {
+    return await methodFunc();
   }
 
   initHostProvider(

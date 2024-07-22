@@ -62,6 +62,10 @@ export class TestDatabaseInfo {
     return this._instances[0].host ?? "";
   }
 
+  get readerInstanceEndpoint() {
+    return this._instances[2].host ?? "";
+  }
+
   get writerInstanceId() {
     return this._instances[0].instanceId;
   }

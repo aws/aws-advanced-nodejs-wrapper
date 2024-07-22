@@ -45,7 +45,7 @@ export class ProxyHelper {
 
     if (proxy !== undefined) {
       await proxy.addToxic(<ICreateToxicBody<Bandwidth>>{
-        attributes: <Bandwidth>{ rate: 0 },
+        attributes: <Bandwidth>{ rate: 0},
         type: "bandwidth",
         name: "DOWN-STREAM",
         stream: "downstream",
@@ -53,7 +53,7 @@ export class ProxyHelper {
       });
 
       await proxy.addToxic(<ICreateToxicBody<Bandwidth>>{
-        attributes: <Bandwidth>{ rate: 0 },
+        attributes: <Bandwidth>{ rate: 0},
         type: "bandwidth",
         name: "UP-STREAM",
         stream: "upstream",

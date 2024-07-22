@@ -15,6 +15,7 @@
 */
 
 import { ErrorHandler } from "../../common/lib/error_handler";
+import { logger } from "../../common/logutils";
 
 export class MySQLErrorHandler implements ErrorHandler {
   isLoginError(e: Error): boolean {
@@ -22,6 +23,7 @@ export class MySQLErrorHandler implements ErrorHandler {
   }
 
   isNetworkError(e: Error): boolean {
+    logger.debug("checking is network error");
     return (
       e.message.includes("Connection lost: The server closed the connection.") ||
       e.message.includes("Query inactivity timeout") ||

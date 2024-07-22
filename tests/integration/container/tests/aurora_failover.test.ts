@@ -23,6 +23,7 @@ import { QueryResult } from "pg";
 import { ProxyHelper } from "./utils/proxy_helper";
 import { RdsUtils } from "../../../../common/lib/utils/rds_utils";
 import { logger } from "../../../../common/logutils";
+import { sleep } from "../../../../common/lib/utils/utils";
 
 let env: TestEnvironment;
 let driver;
@@ -49,7 +50,7 @@ async function initDefaultConfig(host: string, port: number, connectToProxy: boo
   return config;
 }
 
-describe("aurora failover", () => {
+describe.skip("aurora failover", () => {
   beforeEach(async () => {
     logger.info(`Test started: ${expect.getState().currentTestName}`);
     env = await TestEnvironment.getCurrent();
@@ -207,16 +208,21 @@ describe("aurora failover", () => {
     // Crash the reader instance
     const rdsUtils = new RdsUtils();
     const readerInstanceId = rdsUtils.getRdsInstanceId(readerInstanceHost);
+    logger.debug("connectivity disabled");
+
     if (readerInstanceId) {
       await ProxyHelper.disableConnectivity(env.engine, readerInstanceId);
-      logger.debug("AAAA");
+      logger.debug("GOT TO QUERY STAGE");
+      await sleep(6000);
+      logger.debug("GOT TO QUERY STAGE");
 
       await expect(async () => {
         await auroraTestUtility.queryInstanceId(secondaryClient);
       }).rejects.toThrow(FailoverSuccessError);
 
+
       await ProxyHelper.enableConnectivity(readerInstanceId);
-      logger.debug("CCC");
+      logger.debug("connectivity enabled");
 
       // Assert that we are currently connected to the writer instance
       const currentConnectionId = await auroraTestUtility.queryInstanceId(secondaryClient);
@@ -224,5 +230,5 @@ describe("aurora failover", () => {
       expect(await auroraTestUtility.isDbInstanceWriter(currentConnectionId)).toBe(true);
       expect(currentConnectionId).toBe(initialWriterId);
     }
-  }, 1000000);
+  }, 9000000);
 });

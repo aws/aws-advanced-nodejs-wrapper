@@ -16,6 +16,7 @@
 
 import { MySQLDatabaseDialect } from "./mysql_database_dialect";
 import { DatabaseDialectCodes } from "../../../common/lib/database_dialect/database_dialect_codes";
+import { WrapperProperties } from "../../../common/lib/wrapper_property";
 
 export class RdsMySQLDatabaseDialect extends MySQLDatabaseDialect {
   constructor() {
@@ -44,7 +45,7 @@ export class RdsMySQLDatabaseDialect extends MySQLDatabaseDialect {
 
     return await targetClient
       .promise()
-      .query({ sql: this.getServerVersionQuery(), timeout: 2000 })
+      .query({ sql: this.getServerVersionQuery(), timeout: WrapperProperties.QUERY_TIMEOUT_MS.defaultValue })
       .then(([rows]: any) => {
         return rows[0]["Value"].toLowerCase().includes("source distribution");
       })

@@ -254,6 +254,8 @@ export class FailoverPlugin extends AbstractConnectionPlugin {
     try {
       return await this.connectInternal(hostInfo, props, isInitialConnection, connectFunc);
     } catch (e: any) {
+      logger.debug("error7");
+
       logger.debug(e.message);
       throw e;
     }
@@ -268,6 +270,7 @@ export class FailoverPlugin extends AbstractConnectionPlugin {
     try {
       return await this.connectInternal(hostInfo, props, isInitialConnection, forceConnectFunc);
     } catch (e: any) {
+      logger.debug("error6");
       logger.debug(e.message);
       throw e;
     }
@@ -295,20 +298,26 @@ export class FailoverPlugin extends AbstractConnectionPlugin {
   }
 
   override async execute<T>(methodName: string, methodFunc: () => Promise<T>): Promise<T> {
+    logger.debug("start failover plugin");
     try {
       if (!this.enableFailoverSetting || this.canDirectExecute(methodName)) {
+        logger.debug("here1");
+
         return await methodFunc();
       }
 
       // TODO: !allowedOnClosedConnection(methodName); (when target driver dialects implemented)
       if (this.isClosed) {
+        logger.debug("here2");
         await this.invalidInvocationOnClosedConnection();
       }
 
       if (this.canUpdateTopology(methodName)) {
+        logger.debug("update topology here");
         await this.updateTopology(false);
       }
-
+      logger.debug("here15?");
+      logger.debug(`method name : ${methodName}`);
       return await methodFunc();
     } catch (e: any) {
       logger.debug(Messages.get("Failover.detectedException", e.message));
