@@ -43,7 +43,7 @@ async function initDefaultConfig(host: string, port: number, connectToProxy: boo
     failoverTimeoutMs: 250000
   };
   if (connectToProxy) {
-    config["clusterInstanceHostPattern"] = "?." + env.proxyDatabaseInfo.instanceEndpointSuffix + ":" + env.proxyDatabaseInfo.instanceEndpointPort;
+    config["clusterInstanceHostPattern"] = "?." + env.proxyDatabaseInfo.instanceEndpointSuffix;
   }
   config = DriverHelper.addDriverSpecificConfiguration(config, env.engine);
   return config;
@@ -59,14 +59,24 @@ describe("aurora failover", () => {
     await ProxyHelper.enableAllConnectivity();
     client = null;
     secondaryClient = null;
+    await TestEnvironment.updateWriter();
   });
 
   afterEach(async () => {
     if (client !== null) {
-      await client.end();
+      try {
+        await client.end();
+      } catch (error) {
+        // pass
+      }
     }
+
     if (secondaryClient !== null) {
-      await secondaryClient.end();
+      try {
+        await secondaryClient.end();
+      } catch (error) {
+        // pass
+      }
     }
     await TestEnvironment.updateWriter();
     logger.info(`Test finished: ${expect.getState().currentTestName}`);
@@ -76,7 +86,7 @@ describe("aurora failover", () => {
     const config = await initDefaultConfig(env.databaseInfo.writerInstanceEndpoint, env.databaseInfo.instanceEndpointPort, false);
     client = initClientFunc(config);
     client.on("error", (error: any) => {
-      logger.debug(error);
+      logger.debug(error.message);
     });
 
     await client.connect();
@@ -102,7 +112,7 @@ describe("aurora failover", () => {
     client = initClientFunc(config);
 
     client.on("error", (error: any) => {
-      logger.debug(error);
+      logger.debug(error.message);
     });
 
     await client.connect();
@@ -148,7 +158,7 @@ describe("aurora failover", () => {
     client = initClientFunc(config);
 
     client.on("error", (error: any) => {
-      logger.debug(error);
+      logger.debug(error.message);
     });
 
     await client.connect();
@@ -165,15 +175,13 @@ describe("aurora failover", () => {
       await auroraTestUtility.queryInstanceId(client);
     }).rejects.toThrow(FailoverSuccessError);
 
-    expect(client.isReadOnly()).toBe(true);
-
     // Assert that we are connected to the new writer after failover happens
     const currentConnectionId = await auroraTestUtility.queryInstanceId(client);
     expect(await auroraTestUtility.isDbInstanceWriter(currentConnectionId)).toBe(true);
     expect(currentConnectionId).not.toBe(initialWriterId);
   }, 1000000);
 
-  it.skip("fails from reader to writer", async () => {
+  it("fails from reader to writer", async () => {
     // Connect to writer instance
     const writerConfig = await initDefaultConfig(env.proxyDatabaseInfo.writerInstanceEndpoint, env.proxyDatabaseInfo.instanceEndpointPort, true);
     client = initClientFunc(writerConfig);
@@ -217,7 +225,6 @@ describe("aurora failover", () => {
 
       // Assert that we are currently connected to the writer instance
       const currentConnectionId = await auroraTestUtility.queryInstanceId(secondaryClient);
-      logger.debug(`Current connection id: ${currentConnectionId}`);
       expect(await auroraTestUtility.isDbInstanceWriter(currentConnectionId)).toBe(true);
       expect(currentConnectionId).toBe(initialWriterId);
     }

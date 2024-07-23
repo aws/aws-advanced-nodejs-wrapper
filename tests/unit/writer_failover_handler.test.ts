@@ -24,6 +24,7 @@ import { mock, instance, when, anything, verify, reset } from "ts-mockito";
 import { HostAvailability } from "../../common/lib/host_availability/host_availability";
 import { ReaderFailoverResult } from "../../common/lib/plugins/failover/reader_failover_result";
 import { AwsPGClient } from "../../pg/lib";
+import { WriterFailoverResult } from "../../common/lib/plugins/failover/writer_failover_result";
 
 const builder = new HostInfoBuilder({ hostAvailabilityStrategy: new SimpleHostAvailabilityStrategy() });
 
@@ -118,7 +119,7 @@ describe("writer failover handler", () => {
     const mockPluginServiceInstance = instance(mockPluginService);
 
     const target = new ClusterAwareWriterFailoverHandler(mockPluginServiceInstance, mockReaderFailoverInstance, properties, 60000, 2000, 2000);
-    const result = await target.failover(topology);
+    const result: WriterFailoverResult = await target.failover(topology);
 
     expect(result.isConnected).toBe(true);
     expect(result.isNewHost).toBe(false);
@@ -143,8 +144,15 @@ describe("writer failover handler", () => {
     const mockReaderFailoverInstance = instance(mockReaderFailover);
     const mockPluginServiceInstance = instance(mockPluginService);
 
-    const target = new ClusterAwareWriterFailoverHandler(mockPluginServiceInstance, mockReaderFailoverInstance, properties, 60000, 5000, 5000);
-    const result = await target.failover(topology);
+    const target: ClusterAwareWriterFailoverHandler = new ClusterAwareWriterFailoverHandler(
+      mockPluginServiceInstance,
+      mockReaderFailoverInstance,
+      properties,
+      60000,
+      5000,
+      5000
+    );
+    const result: WriterFailoverResult = await target.failover(topology);
 
     expect(result.isConnected).toBe(true);
     expect(result.isNewHost).toBe(true);
@@ -173,8 +181,8 @@ describe("writer failover handler", () => {
     const mockReaderFailoverInstance = instance(mockReaderFailover);
     const mockPluginServiceInstance = instance(mockPluginService);
 
-    const target = new ClusterAwareWriterFailoverHandler(mockPluginServiceInstance, mockReaderFailoverInstance, properties, 60000, 5000, 5000);
-    const result = await target.failover(topology);
+    const target = new ClusterAwareWriterFailoverHandler(mockPluginServiceInstance, mockReaderFailoverInstance, properties, 60000, 5000, 2000);
+    const result: WriterFailoverResult = await target.failover(topology);
 
     expect(result.isConnected).toBe(true);
     expect(result.isNewHost).toBe(true);

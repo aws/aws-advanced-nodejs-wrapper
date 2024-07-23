@@ -59,11 +59,15 @@ async function validateConnection(client: AwsPGClient | AwsMySQLClient) {
     const res = await DriverHelper.executeQuery(env.engine, client, "select 1");
     expect(res).not.toBeNull();
   } finally {
-    await client.end();
+    try {
+      await client.end();
+    } catch (error) {
+      // pass
+    }
   }
 }
 
-describe("iamTests", () => {
+describe("iam authentication", () => {
   beforeEach(async () => {
     logger.info(`Test started: ${expect.getState().currentTestName}`);
     env = await TestEnvironment.getCurrent();
@@ -77,44 +81,44 @@ describe("iamTests", () => {
     logger.info(`Test finished: ${expect.getState().currentTestName}`);
   }, 1000000);
 
-  it("testIamWrongDatabaseUsername", async () => {
+  it("iam wrong database username", async () => {
     const config = await initDefaultConfig(env.databaseInfo.writerInstanceEndpoint);
     config["user"] = `WRONG_${env.info.databaseInfo.username}_USER`;
     const client: AwsPGClient | AwsMySQLClient = initClientFunc(config);
 
     client.on("error", (error: any) => {
-      logger.error(error);
+      logger.debug(error.message);
     });
 
     await expect(client.connect()).rejects.toThrow();
   }, 100000);
 
-  it("testIamNoDatabaseUsername", async () => {
+  it("iam no database username", async () => {
     const config = await initDefaultConfig(env.databaseInfo.writerInstanceEndpoint);
     config["user"] = undefined;
     const client: AwsPGClient | AwsMySQLClient = initClientFunc(config);
 
     client.on("error", (error: any) => {
-      logger.error(error);
+      logger.debug(error.message);
     });
 
     await expect(client.connect()).rejects.toBeInstanceOf(AwsWrapperError);
   }, 100000);
 
-  it("testIamInvalidHost", async () => {
+  it("iam invalid host", async () => {
     const config = await initDefaultConfig(env.databaseInfo.writerInstanceEndpoint);
     config["iamHost"] = "<>";
     const client: AwsPGClient | AwsMySQLClient = initClientFunc(config);
 
     client.on("error", (error: any) => {
-      logger.error(error);
+      logger.debug(error.message);
     });
 
     await expect(client.connect()).rejects.toBeInstanceOf(AwsWrapperError);
   }, 100000);
 
   // Currently, PG cannot connect to an IP address with SSL enabled, skip if PG
-  it("testIamUsingIpAddress", async () => {
+  it("iam using ip address", async () => {
     if (env.engine === "MYSQL") {
       const instance = env.writer;
       if (instance.host) {
@@ -127,7 +131,7 @@ describe("iamTests", () => {
         const client: AwsPGClient | AwsMySQLClient = initClientFunc(config);
 
         client.on("error", (error: any) => {
-          logger.error(error);
+          logger.debug(error.message);
         });
 
         await validateConnection(client);
@@ -137,25 +141,25 @@ describe("iamTests", () => {
     }
   }, 100000);
 
-  it("testIamValidConnectionProperties", async () => {
+  it("iam valid connection properties", async () => {
     const config = await initDefaultConfig(env.databaseInfo.writerInstanceEndpoint);
     config["password"] = "anything";
     const client: AwsPGClient | AwsMySQLClient = initClientFunc(config);
 
     client.on("error", (error: any) => {
-      logger.error(error);
+      logger.debug(error.message);
     });
 
     await validateConnection(client);
   }, 100000);
 
-  it("testIamValidConnectionPropertiesNoPassword", async () => {
+  it("iam valid connection properties no password", async () => {
     const config = await initDefaultConfig(env.databaseInfo.writerInstanceEndpoint);
     config["password"] = undefined;
     const client: AwsPGClient | AwsMySQLClient = initClientFunc(config);
 
     client.on("error", (error: any) => {
-      logger.error(error);
+      logger.debug(error.message);
     });
 
     await validateConnection(client);

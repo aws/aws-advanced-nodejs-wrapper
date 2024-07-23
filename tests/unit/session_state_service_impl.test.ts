@@ -68,9 +68,9 @@ describe("testSessionStateServiceImpl", () => {
     sessionStateService.complete();
 
     if (shouldReset) {
-      verify(mockAwsClient.setReadOnly(pristineValue)).once();
+      verify(mockAwsClient.updateSessionStateReadOnly(pristineValue)).once();
     } else {
-      verify(mockAwsClient.setReadOnly(anything())).never();
+      verify(mockAwsClient.updateSessionStateReadOnly(anything())).never();
     }
   });
 

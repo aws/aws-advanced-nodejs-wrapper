@@ -113,6 +113,8 @@ export abstract class AwsClient extends EventEmitter {
     return this._createClientFunc;
   }
 
+  abstract updateSessionStateReadOnly(readOnly: boolean): Promise<any | void>;
+
   abstract setReadOnly(readOnly: boolean): Promise<any | void>;
 
   abstract isReadOnly(): boolean;

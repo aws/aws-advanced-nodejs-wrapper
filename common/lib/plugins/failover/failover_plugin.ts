@@ -443,10 +443,9 @@ export class FailoverPlugin extends AbstractConnectionPlugin {
       logger.debug(Messages.get("Failover.transactionResolutionUnknownError"));
       return;
     }
-
     const currentClient = this.pluginService.getCurrentClient();
     const currentWriter = this.getCurrentWriter();
-    if (currentWriter && (!currentClient || !currentClient.targetClient) && !this.shouldAttemptReaderConnection()) {
+    if (currentWriter && currentClient.targetClient == null && !this.shouldAttemptReaderConnection()) {
       try {
         await this.connectTo(currentWriter);
       } catch (error) {

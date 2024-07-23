@@ -28,6 +28,7 @@ import { AwsWrapperError, UnsupportedMethodError } from "../../common/lib/utils/
 import { Messages } from "../../common/lib/utils/messages";
 import { TransactionIsolationLevel } from "../../common/lib/utils/transaction_isolation_level";
 import { ClientWrapper } from "../../common/lib/client_wrapper";
+import { Query } from "mysql2";
 
 export class AwsPGClient extends AwsClient {
   private static readonly knownDialectsByCode: Map<string, DatabaseDialect> = new Map([
@@ -81,25 +82,29 @@ export class AwsPGClient extends AwsClient {
       text
     );
   }
+  async updateSessionStateReadOnly(readOnly: boolean): Promise<QueryResult | void> {
+    return await this.executeQuery(
+      this.properties,
+      `SET SESSION CHARACTERISTICS AS TRANSACTION READ ${readOnly} ? "ONLY" : "WRITE"`,
+      this.targetClient
+    );
+  }
+
+  private async readOnlyQuery(text: string): Promise<QueryResult> {
+    return this.pluginManager.execute(
+      this.pluginService.getCurrentHostInfo(),
+      this.properties,
+      "query",
+      async () => {
+        return this.targetClient?.client.query(text);
+      },
+      text
+    );
+  }
 
   async setReadOnly(readOnly: boolean): Promise<QueryResult | void> {
-    if (readOnly === this.isReadOnly()) {
-      return Promise.resolve();
-    }
-    const previousReadOnly: boolean = this.isReadOnly();
-    let result;
-    try {
-      this._isReadOnly = readOnly;
-      if (this.isReadOnly()) {
-        result = await this.query("SET SESSION CHARACTERISTICS AS TRANSACTION READ ONLY");
-      } else {
-        result = await this.query("SET SESSION CHARACTERISTICS AS TRANSACTION READ WRITE");
-      }
-    } catch (error) {
-      // revert
-      this._isReadOnly = previousReadOnly;
-      throw error;
-    }
+    const result = await this.readOnlyQuery(`SET SESSION CHARACTERISTICS AS TRANSACTION READ ${readOnly} ? "ONLY" : "WRITE"`);
+    this._isReadOnly = readOnly;
     this.pluginService.getSessionStateService().setupPristineReadOnly();
     this.pluginService.getSessionStateService().setReadOnly(readOnly);
     return result;

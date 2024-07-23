@@ -156,7 +156,6 @@ export class ReadWriteSplittingPlugin extends AbstractConnectionPlugin {
     const statements = SqlMethodUtils.parseMultiStatementQueries(statement);
 
     const updateReadOnly: boolean | undefined = SqlMethodUtils.doesSetReadOnly(statements, this.pluginService.getDialect());
-
     if (updateReadOnly !== undefined) {
       try {
         await this.switchClientIfRequired(updateReadOnly);
@@ -226,11 +225,11 @@ export class ReadWriteSplittingPlugin extends AbstractConnectionPlugin {
       if (!this.pluginService.isInTransaction() && currentHost.role != HostRole.READER) {
         try {
           await this.switchToReaderTargetClient(hosts);
-        } catch (error) {
+        } catch (error: any) {
           if (!(await currentClient.isValid())) {
-            this.logAndThrowError(Messages.get("ReadWriteSplittingPlugin.errorSwitchingToReader"));
+            this.logAndThrowError(Messages.get("ReadWriteSplittingPlugin.errorSwitchingToReader", error.message));
           }
-          logger.warn("ReadWriteSplittingPlugin.fallbackToWriter", currentHost.url);
+          logger.warn(Messages.get("ReadWriteSplittingPlugin.fallbackToWriter", currentHost.url));
         }
       }
     } else if (currentHost.role != HostRole.WRITER) {
@@ -239,8 +238,8 @@ export class ReadWriteSplittingPlugin extends AbstractConnectionPlugin {
       }
       try {
         await this.switchToWriterTargetClient(hosts);
-      } catch {
-        this.logAndThrowError(Messages.get("ReadWriteSplittingPlugin.errorSwitchingToWriter"));
+      } catch (error: any) {
+        this.logAndThrowError(Messages.get("ReadWriteSplittingPlugin.errorSwitchingToWriter", error.message));
       }
     }
   }
@@ -296,13 +295,12 @@ export class ReadWriteSplittingPlugin extends AbstractConnectionPlugin {
       }
     }
     if (targetClient == undefined || readerHost === undefined) {
-      logger.debug(Messages.get("ReadWriteSplittingPlugin.noReadersAvailable"));
+      this.logAndThrowError(Messages.get("ReadWriteSplittingPlugin.noReadersAvailable"));
       return;
-    } else {
-      logger.debug(Messages.get("ReadWriteSplittingPlugin.successfullyConnectedToReader", readerHost.url));
-      this.setReaderClient(targetClient, readerHost);
-      await this.switchCurrentTargetClientTo(this.readerTargetClient, this._readerHostInfo);
     }
+    logger.debug(Messages.get("ReadWriteSplittingPlugin.successfullyConnectedToReader", readerHost.url));
+    this.setReaderClient(targetClient, readerHost);
+    await this.switchCurrentTargetClientTo(this.readerTargetClient, this._readerHostInfo);
   }
 
   async switchToWriterTargetClient(hosts: HostInfo[]) {
@@ -358,19 +356,19 @@ export class ReadWriteSplittingPlugin extends AbstractConnectionPlugin {
   async closeTargetClientIfIdle(internalTargetClient: ClientWrapper | undefined) {
     const currentTargetClient = this.pluginService.getCurrentClient().targetClient;
     try {
-      if (internalTargetClient != null && internalTargetClient != currentTargetClient && (await this.isTargetClientUsable(internalTargetClient))) {
+      if (internalTargetClient != null && internalTargetClient !== currentTargetClient && (await this.isTargetClientUsable(internalTargetClient))) {
         await this.pluginService.tryClosingTargetClient(internalTargetClient);
+
+        if (internalTargetClient === this.writerTargetClient) {
+          this.writerTargetClient = undefined;
+        }
+        if (internalTargetClient === this.readerTargetClient) {
+          this.readerTargetClient = undefined;
+          this._readerHostInfo = undefined;
+        }
       }
     } catch (error) {
       // ignore
-    } finally {
-      if (internalTargetClient === this.writerTargetClient) {
-        this.writerTargetClient = undefined;
-      }
-      if (internalTargetClient === this.readerTargetClient) {
-        this.readerTargetClient = undefined;
-        this._readerHostInfo = undefined;
-      }
     }
   }
 
