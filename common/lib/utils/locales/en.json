@@ -110,5 +110,7 @@
   "SamlCredentialsProviderFactory.getSamlAssertionFailed": "Failed to get SAML Assertion due to exception: '%s'",
   "SamlAuthPlugin.unhandledException": "Unhandled exception: '%s'",
   "HostAvailabilityStrategy.invalidMaxRetries": "Invalid value of '%s' for configuration parameter `hostAvailabilityStrategyMaxRetries`. It must be an integer greater or equal to 1.",
-  "HostAvailabilityStrategy.invalidInitialBackoffTime": "Invalid value of '%s'  for configuration parameter `hostAvailabilityStrategyInitialBackoffTime`. It must be an integer greater or equal to 1."
+  "HostAvailabilityStrategy.invalidInitialBackoffTime": "Invalid value of '%s'  for configuration parameter `hostAvailabilityStrategyInitialBackoffTime`. It must be an integer greater or equal to 1.",
+  "AuroraInitialConnectionStrategyPlugin.unsupportedStrategy": "Unsupported host selection strategy '%s'.",
+  "AuroraInitialConnectionStrategyPlugin.requireDynamicProvider": "Dynamic host list provider is required."
 }

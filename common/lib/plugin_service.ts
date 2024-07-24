@@ -390,4 +390,12 @@ export class PluginService implements ErrorHandler, HostListProviderService {
       await this.getCurrentClient().setTransactionIsolation(updateTransactionIsolation);
     }
   }
+
+  identifyConnection(client: any): Promise<void | HostInfo | null> | undefined {
+    return this.getHostListProvider()?.identifyConnection(client, this.dialect);
+  }
+
+  getHostRole(client: any): Promise<HostRole> | undefined {
+    return this._hostListProvider?.getHostRole(client, this.dialect);
+  }
 }
