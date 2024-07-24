@@ -76,6 +76,7 @@ export class AuroraInitialConnectionStrategyPlugin extends AbstractConnectionPlu
       const writerCandidateClient = await this.getVerifiedWriterClient(props, isInitialConnection, connectFunc);
       if (writerCandidateClient === null) {
         // Can't get writer connection. Continue with a normal workflow.
+        logger.debug("Couldn't get writer.");
         return connectFunc();
       }
       return writerCandidateClient;
@@ -85,7 +86,7 @@ export class AuroraInitialConnectionStrategyPlugin extends AbstractConnectionPlu
       const readerCandidateClient = await this.getVerifiedReaderClient(props, isInitialConnection, connectFunc);
       if (readerCandidateClient === null) {
         // Can't get a reader connection. Continue with a normal workflow.
-        logger.debug("Continue with normal workflow.");
+        logger.debug("Couldn't get reader.");
         return connectFunc();
       }
       return readerCandidateClient;
@@ -204,7 +205,7 @@ export class AuroraInitialConnectionStrategyPlugin extends AbstractConnectionPlu
               continue;
             }
 
-            // Reader client is valid and verified.
+            // Reader connection is valid and verified.
             if (isInitialConnection) {
               this.hostListProviderService.setInitialConnectionHostInfo(readerCandidate);
             }
@@ -232,7 +233,7 @@ export class AuroraInitialConnectionStrategyPlugin extends AbstractConnectionPlu
           await sleep(retryDelayMs);
           continue;
         }
-        // Reader client is valid and verified.
+        // Reader connection is valid and verified.
         if (isInitialConnection) {
           this.hostListProviderService.setInitialConnectionHostInfo(readerCandidate);
         }
@@ -295,7 +296,7 @@ export class AuroraInitialConnectionStrategyPlugin extends AbstractConnectionPlu
       if (host.role === HostRole.WRITER) {
         continue;
       }
-      // Found a reader node
+      // Found a reader host
       return false;
     }
     // Went through all hosts and found no reader.
