@@ -34,7 +34,7 @@
     "@aws-sdk/client-secrets-manager": "^3.616.0",
     "@aws-sdk/client-sts": "^3.616.0",
     "@aws-sdk/credential-providers": "^3.614.0",
-    "@aws-sdk/rds-signer": "^3.614.0",
+    "@aws-sdk/rds-signer": "^3.620.1",
     "@aws-sdk/client-rds": "^3.620.1",
     "@types/i18n": "^0.13.12",
     "@types/jest": "^29.5.12",
