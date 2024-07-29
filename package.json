@@ -38,7 +38,7 @@
     "@aws-sdk/client-rds": "^3.620.1",
     "@types/i18n": "^0.13.12",
     "@types/jest": "^29.5.12",
-    "@types/lodash": "^4.17.6",
+    "@types/lodash": "^4.17.7",
     "@types/node": "^20.14.10",
     "@types/node-fetch": "^2.6.11",
     "@types/pg": "^8.11.6",
