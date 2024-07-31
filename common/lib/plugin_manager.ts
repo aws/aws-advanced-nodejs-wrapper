@@ -91,6 +91,8 @@ export class PluginManager {
     // TODO: proper parsing logic
   }
 
+  async init(): Promise<void>;
+  async init(plugins: ConnectionPlugin[]): Promise<void>;
   async init(plugins?: ConnectionPlugin[]) {
     if (this.pluginServiceManagerContainer.pluginService != null) {
       if (plugins) {

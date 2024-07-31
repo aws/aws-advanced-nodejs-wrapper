@@ -14,7 +14,7 @@
   limitations under the License.
 */
 
-import { instance, mock } from "ts-mockito";
+import { anything, instance, mock, when } from "ts-mockito";
 import { ConnectionProvider } from "../common/lib/connection_provider";
 import { PluginService } from "../common/lib/plugin_service";
 import { PluginServiceManagerContainer } from "../common/lib/plugin_service_manager_container";
@@ -22,9 +22,19 @@ import { WrapperProperties } from "../common/lib/wrapper_property";
 import { PluginManager } from "../common/lib";
 import { add, complete, configure, cycle, save, suite } from "benny";
 import { TestConnectionWrapper } from "./testplugin/test_connection_wrapper";
+import { HostInfoBuilder } from "../common/lib/host_info_builder";
+import { SimpleHostAvailabilityStrategy } from "../common/lib/host_availability/simple_host_availability_strategy";
+import { HostRole } from "../common/lib/host_role";
+import { Client } from "pg";
 
 const mockConnectionProvider = mock<ConnectionProvider>();
 const mockPluginService = mock(PluginService);
+const mockTargetClient = mock(Client);
+
+when(mockPluginService.getCurrentHostInfo()).thenReturn(
+  new HostInfoBuilder({ hostAvailabilityStrategy: new SimpleHostAvailabilityStrategy() }).withHost("host").withRole(HostRole.WRITER).build()
+);
+when(mockTargetClient.query(anything())).thenReturn();
 
 const connectionString = "my.domain.com";
 const pluginServiceManagerContainer = new PluginServiceManagerContainer();
@@ -49,7 +59,7 @@ suite(
 
   configure({
     cases: {
-      delay: 0.1
+      delay: 0.5
     }
   }),
 
@@ -58,47 +68,35 @@ suite(
   add("initAndReleaseWithExecuteTimePlugin", async () => {
     await pluginManagerExecute.init();
     const wrapper = new TestConnectionWrapper(propsExecute, pluginManagerExecute, instance(mockPluginService));
-    try {
-      // Uncomment once releaseResources implemented
-      // await wrapper.releaseResources();
-      await wrapper.end();
-    } catch (e) {
-      /* empty */
-    }
+    wrapper["targetClient"] = instance(mockTargetClient);
+    // Uncomment once releaseResources implemented
+    // await wrapper.releaseResources();
+    await wrapper.end();
   }),
 
   add("initAndReleaseWithReadWriteSplittingPlugin", async () => {
     await pluginManagerReadWrite.init();
     const wrapper = new TestConnectionWrapper(propsReadWrite, pluginManagerReadWrite, instance(mockPluginService));
-    try {
-      // Uncomment once releaseResources implemented
-      // await wrapper.releaseResources();
-      await wrapper.end();
-    } catch (e) {
-      /* empty */
-    }
+    wrapper["targetClient"] = instance(mockTargetClient);
+    // Uncomment once releaseResources implemented
+    // await wrapper.releaseResources();
+    await wrapper.end();
   }),
 
   add("executeStatementBaseline", async () => {
     await pluginManager.init();
     const wrapper = new TestConnectionWrapper(props, pluginManager, instance(mockPluginService));
-    try {
-      await wrapper.executeQuery(props, "select 1");
-      await wrapper.end();
-    } catch (e) {
-      /* empty */
-    }
+    wrapper["targetClient"] = instance(mockTargetClient);
+    await wrapper.executeQuery(props, "select 1");
+    await wrapper.end();
   }),
 
   add("executeStatementWithExecuteTimePlugin", async () => {
     await pluginManagerExecute.init();
     const wrapper = new TestConnectionWrapper(propsExecute, pluginManagerExecute, instance(mockPluginService));
-    try {
-      await wrapper.executeQuery(propsExecute, "select 1");
-      await wrapper.end();
-    } catch (e) {
-      /* empty */
-    }
+    wrapper["targetClient"] = instance(mockTargetClient);
+    await wrapper.executeQuery(propsExecute, "select 1");
+    await wrapper.end();
   }),
 
   cycle(),
