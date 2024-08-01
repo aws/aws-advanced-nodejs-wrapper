@@ -19,13 +19,14 @@ import { HostInfo } from "./host_info";
 import { HostChangeOptions } from "./host_change_options";
 import { OldConnectionSuggestionAction } from "./old_connection_suggestion_action";
 import { HostRole } from "./host_role";
+import { ClientWrapper } from "./client_wrapper"
 
 export interface ConnectionPlugin {
   getSubscribedMethods(): Set<string>;
 
-  connect<T>(hostInfo: HostInfo, props: Map<string, any>, isInitialConnection: boolean, connectFunc: () => Promise<T>): Promise<T>;
+  connect<T>(hostInfo: HostInfo, props: Map<string, any>, isInitialConnection: boolean, connectFunc: () => Promise<ClientWrapper>): Promise<ClientWrapper>;
 
-  forceConnect<T>(hostInfo: HostInfo, props: Map<string, any>, isInitialConnection: boolean, forceConnectFunc: () => Promise<T>): Promise<T>;
+  forceConnect<T>(hostInfo: HostInfo, props: Map<string, any>, isInitialConnection: boolean, forceConnectFunc: () => Promise<ClientWrapper>): Promise<ClientWrapper>;
 
   execute<T>(methodName: string, methodFunc: () => Promise<T>, methodArgs: any): Promise<T>;
 

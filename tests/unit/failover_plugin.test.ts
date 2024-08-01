@@ -36,6 +36,7 @@ import { AwsMySQLClient } from "../../mysql/lib";
 import { anything, instance, mock, reset, resetCalls, spy, verify, when } from "ts-mockito";
 import { Messages } from "../../common/lib/utils/messages";
 import { HostChangeOptions } from "../../common/lib/host_change_options";
+import { ClientWrapper } from "../../common/lib/client_wrapper"
 
 const builder = new HostInfoBuilder({ hostAvailabilityStrategy: new SimpleHostAvailabilityStrategy() });
 
@@ -50,6 +51,11 @@ let mockWriterFailoverHandlerInstance;
 const mockWriterFailoverHandler: ClusterAwareWriterFailoverHandler = mock(ClusterAwareWriterFailoverHandler);
 const mockReaderResult: ReaderFailoverResult = mock(ReaderFailoverResult);
 const mockWriterResult: WriterFailoverResult = mock(WriterFailoverResult);
+
+const mockClientWrapper: ClientWrapper = { 
+  client : undefined,
+  hostInfo : mockHostInfo,
+  properties : new Map<string, any>()}
 
 const properties: Map<string, any> = new Map();
 
@@ -189,14 +195,13 @@ describe("reader failover handler", () => {
   it("test failover reader with valid failed HostInfo - failover success", async () => {
     const hostInfo = builder.withHost("hostA").build();
     const hosts = [hostInfo];
-    const mockAwsClientInstance = instance(mockAwsClient);
 
     when(mockHostInfo.allAliases).thenReturn(new Set<string>(["alias1", "aslias2"]));
     when(mockHostInfo.getRawAvailability()).thenReturn(HostAvailability.AVAILABLE);
     when(mockPluginService.getHosts()).thenReturn(hosts);
 
     when(mockReaderResult.isConnected).thenReturn(true);
-    when(mockReaderResult.client).thenReturn(mockAwsClientInstance);
+    when(mockReaderResult.client).thenReturn(mockClientWrapper);
     when(mockReaderResult.newHost).thenReturn(hostInfo);
 
     const mockPluginServiceInstance = instance(mockPluginService);
@@ -216,7 +221,7 @@ describe("reader failover handler", () => {
     await plugin.failoverReader(mockHostInfoInstance);
 
     verify(mockReaderFailoverHandler.failover(anything(), anything())).once();
-    verify(mockPluginService.setCurrentClient(mockAwsClientInstance, hostInfo)).once();
+    verify(mockPluginService.setCurrentClient(mockClientWrapper, hostInfo)).once();
   });
 
   it("test failover reader with no failed host", async () => {
@@ -327,7 +332,7 @@ describe("reader failover handler", () => {
   });
 
   it("test invalid current connection - no connection", async () => {
-    when(mockAwsClient.targetClient).thenReturn(null);
+    when(mockAwsClient.targetClient).thenReturn(undefined);
     const mockAwsClientInstance = instance(mockAwsClient);
 
     when(mockPluginService.getCurrentClient()).thenReturn(mockAwsClientInstance);
@@ -340,7 +345,7 @@ describe("reader failover handler", () => {
   });
 
   it("test invalidate current connection - in transaction", async () => {
-    when(mockMySQLClient.targetClient).thenReturn({});
+    when(mockMySQLClient.targetClient).thenReturn(mockClientWrapper);
     when(mockPluginService.getCurrentClient()).thenReturn(instance(mockMySQLClient));
     when(mockPluginService.isInTransaction()).thenReturn(true);
     when(mockHostInfo.host).thenReturn("host");
@@ -358,7 +363,7 @@ describe("reader failover handler", () => {
   });
 
   it("test invalidate current connection - not in transaction", async () => {
-    when(mockMySQLClient.targetClient).thenReturn({});
+    when(mockMySQLClient.targetClient).thenReturn(mockClientWrapper);
     when(mockPluginService.getCurrentClient()).thenReturn(instance(mockMySQLClient));
     when(mockPluginService.isInTransaction()).thenReturn(false);
     when(mockHostInfo.host).thenReturn("host");
@@ -374,7 +379,7 @@ describe("reader failover handler", () => {
   });
 
   it("test invalidate current connection - with open connection", async () => {
-    when(mockMySQLClient.targetClient).thenReturn({});
+    when(mockMySQLClient.targetClient).thenReturn(mockClientWrapper);
     when(mockMySQLClient.isValid()).thenResolve(false);
     const mockMySQLClientInstance = instance(mockMySQLClient);
 

@@ -24,6 +24,7 @@ import { HostListProvider } from "./host_list_provider/host_list_provider";
 import { PluginManager } from "./plugin_manager";
 import { EventEmitter } from "stream";
 import { DriverConnectionProvider } from "./driver_connection_provider";
+import { ClientWrapper } from "./client_wrapper";
 
 export abstract class AwsClient extends EventEmitter {
   private _defaultPort: number = -1;
@@ -40,7 +41,7 @@ export abstract class AwsClient extends EventEmitter {
   protected _connectionUrlParser: ConnectionUrlParser;
   readonly properties: Map<string, any>;
   config: any;
-  targetClient: any = null;
+  targetClient? : ClientWrapper; 
 
   protected constructor(
     config: any,
@@ -50,6 +51,7 @@ export abstract class AwsClient extends EventEmitter {
     parser: ConnectionUrlParser
   ) {
     super();
+    this.config = config;
     this._errorHandler = errorHandler;
     this._connectionUrlParser = parser;
 

@@ -17,9 +17,10 @@
 import { HostRole } from "./host_role";
 import { HostInfo } from "./host_info";
 import { PluginService } from "./plugin_service";
+import { ClientWrapper } from "./client_wrapper"
 
 export interface ConnectionProvider {
-  connect<T>(hostInfo: HostInfo, pluginService: PluginService, props: Map<string, any>): Promise<T>;
+  connect(hostInfo: HostInfo, pluginService: PluginService, props: Map<string, any>): Promise<ClientWrapper>;
   acceptsUrl(hostInfo: HostInfo, props: Map<string, any>): boolean;
   acceptsStrategy(role: HostRole, strategy: string): boolean;
   getHostInfoByStrategy(hosts: HostInfo[], role: HostRole, strategy: string, props?: Map<string, any>): HostInfo;

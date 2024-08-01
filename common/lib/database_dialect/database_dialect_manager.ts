@@ -23,6 +23,7 @@ import { Messages } from "../utils/messages";
 import { RdsUtils } from "../utils/rds_utils";
 import { logger } from "../../logutils";
 import { CacheMap } from "../utils/cache_map";
+import { ClientWrapper } from "../client_wrapper"
 
 export class DatabaseDialectManager implements DatabaseDialectProvider {
   /**
@@ -139,7 +140,7 @@ export class DatabaseDialectManager implements DatabaseDialectProvider {
     throw new AwsWrapperError(Messages.get("DialectManager.getDialectError"));
   }
 
-  async getDialectForUpdate(targetClient: any, originalHost: string, newHost: string): Promise<DatabaseDialect> {
+  async getDialectForUpdate(targetClient: ClientWrapper, originalHost: string, newHost: string): Promise<DatabaseDialect> {
     if (!this.canUpdate) {
       return this.dialect;
     }

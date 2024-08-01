@@ -33,11 +33,10 @@ const mockEffectiveConnProvider: ConnectionProvider = mock(DriverConnectionProvi
 
 describe("testConnectionPluginChainBuilder", () => {
   it.each([["iam,staleDns,failover"], ["iam,  staleDns,    failover"]])("sort plugins", async (plugins) => {
-    const builder: ConnectionPluginChainBuilder = new ConnectionPluginChainBuilder();
     const props = new Map();
     props.set(WrapperProperties.PLUGINS.name, plugins);
 
-    const result = await builder.getPlugins(mockPluginService, props, mockDefaultConnProvider, mockEffectiveConnProvider);
+    const result = await ConnectionPluginChainBuilder.getPlugins(mockPluginService, props, mockDefaultConnProvider, mockEffectiveConnProvider);
 
     expect(result.length).toBe(4);
     expect(result[0]).toBeInstanceOf(StaleDnsPlugin);
@@ -47,12 +46,11 @@ describe("testConnectionPluginChainBuilder", () => {
   });
 
   it("preserve plugin order", async () => {
-    const builder: ConnectionPluginChainBuilder = new ConnectionPluginChainBuilder();
     const props = new Map();
     props.set(WrapperProperties.PLUGINS.name, "iam,staleDns,failover");
     props.set(WrapperProperties.AUTO_SORT_PLUGIN_ORDER.name, false);
 
-    const result = await builder.getPlugins(mockPluginService, props, mockDefaultConnProvider, mockEffectiveConnProvider);
+    const result = await ConnectionPluginChainBuilder.getPlugins(mockPluginService, props, mockDefaultConnProvider, mockEffectiveConnProvider);
 
     expect(result.length).toBe(4);
     expect(result[0]).toBeInstanceOf(IamAuthenticationPlugin);
@@ -62,11 +60,10 @@ describe("testConnectionPluginChainBuilder", () => {
   });
 
   it("sort plugins with stick to prior", async () => {
-    const builder: ConnectionPluginChainBuilder = new ConnectionPluginChainBuilder();
     const props = new Map();
     props.set(WrapperProperties.PLUGINS.name, "iam,executeTime,connectTime,failover");
 
-    const result = await builder.getPlugins(mockPluginService, props, mockDefaultConnProvider, mockEffectiveConnProvider);
+    const result = await ConnectionPluginChainBuilder.getPlugins(mockPluginService, props, mockDefaultConnProvider, mockEffectiveConnProvider);
 
     expect(result.length).toBe(5);
     expect(result[0]).toBeInstanceOf(FailoverPlugin);

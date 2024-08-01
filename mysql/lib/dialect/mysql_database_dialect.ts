@@ -18,10 +18,10 @@ import { DatabaseDialect, DatabaseType } from "../../../common/lib/database_dial
 import { HostListProviderService } from "../../../common/lib/host_list_provider_service";
 import { HostListProvider } from "../../../common/lib/host_list_provider/host_list_provider";
 import { ConnectionStringHostListProvider } from "../../../common/lib/host_list_provider/connection_string_host_list_provider";
-import { AwsClient } from "../../../common/lib/aws_client";
 import { AwsWrapperError } from "../../../common/lib/utils/errors";
 import { DatabaseDialectCodes } from "../../../common/lib/database_dialect/database_dialect_codes";
 import { TransactionIsolationLevel } from "../../../common/lib/utils/transaction_isolation_level";
+import { ClientWrapper } from "../../../common/lib/client_wrapper"
 
 export class MySQLDatabaseDialect implements DatabaseDialect {
   protected dialectName: string = "MySQLDatabaseDialect";
@@ -39,8 +39,8 @@ export class MySQLDatabaseDialect implements DatabaseDialect {
     return "SELECT CONCAT(@@hostname, ':', @@port)";
   }
 
-  async getHostAliasAndParseResults(client: AwsClient): Promise<string> {
-    return client.targetClient
+  async getHostAliasAndParseResults(targetClient: ClientWrapper): Promise<string> {
+    return targetClient.client
       .promise()
       .query(this.getHostAliasQuery())
       .then(([rows]: any) => {
@@ -55,8 +55,8 @@ export class MySQLDatabaseDialect implements DatabaseDialect {
     return "SHOW VARIABLES LIKE 'version_comment'";
   }
 
-  async isDialect(targetClient: any): Promise<boolean> {
-    return await targetClient
+  async isDialect(targetClient: ClientWrapper): Promise<boolean> {
+    return await targetClient.client
       .promise()
       .query(this.getServerVersionQuery())
       .then(([rows]: any) => {
@@ -71,16 +71,16 @@ export class MySQLDatabaseDialect implements DatabaseDialect {
     return new ConnectionStringHostListProvider(props, originalUrl, this.getDefaultPort(), hostListProviderService);
   }
 
-  async tryClosingTargetClient(targetClient: any) {
+  async tryClosingTargetClient(targetClient: ClientWrapper) {
     try {
-      await targetClient.promise().end();
+      await targetClient.client.promise().end();
     } catch (error) {
       // ignore
     }
   }
 
-  async isClientValid(targetClient: any): Promise<boolean> {
-    return await targetClient
+  async isClientValid(targetClient: ClientWrapper): Promise<boolean> {
+    return await targetClient.client
       .promise()
       .query({ sql: "SELECT 1" })
       .then(() => {

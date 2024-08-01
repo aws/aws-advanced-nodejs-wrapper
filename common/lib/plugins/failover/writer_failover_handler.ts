@@ -26,6 +26,7 @@ import { HostRole } from "../../host_role";
 import { Messages } from "../../utils/messages";
 import { logger } from "../../../logutils";
 import { WrapperProperties } from "../../wrapper_property";
+import { ClientWrapper } from "../../client_wrapper";
 
 export interface WriterFailoverHandler {
   failover(currentTopology: HostInfo[]): Promise<WriterFailoverResult>;
@@ -188,7 +189,7 @@ class ReconnectToWriterHandlerTask {
   originalWriterHost: HostInfo | null;
   initialConnectionProps: Map<string, any>;
   reconnectionWriterIntervalMs: number;
-  currentClient?: any;
+  currentClient?: ClientWrapper;
   endTime: number;
   failoverCompleted: boolean = false;
   timeoutId: any = -1;

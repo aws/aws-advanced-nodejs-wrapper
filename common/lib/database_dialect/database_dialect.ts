@@ -13,10 +13,9 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 */
-
-import { AwsClient } from "../aws_client";
 import { HostListProvider } from "../host_list_provider/host_list_provider";
 import { HostListProviderService } from "../host_list_provider_service";
+import { ClientWrapper } from "../client_wrapper"
 
 export enum DatabaseType {
   MYSQL,
@@ -26,13 +25,13 @@ export enum DatabaseType {
 export interface DatabaseDialect {
   getDefaultPort(): number;
   getHostAliasQuery(): string;
-  getHostAliasAndParseResults(client: AwsClient): Promise<string>;
+  getHostAliasAndParseResults(targetClient: ClientWrapper): Promise<string>;
   getServerVersionQuery(): string;
   getDialectUpdateCandidates(): string[];
-  isDialect<T>(targetClient: T): Promise<boolean>;
+  isDialect(targetClient: ClientWrapper): Promise<boolean>;
   getHostListProvider(props: Map<string, any>, originalUrl: string, hostListProviderService: HostListProviderService): HostListProvider;
-  tryClosingTargetClient(targetClient: any): Promise<void>;
-  isClientValid(targetClient: any): Promise<boolean>;
+  tryClosingTargetClient(targetClient: ClientWrapper): Promise<void>;
+  isClientValid(targetClient: ClientWrapper): Promise<boolean>;
   getConnectFunc(targetClient: any): () => Promise<any>;
   getDatabaseType(): DatabaseType;
   getDialectName(): string;

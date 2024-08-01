@@ -27,6 +27,7 @@ import { logger } from "../../logutils";
 import { AwsWrapperError, FailoverError } from "../utils/errors";
 import { HostRole } from "../host_role";
 import { SqlMethodUtils } from "../utils/sql_method_utils";
+import { ClientWrapper } from "../client_wrapper";
 
 export class ReadWriteSplittingPlugin extends AbstractConnectionPlugin {
   private static readonly subscribedMethods: Set<string> = new Set(["initHostProvider", "connect", "notifyConnectionChanged", "query"]);
@@ -38,23 +39,23 @@ export class ReadWriteSplittingPlugin extends AbstractConnectionPlugin {
   private readonly _properties: Map<string, any>;
   private _readerHostInfo?: HostInfo = undefined;
   private _inReadWriteSplit = false;
-  writerTargetClient: any | undefined;
-  readerTargetClient: any | undefined;
+  writerTargetClient: ClientWrapper | undefined;
+  readerTargetClient: ClientWrapper | undefined;
 
   constructor(pluginService: PluginService, properties: Map<string, any>);
   constructor(
     pluginService: PluginService,
     properties: Map<string, any>,
     hostListProviderService: HostListProviderService,
-    writerClient: any,
-    readerClient: any
+    writerClient: ClientWrapper,
+    readerClient: ClientWrapper
   );
   constructor(
     pluginService: PluginService,
     properties: Map<string, any>,
     hostListProviderService?: HostListProviderService,
-    writerClient?: any,
-    readerClient?: any
+    writerClient?: ClientWrapper,
+    readerClient?: ClientWrapper
   ) {
     super();
     logger.debug(`TestPlugin constructor id: ${this.id}`);
@@ -106,24 +107,22 @@ export class ReadWriteSplittingPlugin extends AbstractConnectionPlugin {
     }
   }
 
-  override async connect<T>(hostInfo: HostInfo, props: Map<string, any>, isInitialConnection: boolean, connectFunc: () => Promise<T>): Promise<T> {
+  override async connect<T>(hostInfo: HostInfo, props: Map<string, any>, isInitialConnection: boolean, connectFunc: () => Promise<ClientWrapper>): Promise<ClientWrapper> {
     if (!this.pluginService.acceptsStrategy(hostInfo.role, this.readerSelectorStrategy)) {
       const message: string = Messages.get("ReadWriteSplittingPlugin.unsupportedHostSelectorStrategy", this.readerSelectorStrategy);
       this.logAndThrowError(message);
     }
-    return await this.connectInternal(hostInfo, props, isInitialConnection, connectFunc);
+    return await this.connectInternal(isInitialConnection, connectFunc);
   }
 
-  forceConnect<T>(hostInfo: HostInfo, props: Map<string, any>, isInitialConnection: boolean, forceConnectFunc: () => Promise<T>): Promise<T> {
-    return this.connectInternal(hostInfo, props, isInitialConnection, forceConnectFunc);
+  forceConnect<T>(hostInfo: HostInfo, props: Map<string, any>, isInitialConnection: boolean, forceConnectFunc: () => Promise<ClientWrapper>): Promise<ClientWrapper> {
+    return this.connectInternal(isInitialConnection, forceConnectFunc);
   }
 
   private async connectInternal<T>(
-    hostInfo: HostInfo,
-    props: Map<string, any>,
     isInitialConnection: boolean,
-    connectFunc: () => Promise<T>
-  ): Promise<T> {
+    connectFunc: () => Promise<ClientWrapper>
+  ): Promise<ClientWrapper> {
     const result = await connectFunc();
     if (!isInitialConnection || this._hostListProviderService?.isStaticHostListProvider()) {
       return result;
@@ -174,12 +173,12 @@ export class ReadWriteSplittingPlugin extends AbstractConnectionPlugin {
     }
   }
 
-  setWriterClient(writerTargetClient: any, writerHostInfo: HostInfo): void {
+  setWriterClient(writerTargetClient: ClientWrapper | undefined, writerHostInfo: HostInfo): void {
     this.writerTargetClient = writerTargetClient;
     logger.debug(Messages.get("ReadWriteSplittingPlugin.setWriterClient", writerHostInfo.url));
   }
 
-  setReaderClient(readerTargetClient: any, readerHost: HostInfo): void {
+  setReaderClient(readerTargetClient: ClientWrapper | undefined, readerHost: HostInfo): void {
     this.readerTargetClient = readerTargetClient;
     this._readerHostInfo = readerHost;
     logger.debug(Messages.get("ReadWriteSplittingPlugin.setReaderClient", readerHost.url));
@@ -239,13 +238,13 @@ export class ReadWriteSplittingPlugin extends AbstractConnectionPlugin {
     }
   }
 
-  async switchCurrentTargetClientTo(newTargetClient: any, newClientHost: HostInfo | undefined) {
+  async switchCurrentTargetClientTo(newTargetClient: ClientWrapper | undefined, newClientHost: HostInfo | undefined) {
     const currentTargetClient = this.pluginService.getCurrentClient().targetClient;
 
     if (currentTargetClient === newTargetClient) {
       return;
     }
-    if (newClientHost) {
+    if (newClientHost && newTargetClient) {
       try {
         await this.pluginService.setCurrentClient(newTargetClient, newClientHost);
         logger.debug(Messages.get("ReadWriteSplittingPlugin.settingCurrentClient", newClientHost.url));
@@ -342,14 +341,14 @@ export class ReadWriteSplittingPlugin extends AbstractConnectionPlugin {
     }
   }
 
-  async isTargetClientUsable(targetClient: any | undefined): Promise<boolean> {
+  async isTargetClientUsable(targetClient: ClientWrapper | undefined): Promise<boolean> {
     if (!targetClient) {
       return Promise.resolve(false);
     }
     return await this.pluginService.isClientValid(targetClient);
   }
 
-  async closeTargetClientIfIdle(internalTargetClient: any | undefined) {
+  async closeTargetClientIfIdle(internalTargetClient: ClientWrapper | undefined) {
     const currentTargetClient = this.pluginService.getCurrentClient().targetClient;
     try {
       if (internalTargetClient != null && internalTargetClient != currentTargetClient && (await this.isTargetClientUsable(internalTargetClient))) {

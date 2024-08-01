@@ -31,6 +31,7 @@ import { CacheMap } from "../utils/cache_map";
 import { logTopology } from "../utils/utils";
 import { TopologyAwareDatabaseDialect } from "../topology_aware_database_dialect";
 import { DatabaseDialect } from "../database_dialect/database_dialect";
+import { ClientWrapper } from "../client_wrapper"
 
 export class RdsHostListProvider implements DynamicHostListProvider {
   private readonly hostListProviderService: HostListProviderService;
@@ -117,8 +118,8 @@ export class RdsHostListProvider implements DynamicHostListProvider {
   }
 
   async forceRefresh(): Promise<HostInfo[]>;
-  async forceRefresh(targetClient: any): Promise<HostInfo[]>;
-  async forceRefresh(targetClient?: any): Promise<HostInfo[]> {
+  async forceRefresh(targetClient: ClientWrapper): Promise<HostInfo[]>;
+  async forceRefresh(targetClient?: ClientWrapper): Promise<HostInfo[]> {
     this.init();
 
     const currentClient = targetClient ?? this.hostListProviderService.getCurrentClient().targetClient;
@@ -151,8 +152,8 @@ export class RdsHostListProvider implements DynamicHostListProvider {
   }
 
   async refresh(): Promise<HostInfo[]>;
-  async refresh(targetClient: any): Promise<HostInfo[]>;
-  async refresh(targetClient?: any): Promise<HostInfo[]> {
+  async refresh(targetClient: ClientWrapper): Promise<HostInfo[]>;
+  async refresh(targetClient?: ClientWrapper): Promise<HostInfo[]> {
     this.init();
 
     const currentClient = targetClient ?? this.hostListProviderService.getCurrentClient().targetClient;
@@ -166,7 +167,7 @@ export class RdsHostListProvider implements DynamicHostListProvider {
     throw new AwsWrapperError("Could not retrieve targetClient.");
   }
 
-  async getTopology(targetClient: any, forceUpdate: boolean): Promise<FetchTopologyResult> {
+  async getTopology(targetClient: ClientWrapper, forceUpdate: boolean): Promise<FetchTopologyResult> {
     this.init();
 
     if (!this.clusterId) {
@@ -262,7 +263,7 @@ export class RdsHostListProvider implements DynamicHostListProvider {
     return arg;
   }
 
-  async queryForTopology(targetClient: any, dialect: DatabaseDialect): Promise<HostInfo[]> {
+  async queryForTopology(targetClient: ClientWrapper, dialect: DatabaseDialect): Promise<HostInfo[]> {
     if (!this.isTopologyAwareDatabaseDialect(dialect)) {
       throw new TypeError(Messages.get("RdsHostListProvider.incorrectDialect"));
     }
