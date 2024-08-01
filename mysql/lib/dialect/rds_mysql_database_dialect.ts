@@ -16,7 +16,7 @@
 
 import { MySQLDatabaseDialect } from "./mysql_database_dialect";
 import { DatabaseDialectCodes } from "../../../common/lib/database_dialect/database_dialect_codes";
-import { ClientWrapper } from "../../../common/lib/client_wrapper"
+import { ClientWrapper } from "../../../common/lib/client_wrapper";
 
 export class RdsMySQLDatabaseDialect extends MySQLDatabaseDialect {
   constructor() {

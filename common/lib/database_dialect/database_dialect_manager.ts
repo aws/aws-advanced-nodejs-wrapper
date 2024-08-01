@@ -23,7 +23,7 @@ import { Messages } from "../utils/messages";
 import { RdsUtils } from "../utils/rds_utils";
 import { logger } from "../../logutils";
 import { CacheMap } from "../utils/cache_map";
-import { ClientWrapper } from "../client_wrapper"
+import { ClientWrapper } from "../client_wrapper";
 
 export class DatabaseDialectManager implements DatabaseDialectProvider {
   /**

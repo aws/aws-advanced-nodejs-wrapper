@@ -31,7 +31,7 @@ import { CacheMap } from "../utils/cache_map";
 import { logTopology } from "../utils/utils";
 import { TopologyAwareDatabaseDialect } from "../topology_aware_database_dialect";
 import { DatabaseDialect } from "../database_dialect/database_dialect";
-import { ClientWrapper } from "../client_wrapper"
+import { ClientWrapper } from "../client_wrapper";
 
 export class RdsHostListProvider implements DynamicHostListProvider {
   private readonly hostListProviderService: HostListProviderService;

@@ -29,7 +29,7 @@ import { AwsPGClient } from "../../pg/lib";
 import { WrapperProperties } from "../../common/lib/wrapper_property";
 import { HostInfoBuilder } from "../../common/lib/host_info_builder";
 import { SimpleHostAvailabilityStrategy } from "../../common/lib/host_availability/simple_host_availability_strategy";
-import { ClientWrapper } from "../../common/lib/client_wrapper"
+import { ClientWrapper } from "../../common/lib/client_wrapper";
 
 const mysqlDialect = new MySQLDatabaseDialect();
 const rdsMysqlDialect = new RdsMySQLDatabaseDialect();
@@ -178,10 +178,11 @@ describe("test dialects", () => {
         hostAvailabilityStrategy: new SimpleHostAvailabilityStrategy()
       }).build();
 
-      const mockClientWrapper : ClientWrapper = { 
-        client : mockTargetClient,
-        hostInfo : currentHostInfo,
-        properties : new Map<string, any>()}
+      const mockClientWrapper: ClientWrapper = {
+        client: mockTargetClient,
+        hostInfo: currentHostInfo,
+        properties: new Map<string, any>()
+      };
 
       const pluginService = new PluginService(pluginServiceManagerContainer, mockClient, dbType, knownDialects, props);
       await pluginService.updateDialect(mockClientWrapper);

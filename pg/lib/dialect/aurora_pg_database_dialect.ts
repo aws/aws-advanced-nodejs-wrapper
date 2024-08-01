@@ -22,7 +22,7 @@ import { TopologyAwareDatabaseDialect } from "../../../common/lib/topology_aware
 import { HostInfo } from "../../../common/lib/host_info";
 import { AwsClient } from "../../../common/lib/aws_client";
 import { HostRole } from "../../../common/lib/host_role";
-import { ClientWrapper } from "../../../common/lib/client_wrapper"
+import { ClientWrapper } from "../../../common/lib/client_wrapper";
 
 export class AuroraPgDatabaseDialect extends PgDatabaseDialect implements TopologyAwareDatabaseDialect {
   private static readonly TOPOLOGY_QUERY: string =

@@ -26,7 +26,7 @@ import { promisify } from "util";
 import { AwsWrapperError } from "../../utils/errors";
 import { HostChangeOptions } from "../../host_change_options";
 import { WrapperProperties } from "../../wrapper_property";
-import { ClientWrapper } from "../../client_wrapper"
+import { ClientWrapper } from "../../client_wrapper";
 
 export class StaleDnsHelper {
   private readonly pluginService: PluginService;
@@ -37,7 +37,6 @@ export class StaleDnsHelper {
   constructor(pluginService: PluginService) {
     this.pluginService = pluginService;
   }
-
 
   // Follow the returns and throws
   async getVerifiedConnection<Type>(
@@ -130,9 +129,9 @@ export class StaleDnsHelper {
         // TODO review: the call below will start a new plugin chain again and will invoke this function from top. Hopefully, no infinite recursion.
         // Moreover, upon returning from this function here, the original plugin chain will continue. Depending on the plugins and their implementation
         // would that have an effect?
-        let newProps = new Map<string, any>(props);
-        newProps.set(WrapperProperties.HOST.name, this.writerHostInfo.host); 
-        targetClient  = await this.pluginService.connect(this.writerHostInfo, newProps);
+        const newProps = new Map<string, any>(props);
+        newProps.set(WrapperProperties.HOST.name, this.writerHostInfo.host);
+        targetClient = await this.pluginService.connect(this.writerHostInfo, newProps);
         await this.pluginService.tryClosingTargetClient(currentTargetClient);
 
         if (isInitialConnection) {

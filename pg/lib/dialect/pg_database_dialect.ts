@@ -21,7 +21,7 @@ import { ConnectionStringHostListProvider } from "../../../common/lib/host_list_
 import { AwsWrapperError } from "../../../common/lib/utils/errors";
 import { DatabaseDialectCodes } from "../../../common/lib/database_dialect/database_dialect_codes";
 import { TransactionIsolationLevel } from "../../../common/lib/utils/transaction_isolation_level";
-import { ClientWrapper } from "../../../common/lib/client_wrapper"
+import { ClientWrapper } from "../../../common/lib/client_wrapper";
 
 export class PgDatabaseDialect implements DatabaseDialect {
   protected dialectName: string = "PgDatabaseDialect";

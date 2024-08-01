@@ -18,7 +18,7 @@ import { HostInfo } from "./host_info";
 import { AwsClient } from "./aws_client";
 import { HostListProvider } from "./host_list_provider/host_list_provider";
 import { HostRole } from "./host_role";
-import { ClientWrapper } from "./client_wrapper"
+import { ClientWrapper } from "./client_wrapper";
 
 export interface TopologyAwareDatabaseDialect {
   queryForTopology(client: ClientWrapper, hostListProvider: HostListProvider): Promise<HostInfo[]>;

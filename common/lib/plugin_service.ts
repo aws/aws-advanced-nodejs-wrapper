@@ -36,7 +36,7 @@ import { SqlMethodUtils } from "./utils/sql_method_utils";
 import { SessionStateService } from "./session_state_service";
 import { SessionStateServiceImpl } from "./session_state_service_impl";
 import { HostAvailabilityStrategyFactory } from "./host_availability/host_availability_strategy_factory";
-import { ClientWrapper } from "./client_wrapper"
+import { ClientWrapper } from "./client_wrapper";
 
 export class PluginService implements ErrorHandler, HostListProviderService {
   private readonly _currentClient: AwsClient;
@@ -253,7 +253,7 @@ export class PluginService implements ErrorHandler, HostListProviderService {
     throw new AwsWrapperError("AwsClient is missing create target client function."); // This should not be reached
   }
 
-  connect<T>(hostInfo: HostInfo, props: Map<string, any>): Promise<ClientWrapper>  {
+  connect<T>(hostInfo: HostInfo, props: Map<string, any>): Promise<ClientWrapper> {
     if (this.pluginServiceManagerContainer.pluginManager) {
       return this.pluginServiceManagerContainer.pluginManager.connect(hostInfo, props, false);
     } else {
@@ -275,7 +275,7 @@ export class PluginService implements ErrorHandler, HostListProviderService {
 
   async setCurrentClient(newClient: ClientWrapper, hostInfo: HostInfo): Promise<Set<HostChangeOptions>> {
     if (!this.getCurrentClient().targetClient) {
-      this.getCurrentClient().targetClient = newClient;   
+      this.getCurrentClient().targetClient = newClient;
       await this.updateDialect(newClient);
       this._currentHostInfo = hostInfo;
       this.sessionStateService.reset();
@@ -292,7 +292,7 @@ export class PluginService implements ErrorHandler, HostListProviderService {
 
         // TODO review:  why are we comparing host info differences here? Even if there are no differences, presumably we have a new connection for a reason
         // therefore we should still use the new connection. If we did not want a new connection if hostInfo matches then we should do the
-        // check in place where we are connecting. 
+        // check in place where we are connecting.
         if (changes.size > 0) {
           const oldClient = this.getCurrentClient().targetClient;
           const isInTransaction = this.isInTransaction;
@@ -313,7 +313,8 @@ export class PluginService implements ErrorHandler, HostListProviderService {
               const shouldCloseConnection =
                 changes.has(HostChangeOptions.CONNECTION_OBJECT_CHANGED) &&
                 !pluginOpinions.has(OldConnectionSuggestionAction.PRESERVE) &&
-                (oldClient && await this.isClientValid(oldClient));
+                oldClient &&
+                (await this.isClientValid(oldClient));
               // TODO: Review should tryClosingTargetClient(oldClient) be called here, or at some point in this setCurrentClient method?
             }
           } finally {
@@ -332,12 +333,12 @@ export class PluginService implements ErrorHandler, HostListProviderService {
 
   async tryClosingTargetClient(): Promise<void>;
   async tryClosingTargetClient(targetClient: ClientWrapper): Promise<void>;
-  async tryClosingTargetClient(targetClient?: ClientWrapper): Promise<void> 
-  async tryClosingTargetClient(targetClient?: ClientWrapper | undefined): Promise<void> { // Note: This last overload is only required because of the way typescript overloads work https://www.typescriptlang.org/docs/handbook/functions.html#overloads
+  async tryClosingTargetClient(targetClient?: ClientWrapper): Promise<void>;
+  async tryClosingTargetClient(targetClient?: ClientWrapper | undefined): Promise<void> {
+    // Note: This last overload is only required because of the way typescript overloads work https://www.typescriptlang.org/docs/handbook/functions.html#overloads
     if (targetClient) {
       this.getDialect().tryClosingTargetClient(targetClient);
-    } 
-    else if (this._currentClient.targetClient) {
+    } else if (this._currentClient.targetClient) {
       this.getDialect().tryClosingTargetClient(this._currentClient.targetClient);
     }
   }

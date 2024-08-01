@@ -15,7 +15,7 @@
 */
 
 import { DatabaseDialect } from "./database_dialect";
-import { ClientWrapper } from "../client_wrapper"
+import { ClientWrapper } from "../client_wrapper";
 
 export interface DatabaseDialectProvider {
   getDialect(props: Map<string, any>): DatabaseDialect;

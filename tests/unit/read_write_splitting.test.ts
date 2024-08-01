@@ -30,7 +30,7 @@ import { HostChangeOptions } from "../../common/lib/host_change_options";
 import { OldConnectionSuggestionAction } from "../../common/lib/old_connection_suggestion_action";
 import { HostListProvider } from "../../common/lib/host_list_provider/host_list_provider";
 import { WrapperProperties } from "../../common/lib/wrapper_property";
-import { ClientWrapper } from "../../common/lib/client_wrapper"
+import { ClientWrapper } from "../../common/lib/client_wrapper";
 
 const properties: Map<string, any> = new Map();
 const builder = new HostInfoBuilder({ hostAvailabilityStrategy: new SimpleHostAvailabilityStrategy() });
@@ -55,10 +55,11 @@ const mockClosedWriterClient: AwsClient = mock(AwsMySQLClient);
 const mockDialect: MySQLDatabaseDialect = mock(MySQLDatabaseDialect);
 const mockChanges: Set<HostChangeOptions> = mock(Set<HostChangeOptions>);
 
-const clientWrapper: ClientWrapper = { 
-    client : undefined,
-    hostInfo : mockHostInfo,
-    properties : new Map<string, any>()}
+const clientWrapper: ClientWrapper = {
+  client: undefined,
+  hostInfo: mockHostInfo,
+  properties: new Map<string, any>()
+};
 
 const mockReaderWrapper: ClientWrapper = mock(clientWrapper);
 const mockWriterWrapper: ClientWrapper = mock(clientWrapper);
@@ -104,7 +105,13 @@ describe("reader write splitting test", () => {
     when(mockDialect.getConnectFunc(anything())).thenReturn(() => Promise.resolve());
     when(mockPluginService.connect(anything(), anything())).thenResolve(mockReaderWrapper);
 
-    const target = new ReadWriteSplittingPlugin(mockPluginServiceInstance, properties, mockHostListProviderService, clientWrapper_undefined, clientWrapper_undefined);
+    const target = new ReadWriteSplittingPlugin(
+      mockPluginServiceInstance,
+      properties,
+      mockHostListProviderService,
+      clientWrapper_undefined,
+      clientWrapper_undefined
+    );
 
     await target.switchClientIfRequired(true);
     verify(mockPluginService.refreshHostList()).once();
@@ -125,7 +132,13 @@ describe("reader write splitting test", () => {
     //when(mockPluginService.connect(anything(), anything())).thenReturn(mockWriterClient);
     when(mockPluginService.connect(anything(), anything())).thenResolve(mockWriterWrapper);
 
-    const target = new ReadWriteSplittingPlugin(mockPluginServiceInstance, properties, mockHostListProviderService, mockWriterWrapper, clientWrapper_undefined);
+    const target = new ReadWriteSplittingPlugin(
+      mockPluginServiceInstance,
+      properties,
+      mockHostListProviderService,
+      mockWriterWrapper,
+      clientWrapper_undefined
+    );
 
     await target.switchClientIfRequired(false);
     verify(mockPluginService.setCurrentClient(mockWriterWrapper, writerHost)).once();
@@ -192,13 +205,19 @@ describe("reader write splitting test", () => {
     when(mockPluginService.getHostInfoByStrategy(anything(), anything())).thenReturn(writerHost);
     when(mockPluginService.getCurrentClient()).thenReturn(instance(mockWriterClient));
     when(await mockWriterClient.isValid()).thenReturn(true);
-    when(mockWriterClient.targetClient && await mockPluginService.isClientValid(mockWriterClient.targetClient)).thenReturn(true);
+    when(mockWriterClient.targetClient && (await mockPluginService.isClientValid(mockWriterClient.targetClient))).thenReturn(true);
     when(mockPluginService.getCurrentHostInfo()).thenReturn(writerHost);
     when(mockPluginService.getDialect()).thenReturn(mockDialect);
     when(mockDialect.getConnectFunc(anything())).thenReturn(() => Promise.resolve());
     when(mockPluginService.connect(anything(), anything())).thenReturn(Promise.resolve(mockWriterWrapper));
 
-    const target = new ReadWriteSplittingPlugin(mockPluginServiceInstance, properties, mockHostListProviderService, mockWriterWrapper, clientWrapper_undefined);
+    const target = new ReadWriteSplittingPlugin(
+      mockPluginServiceInstance,
+      properties,
+      mockHostListProviderService,
+      mockWriterWrapper,
+      clientWrapper_undefined
+    );
 
     await target.switchClientIfRequired(true);
 
@@ -220,7 +239,13 @@ describe("reader write splitting test", () => {
     when(mockHostListProviderService.isStaticHostListProvider()).thenReturn(false);
     when(mockHostListProviderService.getHostListProvider()).thenReturn(mockHostListProviderInstance);
 
-    const target = new ReadWriteSplittingPlugin(mockPluginServiceInstance, properties, mockHostListProviderServiceInstance, clientWrapper_undefined, clientWrapper_undefined);
+    const target = new ReadWriteSplittingPlugin(
+      mockPluginServiceInstance,
+      properties,
+      mockHostListProviderServiceInstance,
+      clientWrapper_undefined,
+      clientWrapper_undefined
+    );
 
     await target.connect(writerHost, properties, true, mockConnectFunc);
     verify(mockHostListProviderService.setInitialConnectionHostInfo(anything())).once();
@@ -236,7 +261,13 @@ describe("reader write splitting test", () => {
     when(mockPluginService.getCurrentHostInfo()).thenReturn(readerHost1);
     when(await mockPluginService.connect(writerHost, properties)).thenReject();
 
-    const target = new ReadWriteSplittingPlugin(mockPluginServiceInstance, properties, mockHostListProviderService, clientWrapper_undefined, mockReaderWrapper);
+    const target = new ReadWriteSplittingPlugin(
+      mockPluginServiceInstance,
+      properties,
+      mockHostListProviderService,
+      clientWrapper_undefined,
+      mockReaderWrapper
+    );
 
     await expect(async () => await target.switchClientIfRequired(false)).rejects.toThrow(AwsWrapperError);
     verify(mockPluginService.setCurrentClient(anything(), anything())).never();
@@ -257,7 +288,7 @@ describe("reader write splitting test", () => {
       mockPluginServiceInstance,
       properties,
       mockHostListProviderServiceInstance,
-      mockWriterWrapper, 
+      mockWriterWrapper,
       clientWrapper_undefined
     );
 
@@ -274,7 +305,13 @@ describe("reader write splitting test", () => {
     when(mockPluginService.getCurrentClient()).thenReturn(instance(mockClosedWriterClient));
     when(mockPluginService.getCurrentHostInfo()).thenReturn(writerHost);
 
-    const target = new ReadWriteSplittingPlugin(mockPluginServiceInstance, properties, mockHostListProviderService, mockWriterWrapper, clientWrapper_undefined);
+    const target = new ReadWriteSplittingPlugin(
+      mockPluginServiceInstance,
+      properties,
+      mockHostListProviderService,
+      mockWriterWrapper,
+      clientWrapper_undefined
+    );
 
     await expect(async () => await target.switchClientIfRequired(true)).rejects.toThrow(AwsWrapperError);
     verify(mockPluginService.setCurrentClient(anything(), anything())).never();
@@ -291,7 +328,13 @@ describe("reader write splitting test", () => {
     when(mockPluginService.getDialect()).thenReturn(mockDialect);
     when(mockPluginService.getCurrentHostInfo()).thenReturn(writerHost);
     when(await mockPluginService.isClientValid(mockWriterWrapper)).thenReturn(true);
-    const target = new ReadWriteSplittingPlugin(mockPluginServiceInstance, properties, mockHostListProviderService, mockWriterWrapper, clientWrapper_undefined);
+    const target = new ReadWriteSplittingPlugin(
+      mockPluginServiceInstance,
+      properties,
+      mockHostListProviderService,
+      mockWriterWrapper,
+      clientWrapper_undefined
+    );
 
     await expect(async () => {
       await target.execute("query", mockExecuteFuncThrowsFailoverSuccessError, "test");
@@ -307,7 +350,13 @@ describe("reader write splitting test", () => {
     when(mockPluginService.getCurrentClient()).thenReturn(mockWriterClient);
     when(mockPluginService.getCurrentHostInfo()).thenReturn(writerHost);
 
-    const target = new ReadWriteSplittingPlugin(mockPluginServiceInstance, properties, mockHostListProviderService, clientWrapper_undefined, clientWrapper_undefined);
+    const target = new ReadWriteSplittingPlugin(
+      mockPluginServiceInstance,
+      properties,
+      mockHostListProviderService,
+      clientWrapper_undefined,
+      clientWrapper_undefined
+    );
 
     const suggestion = target.notifyConnectionChanged(mockChanges);
     expect(suggestion).toEqual(OldConnectionSuggestionAction.NO_OPINION);
@@ -321,7 +370,13 @@ describe("reader write splitting test", () => {
     when(mockPluginService.getCurrentHostInfo()).thenReturn(writerHost);
     when(mockPluginService.acceptsStrategy(anything(), anything())).thenReturn(true);
 
-    const target = new ReadWriteSplittingPlugin(mockPluginServiceInstance, properties, mockHostListProviderService, mockWriterWrapper, clientWrapper_undefined);
+    const target = new ReadWriteSplittingPlugin(
+      mockPluginServiceInstance,
+      properties,
+      mockHostListProviderService,
+      mockWriterWrapper,
+      clientWrapper_undefined
+    );
 
     await target.connect(writerHost, properties, false, mockConnectFunc);
 
@@ -337,7 +392,13 @@ describe("reader write splitting test", () => {
     when(mockPluginService.acceptsStrategy(anything(), anything())).thenReturn(true);
     when(mockHostListProviderService.isStaticHostListProvider()).thenReturn(false);
 
-    const target = new ReadWriteSplittingPlugin(mockPluginServiceInstance, properties, mockHostListProviderServiceInstance, clientWrapper_undefined, clientWrapper_undefined);
+    const target = new ReadWriteSplittingPlugin(
+      mockPluginServiceInstance,
+      properties,
+      mockHostListProviderServiceInstance,
+      clientWrapper_undefined,
+      clientWrapper_undefined
+    );
 
     await expect(async () => await target.connect(writerHost, properties, true, mockConnectFunc)).rejects.toThrow(AwsWrapperError);
     verify(mockHostListProviderService.setInitialConnectionHostInfo(anything())).never();

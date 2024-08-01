@@ -29,7 +29,7 @@ import { lookup } from "dns";
 import { PluginService } from "./plugin_service";
 import { logger } from "../logutils";
 import { maskProperties } from "./utils/utils";
-import { ClientWrapper } from "./client_wrapper"
+import { ClientWrapper } from "./client_wrapper";
 
 export class DriverConnectionProvider implements ConnectionProvider {
   private static readonly acceptedStrategies: Map<string, HostSelector> = new Map([[RandomHostSelector.STRATEGY_NAME, new RandomHostSelector()]]);
@@ -45,7 +45,7 @@ export class DriverConnectionProvider implements ConnectionProvider {
 
   async connect(hostInfo: HostInfo, pluginService: PluginService, props: Map<string, any>): Promise<ClientWrapper> {
     let resultTargetClient;
-    let connectionHostInfo : HostInfo;
+    let connectionHostInfo: HostInfo;
 
     try {
       const targetClient: any = pluginService.createTargetClient(props);
@@ -86,7 +86,7 @@ export class DriverConnectionProvider implements ConnectionProvider {
       // Green node DNS doesn't exist. Try to replace it with corresponding node name and connect again.
       const originalHost: string = hostInfo.host;
       const fixedHost: string = this.rdsUtils.removeGreenInstancePrefix(hostInfo.host);
-      props.set(WrapperProperties.HOST.name, fixedHost);  // TODO review - this changes the original properties object passed through connect chain, should a copy be used instead?
+      props.set(WrapperProperties.HOST.name, fixedHost); // TODO review - this changes the original properties object passed through connect chain, should a copy be used instead?
       connectionHostInfo = new HostInfoBuilder({
         hostAvailabilityStrategy: hostInfo.hostAvailabilityStrategy
       })
@@ -115,11 +115,11 @@ export class DriverConnectionProvider implements ConnectionProvider {
       await pluginService.tryClosingTargetClient();
     }
 
-    const result : ClientWrapper = {
-      client : resultTargetClient,
-      hostInfo : connectionHostInfo,
-      properties : new Map<string, any>(props)
-    }
+    const result: ClientWrapper = {
+      client: resultTargetClient,
+      hostInfo: connectionHostInfo,
+      properties: new Map<string, any>(props)
+    };
     return result;
   }
 

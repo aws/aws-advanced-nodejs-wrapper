@@ -21,4 +21,3 @@ export interface ClientWrapper {
   readonly hostInfo: HostInfo;
   readonly properties: Map<string, any>;
 }
-

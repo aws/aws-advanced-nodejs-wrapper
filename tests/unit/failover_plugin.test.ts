@@ -36,7 +36,7 @@ import { AwsMySQLClient } from "../../mysql/lib";
 import { anything, instance, mock, reset, resetCalls, spy, verify, when } from "ts-mockito";
 import { Messages } from "../../common/lib/utils/messages";
 import { HostChangeOptions } from "../../common/lib/host_change_options";
-import { ClientWrapper } from "../../common/lib/client_wrapper"
+import { ClientWrapper } from "../../common/lib/client_wrapper";
 
 const builder = new HostInfoBuilder({ hostAvailabilityStrategy: new SimpleHostAvailabilityStrategy() });
 
@@ -52,10 +52,11 @@ const mockWriterFailoverHandler: ClusterAwareWriterFailoverHandler = mock(Cluste
 const mockReaderResult: ReaderFailoverResult = mock(ReaderFailoverResult);
 const mockWriterResult: WriterFailoverResult = mock(WriterFailoverResult);
 
-const mockClientWrapper: ClientWrapper = { 
-  client : undefined,
-  hostInfo : mockHostInfo,
-  properties : new Map<string, any>()}
+const mockClientWrapper: ClientWrapper = {
+  client: undefined,
+  hostInfo: mockHostInfo,
+  properties: new Map<string, any>()
+};
 
 const properties: Map<string, any> = new Map();
 

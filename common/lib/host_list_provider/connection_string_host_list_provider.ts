@@ -24,7 +24,7 @@ import { ConnectionUrlParser } from "../utils/connection_url_parser";
 import { Messages } from "../utils/messages";
 import { WrapperProperties } from "../wrapper_property";
 import { StaticHostListProvider } from "./host_list_provider";
-import { ClientWrapper } from "../client_wrapper"
+import { ClientWrapper } from "../client_wrapper";
 
 export class ConnectionStringHostListProvider implements StaticHostListProvider {
   hostList: HostInfo[] = [];
@@ -68,7 +68,7 @@ export class ConnectionStringHostListProvider implements StaticHostListProvider 
 
   refresh(): Promise<HostInfo[]>;
   refresh(client: ClientWrapper): Promise<HostInfo[]>;
-  refresh(client?: ClientWrapper): Promise<HostInfo[]> 
+  refresh(client?: ClientWrapper): Promise<HostInfo[]>;
   refresh(client?: ClientWrapper | undefined): Promise<HostInfo[]> {
     this.init();
     if (client === undefined) {

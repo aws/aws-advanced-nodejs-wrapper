@@ -13,9 +13,10 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 */
+
 import { HostListProvider } from "../host_list_provider/host_list_provider";
 import { HostListProviderService } from "../host_list_provider_service";
-import { ClientWrapper } from "../client_wrapper"
+import { ClientWrapper } from "../client_wrapper";
 
 export enum DatabaseType {
   MYSQL,

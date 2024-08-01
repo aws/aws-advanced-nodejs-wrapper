@@ -107,7 +107,12 @@ export class ReadWriteSplittingPlugin extends AbstractConnectionPlugin {
     }
   }
 
-  override async connect<T>(hostInfo: HostInfo, props: Map<string, any>, isInitialConnection: boolean, connectFunc: () => Promise<ClientWrapper>): Promise<ClientWrapper> {
+  override async connect<T>(
+    hostInfo: HostInfo,
+    props: Map<string, any>,
+    isInitialConnection: boolean,
+    connectFunc: () => Promise<ClientWrapper>
+  ): Promise<ClientWrapper> {
     if (!this.pluginService.acceptsStrategy(hostInfo.role, this.readerSelectorStrategy)) {
       const message: string = Messages.get("ReadWriteSplittingPlugin.unsupportedHostSelectorStrategy", this.readerSelectorStrategy);
       this.logAndThrowError(message);
@@ -115,14 +120,16 @@ export class ReadWriteSplittingPlugin extends AbstractConnectionPlugin {
     return await this.connectInternal(isInitialConnection, connectFunc);
   }
 
-  forceConnect<T>(hostInfo: HostInfo, props: Map<string, any>, isInitialConnection: boolean, forceConnectFunc: () => Promise<ClientWrapper>): Promise<ClientWrapper> {
+  forceConnect<T>(
+    hostInfo: HostInfo,
+    props: Map<string, any>,
+    isInitialConnection: boolean,
+    forceConnectFunc: () => Promise<ClientWrapper>
+  ): Promise<ClientWrapper> {
     return this.connectInternal(isInitialConnection, forceConnectFunc);
   }
 
-  private async connectInternal<T>(
-    isInitialConnection: boolean,
-    connectFunc: () => Promise<ClientWrapper>
-  ): Promise<ClientWrapper> {
+  private async connectInternal<T>(isInitialConnection: boolean, connectFunc: () => Promise<ClientWrapper>): Promise<ClientWrapper> {
     const result = await connectFunc();
     if (!isInitialConnection || this._hostListProviderService?.isStaticHostListProvider()) {
       return result;

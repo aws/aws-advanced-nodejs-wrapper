@@ -22,7 +22,7 @@ import { AwsClient } from "../../../common/lib/aws_client";
 import { HostInfo } from "../../../common/lib/host_info";
 import { TopologyAwareDatabaseDialect } from "../../../common/lib/topology_aware_database_dialect";
 import { HostRole } from "../../../common/lib/host_role";
-import { ClientWrapper } from "../../../common/lib/client_wrapper"
+import { ClientWrapper } from "../../../common/lib/client_wrapper";
 
 export class AuroraMySQLDatabaseDialect extends MySQLDatabaseDialect implements TopologyAwareDatabaseDialect {
   private static readonly TOPOLOGY_QUERY: string =

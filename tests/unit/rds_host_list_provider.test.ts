@@ -28,7 +28,7 @@ import { AwsWrapperError } from "../../common/lib/utils/errors";
 import { sleep } from "../../common/lib/utils/utils";
 import { HostRole } from "../../common/lib/host_role";
 import { AuroraPgDatabaseDialect } from "../../pg/lib/dialect/aurora_pg_database_dialect";
-import { ClientWrapper } from "../../common/lib/client_wrapper"
+import { ClientWrapper } from "../../common/lib/client_wrapper";
 
 const mockClient: AwsClient = mock(AwsPGClient);
 const mockDialect: AuroraPgDatabaseDialect = mock(AuroraPgDatabaseDialect);
@@ -53,10 +53,11 @@ const currentHostInfo = new HostInfoBuilder({
   hostAvailabilityStrategy: new SimpleHostAvailabilityStrategy()
 }).build();
 
-const clientWrapper: ClientWrapper = { 
-  client : undefined,
-  hostInfo : currentHostInfo,
-  properties : new Map<string, any>()}
+const clientWrapper: ClientWrapper = {
+  client: undefined,
+  hostInfo: currentHostInfo,
+  properties: new Map<string, any>()
+};
 
 const mockClientWrapper: ClientWrapper = mock(clientWrapper);
 

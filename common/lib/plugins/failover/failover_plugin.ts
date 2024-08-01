@@ -274,7 +274,12 @@ export class FailoverPlugin extends AbstractConnectionPlugin {
     }
   }
 
-  async connectInternal<Type>(hostInfo: HostInfo, props: Map<string, any>, isInitialConnection: boolean, connectFunc: () => Promise<ClientWrapper>): Promise<ClientWrapper> {
+  async connectInternal<Type>(
+    hostInfo: HostInfo,
+    props: Map<string, any>,
+    isInitialConnection: boolean,
+    connectFunc: () => Promise<ClientWrapper>
+  ): Promise<ClientWrapper> {
     if (!this.hostListProviderService) {
       throw new AwsWrapperError("Host list provider service not found."); // this should not be reached
     }
@@ -282,13 +287,13 @@ export class FailoverPlugin extends AbstractConnectionPlugin {
     // TODO review: does the logic in the _staleDnsHelper.getVerifiedConnection need to happen during connect?
     // Probably it should only happen during execute, the first time when actual failover is needed.
     // This will make the connect faster, and if failover is not needed (should be the most common scenario)
-    // the logic would never be necessary. 
-    // Note however, that there is one clause there 
-    // if (this.writerHostAddress !== clusterInetAddress) 
+    // the logic would never be necessary.
+    // Note however, that there is one clause there
+    // if (this.writerHostAddress !== clusterInetAddress)
     // that triggers a new connection chain, in which case this maybe needed during connection
     // but that case should re-thought perhaps.
 
-    // Moreover, internally it calls refreshHostList which is also called in the internalPostConnect() function 
+    // Moreover, internally it calls refreshHostList which is also called in the internalPostConnect() function
     // of the AwsClient class when the connect chain is finished. Maybe the call could be refactored such that no need to call it
     // multiple times during the connect chain execution.
     const targetClient = await this._staleDnsHelper.getVerifiedConnection(

@@ -17,7 +17,7 @@
 import { HostRole } from "./host_role";
 import { HostInfo } from "./host_info";
 import { PluginService } from "./plugin_service";
-import { ClientWrapper } from "./client_wrapper"
+import { ClientWrapper } from "./client_wrapper";
 
 export interface ConnectionProvider {
   connect(hostInfo: HostInfo, pluginService: PluginService, props: Map<string, any>): Promise<ClientWrapper>;

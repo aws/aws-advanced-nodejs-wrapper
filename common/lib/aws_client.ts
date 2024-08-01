@@ -41,7 +41,7 @@ export abstract class AwsClient extends EventEmitter {
   protected _connectionUrlParser: ConnectionUrlParser;
   readonly properties: Map<string, any>;
   config: any;
-  targetClient? : ClientWrapper; 
+  targetClient?: ClientWrapper;
 
   protected constructor(
     config: any,

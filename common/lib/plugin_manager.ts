@@ -25,7 +25,7 @@ import { HostChangeOptions } from "./host_change_options";
 import { OldConnectionSuggestionAction } from "./old_connection_suggestion_action";
 import { HostRole } from "./host_role";
 import { ConnectionProvider } from "./connection_provider";
-import { ClientWrapper } from "./client_wrapper"
+import { ClientWrapper } from "./client_wrapper";
 
 type PluginFunc<T> = (plugin: ConnectionPlugin, targetFunc: () => Promise<T>) => Promise<T>;
 
