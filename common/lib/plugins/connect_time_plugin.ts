@@ -19,6 +19,7 @@ import { logger } from "../../logutils";
 import { HostInfo } from "../host_info";
 import { getTimeInNanos } from "../utils/utils";
 import { Messages } from "../utils/messages";
+import { ClientWrapper } from "../client_wrapper";
 
 export class ConnectTimePlugin extends AbstractConnectionPlugin {
   private static readonly subscribedMethods: Set<string> = new Set<string>(["connect", "forceConnect"]);
@@ -32,8 +33,8 @@ export class ConnectTimePlugin extends AbstractConnectionPlugin {
     hostInfo: HostInfo,
     props: Map<string, any>,
     isInitialConnection: boolean,
-    connectFunc: () => Promise<T>
-  ): Promise<T> {
+    connectFunc: () => Promise<ClientWrapper>
+  ): Promise<ClientWrapper> {
     const startTime = getTimeInNanos();
 
     const result = await connectFunc();
@@ -48,8 +49,8 @@ export class ConnectTimePlugin extends AbstractConnectionPlugin {
     hostInfo: HostInfo,
     props: Map<string, any>,
     isInitialConnection: boolean,
-    forceConnectFunc: () => Promise<T>
-  ): Promise<T> {
+    forceConnectFunc: () => Promise<ClientWrapper>
+  ): Promise<ClientWrapper> {
     const startTime = getTimeInNanos();
 
     const result = await forceConnectFunc();

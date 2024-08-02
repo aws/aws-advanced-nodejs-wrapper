@@ -28,6 +28,7 @@ import { RdsMySQLDatabaseDialect } from "./dialect/rds_mysql_database_dialect";
 import { TransactionIsolationLevel } from "../../common/lib/utils/transaction_isolation_level";
 import { AwsWrapperError, UnsupportedMethodError } from "../../common/lib/utils/errors";
 import { Messages } from "../../common/lib/utils/messages";
+import { ClientWrapper } from "../../common/lib/client_wrapper";
 
 export class AwsMySQLClient extends AwsClient {
   private static readonly knownDialectsByCode: Map<string, DatabaseDialect> = new Map([
@@ -38,7 +39,6 @@ export class AwsMySQLClient extends AwsClient {
 
   constructor(config: any) {
     super(config, new MySQLErrorHandler(), DatabaseType.MYSQL, AwsMySQLClient.knownDialectsByCode, new MySQLConnectionUrlParser());
-    this.config = config;
     this._createClientFunc = (config: any) => {
       return createConnection(WrapperProperties.removeWrapperProperties(config));
     };
@@ -51,11 +51,8 @@ export class AwsMySQLClient extends AwsClient {
     if (hostInfo == null) {
       throw new AwsWrapperError("HostInfo was not provided.");
     }
-    const conn: any = await this.pluginManager.connect(hostInfo, this.properties, true);
-    await this.pluginService.setCurrentClient(conn, hostInfo);
-    // TODO review the this.isConnected  usage. Perhaps we don't need this variable at all.
-    // This could be determined based on the state of _targetClient, e.g. is it set or not.
-    this.isConnected = true;
+    const result: ClientWrapper = await this.pluginManager.connect(hostInfo, this.properties, true);
+    await this.pluginService.setCurrentClient(result, result.hostInfo);
     await this.internalPostConnect();
     return;
   }
@@ -65,7 +62,7 @@ export class AwsMySQLClient extends AwsClient {
       await this.connect(); // client.connect is not required for MySQL clients
       this.isConnected = true;
     }
-    return this.targetClient.promise().query({ sql: sql });
+    return this.targetClient?.client.promise().query({ sql: sql });
   }
 
   async query(options: QueryOptions, callback?: any): Promise<Query> {
@@ -80,7 +77,7 @@ export class AwsMySQLClient extends AwsClient {
       "query",
       async () => {
         await this.pluginService.updateState(options.sql);
-        return await this.targetClient.promise().query(options, callback);
+        return await this.targetClient?.client?.promise().query(options, callback);
       },
       options
     );
@@ -196,7 +193,7 @@ export class AwsMySQLClient extends AwsClient {
       this.properties,
       "end",
       () => {
-        return this.targetClient.promise().end();
+        return this.targetClient?.client?.promise().end();
       },
       null
     );
@@ -209,7 +206,7 @@ export class AwsMySQLClient extends AwsClient {
       "rollback",
       () => {
         this.pluginService.updateInTransaction("rollback");
-        return this.targetClient.promise().rollback();
+        return this.targetClient?.client?.promise().rollback();
       },
       null
     );

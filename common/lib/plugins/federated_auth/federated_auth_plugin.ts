@@ -26,6 +26,7 @@ import { Messages } from "../../utils/messages";
 import { CredentialsProviderFactory } from "./credentials_provider_factory";
 import { ConnectionPluginFactory } from "../../plugin_factory";
 import { SamlUtils } from "../../utils/saml_utils";
+import { ClientWrapper } from "../../client_wrapper";
 
 export class FederatedAuthPlugin extends AbstractConnectionPlugin {
   protected static readonly tokenCache = new Map<string, TokenInfo>();
@@ -44,15 +45,25 @@ export class FederatedAuthPlugin extends AbstractConnectionPlugin {
     this.pluginService = pluginService;
   }
 
-  connect<T>(hostInfo: HostInfo, props: Map<string, any>, isInitialConnection: boolean, connectFunc: () => Promise<T>): Promise<T> {
+  connect<T>(
+    hostInfo: HostInfo,
+    props: Map<string, any>,
+    isInitialConnection: boolean,
+    connectFunc: () => Promise<ClientWrapper>
+  ): Promise<ClientWrapper> {
     return this.connectInternal(hostInfo, props, connectFunc);
   }
 
-  forceConnect<T>(hostInfo: HostInfo, props: Map<string, any>, isInitialConnection: boolean, forceConnectFunc: () => Promise<T>): Promise<T> {
+  forceConnect<T>(
+    hostInfo: HostInfo,
+    props: Map<string, any>,
+    isInitialConnection: boolean,
+    forceConnectFunc: () => Promise<ClientWrapper>
+  ): Promise<ClientWrapper> {
     return this.connectInternal(hostInfo, props, forceConnectFunc);
   }
 
-  async connectInternal<T>(hostInfo: HostInfo, props: Map<string, any>, connectFunc: () => Promise<T>): Promise<T> {
+  async connectInternal<T>(hostInfo: HostInfo, props: Map<string, any>, connectFunc: () => Promise<ClientWrapper>): Promise<ClientWrapper> {
     SamlUtils.checkIdpCredentialsWithFallback(props);
 
     const host = IamAuthUtils.getIamHost(props, hostInfo);

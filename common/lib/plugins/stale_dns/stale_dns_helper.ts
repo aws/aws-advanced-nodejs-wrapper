@@ -25,6 +25,8 @@ import { LookupAddress, lookup } from "dns";
 import { promisify } from "util";
 import { AwsWrapperError } from "../../utils/errors";
 import { HostChangeOptions } from "../../host_change_options";
+import { WrapperProperties } from "../../wrapper_property";
+import { ClientWrapper } from "../../client_wrapper";
 
 export class StaleDnsHelper {
   private readonly pluginService: PluginService;
@@ -36,16 +38,14 @@ export class StaleDnsHelper {
     this.pluginService = pluginService;
   }
 
-  // TODO review changes/implementation
-  // Note important difference!!! This function was calling pluginService.setCurrentClient. Now it just returns the connection/target client
   // Follow the returns and throws
   async getVerifiedConnection<Type>(
     host: string,
     isInitialConnection: boolean,
     hostListProviderService: HostListProviderService,
     props: Map<string, any>,
-    connectFunc: () => Type
-  ): Promise<Type> {
+    connectFunc: () => Promise<ClientWrapper>
+  ): Promise<ClientWrapper> {
     if (!this.rdsUtils.isWriterClusterDns(host)) {
       return connectFunc();
     }
@@ -126,15 +126,14 @@ export class StaleDnsHelper {
 
       let targetClient;
       try {
-        // Just note, the call below will trigger the plugin chain again and will invoke this function from top  todo: delete this comment later.
-        targetClient = await this.pluginService.connect(this.writerHostInfo, props);
+        // TODO review: the call below will start a new plugin chain again and will invoke this function from top. Hopefully, no infinite recursion.
+        // Moreover, upon returning from this function here, the original plugin chain will continue. Depending on the plugins and their implementation
+        // would that have an effect?
+        const newProps = new Map<string, any>(props);
+        newProps.set(WrapperProperties.HOST.name, this.writerHostInfo.host);
+        targetClient = await this.pluginService.connect(this.writerHostInfo, newProps);
         await this.pluginService.tryClosingTargetClient(currentTargetClient);
-        //await this.pluginService.setCurrentClient(targetClient, this.writerHostInfo);
 
-        // TODO review: Since we're not calling the pluginService.setCurrentClient here any more, just returning new targetClient
-        // the pluginService.setCurrentClient is called later. However! The pluginService.setCurrentClient takes the HostInfo as parameter
-        // and sets this._currentHostInfo = hostInfo; internally.
-        // This means that the this.writerHostInfo would not be properly set later because we're not returning it, thus loosing the correct hostInfo information?
         if (isInitialConnection) {
           hostListProviderService.setInitialConnectionHostInfo(this.writerHostInfo);
         }

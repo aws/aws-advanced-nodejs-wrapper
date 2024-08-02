@@ -338,11 +338,6 @@ class ConnectionAttemptTask {
     }
   }
 
-  // TODO review
-  // We probably don't need the class member this.targetClient
-  // it is only created in async call() above and if successful passed to
-  // ReaderFailoverResult and eventually may get it's way to pluginService.setCurrentClient
-  // In this case we should not be clearing it here. And again don't need to store it in class member.
   async performFinalCleanup() {
     if (this.selectedTask !== this.taskId) {
       await this.pluginService.tryClosingTargetClient(this.targetClient);

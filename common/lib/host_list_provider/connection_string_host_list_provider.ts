@@ -24,6 +24,7 @@ import { ConnectionUrlParser } from "../utils/connection_url_parser";
 import { Messages } from "../utils/messages";
 import { WrapperProperties } from "../wrapper_property";
 import { StaticHostListProvider } from "./host_list_provider";
+import { ClientWrapper } from "../client_wrapper";
 
 export class ConnectionStringHostListProvider implements StaticHostListProvider {
   hostList: HostInfo[] = [];
@@ -66,23 +67,30 @@ export class ConnectionStringHostListProvider implements StaticHostListProvider 
   }
 
   refresh(): Promise<HostInfo[]>;
-  refresh(client: AwsClient): Promise<HostInfo[]>;
-  refresh(client?: AwsClient): Promise<HostInfo[]> {
+  refresh(client: ClientWrapper): Promise<HostInfo[]>;
+  refresh(client?: ClientWrapper): Promise<HostInfo[]>;
+  refresh(client?: ClientWrapper | undefined): Promise<HostInfo[]> {
     this.init();
     if (client === undefined) {
       return Promise.resolve(this.hostList);
     }
-    return this.refresh();
+    //return this.refresh();
+    // TODO review. More work needed here?
+    // the above commented out call to this.refresh() would result in infinite recursion.
+    return Promise.resolve(this.hostList);
   }
 
   forceRefresh(): Promise<HostInfo[]>;
-  forceRefresh(client: AwsClient): Promise<HostInfo[]>;
-  forceRefresh(client?: AwsClient): Promise<HostInfo[]> {
+  forceRefresh(client: ClientWrapper): Promise<HostInfo[]>;
+  forceRefresh(client?: ClientWrapper): Promise<HostInfo[]> {
     this.init();
     if (client === undefined) {
       return Promise.resolve(this.hostList);
     }
-    return this.forceRefresh();
+    //return this.forceRefresh();
+    // TODO review. More work needed here?
+    // the above commented out call to this.forceRefresh() would result in infinite recursion.
+    return Promise.resolve(this.hostList);
   }
 
   getHostRole(client: AwsClient): Promise<HostRole> {
@@ -90,8 +98,11 @@ export class ConnectionStringHostListProvider implements StaticHostListProvider 
   }
 
   async identifyConnection(client: AwsClient): Promise<HostInfo | void | null> {
-    const instance = await this.hostListProviderService.getDialect().getHostAliasAndParseResults(client);
-    const topology = await this.refresh(client);
+    if (!client.targetClient) {
+      return null;
+    }
+    const instance = await this.hostListProviderService.getDialect().getHostAliasAndParseResults(client.targetClient);
+    const topology = await this.refresh(client.targetClient);
     if (!topology || topology.length == 0) {
       return null;
     }

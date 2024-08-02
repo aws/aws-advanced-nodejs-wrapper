@@ -16,6 +16,7 @@
 
 import { MySQLDatabaseDialect } from "./mysql_database_dialect";
 import { DatabaseDialectCodes } from "../../../common/lib/database_dialect/database_dialect_codes";
+import { ClientWrapper } from "../../../common/lib/client_wrapper";
 
 export class RdsMySQLDatabaseDialect extends MySQLDatabaseDialect {
   constructor() {
@@ -27,7 +28,7 @@ export class RdsMySQLDatabaseDialect extends MySQLDatabaseDialect {
     return [DatabaseDialectCodes.AURORA_MYSQL];
   }
 
-  async isDialect(targetClient: any): Promise<boolean> {
+  async isDialect(targetClient: ClientWrapper): Promise<boolean> {
     if (await super.isDialect(targetClient)) {
       // MysqlDialect and RdsMysqlDialect use the same server version query to determine the dialect.
       // The `SHOW VARIABLES LIKE 'version_comment'` either outputs
@@ -42,7 +43,7 @@ export class RdsMySQLDatabaseDialect extends MySQLDatabaseDialect {
       return false;
     }
 
-    return await targetClient
+    return await targetClient.client
       .promise()
       .query(this.getServerVersionQuery())
       .then(([rows]: any) => {

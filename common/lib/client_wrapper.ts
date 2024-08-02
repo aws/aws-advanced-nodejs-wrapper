@@ -15,15 +15,9 @@
 */
 
 import { HostInfo } from "./host_info";
-import { AwsClient } from "./aws_client";
-import { HostListProvider } from "./host_list_provider/host_list_provider";
-import { HostRole } from "./host_role";
-import { ClientWrapper } from "./client_wrapper";
 
-export interface TopologyAwareDatabaseDialect {
-  queryForTopology(client: ClientWrapper, hostListProvider: HostListProvider): Promise<HostInfo[]>;
-
-  identifyConnection(client: AwsClient, props: Map<string, any>): Promise<string>;
-
-  getHostRole(client: AwsClient, props: Map<string, any>): Promise<HostRole>;
+export interface ClientWrapper {
+  readonly client: any;
+  readonly hostInfo: HostInfo;
+  readonly properties: Map<string, any>;
 }

@@ -22,6 +22,7 @@ import { TopologyAwareDatabaseDialect } from "../../../common/lib/topology_aware
 import { HostInfo } from "../../../common/lib/host_info";
 import { AwsClient } from "../../../common/lib/aws_client";
 import { HostRole } from "../../../common/lib/host_role";
+import { ClientWrapper } from "../../../common/lib/client_wrapper";
 
 export class AuroraPgDatabaseDialect extends PgDatabaseDialect implements TopologyAwareDatabaseDialect {
   private static readonly TOPOLOGY_QUERY: string =
@@ -45,8 +46,8 @@ export class AuroraPgDatabaseDialect extends PgDatabaseDialect implements Topolo
     return new RdsHostListProvider(props, originalUrl, hostListProviderService);
   }
 
-  async queryForTopology(targetClient: any, hostListProvider: HostListProvider): Promise<HostInfo[]> {
-    const res = await targetClient.query(AuroraPgDatabaseDialect.TOPOLOGY_QUERY);
+  async queryForTopology(targetClient: ClientWrapper, hostListProvider: HostListProvider): Promise<HostInfo[]> {
+    const res = await targetClient.client.query(AuroraPgDatabaseDialect.TOPOLOGY_QUERY);
     const hosts: HostInfo[] = [];
     const rows: any[] = res.rows;
     rows.forEach((row) => {
@@ -73,12 +74,12 @@ export class AuroraPgDatabaseDialect extends PgDatabaseDialect implements Topolo
     return Promise.resolve(res.rows[0]["is_reader"] === "true" ? HostRole.READER : HostRole.WRITER);
   }
 
-  async isDialect(targetClient: any): Promise<boolean> {
+  async isDialect(targetClient: ClientWrapper): Promise<boolean> {
     if (!(await super.isDialect(targetClient))) {
       return false;
     }
 
-    return await targetClient
+    return await targetClient.client
       .query(AuroraPgDatabaseDialect.EXTENSIONS_SQL)
       .then((result: any) => {
         return result.rows[0]["aurora_stat_utils"];
