@@ -115,12 +115,11 @@ export class DriverConnectionProvider implements ConnectionProvider {
       await pluginService.tryClosingTargetClient();
     }
 
-    const result: ClientWrapper = {
+    return {
       client: resultTargetClient,
       hostInfo: connectionHostInfo,
       properties: new Map<string, any>(props)
     };
-    return result;
   }
 
   getHostInfoByStrategy(hosts: HostInfo[], role: HostRole, strategy: string, props?: Map<string, any>): HostInfo {

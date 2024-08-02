@@ -98,6 +98,7 @@ export class DefaultPlugin extends AbstractConnectionPlugin {
   private async connectInternal(hostInfo: HostInfo, props: Map<string, any>, connProvider: ConnectionProvider): Promise<ClientWrapper> {
     const result = await connProvider.connect(hostInfo, this.pluginService, props);
     this.pluginService.setAvailability(hostInfo.allAliases, HostAvailability.AVAILABLE);
+    await this.pluginService.updateDialect(result);
     return result;
   }
 
