@@ -129,7 +129,6 @@ describe("reader write splitting test", () => {
     when(mockPluginService.getCurrentHostInfo()).thenReturn(readerHost1);
     when(mockPluginService.getDialect()).thenReturn(mockDialect);
     when(mockDialect.getConnectFunc(anything())).thenReturn(() => Promise.resolve());
-    //when(mockPluginService.connect(anything(), anything())).thenReturn(mockWriterClient);
     when(mockPluginService.connect(anything(), anything())).thenResolve(mockWriterWrapper);
 
     const target = new ReadWriteSplittingPlugin(
