@@ -76,7 +76,7 @@ export class AuroraInitialConnectionStrategyPlugin extends AbstractConnectionPlu
       const writerCandidateClient = await this.getVerifiedWriterClient(props, isInitialConnection, connectFunc);
       if (writerCandidateClient === null) {
         // Can't get writer connection. Continue with a normal workflow.
-        logger.debug("Couldn't get writer.");
+        logger.debug("Couldn't get writer from Initial Connection Strategy Plugin.");
         return connectFunc();
       }
       return writerCandidateClient;
@@ -86,7 +86,7 @@ export class AuroraInitialConnectionStrategyPlugin extends AbstractConnectionPlu
       const readerCandidateClient = await this.getVerifiedReaderClient(props, isInitialConnection, connectFunc);
       if (readerCandidateClient === null) {
         // Can't get a reader connection. Continue with a normal workflow.
-        logger.debug("Couldn't get reader.");
+        logger.debug("Couldn't get reader from Initial Connection Strategy Plugin.");
         return connectFunc();
       }
       return readerCandidateClient;
@@ -102,7 +102,7 @@ export class AuroraInitialConnectionStrategyPlugin extends AbstractConnectionPlu
     const retryDelayMs = WrapperProperties.OPEN_CONNECTION_RETRY_INTERVAL_MS.get(props);
 
     const endTimeMillis = Date.now() + WrapperProperties.OPEN_CONNECTION_RETRY_TIMEOUT_MS.get(props);
-    let writerCandidateClient: any | null;
+    let writerCandidateClient: any;
     let writerCandidate: void | HostInfo | null;
 
     while (Date.now() < endTimeMillis) {
@@ -121,7 +121,7 @@ export class AuroraInitialConnectionStrategyPlugin extends AbstractConnectionPlu
           if (writerCandidate) {
             if (writerCandidateClient.role !== HostRole.WRITER) {
               // Shouldn't be here. But let's try again.
-              await this.closeClient(writerCandidateClient);
+              await this.pluginService.tryClosingTargetClient(writerCandidateClient);
               await sleep(retryDelayMs);
               continue;
             }
@@ -132,13 +132,13 @@ export class AuroraInitialConnectionStrategyPlugin extends AbstractConnectionPlu
           }
           return writerCandidateClient;
         }
-        writerCandidateClient = this.pluginService.connect(writerCandidate, props);
+        writerCandidateClient = await this.pluginService.connect(writerCandidate, props);
 
         if ((await this.pluginService.getHostRole(writerCandidateClient)) !== HostRole.WRITER) {
           // If the new connection resolves to a reader instance, this means the topology is outdated.
           // Force refresh to update the topology.
           await this.pluginService.forceRefreshHostList(writerCandidateClient);
-          await this.closeClient(writerCandidateClient);
+          await this.pluginService.tryClosingTargetClient(writerCandidateClient);
           await sleep(retryDelayMs);
           continue;
         }
@@ -149,15 +149,14 @@ export class AuroraInitialConnectionStrategyPlugin extends AbstractConnectionPlu
         }
         return writerCandidateClient;
       } catch (error: any) {
+        await this.pluginService.tryClosingTargetClient(writerCandidateClient);
         if (error instanceof AwsWrapperError) {
-          await this.closeClient(writerCandidateClient);
           if (this.pluginService.isLoginError(error)) {
             throw error;
           } else if (writerCandidate) {
             this.pluginService.setAvailability(writerCandidate.allAliases, HostAvailability.NOT_AVAILABLE);
           }
         } else {
-          await this.closeClient(writerCandidateClient);
           throw error;
         }
       }
@@ -172,7 +171,7 @@ export class AuroraInitialConnectionStrategyPlugin extends AbstractConnectionPlu
     const retryDelayMs = WrapperProperties.OPEN_CONNECTION_RETRY_INTERVAL_MS.get(props);
     const endTimeMs = Date.now() + WrapperProperties.OPEN_CONNECTION_RETRY_TIMEOUT_MS.get(props);
 
-    let readerCandidateClient: any | null;
+    let readerCandidateClient: any;
     let readerCandidate: void | HostInfo | null;
 
     while (Date.now() < endTimeMs) {
@@ -200,7 +199,7 @@ export class AuroraInitialConnectionStrategyPlugin extends AbstractConnectionPlu
                 }
                 return readerCandidateClient;
               }
-              await this.closeClient(readerCandidateClient);
+              await this.pluginService.tryClosingTargetClient(readerCandidateClient);
               await sleep(retryDelayMs);
               continue;
             }
@@ -214,7 +213,7 @@ export class AuroraInitialConnectionStrategyPlugin extends AbstractConnectionPlu
           }
           return readerCandidateClient;
         }
-        readerCandidateClient = this.pluginService.connect(readerCandidate, props);
+        readerCandidateClient = await this.pluginService.connect(readerCandidate, props);
 
         if ((await this.pluginService.getHostRole(readerCandidateClient)) !== HostRole.READER) {
           // If the new connection resolves to a writer instance, this means the topology is outdated.
@@ -229,7 +228,7 @@ export class AuroraInitialConnectionStrategyPlugin extends AbstractConnectionPlu
             }
             return readerCandidateClient;
           }
-          await this.closeClient(readerCandidateClient);
+          await this.pluginService.tryClosingTargetClient(readerCandidateClient);
           await sleep(retryDelayMs);
           continue;
         }
@@ -239,15 +238,14 @@ export class AuroraInitialConnectionStrategyPlugin extends AbstractConnectionPlu
         }
         return readerCandidateClient;
       } catch (error: any) {
+        await this.pluginService.tryClosingTargetClient(readerCandidateClient);
         if (error instanceof AwsWrapperError) {
-          await this.closeClient(readerCandidateClient);
           if (this.pluginService.isLoginError(error)) {
             throw error;
           } else if (readerCandidate) {
             this.pluginService.setAvailability(readerCandidate.allAliases, HostAvailability.NOT_AVAILABLE);
           }
         } else {
-          await this.closeClient(readerCandidateClient);
           throw error;
         }
       }
@@ -261,16 +259,6 @@ export class AuroraInitialConnectionStrategyPlugin extends AbstractConnectionPlu
       }
     }
     return null;
-  }
-
-  private async closeClient(client: any) {
-    if (client !== null) {
-      try {
-        await client.end();
-      } catch (error: any) {
-        // ignore
-      }
-    }
   }
 
   private getReader(props: Map<string, any>) {
