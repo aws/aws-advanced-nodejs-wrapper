@@ -36,6 +36,7 @@ import { SqlMethodUtils } from "./utils/sql_method_utils";
 import { SessionStateService } from "./session_state_service";
 import { SessionStateServiceImpl } from "./session_state_service_impl";
 import { HostAvailabilityStrategyFactory } from "./host_availability/host_availability_strategy_factory";
+import { ClientWrapper } from "./client_wrapper";
 
 export class PluginService implements ErrorHandler, HostListProviderService {
   private readonly _currentClient: AwsClient;
@@ -140,8 +141,8 @@ export class PluginService implements ErrorHandler, HostListProviderService {
   }
 
   async forceRefreshHostList(): Promise<void>;
-  async forceRefreshHostList(targetClient?: any): Promise<void>;
-  async forceRefreshHostList(targetClient?: any): Promise<void> {
+  async forceRefreshHostList(targetClient: ClientWrapper): Promise<void>;
+  async forceRefreshHostList(targetClient?: ClientWrapper): Promise<void> {
     const updatedHostList = targetClient
       ? await this.getHostListProvider()?.forceRefresh(targetClient)
       : await this.getHostListProvider()?.forceRefresh();
@@ -152,8 +153,8 @@ export class PluginService implements ErrorHandler, HostListProviderService {
   }
 
   async refreshHostList(): Promise<void>;
-  async refreshHostList(targetClient: any): Promise<void>;
-  async refreshHostList(targetClient?: any): Promise<void> {
+  async refreshHostList(targetClient: ClientWrapper): Promise<void>;
+  async refreshHostList(targetClient?: ClientWrapper): Promise<void> {
     const updatedHostList = targetClient ? await this.getHostListProvider()?.refresh(targetClient) : await this.getHostListProvider()?.refresh();
     if (updatedHostList && updatedHostList !== this.hosts) {
       this.updateHostAvailability(updatedHostList);
@@ -252,15 +253,27 @@ export class PluginService implements ErrorHandler, HostListProviderService {
     throw new AwsWrapperError("AwsClient is missing create target client function."); // This should not be reached
   }
 
-  connect<T>(hostInfo: HostInfo, props: Map<string, any>): any {
-    return this.pluginServiceManagerContainer.pluginManager?.connect(hostInfo, props, false);
+  connect<T>(hostInfo: HostInfo, props: Map<string, any>): Promise<ClientWrapper> {
+    if (this.pluginServiceManagerContainer.pluginManager) {
+      return this.pluginServiceManagerContainer.pluginManager.connect(hostInfo, props, false);
+    } else {
+      // TODO: Review how the pluginServiceManagerContainer and it's members are initialized and used
+      // so that such checks are not required throughout the code but only in one place perhaps.
+      throw new AwsWrapperError("Connection Plugin Manager was not detected."); // This should not be reached
+    }
   }
 
-  forceConnect<T>(hostInfo: HostInfo, props: Map<string, any>): any {
-    return this.pluginServiceManagerContainer.pluginManager?.forceConnect(hostInfo, props, false);
+  forceConnect<T>(hostInfo: HostInfo, props: Map<string, any>): Promise<ClientWrapper> {
+    if (this.pluginServiceManagerContainer.pluginManager) {
+      return this.pluginServiceManagerContainer.pluginManager.forceConnect(hostInfo, props, false);
+    } else {
+      // TODO: Review how the pluginServiceManagerContainer and it's members are initialized and used
+      // so that such checks are not required throughout the code but only in one place perhaps.
+      throw new AwsWrapperError("Connection Plugin Manager was not detected."); // This should not be reached
+    }
   }
 
-  async setCurrentClient(newClient: any, hostInfo: HostInfo): Promise<Set<HostChangeOptions>> {
+  async setCurrentClient(newClient: ClientWrapper, hostInfo: HostInfo): Promise<Set<HostChangeOptions>> {
     if (!this.getCurrentClient().targetClient) {
       this.getCurrentClient().targetClient = newClient;
       this._currentHostInfo = hostInfo;
@@ -274,10 +287,13 @@ export class PluginService implements ErrorHandler, HostListProviderService {
       return changes;
     } else {
       if (this._currentHostInfo) {
-        const changes: Set<HostChangeOptions> = this.compare(this._currentHostInfo, hostInfo);
+        const changes: Set<HostChangeOptions> = this.compare(this._currentHostInfo, newClient.hostInfo);
 
+        // TODO review:  why are we comparing host info differences here? Even if there are no differences, presumably we have a new connection for a reason
+        // therefore we should still use the new connection. If we did not want a new connection if hostInfo matches then we should do the
+        // check in place where we are connecting.
         if (changes.size > 0) {
-          const oldClient: any = this.getCurrentClient().targetClient;
+          const oldClient = this.getCurrentClient().targetClient;
           const isInTransaction = this.isInTransaction;
           this.sessionStateService.begin();
 
@@ -295,7 +311,8 @@ export class PluginService implements ErrorHandler, HostListProviderService {
               const shouldCloseConnection =
                 changes.has(HostChangeOptions.CONNECTION_OBJECT_CHANGED) &&
                 !pluginOpinions.has(OldConnectionSuggestionAction.PRESERVE) &&
-                (await oldClient.isValid());
+                oldClient &&
+                (await this.isClientValid(oldClient));
               // TODO: Review should tryClosingTargetClient(oldClient) be called here, or at some point in this setCurrentClient method?
             }
           } finally {
@@ -308,14 +325,20 @@ export class PluginService implements ErrorHandler, HostListProviderService {
     }
   }
 
-  async isClientValid(targetClient: any): Promise<boolean> {
+  async isClientValid(targetClient: ClientWrapper): Promise<boolean> {
     return await this.getDialect().isClientValid(targetClient);
   }
 
   async tryClosingTargetClient(): Promise<void>;
-  async tryClosingTargetClient(targetClient: any): Promise<void>;
-  async tryClosingTargetClient(targetClient?: any): Promise<void> {
-    await this.getDialect().tryClosingTargetClient(targetClient ?? this._currentClient.targetClient);
+  async tryClosingTargetClient(targetClient: ClientWrapper): Promise<void>;
+  async tryClosingTargetClient(targetClient?: ClientWrapper): Promise<void>;
+  async tryClosingTargetClient(targetClient?: ClientWrapper | undefined): Promise<void> {
+    // Note: This last overload is only required because of the way typescript overloads work https://www.typescriptlang.org/docs/handbook/functions.html#overloads
+    if (targetClient) {
+      this.getDialect().tryClosingTargetClient(targetClient);
+    } else if (this._currentClient.targetClient) {
+      this.getDialect().tryClosingTargetClient(this._currentClient.targetClient);
+    }
   }
 
   getConnectFunc(targetClient: any): () => Promise<any> {
@@ -345,7 +368,7 @@ export class PluginService implements ErrorHandler, HostListProviderService {
     }
   }
 
-  async updateDialect(targetClient: any) {
+  async updateDialect(targetClient: ClientWrapper) {
     const originalDialect = this.dialect;
     this.dialect = await this.dbDialectProvider.getDialectForUpdate(targetClient, this.initialHost, this.props.get(WrapperProperties.HOST.name));
 

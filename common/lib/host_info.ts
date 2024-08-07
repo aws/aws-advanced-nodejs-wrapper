@@ -47,7 +47,7 @@ export class HostInfo {
     this.port = port;
     this.availability = availability;
     this.role = role;
-    this.weight = weight;
+    this.weight = weight; // TODO: add check for weight parameter passed. As per comment above, weight should be Greater or equal 0
     this.lastUpdateTime = lastUpdateTime;
     this.hostAvailabilityStrategy = hostAvailabilityStrategy;
   }

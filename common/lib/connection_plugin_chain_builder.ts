@@ -61,7 +61,7 @@ export class ConnectionPluginChainBuilder {
     ["executeTime", { factory: ExecuteTimePluginFactory, weight: ConnectionPluginChainBuilder.WEIGHT_RELATIVE_TO_PRIOR_PLUGIN }]
   ]);
 
-  async getPlugins(
+  static async getPlugins(
     pluginService: PluginService,
     props: Map<string, any>,
     defaultConnProvider: ConnectionProvider,

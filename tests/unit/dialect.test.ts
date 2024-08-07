@@ -27,6 +27,9 @@ import { PluginService } from "../../common/lib/plugin_service";
 import { PluginServiceManagerContainer } from "../../common/lib/plugin_service_manager_container";
 import { AwsPGClient } from "../../pg/lib";
 import { WrapperProperties } from "../../common/lib/wrapper_property";
+import { HostInfoBuilder } from "../../common/lib/host_info_builder";
+import { SimpleHostAvailabilityStrategy } from "../../common/lib/host_availability/simple_host_availability_strategy";
+import { ClientWrapper } from "../../common/lib/client_wrapper";
 
 const mysqlDialect = new MySQLDatabaseDialect();
 const rdsMysqlDialect = new RdsMySQLDatabaseDialect();
@@ -169,9 +172,20 @@ describe("test dialects", () => {
       props.set(WrapperProperties.HOST.name, host);
 
       const mockTargetClient = new MockTargetClient(expectedResults);
+      const currentHostInfo = new HostInfoBuilder({
+        host: "foo",
+        port: 1234,
+        hostAvailabilityStrategy: new SimpleHostAvailabilityStrategy()
+      }).build();
+
+      const mockClientWrapper: ClientWrapper = {
+        client: mockTargetClient,
+        hostInfo: currentHostInfo,
+        properties: new Map<string, any>()
+      };
 
       const pluginService = new PluginService(pluginServiceManagerContainer, mockClient, dbType, knownDialects, props);
-      await pluginService.updateDialect(mockTargetClient);
+      await pluginService.updateDialect(mockClientWrapper);
       expect(pluginService.getDialect()).toBe(expectedDialect);
     }
   );

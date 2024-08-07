@@ -18,10 +18,10 @@ import { DatabaseDialect, DatabaseType } from "../../../common/lib/database_dial
 import { HostListProviderService } from "../../../common/lib/host_list_provider_service";
 import { HostListProvider } from "../../../common/lib/host_list_provider/host_list_provider";
 import { ConnectionStringHostListProvider } from "../../../common/lib/host_list_provider/connection_string_host_list_provider";
-import { AwsClient } from "../../../common/lib/aws_client";
 import { AwsWrapperError } from "../../../common/lib/utils/errors";
 import { DatabaseDialectCodes } from "../../../common/lib/database_dialect/database_dialect_codes";
 import { TransactionIsolationLevel } from "../../../common/lib/utils/transaction_isolation_level";
+import { ClientWrapper } from "../../../common/lib/client_wrapper";
 
 export class PgDatabaseDialect implements DatabaseDialect {
   protected dialectName: string = "PgDatabaseDialect";
@@ -39,8 +39,8 @@ export class PgDatabaseDialect implements DatabaseDialect {
     return "SELECT CONCAT(inet_server_addr(), ':', inet_server_port())";
   }
 
-  async getHostAliasAndParseResults(client: AwsClient): Promise<string> {
-    return client.targetClient
+  async getHostAliasAndParseResults(targetClient: ClientWrapper): Promise<string> {
+    return targetClient.client
       .query(this.getHostAliasQuery())
       .then((rows: any) => {
         return rows.rows[0]["concat"];
@@ -54,8 +54,8 @@ export class PgDatabaseDialect implements DatabaseDialect {
     return "SELECT 'version', VERSION()";
   }
 
-  async isDialect(targetClient: any): Promise<boolean> {
-    return await targetClient
+  async isDialect(targetClient: ClientWrapper): Promise<boolean> {
+    return await targetClient.client
       .query("SELECT 1 FROM pg_proc LIMIT 1")
       .then((result: { rows: any }) => {
         return !!result.rows[0];
@@ -69,15 +69,15 @@ export class PgDatabaseDialect implements DatabaseDialect {
     return new ConnectionStringHostListProvider(props, originalUrl, this.getDefaultPort(), hostListProviderService);
   }
 
-  async tryClosingTargetClient(targetClient: any) {
-    await targetClient.end().catch((error: any) => {
+  async tryClosingTargetClient(targetClient: ClientWrapper) {
+    await targetClient.client.end().catch((error: any) => {
       // ignore
     });
   }
 
-  async isClientValid(targetClient: any): Promise<boolean> {
+  async isClientValid(targetClient: ClientWrapper): Promise<boolean> {
     try {
-      return Promise.resolve(targetClient._connected || targetClient._connecting);
+      return Promise.resolve(targetClient.client._connected || targetClient.client._connecting);
     } catch (error) {
       return false;
     }

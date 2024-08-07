@@ -34,6 +34,7 @@ import { WrapperProperties } from "../../wrapper_property";
 import { RdsUrlType } from "../../utils/rds_url_type";
 import { RdsUtils } from "../../utils/rds_utils";
 import { Messages } from "../../utils/messages";
+import { ClientWrapper } from "../../client_wrapper";
 
 export class FailoverPlugin extends AbstractConnectionPlugin {
   private static readonly METHOD_END = "end";
@@ -248,8 +249,8 @@ export class FailoverPlugin extends AbstractConnectionPlugin {
     hostInfo: HostInfo,
     props: Map<string, any>,
     isInitialConnection: boolean,
-    connectFunc: () => Promise<Type>
-  ): Promise<Type> {
+    connectFunc: () => Promise<ClientWrapper>
+  ): Promise<ClientWrapper> {
     logger.debug(`Start connect for test plugin: ${this.id}`);
     try {
       return await this.connectInternal(hostInfo, props, isInitialConnection, connectFunc);
@@ -263,8 +264,8 @@ export class FailoverPlugin extends AbstractConnectionPlugin {
     hostInfo: HostInfo,
     props: Map<string, any>,
     isInitialConnection: boolean,
-    forceConnectFunc: () => Promise<Type>
-  ): Promise<Type> {
+    forceConnectFunc: () => Promise<ClientWrapper>
+  ): Promise<ClientWrapper> {
     try {
       return await this.connectInternal(hostInfo, props, isInitialConnection, forceConnectFunc);
     } catch (e: any) {
@@ -273,11 +274,28 @@ export class FailoverPlugin extends AbstractConnectionPlugin {
     }
   }
 
-  async connectInternal<Type>(hostInfo: HostInfo, props: Map<string, any>, isInitialConnection: boolean, connectFunc: () => Type): Promise<Type> {
+  async connectInternal<Type>(
+    hostInfo: HostInfo,
+    props: Map<string, any>,
+    isInitialConnection: boolean,
+    connectFunc: () => Promise<ClientWrapper>
+  ): Promise<ClientWrapper> {
     if (!this.hostListProviderService) {
       throw new AwsWrapperError("Host list provider service not found."); // this should not be reached
     }
 
+    // TODO review: does the logic in the _staleDnsHelper.getVerifiedConnection need to happen during connect?
+    // Probably it should only happen during execute, the first time when actual failover is needed.
+    // This will make the connect faster, and if failover is not needed (should be the most common scenario)
+    // the logic would never be necessary.
+    // Note however, that there is one clause there
+    // if (this.writerHostAddress !== clusterInetAddress)
+    // that triggers a new connection chain, in which case this maybe needed during connection
+    // but that case should re-thought perhaps.
+
+    // Moreover, internally it calls refreshHostList which is also called in the internalPostConnect() function
+    // of the AwsClient class when the connect chain is finished. Maybe the call could be refactored such that no need to call it
+    // multiple times during the connect chain execution.
     const targetClient = await this._staleDnsHelper.getVerifiedConnection(
       hostInfo.host,
       isInitialConnection,
@@ -285,11 +303,6 @@ export class FailoverPlugin extends AbstractConnectionPlugin {
       props,
       connectFunc
     );
-
-    if (isInitialConnection) {
-      // Todo review: should this be called here or later when the target client is set in plugin service?
-      await this.pluginService.refreshHostList(targetClient);
-    }
 
     return targetClient;
   }

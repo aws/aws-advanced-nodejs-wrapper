@@ -15,8 +15,9 @@
 */
 
 import { DatabaseDialect } from "./database_dialect";
+import { ClientWrapper } from "../client_wrapper";
 
 export interface DatabaseDialectProvider {
   getDialect(props: Map<string, any>): DatabaseDialect;
-  getDialectForUpdate(targetClient: any, originalHost: string, newHost: string): Promise<DatabaseDialect>;
+  getDialectForUpdate(targetClient: ClientWrapper, originalHost: string, newHost: string): Promise<DatabaseDialect>;
 }
