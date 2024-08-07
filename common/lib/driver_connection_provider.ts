@@ -29,6 +29,7 @@ import { lookup } from "dns";
 import { PluginService } from "./plugin_service";
 import { logger } from "../logutils";
 import { maskProperties } from "./utils/utils";
+import { ClientWrapper } from "./client_wrapper";
 
 export class DriverConnectionProvider implements ConnectionProvider {
   private static readonly acceptedStrategies: Map<string, HostSelector> = new Map([[RandomHostSelector.STRATEGY_NAME, new RandomHostSelector()]]);
@@ -42,13 +43,20 @@ export class DriverConnectionProvider implements ConnectionProvider {
     return true;
   }
 
-  async connect<T>(hostInfo: HostInfo, pluginService: PluginService, props: Map<string, any>): Promise<T> {
-    let result;
+  async connect(hostInfo: HostInfo, pluginService: PluginService, props: Map<string, any>): Promise<ClientWrapper> {
+    let resultTargetClient;
+    let connectionHostInfo: HostInfo;
+
     try {
       const targetClient: any = pluginService.createTargetClient(props);
       const connFunc = pluginService.getConnectFunc(targetClient);
       await connFunc();
-      result = targetClient;
+      connectionHostInfo = new HostInfoBuilder({
+        hostAvailabilityStrategy: hostInfo.hostAvailabilityStrategy
+      })
+        .copyFrom(hostInfo)
+        .build();
+      resultTargetClient = targetClient;
     } catch (e) {
       if (!WrapperProperties.ENABLE_GREEN_NODE_REPLACEMENT.get(props)) {
         throw e;
@@ -78,8 +86,8 @@ export class DriverConnectionProvider implements ConnectionProvider {
       // Green node DNS doesn't exist. Try to replace it with corresponding node name and connect again.
       const originalHost: string = hostInfo.host;
       const fixedHost: string = this.rdsUtils.removeGreenInstancePrefix(hostInfo.host);
-      props.set(WrapperProperties.HOST.name, fixedHost);
-      const connectionHostInfo = new HostInfoBuilder({
+      props.set(WrapperProperties.HOST.name, fixedHost); // TODO review - this changes the original properties object passed through connect chain, should a copy be used instead?
+      connectionHostInfo = new HostInfoBuilder({
         hostAvailabilityStrategy: hostInfo.hostAvailabilityStrategy
       })
         .copyFrom(hostInfo)
@@ -98,7 +106,7 @@ export class DriverConnectionProvider implements ConnectionProvider {
       const newTargetClient = pluginService.createTargetClient(props);
       const fixedConnFunc = pluginService.getConnectFunc(newTargetClient);
       await fixedConnFunc();
-      result = newTargetClient;
+      resultTargetClient = newTargetClient;
 
       // Note keeping this here temporarily for current functionality.
       // TODO revisit - Follow the paths that the driver_connection_provider.connect is called from
@@ -107,7 +115,11 @@ export class DriverConnectionProvider implements ConnectionProvider {
       await pluginService.tryClosingTargetClient();
     }
 
-    return result;
+    return {
+      client: resultTargetClient,
+      hostInfo: connectionHostInfo,
+      properties: new Map<string, any>(props)
+    };
   }
 
   getHostInfoByStrategy(hosts: HostInfo[], role: HostRole, strategy: string, props?: Map<string, any>): HostInfo {

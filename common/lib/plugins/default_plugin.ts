@@ -28,6 +28,7 @@ import { ConnectionProviderManager } from "../connection_provider_manager";
 import { ConnectionProvider } from "../connection_provider";
 import { AwsWrapperError } from "../utils/errors";
 import { HostAvailability } from "../host_availability/host_availability";
+import { ClientWrapper } from "../client_wrapper";
 
 export class DefaultPlugin extends AbstractConnectionPlugin {
   id: string = uniqueId("_defaultPlugin");
@@ -61,8 +62,8 @@ export class DefaultPlugin extends AbstractConnectionPlugin {
     hostInfo: HostInfo,
     props: Map<string, any>,
     isInitialConnection: boolean,
-    forceConnectFunc: () => Promise<Type>
-  ): Promise<Type> {
+    forceConnectFunc: () => Promise<ClientWrapper>
+  ): Promise<ClientWrapper> {
     return await this.connectInternal(hostInfo, props, this.defaultConnProvider);
   }
 
@@ -79,8 +80,8 @@ export class DefaultPlugin extends AbstractConnectionPlugin {
     hostInfo: HostInfo,
     props: Map<string, any>,
     isInitialConnection: boolean,
-    connectFunc: () => Promise<Type>
-  ): Promise<Type> {
+    connectFunc: () => Promise<ClientWrapper>
+  ): Promise<ClientWrapper> {
     let connProvider = null;
 
     if (this.effectiveConnProvider && this.effectiveConnProvider.acceptsUrl(hostInfo, props)) {
@@ -94,11 +95,9 @@ export class DefaultPlugin extends AbstractConnectionPlugin {
     return this.connectInternal(hostInfo, props, connProvider);
   }
 
-  private async connectInternal<Type>(hostInfo: HostInfo, props: Map<string, any>, connProvider: ConnectionProvider): Promise<Type> {
-    const result: any = await connProvider.connect(hostInfo, this.pluginService, props);
+  private async connectInternal(hostInfo: HostInfo, props: Map<string, any>, connProvider: ConnectionProvider): Promise<ClientWrapper> {
+    const result = await connProvider.connect(hostInfo, this.pluginService, props);
     this.pluginService.setAvailability(hostInfo.allAliases, HostAvailability.AVAILABLE);
-    // TODO: review this probably should not be called here, but probably in pluginService.setCurrentClient
-    // as the pluginService.setCurrentClient has not been called yet
     await this.pluginService.updateDialect(result);
     return result;
   }

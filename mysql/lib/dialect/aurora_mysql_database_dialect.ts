@@ -22,6 +22,7 @@ import { AwsClient } from "../../../common/lib/aws_client";
 import { HostInfo } from "../../../common/lib/host_info";
 import { TopologyAwareDatabaseDialect } from "../../../common/lib/topology_aware_database_dialect";
 import { HostRole } from "../../../common/lib/host_role";
+import { ClientWrapper } from "../../../common/lib/client_wrapper";
 
 export class AuroraMySQLDatabaseDialect extends MySQLDatabaseDialect implements TopologyAwareDatabaseDialect {
   private static readonly TOPOLOGY_QUERY: string =
@@ -43,8 +44,8 @@ export class AuroraMySQLDatabaseDialect extends MySQLDatabaseDialect implements 
     return new RdsHostListProvider(props, originalUrl, hostListProviderService);
   }
 
-  async queryForTopology(targetClient: any, hostListProvider: HostListProvider): Promise<HostInfo[]> {
-    const res = await targetClient.promise().query(AuroraMySQLDatabaseDialect.TOPOLOGY_QUERY);
+  async queryForTopology(targetClient: ClientWrapper, hostListProvider: HostListProvider): Promise<HostInfo[]> {
+    const res = await targetClient.client.promise().query(AuroraMySQLDatabaseDialect.TOPOLOGY_QUERY);
     const hosts: HostInfo[] = [];
     const rows: any[] = res[0];
     rows.forEach((row) => {
@@ -71,8 +72,8 @@ export class AuroraMySQLDatabaseDialect extends MySQLDatabaseDialect implements 
     return Promise.resolve(res[0]["is_reader"] === "true" ? HostRole.READER : HostRole.WRITER);
   }
 
-  async isDialect(targetClient: any): Promise<boolean> {
-    return targetClient
+  async isDialect(targetClient: ClientWrapper): Promise<boolean> {
+    return targetClient.client
       .promise()
       .query(AuroraMySQLDatabaseDialect.AURORA_VERSION_QUERY)
       .then(([rows]: any) => {

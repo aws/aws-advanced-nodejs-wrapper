@@ -25,6 +25,7 @@ import { WrapperProperties } from "../../wrapper_property";
 import { logger } from "../../../logutils";
 import { Messages } from "../../utils/messages";
 import { AwsWrapperError } from "../../utils/errors";
+import { ClientWrapper } from "../../client_wrapper";
 
 export class OktaAuthPlugin extends AbstractConnectionPlugin {
   protected static readonly tokenCache = new Map<string, TokenInfo>();
@@ -43,15 +44,25 @@ export class OktaAuthPlugin extends AbstractConnectionPlugin {
     return OktaAuthPlugin.subscribedMethods;
   }
 
-  connect<T>(hostInfo: HostInfo, props: Map<string, any>, isInitialConnection: boolean, connectFunc: () => Promise<T>): Promise<T> {
+  connect<T>(
+    hostInfo: HostInfo,
+    props: Map<string, any>,
+    isInitialConnection: boolean,
+    connectFunc: () => Promise<ClientWrapper>
+  ): Promise<ClientWrapper> {
     return this.connectInternal(hostInfo, props, connectFunc);
   }
 
-  forceConnect<T>(hostInfo: HostInfo, props: Map<string, any>, isInitialConnection: boolean, connectFunc: () => Promise<T>): Promise<T> {
+  forceConnect<T>(
+    hostInfo: HostInfo,
+    props: Map<string, any>,
+    isInitialConnection: boolean,
+    connectFunc: () => Promise<ClientWrapper>
+  ): Promise<ClientWrapper> {
     return this.connectInternal(hostInfo, props, connectFunc);
   }
 
-  async connectInternal<T>(hostInfo: HostInfo, props: Map<string, any>, connectFunc: () => Promise<T>): Promise<T> {
+  async connectInternal<T>(hostInfo: HostInfo, props: Map<string, any>, connectFunc: () => Promise<ClientWrapper>): Promise<ClientWrapper> {
     SamlUtils.checkIdpCredentialsWithFallback(props);
 
     const host = IamAuthUtils.getIamHost(props, hostInfo);

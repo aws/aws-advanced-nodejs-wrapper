@@ -25,6 +25,7 @@ import { HostChangeOptions } from "./host_change_options";
 import { OldConnectionSuggestionAction } from "./old_connection_suggestion_action";
 import { HostRole } from "./host_role";
 import { ConnectionProvider } from "./connection_provider";
+import { ClientWrapper } from "./client_wrapper";
 
 type PluginFunc<T> = (plugin: ConnectionPlugin, targetFunc: () => Promise<T>) => Promise<T>;
 
@@ -95,6 +96,12 @@ export class PluginManager {
   async init(plugins: ConnectionPlugin[]): Promise<void>;
   async init(plugins?: ConnectionPlugin[]) {
     if (this.pluginServiceManagerContainer.pluginService != null) {
+      this._plugins = await ConnectionPluginChainBuilder.getPlugins(
+        this.pluginServiceManagerContainer.pluginService,
+        this.props,
+        this.defaultConnProvider,
+        this.effectiveConnProvider
+      );
       if (plugins) {
         this._plugins = plugins;
       } else {
@@ -121,11 +128,11 @@ export class PluginManager {
     );
   }
 
-  connect<T>(hostInfo: HostInfo | null, props: Map<string, any>, isInitialConnection: boolean): Promise<T> {
+  connect<T>(hostInfo: HostInfo | null, props: Map<string, any>, isInitialConnection: boolean): Promise<ClientWrapper> {
     if (hostInfo == null) {
       throw new AwsWrapperError("HostInfo was not provided.");
     }
-    return this.executeWithSubscribedPlugins(
+    return this.executeWithSubscribedPlugins<ClientWrapper>(
       hostInfo,
       props,
       PluginManager.CONNECT_METHOD,
@@ -136,11 +143,11 @@ export class PluginManager {
     );
   }
 
-  forceConnect<T>(hostInfo: HostInfo | null, props: Map<string, any>, isInitialConnection: boolean): Promise<T> {
+  forceConnect<T>(hostInfo: HostInfo | null, props: Map<string, any>, isInitialConnection: boolean): Promise<ClientWrapper> {
     if (hostInfo == null) {
       throw new AwsWrapperError("HostInfo was not provided.");
     }
-    return this.executeWithSubscribedPlugins(
+    return this.executeWithSubscribedPlugins<ClientWrapper>(
       hostInfo,
       props,
       PluginManager.FORCE_CONNECT_METHOD,

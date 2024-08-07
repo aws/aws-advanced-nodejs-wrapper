@@ -27,6 +27,7 @@ import { AuroraPgDatabaseDialect } from "./dialect/aurora_pg_database_dialect";
 import { AwsWrapperError, UnsupportedMethodError } from "../../common/lib/utils/errors";
 import { Messages } from "../../common/lib/utils/messages";
 import { TransactionIsolationLevel } from "../../common/lib/utils/transaction_isolation_level";
+import { ClientWrapper } from "../../common/lib/client_wrapper";
 
 export class AwsPGClient extends AwsClient {
   private static readonly knownDialectsByCode: Map<string, DatabaseDialect> = new Map([
@@ -37,7 +38,6 @@ export class AwsPGClient extends AwsClient {
 
   constructor(config: any) {
     super(config, new PgErrorHandler(), DatabaseType.POSTGRES, AwsPGClient.knownDialectsByCode, new PgConnectionUrlParser());
-    this.config = config;
     this._createClientFunc = (config: any) => {
       const targetClient: Client = new Client(WrapperProperties.removeWrapperProperties(config));
       targetClient.on("error", (error: any) => {
@@ -55,14 +55,14 @@ export class AwsPGClient extends AwsClient {
     if (hostInfo == null) {
       throw new AwsWrapperError("HostInfo was not provided.");
     }
-    const conn: any = await this.pluginManager.connect(hostInfo, this.properties, true);
-    await this.pluginService.setCurrentClient(conn, hostInfo);
+    const result: ClientWrapper = await this.pluginManager.connect(hostInfo, this.properties, true);
+    await this.pluginService.setCurrentClient(result, result.hostInfo);
     await this.internalPostConnect();
     return;
   }
 
   executeQuery(props: Map<string, any>, sql: string): Promise<QueryResult> {
-    return this.targetClient.query(sql);
+    return this.targetClient?.client.query(sql);
   }
 
   query(text: string): Promise<QueryResult> {
@@ -72,7 +72,7 @@ export class AwsPGClient extends AwsClient {
       "query",
       async () => {
         await this.pluginService.updateState(text);
-        return this.targetClient.query(text);
+        return this.targetClient?.client.query(text);
       },
       text
     );
@@ -169,7 +169,7 @@ export class AwsPGClient extends AwsClient {
   }
 
   end(): Promise<void> {
-    return this.pluginManager.execute(this.pluginService.getCurrentHostInfo(), this.properties, "end", () => this.targetClient.end(), null);
+    return this.pluginManager.execute(this.pluginService.getCurrentHostInfo(), this.properties, "end", () => this.targetClient?.client?.end(), null);
   }
 
   async rollback(): Promise<QueryResult> {
@@ -179,7 +179,7 @@ export class AwsPGClient extends AwsClient {
       "rollback",
       async () => {
         this.pluginService.updateInTransaction("rollback");
-        return this.targetClient.rollback();
+        return this.targetClient?.client?.rollback();
       },
       null
     );
