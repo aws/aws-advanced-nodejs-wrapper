@@ -17,7 +17,7 @@
 import { add, cycle, suite, save, complete, configure } from "benny";
 import { ConnectionPlugin, PluginManager } from "../common/lib";
 import { PluginServiceManagerContainer } from "../common/lib/plugin_service_manager_container";
-import { instance, mock, when } from "ts-mockito";
+import { instance, mock } from "ts-mockito";
 import { ConnectionProvider } from "../common/lib/connection_provider";
 import { HostInfoBuilder } from "../common/lib/host_info_builder";
 import { SimpleHostAvailabilityStrategy } from "../common/lib/host_availability/simple_host_availability_strategy";
@@ -161,18 +161,13 @@ suite(
     await pluginManagerWithNoPlugins.notifyConnectionChanged(new Set<HostChangeOptions>([HostChangeOptions.INITIAL_CONNECTION]), null);
   }),
 
-  // TODO Uncomment when releaseResources implemented
-  // add("releaseResourcesWithPlugins", async () => {
-  //   const factory = await import("./testplugin/benchmark_plugin");
-  //   return async () => {
-  //     await pluginManagerWithPlugins.init(await createPlugins(instance(mockPluginService), instance(mockConnectionProvider), propsWithPlugins, factory));
-  //     await pluginManagerWithPlugins.releaseResources();
-  //   };
-  // }),
-  //
-  // add("releaseResourcesWithNoPlugins", async () => {
-  //   await pluginManagerWithNoPlugins.releaseResources();
-  // }),
+  add("releaseResourcesWithPlugins", async () => {
+    await pluginManagerWithPlugins.releaseResources();
+  }),
+
+  add("releaseResourcesWithNoPlugins", async () => {
+    await pluginManagerWithNoPlugins.releaseResources();
+  }),
 
   cycle(),
   complete(),

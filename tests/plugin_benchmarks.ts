@@ -25,16 +25,25 @@ import { TestConnectionWrapper } from "./testplugin/test_connection_wrapper";
 import { HostInfoBuilder } from "../common/lib/host_info_builder";
 import { SimpleHostAvailabilityStrategy } from "../common/lib/host_availability/simple_host_availability_strategy";
 import { HostRole } from "../common/lib/host_role";
-import { Client } from "pg";
+import { ClientWrapper } from "../common/lib/client_wrapper";
+import { AwsPGClient } from "../pg/lib";
 
 const mockConnectionProvider = mock<ConnectionProvider>();
 const mockPluginService = mock(PluginService);
-const mockTargetClient = mock(Client);
+const mockClient = mock(AwsPGClient);
 
-when(mockPluginService.getCurrentHostInfo()).thenReturn(
-  new HostInfoBuilder({ hostAvailabilityStrategy: new SimpleHostAvailabilityStrategy() }).withHost("host").withRole(HostRole.WRITER).build()
-);
-when(mockTargetClient.query(anything())).thenReturn();
+const hostInfo = new HostInfoBuilder({ hostAvailabilityStrategy: new SimpleHostAvailabilityStrategy() })
+  .withHost("host")
+  .withRole(HostRole.WRITER)
+  .build();
+const mockClientWrapper: ClientWrapper = {
+  client: instance(mockClient),
+  hostInfo: hostInfo,
+  properties: new Map<string, any>()
+};
+
+when(mockClient.query(anything())).thenReturn();
+when(mockPluginService.getCurrentHostInfo()).thenReturn(hostInfo);
 
 const connectionString = "my.domain.com";
 const pluginServiceManagerContainer = new PluginServiceManagerContainer();
@@ -42,17 +51,14 @@ pluginServiceManagerContainer.pluginService = instance(mockPluginService);
 
 const propsExecute = new Map<string, any>();
 const propsReadWrite = new Map<string, any>();
-const props = new Map<string, any>();
 
 WrapperProperties.PLUGINS.set(propsExecute, "executeTime");
 WrapperProperties.PLUGINS.set(propsReadWrite, "readWriteSplitting");
 WrapperProperties.HOST.set(propsExecute, connectionString);
 WrapperProperties.HOST.set(propsReadWrite, connectionString);
-WrapperProperties.HOST.set(props, connectionString);
 
 const pluginManagerExecute = new PluginManager(pluginServiceManagerContainer, propsExecute, instance(mockConnectionProvider), null);
 const pluginManagerReadWrite = new PluginManager(pluginServiceManagerContainer, propsReadWrite, instance(mockConnectionProvider), null);
-const pluginManager = new PluginManager(pluginServiceManagerContainer, props, instance(mockConnectionProvider), null);
 
 suite(
   "Plugin benchmarks",
@@ -66,36 +72,29 @@ suite(
   add("initAndReleaseBaseline", async () => {}),
 
   add("initAndReleaseWithExecuteTimePlugin", async () => {
-    await pluginManagerExecute.init();
     const wrapper = new TestConnectionWrapper(propsExecute, pluginManagerExecute, instance(mockPluginService));
-    wrapper["targetClient"] = instance(mockTargetClient);
-    // Uncomment once releaseResources implemented
-    // await wrapper.releaseResources();
+    await pluginManagerExecute.init();
+    await wrapper.releaseResources();
     await wrapper.end();
   }),
 
   add("initAndReleaseWithReadWriteSplittingPlugin", async () => {
-    await pluginManagerReadWrite.init();
     const wrapper = new TestConnectionWrapper(propsReadWrite, pluginManagerReadWrite, instance(mockPluginService));
-    wrapper["targetClient"] = instance(mockTargetClient);
-    // Uncomment once releaseResources implemented
-    // await wrapper.releaseResources();
+    await pluginManagerReadWrite.init();
+    await wrapper.releaseResources();
     await wrapper.end();
   }),
 
   add("executeStatementBaseline", async () => {
-    await pluginManager.init();
-    const wrapper = new TestConnectionWrapper(props, pluginManager, instance(mockPluginService));
-    wrapper["targetClient"] = instance(mockTargetClient);
-    await wrapper.executeQuery(props, "select 1");
+    const wrapper = new TestConnectionWrapper(propsExecute, pluginManagerExecute, instance(mockPluginService));
+    await pluginManagerReadWrite.init();
     await wrapper.end();
   }),
 
   add("executeStatementWithExecuteTimePlugin", async () => {
-    await pluginManagerExecute.init();
     const wrapper = new TestConnectionWrapper(propsExecute, pluginManagerExecute, instance(mockPluginService));
-    wrapper["targetClient"] = instance(mockTargetClient);
-    await wrapper.executeQuery(propsExecute, "select 1");
+    await pluginManagerReadWrite.init();
+    await wrapper.executeQuery(propsExecute, "select 1", mockClientWrapper);
     await wrapper.end();
   }),
 
