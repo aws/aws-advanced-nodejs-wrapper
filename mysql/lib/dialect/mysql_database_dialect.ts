@@ -24,7 +24,7 @@ import { TransactionIsolationLevel } from "../../../common/lib/utils/transaction
 import { ClientWrapper } from "../../../common/lib/client_wrapper";
 
 export class MySQLDatabaseDialect implements DatabaseDialect {
-  protected dialectName: string = "MySQLDatabaseDialect";
+  protected dialectName: string = this.constructor.name;
   protected defaultPort: number = 3306;
 
   getDefaultPort(): number {
@@ -62,7 +62,7 @@ export class MySQLDatabaseDialect implements DatabaseDialect {
       .then(([rows]: any) => {
         return rows[0]["Value"].toLowerCase().includes("mysql");
       })
-      .catch((error: any) => {
+      .catch(() => {
         return false;
       });
   }

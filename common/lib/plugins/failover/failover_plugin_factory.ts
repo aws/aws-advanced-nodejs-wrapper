@@ -28,7 +28,7 @@ export class FailoverPluginFactory implements ConnectionPluginFactory {
       const failoverPlugin = await import("./failover_plugin");
       return new failoverPlugin.FailoverPlugin(pluginService, properties, new RdsUtils());
     } catch (error: any) {
-      logger.error(error);
+      logger.error(error.message);
       throw new AwsWrapperError(Messages.get("ConnectionPluginChainBuilder.errorImportingPlugin", "FailoverPlugin"));
     }
   }

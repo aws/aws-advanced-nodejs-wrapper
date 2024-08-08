@@ -150,7 +150,7 @@ export class WrapperProperties {
     "Enable/disable cluster-aware failover logic.",
     true
   );
-  static readonly FAILOVER_MODE = new WrapperProperty<string>("failoverMode", "Set node role to follow during failover.", "");
+  static readonly FAILOVER_MODE = new WrapperProperty<string>("failoverMode", "Set host role to follow during failover.", "");
 
   static readonly CLUSTER_TOPOLOGY_REFRESH_RATE_MS = new WrapperProperty<number>(
     "clusterTopologyRefreshRateMs",
@@ -202,6 +202,36 @@ export class WrapperProperties {
     "openConnectionRetryIntervalMs",
     "Time between each retry of opening a connection.",
     1000
+  );
+
+  static readonly FAILURE_DETECTION_TIME_MS = new WrapperProperty<number>(
+    "failureDetectionTime",
+    "Interval in millis between sending SQL to the server and the first probe to database host.",
+    30000
+  );
+
+  static readonly FAILURE_DETECTION_ENABLED = new WrapperProperty<boolean>(
+    "failureDetectionEnabled",
+    "Enable enhanced failure detection logic.",
+    true
+  );
+
+  static readonly FAILURE_DETECTION_INTERVAL_MS = new WrapperProperty<number>(
+    "failureDetectionInterval",
+    "Interval in millis between probes to database host.",
+    5000
+  );
+
+  static readonly FAILURE_DETECTION_COUNT = new WrapperProperty<number>(
+    "failureDetectionCount",
+    "Number of failed connection checks before considering database host unhealthy.",
+    3
+  );
+
+  static readonly MONITOR_DISPOSAL_TIME_MS = new WrapperProperty<number>(
+    "monitorDisposalTime",
+    "Interval in milliseconds for a monitor to be considered inactive and to be disposed.",
+    600000 // 10 minutes
   );
 
   static removeWrapperProperties<T>(config: T): T {

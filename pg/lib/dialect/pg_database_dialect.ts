@@ -24,7 +24,7 @@ import { TransactionIsolationLevel } from "../../../common/lib/utils/transaction
 import { ClientWrapper } from "../../../common/lib/client_wrapper";
 
 export class PgDatabaseDialect implements DatabaseDialect {
-  protected dialectName: string = "PgDatabaseDialect";
+  protected dialectName: string = this.constructor.name;
   protected defaultPort: number = 5432;
 
   getDefaultPort(): number {
@@ -76,11 +76,14 @@ export class PgDatabaseDialect implements DatabaseDialect {
   }
 
   async isClientValid(targetClient: ClientWrapper): Promise<boolean> {
-    try {
-      return Promise.resolve(targetClient.client._connected || targetClient.client._connecting);
-    } catch (error) {
-      return false;
-    }
+    return await targetClient.client
+      .query("SELECT 1")
+      .then(() => {
+        return true;
+      })
+      .catch(() => {
+        return false;
+      });
   }
 
   getConnectFunc(targetClient: any): () => Promise<any> {
