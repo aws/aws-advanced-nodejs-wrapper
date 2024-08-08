@@ -21,7 +21,7 @@ import { ClientWrapper } from "../../../common/lib/client_wrapper";
 export class RdsMySQLDatabaseDialect extends MySQLDatabaseDialect {
   constructor() {
     super();
-    this.dialectName = "RdsMysqlDatabaseDialect";
+    this.dialectName = this.constructor.name;
   }
 
   getDialectUpdateCandidates(): string[] {

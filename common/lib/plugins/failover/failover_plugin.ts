@@ -137,8 +137,8 @@ export class FailoverPlugin extends AbstractConnectionPlugin {
     logger.debug(Messages.get("Failover.parameterValue", "failoverMode", this.failoverMode.toString()));
   }
 
-  override notifyConnectionChanged(changes: Set<HostChangeOptions>): OldConnectionSuggestionAction {
-    return OldConnectionSuggestionAction.NO_OPINION;
+  override notifyConnectionChanged(changes: Set<HostChangeOptions>): Promise<OldConnectionSuggestionAction> {
+    return Promise.resolve(OldConnectionSuggestionAction.NO_OPINION);
   }
 
   override notifyHostListChanged(changes: Map<string, Set<HostChangeOptions>>): void {
@@ -255,7 +255,7 @@ export class FailoverPlugin extends AbstractConnectionPlugin {
     try {
       return await this.connectInternal(hostInfo, props, isInitialConnection, connectFunc);
     } catch (e: any) {
-      logger.debug(e.message);
+      logger.debug(`Connect to ${hostInfo.host} failed with message: ${e.message}`);
       throw e;
     }
   }
@@ -269,7 +269,7 @@ export class FailoverPlugin extends AbstractConnectionPlugin {
     try {
       return await this.connectInternal(hostInfo, props, isInitialConnection, forceConnectFunc);
     } catch (e: any) {
-      logger.debug(e.message);
+      logger.debug(`Force connect to ${hostInfo.host} failed with message: ${e.message}`);
       throw e;
     }
   }

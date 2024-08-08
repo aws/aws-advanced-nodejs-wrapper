@@ -19,9 +19,21 @@ import { ProxyHelper } from "./utils/proxy_helper";
 import { DriverHelper } from "./utils/driver_helper";
 import { AuroraTestUtility } from "./utils/aurora_test_utility";
 import { logger } from "../../../../common/logutils";
+import { DatabaseEngine } from "./utils/database_engine";
 
 let client: any;
 const auroraTestUtility = new AuroraTestUtility();
+
+async function executeInstanceQuery(client: any, engine: DatabaseEngine, props: any): Promise<void> {
+  client.on("error", (error: any) => {
+    logger.debug(error.message);
+  });
+  await client.connect();
+
+  const res = await DriverHelper.executeInstanceQuery(engine, client);
+
+  expect(res).not.toBeNull();
+}
 
 beforeEach(async () => {
   logger.info(`Test started: ${expect.getState().currentTestName}`);
@@ -37,6 +49,63 @@ afterEach(async () => {
 }, 1000000);
 
 describe("basic_connectivity", () => {
+  it("wrapper with failover plugins read only endpoint", async () => {
+    const env = await TestEnvironment.getCurrent();
+    const driver = DriverHelper.getDriverForDatabaseEngine(env.engine);
+    const initClientFunc = DriverHelper.getClient(driver);
+
+    let props = {
+      user: env.databaseInfo.username,
+      host: env.databaseInfo.clusterReadOnlyEndpoint,
+      database: env.databaseInfo.default_db_name,
+      password: env.databaseInfo.password,
+      port: env.databaseInfo.clusterEndpointPort,
+      plugins: "failover,efm"
+    };
+    props = DriverHelper.addDriverSpecificConfiguration(props, env.engine);
+    client = initClientFunc(props);
+
+    await executeInstanceQuery(client, env.engine, props);
+  }, 1000000);
+
+  it("wrapper with failover plugins cluster endpoint", async () => {
+    const env = await TestEnvironment.getCurrent();
+    const driver = DriverHelper.getDriverForDatabaseEngine(env.engine);
+    const initClientFunc = DriverHelper.getClient(driver);
+
+    let props = {
+      user: env.databaseInfo.username,
+      host: env.databaseInfo.clusterEndpoint,
+      database: env.databaseInfo.default_db_name,
+      password: env.databaseInfo.password,
+      port: env.databaseInfo.clusterEndpointPort,
+      plugins: "failover,efm"
+    };
+    props = DriverHelper.addDriverSpecificConfiguration(props, env.engine);
+
+    client = initClientFunc(props);
+    await executeInstanceQuery(client, env.engine, props);
+  }, 1000000);
+
+  it("wrapper with failover plugins instance endpoint", async () => {
+    const env = await TestEnvironment.getCurrent();
+    const driver = DriverHelper.getDriverForDatabaseEngine(env.engine);
+    const initClientFunc = DriverHelper.getClient(driver);
+
+    let props = {
+      user: env.databaseInfo.username,
+      host: env.databaseInfo.instances[0].host,
+      database: env.databaseInfo.default_db_name,
+      password: env.databaseInfo.password,
+      port: env.databaseInfo.clusterEndpointPort,
+      plugins: "failover,efm"
+    };
+    props = DriverHelper.addDriverSpecificConfiguration(props, env.engine);
+
+    client = initClientFunc(props);
+    await executeInstanceQuery(client, env.engine, props);
+  }, 1000000);
+
   it("wrapper", async () => {
     const env = await TestEnvironment.getCurrent();
     const driver = DriverHelper.getDriverForDatabaseEngine(env.engine);

@@ -31,6 +31,7 @@ import { StaleDnsPluginFactory } from "./plugins/stale_dns/stale_dns_plugin_fact
 import { FederatedAuthPluginFactory } from "./plugins/federated_auth/federated_auth_plugin_factory";
 import { ReadWriteSplittingPluginFactory } from "./plugins/read_write_splitting_plugin_factory";
 import { OktaAuthPluginFactory } from "./plugins/federated_auth/okta_auth_plugin_factory";
+import { HostMonitoringPluginFactory } from "./plugins/efm/host_monitoring_plugin_factory";
 
 /*
   Type alias used for plugin factory sorting. It holds a reference to a plugin
@@ -44,13 +45,14 @@ type PluginFactoryInfo = {
 type FactoryClass = typeof IamAuthenticationPluginFactory | typeof FailoverPluginFactory;
 
 export class ConnectionPluginChainBuilder {
-  static readonly DEFAULT_PLUGINS = "failover";
+  static readonly DEFAULT_PLUGINS = "failover,efm";
   static readonly WEIGHT_RELATIVE_TO_PRIOR_PLUGIN = -1;
 
   static readonly PLUGIN_FACTORIES = new Map<string, PluginFactoryInfo>([
     ["staleDns", { factory: StaleDnsPluginFactory, weight: 500 }],
     ["readWriteSplitting", { factory: ReadWriteSplittingPluginFactory, weight: 600 }],
     ["failover", { factory: FailoverPluginFactory, weight: 700 }],
+    ["efm", { factory: HostMonitoringPluginFactory, weight: 800 }],
     ["iam", { factory: IamAuthenticationPluginFactory, weight: 1000 }],
     ["secretsManager", { factory: AwsSecretsManagerPluginFactory, weight: 1100 }],
     ["federatedAuth", { factory: FederatedAuthPluginFactory, weight: 1200 }],
