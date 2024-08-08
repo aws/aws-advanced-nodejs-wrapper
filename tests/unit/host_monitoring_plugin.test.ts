@@ -29,6 +29,7 @@ import { RdsUrlType } from "../../common/lib/utils/rds_url_type";
 import { HostInfo } from "../../common/lib/host_info";
 import { HostChangeOptions } from "../../common/lib/host_change_options";
 import { OldConnectionSuggestionAction } from "../../common/lib/old_connection_suggestion_action";
+import { ClientWrapper } from "../../common/lib/client_wrapper";
 
 const FAILURE_DETECTION_TIME = 10;
 const FAILURE_DETECTION_INTERVAL = 100;
@@ -55,6 +56,13 @@ function incrementQueryCounter() {
   return Promise.resolve();
 }
 
+const clientWrapper: ClientWrapper = {
+  client: undefined,
+  hostInfo: mock(HostInfo),
+  properties: new Map<string, any>()
+};
+const mockClientWrapper: ClientWrapper = mock(clientWrapper);
+
 function initDefaultMockReturns() {
   when(mockDialect.getHostAliasQuery()).thenReturn("any");
   when(mockMonitorService.startMonitoring(anything(), anything(), anything(), anything(), anything(), anything(), anything())).thenResolve(
@@ -66,7 +74,7 @@ function initDefaultMockReturns() {
   when(mockHostInfo2.port).thenReturn(1234);
   when(mockPluginService.getCurrentHostInfo()).thenReturn(instance(mockHostInfo1));
   when(mockPluginService.getCurrentClient()).thenReturn(instance(mockClient));
-  when(mockClient.targetClient).thenReturn(mockTargetClient);
+  when(mockClient.targetClient).thenReturn(mockClientWrapper);
   when(mockRdsUtils.identifyRdsType(anything())).thenReturn(RdsUrlType.RDS_INSTANCE);
 
   properties.set(WrapperProperties.FAILURE_DETECTION_ENABLED.name, true);
@@ -124,7 +132,7 @@ describe("host monitoring plugin test", () => {
 
     const expectedError = new AwsWrapperError("Error thrown during isClientValid");
     when(mockMonitorConnectionContext.isHostUnhealthy).thenReturn(true);
-    when(mockPluginService.isClientValid(mockTargetClient)).thenThrow(expectedError);
+    when(mockPluginService.isClientValid(mockClientWrapper)).thenThrow(expectedError);
     await expect(plugin.execute(MONITOR_METHOD_NAME, incrementQueryCounter, {})).rejects.toThrow(expectedError);
   });
 
