@@ -43,6 +43,7 @@ const mockReaderFailover = mock(ClusterAwareReaderFailoverHandler);
 
 const mockTargetClient = { client: 123 };
 
+// TODO: re-enable tests
 describe("writer failover handler", () => {
   beforeEach(() => {
     writer.addAlias("writer-host");

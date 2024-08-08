@@ -38,7 +38,7 @@ export class HostMonitoringConnectionPlugin extends AbstractConnectionPlugin imp
   private readonly properties: Map<string, any>;
   private pluginService: PluginService;
   private rdsUtils: RdsUtils;
-  private monitoringHostInfo: HostInfo | null = null;
+  private monitoringHostInfo: HostInfo | void | null = null;
   private monitorService: MonitorService;
 
   constructor(pluginService: PluginService, properties: Map<string, any>, rdsUtils: RdsUtils = new RdsUtils(), monitorService?: MonitorServiceImpl) {
@@ -111,9 +111,13 @@ export class HostMonitoringConnectionPlugin extends AbstractConnectionPlugin imp
             this.pluginService.setAvailability(monitoringHostInfo.allAliases, HostAvailability.NOT_AVAILABLE);
           }
 
-          const isClientClosed = await this.pluginService.isClientValid(this.pluginService.getCurrentClient().targetClient);
+          const targetClient = this.pluginService.getCurrentClient().targetClient;
+          let isClientClosed = false;
+          if (targetClient) {
+            isClientClosed = await this.pluginService.isClientValid(targetClient);
+          }
 
-          if (!isClientClosed) {
+          if (!targetClient || !isClientClosed) {
             await this.pluginService.getCurrentClient().end();
             // eslint-disable-next-line no-unsafe-finally
             throw new AwsWrapperError(Messages.get("HostMonitoringConnectionPlugin.unavailableHost", monitoringHostInfo.host));
