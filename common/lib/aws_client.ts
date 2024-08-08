@@ -112,8 +112,6 @@ export abstract class AwsClient extends EventEmitter {
     return this._createClientFunc;
   }
 
-  abstract executeQuery(props: Map<string, any>, sql: string): Promise<any>;
-
   abstract setReadOnly(readOnly: boolean): Promise<any | void>;
 
   abstract isReadOnly(): boolean;
@@ -146,4 +144,10 @@ export abstract class AwsClient extends EventEmitter {
     }
     return await this.pluginService.isClientValid(this.targetClient);
   }
+
+  async releaseResources(): Promise<any> {
+    await this.pluginManager.releaseResources();
+  }
+
+  abstract executeQuery(props: Map<string, any>, query: string, targetClient?: ClientWrapper): any;
 }

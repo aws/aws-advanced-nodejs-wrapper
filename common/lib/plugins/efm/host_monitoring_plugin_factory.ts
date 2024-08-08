@@ -17,18 +17,19 @@
 import { ConnectionPluginFactory } from "../../plugin_factory";
 import { PluginService } from "../../plugin_service";
 import { ConnectionPlugin } from "../../connection_plugin";
+import { RdsUtils } from "../../utils/rds_utils";
+import { logger } from "../../../logutils";
 import { AwsWrapperError } from "../../utils/errors";
 import { Messages } from "../../utils/messages";
-import { logger } from "../../../logutils";
 
-export class StaleDnsPluginFactory implements ConnectionPluginFactory {
+export class HostMonitoringPluginFactory implements ConnectionPluginFactory {
   async getInstance(pluginService: PluginService, properties: Map<string, any>): Promise<ConnectionPlugin> {
     try {
-      const staleDnsPlugin = await import("./stale_dns_plugin");
-      return new staleDnsPlugin.StaleDnsPlugin(pluginService, properties);
+      const hostMonitoringPlugin = await import("./host_monitoring_connection_plugin");
+      return new hostMonitoringPlugin.HostMonitoringConnectionPlugin(pluginService, properties, new RdsUtils());
     } catch (error: any) {
       logger.error(error.message);
-      throw new AwsWrapperError(Messages.get("ConnectionPluginChainBuilder.errorImportingPlugin", "StaleDnsPlugin"));
+      throw new AwsWrapperError(Messages.get("ConnectionPluginChainBuilder.errorImportingPlugin", "HostMonitoringPlugin"));
     }
   }
 }

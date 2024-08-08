@@ -30,7 +30,7 @@ export class FederatedAuthPluginFactory implements ConnectionPluginFactory {
       const adfsCredentialsProviderFactory = new adfsCredentialsProviderFactoryImport.AdfsCredentialsProviderFactory();
       return new federatedAuthPluginImport.FederatedAuthPlugin(pluginService, adfsCredentialsProviderFactory);
     } catch (error: any) {
-      logger.error(error);
+      logger.error(error.message);
       throw new AwsWrapperError(Messages.get("ConnectionPluginChainBuilder.errorImportingPlugin", "FederatedAuthPlugin"));
     }
   }

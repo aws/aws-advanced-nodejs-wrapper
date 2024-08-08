@@ -56,8 +56,8 @@ export abstract class AbstractConnectionPlugin implements ConnectionPlugin {
     initHostProviderFunc();
   }
 
-  notifyConnectionChanged(changes: Set<HostChangeOptions>): OldConnectionSuggestionAction {
-    return OldConnectionSuggestionAction.NO_OPINION;
+  notifyConnectionChanged(changes: Set<HostChangeOptions>): Promise<OldConnectionSuggestionAction> {
+    return Promise.resolve(OldConnectionSuggestionAction.NO_OPINION);
   }
 
   notifyHostListChanged(changes: Map<string, Set<HostChangeOptions>>): void {}

@@ -25,7 +25,7 @@ export class RdsPgDatabaseDialect extends PgDatabaseDialect {
 
   constructor() {
     super();
-    this.dialectName = "RdsPgDatabaseDialect";
+    this.dialectName = this.constructor.name;
   }
 
   getDialectUpdateCandidates(): string[] {

@@ -27,7 +27,7 @@ export class ReadWriteSplittingPluginFactory implements ConnectionPluginFactory 
       const readWriteSplittingPlugin = await import("./read_write_splitting_plugin");
       return new readWriteSplittingPlugin.ReadWriteSplittingPlugin(pluginService, properties);
     } catch (error: any) {
-      logger.error(error);
+      logger.error(error.message);
       throw new AwsWrapperError(Messages.get("ConnectionPluginChainBuilder.errorImportingPlugin", "readWriteSplittingPlugin"));
     }
   }

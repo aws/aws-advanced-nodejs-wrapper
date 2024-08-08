@@ -53,7 +53,7 @@ async function initConfigWithFailover(host: string, port: number, connectToProxy
     database: env.databaseInfo.default_db_name,
     password: env.databaseInfo.password,
     port: port,
-    plugins: "readWriteSplitting,failover",
+    plugins: "readWriteSplitting,failover,efm",
     failoverTimeoutMs: 400000,
     failoverMode: "reader-or-writer"
   };

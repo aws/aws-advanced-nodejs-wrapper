@@ -26,6 +26,7 @@ import { OldConnectionSuggestionAction } from "./old_connection_suggestion_actio
 import { HostRole } from "./host_role";
 import { ConnectionProvider } from "./connection_provider";
 import { ClientWrapper } from "./client_wrapper";
+import { CanReleaseResources } from "./can_release_resources";
 
 type PluginFunc<T> = (plugin: ConnectionPlugin, targetFunc: () => Promise<T>) => Promise<T>;
 
@@ -211,8 +212,8 @@ export class PluginManager {
     const result = new Set<OldConnectionSuggestionAction>();
     await this.notifySubscribedPlugins(
       PluginManager.NOTIFY_CONNECTION_CHANGED_METHOD,
-      (plugin, func) => {
-        result.add(plugin.notifyConnectionChanged(changes));
+      async (plugin) => {
+        result.add(await plugin.notifyConnectionChanged(changes));
         return Promise.resolve();
       },
       skipNotificationForThisPlugin
@@ -264,5 +265,20 @@ export class PluginManager {
     }
 
     throw new AwsWrapperError("The driver does not support the requested host selection strategy: " + strategy);
+  }
+
+  async releaseResources() {
+    // This step allows all connection plugins a chance to clean up any dangling resources or
+    // perform any last tasks before shutting down.
+
+    for (const plugin of this._plugins) {
+      if (this.implementsCanReleaseResources(plugin)) {
+        await plugin.releaseResources();
+      }
+    }
+  }
+
+  private implementsCanReleaseResources(plugin: any): plugin is CanReleaseResources {
+    return plugin.releaseResources !== undefined;
   }
 }

@@ -25,9 +25,9 @@ import { PluginService } from "../../common/lib/plugin_service";
 class TestPlugin extends DefaultPlugin {
   counter: number = 0;
 
-  notifyConnectionChanged(changes: Set<HostChangeOptions>): OldConnectionSuggestionAction {
+  async notifyConnectionChanged(changes: Set<HostChangeOptions>): Promise<OldConnectionSuggestionAction> {
     this.counter++;
-    return OldConnectionSuggestionAction.NO_OPINION;
+    return Promise.resolve(OldConnectionSuggestionAction.NO_OPINION);
   }
 
   notifyHostListChanged(changes: Map<string, Set<HostChangeOptions>>): void {

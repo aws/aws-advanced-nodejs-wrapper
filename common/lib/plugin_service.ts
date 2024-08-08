@@ -37,6 +37,8 @@ import { SessionStateService } from "./session_state_service";
 import { SessionStateServiceImpl } from "./session_state_service_impl";
 import { HostAvailabilityStrategyFactory } from "./host_availability/host_availability_strategy_factory";
 import { ClientWrapper } from "./client_wrapper";
+import { logger } from "../logutils";
+import { Messages } from "./utils/messages";
 
 export class PluginService implements ErrorHandler, HostListProviderService {
   private readonly _currentClient: AwsClient;
@@ -242,6 +244,41 @@ export class PluginService implements ErrorHandler, HostListProviderService {
 
   updateConfigWithProperties(props: Map<string, any>) {
     this._currentClient.config = Object.fromEntries(props.entries());
+  }
+
+  async fillAliases(targetClient: any, hostInfo: HostInfo) {
+    if (hostInfo == null) {
+      return;
+    }
+
+    if (hostInfo.aliases.size > 0) {
+      logger.debug(Messages.get("PluginService.nonEmptyAliases", [...hostInfo.aliases].join(", ")));
+      return;
+    }
+
+    hostInfo.addAlias(hostInfo.asAlias);
+
+    // Add the host name and port, this host name is usually the internal IP address.
+    await this.dialect
+      .getHostAliasAndParseResults(targetClient)
+      .then((res) => {
+        hostInfo.addAlias(res);
+      })
+      .catch((error) => {
+        logger.debug(Messages.get("PluginServiceImpl.failedToRetrieveHostPort"));
+      });
+    const host: HostInfo | void | null = await this.identifyConnection(targetClient);
+    if (host != null) {
+      hostInfo.addAlias(...host.allAliases);
+    }
+  }
+
+  identifyConnection(targetClient: any): Promise<HostInfo | void | null> {
+    const provider: HostListProvider | null = this.getHostListProvider();
+    if (provider === null) {
+      return Promise.reject();
+    }
+    return provider.identifyConnection(targetClient, this.dialect);
   }
 
   createTargetClient(props: Map<string, any>): any {

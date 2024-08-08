@@ -29,10 +29,10 @@ export class HostInfo {
   readonly weight: number; // Greater or equal 0. Lesser the weight, the healthier node.
   readonly lastUpdateTime: number;
   availability: HostAvailability;
+  aliases: Set<string> = new Set<string>();
   allAliases: Set<string> = new Set<string>();
   hostId?: string;
   hostAvailabilityStrategy: HostAvailabilityStrategy;
-  protected aliases: Set<string> = new Set<string>();
 
   constructor(
     host: string,
@@ -50,6 +50,7 @@ export class HostInfo {
     this.weight = weight; // TODO: add check for weight parameter passed. As per comment above, weight should be Greater or equal 0
     this.lastUpdateTime = lastUpdateTime;
     this.hostAvailabilityStrategy = hostAvailabilityStrategy;
+    this.allAliases.add(this.asAlias);
   }
 
   isPortSpecified(): boolean {

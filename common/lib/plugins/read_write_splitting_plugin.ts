@@ -81,16 +81,16 @@ export class ReadWriteSplittingPlugin extends AbstractConnectionPlugin {
     initHostProviderFunc();
   }
 
-  override notifyConnectionChanged(changes: Set<HostChangeOptions>): OldConnectionSuggestionAction {
+  override notifyConnectionChanged(changes: Set<HostChangeOptions>): Promise<OldConnectionSuggestionAction> {
     try {
       this.updateInternalClientInfo();
     } catch (e) {
       // pass
     }
     if (this._inReadWriteSplit) {
-      return OldConnectionSuggestionAction.PRESERVE;
+      return Promise.resolve(OldConnectionSuggestionAction.PRESERVE);
     }
-    return OldConnectionSuggestionAction.NO_OPINION;
+    return Promise.resolve(OldConnectionSuggestionAction.NO_OPINION);
   }
 
   updateInternalClientInfo(): void {
