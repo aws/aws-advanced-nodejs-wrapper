@@ -38,7 +38,8 @@ export class AuroraPgDatabaseDialect extends PgDatabaseDialect implements Topolo
 
   constructor() {
     super();
-    this.dialectName = this.constructor.name;
+    console.log(this.dialectName);
+    // this.dialectName = this.constructor.name;
   }
 
   getHostListProvider(props: Map<string, any>, originalUrl: string, hostListProviderService: HostListProviderService): HostListProvider {

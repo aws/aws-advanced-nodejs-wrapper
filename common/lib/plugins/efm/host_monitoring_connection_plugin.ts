@@ -32,6 +32,7 @@ import { HostListProvider } from "../../host_list_provider/host_list_provider";
 import { HostAvailability } from "../../host_availability/host_availability";
 import { CanReleaseResources } from "../../can_release_resources";
 import { SubscribedMethodHelper } from "../../utils/subscribed_method_helper";
+import { ClientWrapper } from "../../client_wrapper";
 
 export class HostMonitoringConnectionPlugin extends AbstractConnectionPlugin implements CanReleaseResources {
   id: string = uniqueId("_efmPlugin");
@@ -53,15 +54,25 @@ export class HostMonitoringConnectionPlugin extends AbstractConnectionPlugin imp
     return new Set<string>(["*"]);
   }
 
-  connect<T>(hostInfo: HostInfo, props: Map<string, any>, isInitialConnection: boolean, connectFunc: () => Promise<T>): Promise<T> {
+  connect<T>(
+    hostInfo: HostInfo,
+    props: Map<string, any>,
+    isInitialConnection: boolean,
+    connectFunc: () => Promise<ClientWrapper>
+  ): Promise<ClientWrapper> {
     return this.connectInternal(hostInfo, connectFunc);
   }
 
-  forceConnect<T>(hostInfo: HostInfo, props: Map<string, any>, isInitialConnection: boolean, forceConnectFunc: () => Promise<T>): Promise<T> {
+  forceConnect<T>(
+    hostInfo: HostInfo,
+    props: Map<string, any>,
+    isInitialConnection: boolean,
+    forceConnectFunc: () => Promise<ClientWrapper>
+  ): Promise<ClientWrapper> {
     return this.connectInternal(hostInfo, forceConnectFunc);
   }
 
-  private async connectInternal<T>(hostInfo: HostInfo, connectFunc: () => Promise<T>): Promise<T> {
+  private async connectInternal<T>(hostInfo: HostInfo, connectFunc: () => Promise<ClientWrapper>): Promise<ClientWrapper> {
     const targetClient = await connectFunc();
     if (targetClient != null) {
       const type: RdsUrlType = this.rdsUtils.identifyRdsType(hostInfo.host);
@@ -129,34 +140,34 @@ export class HostMonitoringConnectionPlugin extends AbstractConnectionPlugin imp
     return result;
   }
 
-  async getMonitoringHostInfo(): Promise<HostInfo> {
-    function throwUnableToIdentifyConnection(host: HostInfo | null, provider: HostListProvider | null): never {
-      throw new AwsWrapperError(
-        Messages.get(
-          "HostMonitoringConnectionPlugin.unableToIdentifyConnection",
-          host != null ? host.host : "unknown host",
-          provider != null ? provider.getHostProviderType() : "unknown provider"
-        )
-      );
-    }
+  private throwUnableToIdentifyConnection(host: HostInfo | null, provider: HostListProvider | null): never {
+    throw new AwsWrapperError(
+      Messages.get(
+        "HostMonitoringConnectionPlugin.unableToIdentifyConnection",
+        host != null ? host.host : "unknown host",
+        provider != null ? provider.getHostProviderType() : "unknown provider"
+      )
+    );
+  }
 
+  async getMonitoringHostInfo(): Promise<HostInfo> {
     if (this.monitoringHostInfo == null) {
       this.monitoringHostInfo = this.pluginService.getCurrentHostInfo();
       const provider: HostListProvider | null = this.pluginService.getHostListProvider();
       if (this.monitoringHostInfo == null) {
-        throwUnableToIdentifyConnection(null, provider);
+        this.throwUnableToIdentifyConnection(null, provider);
       }
       const rdsUrlType: RdsUrlType = this.rdsUtils.identifyRdsType(this.monitoringHostInfo.url);
 
       try {
         if (rdsUrlType.isRdsCluster) {
           logger.debug("Monitoring host info is associated with a cluster endpoint, plugin needs to identify the cluster connection");
-          this.monitoringHostInfo = await this.pluginService.identifyConnection(this.pluginService.getCurrentClient().targetClient);
+          this.monitoringHostInfo = await this.pluginService.identifyConnection(this.pluginService.getCurrentClient().targetClient?.client);
           if (this.monitoringHostInfo == null) {
             const host: HostInfo | null = this.pluginService.getCurrentHostInfo();
-            throwUnableToIdentifyConnection(host, provider);
+            this.throwUnableToIdentifyConnection(host, provider);
           }
-          await this.pluginService.fillAliases(this.pluginService.getCurrentClient(), this.monitoringHostInfo);
+          await this.pluginService.fillAliases(this.pluginService.getCurrentClient().targetClient?.client, this.monitoringHostInfo);
         }
       } catch (error: any) {
         logger.debug(Messages.get("HostMonitoringConnectionPlugin.errorIdentifyingConnection", error.message));
@@ -182,8 +193,6 @@ export class HostMonitoringConnectionPlugin extends AbstractConnectionPlugin imp
 
   async releaseResources(): Promise<void> {
     const hostKeys = (await this.getMonitoringHostInfo())?.allAliases;
-    await this.monitorService.releaseResources(hostKeys);
-
-    return Promise.resolve();
+    return this.monitorService.releaseResources(hostKeys);
   }
 }

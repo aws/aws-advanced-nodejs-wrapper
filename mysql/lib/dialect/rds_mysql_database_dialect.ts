@@ -19,11 +19,6 @@ import { DatabaseDialectCodes } from "../../../common/lib/database_dialect/datab
 import { ClientWrapper } from "../../../common/lib/client_wrapper";
 
 export class RdsMySQLDatabaseDialect extends MySQLDatabaseDialect {
-  constructor() {
-    super();
-    this.dialectName = this.constructor.name;
-  }
-
   getDialectUpdateCandidates(): string[] {
     return [DatabaseDialectCodes.AURORA_MYSQL];
   }

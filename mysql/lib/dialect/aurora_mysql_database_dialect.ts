@@ -34,11 +34,6 @@ export class AuroraMySQLDatabaseDialect extends MySQLDatabaseDialect implements 
   private static readonly IS_READER_QUERY: string = "SELECT @@innodb_read_only as is_reader";
   private static readonly AURORA_VERSION_QUERY = "SHOW VARIABLES LIKE 'aurora_version'";
 
-  constructor() {
-    super();
-    this.dialectName = this.constructor.name;
-  }
-
   getHostListProvider(props: Map<string, any>, originalUrl: string, hostListProviderService: HostListProviderService): HostListProvider {
     return new RdsHostListProvider(props, originalUrl, hostListProviderService);
   }

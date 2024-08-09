@@ -150,7 +150,7 @@ export class PluginService implements ErrorHandler, HostListProviderService {
       : await this.getHostListProvider()?.forceRefresh();
     if (updatedHostList && updatedHostList !== this.hosts) {
       this.updateHostAvailability(updatedHostList);
-      this.setHostList(this.hosts, updatedHostList);
+      await this.setHostList(this.hosts, updatedHostList);
     }
   }
 
@@ -160,7 +160,7 @@ export class PluginService implements ErrorHandler, HostListProviderService {
     const updatedHostList = targetClient ? await this.getHostListProvider()?.refresh(targetClient) : await this.getHostListProvider()?.refresh();
     if (updatedHostList && updatedHostList !== this.hosts) {
       this.updateHostAvailability(updatedHostList);
-      this.setHostList(this.hosts, updatedHostList);
+      await this.setHostList(this.hosts, updatedHostList);
     }
   }
 
@@ -203,7 +203,7 @@ export class PluginService implements ErrorHandler, HostListProviderService {
     return changes;
   }
 
-  private setHostList(oldHosts: HostInfo[], newHosts: HostInfo[]) {
+  private async setHostList(oldHosts: HostInfo[], newHosts: HostInfo[]) {
     const oldHostMap: Map<string, HostInfo> = new Map(oldHosts.map((e) => [e.url, e]));
     const newHostMap: Map<string, HostInfo> = new Map(newHosts.map((e) => [e.url, e]));
 
@@ -229,7 +229,7 @@ export class PluginService implements ErrorHandler, HostListProviderService {
     if (changes.size > 0) {
       this.hosts = newHosts ? newHosts : [];
       if (this.pluginServiceManagerContainer.pluginManager) {
-        this.pluginServiceManagerContainer.pluginManager.notifyHostListChanged(changes);
+        await this.pluginServiceManagerContainer.pluginManager.notifyHostListChanged(changes);
       } else {
         throw new AwsWrapperError("Connection Plugin Manager was not detected."); // This should not be reached
       }
@@ -246,7 +246,7 @@ export class PluginService implements ErrorHandler, HostListProviderService {
     this._currentClient.config = Object.fromEntries(props.entries());
   }
 
-  async fillAliases(targetClient: any, hostInfo: HostInfo) {
+  async fillAliases(targetClient: ClientWrapper, hostInfo: HostInfo) {
     if (hostInfo == null) {
       return;
     }
@@ -259,21 +259,20 @@ export class PluginService implements ErrorHandler, HostListProviderService {
     hostInfo.addAlias(hostInfo.asAlias);
 
     // Add the host name and port, this host name is usually the internal IP address.
-    await this.dialect
-      .getHostAliasAndParseResults(targetClient)
-      .then((res) => {
-        hostInfo.addAlias(res);
-      })
-      .catch((error) => {
-        logger.debug(Messages.get("PluginServiceImpl.failedToRetrieveHostPort"));
-      });
+    try {
+      const res: string = await this.dialect.getHostAliasAndParseResults(targetClient);
+      hostInfo.addAlias(res);
+    } catch (error) {
+      logger.debug(Messages.get("PluginServiceImpl.failedToRetrieveHostPort"));
+    }
+
     const host: HostInfo | void | null = await this.identifyConnection(targetClient);
-    if (host != null) {
+    if (host) {
       hostInfo.addAlias(...host.allAliases);
     }
   }
 
-  identifyConnection(targetClient: any): Promise<HostInfo | void | null> {
+  identifyConnection(targetClient: ClientWrapper): Promise<HostInfo | void | null> {
     const provider: HostListProvider | null = this.getHostListProvider();
     if (provider === null) {
       return Promise.reject();
