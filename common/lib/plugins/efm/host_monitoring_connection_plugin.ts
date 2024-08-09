@@ -162,12 +162,12 @@ export class HostMonitoringConnectionPlugin extends AbstractConnectionPlugin imp
       try {
         if (rdsUrlType.isRdsCluster) {
           logger.debug("Monitoring host info is associated with a cluster endpoint, plugin needs to identify the cluster connection");
-          this.monitoringHostInfo = await this.pluginService.identifyConnection(this.pluginService.getCurrentClient().targetClient?.client);
+          this.monitoringHostInfo = await this.pluginService.identifyConnection(this.pluginService.getCurrentClient().targetClient!);
           if (this.monitoringHostInfo == null) {
             const host: HostInfo | null = this.pluginService.getCurrentHostInfo();
             this.throwUnableToIdentifyConnection(host, provider);
           }
-          await this.pluginService.fillAliases(this.pluginService.getCurrentClient().targetClient?.client, this.monitoringHostInfo);
+          await this.pluginService.fillAliases(this.pluginService.getCurrentClient().targetClient!, this.monitoringHostInfo);
         }
       } catch (error: any) {
         logger.debug(Messages.get("HostMonitoringConnectionPlugin.errorIdentifyingConnection", error.message));
