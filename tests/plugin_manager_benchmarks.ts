@@ -57,9 +57,7 @@ suite(
 
   configure({
     cases: {
-      delay: 0.5,
-      minTime: 5,
-      minSamples: 10
+      delay: 0.5
     }
   }),
 
