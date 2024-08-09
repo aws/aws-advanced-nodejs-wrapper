@@ -57,12 +57,13 @@ suite(
 
   configure({
     cases: {
-      delay: 0.5
+      delay: 0.5,
+      minTime: 5,
+      minSamples: 10
     }
   }),
 
   add("initPluginManagerWithPlugins", async () => {
-    await import("./testplugin/benchmark_plugin");
     return async () => {
       const manager = new PluginManager(pluginServiceManagerContainer, propsWithPlugins, instance(mockConnectionProvider), null);
       await manager.init(await createPlugins(instance(mockPluginService), instance(mockConnectionProvider), propsWithPlugins));
@@ -75,7 +76,6 @@ suite(
   }),
 
   add("connectWithPlugins", async () => {
-    await import("./testplugin/benchmark_plugin");
     return async () => {
       await pluginManagerWithPlugins.init(await createPlugins(instance(mockPluginService), instance(mockConnectionProvider), propsWithPlugins));
       await pluginManagerWithPlugins.connect(
@@ -96,7 +96,6 @@ suite(
   }),
 
   add("executeWithPlugins", async () => {
-    await import("./testplugin/benchmark_plugin");
     return async () => {
       await pluginManagerWithPlugins.init(await createPlugins(instance(mockPluginService), instance(mockConnectionProvider), propsWithPlugins));
       await pluginManagerWithPlugins.execute(
@@ -121,7 +120,6 @@ suite(
   }),
 
   add("initHostProviderWithPlugins", async () => {
-    await import("./testplugin/benchmark_plugin");
     return async () => {
       await pluginManagerWithPlugins.init(await createPlugins(instance(mockPluginService), instance(mockConnectionProvider), propsWithPlugins));
       await pluginManagerWithPlugins.initHostProvider(
@@ -142,7 +140,6 @@ suite(
   }),
 
   add("notifyConnectionChangedWithPlugins", async () => {
-    await import("./testplugin/benchmark_plugin");
     return async () => {
       await pluginManagerWithPlugins.init(await createPlugins(instance(mockPluginService), instance(mockConnectionProvider), propsWithPlugins));
       await pluginManagerWithPlugins.notifyConnectionChanged(new Set<HostChangeOptions>([HostChangeOptions.INITIAL_CONNECTION]), null);

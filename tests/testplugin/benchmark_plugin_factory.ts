@@ -19,12 +19,12 @@ import { PluginService } from "../../common/lib/plugin_service";
 import { ConnectionPlugin } from "../../common/lib";
 import { AwsWrapperError } from "../../common/lib/utils/errors";
 import { Messages } from "../../common/lib/utils/messages";
+import { BenchmarkPlugin } from "./benchmark_plugin";
 
 export class BenchmarkPluginFactory implements ConnectionPluginFactory {
   async getInstance(pluginService: PluginService, properties: object): Promise<ConnectionPlugin> {
     try {
-      const benchmarkPlugin = await import("./benchmark_plugin");
-      return new benchmarkPlugin.BenchmarkPlugin();
+      return new BenchmarkPlugin();
     } catch (error: any) {
       throw new AwsWrapperError(Messages.get("ConnectionPluginChainBuilder.errorImportingPlugin", "BenchmarkPlugin"));
     }

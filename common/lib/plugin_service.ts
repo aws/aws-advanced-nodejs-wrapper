@@ -203,7 +203,7 @@ export class PluginService implements ErrorHandler, HostListProviderService {
     return changes;
   }
 
-  private setHostList(oldHosts: HostInfo[], newHosts: HostInfo[]) {
+  private async setHostList(oldHosts: HostInfo[], newHosts: HostInfo[]) {
     const oldHostMap: Map<string, HostInfo> = new Map(oldHosts.map((e) => [e.url, e]));
     const newHostMap: Map<string, HostInfo> = new Map(newHosts.map((e) => [e.url, e]));
 
@@ -229,7 +229,7 @@ export class PluginService implements ErrorHandler, HostListProviderService {
     if (changes.size > 0) {
       this.hosts = newHosts ? newHosts : [];
       if (this.pluginServiceManagerContainer.pluginManager) {
-        this.pluginServiceManagerContainer.pluginManager.notifyHostListChanged(changes);
+        await this.pluginServiceManagerContainer.pluginManager.notifyHostListChanged(changes);
       } else {
         throw new AwsWrapperError("Connection Plugin Manager was not detected."); // This should not be reached
       }
