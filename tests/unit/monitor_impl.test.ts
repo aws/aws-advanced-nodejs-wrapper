@@ -21,6 +21,7 @@ import { HostInfo } from "../../common/lib/host_info";
 import { AwsClient } from "../../common/lib/aws_client";
 import { MonitorConnectionContext } from "../../common/lib/plugins/efm/monitor_connection_context";
 import { sleep } from "../../common/lib/utils/utils";
+import { ClientWrapper } from "../../common/lib/client_wrapper";
 
 class MonitorImplTest extends MonitorImpl {
   constructor(pluginService: PluginService, hostInfo: HostInfo, properties: Map<string, any>, monitorDisposalTimeMillis: number) {
@@ -35,7 +36,12 @@ class MonitorImplTest extends MonitorImpl {
 const mockPluginService = mock(PluginService);
 const mockHostInfo = mock(HostInfo);
 const mockClient = mock(AwsClient);
-const mockTargetClient = {};
+const clientWrapper: ClientWrapper = {
+  client: undefined,
+  hostInfo: mock(HostInfo),
+  properties: new Map<string, any>()
+};
+const mockClientWrapper: ClientWrapper = mock(clientWrapper);
 
 const SHORT_INTERVAL_MILLIS = 30;
 
@@ -48,7 +54,7 @@ describe("monitor impl test", () => {
     reset(mockPluginService);
 
     when(mockPluginService.getCurrentClient()).thenReturn(instance(mockClient));
-    when(mockPluginService.forceConnect(anything(), anything())).thenReturn(mockTargetClient);
+    when(mockPluginService.forceConnect(anything(), anything())).thenResolve(mockClientWrapper);
 
     monitor = new MonitorImplTest(instance(mockPluginService), instance(mockHostInfo), properties, 0);
     monitorSpy = spy(monitor);
@@ -78,7 +84,7 @@ describe("monitor impl test", () => {
     const status2 = await monitor.checkConnectionStatus();
     expect(status2.isValid).toBe(true);
 
-    verify(mockPluginService.isClientValid(mockTargetClient)).twice();
+    verify(mockPluginService.isClientValid(mockClientWrapper)).twice();
   });
 
   it("is client healthy with error", async () => {

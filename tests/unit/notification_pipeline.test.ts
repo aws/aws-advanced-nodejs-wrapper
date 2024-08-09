@@ -21,6 +21,7 @@ import { PluginServiceManagerContainer } from "../../common/lib/plugin_service_m
 import { DefaultPlugin } from "../../common/lib/plugins/default_plugin";
 import { instance, mock } from "ts-mockito";
 import { PluginService } from "../../common/lib/plugin_service";
+import { DriverConnectionProvider } from "../../common/lib/driver_connection_provider";
 
 class TestPlugin extends DefaultPlugin {
   counter: number = 0;
@@ -51,8 +52,8 @@ describe("notificationPipelineTest", () => {
   let plugin: TestPlugin;
 
   beforeEach(() => {
-    pluginManager = new PluginManager(container, props);
-    plugin = new TestPlugin(instance(mockPluginService));
+    pluginManager = new PluginManager(container, props, new DriverConnectionProvider(), null);
+    plugin = new TestPlugin(instance(mockPluginService), new DriverConnectionProvider(), null);
     pluginManager["_plugins"] = [plugin];
   });
 

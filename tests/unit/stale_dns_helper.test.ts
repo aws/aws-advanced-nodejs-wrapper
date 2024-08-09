@@ -24,7 +24,7 @@ import { StaleDnsHelper } from "../../common/lib/plugins/stale_dns/stale_dns_hel
 import { AwsClient } from "../../common/lib/aws_client";
 import { HostChangeOptions } from "../../common/lib/host_change_options";
 import { DatabaseDialect } from "../../common/lib/database_dialect/database_dialect";
-import { ClientWrapper } from "../../common/lib/client_wrapper"
+import { ClientWrapper } from "../../common/lib/client_wrapper";
 
 const mockPluginService: PluginService = mock(PluginService);
 const mockHostListProviderService = mock<HostListProviderService>();
@@ -44,10 +44,11 @@ const mockInitialConn = mock(AwsClient);
 const mockHostInfo = mock(HostInfo);
 const mockDialect = mock<DatabaseDialect>();
 
-const clientWrapper: ClientWrapper = { 
-  client : undefined,
-  hostInfo : mockHostInfo,
-  properties : new Map<string, any>()}
+const clientWrapper: ClientWrapper = {
+  client: undefined,
+  hostInfo: mockHostInfo,
+  properties: new Map<string, any>()
+};
 
 const mockInitialClientWrapper: ClientWrapper = mock(clientWrapper);
 const mockClientWrapper: ClientWrapper = mock(clientWrapper);
@@ -254,10 +255,10 @@ describe("test_stale_dns_helper", () => {
       mockConnectFunc
     );
 
-    expect(mockInitialConn).not.toBe(returnConn);   // TODO fix  mockInitialConn should be mockInitialClientWrapper check assumptions
+    expect(mockInitialConn).not.toBe(returnConn); // TODO fix  mockInitialConn should be mockInitialClientWrapper check assumptions
     expect(mockConnectFunc).toHaveBeenCalled();
     // verify(mockPluginService.connect(anything(), anything())).once(); //TODO fix
-    
+
     // note: it appears that the mocked version doesn't have all the values in stale_dns_helper for this case.
     // it fails the following line in common/lib/plugins/stale_dns/stale_dns_helper.ts file
     // const newProps = new Map<string, any>(props);

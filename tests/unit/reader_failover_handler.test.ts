@@ -21,6 +21,7 @@ import { HostAvailability } from "../../common/lib/host_availability/host_availa
 import { HostRole } from "../../common/lib/host_role";
 import { AwsWrapperError } from "../../common/lib/utils/errors";
 import { mock, instance, when, anything, verify, reset } from "ts-mockito";
+import { ClientWrapper } from "../../common/lib/client_wrapper";
 
 const host1 = new HostInfo("writer", 1234);
 const host2 = new HostInfo("reader1", 1234, HostRole.READER);
@@ -30,6 +31,12 @@ const host5 = new HostInfo("reader4", 1234, HostRole.READER);
 const host6 = new HostInfo("reader5", 1234, HostRole.READER);
 const defaultHosts = [host1, host2, host3, host4, host5, host6];
 const properties = new Map();
+const clientWrapper: ClientWrapper = {
+  client: undefined,
+  hostInfo: mock(HostInfo),
+  properties: new Map<string, any>()
+};
+const mockClientWrapper: ClientWrapper = mock(clientWrapper);
 const mockTargetClient = { client: 123 };
 
 const mockPluginService = mock(PluginService);
@@ -50,7 +57,7 @@ describe("reader failover handler", () => {
         when(mockPluginService.forceConnect(hosts[i], anything())).thenThrow(new AwsWrapperError("Rejecting test"));
         when(mockPluginService.isNetworkError(anything())).thenReturn(true);
       } else {
-        when(mockPluginService.forceConnect(hosts[i], anything())).thenReturn(mockTargetClient);
+        when(mockPluginService.forceConnect(hosts[i], anything())).thenResolve(mockClientWrapper);
       }
     }
     const mockPluginServiceInstance = instance(mockPluginService);
@@ -67,7 +74,7 @@ describe("reader failover handler", () => {
     );
     const result = await target.failover(hosts, hosts[currentHostIndex]);
     expect(result.isConnected).toBe(true);
-    expect(result.client).toBe(mockTargetClient);
+    expect(result.client).toBe(mockClientWrapper);
     expect(result.newHost).toBe(hosts[successHostIndex]);
   }, 20000);
 
@@ -149,9 +156,9 @@ describe("reader failover handler", () => {
       await new Promise((resolve, reject) => {
         timeoutId = setTimeout(resolve, 20000);
       });
-      return mockTargetClient;
+      return mockClientWrapper;
     });
-    when(mockPluginService.forceConnect(fastHost, anything())).thenReturn(mockTargetClient);
+    when(mockPluginService.forceConnect(fastHost, anything())).thenResolve(mockClientWrapper);
 
     const mockPluginServiceInstance = instance(mockPluginService);
     const target = new ClusterAwareReaderFailoverHandler(
@@ -165,7 +172,7 @@ describe("reader failover handler", () => {
     const result = await target.getReaderConnection(hosts);
 
     expect(result.isConnected).toBe(true);
-    expect(result.client).toStrictEqual(mockTargetClient);
+    expect(result.client).toStrictEqual(mockClientWrapper);
 
     verify(mockPluginService.setAvailability(anything(), HostAvailability.NOT_AVAILABLE)).never();
     verify(mockPluginService.setAvailability(fastHost.allAliases, HostAvailability.AVAILABLE)).atMost(2);
