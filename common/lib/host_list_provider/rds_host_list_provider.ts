@@ -161,17 +161,13 @@ export class RdsHostListProvider implements DynamicHostListProvider {
     this.init();
 
     const currentClient = targetClient ?? this.hostListProviderService.getCurrentClient().targetClient;
-    if (currentClient) {
-      const results: FetchTopologyResult = await this.getTopology(currentClient, false);
-      logger.debug(logTopology(results.hosts, results.isCachedData ? "[From cache] " : ""));
-
-      this.hostList = results.hosts;
-      return this.hostList;
-    }
-    throw new AwsWrapperError("Could not retrieve targetClient.");
+    const results: FetchTopologyResult = await this.getTopology(currentClient, false);
+    logger.debug(logTopology(results.hosts, results.isCachedData ? "[From cache] " : ""));
+    this.hostList = results.hosts;
+    return this.hostList;
   }
 
-  async getTopology(targetClient: ClientWrapper, forceUpdate: boolean): Promise<FetchTopologyResult> {
+  async getTopology(targetClient: ClientWrapper | undefined, forceUpdate: boolean): Promise<FetchTopologyResult> {
     this.init();
 
     if (!this.clusterId) {
@@ -192,8 +188,7 @@ export class RdsHostListProvider implements DynamicHostListProvider {
     const needToSuggest: boolean = !cachedHosts && this.isPrimaryClusterId === true;
     if (!cachedHosts || forceUpdate) {
       // need to re-fetch the topology.
-
-      if (!(await this.hostListProviderService.isClientValid(targetClient))) {
+      if (!targetClient || !(await this.hostListProviderService.isClientValid(targetClient))) {
         return new FetchTopologyResult(false, this.initialHostList);
       }
 
