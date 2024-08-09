@@ -85,6 +85,7 @@ export abstract class AwsClient extends EventEmitter {
     const info = this.pluginService.getCurrentHostInfo();
     if (info != null) {
       await this.pluginManager.initHostProvider(info, this.properties, this.pluginService);
+      await this.pluginService.refreshHostList();
     }
   }
 
