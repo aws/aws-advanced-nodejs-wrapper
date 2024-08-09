@@ -76,7 +76,7 @@ export class AuroraInitialConnectionStrategyPlugin extends AbstractConnectionPlu
       const writerCandidateClient = await this.getVerifiedWriterClient(props, isInitialConnection, connectFunc);
       if (writerCandidateClient === null) {
         // Can't get writer connection. Continue with a normal workflow.
-        logger.debug("Couldn't get writer from Initial Connection Strategy Plugin.");
+        logger.debug("Writer cluster endpoint does not resolve to a valid reader instance, skipping the initial connection strategy logic.");
         return connectFunc();
       }
       return writerCandidateClient;
@@ -86,7 +86,7 @@ export class AuroraInitialConnectionStrategyPlugin extends AbstractConnectionPlu
       const readerCandidateClient = await this.getVerifiedReaderClient(props, isInitialConnection, connectFunc);
       if (readerCandidateClient === null) {
         // Can't get a reader connection. Continue with a normal workflow.
-        logger.debug("Couldn't get reader from Initial Connection Strategy Plugin.");
+        logger.debug("Reader cluster endpoint does not resolve to a valid reader instance, skipping the initial connection strategy logic.");
         return connectFunc();
       }
       return readerCandidateClient;
@@ -103,7 +103,7 @@ export class AuroraInitialConnectionStrategyPlugin extends AbstractConnectionPlu
 
     const endTimeMillis = Date.now() + WrapperProperties.OPEN_CONNECTION_RETRY_TIMEOUT_MS.get(props);
     let writerCandidateClient: any;
-    let writerCandidate: void | HostInfo | null;
+    let writerCandidate: HostInfo | void | null;
 
     while (Date.now() < endTimeMillis) {
       writerCandidateClient = null;
@@ -119,7 +119,7 @@ export class AuroraInitialConnectionStrategyPlugin extends AbstractConnectionPlu
           writerCandidate = await this.pluginService.identifyConnection(writerCandidateClient);
 
           if (writerCandidate) {
-            if (writerCandidateClient.role !== HostRole.WRITER) {
+            if (writerCandidate.role !== HostRole.WRITER) {
               // Shouldn't be here. But let's try again.
               await this.pluginService.tryClosingTargetClient(writerCandidateClient);
               await sleep(retryDelayMs);
@@ -172,7 +172,7 @@ export class AuroraInitialConnectionStrategyPlugin extends AbstractConnectionPlu
     const endTimeMs = Date.now() + WrapperProperties.OPEN_CONNECTION_RETRY_TIMEOUT_MS.get(props);
 
     let readerCandidateClient: any;
-    let readerCandidate: void | HostInfo | null;
+    let readerCandidate: HostInfo | void | null;
 
     while (Date.now() < endTimeMs) {
       readerCandidateClient = null;
@@ -253,12 +253,7 @@ export class AuroraInitialConnectionStrategyPlugin extends AbstractConnectionPlu
   }
 
   private getWriter(): HostInfo | null {
-    for (const host of this.pluginService.getHosts()) {
-      if (host.role === HostRole.WRITER) {
-        return host;
-      }
-    }
-    return null;
+    return this.pluginService.getHosts().find((x) => x.role === HostRole.WRITER) ?? null;
   }
 
   private getReader(props: Map<string, any>) {
@@ -275,19 +270,6 @@ export class AuroraInitialConnectionStrategyPlugin extends AbstractConnectionPlu
   }
 
   private hasNoReaders() {
-    if (this.pluginService.getHosts().length === 0) {
-      // Topology inconclusive/corrupted.
-      return false;
-    }
-
-    for (const host of this.pluginService.getHosts()) {
-      if (host.role === HostRole.WRITER) {
-        continue;
-      }
-      // Found a reader host
-      return false;
-    }
-    // Went through all hosts and found no reader.
-    return true;
+    return this.pluginService.getHosts().find((x) => x.role === HostRole.READER) !== undefined;
   }
 }
