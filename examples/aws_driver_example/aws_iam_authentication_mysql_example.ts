@@ -15,7 +15,7 @@
 */
 
 import { readFileSync } from "fs";
-import { AwsMySQLClient } from "../../mysql";
+import { AwsMySQLClient } from "../../mysql/lib";
 
 const mysqlHost = "db-identifier.XYZ.us-east-2.rds.amazonaws.com";
 const username = "john_smith";

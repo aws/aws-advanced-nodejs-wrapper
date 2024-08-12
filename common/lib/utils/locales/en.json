@@ -133,6 +133,7 @@
   "HostMonitoringConnectionPlugin.unableToIdentifyConnection": "Unable to identify the given connection: '%s', please ensure the correct host list provider is specified. The host list provider in use is: '%s'.",
   "HostMonitoringConnectionPlugin.errorIdentifyingConnection": "Error occurred while identifying connection: '%s'.",
   "HostMonitoringConnectionPlugin.unavailableHost": "Host '%s' is unavailable.",
+  "PluginServiceImpl.failedToRetrieveHostPort": "PluginServiceImpl.failedToRetrieveHostPort",
   "AuroraInitialConnectionStrategyPlugin.unsupportedStrategy": "Unsupported host selection strategy '%s'.",
   "AuroraInitialConnectionStrategyPlugin.requireDynamicProvider": "Dynamic host list provider is required."
 }

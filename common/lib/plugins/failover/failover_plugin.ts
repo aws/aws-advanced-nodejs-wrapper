@@ -296,15 +296,7 @@ export class FailoverPlugin extends AbstractConnectionPlugin {
     // Moreover, internally it calls refreshHostList which is also called in the internalPostConnect() function
     // of the AwsClient class when the connect chain is finished. Maybe the call could be refactored such that no need to call it
     // multiple times during the connect chain execution.
-    const targetClient = await this._staleDnsHelper.getVerifiedConnection(
-      hostInfo.host,
-      isInitialConnection,
-      this.hostListProviderService,
-      props,
-      connectFunc
-    );
-
-    return targetClient;
+    return await this._staleDnsHelper.getVerifiedConnection(hostInfo.host, isInitialConnection, this.hostListProviderService, props, connectFunc);
   }
 
   override async execute<T>(methodName: string, methodFunc: () => Promise<T>): Promise<T> {

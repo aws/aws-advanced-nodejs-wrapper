@@ -153,10 +153,9 @@ export class MonitorServiceImpl implements MonitorService {
   }
 
   async releaseResources(hostKeys: Set<string>) {
-    for (const key of MonitorServiceImpl.monitors.getKeys()) {
-      const monitor = MonitorServiceImpl.monitors.get(key);
-      if (monitor) {
-        await monitor.releaseResources();
+    for (const [key, monitor] of MonitorServiceImpl.monitors.entries) {
+      if (monitor.item) {
+        await monitor.item.releaseResources();
       }
     }
     this.cachedMonitorHostKeys = undefined;
