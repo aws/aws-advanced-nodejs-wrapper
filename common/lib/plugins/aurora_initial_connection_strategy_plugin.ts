@@ -150,7 +150,7 @@ export class AuroraInitialConnectionStrategyPlugin extends AbstractConnectionPlu
         return writerCandidateClient;
       } catch (error: any) {
         await this.pluginService.tryClosingTargetClient(writerCandidateClient);
-        if (this.pluginService.isLoginError(error)) {
+        if (this.pluginService.isLoginError(error) || !writerCandidate) {
           throw error;
         } else if (writerCandidate) {
           this.pluginService.setAvailability(writerCandidate.allAliases, HostAvailability.NOT_AVAILABLE);
@@ -235,7 +235,7 @@ export class AuroraInitialConnectionStrategyPlugin extends AbstractConnectionPlu
         return readerCandidateClient;
       } catch (error: any) {
         await this.pluginService.tryClosingTargetClient(readerCandidateClient);
-        if (this.pluginService.isLoginError(error)) {
+        if (this.pluginService.isLoginError(error) || !readerCandidate) {
           throw error;
         } else if (readerCandidate) {
           this.pluginService.setAvailability(readerCandidate.allAliases, HostAvailability.NOT_AVAILABLE);

@@ -23,25 +23,28 @@ import { SimpleHostAvailabilityStrategy } from "../../common/lib/host_availabili
 import { RdsUrlType } from "../../common/lib/utils/rds_url_type";
 import { RdsUtils } from "../../common/lib/utils/rds_utils";
 import { HostListProviderService } from "../../common/lib/host_list_provider_service";
-import { AwsWrapperError } from "../../common/lib/utils/errors";
 import { HostRole } from "../../common/lib/host_role";
-import { AwsClient } from "../../common/lib/aws_client";
 import { HostInfo } from "../../common/lib/host_info";
+import { ClientWrapper } from "../../common/lib/client_wrapper";
+import { AwsWrapperError } from "../../common/lib/utils/errors";
 
 const mockPluginService = mock(PluginService);
 const mockHostListProviderService = mock<HostListProviderService>();
 const mockRdsUtils = mock(RdsUtils);
-const mockWriterClient = mock(AwsClient);
-const mockReaderClient = mock(AwsClient);
 const mockReaderHostInfo = mock(HostInfo);
 const mockFunc = jest.fn();
 
 const hostInfoBuilder = new HostInfoBuilder({ hostAvailabilityStrategy: new SimpleHostAvailabilityStrategy() });
 const hostInfo = hostInfoBuilder.withHost("host").build();
 
+const writerHostInfo = hostInfoBuilder.withHost("host").withRole(HostRole.WRITER).build();
+const readerHostInfo = hostInfoBuilder.withHost("host").withHost(HostRole.READER).build();
+
 describe("Aurora initial connection strategy plugin", () => {
   let props: Map<string, any>;
   let plugin: AuroraInitialConnectionStrategyPlugin;
+  let writerClient: ClientWrapper;
+  let readerClient: ClientWrapper;
 
   beforeEach(() => {
     props = new Map<string, any>();
@@ -49,14 +52,24 @@ describe("Aurora initial connection strategy plugin", () => {
     plugin["rdsUtils"] = instance(mockRdsUtils);
     plugin.initHostProvider(hostInfo, props, instance(mockHostListProviderService), mockFunc);
     WrapperProperties.OPEN_CONNECTION_RETRY_TIMEOUT_MS.set(props, 1000);
+
+    writerClient = {
+      client: undefined,
+      hostInfo: writerHostInfo,
+      properties: new Map<string, any>()
+    };
+
+    readerClient = {
+      client: undefined,
+      hostInfo: readerHostInfo,
+      properties: new Map<string, any>()
+    };
   });
 
   afterEach(() => {
     reset(mockRdsUtils);
     reset(mockPluginService);
     reset(mockHostListProviderService);
-    reset(mockWriterClient);
-    reset(mockReaderClient);
     reset(mockReaderHostInfo);
   });
 
@@ -94,21 +107,19 @@ describe("Aurora initial connection strategy plugin", () => {
   it("test writer - resolves to reader", async () => {
     when(mockRdsUtils.identifyRdsType(anything())).thenReturn(RdsUrlType.RDS_WRITER_CLUSTER);
     when(mockPluginService.getHosts()).thenReturn([hostInfoBuilder.withRole(HostRole.WRITER).build()]);
-    when(mockPluginService.connect(anything(), anything())).thenReturn(instance(mockReaderClient));
+    when(mockPluginService.connect(anything(), anything())).thenResolve(instance(readerClient));
 
     expect(await plugin.connect(hostInfo, props, true, mockFunc)).toBe(undefined);
   });
 
   it("test writer - resolve to writer", async () => {
-    const mockWriterClientInstance = instance(mockWriterClient);
-
     when(mockRdsUtils.identifyRdsType(anything())).thenReturn(RdsUrlType.RDS_WRITER_CLUSTER);
     when(mockPluginService.getHosts()).thenReturn([hostInfoBuilder.withRole(HostRole.WRITER).build()]);
-    when(mockPluginService.getHostRole(mockWriterClientInstance)).thenReturn(Promise.resolve(HostRole.WRITER));
-    when(mockPluginService.connect(anything(), anything())).thenReturn(mockWriterClientInstance);
+    when(mockPluginService.getHostRole(writerClient)).thenReturn(Promise.resolve(HostRole.WRITER));
+    when(mockPluginService.connect(anything(), anything())).thenResolve(writerClient);
 
-    expect(await plugin.connect(hostInfo, props, true, mockFunc)).toBe(mockWriterClientInstance);
-    verify(mockPluginService.forceRefreshHostList(mockWriterClientInstance)).never();
+    expect(await plugin.connect(hostInfo, props, true, mockFunc)).toBe(writerClient);
+    verify(mockPluginService.forceRefreshHostList(writerClient)).never();
   });
 
   it("test reader - not found", async () => {
@@ -119,39 +130,36 @@ describe("Aurora initial connection strategy plugin", () => {
   });
 
   it("test reader - resolves to reader", async () => {
-    const mockReaderClientInstance = instance(mockReaderClient);
     when(mockRdsUtils.identifyRdsType(anything())).thenReturn(RdsUrlType.RDS_READER_CLUSTER);
     when(mockPluginService.getHosts()).thenReturn([hostInfoBuilder.withRole(HostRole.READER).build()]);
-    when(mockPluginService.connect(anything(), anything())).thenReturn(mockReaderClientInstance);
+    when(mockPluginService.connect(anything(), anything())).thenResolve(readerClient);
     when(mockPluginService.acceptsStrategy(anything(), anything())).thenReturn(true);
-    when(mockPluginService.getHostRole(mockReaderClientInstance)).thenReturn(Promise.resolve(HostRole.READER));
+    when(mockPluginService.getHostRole(readerClient)).thenReturn(Promise.resolve(HostRole.READER));
     when(mockPluginService.getHostInfoByStrategy(anything(), anything())).thenReturn(instance(mockReaderHostInfo));
 
-    expect(await plugin.connect(hostInfo, props, true, mockFunc)).toBe(mockReaderClientInstance);
-    verify(mockPluginService.forceRefreshHostList(mockReaderClientInstance)).never();
+    expect(await plugin.connect(hostInfo, props, true, mockFunc)).toBe(readerClient);
+    verify(mockPluginService.forceRefreshHostList(readerClient)).never();
   });
 
   it("test reader - resolves to writer", async () => {
     when(mockRdsUtils.identifyRdsType(anything())).thenReturn(RdsUrlType.RDS_READER_CLUSTER);
     when(mockPluginService.getHosts()).thenReturn([hostInfoBuilder.withRole(HostRole.READER).build()]);
-    when(mockPluginService.connect(anything(), anything())).thenReturn(instance(mockWriterClient));
+    when(mockPluginService.connect(anything(), anything())).thenResolve(writerClient);
     when(mockPluginService.acceptsStrategy(anything(), anything())).thenReturn(true);
 
     expect(await plugin.connect(hostInfo, props, true, mockFunc)).toBe(undefined);
   });
 
   it("test reader - return writer", async () => {
-    const mockWriterClientInstance = instance(mockWriterClient);
-
     when(mockRdsUtils.identifyRdsType(anything())).thenReturn(RdsUrlType.RDS_READER_CLUSTER);
     when(mockPluginService.getHosts())
       .thenReturn([hostInfoBuilder.withRole(HostRole.READER).build()])
       .thenReturn([hostInfoBuilder.withRole(HostRole.WRITER).build()]);
-    when(mockPluginService.connect(anything(), anything())).thenReturn(mockWriterClientInstance);
+    when(mockPluginService.connect(anything(), anything())).thenResolve(writerClient);
     when(mockPluginService.acceptsStrategy(anything(), anything())).thenReturn(true);
-    when(mockPluginService.getHostRole(mockWriterClientInstance)).thenReturn(Promise.resolve(HostRole.WRITER));
+    when(mockPluginService.getHostRole(writerClient)).thenReturn(Promise.resolve(HostRole.WRITER));
     when(mockPluginService.getHostInfoByStrategy(anything(), anything())).thenReturn(instance(mockReaderHostInfo));
 
-    expect(await plugin.connect(hostInfo, props, true, mockFunc)).toBe(mockWriterClientInstance);
+    expect(await plugin.connect(hostInfo, props, true, mockFunc)).toBe(writerClient);
   });
 });
