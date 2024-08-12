@@ -150,14 +150,10 @@ export class AuroraInitialConnectionStrategyPlugin extends AbstractConnectionPlu
         return writerCandidateClient;
       } catch (error: any) {
         await this.pluginService.tryClosingTargetClient(writerCandidateClient);
-        if (error instanceof AwsWrapperError) {
-          if (this.pluginService.isLoginError(error)) {
-            throw error;
-          } else if (writerCandidate) {
-            this.pluginService.setAvailability(writerCandidate.allAliases, HostAvailability.NOT_AVAILABLE);
-          }
-        } else {
+        if (this.pluginService.isLoginError(error)) {
           throw error;
+        } else if (writerCandidate) {
+          this.pluginService.setAvailability(writerCandidate.allAliases, HostAvailability.NOT_AVAILABLE);
         }
       }
     }
@@ -239,14 +235,10 @@ export class AuroraInitialConnectionStrategyPlugin extends AbstractConnectionPlu
         return readerCandidateClient;
       } catch (error: any) {
         await this.pluginService.tryClosingTargetClient(readerCandidateClient);
-        if (error instanceof AwsWrapperError) {
-          if (this.pluginService.isLoginError(error)) {
-            throw error;
-          } else if (readerCandidate) {
-            this.pluginService.setAvailability(readerCandidate.allAliases, HostAvailability.NOT_AVAILABLE);
-          }
-        } else {
+        if (this.pluginService.isLoginError(error)) {
           throw error;
+        } else if (readerCandidate) {
+          this.pluginService.setAvailability(readerCandidate.allAliases, HostAvailability.NOT_AVAILABLE);
         }
       }
     }
@@ -256,7 +248,7 @@ export class AuroraInitialConnectionStrategyPlugin extends AbstractConnectionPlu
     return this.pluginService.getHosts().find((x) => x.role === HostRole.WRITER) ?? null;
   }
 
-  private getReader(props: Map<string, any>) {
+  private getReader(props: Map<string, any>): HostInfo | undefined {
     const strategy = WrapperProperties.READER_HOST_SELECTOR_STRATEGY.get(props);
     if (this.pluginService.acceptsStrategy(HostRole.READER, strategy)) {
       try {
@@ -269,7 +261,7 @@ export class AuroraInitialConnectionStrategyPlugin extends AbstractConnectionPlu
     throw new Error(Messages.get("AuroraInitialConnectionStrategyPlugin.unsupportedStrategy", strategy));
   }
 
-  private hasNoReaders() {
+  private hasNoReaders(): boolean {
     return this.pluginService.getHosts().find((x) => x.role === HostRole.READER) !== undefined;
   }
 }
