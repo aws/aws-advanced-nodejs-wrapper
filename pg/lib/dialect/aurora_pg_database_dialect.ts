@@ -36,11 +36,6 @@ export class AuroraPgDatabaseDialect extends PgDatabaseDialect implements Topolo
   private static readonly HOST_ID_QUERY: string = "SELECT aurora_db_instance_identifier() as host";
   private static readonly IS_READER_QUERY: string = "SELECT pg_is_in_recovery() as is_reader";
 
-  constructor() {
-    super();
-    this.dialectName = this.constructor.name;
-  }
-
   getHostListProvider(props: Map<string, any>, originalUrl: string, hostListProviderService: HostListProviderService): HostListProvider {
     return new RdsHostListProvider(props, originalUrl, hostListProviderService);
   }

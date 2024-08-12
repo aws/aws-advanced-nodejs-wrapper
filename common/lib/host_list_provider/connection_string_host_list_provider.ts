@@ -97,12 +97,12 @@ export class ConnectionStringHostListProvider implements StaticHostListProvider 
     throw new AwsWrapperError("ConnectionStringHostListProvider does not support getHostRole.");
   }
 
-  async identifyConnection(client: AwsClient): Promise<HostInfo | void | null> {
-    if (!client.targetClient) {
+  async identifyConnection(client: ClientWrapper): Promise<HostInfo | void | null> {
+    if (!client.client) {
       return null;
     }
-    const instance = await this.hostListProviderService.getDialect().getHostAliasAndParseResults(client.targetClient);
-    const topology = await this.refresh(client.targetClient);
+    const instance = await this.hostListProviderService.getDialect().getHostAliasAndParseResults(client.client);
+    const topology = await this.refresh(client.client);
     if (!topology || topology.length == 0) {
       return null;
     }

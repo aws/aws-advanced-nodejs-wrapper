@@ -36,7 +36,7 @@ export interface Monitor {
   endMonitoringClient(): Promise<void>;
 }
 
-export class ConnectionStatus {
+class ConnectionStatus {
   isValid: boolean;
   elapsedTimeNano: number;
 
@@ -82,7 +82,7 @@ export class MonitorImpl implements Monitor {
 
   startMonitoring(context: MonitorConnectionContext): void {
     if (this.stopped) {
-      logger.debug(Messages.get("MonitorImpl.monitorIsStopped", this.hostInfo.host));
+      logger.warning(Messages.get("MonitorImpl.monitorIsStopped", this.hostInfo.host));
     }
 
     const currentTimeNanos: number = this.getCurrentTimeNano();

@@ -23,11 +23,6 @@ export class RdsPgDatabaseDialect extends PgDatabaseDialect {
     "SELECT (setting LIKE '%rds_tools%') AS rds_tools, (setting LIKE '%aurora_stat_utils%') AS aurora_stat_utils " +
     "FROM pg_settings WHERE name='rds.extensions'";
 
-  constructor() {
-    super();
-    this.dialectName = this.constructor.name;
-  }
-
   getDialectUpdateCandidates(): string[] {
     return [DatabaseDialectCodes.AURORA_PG];
   }

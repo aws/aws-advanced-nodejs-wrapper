@@ -263,7 +263,6 @@ export class RdsHostListProvider implements DynamicHostListProvider {
   }
 
   async queryForTopology(targetClient: ClientWrapper, dialect: DatabaseDialect): Promise<HostInfo[]> {
-    console.log(dialect);
     if (!this.isTopologyAwareDatabaseDialect(dialect)) {
       throw new TypeError(Messages.get("RdsHostListProvider.incorrectDialect"));
     }
