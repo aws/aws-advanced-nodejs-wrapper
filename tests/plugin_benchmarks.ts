@@ -24,7 +24,6 @@ import { add, complete, configure, cycle, save, suite } from "benny";
 import { TestConnectionWrapper } from "./testplugin/test_connection_wrapper";
 import { HostInfoBuilder } from "../common/lib/host_info_builder";
 import { SimpleHostAvailabilityStrategy } from "../common/lib/host_availability/simple_host_availability_strategy";
-import { HostRole } from "../common/lib/host_role";
 import { ClientWrapper } from "../common/lib/client_wrapper";
 import { AwsPGClient } from "../pg/lib";
 
@@ -32,10 +31,8 @@ const mockConnectionProvider = mock<ConnectionProvider>();
 const mockPluginService = mock(PluginService);
 const mockClient = mock(AwsPGClient);
 
-const hostInfo = new HostInfoBuilder({ hostAvailabilityStrategy: new SimpleHostAvailabilityStrategy() })
-  .withHost("host")
-  .withRole(HostRole.WRITER)
-  .build();
+const hostInfo = new HostInfoBuilder({ hostAvailabilityStrategy: new SimpleHostAvailabilityStrategy() }).withHost("host").build();
+
 const mockClientWrapper: ClientWrapper = {
   client: instance(mockClient),
   hostInfo: hostInfo,
@@ -51,14 +48,18 @@ pluginServiceManagerContainer.pluginService = instance(mockPluginService);
 
 const propsExecute = new Map<string, any>();
 const propsReadWrite = new Map<string, any>();
+const props = new Map<string, any>();
 
 WrapperProperties.PLUGINS.set(propsExecute, "executeTime");
 WrapperProperties.PLUGINS.set(propsReadWrite, "readWriteSplitting");
+WrapperProperties.PLUGINS.set(props, "");
 WrapperProperties.HOST.set(propsExecute, connectionString);
 WrapperProperties.HOST.set(propsReadWrite, connectionString);
+WrapperProperties.HOST.set(props, connectionString);
 
 const pluginManagerExecute = new PluginManager(pluginServiceManagerContainer, propsExecute, instance(mockConnectionProvider), null);
 const pluginManagerReadWrite = new PluginManager(pluginServiceManagerContainer, propsReadWrite, instance(mockConnectionProvider), null);
+const pluginManager = new PluginManager(pluginServiceManagerContainer, props, instance(mockConnectionProvider), null);
 
 suite(
   "Plugin benchmarks",
@@ -69,7 +70,12 @@ suite(
     }
   }),
 
-  add("initAndReleaseBaseline", async () => {}),
+  add("initAndReleaseBaseline", async () => {
+    const wrapper = new TestConnectionWrapper(props, pluginManager, instance(mockPluginService));
+    await pluginManager.init();
+    await wrapper.releaseResources();
+    await wrapper.end();
+  }),
 
   add("initAndReleaseWithExecuteTimePlugin", async () => {
     const wrapper = new TestConnectionWrapper(propsExecute, pluginManagerExecute, instance(mockPluginService));
