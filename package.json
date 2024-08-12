@@ -45,7 +45,7 @@
     "@types/tough-cookie": "^4.0.5",
     "@typescript-eslint/eslint-plugin": "^7.15.0",
     "aws-sdk": "^2.1664.0",
-    "axios": "^1.7.2",
+    "axios": "^1.7.3",
     "axios-cookiejar-support": "^5.0.2",
     "benny": "^3.7.1",
     "dotenv": "^16.4.5",
