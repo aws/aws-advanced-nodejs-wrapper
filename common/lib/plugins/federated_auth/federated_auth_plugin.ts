@@ -24,7 +24,6 @@ import { logger } from "../../../logutils";
 import { AwsWrapperError } from "../../utils/errors";
 import { Messages } from "../../utils/messages";
 import { CredentialsProviderFactory } from "./credentials_provider_factory";
-import { ConnectionPluginFactory } from "../../plugin_factory";
 import { SamlUtils } from "../../utils/saml_utils";
 import { ClientWrapper } from "../../client_wrapper";
 

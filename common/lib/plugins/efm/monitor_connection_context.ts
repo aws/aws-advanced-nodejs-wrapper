@@ -17,12 +17,13 @@
 import { Monitor } from "./monitor";
 import { logger } from "../../../logutils";
 import { Messages } from "../../utils/messages";
+import { ClientWrapper } from "../../client_wrapper";
 
 export class MonitorConnectionContext {
   readonly failureDetectionIntervalMillis: number;
   private readonly failureDetectionTimeMillis: number;
   private readonly failureDetectionCount: number;
-  readonly clientToAbort: any;
+  readonly clientToAbort: ClientWrapper;
   readonly monitor: Monitor;
 
   isActiveContext: boolean = true;
@@ -61,10 +62,10 @@ export class MonitorConnectionContext {
     }
 
     try {
-      await this.clientToAbort.end();
+      await this.clientToAbort.client.end();
     } catch (error: any) {
       // ignore
-      logger.debug(Messages.get("MonitorConnectionContext.exceptionAbortingConnection"));
+      logger.debug(Messages.get("MonitorConnectionContext.exceptionAbortingConnection", error.message));
     }
     this.abortedConnectionCounter++;
   }
