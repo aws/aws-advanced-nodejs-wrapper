@@ -258,7 +258,7 @@ export class AuroraInitialConnectionStrategyPlugin extends AbstractConnectionPlu
         logger.error(error.message);
       }
     }
-    throw new Error(Messages.get("AuroraInitialConnectionStrategyPlugin.unsupportedStrategy", strategy));
+    throw new AwsWrapperError(Messages.get("AuroraInitialConnectionStrategyPlugin.unsupportedStrategy", strategy));
   }
 
   private hasNoReaders(): boolean {
