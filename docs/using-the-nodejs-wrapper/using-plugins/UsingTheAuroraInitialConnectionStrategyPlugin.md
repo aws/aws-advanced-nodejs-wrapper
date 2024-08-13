@@ -14,11 +14,11 @@ To enable the Aurora Initial Connection Strategy Plugin, add `initialConnection`
 
 The following properties can be used to configure the Aurora Initial Connection Strategy Plugin.
 
-| Parameter                       |  Value  | Required | Description                                                                                                                                                                                                              | Example            | Default Value |
-| ------------------------------- | :-----: | :------: | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------ | ------------- |
-| `readerHostSelectorStrategy`    | String  |    No    | The strategy that will be used to select a new reader host when opening a new connection. <br><br> For more information on the available reader selection strategies, see this [table](../ReaderSelectionStrategies.md). | `leastConnections` | `random`      |
-| `openConnectionRetryTimeoutMs`  | Integer |    No    | The maximum allowed time for retries when opening a connection in milliseconds.                                                                                                                                          | `40000`            | `30000`       |
-| `openConnectionRetryIntervalMs` | Integer |    No    | The time between retries when opening a connection in milliseconds.                                                                                                                                                      | `2000`             | `1000`        |
+| Parameter                       | Value  | Required | Description                                                                                                                                                                                                              | Example            | Default Value |
+| ------------------------------- | :----: | :------: | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------ | ------------- |
+| `readerHostSelectorStrategy`    | String |    No    | The strategy that will be used to select a new reader host when opening a new connection. <br><br> For more information on the available reader selection strategies, see this [table](../ReaderSelectionStrategies.md). | `leastConnections` | `random`      |
+| `openConnectionRetryTimeoutMs`  | Number |    No    | The maximum allowed time for retries when opening a connection in milliseconds.                                                                                                                                          | `40000`            | `30000`       |
+| `openConnectionRetryIntervalMs` | Number |    No    | The time between retries when opening a connection in milliseconds.                                                                                                                                                      | `2000`             | `1000`        |
 
 ## Examples
 
