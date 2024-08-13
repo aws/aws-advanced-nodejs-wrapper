@@ -27,17 +27,8 @@ Enabling the plugin:
 ```typescript
 params = {
   plugins: "initialConnection"
+  // Add additional connection parameters here
 };
-
-// If using MySQL:
-
-const client = new AwsMySQLClient(params);
-await client.connect();
-
-// If using Postgres:
-
-const client = new AwsPGClient(params);
-await client.connect();
 ```
 
 Configuring the plugin using the connection parameters:
@@ -45,15 +36,6 @@ Configuring the plugin using the connection parameters:
 ```typescript
 params = {
   openConnectionRetryTimeoutMs: 40000
+  // Add additional connection parameters here
 };
-
-// If using MySQL:
-
-const client = new AwsMySQLClient(params);
-await client.connect();
-
-// If using Postgres:
-
-const client = new AwsPGClient(params);
-await client.connect();
 ```
