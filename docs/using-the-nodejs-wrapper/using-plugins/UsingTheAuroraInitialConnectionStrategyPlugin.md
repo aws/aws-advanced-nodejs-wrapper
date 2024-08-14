@@ -35,7 +35,7 @@ params = {
 const client = new AwsMySQLClient(params);
 await client.connect();
 
-// If using Postgres:
+// If using PostgreSQL:
 
 const client = new AwsPGClient(params);
 await client.connect();
@@ -54,7 +54,7 @@ params = {
 const client = new AwsMySQLClient(params);
 await client.connect();
 
-// If using Postgres:
+// If using PostgreSQL:
 
 const client = new AwsPGClient(params);
 await client.connect();
