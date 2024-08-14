@@ -27,6 +27,8 @@ import { PluginService } from "../plugin_service";
 import { AwsWrapperError } from "../utils/errors";
 import { Messages } from "../utils/messages";
 import { WrapperProperties } from "../wrapper_property";
+import { logAndThrowError } from "../utils/utils";
+import { ClientWrapper } from "../client_wrapper";
 
 export class AwsSecretsManagerPlugin extends AbstractConnectionPlugin {
   private static SUBSCRIBED_METHODS: Set<string> = new Set<string>(["connect", "forceConnect"]);
@@ -70,15 +72,25 @@ export class AwsSecretsManagerPlugin extends AbstractConnectionPlugin {
     return AwsSecretsManagerPlugin.SUBSCRIBED_METHODS;
   }
 
-  connect<T>(hostInfo: HostInfo, props: Map<string, any>, isInitialConnection: boolean, connectFunc: () => Promise<T>): Promise<T> {
-    return this.connectInternal(hostInfo, props, connectFunc);
+  connect(
+    hostInfo: HostInfo,
+    props: Map<string, any>,
+    isInitialConnection: boolean,
+    connectFunc: () => Promise<ClientWrapper>
+  ): Promise<ClientWrapper> {
+    return this.connectInternal(props, connectFunc);
   }
 
-  forceConnect<T>(hostInfo: HostInfo, props: Map<string, any>, isInitialConnection: boolean, forceConnectFunc: () => Promise<T>): Promise<T> {
-    return this.connectInternal(hostInfo, props, forceConnectFunc);
+  forceConnect(
+    hostInfo: HostInfo,
+    props: Map<string, any>,
+    isInitialConnection: boolean,
+    forceConnectFunc: () => Promise<ClientWrapper>
+  ): Promise<ClientWrapper> {
+    return this.connectInternal(props, forceConnectFunc);
   }
 
-  private async connectInternal<T>(hostInfo: HostInfo, props: Map<string, any>, connectFunc: () => Promise<T>): Promise<T> {
+  private async connectInternal(props: Map<string, any>, connectFunc: () => Promise<ClientWrapper>): Promise<ClientWrapper> {
     let secretWasFetched = await this.updateSecret(false);
     try {
       WrapperProperties.USER.set(props, this.secret?.username ?? "");
@@ -115,11 +127,11 @@ export class AwsSecretsManagerPlugin extends AbstractConnectionPlugin {
         AwsSecretsManagerPlugin.secretsCache.set(JSON.stringify(this.secretKey), this.secret);
       } catch (error: any) {
         if (error instanceof SecretsManagerServiceException) {
-          this.logAndThrowError(Messages.get("AwsSecretsManagerConnectionPlugin.failedToFetchDbCredentials"));
+          logAndThrowError(Messages.get("AwsSecretsManagerConnectionPlugin.failedToFetchDbCredentials"));
         } else if (error instanceof Error && error.message.includes("AWS SDK error")) {
-          this.logAndThrowError(Messages.get("AwsSecretsManagerConnectionPlugin.endpointOverrideInvalidConnection", error.message));
+          logAndThrowError(Messages.get("AwsSecretsManagerConnectionPlugin.endpointOverrideInvalidConnection", error.message));
         } else {
-          this.logAndThrowError(Messages.get("AwsSecretsManagerConnectionPlugin.unhandledException", error.message));
+          logAndThrowError(Messages.get("AwsSecretsManagerConnectionPlugin.unhandledException", error.message));
         }
       }
     }
@@ -138,11 +150,6 @@ export class AwsSecretsManagerPlugin extends AbstractConnectionPlugin {
       return secret;
     }
     throw new AwsWrapperError(Messages.get("AwsSecretsManagerConnectionPlugin.failedToFetchDbCredentials"));
-  }
-
-  private logAndThrowError(message: string) {
-    logger.debug(message);
-    throw new AwsWrapperError(message);
   }
 }
 

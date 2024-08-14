@@ -16,7 +16,6 @@
 
 import { AbstractConnectionPlugin } from "../abstract_connection_plugin";
 import { HostInfo } from "../host_info";
-import { uniqueId } from "lodash";
 import { PluginService } from "../plugin_service";
 import { HostListProviderService } from "../host_list_provider_service";
 import { OldConnectionSuggestionAction } from "../old_connection_suggestion_action";
@@ -24,15 +23,15 @@ import { HostChangeOptions } from "../host_change_options";
 import { WrapperProperties } from "../wrapper_property";
 import { Messages } from "../utils/messages";
 import { logger } from "../../logutils";
-import { AwsWrapperError, FailoverError } from "../utils/errors";
+import { FailoverError } from "../utils/errors";
 import { HostRole } from "../host_role";
 import { SqlMethodUtils } from "../utils/sql_method_utils";
 import { ClientWrapper } from "../client_wrapper";
+import { getWriter, logAndThrowError } from "../utils/utils";
 
 export class ReadWriteSplittingPlugin extends AbstractConnectionPlugin {
   private static readonly subscribedMethods: Set<string> = new Set(["initHostProvider", "connect", "notifyConnectionChanged", "query"]);
   private readonly readerSelectorStrategy: string = "";
-  private readonly id: string = uniqueId("_readWriteSplittingPlugin");
 
   private _hostListProviderService: HostListProviderService | undefined;
   private pluginService: PluginService;
@@ -58,7 +57,6 @@ export class ReadWriteSplittingPlugin extends AbstractConnectionPlugin {
     readerClient?: ClientWrapper
   ) {
     super();
-    logger.debug(`TestPlugin constructor id: ${this.id}`);
     this.pluginService = pluginService;
     this._properties = properties;
     this.readerSelectorStrategy = WrapperProperties.READER_HOST_SELECTOR_STRATEGY.get(properties);
@@ -107,7 +105,7 @@ export class ReadWriteSplittingPlugin extends AbstractConnectionPlugin {
     }
   }
 
-  override async connect<T>(
+  override async connect(
     hostInfo: HostInfo,
     props: Map<string, any>,
     isInitialConnection: boolean,
@@ -115,12 +113,12 @@ export class ReadWriteSplittingPlugin extends AbstractConnectionPlugin {
   ): Promise<ClientWrapper> {
     if (!this.pluginService.acceptsStrategy(hostInfo.role, this.readerSelectorStrategy)) {
       const message: string = Messages.get("ReadWriteSplittingPlugin.unsupportedHostSelectorStrategy", this.readerSelectorStrategy);
-      this.logAndThrowError(message);
+      logAndThrowError(message);
     }
     return await this.connectInternal(isInitialConnection, connectFunc);
   }
 
-  forceConnect<T>(
+  forceConnect(
     hostInfo: HostInfo,
     props: Map<string, any>,
     isInitialConnection: boolean,
@@ -129,7 +127,7 @@ export class ReadWriteSplittingPlugin extends AbstractConnectionPlugin {
     return this.connectInternal(isInitialConnection, forceConnectFunc);
   }
 
-  private async connectInternal<T>(isInitialConnection: boolean, connectFunc: () => Promise<ClientWrapper>): Promise<ClientWrapper> {
+  private async connectInternal(isInitialConnection: boolean, connectFunc: () => Promise<ClientWrapper>): Promise<ClientWrapper> {
     const result = await connectFunc();
     if (!isInitialConnection || this._hostListProviderService?.isStaticHostListProvider()) {
       return result;
@@ -137,7 +135,7 @@ export class ReadWriteSplittingPlugin extends AbstractConnectionPlugin {
     const currentRole = this.pluginService.getCurrentHostInfo()?.role;
 
     if (currentRole == HostRole.UNKNOWN) {
-      this.logAndThrowError(Messages.get("ReadWriteSplittingPlugin.errorVerifyingInitialHostRole"));
+      logAndThrowError(Messages.get("ReadWriteSplittingPlugin.errorVerifyingInitialHostRole"));
     }
     const currentHost: HostInfo | null = this.pluginService.getInitialConnectionHostInfo();
     if (currentHost !== null) {
@@ -205,7 +203,7 @@ export class ReadWriteSplittingPlugin extends AbstractConnectionPlugin {
   async switchClientIfRequired(readOnly: boolean) {
     const currentClient = this.pluginService.getCurrentClient();
     if (!(await currentClient.isValid())) {
-      this.logAndThrowError(Messages.get("ReadWriteSplittingPlugin.setReadOnlyOnClosedClient"));
+      logAndThrowError(Messages.get("ReadWriteSplittingPlugin.setReadOnlyOnClosedClient"));
     }
     try {
       await this.pluginService.refreshHostList();
@@ -215,31 +213,31 @@ export class ReadWriteSplittingPlugin extends AbstractConnectionPlugin {
 
     const hosts: HostInfo[] = this.pluginService.getHosts();
     if (hosts == null || hosts.length === 0) {
-      this.logAndThrowError(Messages.get("ReadWriteSplittingPlugin.emptyHostList"));
+      logAndThrowError(Messages.get("ReadWriteSplittingPlugin.emptyHostList"));
     }
 
     const currentHost = this.pluginService.getCurrentHostInfo();
     if (currentHost == null) {
-      this.logAndThrowError(Messages.get("ReadWriteSplittingPlugin.unavailableHostInfo"));
+      logAndThrowError(Messages.get("ReadWriteSplittingPlugin.unavailableHostInfo"));
     } else if (readOnly) {
       if (!this.pluginService.isInTransaction() && currentHost.role != HostRole.READER) {
         try {
           await this.switchToReaderTargetClient(hosts);
         } catch (error: any) {
           if (!(await currentClient.isValid())) {
-            this.logAndThrowError(Messages.get("ReadWriteSplittingPlugin.errorSwitchingToReader", error.message));
+            logAndThrowError(Messages.get("ReadWriteSplittingPlugin.errorSwitchingToReader", error.message));
           }
           logger.warn(Messages.get("ReadWriteSplittingPlugin.fallbackToWriter", currentHost.url));
         }
       }
     } else if (currentHost.role != HostRole.WRITER) {
       if (this.pluginService.isInTransaction()) {
-        this.logAndThrowError(Messages.get("ReadWriteSplittingPlugin.setReadOnlyFalseInTransaction"));
+        logAndThrowError(Messages.get("ReadWriteSplittingPlugin.setReadOnlyFalseInTransaction"));
       }
       try {
         await this.switchToWriterTargetClient(hosts);
       } catch (error: any) {
-        this.logAndThrowError(Messages.get("ReadWriteSplittingPlugin.errorSwitchingToWriter", error.message));
+        logAndThrowError(Messages.get("ReadWriteSplittingPlugin.errorSwitchingToWriter", error.message));
       }
     }
   }
@@ -262,8 +260,8 @@ export class ReadWriteSplittingPlugin extends AbstractConnectionPlugin {
 
   async initializeReaderClient(hosts: HostInfo[]) {
     if (hosts.length === 1) {
-      const writerHost = this.getWriter(hosts);
-      if (writerHost !== undefined) {
+      const writerHost = getWriter(hosts, Messages.get("ReadWriteSplittingPlugin.noWriterFound"));
+      if (writerHost) {
         if (!(await this.isTargetClientUsable(this.writerTargetClient))) {
           await this.getNewWriterClient(writerHost);
         }
@@ -295,7 +293,7 @@ export class ReadWriteSplittingPlugin extends AbstractConnectionPlugin {
       }
     }
     if (targetClient == undefined || readerHost === undefined) {
-      this.logAndThrowError(Messages.get("ReadWriteSplittingPlugin.noReadersAvailable"));
+      logAndThrowError(Messages.get("ReadWriteSplittingPlugin.noReadersAvailable"));
       return;
     }
     logger.debug(Messages.get("ReadWriteSplittingPlugin.successfullyConnectedToReader", readerHost.url));
@@ -310,7 +308,7 @@ export class ReadWriteSplittingPlugin extends AbstractConnectionPlugin {
       return;
     }
     this._inReadWriteSplit = true;
-    const writerHost = this.getWriter(hosts);
+    const writerHost = getWriter(hosts, Messages.get("ReadWriteSplittingPlugin.noWriterFound"));
     if (!writerHost) {
       return;
     }
@@ -376,17 +374,5 @@ export class ReadWriteSplittingPlugin extends AbstractConnectionPlugin {
     logger.debug(Messages.get("ReadWriteSplittingPlugin.closingInternalClients"));
     await this.closeTargetClientIfIdle(this.readerTargetClient);
     await this.closeTargetClientIfIdle(this.writerTargetClient);
-  }
-
-  getWriter(hosts: HostInfo[]): HostInfo | undefined {
-    for (const host of hosts) {
-      if (host.role === HostRole.WRITER) return host;
-    }
-    this.logAndThrowError(Messages.get("ReadWriteSplittingPlugin.noWriterFound"));
-  }
-
-  private logAndThrowError(message: string) {
-    logger.error(message);
-    throw new AwsWrapperError(message);
   }
 }

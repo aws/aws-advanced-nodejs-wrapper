@@ -89,8 +89,6 @@ export class PluginManager {
     this.props = props;
     this.defaultConnProvider = defaultConnProvider;
     this.effectiveConnProvider = effectiveConnProvider;
-
-    // TODO: proper parsing logic
   }
 
   async init(): Promise<void>;
@@ -123,7 +121,7 @@ export class PluginManager {
     );
   }
 
-  connect<T>(hostInfo: HostInfo | null, props: Map<string, any>, isInitialConnection: boolean): Promise<ClientWrapper> {
+  connect(hostInfo: HostInfo | null, props: Map<string, any>, isInitialConnection: boolean): Promise<ClientWrapper> {
     if (hostInfo == null) {
       throw new AwsWrapperError("HostInfo was not provided.");
     }
@@ -138,7 +136,7 @@ export class PluginManager {
     );
   }
 
-  forceConnect<T>(hostInfo: HostInfo | null, props: Map<string, any>, isInitialConnection: boolean): Promise<ClientWrapper> {
+  forceConnect(hostInfo: HostInfo | null, props: Map<string, any>, isInitialConnection: boolean): Promise<ClientWrapper> {
     if (hostInfo == null) {
       throw new AwsWrapperError("HostInfo was not provided.");
     }

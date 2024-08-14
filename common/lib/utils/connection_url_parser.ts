@@ -43,10 +43,16 @@ export abstract class ConnectionUrlParser {
     return builder.withPort(port ? parseInt(port) : -1).build();
   }
 
-  private parseHostPortPair(pair: string, hostInfoBuilderFunc: () => HostInfoBuilder): HostInfo;
-  private parseHostPortPair(pair: string, hostInfoBuilderFunc: () => HostInfoBuilder, role: HostRole): HostInfo;
-  private parseHostPortPair(pair: string, hostInfoBuilderFunc: () => HostInfoBuilder, role?: HostRole): HostInfo {
-    const [host, port] = pair.trim().split(ConnectionUrlParser.HOST_PORT_SEPARATOR);
+  private parseHostPortPair(pair: string, fallbackPort: number, hostInfoBuilderFunc: () => HostInfoBuilder): HostInfo;
+  private parseHostPortPair(pair: string, fallbackPort: number, hostInfoBuilderFunc: () => HostInfoBuilder, role: HostRole): HostInfo;
+  private parseHostPortPair(pair: string, fallbackPort: number, hostInfoBuilderFunc: () => HostInfoBuilder, role?: HostRole): HostInfo {
+    const splitPair = pair.trim().split(ConnectionUrlParser.HOST_PORT_SEPARATOR);
+    const host = splitPair[0];
+    let port = splitPair[1];
+    if (!port) {
+      port = fallbackPort.toString();
+    }
+
     if (role) {
       return this.getHostInfo(host, port, role, hostInfoBuilderFunc());
     }
@@ -58,16 +64,21 @@ export abstract class ConnectionUrlParser {
     return this.getHostInfo(host, port, hostRole, hostInfoBuilderFunc());
   }
 
-  getHostsFromConnectionUrl(initialConnection: string, singleWriterConnectionString: boolean, builderFunc: () => HostInfoBuilder): HostInfo[] {
+  getHostsFromConnectionUrl(
+    initialConnection: string,
+    singleWriterConnectionString: boolean,
+    fallbackPort: number,
+    builderFunc: () => HostInfoBuilder
+  ): HostInfo[] {
     const hostsList: HostInfo[] = [];
     const hosts: string[] = this.getHostPortPairsFromUrl(initialConnection);
     hosts.forEach((pair, i) => {
       let host;
       if (singleWriterConnectionString) {
         const role: HostRole = i > 0 ? HostRole.READER : HostRole.WRITER;
-        host = this.parseHostPortPair(pair, builderFunc, role);
+        host = this.parseHostPortPair(pair, fallbackPort, builderFunc, role);
       } else {
-        host = this.parseHostPortPair(pair, builderFunc);
+        host = this.parseHostPortPair(pair, fallbackPort, builderFunc);
       }
 
       if (host.host) {

@@ -29,7 +29,7 @@ export class ConnectTimePlugin extends AbstractConnectionPlugin {
     return ConnectTimePlugin.subscribedMethods;
   }
 
-  public override async connect<T>(
+  public override async connect(
     hostInfo: HostInfo,
     props: Map<string, any>,
     isInitialConnection: boolean,
@@ -45,7 +45,7 @@ export class ConnectTimePlugin extends AbstractConnectionPlugin {
     return result;
   }
 
-  public override async forceConnect<T>(
+  public override async forceConnect(
     hostInfo: HostInfo,
     props: Map<string, any>,
     isInitialConnection: boolean,

@@ -20,9 +20,8 @@ import { ClusterAwareReaderFailoverHandler } from "./reader_failover_handler";
 import { PluginService } from "../../plugin_service";
 import { HostAvailability } from "../../host_availability/host_availability";
 import { AwsWrapperError } from "../../utils/errors";
-import { maskProperties } from "../../utils/utils";
+import { getWriter, maskProperties } from "../../utils/utils";
 import { ReaderFailoverResult } from "./reader_failover_result";
-import { HostRole } from "../../host_role";
 import { Messages } from "../../utils/messages";
 import { logger } from "../../../logutils";
 import { WrapperProperties } from "../../wrapper_property";
@@ -30,19 +29,6 @@ import { ClientWrapper } from "../../client_wrapper";
 
 export interface WriterFailoverHandler {
   failover(currentTopology: HostInfo[]): Promise<WriterFailoverResult>;
-}
-
-function getWriter(topology: HostInfo[]): HostInfo | null {
-  if (!topology || topology.length === 0) {
-    return null;
-  }
-
-  for (let i = 0; i < topology.length; i++) {
-    if (topology[i].role === HostRole.WRITER) {
-      return topology[i];
-    }
-  }
-  return null;
 }
 
 function isCurrentHostWriter(topology: HostInfo[], originalWriterHost: HostInfo): boolean {
@@ -189,7 +175,7 @@ class ReconnectToWriterHandlerTask {
   originalWriterHost: HostInfo | null;
   initialConnectionProps: Map<string, any>;
   reconnectionWriterIntervalMs: number;
-  currentClient?: ClientWrapper;
+  currentClient: ClientWrapper | null = null;
   endTime: number;
   failoverCompleted: boolean = false;
   timeoutId: any = -1;
@@ -285,7 +271,7 @@ class ReconnectToWriterHandlerTask {
     this.failoverCompleted = true;
 
     // Task B was returned.
-    if (selectedTask && selectedTask === ClusterAwareWriterFailoverHandler.WAIT_NEW_WRITER_TASK) {
+    if (selectedTask && selectedTask === ClusterAwareWriterFailoverHandler.WAIT_NEW_WRITER_TASK && this.currentClient) {
       await this.pluginService.tryClosingTargetClient(this.currentClient);
     }
   }
@@ -298,9 +284,9 @@ class WaitForNewWriterHandlerTask {
   originalWriterHost: HostInfo | null;
   initialConnectionProps: Map<string, any>;
   readTopologyIntervalMs: number;
-  currentClient: any = null;
+  currentClient: ClientWrapper | null = null;
   currentReaderHost: HostInfo | null = null;
-  currentReaderTargetClient: any = null;
+  currentReaderTargetClient: ClientWrapper | null = null;
   endTime: number;
   connectToReaderTimeoutId: any = -1;
   refreshTopologyTimeoutId: any = -1;
@@ -439,8 +425,8 @@ class WaitForNewWriterHandlerTask {
       try {
         targetClient = await this.pluginService.forceConnect(writerCandidate, props);
         this.pluginService.setAvailability(writerCandidate.allAliases, HostAvailability.AVAILABLE);
-        await this.pluginService.tryClosingTargetClient(this.currentReaderTargetClient);
-        await this.pluginService.tryClosingTargetClient(this.currentClient);
+        await this.callCloseClient(this.currentReaderTargetClient);
+        await this.callCloseClient(this.currentClient);
         this.currentClient = targetClient;
         return true;
       } catch (error) {
@@ -463,7 +449,7 @@ class WaitForNewWriterHandlerTask {
 
   async closeReaderClient() {
     try {
-      await this.pluginService.tryClosingTargetClient(this.currentReaderTargetClient);
+      await this.callCloseClient(this.currentReaderTargetClient);
     } finally {
       this.currentReaderTargetClient = null;
       this.currentReaderHost = null;
@@ -477,8 +463,8 @@ class WaitForNewWriterHandlerTask {
 
     // Task A was returned.
     if (selectedTask && selectedTask === ClusterAwareWriterFailoverHandler.RECONNECT_WRITER_TASK) {
-      await this.pluginService.tryClosingTargetClient(this.currentClient);
-      await this.pluginService.tryClosingTargetClient(this.currentReaderTargetClient);
+      await this.callCloseClient(this.currentClient);
+      await this.callCloseClient(this.currentReaderTargetClient);
     }
   }
 
@@ -486,6 +472,12 @@ class WaitForNewWriterHandlerTask {
     // Close the reader connection if it's not needed.
     if (this.currentReaderTargetClient && this.currentClient !== this.currentReaderTargetClient) {
       await this.pluginService.tryClosingTargetClient(this.currentReaderTargetClient);
+    }
+  }
+
+  async callCloseClient(targetClient: ClientWrapper | null) {
+    if (targetClient) {
+      await this.pluginService.tryClosingTargetClient(targetClient);
     }
   }
 }

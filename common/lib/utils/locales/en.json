@@ -11,6 +11,7 @@
   "DefaultConnectionPlugin.unknownRoleRequested": "A HostInfo with a role of HostRole.UNKNOWN was requested via getHostInfoByStrategy. The requested role must be either HostRole.WRITER or HostRole.READER",
   "DefaultConnectionPlugin.noHostsAvailable": "The default connection plugin received an empty host list from the plugin service.",
   "HostSelector.noHostsMatchingRole": "No hosts were found matching the requested '%s' role.",
+  "HostInfo.weightLessThanZero": "A HostInfo object was created with a weight value less than 0.",
   "AwsSecretsManagerConnectionPlugin.failedToFetchDbCredentials": "Was not able to either fetch or read the database credentials from AWS Secrets Manager. Ensure the correct secretId and region properties have been provided.",
   "AwsSecretsManagerConnectionPlugin.missingRequiredConfigParameter": "Configuration parameter 'secretId' is required.",
   "AwsSecretsManagerConnectionPlugin.unhandledException": "Unhandled exception: '%s'",

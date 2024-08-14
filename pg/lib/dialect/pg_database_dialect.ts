@@ -153,4 +153,8 @@ export class PgDatabaseDialect implements DatabaseDialect {
 
     return undefined;
   }
+
+  async rollback(targetClient: ClientWrapper): Promise<any> {
+    return await targetClient.client.rollback();
+  }
 }

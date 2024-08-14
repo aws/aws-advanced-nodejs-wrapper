@@ -28,7 +28,7 @@ import { ClientWrapper } from "../../common/lib/client_wrapper";
 
 const mockPluginService: PluginService = mock(PluginService);
 const mockHostListProviderService = mock<HostListProviderService>();
-const props: Map<string, any> = mock(Map<string, any>);
+const props: Map<string, any> = new Map();
 
 const writerInstance = new HostInfo("writer-host.XYZ.us-west-2.rds.amazonaws.com", 1234, HostRole.WRITER);
 const writerCluster = new HostInfo("my-cluster.cluster-XYZ.us-west-2.rds.amazonaws.com", 1234, HostRole.WRITER);
@@ -51,7 +51,6 @@ const clientWrapper: ClientWrapper = {
 };
 
 const mockInitialClientWrapper: ClientWrapper = mock(clientWrapper);
-const mockClientWrapper: ClientWrapper = mock(clientWrapper);
 
 const mockConnectFunc = jest.fn().mockImplementation(() => {
   return mockInitialClientWrapper;
@@ -68,7 +67,6 @@ describe("test_stale_dns_helper", () => {
 
   afterEach(() => {
     reset(mockInitialConn);
-    reset(props);
     reset(mockHostListProviderService);
     reset(mockPluginService);
     reset(mockHostInfo);
@@ -255,16 +253,9 @@ describe("test_stale_dns_helper", () => {
       mockConnectFunc
     );
 
-    expect(mockInitialConn).not.toBe(returnConn); // TODO fix  mockInitialConn should be mockInitialClientWrapper check assumptions
+    expect(mockInitialConn.targetClient).not.toBe(returnConn);
     expect(mockConnectFunc).toHaveBeenCalled();
-    // verify(mockPluginService.connect(anything(), anything())).once(); //TODO fix
-
-    // note: it appears that the mocked version doesn't have all the values in stale_dns_helper for this case.
-    // it fails the following line in common/lib/plugins/stale_dns/stale_dns_helper.ts file
-    // const newProps = new Map<string, any>(props);
-    // therefore the test correctly states that the mockPluginService.connect was not called.
-
-    // however, in during the normal execution (non mocked objects) everything works.
+    verify(mockPluginService.connect(anything(), anything())).once();
   });
 
   it("test_get_verified_connection__initial_connection_writer_host_address_not_equals_cluster_inet_address", async () => {
@@ -289,9 +280,9 @@ describe("test_stale_dns_helper", () => {
       mockConnectFunc
     );
 
-    // verify(mockPluginService.connect(anything(), anything())).once();  TODO fix
+    verify(mockPluginService.connect(anything(), anything())).once();
     expect(targetInstance["writerHostInfo"]).toBe(mockHostListProviderServiceInstance.getInitialConnectionHostInfo());
-    expect(mockInitialConn).not.toBe(returnConn);
+    expect(mockInitialConn.targetClient).not.toBe(returnConn);
   });
 
   it("test_notify_host_list_changed", () => {

@@ -35,6 +35,7 @@ import { RdsUrlType } from "../../utils/rds_url_type";
 import { RdsUtils } from "../../utils/rds_utils";
 import { Messages } from "../../utils/messages";
 import { ClientWrapper } from "../../client_wrapper";
+import { getWriter } from "../../utils/utils";
 
 export class FailoverPlugin extends AbstractConnectionPlugin {
   private static readonly METHOD_END = "end";
@@ -221,16 +222,7 @@ export class FailoverPlugin extends AbstractConnectionPlugin {
     if (topology.length == 0) {
       return null;
     }
-    return this.getWriter(topology);
-  }
-
-  private getWriter(hosts: HostInfo[]): HostInfo | null {
-    for (const host of hosts) {
-      if (host.role === HostRole.WRITER) {
-        return host;
-      }
-    }
-    return null;
+    return getWriter(topology);
   }
 
   async updateTopology(forceUpdate: boolean) {
@@ -246,7 +238,7 @@ export class FailoverPlugin extends AbstractConnectionPlugin {
     }
   }
 
-  override async connect<Type>(
+  override async connect(
     hostInfo: HostInfo,
     props: Map<string, any>,
     isInitialConnection: boolean,
@@ -261,7 +253,7 @@ export class FailoverPlugin extends AbstractConnectionPlugin {
     }
   }
 
-  override async forceConnect<Type>(
+  override async forceConnect(
     hostInfo: HostInfo,
     props: Map<string, any>,
     isInitialConnection: boolean,
@@ -275,29 +267,13 @@ export class FailoverPlugin extends AbstractConnectionPlugin {
     }
   }
 
-  async connectInternal<Type>(
+  async connectInternal(
     hostInfo: HostInfo,
     props: Map<string, any>,
     isInitialConnection: boolean,
     connectFunc: () => Promise<ClientWrapper>
   ): Promise<ClientWrapper> {
-    if (!this.hostListProviderService) {
-      throw new AwsWrapperError("Host list provider service not found."); // this should not be reached
-    }
-
-    // TODO review: does the logic in the _staleDnsHelper.getVerifiedConnection need to happen during connect?
-    // Probably it should only happen during execute, the first time when actual failover is needed.
-    // This will make the connect faster, and if failover is not needed (should be the most common scenario)
-    // the logic would never be necessary.
-    // Note however, that there is one clause there
-    // if (this.writerHostAddress !== clusterInetAddress)
-    // that triggers a new connection chain, in which case this maybe needed during connection
-    // but that case should re-thought perhaps.
-
-    // Moreover, internally it calls refreshHostList which is also called in the internalPostConnect() function
-    // of the AwsClient class when the connect chain is finished. Maybe the call could be refactored such that no need to call it
-    // multiple times during the connect chain execution.
-    return await this._staleDnsHelper.getVerifiedConnection(hostInfo.host, isInitialConnection, this.hostListProviderService, props, connectFunc);
+    return await this._staleDnsHelper.getVerifiedConnection(hostInfo.host, isInitialConnection, this.hostListProviderService!, props, connectFunc);
   }
 
   override async execute<T>(methodName: string, methodFunc: () => Promise<T>): Promise<T> {
@@ -306,7 +282,6 @@ export class FailoverPlugin extends AbstractConnectionPlugin {
         return await methodFunc();
       }
 
-      // TODO: !allowedOnClosedConnection(methodName); (when target driver dialects implemented)
       if (this.isClosed) {
         await this.invalidInvocationOnClosedConnection();
       }
@@ -375,7 +350,7 @@ export class FailoverPlugin extends AbstractConnectionPlugin {
       }
     }
 
-    if (!result || !result.isConnected || !result.newHost) {
+    if (!result || !result.isConnected || !result.newHost || !result.client) {
       // "Unable to establish SQL connection to reader instance"
       throw new FailoverFailedError(Messages.get("Failover.unableToConnectToReader"));
     }
@@ -397,13 +372,13 @@ export class FailoverPlugin extends AbstractConnectionPlugin {
       }
     }
 
-    if (!result || !result.isConnected) {
+    if (!result || !result.isConnected || !result.client) {
       // "Unable to establish SQL connection to writer node"
       throw new FailoverFailedError(Messages.get("Failover.unableToConnectToWriter"));
     }
 
     // successfully re-connected to a writer node
-    const writerHostInfo = this.getWriter(result.topology);
+    const writerHostInfo = getWriter(result.topology);
     if (!writerHostInfo) {
       throw new AwsWrapperError();
     }
@@ -488,7 +463,7 @@ export class FailoverPlugin extends AbstractConnectionPlugin {
 
   private async connectTo(host: HostInfo) {
     try {
-      await this.createConnectionForHost(host);
+      await this.pluginService.setCurrentClient(await this.createConnectionForHost(host), host);
       logger.debug(Messages.get("Failover.establishedConnection", host.host));
     } catch (error) {
       if (this.pluginService.getCurrentClient()) {
@@ -499,19 +474,10 @@ export class FailoverPlugin extends AbstractConnectionPlugin {
     }
   }
 
-  private async createConnectionForHost(baseHostInfo: HostInfo) {
+  private async createConnectionForHost(baseHostInfo: HostInfo): Promise<ClientWrapper> {
     const props = new Map(this._properties);
     props.set(WrapperProperties.HOST.name, baseHostInfo.host);
-
-    let client;
-    try {
-      client = await this.pluginService.connect(baseHostInfo, props);
-      // TODO: review usage of the createConnectionForHost, should we be calling pluginService.setCurrentClient here?
-      await this.pluginService.setCurrentClient(client, baseHostInfo);
-    } catch (error) {
-      await this.pluginService.tryClosingTargetClient(client);
-      throw error;
-    }
+    return await this.pluginService.connect(baseHostInfo, props);
   }
 
   private canDirectExecute(methodName: string): boolean {

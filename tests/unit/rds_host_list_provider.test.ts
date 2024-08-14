@@ -16,7 +16,6 @@
 
 import { RdsHostListProvider } from "../../common/lib/host_list_provider/rds_host_list_provider";
 import { anyFunction, anyString, anything, instance, mock, reset, spy, verify, when } from "ts-mockito";
-import { HostListProviderService } from "../../common/lib/host_list_provider_service";
 import { PluginService } from "../../common/lib/plugin_service";
 import { AwsClient } from "../../common/lib/aws_client";
 import { HostInfo } from "../../common/lib/host_info";
@@ -34,7 +33,6 @@ const mockClient: AwsClient = mock(AwsPGClient);
 const mockDialect: AuroraPgDatabaseDialect = mock(AuroraPgDatabaseDialect);
 const mockPluginService: PluginService = mock(PluginService);
 const mockConnectionUrlParser: ConnectionUrlParser = mock(ConnectionUrlParser);
-const mockHostListProviderService: HostListProviderService = mock<HostListProviderService>();
 
 const hosts: HostInfo[] = [
   new HostInfoBuilder({
@@ -70,24 +68,22 @@ function getRdsHostListProvider(originalHost: string): RdsHostListProvider {
       host: originalHost
     }).build()
   ];
-  when(mockConnectionUrlParser.getHostsFromConnectionUrl(anyString(), anything(), anyFunction())).thenReturn(host);
+  when(mockConnectionUrlParser.getHostsFromConnectionUrl(anyString(), anything(), anything(), anyFunction())).thenReturn(host);
 
-  const provider = new RdsHostListProvider(new Map<string, any>(), originalHost, instance(mockHostListProviderService));
+  const provider = new RdsHostListProvider(new Map<string, any>(), originalHost, instance(mockPluginService));
   provider.init();
   return provider;
 }
 
 describe("testRdsHostListProvider", () => {
   beforeEach(() => {
-    when(mockPluginService.getDialect()).thenReturn(instance(mockDialect));
+    when(mockDialect.getDefaultPort()).thenReturn(-1);
     when(mockClient.isValid()).thenResolve(true);
-    when(mockPluginService.getCurrentClient()).thenReturn(instance(mockClient));
+    when(mockPluginService.getDialect()).thenReturn(instance(mockDialect));
     when(mockPluginService.getCurrentHostInfo()).thenReturn(currentHostInfo);
-    when(mockHostListProviderService.getConnectionUrlParser()).thenReturn(instance(mockConnectionUrlParser));
-    when(mockHostListProviderService.getCurrentClient()).thenReturn(instance(mockClient));
-    when(mockHostListProviderService.getHostInfoBuilder()).thenReturn(
-      new HostInfoBuilder({ hostAvailabilityStrategy: new SimpleHostAvailabilityStrategy() })
-    );
+    when(mockPluginService.getConnectionUrlParser()).thenReturn(instance(mockConnectionUrlParser));
+    when(mockPluginService.getCurrentClient()).thenReturn(instance(mockClient));
+    when(mockPluginService.getHostInfoBuilder()).thenReturn(new HostInfoBuilder({ hostAvailabilityStrategy: new SimpleHostAvailabilityStrategy() }));
   });
 
   afterEach(() => {
@@ -97,7 +93,6 @@ describe("testRdsHostListProvider", () => {
     reset(mockClientWrapper);
     reset(mockClient);
     reset(mockPluginService);
-    reset(mockHostListProviderService);
   });
 
   it("testGetTopology_returnCachedTopology", async () => {
@@ -119,7 +114,7 @@ describe("testRdsHostListProvider", () => {
     const spiedProvider = spy(rdsHostListProvider);
     spiedProvider.isInitialized = true;
 
-    when(mockHostListProviderService.isClientValid(anything())).thenResolve(true);
+    when(mockPluginService.isClientValid(anything())).thenResolve(true);
 
     RdsHostListProvider.topologyCache.put(rdsHostListProvider.clusterId, hosts, defaultRefreshRateNano);
     const newHosts: HostInfo[] = [
@@ -162,7 +157,7 @@ describe("testRdsHostListProvider", () => {
         host: "someUrl"
       }).build()
     ];
-    when(mockConnectionUrlParser.getHostsFromConnectionUrl(anyString(), anything(), anyFunction())).thenReturn(initialHosts);
+    when(mockConnectionUrlParser.getHostsFromConnectionUrl(anyString(), anything(), anything(), anyFunction())).thenReturn(initialHosts);
 
     const rdsHostListProvider = getRdsHostListProvider("someUrl");
     const spiedProvider = spy(rdsHostListProvider);
@@ -208,7 +203,7 @@ describe("testRdsHostListProvider", () => {
   it("testTopologyCache_noSuggestedClusterId", async () => {
     RdsHostListProvider.clearAll();
 
-    when(mockHostListProviderService.isClientValid(anything())).thenResolve(true);
+    when(mockPluginService.isClientValid(anything())).thenResolve(true);
 
     const provider1 = getRdsHostListProvider("cluster-a.xyz.us-east-2.rds.amazonaws.com");
     const spiedProvider1 = spy(provider1);
@@ -266,9 +261,9 @@ describe("testRdsHostListProvider", () => {
   it("testTopologyCache_suggestedClusterIdForRds", async () => {
     RdsHostListProvider.clearAll();
 
-    when(mockHostListProviderService.isClientValid(anything())).thenResolve(true);
+    when(mockPluginService.isClientValid(anything())).thenResolve(true);
 
-    when(mockConnectionUrlParser.getHostsFromConnectionUrl(anyString(), anything(), anyFunction())).thenReturn([
+    when(mockConnectionUrlParser.getHostsFromConnectionUrl(anyString(), anything(), anything(), anyFunction())).thenReturn([
       new HostInfoBuilder({
         hostAvailabilityStrategy: new SimpleHostAvailabilityStrategy(),
         host: "cluster-a.cluster-xyz.us-east-2.rds.amazonaws.com"
@@ -315,9 +310,9 @@ describe("testRdsHostListProvider", () => {
   it("testTopologyCache_suggestedClusterIdForInstance", async () => {
     RdsHostListProvider.clearAll();
 
-    when(mockHostListProviderService.isClientValid(anything())).thenResolve(true);
+    when(mockPluginService.isClientValid(anything())).thenResolve(true);
 
-    when(mockConnectionUrlParser.getHostsFromConnectionUrl(anyString(), anything(), anyFunction())).thenReturn([
+    when(mockConnectionUrlParser.getHostsFromConnectionUrl(anyString(), anything(), anything(), anyFunction())).thenReturn([
       new HostInfoBuilder({
         hostAvailabilityStrategy: new SimpleHostAvailabilityStrategy(),
         host: "cluster-a.cluster-xyz.us-east-2.rds.amazonaws.com"
@@ -364,9 +359,9 @@ describe("testRdsHostListProvider", () => {
   it("testTopologyCache_acceptSuggestion", async () => {
     RdsHostListProvider.clearAll();
 
-    when(mockHostListProviderService.isClientValid(anything())).thenResolve(true);
+    when(mockPluginService.isClientValid(anything())).thenResolve(true);
 
-    when(mockConnectionUrlParser.getHostsFromConnectionUrl(anyString(), anything(), anyFunction())).thenReturn([
+    when(mockConnectionUrlParser.getHostsFromConnectionUrl(anyString(), anything(), anything(), anyFunction())).thenReturn([
       new HostInfoBuilder({
         hostAvailabilityStrategy: new SimpleHostAvailabilityStrategy(),
         host: "instance-a-2.xyz.us-east-2.rds.amazonaws.com/"
@@ -480,8 +475,8 @@ describe("testRdsHostListProvider", () => {
       }).build()
     ]);
 
-    when(mockHostListProviderService.isClientValid(anything())).thenResolve(true);
-    when(mockHostListProviderService.getDialect()).thenReturn(instance(mockDialect));
+    when(mockPluginService.isClientValid(anything())).thenResolve(true);
+    when(mockPluginService.getDialect()).thenReturn(instance(mockDialect));
 
     const rdsHostListProvider = getRdsHostListProvider("foo");
     const spiedProvider = spy(rdsHostListProvider);

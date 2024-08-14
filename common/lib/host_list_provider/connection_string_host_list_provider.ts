@@ -53,7 +53,7 @@ export class ConnectionStringHostListProvider implements StaticHostListProvider 
     }
 
     this.hostList.push(
-      ...this.connectionUrlParser.getHostsFromConnectionUrl(this.initialHost, this.isSingleWriterConnectionString, () =>
+      ...this.connectionUrlParser.getHostsFromConnectionUrl(this.initialHost, this.isSingleWriterConnectionString, this.initialPort, () =>
         this.hostListProviderService.getHostInfoBuilder()
       )
     );
@@ -71,12 +71,6 @@ export class ConnectionStringHostListProvider implements StaticHostListProvider 
   refresh(client?: ClientWrapper): Promise<HostInfo[]>;
   refresh(client?: ClientWrapper | undefined): Promise<HostInfo[]> {
     this.init();
-    if (client === undefined) {
-      return Promise.resolve(this.hostList);
-    }
-    //return this.refresh();
-    // TODO review. More work needed here?
-    // the above commented out call to this.refresh() would result in infinite recursion.
     return Promise.resolve(this.hostList);
   }
 
@@ -84,12 +78,6 @@ export class ConnectionStringHostListProvider implements StaticHostListProvider 
   forceRefresh(client: ClientWrapper): Promise<HostInfo[]>;
   forceRefresh(client?: ClientWrapper): Promise<HostInfo[]> {
     this.init();
-    if (client === undefined) {
-      return Promise.resolve(this.hostList);
-    }
-    //return this.forceRefresh();
-    // TODO review. More work needed here?
-    // the above commented out call to this.forceRefresh() would result in infinite recursion.
     return Promise.resolve(this.hostList);
   }
 

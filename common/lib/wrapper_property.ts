@@ -80,6 +80,11 @@ export class WrapperProperties {
     "Enables resetting a connection's session state before closing it.",
     true
   );
+  static readonly ROLLBACK_ON_SWITCH = new WrapperProperty<boolean>(
+    "rollbackOnSwitch",
+    "Enables to rollback a current transaction being in progress when switching to a new connection.",
+    true
+  );
 
   static readonly DEFAULT_HOST_AVAILABILITY_STRATEGY = new WrapperProperty<string>(
     "defaultHostAvailabilityStrategy",

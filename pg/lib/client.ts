@@ -203,7 +203,7 @@ export class AwsPGClient extends AwsClient {
       "rollback",
       async () => {
         this.pluginService.updateInTransaction("rollback");
-        return this.targetClient?.client?.rollback();
+        return await this.targetClient?.client?.rollback();
       },
       null
     );

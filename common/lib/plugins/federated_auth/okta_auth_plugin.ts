@@ -44,7 +44,7 @@ export class OktaAuthPlugin extends AbstractConnectionPlugin {
     return OktaAuthPlugin.subscribedMethods;
   }
 
-  connect<T>(
+  connect(
     hostInfo: HostInfo,
     props: Map<string, any>,
     isInitialConnection: boolean,
@@ -53,7 +53,7 @@ export class OktaAuthPlugin extends AbstractConnectionPlugin {
     return this.connectInternal(hostInfo, props, connectFunc);
   }
 
-  forceConnect<T>(
+  forceConnect(
     hostInfo: HostInfo,
     props: Map<string, any>,
     isInitialConnection: boolean,
@@ -62,7 +62,7 @@ export class OktaAuthPlugin extends AbstractConnectionPlugin {
     return this.connectInternal(hostInfo, props, connectFunc);
   }
 
-  async connectInternal<T>(hostInfo: HostInfo, props: Map<string, any>, connectFunc: () => Promise<ClientWrapper>): Promise<ClientWrapper> {
+  async connectInternal(hostInfo: HostInfo, props: Map<string, any>, connectFunc: () => Promise<ClientWrapper>): Promise<ClientWrapper> {
     SamlUtils.checkIdpCredentialsWithFallback(props);
 
     const host = IamAuthUtils.getIamHost(props, hostInfo);

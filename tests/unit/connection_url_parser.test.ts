@@ -63,6 +63,7 @@ describe("connectionUrlParserTest", () => {
     const results = parser.getHostsFromConnectionUrl(
       testUrl,
       false,
+      -1,
       () => new HostInfoBuilder({ hostAvailabilityStrategy: new SimpleHostAvailabilityStrategy() })
     );
     expect(results.length).toEqual(expected.length);
