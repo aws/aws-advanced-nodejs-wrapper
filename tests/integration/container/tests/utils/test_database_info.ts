@@ -16,7 +16,6 @@
 
 import { TestInstanceInfo } from "./test_instance_info";
 import { DBInstance } from "@aws-sdk/client-rds/dist-types/models/models_0";
-import { logger } from "../../../../../common/logutils";
 
 export class TestDatabaseInfo {
   private readonly _username: string;

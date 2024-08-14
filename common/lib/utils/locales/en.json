@@ -111,7 +111,7 @@
   "SamlAuthPlugin.unhandledException": "Unhandled exception: '%s'",
   "HostAvailabilityStrategy.invalidMaxRetries": "Invalid value of '%s' for configuration parameter `hostAvailabilityStrategyMaxRetries`. It must be an integer greater or equal to 1.",
   "HostAvailabilityStrategy.invalidInitialBackoffTime": "Invalid value of '%s'  for configuration parameter `hostAvailabilityStrategyInitialBackoffTime`. It must be an integer greater or equal to 1.",
-  "MonitorConnectionContext.exceptionAbortingConnection": "Exception during aborting connection",
+  "MonitorConnectionContext.exceptionAbortingConnection": "Exception during aborting connection: %s.",
   "MonitorConnectionContext.hostDead": "Host %s is *dead*.",
   "MonitorConnectionContext.hostNotResponding": "Host %s is not *responding* %s",
   "MonitorConnectionContext.hostAlive": "Host %s is *alive*.",

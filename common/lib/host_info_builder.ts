@@ -19,7 +19,6 @@ import { HostAvailability } from "./host_availability/host_availability";
 import { HostInfo } from "./host_info";
 import { HostAvailabilityStrategy } from "./host_availability/host_availability_strategy";
 import { AwsWrapperError } from "./utils/errors";
-import { SimpleHostAvailabilityStrategy } from "./host_availability/simple_host_availability_strategy";
 
 export class HostInfoBuilder {
   private host: string;

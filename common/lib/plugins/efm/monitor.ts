@@ -19,6 +19,8 @@ import { HostInfo } from "../../host_info";
 import { PluginService } from "../../plugin_service";
 import { logger } from "../../../logutils";
 import { Messages } from "../../utils/messages";
+import { ClientWrapper } from "../../client_wrapper";
+import { sleep } from "../../utils/utils";
 
 export interface Monitor {
   startMonitoring(context: MonitorConnectionContext): void;
@@ -62,7 +64,7 @@ export class MonitorImpl implements Monitor {
   private started = false;
   private stopped: boolean = false;
   private cancel: boolean = false;
-  private monitoringClient: any | null = null;
+  private monitoringClient: ClientWrapper | null = null;
   private delayMillisTimeoutId: any;
   private sleepWhenInactiveTimeoutId: any;
 
@@ -268,6 +270,8 @@ export class MonitorImpl implements Monitor {
     clearTimeout(this.delayMillisTimeoutId);
     clearTimeout(this.sleepWhenInactiveTimeoutId);
     await this.endMonitoringClient();
+    // Allow time for monitor loop to close.
+    await sleep(500);
   }
 
   async endMonitoringClient() {
