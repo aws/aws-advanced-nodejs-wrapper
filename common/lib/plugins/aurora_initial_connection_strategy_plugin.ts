@@ -57,7 +57,7 @@ export class AuroraInitialConnectionStrategyPlugin extends AbstractConnectionPlu
     initHostProviderFunc();
   }
 
-  async connect<T>(
+  async connect(
     hostInfo: HostInfo,
     props: Map<string, any>,
     isInitialConnection: boolean,
@@ -66,7 +66,7 @@ export class AuroraInitialConnectionStrategyPlugin extends AbstractConnectionPlu
     return this.connectInternal(hostInfo, props, isInitialConnection, connectFunc);
   }
 
-  async forceConnect<T>(
+  async forceConnect(
     hostInfo: HostInfo,
     props: Map<string, any>,
     isInitialConnection: boolean,
@@ -75,7 +75,7 @@ export class AuroraInitialConnectionStrategyPlugin extends AbstractConnectionPlu
     return this.connectInternal(hostInfo, props, isInitialConnection, forceConnectFunc);
   }
 
-  async connectInternal<T>(
+  async connectInternal(
     hostInfo: HostInfo,
     props: Map<string, any>,
     isInitialConnection: boolean,
