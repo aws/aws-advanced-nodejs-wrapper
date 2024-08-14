@@ -27,6 +27,7 @@ import { WrapperProperties } from "../wrapper_property";
 import { sleep } from "../utils/utils";
 import { HostAvailability } from "../host_availability/host_availability";
 import { logger } from "../../logutils";
+import { ClientWrapper } from "../client_wrapper";
 
 export class AuroraInitialConnectionStrategyPlugin extends AbstractConnectionPlugin {
   private static readonly subscribedMethods = new Set<string>(["initHostProvider", "connect", "forceConnect"]);
@@ -56,15 +57,30 @@ export class AuroraInitialConnectionStrategyPlugin extends AbstractConnectionPlu
     initHostProviderFunc();
   }
 
-  async connect<T>(hostInfo: HostInfo, props: Map<string, any>, isInitialConnection: boolean, connectFunc: () => Promise<T>): Promise<T> {
+  async connect<T>(
+    hostInfo: HostInfo,
+    props: Map<string, any>,
+    isInitialConnection: boolean,
+    connectFunc: () => Promise<ClientWrapper>
+  ): Promise<ClientWrapper> {
     return this.connectInternal(hostInfo, props, isInitialConnection, connectFunc);
   }
 
-  async forceConnect<T>(hostInfo: HostInfo, props: Map<string, any>, isInitialConnection: boolean, forceConnectFunc: () => Promise<T>): Promise<T> {
+  async forceConnect<T>(
+    hostInfo: HostInfo,
+    props: Map<string, any>,
+    isInitialConnection: boolean,
+    forceConnectFunc: () => Promise<ClientWrapper>
+  ): Promise<ClientWrapper> {
     return this.connectInternal(hostInfo, props, isInitialConnection, forceConnectFunc);
   }
 
-  async connectInternal<T>(hostInfo: HostInfo, props: Map<string, any>, isInitialConnection: boolean, connectFunc: () => Promise<T>): Promise<T> {
+  async connectInternal<T>(
+    hostInfo: HostInfo,
+    props: Map<string, any>,
+    isInitialConnection: boolean,
+    connectFunc: () => Promise<ClientWrapper>
+  ): Promise<ClientWrapper> {
     const type = this.rdsUtils.identifyRdsType(hostInfo.host);
 
     if (!type.isRdsCluster) {
