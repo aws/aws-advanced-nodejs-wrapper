@@ -82,12 +82,13 @@ export class AwsPGClient extends AwsClient {
       text
     );
   }
+
   async updateSessionStateReadOnly(readOnly: boolean): Promise<QueryResult | void> {
-    return await this.executeQuery(
-      this.properties,
-      `SET SESSION CHARACTERISTICS AS TRANSACTION READ ${readOnly} ? "ONLY" : "WRITE"`,
-      this.targetClient
-    );
+    if (this.isReadOnly()) {
+      return await this.executeQuery(this.properties, "SET SESSION CHARACTERISTICS AS TRANSACTION READ ONLY");
+    } else {
+      return await this.executeQuery(this.properties, "SET SESSION CHARACTERISTICS AS TRANSACTION READ WRITE");
+    }
   }
 
   private async readOnlyQuery(text: string): Promise<QueryResult> {
@@ -103,7 +104,12 @@ export class AwsPGClient extends AwsClient {
   }
 
   async setReadOnly(readOnly: boolean): Promise<QueryResult | void> {
-    const result = await this.readOnlyQuery(`SET SESSION CHARACTERISTICS AS TRANSACTION READ ${readOnly} ? "ONLY" : "WRITE"`);
+    let result;
+    if (this.isReadOnly()) {
+      result = await this.readOnlyQuery("SET SESSION CHARACTERISTICS AS TRANSACTION READ ONLY");
+    } else {
+      result = await this.readOnlyQuery("SET SESSION CHARACTERISTICS AS TRANSACTION READ WRITE");
+    }
     this._isReadOnly = readOnly;
     this.pluginService.getSessionStateService().setupPristineReadOnly();
     this.pluginService.getSessionStateService().setReadOnly(readOnly);

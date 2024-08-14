@@ -65,9 +65,9 @@ export class AwsMySQLClient extends AwsClient {
       this.isConnected = true;
     }
     if (targetClient) {
-      return await ClientUtils.queryWithTimeout(targetClient?.client.promise().query({ sql: sql }), props);
+      return await targetClient?.client.promise().query({ sql: sql });
     } else {
-      return await ClientUtils.queryWithTimeout(this.targetClient?.client.promise().query({ sql: sql }), props);
+      return await this.targetClient?.client.promise().query({ sql: sql });
     }
   }
 
