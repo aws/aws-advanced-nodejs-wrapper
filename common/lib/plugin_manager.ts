@@ -93,14 +93,20 @@ export class PluginManager {
     // TODO: proper parsing logic
   }
 
-  async init() {
+  async init(): Promise<void>;
+  async init(plugins: ConnectionPlugin[]): Promise<void>;
+  async init(plugins?: ConnectionPlugin[]) {
     if (this.pluginServiceManagerContainer.pluginService != null) {
-      this._plugins = await ConnectionPluginChainBuilder.getPlugins(
-        this.pluginServiceManagerContainer.pluginService,
-        this.props,
-        this.defaultConnProvider,
-        this.effectiveConnProvider
-      );
+      if (plugins) {
+        this._plugins = plugins;
+      } else {
+        this._plugins = await ConnectionPluginChainBuilder.getPlugins(
+          this.pluginServiceManagerContainer.pluginService,
+          this.props,
+          this.defaultConnProvider,
+          this.effectiveConnProvider
+        );
+      }
     }
   }
 
