@@ -58,7 +58,7 @@ describe("testSessionStateServiceImpl", () => {
     when(mockPluginService.getCurrentClient()).thenReturn(awsClient);
     when(mockAwsClient.isReadOnly()).thenReturn(pristineValue);
     expect(sessionStateService.getReadOnly()).toBe(undefined);
-    when(mockAwsClient.connect()).thenResolve();
+    when(mockAwsClient.updateSessionStateReadOnly(anything())).thenResolve();
     sessionStateService.setupPristineReadOnly();
     sessionStateService.setReadOnly(value);
     expect(sessionStateService.getReadOnly()).toBe(value);

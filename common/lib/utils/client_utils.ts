@@ -14,7 +14,6 @@
   limitations under the License.
 */
 
-import { QueryOptions } from "mysql2/typings/mysql/lib/protocol/sequences/Query";
 import { getTimeoutTask } from "./utils";
 import { Messages } from "./messages";
 import { AwsWrapperError } from "./errors";
