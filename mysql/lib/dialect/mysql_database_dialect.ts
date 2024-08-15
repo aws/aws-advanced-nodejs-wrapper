@@ -22,6 +22,8 @@ import { AwsWrapperError } from "../../../common/lib/utils/errors";
 import { DatabaseDialectCodes } from "../../../common/lib/database_dialect/database_dialect_codes";
 import { TransactionIsolationLevel } from "../../../common/lib/utils/transaction_isolation_level";
 import { ClientWrapper } from "../../../common/lib/client_wrapper";
+import { Utils } from "../utils";
+import { ClientUtils } from "../../../common/lib/utils/client_utils";
 
 export class MySQLDatabaseDialect implements DatabaseDialect {
   protected dialectName: string = this.constructor.name;
@@ -73,22 +75,29 @@ export class MySQLDatabaseDialect implements DatabaseDialect {
 
   async tryClosingTargetClient(targetClient: ClientWrapper) {
     try {
-      await targetClient.client.promise().end();
+      await ClientUtils.queryWithTimeout(targetClient.client.promise().end(), targetClient.properties);
     } catch (error) {
       // ignore
     }
   }
 
   async isClientValid(targetClient: ClientWrapper): Promise<boolean> {
-    return await targetClient.client
-      .promise()
-      .query({ sql: "SELECT 1" })
-      .then(() => {
-        return true;
-      })
-      .catch(() => {
-        return false;
-      });
+    try {
+      return await ClientUtils.queryWithTimeout(
+        targetClient.client
+          .promise()
+          .query({ sql: "SELECT 1" })
+          .then(() => {
+            return true;
+          })
+          .catch(() => {
+            return false;
+          }),
+        targetClient.properties
+      );
+    } catch (error) {
+      return false;
+    }
   }
 
   getConnectFunc(targetClient: any): () => Promise<any> {

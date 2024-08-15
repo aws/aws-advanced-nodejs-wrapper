@@ -22,6 +22,14 @@ export function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+export function getTimeoutTask(timer: any, message: string, timeoutValue: number): Promise<void> {
+  return new Promise((_resolve, reject) => {
+    timer.timeoutId = setTimeout(() => {
+      reject(message);
+    }, timeoutValue);
+  });
+}
+
 export function shuffleList(list: any[]) {
   for (let i = list.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));

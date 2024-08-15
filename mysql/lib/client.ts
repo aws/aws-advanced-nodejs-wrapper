@@ -29,6 +29,7 @@ import { TransactionIsolationLevel } from "../../common/lib/utils/transaction_is
 import { AwsWrapperError, UnsupportedMethodError } from "../../common/lib/utils/errors";
 import { Messages } from "../../common/lib/utils/messages";
 import { ClientWrapper } from "../../common/lib/client_wrapper";
+import { ClientUtils } from "../../common/lib/utils/client_utils";
 
 export class AwsMySQLClient extends AwsClient {
   private static readonly knownDialectsByCode: Map<string, DatabaseDialect> = new Map([
@@ -57,16 +58,15 @@ export class AwsMySQLClient extends AwsClient {
     return;
   }
 
-  async executeQuery(props: Map<string, any>, sql: string, targetClient: ClientWrapper): Promise<Query> {
+  async executeQuery(props: Map<string, any>, sql: string, targetClient?: ClientWrapper): Promise<Query> {
     if (!this.isConnected) {
       await this.connect(); // client.connect is not required for MySQL clients
       this.isConnected = true;
     }
-
     if (targetClient) {
-      return targetClient?.client.promise().query({ sql: sql });
+      return await ClientUtils.queryWithTimeout(targetClient?.client.promise().query({ sql: sql }), props);
     } else {
-      return this.targetClient?.client.promise().query({ sql: sql });
+      return await ClientUtils.queryWithTimeout(this.targetClient?.client.promise().query({ sql: sql }), props);
     }
   }
 
@@ -82,30 +82,38 @@ export class AwsMySQLClient extends AwsClient {
       "query",
       async () => {
         await this.pluginService.updateState(options.sql);
-        return await this.targetClient?.client?.promise().query(options, callback);
+        return await ClientUtils.queryWithTimeout(this.targetClient?.client?.promise().query(options, callback), this.properties);
       },
       options
     );
   }
 
+  private async readOnlyQuery(options: QueryOptions, callback?: any): Promise<Query> {
+    const host = this.pluginService.getCurrentHostInfo();
+
+    return this.pluginManager.execute(
+      host,
+      this.properties,
+      "query",
+      async () => {
+        return await ClientUtils.queryWithTimeout(this.targetClient?.client?.promise().query(options, callback), this.properties);
+      },
+      options
+    );
+  }
+
+  async updateSessionStateReadOnly(readOnly: boolean): Promise<Query | void> {
+    const result = await this.executeQuery(this.properties, `SET SESSION TRANSACTION READ ${readOnly ? "ONLY" : "WRITE"}`, this.targetClient);
+
+    this._isReadOnly = readOnly;
+    this.pluginService.getSessionStateService().setupPristineReadOnly();
+    this.pluginService.getSessionStateService().setReadOnly(readOnly);
+    return result;
+  }
+
   async setReadOnly(readOnly: boolean): Promise<Query | void> {
-    if (readOnly === this.isReadOnly()) {
-      return Promise.resolve();
-    }
-    const previousReadOnly: boolean = this.isReadOnly();
-    let result;
-    try {
-      this._isReadOnly = readOnly;
-      if (this.isReadOnly()) {
-        result = await this.query({ sql: "SET SESSION TRANSACTION READ ONLY;" });
-      } else {
-        result = await this.query({ sql: "SET SESSION TRANSACTION READ WRITE;" });
-      }
-    } catch (error) {
-      // revert
-      this._isReadOnly = previousReadOnly;
-      throw error;
-    }
+    const result = await this.readOnlyQuery({ sql: `SET SESSION TRANSACTION READ ${readOnly ? "ONLY" : "WRITE"}` });
+    this._isReadOnly = readOnly;
     this.pluginService.getSessionStateService().setupPristineReadOnly();
     this.pluginService.getSessionStateService().setReadOnly(readOnly);
     return result;
@@ -198,7 +206,15 @@ export class AwsMySQLClient extends AwsClient {
       this.properties,
       "end",
       () => {
-        return this.targetClient?.client?.promise().end();
+        return ClientUtils.queryWithTimeout(
+          this.targetClient?.client
+            ?.promise()
+            .end()
+            .catch((error: any) => {
+              // ignore
+            }),
+          this.properties
+        );
       },
       null
     );

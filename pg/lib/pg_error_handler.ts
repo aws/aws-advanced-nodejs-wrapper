@@ -15,6 +15,7 @@
 */
 
 import { ErrorHandler } from "../../common/lib/error_handler";
+import { Messages } from "../../common/lib/utils/messages";
 
 export class PgErrorHandler implements ErrorHandler {
   isLoginError(e: Error): boolean {

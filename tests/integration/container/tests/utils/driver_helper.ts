@@ -63,7 +63,7 @@ export class DriverHelper {
           return result.rows[0]["aurora_db_instance_identifier"];
         });
       case DatabaseEngine.MYSQL:
-        result = await (client as AwsMySQLClient).query({ sql: sql, timeout: 10000 });
+        result = await (client as AwsMySQLClient).query({ sql: sql });
         return JSON.parse(JSON.stringify(result))[0][0]["id"];
       default:
         throw new Error("invalid engine");

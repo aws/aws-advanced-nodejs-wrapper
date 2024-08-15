@@ -57,12 +57,12 @@ export class DriverConnectionProvider implements ConnectionProvider {
         .copyFrom(hostInfo)
         .build();
       resultTargetClient = targetClient;
-    } catch (e) {
+    } catch (e: any) {
       if (!WrapperProperties.ENABLE_GREEN_NODE_REPLACEMENT.get(props)) {
         throw e;
       }
 
-      if (!JSON.stringify(e).includes("Error: getaddrinfo ENOTFOUND")) {
+      if (!e.message.includes("Error: getaddrinfo ENOTFOUND")) {
         throw e;
       }
 
@@ -100,7 +100,7 @@ export class DriverConnectionProvider implements ConnectionProvider {
           " after correcting the hostname from " +
           originalHost +
           "\nwith properties: \n" +
-          JSON.stringify(maskProperties(props))
+          JSON.stringify(Object.fromEntries(maskProperties(props)))
       );
 
       const newTargetClient = pluginService.createTargetClient(props);

@@ -148,7 +148,7 @@ export class ClusterAwareWriterFailoverHandler implements WriterFailoverHandler 
         }
         throw new AwsWrapperError("Connection attempt task timed out.");
       })
-      .catch((error) => {
+      .catch((error: any) => {
         logger.info("ClusterAwareWriterFailoverHandler.failedToConnectToWriterInstance");
         if (JSON.stringify(error).includes("Connection attempt task timed out.")) {
           return new WriterFailoverResult(false, false, [], "None", null);
@@ -248,7 +248,7 @@ class ReconnectToWriterHandlerTask {
         } catch (error) {
           // Propagate exceptions that are not caused by network errors.
           if (error instanceof AwsWrapperError && !this.pluginService.isNetworkError(error)) {
-            logger.info("ClusterAwareWriterFailoverHandler.taskAEncounteredException", JSON.stringify(error));
+            logger.info("ClusterAwareWriterFailoverHandler.taskAEncounteredException", error.message);
             return new WriterFailoverResult(false, false, [], ClusterAwareWriterFailoverHandler.RECONNECT_WRITER_TASK, null, error);
           }
         }
@@ -269,8 +269,8 @@ class ReconnectToWriterHandlerTask {
         ClusterAwareWriterFailoverHandler.RECONNECT_WRITER_TASK,
         success ? this.currentClient : null
       );
-    } catch (error) {
-      logger.error(error);
+    } catch (error: any) {
+      logger.error(error.message);
       return new WriterFailoverResult(false, false, [], ClusterAwareWriterFailoverHandler.RECONNECT_WRITER_TASK, null);
     } finally {
       if (this.currentClient && !success) {
@@ -404,8 +404,6 @@ class WaitForNewWriterHandlerTask {
           } else {
             this.currentTopology = topology;
             const writerCandidate = getWriter(this.currentTopology);
-            logger.debug(`writerCandidateHost: ${writerCandidate?.host} has role ${writerCandidate?.role}`);
-            logger.debug(`originalWriterHost: ${this.originalWriterHost?.host} has role ${this.originalWriterHost?.role}`);
             if (writerCandidate && !this.isSame(writerCandidate, this.originalWriterHost)) {
               // new writer is available, and it's different from the previous writer
               if (await this.connectToWriter(writerCandidate)) {

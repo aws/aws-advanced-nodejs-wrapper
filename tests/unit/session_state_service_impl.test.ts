@@ -55,10 +55,10 @@ describe("testSessionStateServiceImpl", () => {
   ])("test reset client readOnly", async (pristineValue: boolean, value: boolean, shouldReset: boolean, driver: number) => {
     const mockAwsClient = driver === 0 ? mockAwsPGClient : mockAwsMySQLClient;
     const awsClient = driver === 0 ? awsPGClient : awsMySQLClient;
-
     when(mockPluginService.getCurrentClient()).thenReturn(awsClient);
     when(mockAwsClient.isReadOnly()).thenReturn(pristineValue);
     expect(sessionStateService.getReadOnly()).toBe(undefined);
+    when(mockAwsClient.updateSessionStateReadOnly(anything())).thenResolve();
     sessionStateService.setupPristineReadOnly();
     sessionStateService.setReadOnly(value);
     expect(sessionStateService.getReadOnly()).toBe(value);
@@ -68,9 +68,9 @@ describe("testSessionStateServiceImpl", () => {
     sessionStateService.complete();
 
     if (shouldReset) {
-      verify(mockAwsClient.setReadOnly(pristineValue)).once();
+      verify(mockAwsClient.updateSessionStateReadOnly(pristineValue)).once();
     } else {
-      verify(mockAwsClient.setReadOnly(anything())).never();
+      verify(mockAwsClient.updateSessionStateReadOnly(anything())).never();
     }
   });
 

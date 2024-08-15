@@ -63,6 +63,12 @@ export class WrapperProperties {
 
   static readonly DIALECT = new WrapperProperty<string>("dialect", "A unique identifier for the supported database dialect.", "");
 
+  static readonly INTERNAL_QUERY_TIMEOUT = new WrapperProperty<number>(
+    "internal_query_timeout",
+    "Timeout in milliseconds for the driver to execute internal queries, such as the query for cluster topology",
+    20000
+  );
+
   static readonly TRANSFER_SESSION_STATE_ON_SWITCH = new WrapperProperty<boolean>(
     "transferSessionStateOnSwitch",
     "Enables session state transfer to a new connection.",

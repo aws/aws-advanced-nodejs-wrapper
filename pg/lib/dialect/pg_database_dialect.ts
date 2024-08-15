@@ -22,6 +22,8 @@ import { AwsWrapperError } from "../../../common/lib/utils/errors";
 import { DatabaseDialectCodes } from "../../../common/lib/database_dialect/database_dialect_codes";
 import { TransactionIsolationLevel } from "../../../common/lib/utils/transaction_isolation_level";
 import { ClientWrapper } from "../../../common/lib/client_wrapper";
+import { logger } from "../../../common/logutils";
+import { ClientUtils } from "../../../common/lib/utils/client_utils";
 
 export class PgDatabaseDialect implements DatabaseDialect {
   protected dialectName: string = this.constructor.name;
@@ -76,14 +78,18 @@ export class PgDatabaseDialect implements DatabaseDialect {
   }
 
   async isClientValid(targetClient: ClientWrapper): Promise<boolean> {
-    return await targetClient.client
-      .query("SELECT 1")
-      .then(() => {
-        return true;
-      })
-      .catch(() => {
-        return false;
-      });
+    try {
+      return await targetClient.client
+        .query("SELECT 1")
+        .then(() => {
+          return true;
+        })
+        .catch(() => {
+          return false;
+        });
+    } catch (error) {
+      return false;
+    }
   }
 
   getConnectFunc(targetClient: any): () => Promise<any> {

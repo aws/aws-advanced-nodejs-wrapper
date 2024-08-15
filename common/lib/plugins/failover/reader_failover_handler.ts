@@ -17,7 +17,7 @@
 import { HostInfo } from "../../host_info";
 import { PluginService } from "../../plugin_service";
 import { ReaderFailoverResult } from "./reader_failover_result";
-import { maskProperties, shuffleList, sleep } from "../../utils/utils";
+import { getTimeoutTask, maskProperties, shuffleList, sleep } from "../../utils/utils";
 import { HostRole } from "../../host_role";
 import { HostAvailability } from "../../host_availability/host_availability";
 import { AwsWrapperError } from "../../utils/errors";
@@ -55,14 +55,6 @@ export class ClusterAwareReaderFailoverHandler implements ReaderFailoverHandler 
     this.enableFailoverStrictReader = enableFailoverStrictReader;
   }
 
-  private getTimeoutTask(timer: any, message: string, timeoutValue: number): Promise<void> {
-    return new Promise((_resolve, reject) => {
-      timer.timeoutId = setTimeout(() => {
-        reject(message);
-      }, timeoutValue);
-    });
-  }
-
   async failover(hosts: HostInfo[], currentHost: HostInfo | null): Promise<ReaderFailoverResult> {
     if (hosts == null || hosts.length === 0) {
       logger.info(Messages.get("ClusterAwareReaderFailoverHandler.invalidTopology", "failover"));
@@ -89,7 +81,7 @@ export class ClusterAwareReaderFailoverHandler implements ReaderFailoverHandler 
     const timer: any = {};
     const endTime = Date.now() + this.maxFailoverTimeoutMs;
 
-    const timeoutTask = this.getTimeoutTask(timer, "Internal failover task timed out.", this.maxFailoverTimeoutMs);
+    const timeoutTask = getTimeoutTask(timer, "Internal failover task timed out.", this.maxFailoverTimeoutMs);
     const failoverTask = this.internalFailoverTask(hosts, currentHost, endTime);
 
     return await Promise.race([timeoutTask, failoverTask])
@@ -180,7 +172,7 @@ export class ClusterAwareReaderFailoverHandler implements ReaderFailoverHandler 
 
   async getResultFromNextTaskBatch(hosts: HostInfo[], i: number): Promise<ReaderFailoverResult> {
     const timer: any = {};
-    const timeoutTask = this.getTimeoutTask(timer, "Connection attempt task timed out.", this.timeoutMs);
+    const timeoutTask = getTimeoutTask(timer, "Connection attempt task timed out.", this.timeoutMs);
 
     const numTasks = i + 1 < hosts.length ? 2 : 1;
     const getResultTask = this.getResultTask(hosts, numTasks, i);

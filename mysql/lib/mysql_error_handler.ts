@@ -15,6 +15,7 @@
 */
 
 import { ErrorHandler } from "../../common/lib/error_handler";
+import { Messages } from "../../common/lib/utils/messages";
 
 export class MySQLErrorHandler implements ErrorHandler {
   isLoginError(e: Error): boolean {
@@ -25,7 +26,8 @@ export class MySQLErrorHandler implements ErrorHandler {
     return (
       e.message.includes("Connection lost: The server closed the connection.") ||
       e.message.includes("Query inactivity timeout") ||
-      e.message.includes("Can't add new command when connection is in closed state")
+      e.message.includes("Can't add new command when connection is in closed state") ||
+      e.message.includes(Messages.get("ClientUtils.queryTaskTimeout"))
     );
   }
 }

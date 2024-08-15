@@ -43,7 +43,11 @@ beforeEach(async () => {
 
 afterEach(async () => {
   if (client !== null) {
-    await client.end();
+    try {
+      await client.end();
+    } catch (error) {
+      // pass
+    }
   }
   logger.info(`Test finished: ${expect.getState().currentTestName}`);
 }, 1000000);
@@ -123,7 +127,7 @@ describe("basic_connectivity", () => {
 
     client = initClientFunc(props);
     client.on("error", (error: any) => {
-      logger.debug(error);
+      logger.debug(error.message);
     });
     await client.connect();
 
@@ -150,7 +154,7 @@ describe("basic_connectivity", () => {
 
     client = initClientFunc(props);
     client.on("error", (error: any) => {
-      logger.debug(error);
+      logger.debug(error.message);
     });
 
     await client.connect();
