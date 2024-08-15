@@ -78,7 +78,6 @@ export class PgDatabaseDialect implements DatabaseDialect {
   }
 
   async isClientValid(targetClient: ClientWrapper): Promise<boolean> {
-    logger.debug("calling isclientvalid");
     try {
       return await ClientUtils.queryWithTimeout(
         targetClient.client
