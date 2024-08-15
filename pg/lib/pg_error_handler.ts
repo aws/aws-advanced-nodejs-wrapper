@@ -26,8 +26,7 @@ export class PgErrorHandler implements ErrorHandler {
     return (
       e.message.includes("Connection terminated unexpectedly") ||
       e.message.includes("Client has encountered a connection error and is not queryable") ||
-      e.message.includes("Query read timeout") ||
-      e.message.includes(Messages.get("ClientUtils.queryTaskTimeout"))
+      e.message.includes("Query read timeout")
     );
   }
 }

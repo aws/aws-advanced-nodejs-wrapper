@@ -29,7 +29,6 @@ import { TransactionIsolationLevel } from "../../common/lib/utils/transaction_is
 import { AwsWrapperError, UnsupportedMethodError } from "../../common/lib/utils/errors";
 import { Messages } from "../../common/lib/utils/messages";
 import { ClientWrapper } from "../../common/lib/client_wrapper";
-import { Utils } from "./utils";
 import { ClientUtils } from "../../common/lib/utils/client_utils";
 
 export class AwsMySQLClient extends AwsClient {
@@ -65,9 +64,9 @@ export class AwsMySQLClient extends AwsClient {
       this.isConnected = true;
     }
     if (targetClient) {
-      return await targetClient?.client.promise().query({ sql: sql });
+      return await ClientUtils.queryWithTimeout(targetClient?.client.promise().query({ sql: sql }), props);
     } else {
-      return await this.targetClient?.client.promise().query({ sql: sql });
+      return await ClientUtils.queryWithTimeout(this.targetClient?.client.promise().query({ sql: sql }), props);
     }
   }
 
