@@ -74,7 +74,6 @@ export class SessionStateServiceImpl implements SessionStateService {
       this.sessionState.readOnly.resetPristineValue();
       this.setupPristineReadOnly();
       try {
-        logger.debug("SessionStateServiceImpl::applyCurrentSessionState");
         await newClient.updateSessionStateReadOnly(this.sessionState.readOnly.value);
       } catch (error: any) {
         if (error instanceof UnsupportedMethodError) {
