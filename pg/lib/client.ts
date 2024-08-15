@@ -28,7 +28,6 @@ import { AwsWrapperError, UnsupportedMethodError } from "../../common/lib/utils/
 import { Messages } from "../../common/lib/utils/messages";
 import { TransactionIsolationLevel } from "../../common/lib/utils/transaction_isolation_level";
 import { ClientWrapper } from "../../common/lib/client_wrapper";
-import { Query } from "mysql2";
 
 export class AwsPGClient extends AwsClient {
   private static readonly knownDialectsByCode: Map<string, DatabaseDialect> = new Map([
