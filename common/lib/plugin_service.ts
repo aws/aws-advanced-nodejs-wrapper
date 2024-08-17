@@ -310,6 +310,7 @@ export class PluginService implements ErrorHandler, HostListProviderService {
   }
 
   async setCurrentClient(newClient: ClientWrapper, hostInfo: HostInfo): Promise<Set<HostChangeOptions>> {
+    logger.debug("setting current client");
     if (!this.getCurrentClient().targetClient) {
       this.getCurrentClient().targetClient = newClient;
       this._currentHostInfo = hostInfo;
@@ -317,6 +318,7 @@ export class PluginService implements ErrorHandler, HostListProviderService {
       const changes = new Set<HostChangeOptions>([HostChangeOptions.INITIAL_CONNECTION]);
 
       if (this.pluginServiceManagerContainer.pluginManager) {
+        logger.debug("notify connection changed")
         await this.pluginServiceManagerContainer.pluginManager.notifyConnectionChanged(changes, null);
       }
 
@@ -337,6 +339,7 @@ export class PluginService implements ErrorHandler, HostListProviderService {
             this.getCurrentClient().resetState();
             this.getCurrentClient().targetClient = newClient;
             this._currentHostInfo = hostInfo;
+            logger.debug("ApplyCurrentSessionState::Setcurrentclient")
             await this.sessionStateService.applyCurrentSessionState(this.getCurrentClient());
             this.setInTransaction(false);
 

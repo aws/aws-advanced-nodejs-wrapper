@@ -77,19 +77,19 @@ export class PgDatabaseDialect implements DatabaseDialect {
     });
   }
 
+
   async isClientValid(targetClient: ClientWrapper): Promise<boolean> {
-    try {
-      return await targetClient.client
-        .query("SELECT 1")
-        .then(() => {
-          return true;
-        })
-        .catch(() => {
-          return false;
-        });
-    } catch (error) {
-      return false;
-    }
+
+    return await targetClient.client
+      .query("SELECT 1")
+      .then(() => {
+        logger.debug("client is valid");
+        return true;
+      })
+      .catch(() => {
+        logger.debug("client not valid");
+        return false;
+      });
   }
 
   getConnectFunc(targetClient: any): () => Promise<any> {

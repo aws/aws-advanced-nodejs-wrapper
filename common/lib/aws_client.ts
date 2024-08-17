@@ -137,8 +137,6 @@ export abstract class AwsClient extends EventEmitter {
 
   abstract end(): Promise<any>;
 
-  abstract connect(): Promise<any>;
-
   abstract rollback(): Promise<any>;
 
   abstract resetState(): void;
