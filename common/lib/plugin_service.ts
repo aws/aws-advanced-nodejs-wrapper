@@ -449,4 +449,8 @@ export class PluginService implements ErrorHandler, HostListProviderService {
       await this.getCurrentClient().setTransactionIsolation(updateTransactionIsolation);
     }
   }
+
+  getHostRole(client: any): Promise<HostRole> | undefined {
+    return this._hostListProvider?.getHostRole(client, this.dialect);
+  }
 }

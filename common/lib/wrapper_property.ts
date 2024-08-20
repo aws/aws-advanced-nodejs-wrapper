@@ -199,6 +199,16 @@ export class WrapperProperties {
     "The strategy that should be used to select a new reader host.",
     "random"
   );
+  static readonly OPEN_CONNECTION_RETRY_TIMEOUT_MS = new WrapperProperty<number>(
+    "openConnectionRetryTimeoutMs",
+    "Maximum allowed time for the retries opening a connection.",
+    30000
+  );
+  static readonly OPEN_CONNECTION_RETRY_INTERVAL_MS = new WrapperProperty<number>(
+    "openConnectionRetryIntervalMs",
+    "Time between each retry of opening a connection.",
+    1000
+  );
 
   static readonly FAILURE_DETECTION_TIME_MS = new WrapperProperty<number>(
     "failureDetectionTime",

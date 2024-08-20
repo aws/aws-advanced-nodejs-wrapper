@@ -32,6 +32,7 @@ import { FederatedAuthPluginFactory } from "./plugins/federated_auth/federated_a
 import { ReadWriteSplittingPluginFactory } from "./plugins/read_write_splitting_plugin_factory";
 import { OktaAuthPluginFactory } from "./plugins/federated_auth/okta_auth_plugin_factory";
 import { HostMonitoringPluginFactory } from "./plugins/efm/host_monitoring_plugin_factory";
+import { AuroraInitialConnectionStrategyFactory } from "./plugins/aurora_initial_connection_strategy_plugin_factory";
 
 /*
   Type alias used for plugin factory sorting. It holds a reference to a plugin
@@ -49,6 +50,7 @@ export class ConnectionPluginChainBuilder {
   static readonly WEIGHT_RELATIVE_TO_PRIOR_PLUGIN = -1;
 
   static readonly PLUGIN_FACTORIES = new Map<string, PluginFactoryInfo>([
+    ["initialConnection", { factory: AuroraInitialConnectionStrategyFactory, weight: 390 }],
     ["staleDns", { factory: StaleDnsPluginFactory, weight: 500 }],
     ["readWriteSplitting", { factory: ReadWriteSplittingPluginFactory, weight: 600 }],
     ["failover", { factory: FailoverPluginFactory, weight: 700 }],
