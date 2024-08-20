@@ -97,8 +97,8 @@ export class RdsUtils {
     return host.match(RdsUtils.AURORA_DNS_PATTERN) || host.match(RdsUtils.AURORA_CHINA_DNS_PATTERN);
   }
 
-  public isRdsInstance(host: string) {
-    return host.match(RdsUtils.AURORA_INSTANCE_PATTERN) || host.match(RdsUtils.AURORA_CHINA_INSTANCE_PATTERN);
+  public isRdsInstance(host: string): boolean {
+    return host.match(RdsUtils.AURORA_INSTANCE_PATTERN) !== null || host.match(RdsUtils.AURORA_CHINA_INSTANCE_PATTERN) !== null;
   }
 
   isRdsProxyDns(host: string) {
@@ -247,5 +247,16 @@ export class RdsUtils {
     }
 
     return host.replace(prefixGroup, "");
+  }
+
+  public removePort(hostAndPort: string): string {
+    if (!hostAndPort) {
+      return hostAndPort;
+    }
+    const index = hostAndPort.indexOf(":");
+    if (index === -1) {
+      return hostAndPort;
+    }
+    return hostAndPort.substring(0, index);
   }
 }

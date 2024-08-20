@@ -141,9 +141,9 @@ export class FailoverPlugin extends AbstractConnectionPlugin {
     return Promise.resolve(OldConnectionSuggestionAction.NO_OPINION);
   }
 
-  override notifyHostListChanged(changes: Map<string, Set<HostChangeOptions>>): void {
+  override async notifyHostListChanged(changes: Map<string, Set<HostChangeOptions>>): Promise<void> {
     if (!this.enableFailoverSetting) {
-      return;
+      return Promise.resolve();
     }
 
     // Log changes
@@ -164,16 +164,17 @@ export class FailoverPlugin extends AbstractConnectionPlugin {
     if (currentHost) {
       const url = currentHost.url;
       if (this.isHostStillValid(url, changes)) {
-        return;
+        return Promise.resolve();
       }
 
       for (const alias of currentHost.allAliases) {
         if (this.isHostStillValid(alias + "/", changes)) {
-          return;
+          return Promise.resolve();
         }
       }
     }
     logger.info(Messages.get("Failover.invalidNode"), currentHost);
+    return Promise.resolve();
   }
 
   private isHostStillValid(host: string, changes: Map<string, Set<HostChangeOptions>>): boolean {

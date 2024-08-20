@@ -60,7 +60,9 @@ export abstract class AbstractConnectionPlugin implements ConnectionPlugin {
     return Promise.resolve(OldConnectionSuggestionAction.NO_OPINION);
   }
 
-  notifyHostListChanged(changes: Map<string, Set<HostChangeOptions>>): void {}
+  notifyHostListChanged(changes: Map<string, Set<HostChangeOptions>>): Promise<void> {
+    return Promise.resolve();
+  }
 
   acceptsStrategy(role: HostRole, strategy: string): boolean {
     return false;

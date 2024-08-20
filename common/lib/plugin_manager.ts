@@ -230,8 +230,8 @@ export class PluginManager {
   async notifyHostListChanged(changes: Map<string, Set<HostChangeOptions>>): Promise<void> {
     await this.notifySubscribedPlugins(
       PluginManager.NOTIFY_HOST_LIST_CHANGED_METHOD,
-      (plugin, func) => {
-        plugin.notifyHostListChanged(changes);
+      async (plugin, func) => {
+        await plugin.notifyHostListChanged(changes);
         return Promise.resolve();
       },
       null

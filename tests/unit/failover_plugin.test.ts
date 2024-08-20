@@ -105,7 +105,7 @@ describe("reader failover handler", () => {
     const changes: Map<string, Set<HostChangeOptions>> = new Map();
 
     initializePlugin(instance(mockPluginService));
-    plugin.notifyHostListChanged(changes);
+    await plugin.notifyHostListChanged(changes);
 
     verify(mockPluginService.getCurrentHostInfo()).never();
   });
@@ -116,7 +116,7 @@ describe("reader failover handler", () => {
     changes.set("instance/", new Set<HostChangeOptions>([HostChangeOptions.HOST_ADDED]));
 
     initializePlugin(instance(mockPluginService));
-    plugin.notifyHostListChanged(changes);
+    await plugin.notifyHostListChanged(changes);
 
     when(mockHostInfo.url).thenReturn("cluster-url/");
     when(mockHostInfo.allAliases).thenReturn(new Set<string>(["instance"]));

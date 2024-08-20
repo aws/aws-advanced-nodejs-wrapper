@@ -111,8 +111,8 @@ export class DefaultPlugin extends AbstractConnectionPlugin {
     return Promise.resolve(OldConnectionSuggestionAction.NO_OPINION);
   }
 
-  override notifyHostListChanged(changes: Map<string, Set<HostChangeOptions>>): void {
-    // do nothing
+  override notifyHostListChanged(changes: Map<string, Set<HostChangeOptions>>): Promise<void> {
+    return Promise.resolve();
   }
 
   override acceptsStrategy(role: HostRole, strategy: string): boolean {
