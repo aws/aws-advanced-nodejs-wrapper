@@ -66,7 +66,7 @@ export class WrapperProperties {
   static readonly INTERNAL_QUERY_TIMEOUT = new WrapperProperty<number>(
     "internal_query_timeout",
     "Timeout in milliseconds for the driver to execute internal queries, such as the query for cluster topology",
-    40000
+    3000
   );
 
   static readonly TRANSFER_SESSION_STATE_ON_SWITCH = new WrapperProperty<boolean>(
@@ -149,7 +149,7 @@ export class WrapperProperties {
   static readonly FAILOVER_READER_CONNECT_TIMEOUT_MS = new WrapperProperty<number>(
     "failoverReaderConnectTimeoutMs",
     "Reader connection attempt timeout during a reader failover process.",
-    30000
+    50000
   );
   static readonly ENABLE_CLUSTER_AWARE_FAILOVER = new WrapperProperty<boolean>(
     "enableClusterAwareFailover",

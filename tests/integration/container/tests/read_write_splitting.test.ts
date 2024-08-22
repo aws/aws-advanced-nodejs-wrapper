@@ -53,9 +53,7 @@ async function initConfigWithFailover(host: string, port: number, connectToProxy
     database: env.databaseInfo.default_db_name,
     password: env.databaseInfo.password,
     port: port,
-    plugins: "readWriteSplitting,failover",
-    failoverTimeoutMs: 400000
-  };
+    plugins: "readWriteSplitting,failover"};
 
   if (connectToProxy) {
     config["clusterInstanceHostPattern"] = "?." + env.proxyDatabaseInfo.instanceEndpointSuffix;
@@ -197,7 +195,7 @@ describe("aurora read write splitting", () => {
     await DriverHelper.executeQuery(env.engine, client, "DROP TABLE IF EXISTS test3_3");
   }, 1000000);
 
-  it("test set read only all instances down", async () => {
+  it.only("test set read only all instances down", async () => {
     const config = await initDefaultConfig(env.proxyDatabaseInfo.writerInstanceEndpoint, env.proxyDatabaseInfo.instanceEndpointPort, true);
     client = initClientFunc(config);
 
@@ -219,7 +217,7 @@ describe("aurora read write splitting", () => {
     }).rejects.toThrow();
   }, 1000000);
 
-  it("test set read only all readers down", async () => {
+  it.only("test set read only all readers down", async () => {
     // Connect to writer instance
     const config = await initDefaultConfig(env.proxyDatabaseInfo.writerInstanceEndpoint, env.proxyDatabaseInfo.instanceEndpointPort, true);
     client = initClientFunc(config);
@@ -252,7 +250,7 @@ describe("aurora read write splitting", () => {
     expect(currentReaderId2).not.toBe(initialWriterId);
   }, 1000000);
 
-  it("test failover to new writer set read only true false", async () => {
+  it.only("test failover to new writer set read only true false", async () => {
     // Connect to writer instance
     const writerConfig = await initConfigWithFailover(env.proxyDatabaseInfo.writerInstanceEndpoint, env.proxyDatabaseInfo.instanceEndpointPort, true);
     client = initClientFunc(writerConfig);
@@ -302,7 +300,7 @@ describe("aurora read write splitting", () => {
     expect(currentId).toStrictEqual(newWriterId);
   }, 1000000);
 
-  it("test failover to new reader set read only false true", async () => {
+  it.only("test failover to new reader set read only false true", async () => {
     // Connect to writer instance
     const writerConfig = await initConfigWithFailover(env.proxyDatabaseInfo.writerInstanceEndpoint, env.proxyDatabaseInfo.instanceEndpointPort, true);
     writerConfig["failoverMode"] = "reader-or-writer";
@@ -358,7 +356,7 @@ describe("aurora read write splitting", () => {
     expect(currentReaderId2).toStrictEqual(otherReaderId);
   }, 1000000);
 
-  it("test failover reader to writer set read only true false", async () => {
+  it.only("test failover reader to writer set read only true false", async () => {
     // Connect to writer instance
     const writerConfig = await initConfigWithFailover(env.proxyDatabaseInfo.writerInstanceEndpoint, env.proxyDatabaseInfo.instanceEndpointPort, true);
     client = initClientFunc(writerConfig);

@@ -95,7 +95,7 @@ export class DriverHelper {
   static addDriverSpecificConfiguration(props: any, engine: DatabaseEngine) {
     switch (engine) {
       case DatabaseEngine.PG:
-        props["query_timeout"] = 40000;
+        props["query_timeout"] = 3000;
         break;
       case DatabaseEngine.MYSQL:
         break;

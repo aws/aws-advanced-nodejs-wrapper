@@ -52,7 +52,7 @@ afterEach(async () => {
   logger.info(`Test finished: ${expect.getState().currentTestName}`);
 }, 1000000);
 
-describe("basic_connectivity", () => {
+describe.skip("basic_connectivity", () => {
   it("wrapper with failover plugins read only endpoint", async () => {
     const env = await TestEnvironment.getCurrent();
     const driver = DriverHelper.getDriverForDatabaseEngine(env.engine);

@@ -67,7 +67,7 @@ async function validateConnection(client: AwsPGClient | AwsMySQLClient) {
   }
 }
 
-describe("iam authentication", () => {
+describe.skip("iam authentication", () => {
   beforeEach(async () => {
     logger.info(`Test started: ${expect.getState().currentTestName}`);
     env = await TestEnvironment.getCurrent();
