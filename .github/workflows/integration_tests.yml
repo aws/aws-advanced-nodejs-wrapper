@@ -69,6 +69,21 @@ jobs:
           AWS_SESSION_TOKEN: ${{ env.TEMP_AWS_SESSION_TOKEN }}
           NUM_INSTANCES: 5
 
+      - name: "Get Github Action IP"
+        if: always()
+        id: ip
+        uses: haythem/public-ip@v1.3
+
+      - name: "Remove Github Action IP"
+        if: always()
+        run: |
+          aws ec2 revoke-security-group-ingress \
+            --group-name default \
+            --protocol -1 \
+            --port -1 \
+            --cidr ${{ steps.ip.outputs.ipv4 }}/32 \
+          2>&1 > /dev/null;
+
       - name: Archive results
         if: always()
         uses: actions/upload-artifact@v3
