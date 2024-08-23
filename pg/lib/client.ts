@@ -28,6 +28,7 @@ import { AwsWrapperError, UnsupportedMethodError } from "../../common/lib/utils/
 import { Messages } from "../../common/lib/utils/messages";
 import { TransactionIsolationLevel } from "../../common/lib/utils/transaction_isolation_level";
 import { ClientWrapper } from "../../common/lib/client_wrapper";
+import { ClientUtils } from "../../common/lib/utils/client_utils";
 
 export class AwsPGClient extends AwsClient {
   private static readonly knownDialectsByCode: Map<string, DatabaseDialect> = new Map([
@@ -63,9 +64,9 @@ export class AwsPGClient extends AwsClient {
 
   executeQuery(props: Map<string, any>, sql: string, targetClient?: ClientWrapper): Promise<QueryResult> {
     if (targetClient) {
-      return targetClient?.client.query(sql);
+      return ClientUtils.queryWithTimeout(targetClient?.client.query(sql), props);
     } else {
-      return this.targetClient?.client.query(sql);
+      return ClientUtils.queryWithTimeout(this.targetClient?.client.query(sql), props);
     }
   }
 
@@ -76,7 +77,7 @@ export class AwsPGClient extends AwsClient {
       "query",
       async () => {
         await this.pluginService.updateState(text);
-        return this.targetClient?.client.query(text);
+        return await ClientUtils.queryWithTimeout(this.targetClient?.client.query(text), this.properties);
       },
       text
     );
@@ -100,7 +101,7 @@ export class AwsPGClient extends AwsClient {
       this.properties,
       "query",
       async () => {
-        return this.targetClient?.client.query(text);
+        return ClientUtils.queryWithTimeout(this.targetClient?.client.query(text), this.properties);
       },
       text
     );
@@ -187,17 +188,26 @@ export class AwsPGClient extends AwsClient {
   }
 
   async end() {
-    const result = await this.pluginManager.execute(
-      this.pluginService.getCurrentHostInfo(),
-      this.properties,
-      "end",
-      () => {
-        return this.targetClient?.client?.end();
-      },
-      null
-    );
-    await this.releaseResources();
-    return result;
+    try {
+      const result = await this.pluginManager.execute(
+        this.pluginService.getCurrentHostInfo(),
+        this.properties,
+        "end",
+        () => {
+          return ClientUtils.queryWithTimeout(
+            this.targetClient?.client?.end().catch((error: any) => {
+              // ignore
+            }),
+            this.properties
+          );
+        },
+        null
+      );
+      await this.releaseResources();
+      return result;
+    } catch (error: any) {
+      //
+    }
   }
 
   async rollback(): Promise<QueryResult> {

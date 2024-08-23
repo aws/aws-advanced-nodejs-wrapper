@@ -195,7 +195,7 @@ describe("aurora read write splitting", () => {
     await DriverHelper.executeQuery(env.engine, client, "DROP TABLE IF EXISTS test3_3");
   }, 1000000);
 
-  it.only("test set read only all instances down", async () => {
+  it("test set read only all instances down", async () => {
     const config = await initDefaultConfig(env.proxyDatabaseInfo.writerInstanceEndpoint, env.proxyDatabaseInfo.instanceEndpointPort, true);
     client = initClientFunc(config);
 

@@ -33,8 +33,8 @@ export interface ReaderFailoverHandler {
 
 export class ClusterAwareReaderFailoverHandler implements ReaderFailoverHandler {
   static readonly FAILED_READER_FAILOVER_RESULT = new ReaderFailoverResult(null, null, false);
-  static readonly DEFAULT_FAILOVER_TIMEOUT = 60000; // 60 sec
-  static readonly DEFAULT_READER_CONNECT_TIMEOUT = 30000; // 30 sec
+  static readonly DEFAULT_FAILOVER_TIMEOUT = 120000; // 60 sec
+  static readonly DEFAULT_READER_CONNECT_TIMEOUT = 600000; // 30 sec
   private readonly initialConnectionProps: Map<string, any>;
   private readonly maxFailoverTimeoutMs: number;
   private readonly timeoutMs: number;
