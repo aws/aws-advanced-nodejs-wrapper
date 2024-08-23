@@ -331,7 +331,7 @@ public class TestEnvironmentConfig implements AutoCloseable {
   private static String getAuroraDbEngineVersion(TestEnvironmentRequest request) {
     switch (request.getDatabaseEngine()) {
       case MYSQL:
-        return "8.0.mysql_aurora.3.03.0";
+        return "8.0.mysql_aurora.3.04.0";
       case PG:
         return "15.2";
       default:
