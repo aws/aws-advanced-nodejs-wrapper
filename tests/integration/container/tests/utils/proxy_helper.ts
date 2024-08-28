@@ -22,7 +22,9 @@ import { DatabaseEngine } from "./database_engine";
 export class ProxyHelper {
   static async disableAllConnectivity(engine: DatabaseEngine) {
     const env = await TestEnvironment.getCurrent();
-    env.proxyInfos.forEach((p) => ProxyHelper.disableProxyConnectivity(p));
+    for (let i = 0; i < env.proxyInfos.length; i++) {
+      await ProxyHelper.disableProxyConnectivity(env.proxyInfos[i]);
+    }
   }
 
   static async enableAllConnectivity() {

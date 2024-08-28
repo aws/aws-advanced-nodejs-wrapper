@@ -18,6 +18,10 @@ import { Monitor } from "./monitor";
 import { logger } from "../../../logutils";
 import { Messages } from "../../utils/messages";
 import { ClientWrapper } from "../../client_wrapper";
+import { sleep } from "../../utils/utils";
+import { AwsWrapperError } from "../../utils/errors";
+import { uniqueId } from "lodash";
+import { PluginService } from "../../plugin_service";
 
 export class MonitorConnectionContext {
   readonly failureDetectionIntervalMillis: number;
@@ -25,6 +29,7 @@ export class MonitorConnectionContext {
   private readonly failureDetectionCount: number;
   readonly clientToAbort: ClientWrapper;
   readonly monitor: Monitor;
+  readonly pluginService: PluginService;
 
   isActiveContext: boolean = true;
   isHostUnhealthy: boolean = false;
@@ -33,19 +38,22 @@ export class MonitorConnectionContext {
   private invalidHostStartTimeNano: number = 0;
   private abortedConnectionCounter: number = 0;
   failureCount: number = 0;
+  id: string = uniqueId("_monitorContext");
 
   constructor(
     monitor: Monitor,
     clientToAbort: any,
     failureDetectionTimeMillis: number,
     failureDetectionIntervalMillis: number,
-    failureDetectionCount: number
+    failureDetectionCount: number,
+    pluginService: PluginService
   ) {
     this.monitor = monitor;
     this.clientToAbort = clientToAbort;
     this.failureDetectionTimeMillis = failureDetectionTimeMillis;
     this.failureDetectionIntervalMillis = failureDetectionIntervalMillis;
     this.failureDetectionCount = failureDetectionCount;
+    this.pluginService = pluginService;
   }
 
   resetInvalidHostStartTimeNano(): void {
@@ -62,7 +70,7 @@ export class MonitorConnectionContext {
     }
 
     try {
-      await this.clientToAbort.client.end();
+      await this.pluginService.tryClosingTargetClient(this.clientToAbort);
     } catch (error: any) {
       // ignore
       logger.debug(Messages.get("MonitorConnectionContext.exceptionAbortingConnection", error.message));
@@ -116,7 +124,7 @@ export class MonitorConnectionContext {
       const invalidHostDurationNano: number = statusCheckEndNano - this.invalidHostStartTimeNano;
       const maxInvalidHostDurationMillis: number = this.failureDetectionIntervalMillis * Math.max(0, this.failureDetectionCount);
 
-      if (invalidHostDurationNano >= maxInvalidHostDurationMillis * 1_000_000) {
+      if (this.failureCount >= this.failureDetectionCount || invalidHostDurationNano >= maxInvalidHostDurationMillis * 1_000_000) {
         logger.debug(Messages.get("MonitorConnectionContext.hostDead", hostName));
         this.isHostUnhealthy = true;
         await this.abortConnection();
@@ -132,5 +140,13 @@ export class MonitorConnectionContext {
     this.isHostUnhealthy = false;
 
     logger.debug(Messages.get("MonitorConnectionContext.hostAlive", hostName));
+  }
+
+  async trackHealthStatus() {
+    while (!this.isHostUnhealthy && this.isActiveContext) {
+      await sleep(100);
+    }
+
+    throw new AwsWrapperError("trackHealthStatus stopped");
   }
 }

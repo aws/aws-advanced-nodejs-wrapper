@@ -282,9 +282,8 @@ export class PluginService implements ErrorHandler, HostListProviderService {
 
   createTargetClient(props: Map<string, any>): any {
     const createClientFunc = this.getCurrentClient().getCreateClientFunc();
-    const copy = WrapperProperties.removeWrapperProperties(Object.fromEntries(props.entries()));
     if (createClientFunc) {
-      return createClientFunc(Object.fromEntries(new Map(Object.entries(copy))));
+      return createClientFunc(props);
     }
     throw new AwsWrapperError("AwsClient is missing create target client function."); // This should not be reached
   }

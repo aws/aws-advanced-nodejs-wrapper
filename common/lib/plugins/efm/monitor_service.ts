@@ -38,7 +38,7 @@ export interface MonitorService {
 
   stopMonitoringForAllConnections(hostKeys: Set<string>): void;
 
-  releaseResources(hostKeys: Set<string> | undefined): Promise<void>;
+  releaseResources(): Promise<void>;
 }
 
 export class MonitorServiceImpl implements MonitorService {
@@ -87,7 +87,8 @@ export class MonitorServiceImpl implements MonitorService {
         clientToAbort,
         failureDetectionTimeMillis,
         failureDetectionIntervalMillis,
-        failureDetectionCount
+        failureDetectionCount,
+        this.pluginService
       );
       monitor.startMonitoring(context);
       return context;
@@ -152,7 +153,7 @@ export class MonitorServiceImpl implements MonitorService {
     }
   }
 
-  async releaseResources(hostKeys: Set<string>) {
+  async releaseResources() {
     for (const [key, monitor] of MonitorServiceImpl.monitors.entries) {
       if (monitor.item) {
         await monitor.item.releaseResources();

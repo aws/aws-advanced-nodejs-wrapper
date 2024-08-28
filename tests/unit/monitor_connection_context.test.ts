@@ -17,7 +17,9 @@
 import { instance, mock, spy, verify } from "ts-mockito";
 import { MonitorConnectionContext } from "../../common/lib/plugins/efm/monitor_connection_context";
 import { MonitorImpl } from "../../common/lib/plugins/efm/monitor";
+import { PluginService } from "../../common/lib/plugin_service";
 
+const mockPluginService: PluginService = mock(PluginService);
 const mockMonitor = mock(MonitorImpl);
 const mockTargetClient = {
   end() {
@@ -39,7 +41,8 @@ describe("monitor connection context test", () => {
       null,
       FAILURE_DETECTION_TIME_MILLIS,
       FAILURE_DETECTION_INTERVAL_MILLIS,
-      FAILURE_DETECTION_COUNT
+      FAILURE_DETECTION_COUNT,
+      instance(mockPluginService)
     );
   });
 
@@ -57,19 +60,6 @@ describe("monitor connection context test", () => {
     expect(context.failureCount).toBe(1);
   });
 
-  it("isHostUnhealthy exceeds failure detection count - return true", async () => {
-    const expectedFailureCount = FAILURE_DETECTION_COUNT + 1;
-    context.failureCount = FAILURE_DETECTION_COUNT;
-    context.resetInvalidHostStartTimeNano();
-
-    const currentTimeNano = Date.now();
-    await context.setConnectionValid("test-node", false, currentTimeNano, currentTimeNano);
-
-    expect(context.isHostUnhealthy).toBe(false);
-    expect(context.failureCount).toBe(expectedFailureCount);
-    expect(context.isInvalidHostStartTimeDefined()).toBe(true);
-  });
-
   it("isHostUnhealthy exceeds failure detection count", async () => {
     let currentTimeNano = Date.now();
     context.failureCount = 0;
@@ -80,7 +70,11 @@ describe("monitor connection context test", () => {
       const statusCheckEndTime = currentTimeNano + VALIDATION_INTERVAL_MILLIS * 1_000_000;
 
       await context.setConnectionValid("test-node", false, statusCheckStartTime, statusCheckEndTime);
-      expect(context.isHostUnhealthy).toBe(false);
+      if (i >= FAILURE_DETECTION_COUNT - 1) {
+        expect(context.isHostUnhealthy).toBe(true);
+      } else {
+        expect(context.isHostUnhealthy).toBe(false);
+      }
 
       currentTimeNano += VALIDATION_INTERVAL_MILLIS * 1_000_000;
     }
@@ -118,7 +112,8 @@ describe("monitor connection context test", () => {
       mockTargetClient,
       FAILURE_DETECTION_TIME_MILLIS,
       FAILURE_DETECTION_INTERVAL_MILLIS,
-      FAILURE_DETECTION_COUNT
+      FAILURE_DETECTION_COUNT,
+      instance(mockPluginService)
     );
 
     await context.abortConnection();

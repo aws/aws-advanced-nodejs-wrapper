@@ -40,6 +40,7 @@ export class WrapperProperty<T> {
 }
 
 export class WrapperProperties {
+  static readonly MONITORING_PROPERTY_PREFIX: string = "monitoring_";
   static readonly DEFAULT_PLUGINS = "auroraConnectionTracker,failover,hostMonitoring";
   static readonly DEFAULT_TOKEN_EXPIRATION_SEC = 15 * 60;
 
@@ -240,8 +241,7 @@ export class WrapperProperties {
     600000 // 10 minutes
   );
 
-  static removeWrapperProperties<T>(config: T): T {
-    const copy = Object.assign({}, config);
+  static removeWrapperProperties(props: Map<string, any>): any {
     const persistingProperties = [
       WrapperProperties.USER.name,
       WrapperProperties.PASSWORD.name,
@@ -250,16 +250,25 @@ export class WrapperProperties {
       WrapperProperties.HOST.name
     ];
 
+    const copy = new Map(props);
+
+    for (const key of props.keys()) {
+      if (!key.startsWith(WrapperProperties.MONITORING_PROPERTY_PREFIX)) {
+        continue;
+      }
+
+      copy.delete(key);
+    }
+
     Object.values(WrapperProperties).forEach((prop) => {
       if (prop instanceof WrapperProperty) {
         const propertyName = (prop as WrapperProperty<any>).name;
-        if (!persistingProperties.includes(propertyName) && Object.hasOwn(config as object, propertyName)) {
-          // @ts-expect-error
-          delete copy[propertyName];
+        if (!persistingProperties.includes(propertyName) && copy.has(propertyName)) {
+          copy.delete(propertyName);
         }
       }
     });
 
-    return copy;
+    return Object.fromEntries(copy.entries());
   }
 }

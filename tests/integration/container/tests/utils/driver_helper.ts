@@ -81,26 +81,28 @@ export class DriverHelper {
     }
   }
 
-  static async executeQuery(engine: DatabaseEngine, client: AwsClient, sql: string) {
+  static async executeQuery(engine: DatabaseEngine, client: AwsClient, sql: string, timeoutValue?: number) {
     switch (engine) {
       case DatabaseEngine.PG:
         return await (client as AwsPGClient).query(sql);
       case DatabaseEngine.MYSQL:
-        return await (client as AwsMySQLClient).query({ sql: sql, timeout: 10000 });
+        return await (client as AwsMySQLClient).query({ sql: sql, timeout: timeoutValue });
       default:
         throw new Error("invalid engine");
     }
   }
 
-  static addDriverSpecificConfiguration(props: any, engine: DatabaseEngine) {
-    switch (engine) {
-      case DatabaseEngine.PG:
-        props["query_timeout"] = 10000;
-        break;
-      case DatabaseEngine.MYSQL:
-        break;
-      default:
-        break;
+  static addDriverSpecificConfiguration(props: any, engine: DatabaseEngine, performance: boolean = false) {
+    if (engine === DatabaseEngine.PG && !performance) {
+      props["query_timeout"] = 10000;
+    } else if (engine === DatabaseEngine.PG && performance) {
+      props["query_timeout"] = 120000;
+      props["connectionTimeoutMillis"] = 400;
+      props["monitoring_query_timeout"] = 400;
+    } else if (engine === DatabaseEngine.MYSQL && performance) {
+      props["connectTimeout"] = 400;
+      props["monitoring_internal_query_timeout"] = 400;
+      props["internal_query_timeout"] = 120000;
     }
 
     return props;

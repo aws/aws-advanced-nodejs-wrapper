@@ -24,6 +24,10 @@ import { AwsPGClient } from "../../../../pg/lib";
 import { AwsMySQLClient } from "../../../../mysql/lib";
 import { IamAuthenticationPlugin } from "../../../../common/lib/authentication/iam_authentication_plugin";
 import { logger } from "../../../../common/logutils";
+import { TestEnvironmentFeatures } from "./utils/test_environment_features";
+import { features } from "./config";
+
+const itIf = !features.includes(TestEnvironmentFeatures.PERFORMANCE) && features.includes(TestEnvironmentFeatures.IAM) ? it : it.skip;
 
 let env: TestEnvironment;
 let driver;
@@ -81,87 +85,111 @@ describe("iam authentication", () => {
     logger.info(`Test finished: ${expect.getState().currentTestName}`);
   }, 1000000);
 
-  it("iam wrong database username", async () => {
-    const config = await initDefaultConfig(env.databaseInfo.writerInstanceEndpoint);
-    config["user"] = `WRONG_${env.info.databaseInfo.username}_USER`;
-    const client: AwsPGClient | AwsMySQLClient = initClientFunc(config);
+  itIf(
+    "iam wrong database username",
+    async () => {
+      const config = await initDefaultConfig(env.databaseInfo.writerInstanceEndpoint);
+      config["user"] = `WRONG_${env.info.databaseInfo.username}_USER`;
+      const client: AwsPGClient | AwsMySQLClient = initClientFunc(config);
 
-    client.on("error", (error: any) => {
-      logger.debug(error.message);
-    });
+      client.on("error", (error: any) => {
+        logger.debug(error.message);
+      });
 
-    await expect(client.connect()).rejects.toThrow();
-  }, 100000);
+      await expect(client.connect()).rejects.toThrow();
+    },
+    100000
+  );
 
-  it("iam no database username", async () => {
-    const config = await initDefaultConfig(env.databaseInfo.writerInstanceEndpoint);
-    config["user"] = undefined;
-    const client: AwsPGClient | AwsMySQLClient = initClientFunc(config);
+  itIf(
+    "iam no database username",
+    async () => {
+      const config = await initDefaultConfig(env.databaseInfo.writerInstanceEndpoint);
+      config["user"] = undefined;
+      const client: AwsPGClient | AwsMySQLClient = initClientFunc(config);
 
-    client.on("error", (error: any) => {
-      logger.debug(error.message);
-    });
+      client.on("error", (error: any) => {
+        logger.debug(error.message);
+      });
 
-    await expect(client.connect()).rejects.toBeInstanceOf(AwsWrapperError);
-  }, 100000);
+      await expect(client.connect()).rejects.toBeInstanceOf(AwsWrapperError);
+    },
+    100000
+  );
 
-  it("iam invalid host", async () => {
-    const config = await initDefaultConfig(env.databaseInfo.writerInstanceEndpoint);
-    config["iamHost"] = "<>";
-    const client: AwsPGClient | AwsMySQLClient = initClientFunc(config);
+  itIf(
+    "iam invalid host",
+    async () => {
+      const config = await initDefaultConfig(env.databaseInfo.writerInstanceEndpoint);
+      config["iamHost"] = "<>";
+      const client: AwsPGClient | AwsMySQLClient = initClientFunc(config);
 
-    client.on("error", (error: any) => {
-      logger.debug(error.message);
-    });
+      client.on("error", (error: any) => {
+        logger.debug(error.message);
+      });
 
-    await expect(client.connect()).rejects.toBeInstanceOf(AwsWrapperError);
-  }, 100000);
+      await expect(client.connect()).rejects.toBeInstanceOf(AwsWrapperError);
+    },
+    100000
+  );
 
   // Currently, PG cannot connect to an IP address with SSL enabled, skip if PG
-  it("iam using ip address", async () => {
-    if (env.engine === "MYSQL") {
-      const instance = env.writer;
-      if (instance.host) {
-        const ip = await getIpAddress(instance.host);
-        const config = await initDefaultConfig(ip.address);
+  itIf(
+    "iam using ip address",
+    async () => {
+      if (env.engine === "MYSQL") {
+        const instance = env.writer;
+        if (instance.host) {
+          const ip = await getIpAddress(instance.host);
+          const config = await initDefaultConfig(ip.address);
 
-        config["password"] = "anything";
-        config["iamHost"] = instance.host;
+          config["password"] = "anything";
+          config["iamHost"] = instance.host;
 
-        const client: AwsPGClient | AwsMySQLClient = initClientFunc(config);
+          const client: AwsPGClient | AwsMySQLClient = initClientFunc(config);
 
-        client.on("error", (error: any) => {
-          logger.debug(error.message);
-        });
+          client.on("error", (error: any) => {
+            logger.debug(error.message);
+          });
 
-        await validateConnection(client);
-      } else {
-        throw new AwsWrapperError("Host not found");
+          await validateConnection(client);
+        } else {
+          throw new AwsWrapperError("Host not found");
+        }
       }
-    }
-  }, 100000);
+    },
+    100000
+  );
 
-  it("iam valid connection properties", async () => {
-    const config = await initDefaultConfig(env.databaseInfo.writerInstanceEndpoint);
-    config["password"] = "anything";
-    const client: AwsPGClient | AwsMySQLClient = initClientFunc(config);
+  itIf(
+    "iam valid connection properties",
+    async () => {
+      const config = await initDefaultConfig(env.databaseInfo.writerInstanceEndpoint);
+      config["password"] = "anything";
+      const client: AwsPGClient | AwsMySQLClient = initClientFunc(config);
 
-    client.on("error", (error: any) => {
-      logger.debug(error.message);
-    });
+      client.on("error", (error: any) => {
+        logger.debug(error.message);
+      });
 
-    await validateConnection(client);
-  }, 100000);
+      await validateConnection(client);
+    },
+    100000
+  );
 
-  it("iam valid connection properties no password", async () => {
-    const config = await initDefaultConfig(env.databaseInfo.writerInstanceEndpoint);
-    config["password"] = undefined;
-    const client: AwsPGClient | AwsMySQLClient = initClientFunc(config);
+  itIf(
+    "iam valid connection properties no password",
+    async () => {
+      const config = await initDefaultConfig(env.databaseInfo.writerInstanceEndpoint);
+      config["password"] = undefined;
+      const client: AwsPGClient | AwsMySQLClient = initClientFunc(config);
 
-    client.on("error", (error: any) => {
-      logger.debug(error.message);
-    });
+      client.on("error", (error: any) => {
+        logger.debug(error.message);
+      });
 
-    await validateConnection(client);
-  }, 100000);
+      await validateConnection(client);
+    },
+    100000
+  );
 });

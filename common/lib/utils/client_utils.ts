@@ -21,9 +21,13 @@ import { logger } from "../../logutils";
 import { WrapperProperties } from "../wrapper_property";
 
 export class ClientUtils {
-  static async queryWithTimeout(newPromise: Promise<any>, props: Map<string, any>): Promise<any> {
+  static async queryWithTimeout(newPromise: Promise<any>, props: Map<string, any>, timeValue?: number): Promise<any> {
     const timer: any = {};
-    const timeoutTask = getTimeoutTask(timer, Messages.get("ClientUtils.queryTaskTimeout"), WrapperProperties.INTERNAL_QUERY_TIMEOUT.get(props));
+    const timeoutTask = getTimeoutTask(
+      timer,
+      Messages.get("ClientUtils.queryTaskTimeout"),
+      timeValue ?? WrapperProperties.INTERNAL_QUERY_TIMEOUT.get(props)
+    );
     return await Promise.race([timeoutTask, newPromise])
       .then((result) => {
         if (result) {
