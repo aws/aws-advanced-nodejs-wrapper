@@ -42,7 +42,7 @@
     "@types/lodash": "^4.17.7",
     "@types/node": "^20.14.10",
     "@types/node-fetch": "^2.6.11",
-    "@types/pg": "^8.11.6",
+    "@types/pg": "^8.11.8",
     "@types/tough-cookie": "^4.0.5",
     "@typescript-eslint/eslint-plugin": "^7.15.0",
     "aws-sdk": "^2.1664.0",
