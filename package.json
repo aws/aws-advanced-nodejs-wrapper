@@ -67,7 +67,7 @@
     "prettier": "^3.3.3",
     "querystring": "^0.2.1",
     "toxiproxy-node-client": "^3.0.0",
-    "ts-jest": "^29.2.4",
+    "ts-jest": "^29.2.5",
     "ts-mockito": "^2.6.1",
     "ts-node": "^10.9.2",
     "tsx": "^4.19.0",
