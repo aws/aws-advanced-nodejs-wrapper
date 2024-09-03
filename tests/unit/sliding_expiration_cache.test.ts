@@ -34,9 +34,9 @@ describe("test_sliding_expiration_cache", () => {
   it("test_compute_if_absent", async () => {
     const target = new SlidingExpirationCache(BigInt(50_000_000));
     const result1 = target.computeIfAbsent(1, () => "a", BigInt(1));
-    const originalItemExpiration = target._map.get(1)!.expirationTimeNs;
+    const originalItemExpiration = target.map.get(1)!.expirationTimeNs;
     const result2 = target.computeIfAbsent(1, () => "b", BigInt(5));
-    const updatedItemExpiration = target._map.get(1)?.expirationTimeNs;
+    const updatedItemExpiration = target.map.get(1)?.expirationTimeNs;
 
     expect(updatedItemExpiration).toBeGreaterThan(originalItemExpiration);
     expect(result1).toEqual("a");

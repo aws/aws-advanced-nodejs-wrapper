@@ -14,50 +14,28 @@
   limitations under the License.
 */
 
-export class MapUtils<K, V> {
-  protected map: Map<K, V> = new Map<K, V>();
-
-  get size(): number {
-    return this.map.size;
-  }
-
-  get keys() {
-    return this.map.keys();
-  }
-
-  get entries() {
-    return this.map.entries();
-  }
-
-  get(key: K): V | undefined {
-    return this.map.get(key);
-  }
-
-  clear() {
-    this.map.clear();
-  }
-
-  computeIfPresent(key: K, remappingFunc: (key: K, existingValue: V) => V | null): V | undefined {
-    const existingValue: V | undefined = this.map.get(key);
+export class MapUtils {
+  static computeIfPresent<K, V>(map: Map<K, V>, key: K, remappingFunc: (key: K, existingValue: V) => V | null): V | undefined {
+    const existingValue: V | undefined = map.get(key);
     if (existingValue === undefined) {
       return undefined;
     }
     const newValue: any = remappingFunc(key, existingValue);
     if (newValue !== null) {
-      this.map.set(key, newValue);
+      map.set(key, newValue);
       return newValue;
     } else {
-      this.map.delete(key);
+      map.delete(key);
       return undefined;
     }
   }
 
-  computeIfAbsent(key: K, mappingFunc: (key: K) => V | null): V | undefined {
-    const value: V | undefined = this.map.get(key);
+  static computeIfAbsent<K, V>(map: Map<K, V>, key: K, mappingFunc: (key: K) => V | null): V | undefined {
+    const value: V | undefined = map.get(key);
     if (value == undefined) {
       const newValue: V | null = mappingFunc(key);
       if (newValue !== null) {
-        this.map.set(key, newValue);
+        map.set(key, newValue);
         return newValue;
       }
       return undefined;
@@ -65,44 +43,44 @@ export class MapUtils<K, V> {
     return value;
   }
 
-  putIfAbsent(key: K, newValue: V): V | undefined {
-    const existingValue: V | undefined = this.map.get(key);
+  static putIfAbsent<K, V>(map: Map<K, V>, key: K, newValue: V): V | undefined {
+    const existingValue: V | undefined = map.get(key);
     if (existingValue === undefined) {
-      this.map.set(key, newValue);
+      map.set(key, newValue);
       return newValue;
     }
     return existingValue;
   }
 
-  remove(key: K): V | undefined {
-    const value = this.map.get(key);
-    this.map.delete(key);
+  static remove<K, V>(map: Map<K, V>, key: K): V | undefined {
+    const value = map.get(key);
+    map.delete(key);
     return value;
   }
 
-  removeIf(predicate: (v: any, k: any) => V): boolean {
-    const originalSize = this.size;
-    this.map.forEach((v, k) => {
+  static removeIf<K, V>(map: Map<K, V>, predicate: (v: any, k: any) => V): boolean {
+    const originalSize = map.size;
+    map.forEach((v, k) => {
       if (predicate(v, k)) {
-        this.remove(k);
+        this.remove(map, k);
       }
     });
-    return this.size < originalSize;
+    return map.size < originalSize;
   }
 
-  removeMatchingValues(removalValues: any[]): boolean {
-    const originalSize = this.size;
-    this.map.forEach((v, k) => {
+  static removeMatchingValues<K, V>(map: Map<K, V>, removalValues: any[]): boolean {
+    const originalSize = map.size;
+    map.forEach((v, k) => {
       if (removalValues.includes(v)) {
-        this.remove(k);
+        this.remove(map, k);
       }
     });
-    return this.size < originalSize;
+    return map.size < originalSize;
   }
 
-  applyIf(predicate: (v: any, k: any) => V, apply: (v: any, k: any) => V): void {
-    const originalSize = this.size;
-    this.map.forEach((v, k) => {
+  static applyIf<K, V>(map: Map<K, V>, predicate: (v: any, k: any) => V, apply: (v: any, k: any) => V): void {
+    const originalSize = map.size;
+    map.forEach((v, k) => {
       if (predicate(v, k)) {
         apply(v, k);
       }
