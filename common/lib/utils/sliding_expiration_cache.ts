@@ -14,8 +14,8 @@
   limitations under the License.
 */
 
-import { MapUtils } from "./map_utils";
 import { getTimeInNanos } from "./utils";
+import { MapUtils } from "./map_utils";
 
 class CacheItem<V> {
   readonly item: V;
