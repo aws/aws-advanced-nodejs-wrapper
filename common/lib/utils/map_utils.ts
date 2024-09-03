@@ -79,7 +79,6 @@ export class MapUtils {
   }
 
   static applyIf<K, V>(map: Map<K, V>, predicate: (v: any, k: any) => V, apply: (v: any, k: any) => V): void {
-    const originalSize = map.size;
     map.forEach((v, k) => {
       if (predicate(v, k)) {
         apply(v, k);
