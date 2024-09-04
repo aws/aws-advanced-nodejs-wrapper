@@ -49,7 +49,7 @@ export class DriverConnectionProvider implements ConnectionProvider {
 
   async connect(hostInfo: HostInfo, pluginService: PluginService, props: Map<string, any>): Promise<ClientWrapper> {
     let resultTargetClient;
-    let resultProps = new Map(props);
+    const resultProps = new Map(props);
     let connectionHostInfo: HostInfo;
 
     try {

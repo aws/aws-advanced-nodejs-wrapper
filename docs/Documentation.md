@@ -11,5 +11,6 @@
     - [Federated Authentication Plugin](./using-the-nodejs-wrapper/using-plugins/UsingTheFederatedAuthPlugin.md)
     - [IAM Authentication Plugin](./using-the-nodejs-wrapper/using-plugins/UsingTheIamAuthenticationPlugin.md)
     - [Aurora Initial Connection Strategy Plugin](./using-the-nodejs-wrapper/using-plugins/UsingTheAuroraInitialConnectionStrategyPlugin.md)
+    - [Aurora Connection Tracker Plugin](./using-the-nodejs-wrapper/using-plugins/UsingTheAuroraConnectionTrackerPlugin.md)
   - [Host Availability Strategy](./using-the-nodejs-wrapper/HostAvailabilityStrategy.md)
   - [Reader Selection Strategies](./using-the-nodejs-wrapper/ReaderSelectionStrategies.md)

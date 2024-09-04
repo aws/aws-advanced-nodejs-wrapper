@@ -22,11 +22,11 @@ Although Aurora is able to provide maximum availability through the use of failo
 
 Since a database failover is usually identified by reaching a network or a connection timeout, the AWS Advanced NodeJS Wrapper introduces an enhanced and customizable manner to faster identify a database outage.
 
-Enhanced Failure Monitoring (EFM) is a feature available from the [Host Monitoring Connection Plugin](./docs/using-the-nodejs-wrapper/using-plugins/UsingTheHostMonitoringPlugin.md#enhanced-failure-monitoring) that periodically checks the connected database instance's health and availability. If a database node is determined to be unhealthy, the connection is aborted (and potentially routed to another healthy node in the cluster).
+Enhanced Failure Monitoring (EFM) is a feature available from the [Host Monitoring Connection Plugin](./docs/using-the-nodejs-wrapper/using-plugins/UsingTheHostMonitoringPlugin.md#enhanced-failure-monitoring) that periodically checks the connected database instance's health and availability. If a database instance is determined to be unhealthy, the connection is aborted (and potentially routed to another healthy instance in the cluster).
 
 ### Using the AWS Advanced NodeJS Wrapper with RDS Multi-AZ DB Clusters
 
-The [AWS RDS Multi-AZ DB Clusters](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/multi-az-db-clusters-concepts.html) are capable of switching over the current writer node to another node in the cluster within approximately 1 second or less, in case of minor engine version upgrade or OS maintenance operations.
+The [AWS RDS Multi-AZ DB Clusters](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/multi-az-db-clusters-concepts.html) are capable of switching over the current writer instance to another instance in the cluster within approximately 1 second or less, in case of minor engine version upgrade or OS maintenance operations.
 The AWS Advanced NodeJS Wrapper has been optimized for such fast failover when working with AWS RDS Multi-AZ DB Clusters.
 
 With the `failover` plugin, the downtime during certain DB cluster operations, such as engine minor version upgrades, can be reduced to one second or even less with finely tuned parameters. It supports both MySQL and PostgreSQL clusters.
