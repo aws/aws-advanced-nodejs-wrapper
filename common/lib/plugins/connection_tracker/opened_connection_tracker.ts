@@ -23,7 +23,7 @@ import { Messages } from "../../utils/messages";
 import { PluginService } from "../../plugin_service";
 
 export class OpenedConnectionTracker {
-  static readonly openedConnections: MapUtils<string, Array<WeakRef<ClientWrapper>>> = new MapUtils<string, Array<WeakRef<ClientWrapper>>>();
+  static readonly openedConnections: Map<string, Array<WeakRef<ClientWrapper>>> = new Map<string, Array<WeakRef<ClientWrapper>>>();
   readonly pluginService: PluginService;
   private static readonly rdsUtils = new RdsUtils();
 
@@ -88,7 +88,11 @@ export class OpenedConnectionTracker {
   }
 
   private trackConnection(instanceEndpoint: string, client: ClientWrapper): void {
-    const connectionQueue = OpenedConnectionTracker.openedConnections.computeIfAbsent(instanceEndpoint, (k) => new Array<WeakRef<ClientWrapper>>());
+    const connectionQueue = MapUtils.computeIfAbsent(
+      OpenedConnectionTracker.openedConnections,
+      instanceEndpoint,
+      (k) => new Array<WeakRef<ClientWrapper>>()
+    );
     connectionQueue!.push(new WeakRef<ClientWrapper>(client));
     this.logOpenedConnections();
   }
@@ -107,7 +111,7 @@ export class OpenedConnectionTracker {
   logOpenedConnections(): void {
     if (logger.level === "debug") {
       let str = "";
-      for (const [key, queue] of OpenedConnectionTracker.openedConnections.map) {
+      for (const [key, queue] of OpenedConnectionTracker.openedConnections) {
         if (queue.length !== 0) {
           str += JSON.stringify(queue.map((x) => x.deref()!.hostInfo));
           str += "\n\n\t";
@@ -126,7 +130,7 @@ export class OpenedConnectionTracker {
   }
 
   pruneNullConnections(): void {
-    for (const [key, queue] of OpenedConnectionTracker.openedConnections.map) {
+    for (const [key, queue] of OpenedConnectionTracker.openedConnections) {
       queue.filter((connWeakRef: WeakRef<ClientWrapper>) => connWeakRef);
     }
   }
