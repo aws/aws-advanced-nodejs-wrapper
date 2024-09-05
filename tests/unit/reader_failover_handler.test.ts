@@ -20,10 +20,10 @@ import { ClusterAwareReaderFailoverHandler } from "../../common/lib/plugins/fail
 import { HostAvailability } from "../../common/lib/host_availability/host_availability";
 import { HostRole } from "../../common/lib/host_role";
 import { AwsWrapperError } from "../../common/lib/utils/errors";
-import { mock, instance, when, anything, verify, reset } from "ts-mockito";
+import { anything, instance, mock, reset, verify, when } from "ts-mockito";
 import { ClientWrapper } from "../../common/lib/client_wrapper";
 
-const host1 = new HostInfo("writer", 1234);
+const host1 = new HostInfo("writer", 1234, HostRole.WRITER);
 const host2 = new HostInfo("reader1", 1234, HostRole.READER);
 const host3 = new HostInfo("reader2", 1234, HostRole.READER);
 const host4 = new HostInfo("reader3", 1234, HostRole.READER);
@@ -319,7 +319,7 @@ describe("reader failover handler", () => {
   });
 
   it("test host failover strict reader enabled", async () => {
-    const writer = new HostInfo("writer", 1234);
+    const writer = new HostInfo("writer", 1234, HostRole.WRITER);
     const reader = new HostInfo("reader", 1234, HostRole.READER);
     const hosts = [writer, reader];
     when(mockPluginService.getHosts()).thenReturn(hosts);

@@ -30,9 +30,9 @@ const mockPluginService: PluginService = mock(PluginService);
 const mockHostListProviderService = mock<HostListProviderService>();
 const props: Map<string, any> = mock(Map<string, any>);
 
-const writerInstance = new HostInfo("writer-host.XYZ.us-west-2.rds.amazonaws.com", 1234);
-const writerCluster = new HostInfo("my-cluster.cluster-XYZ.us-west-2.rds.amazonaws.com", 1234);
-const writerClusterInvalidClusterInetAddress = new HostInfo("my-cluster.cluster-invalid.us-west-2.rds.amazonaws.com", 1234);
+const writerInstance = new HostInfo("writer-host.XYZ.us-west-2.rds.amazonaws.com", 1234, HostRole.WRITER);
+const writerCluster = new HostInfo("my-cluster.cluster-XYZ.us-west-2.rds.amazonaws.com", 1234, HostRole.WRITER);
+const writerClusterInvalidClusterInetAddress = new HostInfo("my-cluster.cluster-invalid.us-west-2.rds.amazonaws.com", 1234, HostRole.WRITER);
 const readerA = new HostInfo("reader-a-host.XYZ.us-west-2.rds.amazonaws.com", 1234, HostRole.READER, HostAvailability.AVAILABLE);
 const readerB = new HostInfo("reader-b-host.XYZ.us-west-2.rds.amazonaws.com", 1234, HostRole.READER, HostAvailability.AVAILABLE);
 

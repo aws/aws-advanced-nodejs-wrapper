@@ -136,5 +136,7 @@
   "HostMonitoringConnectionPlugin.unavailableHost": "Host '%s' is unavailable.",
   "PluginServiceImpl.failedToRetrieveHostPort": "PluginServiceImpl.failedToRetrieveHostPort",
   "AuroraInitialConnectionStrategyPlugin.unsupportedStrategy": "Unsupported host selection strategy '%s'.",
-  "AuroraInitialConnectionStrategyPlugin.requireDynamicProvider": "Dynamic host list provider is required."
+  "AuroraInitialConnectionStrategyPlugin.requireDynamicProvider": "Dynamic host list provider is required.",
+  "OpenedConnectionTracker.unableToPopulateOpenedConnectionQueue": "The driver is unable to track this opened connection because the instance endpoint is unknown: '%s'",
+  "OpenedConnectionTracker.invalidatingConnections": "Invalidating opened connections to host: '%s'"
 }

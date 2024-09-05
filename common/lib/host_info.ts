@@ -37,7 +37,7 @@ export class HostInfo {
   constructor(
     host: string,
     port: number,
-    role: HostRole = HostRole.WRITER,
+    role: HostRole = HostRole.UNKNOWN,
     availability: HostAvailability = HostAvailability.AVAILABLE,
     weight: number = HostInfo.DEFAULT_WEIGHT,
     lastUpdateTime: number = Date.now(),
@@ -55,6 +55,10 @@ export class HostInfo {
 
   isPortSpecified(): boolean {
     return this.port != HostInfo.NO_PORT;
+  }
+
+  getHostAndPort(): string {
+    return this.isPortSpecified() ? this.host + ":" + this.port : this.host;
   }
 
   addAlias(...alias: string[]) {

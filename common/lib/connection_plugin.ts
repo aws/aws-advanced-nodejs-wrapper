@@ -49,7 +49,7 @@ export interface ConnectionPlugin {
 
   notifyConnectionChanged(changes: Set<HostChangeOptions>): Promise<OldConnectionSuggestionAction>;
 
-  notifyHostListChanged(changes: Map<string, Set<HostChangeOptions>>): void;
+  notifyHostListChanged(changes: Map<string, Set<HostChangeOptions>>): Promise<void>;
 
   acceptsStrategy(role: HostRole, strategy: string): boolean;
 

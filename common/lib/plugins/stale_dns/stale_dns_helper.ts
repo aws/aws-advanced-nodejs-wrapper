@@ -154,9 +154,9 @@ export class StaleDnsHelper {
     return null;
   }
 
-  notifyHostListChanged(changes: Map<string, Set<HostChangeOptions>>): void {
+  notifyHostListChanged(changes: Map<string, Set<HostChangeOptions>>): Promise<void> {
     if (!this.writerHostInfo) {
-      return;
+      return Promise.resolve();
     }
 
     for (const [key, values] of changes.entries()) {
@@ -174,6 +174,7 @@ export class StaleDnsHelper {
         }
       }
     }
+    return Promise.resolve();
   }
 
   lookupResult(host: string): Promise<LookupAddress> {

@@ -23,6 +23,7 @@ import { anything, instance, mock, spy, when } from "ts-mockito";
 import { CredentialsProviderFactory } from "../../common/lib/plugins/federated_auth/credentials_provider_factory";
 import { DatabaseDialect } from "../../common/lib/database_dialect/database_dialect";
 import { Credentials } from "aws-sdk";
+import { HostRole } from "../../common/lib/host_role";
 
 const testToken = "testToken";
 const defaultPort = 5432;
@@ -31,7 +32,7 @@ const dbUser = "iamUser";
 const expirationFiveMinutes = 5 * 60 * 1000;
 const tokenCache = new Map<string, TokenInfo>();
 
-const hostInfo = new HostInfo("pg.testdb.us-east-2.rds.amazonaws.com", defaultPort);
+const hostInfo = new HostInfo("pg.testdb.us-east-2.rds.amazonaws.com", defaultPort, HostRole.WRITER);
 const testTokenInfo = new TokenInfo(testToken, Date.now() + expirationFiveMinutes);
 
 const mockDialect = mock<DatabaseDialect>();
