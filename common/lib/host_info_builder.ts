@@ -106,6 +106,16 @@ export class HostInfoBuilder {
     if (!this.host) {
       throw new AwsWrapperError("host parameter must be set");
     }
-    return new HostInfo(this.host, this.port, this.role, this.availability, this.weight, this.lastUpdateTime, this.hostAvailabilityStrategy);
+    const hostInfo = new HostInfo(
+      this.host,
+      this.port,
+      this.role,
+      this.availability,
+      this.weight,
+      this.lastUpdateTime,
+      this.hostAvailabilityStrategy
+    );
+    hostInfo.hostId = this.hostId;
+    return hostInfo;
   }
 }

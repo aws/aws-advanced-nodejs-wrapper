@@ -246,6 +246,18 @@ export class WrapperProperties {
     600000 // 10 minutes
   );
 
+  static readonly ROUND_ROBIN_HOST_WEIGHT_PAIRS = new WrapperProperty<string>(
+    "roundRobinHostWeightPairs",
+    "Comma separated list of database host-weight pairs in the format of `<host>:<weight>`.",
+    null
+  );
+
+  static readonly ROUND_ROBIN_DEFAULT_WEIGHT = new WrapperProperty<number>(
+    "roundRobinDefaultWeight",
+    "The default weight for any hosts that have not been configured with the `roundRobinHostWeightPairs` parameter.",
+    1
+  );
+
   static removeWrapperProperties(props: Map<string, any>): any {
     const persistingProperties = [
       WrapperProperties.USER.name,

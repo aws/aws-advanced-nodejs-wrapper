@@ -30,9 +30,13 @@ import { PluginService } from "./plugin_service";
 import { logger } from "../logutils";
 import { maskProperties } from "./utils/utils";
 import { ClientWrapper } from "./client_wrapper";
+import { RoundRobinHostSelector } from "./round_robin_host_selector";
 
 export class DriverConnectionProvider implements ConnectionProvider {
-  private static readonly acceptedStrategies: Map<string, HostSelector> = new Map([[RandomHostSelector.STRATEGY_NAME, new RandomHostSelector()]]);
+  private static readonly acceptedStrategies: Map<string, HostSelector> = new Map([
+    [RandomHostSelector.STRATEGY_NAME, new RandomHostSelector()],
+    [RoundRobinHostSelector.STRATEGY_NAME, new RoundRobinHostSelector()]
+  ]);
   private readonly rdsUtils: RdsUtils = new RdsUtils();
 
   acceptsStrategy(role: HostRole, strategy: string): boolean {
