@@ -28,7 +28,7 @@ export function sleep(ms: number) {
 export function getTimeoutTask(timer: any, message: string, timeoutValue: number): Promise<void> {
   return new Promise((_resolve, reject) => {
     timer.timeoutId = setTimeout(() => {
-      reject(message);
+      throw new AwsWrapperError(Messages.get("ClientUtils.queryTaskTimeout"));
     }, timeoutValue);
   });
 }

@@ -29,14 +29,11 @@ export class ClientUtils {
       timeValue ?? WrapperProperties.INTERNAL_QUERY_TIMEOUT.get(props)
     );
     return await Promise.race([timeoutTask, newPromise])
-      .then((result) => {
-        if (result) {
-          return result;
-        }
-        throw new AwsWrapperError(Messages.get("ClientUtils.queryTaskTimeout"));
-      })
       .catch((error: any) => {
         logger.debug(error);
+        if (error instanceof AwsWrapperError) {
+          throw error;
+        }
         throw new AwsWrapperError(error);
       })
       .finally(() => {
