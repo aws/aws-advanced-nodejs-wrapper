@@ -58,6 +58,9 @@ export class SlidingExpirationCache<K, V> {
     return this.map.entries();
   }
 
+  get keys() {
+    return this.map.keys();
+  }
   set cleanupIntervalNs(value: bigint) {
     this._cleanupIntervalNanos = value;
   }

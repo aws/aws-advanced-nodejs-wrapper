@@ -26,6 +26,7 @@ import { DriverConnectionProvider } from "./driver_connection_provider";
 import { ClientWrapper } from "./client_wrapper";
 import { DefaultTelemetryFactory } from "./utils/telemetry/default_telemetry_factory";
 import { TelemetryFactory } from "./utils/telemetry/telemetry_factory";
+import { ConnectionProviderManager } from "./connection_provider_manager";
 
 export abstract class AwsClient extends EventEmitter {
   private _defaultPort: number = -1;

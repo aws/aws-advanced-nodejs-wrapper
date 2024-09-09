@@ -39,8 +39,9 @@ import { HostAvailabilityStrategyFactory } from "./host_availability/host_availa
 import { ClientWrapper } from "./client_wrapper";
 import { logger } from "../logutils";
 import { Messages } from "./utils/messages";
-import { getWriter } from "./utils/utils";
 import { DatabaseDialectCodes } from "./database_dialect/database_dialect_codes";
+import { getWriter } from "./utils/utils";
+import { ConnectionProvider } from "./connection_provider";
 import { TelemetryFactory } from "./utils/telemetry/telemetry_factory";
 
 export class PluginService implements ErrorHandler, HostListProviderService {
@@ -52,7 +53,7 @@ export class PluginService implements ErrorHandler, HostListProviderService {
   private pluginServiceManagerContainer: PluginServiceManagerContainer;
   protected hosts: HostInfo[] = [];
   private dbDialectProvider: DatabaseDialectProvider;
-  private initialHost: string;
+  private readonly initialHost: string;
   private dialect: DatabaseDialect;
   protected readonly sessionStateService: SessionStateService;
   protected static readonly hostAvailabilityExpiringCache: CacheMap<string, HostAvailability> = new CacheMap<string, HostAvailability>();
@@ -421,6 +422,10 @@ export class PluginService implements ErrorHandler, HostListProviderService {
     } else if (SqlMethodUtils.doesCloseTransaction(sql)) {
       this.setInTransaction(false);
     }
+  }
+
+  getConnectionProvider(): ConnectionProvider {
+    return this.pluginServiceManagerContainer.pluginManager!.defaultConnProvider;
   }
 
   async updateDialect(targetClient: ClientWrapper) {

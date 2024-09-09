@@ -32,6 +32,7 @@ import { ClientWrapper } from "../../common/lib/client_wrapper";
 import { ClientUtils } from "../../common/lib/utils/client_utils";
 import { RdsMultiAZMySQLDatabaseDialect } from "./dialect/rds_multi_az_mysql_database_dialect";
 import { TelemetryTraceLevel } from "../../common/lib/utils/telemetry/telemetry_trace_level";
+import { ConnectionProviderManager } from "../../common/lib/connection_provider_manager";
 
 export class AwsMySQLClient extends AwsClient {
   private static readonly knownDialectsByCode: Map<string, DatabaseDialect> = new Map([
@@ -214,10 +215,11 @@ export class AwsMySQLClient extends AwsClient {
       this.properties,
       "end",
       () => {
+        const newConnProviderManager = new ConnectionProviderManager(this.pluginService.getConnectionProvider());
         return ClientUtils.queryWithTimeout(
-          this.pluginService
-            .getDialect()
-            .end(this.targetClient)
+          newConnProviderManager
+            .getConnectionProvider(this.pluginService.getCurrentHostInfo()!, this.properties)
+            .end(this.pluginService, this.targetClient!)
             .catch((error: any) => {
               // ignore
             }),

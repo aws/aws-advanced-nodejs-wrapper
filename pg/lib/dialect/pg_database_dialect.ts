@@ -23,6 +23,12 @@ import { DatabaseDialectCodes } from "../../../common/lib/database_dialect/datab
 import { TransactionIsolationLevel } from "../../../common/lib/utils/transaction_isolation_level";
 import { ClientWrapper } from "../../../common/lib/client_wrapper";
 import { FailoverRestriction } from "../../../common/lib/plugins/failover/failover_restriction";
+import { AwsPoolClient } from "../../../common/lib/aws_pool_client";
+import { AwsMysqlPoolClient } from "../../../mysql/lib/mysql_pool_client";
+import { AwsPgPoolClient } from "../pg_pool_client";
+import { AwsPoolConfig } from "../../../common/lib/aws_pool_config";
+import { PoolClient, PoolConfig } from "pg";
+import { WrapperProperties } from "../../../common/lib/wrapper_property";
 
 export class PgDatabaseDialect implements DatabaseDialect {
   protected dialectName: string = this.constructor.name;
@@ -64,6 +70,10 @@ export class PgDatabaseDialect implements DatabaseDialect {
       .catch(() => {
         return false;
       });
+  }
+
+  getAwsPoolClient(props: PoolConfig): AwsPoolClient {
+    return new AwsPgPoolClient(props);
   }
 
   getHostListProvider(props: Map<string, any>, originalUrl: string, hostListProviderService: HostListProviderService): HostListProvider {
@@ -157,6 +167,19 @@ export class PgDatabaseDialect implements DatabaseDialect {
 
   async rollback(targetClient: ClientWrapper): Promise<any> {
     return await targetClient.client.rollback();
+  }
+
+  preparePoolClientProperties(props: Map<string, any>, poolConfig: AwsPoolConfig | undefined): any {
+    const finalPoolConfig: PoolConfig = {};
+    const finalClientProps = WrapperProperties.removeWrapperProperties(props);
+
+    Object.assign(finalPoolConfig, finalClientProps);
+    finalPoolConfig.max = poolConfig?.maxConnections;
+    finalPoolConfig.min = poolConfig?.minConnections;
+    finalPoolConfig.idleTimeoutMillis = poolConfig?.idleTimeoutMillis;
+    finalPoolConfig.connectionTimeoutMillis = poolConfig?.connectionTimeoutMillis;
+    finalPoolConfig.allowExitOnIdle = poolConfig?.allowExitOnIdle;
+    return finalPoolConfig;
   }
 
   end(clientWrapper: ClientWrapper): Promise<void> {

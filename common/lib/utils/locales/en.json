@@ -150,5 +150,6 @@
   "DefaultTelemetryFactory.invalidBackend": "%s is not a valid %s backend. Available options for tracing are: OTLP, XRAY, NONE. Available options for metrics are: OTLP, NONE.",
   "DefaultTelemetryFactory.importFailure": "A tracing backend could not be found.",
   "DefaultTelemetryFactory.missingTracingBackend": "A tracing backend could not be found.",
-  "DefaultTelemetryFactory.missingMetricsBackend": "A metrics backend could not be found."
+  "DefaultTelemetryFactory.missingMetricsBackend": "A metrics backend could not be found.",
+  "InternalPooledConnectionProvider.pooledConnectionFailed": "Internal pooled connection failed with message: '%s'"
 }
