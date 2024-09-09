@@ -17,6 +17,9 @@
 import { HostInfo } from "../host_info";
 import { Messages } from "./messages";
 import { WrapperProperties } from "../wrapper_property";
+import { HostRole } from "../host_role";
+import { logger } from "../../logutils";
+import { AwsWrapperError } from "./errors";
 
 export function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -55,4 +58,17 @@ export function maskProperties(props: Map<string, any>) {
     maskedProperties.set(WrapperProperties.PASSWORD.name, "***");
   }
   return maskedProperties;
+}
+
+export function getWriter(hosts: HostInfo[], errorMessage?: string): HostInfo | null {
+  const writerHost = hosts.find((x) => x.role === HostRole.WRITER) ?? null;
+  if (!writerHost && errorMessage) {
+    logAndThrowError(errorMessage);
+  }
+  return writerHost;
+}
+
+export function logAndThrowError(message: string) {
+  logger.error(message);
+  throw new AwsWrapperError(message);
 }

@@ -45,6 +45,7 @@ export class DriverConnectionProvider implements ConnectionProvider {
 
   async connect(hostInfo: HostInfo, pluginService: PluginService, props: Map<string, any>): Promise<ClientWrapper> {
     let resultTargetClient;
+    let resultProps = new Map(props);
     let connectionHostInfo: HostInfo;
 
     try {
@@ -86,7 +87,7 @@ export class DriverConnectionProvider implements ConnectionProvider {
       // Green node DNS doesn't exist. Try to replace it with corresponding node name and connect again.
       const originalHost: string = hostInfo.host;
       const fixedHost: string = this.rdsUtils.removeGreenInstancePrefix(hostInfo.host);
-      props.set(WrapperProperties.HOST.name, fixedHost); // TODO review - this changes the original properties object passed through connect chain, should a copy be used instead?
+      resultProps.set(WrapperProperties.HOST.name, fixedHost);
       connectionHostInfo = new HostInfoBuilder({
         hostAvailabilityStrategy: hostInfo.hostAvailabilityStrategy
       })
@@ -100,25 +101,19 @@ export class DriverConnectionProvider implements ConnectionProvider {
           " after correcting the hostname from " +
           originalHost +
           "\nwith properties: \n" +
-          JSON.stringify(Object.fromEntries(maskProperties(props)))
+          JSON.stringify(Object.fromEntries(maskProperties(resultProps)))
       );
 
-      const newTargetClient = pluginService.createTargetClient(props);
+      const newTargetClient = pluginService.createTargetClient(resultProps);
       const fixedConnFunc = pluginService.getConnectFunc(newTargetClient);
       await fixedConnFunc();
       resultTargetClient = newTargetClient;
-
-      // Note keeping this here temporarily for current functionality.
-      // TODO revisit - Follow the paths that the driver_connection_provider.connect is called from
-      // and make sure pluginService.tryClosingTargetClient() and pluginService.setCurrentClient are called appropriately.
-      // The driver_connection_provider should have no knowledge of setting/closing clients
-      await pluginService.tryClosingTargetClient();
     }
 
     return {
       client: resultTargetClient,
       hostInfo: connectionHostInfo,
-      properties: new Map<string, any>(props)
+      properties: resultProps
     };
   }
 

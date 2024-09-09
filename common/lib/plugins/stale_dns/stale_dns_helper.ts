@@ -27,6 +27,7 @@ import { AwsWrapperError } from "../../utils/errors";
 import { HostChangeOptions } from "../../host_change_options";
 import { WrapperProperties } from "../../wrapper_property";
 import { ClientWrapper } from "../../client_wrapper";
+import { getWriter } from "../../utils/utils";
 
 export class StaleDnsHelper {
   private readonly pluginService: PluginService;
@@ -50,20 +51,7 @@ export class StaleDnsHelper {
       return connectFunc();
     }
 
-    // TODO review: the currentHostInfo variable is only used starting with the
-    // if (currentHostInfo && currentHostInfo.role === HostRole.READER) below around line 88
-    // should this call and check be done just before that if statement or the code leading to that should also be not executed
-    // in the event where !currentHostInfo?
-    const currentHostInfo = this.pluginService.getCurrentHostInfo();
-    if (!currentHostInfo) {
-      throw new AwsWrapperError("Could not find current hostInfo");
-    }
-
     const currentTargetClient = await connectFunc();
-
-    if (!currentTargetClient) {
-      throw new Error("Connect failed");
-    }
 
     let clusterInetAddress = "";
     try {
@@ -80,6 +68,11 @@ export class StaleDnsHelper {
       return currentTargetClient;
     }
 
+    const currentHostInfo = this.pluginService.getCurrentHostInfo();
+    if (!currentHostInfo) {
+      throw new AwsWrapperError("Stale DNS Helper: Current hostInfo was null.");
+    }
+
     if (currentHostInfo && currentHostInfo.role === HostRole.READER) {
       // This is if-statement is only reached if the connection url is a writer cluster endpoint.
       // If the new connection resolves to a reader instance, this means the topology is outdated.
@@ -91,7 +84,7 @@ export class StaleDnsHelper {
 
     logger.debug(this.pluginService.getHosts());
     if (!this.writerHostInfo) {
-      const writerCandidate = this.getWriter();
+      const writerCandidate = getWriter(this.pluginService.getHosts());
       if (writerCandidate && this.rdsUtils.isRdsClusterDns(writerCandidate.host)) {
         return currentTargetClient;
       }
@@ -126,9 +119,6 @@ export class StaleDnsHelper {
 
       let targetClient;
       try {
-        // TODO review: the call below will start a new plugin chain again and will invoke this function from top. Hopefully, no infinite recursion.
-        // Moreover, upon returning from this function here, the original plugin chain will continue. Depending on the plugins and their implementation
-        // would that have an effect?
         const newProps = new Map<string, any>(props);
         newProps.set(WrapperProperties.HOST.name, this.writerHostInfo.host);
         targetClient = await this.pluginService.connect(this.writerHostInfo, newProps);
@@ -143,15 +133,6 @@ export class StaleDnsHelper {
       }
     }
     return currentTargetClient;
-  }
-
-  private getWriter(): HostInfo | null {
-    for (const host of this.pluginService.getHosts()) {
-      if (host.role === HostRole.WRITER) {
-        return host;
-      }
-    }
-    return null;
   }
 
   notifyHostListChanged(changes: Map<string, Set<HostChangeOptions>>): Promise<void> {

@@ -177,4 +177,8 @@ export class MySQLDatabaseDialect implements DatabaseDialect {
   doesStatementSetSchema(statement: string): string | undefined {
     return undefined;
   }
+
+  async rollback(targetClient: ClientWrapper): Promise<any> {
+    return await targetClient.client.promise().rollback();
+  }
 }

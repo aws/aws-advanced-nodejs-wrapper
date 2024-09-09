@@ -24,12 +24,14 @@ import { MonitorServiceImpl } from "../../common/lib/plugins/efm/monitor_service
 import { PluginService } from "../../common/lib/plugin_service";
 import { MonitorConnectionContext } from "../../common/lib/plugins/efm/monitor_connection_context";
 import { AwsWrapperError } from "../../common/lib/utils/errors";
-import { AwsClient } from "../../common/lib/aws_client";
 import { RdsUrlType } from "../../common/lib/utils/rds_url_type";
 import { HostInfo } from "../../common/lib/host_info";
 import { HostChangeOptions } from "../../common/lib/host_change_options";
 import { OldConnectionSuggestionAction } from "../../common/lib/old_connection_suggestion_action";
 import { ClientWrapper } from "../../common/lib/client_wrapper";
+import { HostAvailability } from "../../common/lib/host_availability/host_availability";
+import { Messages } from "../../common/lib/utils/messages";
+import { AwsPGClient } from "../../pg/lib";
 
 const FAILURE_DETECTION_TIME = 10;
 const FAILURE_DETECTION_INTERVAL = 100;
@@ -41,8 +43,7 @@ const mockDialect: DatabaseDialect = mock(PgDatabaseDialect);
 const mockMonitorService: MonitorServiceImpl = mock(MonitorServiceImpl);
 const mockMonitorConnectionContext: MonitorConnectionContext = mock(MonitorConnectionContext);
 const mockPluginService: PluginService = mock(PluginService);
-const mockClient: AwsClient = mock(AwsClient);
-const mockTargetClient = {};
+const mockClient: AwsPGClient = mock(AwsPGClient);
 const mockRdsUtils = mock(RdsUtils);
 const mockHostInfo1 = mock(HostInfo);
 const mockHostInfo2 = mock(HostInfo);
@@ -137,7 +138,14 @@ describe("host monitoring plugin test", () => {
   });
 
   it("execute cleanup when abort connection throws exception", async () => {
-    // initializePlugin();
+    initializePlugin();
+
+    when(mockPluginService.isClientValid(mockClientWrapper)).thenResolve(false);
+    when(mockMonitorConnectionContext.isHostUnhealthy).thenReturn(true);
+
+    const expectedError = new AwsWrapperError(Messages.get("HostMonitoringConnectionPlugin.unavailableHost", "host"));
+    await expect(plugin.execute(MONITOR_METHOD_NAME, incrementQueryCounter, {})).rejects.toThrow(expectedError);
+    verify(mockPluginService.setAvailability(anything(), HostAvailability.NOT_AVAILABLE)).once();
   });
 
   it("test connect", async () => {
@@ -145,7 +153,7 @@ describe("host monitoring plugin test", () => {
     when(mockRdsUtils.identifyRdsType(anything())).thenReturn(RdsUrlType.RDS_WRITER_CLUSTER);
 
     await plugin.connect(instance(mockHostInfo1), properties, true, () => {
-      return Promise.resolve(mockTargetClient);
+      return Promise.resolve(mockClientWrapper);
     });
     verify(mockPluginService.fillAliases(anything(), anything())).once();
   });

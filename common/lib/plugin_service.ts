@@ -39,6 +39,7 @@ import { HostAvailabilityStrategyFactory } from "./host_availability/host_availa
 import { ClientWrapper } from "./client_wrapper";
 import { logger } from "../logutils";
 import { Messages } from "./utils/messages";
+import { getWriter } from "./utils/utils";
 
 export class PluginService implements ErrorHandler, HostListProviderService {
   private readonly _currentClient: AwsClient;
@@ -111,7 +112,24 @@ export class PluginService implements ErrorHandler, HostListProviderService {
   }
 
   getCurrentHostInfo(): HostInfo | null {
-    return this._currentHostInfo ? this._currentHostInfo : null;
+    if (!this._currentHostInfo) {
+      this._currentHostInfo = this._initialConnectionHostInfo;
+
+      if (!this._currentHostInfo) {
+        if (this.getHosts().length === 0) {
+          throw new AwsWrapperError(Messages.get("PluginService.hostListEmpty"));
+        }
+
+        const writerHost = getWriter(this.getHosts());
+        if (writerHost) {
+          this._currentHostInfo = writerHost;
+        } else {
+          this._currentHostInfo = this.getHosts()[0];
+        }
+      }
+    }
+
+    return this._currentHostInfo;
   }
 
   setCurrentHostInfo(value: HostInfo) {
@@ -173,8 +191,14 @@ export class PluginService implements ErrorHandler, HostListProviderService {
     });
   }
 
-  private compare(hostInfoA: HostInfo, hostInfoB: HostInfo): Set<HostChangeOptions> {
+  private compare(hostInfoA: HostInfo, hostInfoB: HostInfo): Set<HostChangeOptions>;
+  private compare(hostInfoA: HostInfo, hostInfoB: HostInfo, clientA: ClientWrapper, clientB: ClientWrapper): Set<HostChangeOptions>;
+  private compare(hostInfoA: HostInfo, hostInfoB: HostInfo, clientA?: ClientWrapper, clientB?: ClientWrapper): Set<HostChangeOptions> {
     const changes: Set<HostChangeOptions> = new Set<HostChangeOptions>();
+
+    if (clientA && clientB && !Object.is(clientA, clientB)) {
+      changes.add(HostChangeOptions.CONNECTION_OBJECT_CHANGED);
+    }
 
     if (hostInfoA.host !== hostInfoB.host || hostInfoA.port !== hostInfoB.port) {
       changes.add(HostChangeOptions.HOSTNAME);
@@ -228,11 +252,7 @@ export class PluginService implements ErrorHandler, HostListProviderService {
 
     if (changes.size > 0) {
       this.hosts = newHosts ? newHosts : [];
-      if (this.pluginServiceManagerContainer.pluginManager) {
-        await this.pluginServiceManagerContainer.pluginManager.notifyHostListChanged(changes);
-      } else {
-        throw new AwsWrapperError("Connection Plugin Manager was not detected."); // This should not be reached
-      }
+      await this.pluginServiceManagerContainer.pluginManager!.notifyHostListChanged(changes);
     }
   }
 
@@ -263,7 +283,7 @@ export class PluginService implements ErrorHandler, HostListProviderService {
       const res: string = await this.dialect.getHostAliasAndParseResults(targetClient);
       hostInfo.addAlias(res);
     } catch (error) {
-      logger.debug(Messages.get("PluginServiceImpl.failedToRetrieveHostPort"));
+      logger.debug(Messages.get("PluginService.failedToRetrieveHostPort"));
     }
 
     const host: HostInfo | void | null = await this.identifyConnection(targetClient);
@@ -288,24 +308,12 @@ export class PluginService implements ErrorHandler, HostListProviderService {
     throw new AwsWrapperError("AwsClient is missing create target client function."); // This should not be reached
   }
 
-  connect<T>(hostInfo: HostInfo, props: Map<string, any>): Promise<ClientWrapper> {
-    if (this.pluginServiceManagerContainer.pluginManager) {
-      return this.pluginServiceManagerContainer.pluginManager.connect(hostInfo, props, false);
-    } else {
-      // TODO: Review how the pluginServiceManagerContainer and it's members are initialized and used
-      // so that such checks are not required throughout the code but only in one place perhaps.
-      throw new AwsWrapperError("Connection Plugin Manager was not detected."); // This should not be reached
-    }
+  connect(hostInfo: HostInfo, props: Map<string, any>): Promise<ClientWrapper> {
+    return this.pluginServiceManagerContainer.pluginManager!.connect(hostInfo, props, false);
   }
 
-  forceConnect<T>(hostInfo: HostInfo, props: Map<string, any>): Promise<ClientWrapper> {
-    if (this.pluginServiceManagerContainer.pluginManager) {
-      return this.pluginServiceManagerContainer.pluginManager.forceConnect(hostInfo, props, false);
-    } else {
-      // TODO: Review how the pluginServiceManagerContainer and it's members are initialized and used
-      // so that such checks are not required throughout the code but only in one place perhaps.
-      throw new AwsWrapperError("Connection Plugin Manager was not detected."); // This should not be reached
-    }
+  forceConnect(hostInfo: HostInfo, props: Map<string, any>): Promise<ClientWrapper> {
+    return this.pluginServiceManagerContainer.pluginManager!.forceConnect(hostInfo, props, false);
   }
 
   async setCurrentClient(newClient: ClientWrapper, hostInfo: HostInfo): Promise<Set<HostChangeOptions>> {
@@ -322,14 +330,11 @@ export class PluginService implements ErrorHandler, HostListProviderService {
       return changes;
     } else {
       if (this._currentHostInfo) {
-        const changes: Set<HostChangeOptions> = this.compare(this._currentHostInfo, newClient.hostInfo);
+        const oldClient = this.getCurrentClient().targetClient;
+        const changes: Set<HostChangeOptions> = this.compare(this._currentHostInfo, newClient.hostInfo, oldClient!, newClient);
 
-        // TODO review:  why are we comparing host info differences here? Even if there are no differences, presumably we have a new connection for a reason
-        // therefore we should still use the new connection. If we did not want a new connection if hostInfo matches then we should do the
-        // check in place where we are connecting.
         if (changes.size > 0) {
-          const oldClient = this.getCurrentClient().targetClient;
-          const isInTransaction = this.isInTransaction;
+          const isInTransaction = this.isInTransaction();
           this.sessionStateService.begin();
 
           try {
@@ -339,16 +344,35 @@ export class PluginService implements ErrorHandler, HostListProviderService {
             await this.sessionStateService.applyCurrentSessionState(this.getCurrentClient());
             this.setInTransaction(false);
 
-            if (this.pluginServiceManagerContainer.pluginManager) {
-              const pluginOpinions: Set<OldConnectionSuggestionAction> =
-                await this.pluginServiceManagerContainer.pluginManager.notifyConnectionChanged(changes, null);
+            if (oldClient && (isInTransaction || WrapperProperties.ROLLBACK_ON_SWITCH.get(this.props))) {
+              try {
+                await this.getDialect().rollback(oldClient);
+              } catch (error: any) {
+                // Ignore.
+              }
+            }
 
-              const shouldCloseConnection =
-                changes.has(HostChangeOptions.CONNECTION_OBJECT_CHANGED) &&
-                !pluginOpinions.has(OldConnectionSuggestionAction.PRESERVE) &&
-                oldClient &&
-                (await this.isClientValid(oldClient));
-              // TODO: Review should tryClosingTargetClient(oldClient) be called here, or at some point in this setCurrentClient method?
+            const pluginOpinions: Set<OldConnectionSuggestionAction> =
+              await this.pluginServiceManagerContainer.pluginManager!.notifyConnectionChanged(changes, null);
+
+            const shouldCloseConnection =
+              changes.has(HostChangeOptions.CONNECTION_OBJECT_CHANGED) &&
+              !pluginOpinions.has(OldConnectionSuggestionAction.PRESERVE) &&
+              oldClient &&
+              (await this.isClientValid(oldClient));
+
+            if (shouldCloseConnection) {
+              try {
+                await this.sessionStateService.applyPristineSessionState(this.getCurrentClient());
+              } catch (error: any) {
+                // Ignore.
+              }
+
+              try {
+                await this.tryClosingTargetClient(oldClient);
+              } catch (error: any) {
+                // Ignore.
+              }
             }
           } finally {
             this.sessionStateService.complete();
@@ -451,5 +475,9 @@ export class PluginService implements ErrorHandler, HostListProviderService {
 
   getHostRole(client: any): Promise<HostRole> | undefined {
     return this._hostListProvider?.getHostRole(client, this.dialect);
+  }
+
+  async rollback(targetClient: ClientWrapper) {
+    return await this.getDialect().rollback(targetClient);
   }
 }

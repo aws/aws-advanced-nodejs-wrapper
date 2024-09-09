@@ -204,6 +204,7 @@ describe("reader write splitting test", () => {
     when(mockPluginService.getHostInfoByStrategy(anything(), anything())).thenReturn(writerHost);
     when(mockPluginService.getCurrentClient()).thenReturn(instance(mockWriterClient));
     when(await mockWriterClient.isValid()).thenReturn(true);
+    when(mockWriterClient.targetClient).thenReturn(mockWriterWrapper);
     when(mockWriterClient.targetClient && (await mockPluginService.isClientValid(mockWriterClient.targetClient))).thenReturn(true);
     when(mockPluginService.getCurrentHostInfo()).thenReturn(writerHost);
     when(mockPluginService.getDialect()).thenReturn(mockDialect);
@@ -220,7 +221,7 @@ describe("reader write splitting test", () => {
 
     await target.switchClientIfRequired(true);
 
-    // verify(mockPluginService.setCurrentClient(anything(), anything())).never();  // TODO investigate this call and it's assumptions. It's failing.
+    verify(mockPluginService.setCurrentClient(anything(), anything())).never();
     expect(target.readerTargetClient).toEqual(undefined);
     expect(target.writerTargetClient).toEqual(mockWriterWrapper);
   });

@@ -54,7 +54,7 @@ export class HostMonitoringConnectionPlugin extends AbstractConnectionPlugin imp
     return new Set<string>(["*"]);
   }
 
-  connect<T>(
+  connect(
     hostInfo: HostInfo,
     props: Map<string, any>,
     isInitialConnection: boolean,
@@ -63,7 +63,7 @@ export class HostMonitoringConnectionPlugin extends AbstractConnectionPlugin imp
     return this.connectInternal(hostInfo, connectFunc);
   }
 
-  forceConnect<T>(
+  forceConnect(
     hostInfo: HostInfo,
     props: Map<string, any>,
     isInitialConnection: boolean,
@@ -72,7 +72,7 @@ export class HostMonitoringConnectionPlugin extends AbstractConnectionPlugin imp
     return this.connectInternal(hostInfo, forceConnectFunc);
   }
 
-  private async connectInternal<T>(hostInfo: HostInfo, connectFunc: () => Promise<ClientWrapper>): Promise<ClientWrapper> {
+  private async connectInternal(hostInfo: HostInfo, connectFunc: () => Promise<ClientWrapper>): Promise<ClientWrapper> {
     const targetClient = await connectFunc();
     if (targetClient != null) {
       const type: RdsUrlType = this.rdsUtils.identifyRdsType(hostInfo.host);

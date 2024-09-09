@@ -18,6 +18,8 @@ import { HostRole } from "./host_role";
 import { HostAvailabilityStrategy } from "./host_availability/host_availability_strategy";
 import { HostAvailability } from "./host_availability/host_availability";
 import { SimpleHostAvailabilityStrategy } from "./host_availability/simple_host_availability_strategy";
+import { AwsWrapperError } from "./utils/errors";
+import { Messages } from "./utils/messages";
 
 export class HostInfo {
   public static readonly NO_PORT: number = -1;
@@ -43,11 +45,15 @@ export class HostInfo {
     lastUpdateTime: number = Date.now(),
     hostAvailabilityStrategy: HostAvailabilityStrategy = new SimpleHostAvailabilityStrategy()
   ) {
+    if (weight < 0) {
+      throw new AwsWrapperError(Messages.get("HostInfo.weightLessThanZero"));
+    }
+
     this.host = host;
     this.port = port;
     this.availability = availability;
     this.role = role;
-    this.weight = weight; // TODO: add check for weight parameter passed. As per comment above, weight should be Greater or equal 0
+    this.weight = weight;
     this.lastUpdateTime = lastUpdateTime;
     this.hostAvailabilityStrategy = hostAvailabilityStrategy;
     this.allAliases.add(this.asAlias);

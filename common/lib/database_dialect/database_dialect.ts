@@ -32,6 +32,7 @@ export interface DatabaseDialect {
   isDialect(targetClient: ClientWrapper): Promise<boolean>;
   getHostListProvider(props: Map<string, any>, originalUrl: string, hostListProviderService: HostListProviderService): HostListProvider;
   tryClosingTargetClient(targetClient: ClientWrapper): Promise<void>;
+  rollback(targetClient: ClientWrapper): Promise<any>;
   isClientValid(targetClient: ClientWrapper): Promise<boolean>;
   getConnectFunc(targetClient: any): () => Promise<any>;
   getDatabaseType(): DatabaseType;

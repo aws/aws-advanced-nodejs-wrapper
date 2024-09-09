@@ -24,6 +24,7 @@ import { AwsCredentialsManager } from "./aws_credentials_manager";
 import { AbstractConnectionPlugin } from "../abstract_connection_plugin";
 import { WrapperProperties } from "../wrapper_property";
 import { IamAuthUtils, TokenInfo } from "../utils/iam_auth_utils";
+import { ClientWrapper } from "../client_wrapper";
 
 export class IamAuthenticationPlugin extends AbstractConnectionPlugin {
   private static readonly SUBSCRIBED_METHODS = new Set<string>(["connect", "forceConnect"]);
@@ -40,20 +41,30 @@ export class IamAuthenticationPlugin extends AbstractConnectionPlugin {
     return IamAuthenticationPlugin.SUBSCRIBED_METHODS;
   }
 
-  connect<T>(hostInfo: HostInfo, props: Map<string, any>, isInitialConnection: boolean, connectFunc: () => Promise<T>): Promise<T> {
-    return this.connectInternal(hostInfo, props, isInitialConnection, connectFunc);
-  }
-
-  forceConnect<T>(hostInfo: HostInfo, props: Map<string, any>, isInitialConnection: boolean, forceConnectFunc: () => Promise<T>): Promise<T> {
-    return this.connectInternal(hostInfo, props, isInitialConnection, forceConnectFunc);
-  }
-
-  private async connectInternal<T>(
+  connect(
     hostInfo: HostInfo,
     props: Map<string, any>,
     isInitialConnection: boolean,
-    connectFunc: () => Promise<T>
-  ): Promise<T> {
+    connectFunc: () => Promise<ClientWrapper>
+  ): Promise<ClientWrapper> {
+    return this.connectInternal(hostInfo, props, isInitialConnection, connectFunc);
+  }
+
+  forceConnect(
+    hostInfo: HostInfo,
+    props: Map<string, any>,
+    isInitialConnection: boolean,
+    forceConnectFunc: () => Promise<ClientWrapper>
+  ): Promise<ClientWrapper> {
+    return this.connectInternal(hostInfo, props, isInitialConnection, forceConnectFunc);
+  }
+
+  private async connectInternal(
+    hostInfo: HostInfo,
+    props: Map<string, any>,
+    isInitialConnection: boolean,
+    connectFunc: () => Promise<ClientWrapper>
+  ): Promise<ClientWrapper> {
     const user = WrapperProperties.USER.get(props);
     if (!user) {
       throw new AwsWrapperError(`${WrapperProperties.USER} is null or empty`);

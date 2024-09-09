@@ -15,15 +15,16 @@
 */
 
 import { HostInfo } from "../../host_info";
+import { ClientWrapper } from "../../client_wrapper";
 
 export class ReaderFailoverResult {
-  readonly client: any | null;
+  readonly client: ClientWrapper | null;
   readonly newHost: HostInfo | null;
   readonly isConnected: boolean;
   readonly exception?: Error;
   readonly taskId?: number;
 
-  constructor(client: any | null, newHost: HostInfo | null, isConnected: boolean, exception?: Error, taskId?: number) {
+  constructor(client: ClientWrapper | null, newHost: HostInfo | null, isConnected: boolean, exception?: Error, taskId?: number) {
     this.client = client;
     this.newHost = newHost;
     this.isConnected = isConnected;

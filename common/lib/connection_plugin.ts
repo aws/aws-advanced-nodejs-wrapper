@@ -24,14 +24,14 @@ import { ClientWrapper } from "./client_wrapper";
 export interface ConnectionPlugin {
   getSubscribedMethods(): Set<string>;
 
-  connect<T>(
+  connect(
     hostInfo: HostInfo,
     props: Map<string, any>,
     isInitialConnection: boolean,
     connectFunc: () => Promise<ClientWrapper>
   ): Promise<ClientWrapper>;
 
-  forceConnect<T>(
+  forceConnect(
     hostInfo: HostInfo,
     props: Map<string, any>,
     isInitialConnection: boolean,

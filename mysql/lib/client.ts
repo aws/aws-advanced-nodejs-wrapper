@@ -227,9 +227,9 @@ export class AwsMySQLClient extends AwsClient {
       this.pluginService.getCurrentHostInfo(),
       this.properties,
       "rollback",
-      () => {
+      async () => {
         this.pluginService.updateInTransaction("rollback");
-        return this.targetClient?.client?.promise().rollback();
+        return await this.targetClient?.client?.promise().rollback();
       },
       null
     );

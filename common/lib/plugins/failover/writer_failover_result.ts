@@ -15,16 +15,17 @@
 */
 
 import { HostInfo } from "../../host_info";
+import { ClientWrapper } from "../../client_wrapper";
 
 export class WriterFailoverResult {
   readonly isConnected: boolean;
   readonly isNewHost: boolean;
   readonly topology: HostInfo[];
-  readonly client: any | null;
+  readonly client: ClientWrapper | null;
   readonly taskName: string;
   readonly exception: Error | undefined;
 
-  constructor(isConnected: boolean, isNewHost: boolean, topology: HostInfo[], taskName: string, client: any | null, exception?: Error) {
+  constructor(isConnected: boolean, isNewHost: boolean, topology: HostInfo[], taskName: string, client: ClientWrapper | null, exception?: Error) {
     this.isConnected = isConnected;
     this.isNewHost = isNewHost;
     this.topology = topology;

@@ -61,6 +61,8 @@ describe("aurora failover", () => {
     driver = DriverHelper.getDriverForDatabaseEngine(env.engine);
     initClientFunc = DriverHelper.getClient(driver);
     await ProxyHelper.enableAllConnectivity();
+    await TestEnvironment.updateWriter();
+
     client = null;
     secondaryClient = null;
     await TestEnvironment.updateWriter();
@@ -82,7 +84,6 @@ describe("aurora failover", () => {
         // pass
       }
     }
-    await TestEnvironment.updateWriter();
     logger.info(`Test finished: ${expect.getState().currentTestName}`);
   }, 1000000);
 

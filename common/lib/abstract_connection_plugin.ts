@@ -25,7 +25,7 @@ import { ClientWrapper } from "./client_wrapper";
 export abstract class AbstractConnectionPlugin implements ConnectionPlugin {
   abstract getSubscribedMethods(): Set<string>;
 
-  connect<T>(
+  connect(
     hostInfo: HostInfo,
     props: Map<string, any>,
     isInitialConnection: boolean,
@@ -34,7 +34,7 @@ export abstract class AbstractConnectionPlugin implements ConnectionPlugin {
     return connectFunc();
   }
 
-  forceConnect<T>(
+  forceConnect(
     hostInfo: HostInfo,
     props: Map<string, any>,
     isInitialConnection: boolean,

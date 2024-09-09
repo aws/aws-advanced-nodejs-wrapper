@@ -64,12 +64,6 @@ export abstract class AwsClient extends EventEmitter {
     const container = new PluginServiceManagerContainer();
     this.pluginService = new PluginService(container, this, dbType, knownDialectsByCode, this.properties);
     this.pluginManager = new PluginManager(container, this.properties, defaultConnProvider, effectiveConnProvider);
-
-    // TODO: properly set up host info
-    const host: string = this.properties.get("host");
-    const port: number = this.properties.get("port");
-
-    this.pluginService.setCurrentHostInfo(new HostInfo(host, port));
   }
 
   private async setup() {
@@ -82,9 +76,10 @@ export abstract class AwsClient extends EventEmitter {
       .getDialect()
       .getHostListProvider(this.properties, this.properties.get("host"), this.pluginService);
     this.pluginService.setHostListProvider(hostListProvider);
-    const info = this.pluginService.getCurrentHostInfo();
-    if (info != null) {
-      await this.pluginManager.initHostProvider(info, this.properties, this.pluginService);
+    await this.pluginService.refreshHostList();
+    const initialHostInfo = this.pluginService.getInitialConnectionHostInfo();
+    if (initialHostInfo != null) {
+      await this.pluginManager.initHostProvider(initialHostInfo, this.properties, this.pluginService);
       await this.pluginService.refreshHostList();
     }
   }

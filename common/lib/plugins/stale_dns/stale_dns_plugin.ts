@@ -39,7 +39,7 @@ export class StaleDnsPlugin extends AbstractConnectionPlugin {
     return StaleDnsPlugin.subscribedMethods;
   }
 
-  override async connect<T>(
+  override async connect(
     hostInfo: HostInfo,
     properties: Map<string, any>,
     isInitialConnection: boolean,
@@ -51,7 +51,7 @@ export class StaleDnsPlugin extends AbstractConnectionPlugin {
     return await this.staleDnsHelper.getVerifiedConnection(hostInfo.host, isInitialConnection, this.hostListProviderService, properties, connectFunc);
   }
 
-  override async forceConnect<T>(
+  override async forceConnect(
     hostInfo: HostInfo,
     properties: Map<string, any>,
     isInitialConnection: boolean,
