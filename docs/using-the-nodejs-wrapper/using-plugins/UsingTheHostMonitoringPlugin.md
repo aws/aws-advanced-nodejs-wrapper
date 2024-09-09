@@ -38,7 +38,7 @@ To determine the health of a database instance:
 If a more aggressive approach to failure checking is necessary, all of these parameters can be reduced to reflect that. However, increased failure checking may also lead to an increase in false positives. For example, if the `failureDetectionInterval` was shortened, the plugin may complete several connection checks that all fail. The database instance would then be considered unhealthy, but it may have been about to recover and the connection checks were completed before that could happen.
 
 | Parameter                  |  Value  | Required | Description                                                                                                      | Default Value |
-| -------------------------- | :-----: | :------: |:-----------------------------------------------------------------------------------------------------------------| ------------- |
+| -------------------------- | :-----: | :------: | :--------------------------------------------------------------------------------------------------------------- | ------------- |
 | `failureDetectionCount`    | Integer |    No    | Number of failed connection checks before considering the database instance as unhealthy.                        | `3`           |
 | `failureDetectionEnabled`  | Boolean |    No    | Set to `true` to enable Enhanced Failure Monitoring. Set to `false` to disable it.                               | `true`        |
 | `failureDetectionInterval` | Integer |    No    | Interval in milliseconds between probes to the database instance.                                                | `5000`        |
@@ -72,12 +72,13 @@ await client.connect();
 ```
 
 > [!WARNING]
-> 
+>
 > **Always ensure you provide a non-zero connect timeout value to the Host Monitoring Connection Plugin.**
 >
 > The Host Monitoring Connection Plugin does not have default timeout values such as `connectTimeout` or `query_timeout` since these values are driver specific. If you **do not** override the default timeout value, the Host Monitoring Connection Plugin may wait forever to establish a monitoring connection in the event where the database instance is unavailable.
 
 > [!WARNING]
+>
 > ### :warning: Warnings About Usage of the AWS Advanced NodeJS Wrapper with RDS Proxy
 >
 > We recommend you either disable the Host Monitoring Connection Plugin or avoid using RDS Proxy endpoints when the Host Monitoring Connection Plugin is active.
