@@ -19,7 +19,7 @@ import { Messages } from "./messages";
 import { WrapperProperties } from "../wrapper_property";
 import { HostRole } from "../host_role";
 import { logger } from "../../logutils";
-import { AwsWrapperError } from "./errors";
+import { AwsWrapperError, InternalQueryTimeoutError } from "./errors";
 
 export function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -28,7 +28,7 @@ export function sleep(ms: number) {
 export function getTimeoutTask(timer: any, message: string, timeoutValue: number): Promise<void> {
   return new Promise((_resolve, reject) => {
     timer.timeoutId = setTimeout(() => {
-      throw new AwsWrapperError(Messages.get("ClientUtils.queryTaskTimeout"));
+      reject(new InternalQueryTimeoutError(message));
     }, timeoutValue);
   });
 }

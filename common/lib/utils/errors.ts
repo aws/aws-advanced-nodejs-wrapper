@@ -14,6 +14,8 @@
   limitations under the License.
 */
 
+import { Messages } from "./messages";
+
 export class AwsWrapperError extends Error {
   constructor(message?: string, cause?: any) {
     super(message);
@@ -35,3 +37,5 @@ export class FailoverFailedError extends FailoverError {}
 export class TransactionResolutionUnknownError extends FailoverError {}
 
 export class LoginError extends AwsWrapperError {}
+
+export class InternalQueryTimeoutError extends AwsWrapperError {}
