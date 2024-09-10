@@ -20,7 +20,7 @@ import { ReaderFailoverResult } from "./reader_failover_result";
 import { getTimeoutTask, maskProperties, shuffleList, sleep } from "../../utils/utils";
 import { HostRole } from "../../host_role";
 import { HostAvailability } from "../../host_availability/host_availability";
-import { AwsWrapperError } from "../../utils/errors";
+import { AwsWrapperError, InternalQueryTimeoutError } from "../../utils/errors";
 import { logger } from "../../../logutils";
 import { Messages } from "../../utils/messages";
 import { WrapperProperties } from "../../wrapper_property";
@@ -60,9 +60,7 @@ export class ClusterAwareReaderFailoverHandler implements ReaderFailoverHandler 
       logger.info(Messages.get("ClusterAwareReaderFailoverHandler.invalidTopology", "failover"));
       return ClusterAwareReaderFailoverHandler.FAILED_READER_FAILOVER_RESULT;
     }
-    return await this.failoverTask(hosts, currentHost).catch((error) => {
-      return new ReaderFailoverResult(null, null, false, error);
-    });
+    return await this.failoverTask(hosts, currentHost);
   }
 
   async getReaderConnection(hostList: HostInfo[]): Promise<ReaderFailoverResult> {
@@ -89,10 +87,11 @@ export class ClusterAwareReaderFailoverHandler implements ReaderFailoverHandler 
         if (result) {
           return result;
         }
-        throw new AwsWrapperError("Internal failover task timed out.");
+        // Should not enter here.
+        return new ReaderFailoverResult(null, null, false, new AwsWrapperError("Failover task returned unexpected value"));
       })
       .catch((error) => {
-        throw new AwsWrapperError(error);
+        return new ReaderFailoverResult(null, null, false, error instanceof InternalQueryTimeoutError ? error : new AwsWrapperError(error));
       })
       .finally(() => {
         clearTimeout(timer.timeoutId);
@@ -137,7 +136,7 @@ export class ClusterAwareReaderFailoverHandler implements ReaderFailoverHandler 
         await sleep(1000);
       }
     }
-    throw new AwsWrapperError("Internal failover task has timed out.");
+    throw new InternalQueryTimeoutError("Internal failover task has timed out.");
   }
 
   async failoverInternal(hosts: HostInfo[], currentHost: HostInfo | null): Promise<ReaderFailoverResult> {
