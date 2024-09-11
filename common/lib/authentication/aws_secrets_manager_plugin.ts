@@ -15,10 +15,10 @@
 */
 
 import {
-  SecretsManagerClientConfig,
+  GetSecretValueCommand,
   SecretsManagerClient,
-  SecretsManagerServiceException,
-  GetSecretValueCommand
+  SecretsManagerClientConfig,
+  SecretsManagerServiceException
 } from "@aws-sdk/client-secrets-manager";
 import { logger } from "../../logutils";
 import { AbstractConnectionPlugin } from "../abstract_connection_plugin";
@@ -29,11 +29,15 @@ import { Messages } from "../utils/messages";
 import { WrapperProperties } from "../wrapper_property";
 import { logAndThrowError } from "../utils/utils";
 import { ClientWrapper } from "../client_wrapper";
+import { TelemetryTraceLevel } from "../utils/telemetry/telemetry_trace_level";
 
 export class AwsSecretsManagerPlugin extends AbstractConnectionPlugin {
+  private static readonly TELEMETRY_UPDATE_SECRETS = "fetch credentials";
+  private static readonly TELEMETRY_FETCH_CREDENTIALS_COUNTER = "secretsManager.fetchCredentials.count";
   private static SUBSCRIBED_METHODS: Set<string> = new Set<string>(["connect", "forceConnect"]);
   private static SECRETS_ARN_PATTERN: RegExp = new RegExp("^arn:aws:secretsmanager:(?<region>[^:\\n]*):[^:\\n]*:([^:/\\n]*[:/])?(.*)$");
   private readonly pluginService: PluginService;
+  private readonly fetchCredentialsCounter;
   private secret: Secret | null = null;
   static secretsCache: Map<string, Secret> = new Map();
   secretKey: SecretCacheKey;
@@ -66,6 +70,10 @@ export class AwsSecretsManagerPlugin extends AbstractConnectionPlugin {
 
     this.secretKey = new SecretCacheKey(secretId, region);
     this.secretsManagerClient = new SecretsManagerClient(config);
+
+    this.fetchCredentialsCounter = this.pluginService
+      .getTelemetryFactory()
+      .createCounter(AwsSecretsManagerPlugin.TELEMETRY_FETCH_CREDENTIALS_COUNTER);
   }
 
   getSubscribedMethods(): Set<string> {
@@ -117,26 +125,31 @@ export class AwsSecretsManagerPlugin extends AbstractConnectionPlugin {
   }
 
   private async updateSecret(forceRefresh: boolean): Promise<boolean> {
-    let fetched = false;
-    this.secret = AwsSecretsManagerPlugin.secretsCache.get(JSON.stringify(this.secretKey)) ?? null;
+    const telemetryFactory = this.pluginService.getTelemetryFactory();
+    const telemetryContext = telemetryFactory.openTelemetryContext(AwsSecretsManagerPlugin.TELEMETRY_UPDATE_SECRETS, TelemetryTraceLevel.NESTED);
+    this.fetchCredentialsCounter.inc();
 
-    if (!this.secret || forceRefresh) {
-      try {
-        this.secret = await this.fetchLatestCredentials();
-        fetched = true;
-        AwsSecretsManagerPlugin.secretsCache.set(JSON.stringify(this.secretKey), this.secret);
-      } catch (error: any) {
-        if (error instanceof SecretsManagerServiceException) {
-          logAndThrowError(Messages.get("AwsSecretsManagerConnectionPlugin.failedToFetchDbCredentials"));
-        } else if (error instanceof Error && error.message.includes("AWS SDK error")) {
-          logAndThrowError(Messages.get("AwsSecretsManagerConnectionPlugin.endpointOverrideInvalidConnection", error.message));
-        } else {
-          logAndThrowError(Messages.get("AwsSecretsManagerConnectionPlugin.unhandledException", error.message));
+    return await telemetryContext.start(async () => {
+      let fetched = false;
+      this.secret = AwsSecretsManagerPlugin.secretsCache.get(JSON.stringify(this.secretKey)) ?? null;
+
+      if (!this.secret || forceRefresh) {
+        try {
+          this.secret = await this.fetchLatestCredentials();
+          fetched = true;
+          AwsSecretsManagerPlugin.secretsCache.set(JSON.stringify(this.secretKey), this.secret);
+        } catch (error: any) {
+          if (error instanceof SecretsManagerServiceException) {
+            logAndThrowError(Messages.get("AwsSecretsManagerConnectionPlugin.failedToFetchDbCredentials"));
+          } else if (error instanceof Error && error.message.includes("AWS SDK error")) {
+            logAndThrowError(Messages.get("AwsSecretsManagerConnectionPlugin.endpointOverrideInvalidConnection", error.message));
+          } else {
+            logAndThrowError(Messages.get("AwsSecretsManagerConnectionPlugin.unhandledException", error.message));
+          }
         }
       }
-    }
-
-    return fetched;
+      return fetched;
+    });
   }
 
   private async fetchLatestCredentials(): Promise<Secret> {

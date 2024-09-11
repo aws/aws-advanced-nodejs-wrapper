@@ -28,15 +28,21 @@ import { HostChangeOptions } from "../../host_change_options";
 import { WrapperProperties } from "../../wrapper_property";
 import { ClientWrapper } from "../../client_wrapper";
 import { getWriter } from "../../utils/utils";
+import { TelemetryFactory } from "../../utils/telemetry/telemetry_factory";
+import { TelemetryCounter } from "../../utils/telemetry/telemetry_counter";
 
 export class StaleDnsHelper {
   private readonly pluginService: PluginService;
   private readonly rdsUtils: RdsUtils = new RdsUtils();
   private writerHostInfo: HostInfo | null = null;
   private writerHostAddress: string = "";
+  private readonly telemetryFactory: TelemetryFactory;
+  private readonly staleDNSDetectedCounter: TelemetryCounter;
 
   constructor(pluginService: PluginService) {
     this.pluginService = pluginService;
+    this.telemetryFactory = this.pluginService.getTelemetryFactory();
+    this.staleDNSDetectedCounter = this.telemetryFactory.createCounter("staleDNS.stale.detected");
   }
 
   // Follow the returns and throws
@@ -116,6 +122,7 @@ export class StaleDnsHelper {
       // DNS resolves a cluster endpoint to a wrong writer
       // opens a connection to a proper writer host
       logger.debug(Messages.get("StaleDnsHelper.staleDnsDetected", this.writerHostInfo.host));
+      this.staleDNSDetectedCounter.inc();
 
       let targetClient;
       try {

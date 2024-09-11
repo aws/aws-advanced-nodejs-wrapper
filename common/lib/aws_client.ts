@@ -24,9 +24,12 @@ import { PluginManager } from "./plugin_manager";
 import { EventEmitter } from "stream";
 import { DriverConnectionProvider } from "./driver_connection_provider";
 import { ClientWrapper } from "./client_wrapper";
+import { DefaultTelemetryFactory } from "./utils/telemetry/default_telemetry_factory";
+import { TelemetryFactory } from "./utils/telemetry/telemetry_factory";
 
 export abstract class AwsClient extends EventEmitter {
   private _defaultPort: number = -1;
+  protected telemetryFactory: TelemetryFactory;
   protected pluginManager: PluginManager;
   protected pluginService: PluginService;
   protected isConnected: boolean = false;
@@ -60,12 +63,15 @@ export abstract class AwsClient extends EventEmitter {
     const effectiveConnProvider = null;
     // TODO: check for configuration profile to update the effectiveConnProvider
 
+    this.telemetryFactory = new DefaultTelemetryFactory(this.properties);
+
     const container = new PluginServiceManagerContainer();
     this.pluginService = new PluginService(container, this, dbType, knownDialectsByCode, this.properties);
-    this.pluginManager = new PluginManager(container, this.properties, defaultConnProvider, effectiveConnProvider);
+    this.pluginManager = new PluginManager(container, this.properties, defaultConnProvider, effectiveConnProvider, this.telemetryFactory);
   }
 
   private async setup() {
+    await this.telemetryFactory.init();
     await this.pluginManager.init();
   }
 
@@ -88,6 +94,7 @@ export abstract class AwsClient extends EventEmitter {
     if (info != null) {
       await this.pluginService.refreshHostList();
     }
+
     this.isConnected = true;
   }
 

@@ -26,6 +26,7 @@ import { logger } from "../../../logutils";
 import { Messages } from "../../utils/messages";
 import { AwsWrapperError } from "../../utils/errors";
 import { ClientWrapper } from "../../client_wrapper";
+import { TelemetryCounter } from "../../utils/telemetry/telemetry_counter";
 
 export class OktaAuthPlugin extends AbstractConnectionPlugin {
   protected static readonly tokenCache = new Map<string, TokenInfo>();
@@ -33,11 +34,13 @@ export class OktaAuthPlugin extends AbstractConnectionPlugin {
   protected pluginService: PluginService;
   protected rdsUtils = new RdsUtils();
   private readonly credentialsProviderFactory: CredentialsProviderFactory;
+  private readonly fetchTokenCounter: TelemetryCounter;
 
   constructor(pluginService: PluginService, credentialsProviderFactory: CredentialsProviderFactory) {
     super();
     this.pluginService = pluginService;
     this.credentialsProviderFactory = credentialsProviderFactory;
+    this.fetchTokenCounter = this.pluginService.getTelemetryFactory().createCounter("oktaAuth.fetchToken.count");
   }
 
   public getSubscribedMethods(): Set<string> {
@@ -103,12 +106,14 @@ export class OktaAuthPlugin extends AbstractConnectionPlugin {
     const tokenExpirationSec = WrapperProperties.IAM_TOKEN_EXPIRATION.get(props);
     const tokenExpiry = Date.now() + tokenExpirationSec * 1000;
     const port = IamAuthUtils.getIamPort(props, hostInfo, this.pluginService.getDialect().getDefaultPort());
+    this.fetchTokenCounter.inc();
     const token = await IamAuthUtils.generateAuthenticationToken(
       hostInfo.host,
       port,
       region,
       WrapperProperties.DB_USER.get(props),
-      await this.credentialsProviderFactory.getAwsCredentialsProvider(hostInfo.host, region, props)
+      await this.credentialsProviderFactory.getAwsCredentialsProvider(hostInfo.host, region, props),
+      this.pluginService
     );
     logger.debug(Messages.get("AuthenticationToken.useCachedToken", token));
     WrapperProperties.PASSWORD.set(props, token);

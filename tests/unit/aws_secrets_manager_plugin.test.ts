@@ -25,6 +25,7 @@ import { AwsWrapperError } from "../../common/lib/utils/errors";
 import { Messages } from "../../common/lib/utils/messages";
 import { WrapperProperties } from "../../common/lib/wrapper_property";
 import { anything, instance, mock, reset, verify, when } from "ts-mockito";
+import { NullTelemetryFactory } from "../../common/lib/utils/telemetry/null_telemetry_factory";
 
 const secretsManagerClientException: SecretsManagerServiceException = new SecretsManagerServiceException({
   message: "message",
@@ -78,6 +79,7 @@ describe("testSecretsManager", () => {
     TEST_PROPS.set(WrapperProperties.SECRET_REGION.name, TEST_SECRET_REGION);
     const mockClientInstance = instance(mockClient);
     when(mockPluginService.getCurrentClient()).thenReturn(mockClientInstance);
+    when(mockPluginService.getTelemetryFactory()).thenReturn(new NullTelemetryFactory());
     const mockPluginServiceInstance = instance(mockPluginService);
     plugin = new AwsSecretsManagerPlugin(mockPluginServiceInstance, TEST_PROPS);
   });
@@ -185,7 +187,7 @@ describe("testSecretsManager", () => {
   ])("connect using arn", async (arn, expectedRegionParsedFromARN) => {
     const props = new Map();
     WrapperProperties.SECRET_ID.set(props, arn);
-    const testPlugin = new AwsSecretsManagerPlugin(mockPluginService, props);
+    const testPlugin = new AwsSecretsManagerPlugin(instance(mockPluginService), props);
     const secretKey = testPlugin.secretKey;
     expect(secretKey.region).toBe(expectedRegionParsedFromARN);
   });
@@ -199,7 +201,7 @@ describe("testSecretsManager", () => {
     const props = new Map();
     WrapperProperties.SECRET_ID.set(props, arn);
     WrapperProperties.SECRET_REGION.set(props, expectedRegion);
-    const testPlugin = new AwsSecretsManagerPlugin(mockPluginService, props);
+    const testPlugin = new AwsSecretsManagerPlugin(instance(mockPluginService), props);
     const secretKey = testPlugin.secretKey;
     // The region specified in `secretsManagerRegion` should override the region parsed from ARN.
     expect(secretKey.region).not.toBe(regionFromArn);

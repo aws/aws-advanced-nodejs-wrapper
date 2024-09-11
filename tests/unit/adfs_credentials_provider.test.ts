@@ -16,10 +16,14 @@
 
 import { WrapperProperties } from "../../common/lib/wrapper_property";
 import { readFileSync } from "fs";
-import { anything, instance, spy, when } from "ts-mockito";
+import { anything, instance, mock, spy, when } from "ts-mockito";
 import { AdfsCredentialsProviderFactory } from "../../common/lib/plugins/federated_auth/adfs_credentials_provider_factory";
+import { PluginService } from "../../common/lib/plugin_service";
+import { NullTelemetryFactory } from "../../common/lib/utils/telemetry/null_telemetry_factory";
 
 const props = new Map<string, any>();
+const mockPluginService = mock(PluginService);
+const telemetryFactory = new NullTelemetryFactory();
 
 const signInPageHtml = "tests/unit/resources/federated_auth/adfs-sign-in-page.html";
 const adfsSamlHtml = "tests/unit/resources/federated_auth/adfs-saml.html";
@@ -33,12 +37,13 @@ describe("adfsTest", () => {
   beforeEach(() => {
     WrapperProperties.IDP_USERNAME.set(props, "someFederatedUsername@example.com");
     WrapperProperties.IDP_PASSWORD.set(props, "somePassword");
+    when(mockPluginService.getTelemetryFactory()).thenReturn(telemetryFactory);
   });
 
   it("testGetSamlAssertion", async () => {
     WrapperProperties.IDP_ENDPOINT.set(props, "ec2amaz-ab3cdef.example.com");
 
-    const spyCredentialsFactory = spy(new AdfsCredentialsProviderFactory());
+    const spyCredentialsFactory = spy(new AdfsCredentialsProviderFactory(instance(mockPluginService)));
     const spyCredentialsFactoryInstance = instance(spyCredentialsFactory);
     when(spyCredentialsFactory.getSignInPageBody(anything(), anything())).thenResolve(signInPage);
     when(spyCredentialsFactory.getFormActionBody(anything(), anything(), anything())).thenResolve(adfsSaml);
@@ -56,7 +61,7 @@ describe("adfsTest", () => {
   it("testGetSamlAssertionUrlScheme", async () => {
     WrapperProperties.IDP_ENDPOINT.set(props, "https://ec2amaz-ab3cdef.example.com");
 
-    const spyCredentialsFactory = spy(new AdfsCredentialsProviderFactory());
+    const spyCredentialsFactory = spy(new AdfsCredentialsProviderFactory(instance(mockPluginService)));
     const spyCredentialsFactoryInstance = instance(spyCredentialsFactory);
     when(spyCredentialsFactory.getSignInPageBody(anything(), anything())).thenResolve(signInPage);
     when(spyCredentialsFactory.getFormActionBody(anything(), anything(), anything())).thenResolve(adfsSaml);

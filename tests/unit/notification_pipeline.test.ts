@@ -22,6 +22,7 @@ import { DefaultPlugin } from "../../common/lib/plugins/default_plugin";
 import { instance, mock } from "ts-mockito";
 import { PluginService } from "../../common/lib/plugin_service";
 import { DriverConnectionProvider } from "../../common/lib/driver_connection_provider";
+import { NullTelemetryFactory } from "../../common/lib/utils/telemetry/null_telemetry_factory";
 
 class TestPlugin extends DefaultPlugin {
   counter: number = 0;
@@ -31,9 +32,9 @@ class TestPlugin extends DefaultPlugin {
     return Promise.resolve(OldConnectionSuggestionAction.NO_OPINION);
   }
 
-  notifyHostListChanged(changes: Map<string, Set<HostChangeOptions>>): void {
+  notifyHostListChanged(changes: Map<string, Set<HostChangeOptions>>): Promise<void> {
     this.counter++;
-    return;
+    return Promise.resolve();
   }
 
   resetCounter() {
@@ -52,7 +53,7 @@ describe("notificationPipelineTest", () => {
   let plugin: TestPlugin;
 
   beforeEach(() => {
-    pluginManager = new PluginManager(container, props, new DriverConnectionProvider(), null);
+    pluginManager = new PluginManager(container, props, new DriverConnectionProvider(), null, new NullTelemetryFactory());
     plugin = new TestPlugin(instance(mockPluginService), new DriverConnectionProvider(), null);
     pluginManager["_plugins"] = [plugin];
   });

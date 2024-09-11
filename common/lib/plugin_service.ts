@@ -41,6 +41,7 @@ import { logger } from "../logutils";
 import { Messages } from "./utils/messages";
 import { getWriter } from "./utils/utils";
 import { DatabaseDialectCodes } from "./database_dialect/database_dialect_codes";
+import { TelemetryFactory } from "./utils/telemetry/telemetry_factory";
 
 export class PluginService implements ErrorHandler, HostListProviderService {
   private readonly _currentClient: AwsClient;
@@ -474,5 +475,13 @@ export class PluginService implements ErrorHandler, HostListProviderService {
 
   async rollback(targetClient: ClientWrapper) {
     return await this.getDialect().rollback(targetClient);
+  }
+
+  getTargetName(): string {
+    return this.pluginServiceManagerContainer.pluginManager!.getDefaultConnProvider().getTargetName();
+  }
+
+  getTelemetryFactory(): TelemetryFactory {
+    return this.pluginServiceManagerContainer.pluginManager!.getTelemetryFactory();
   }
 }

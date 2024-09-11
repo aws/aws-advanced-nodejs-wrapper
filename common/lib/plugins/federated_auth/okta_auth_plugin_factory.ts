@@ -27,7 +27,7 @@ export class OktaAuthPluginFactory implements ConnectionPluginFactory {
       const oktaAuthPluginImport = await import("./okta_auth_plugin");
       const oktaCredentialsProviderFactoryImport = await import("./okta_credentials_provider_factory");
 
-      const oktaCredentialsProviderFactory = new oktaCredentialsProviderFactoryImport.OktaCredentialsProviderFactory();
+      const oktaCredentialsProviderFactory = new oktaCredentialsProviderFactoryImport.OktaCredentialsProviderFactory(pluginService);
       return new oktaAuthPluginImport.OktaAuthPlugin(pluginService, oktaCredentialsProviderFactory);
     } catch (error: any) {
       logger.error(error);

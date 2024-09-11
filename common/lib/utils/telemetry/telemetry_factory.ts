@@ -14,10 +14,19 @@
   limitations under the License.
 */
 
-import { QueryOptions } from "mysql2/typings/mysql/lib/protocol/sequences/Query";
+import { TelemetryContext } from "./telemetry_context";
+import { TelemetryTraceLevel } from "./telemetry_trace_level";
+import { TelemetryCounter } from "./telemetry_counter";
+import { TelemetryGauge } from "./telemetry_gauge";
 
-export class Utils {
-  static constructConfig(props: Map<string, any>): QueryOptions {
-    return Object.fromEntries(props) as QueryOptions;
-  }
+export interface TelemetryFactory {
+  init(): Promise<void>;
+
+  openTelemetryContext(name: string, traceLevel: TelemetryTraceLevel): TelemetryContext;
+
+  postCopy(telemetryContext: TelemetryContext, telemetryTraceLevel: TelemetryTraceLevel): Promise<void>;
+
+  createCounter(name: string): TelemetryCounter;
+
+  createGauge(name: string, callable: () => void): TelemetryGauge;
 }

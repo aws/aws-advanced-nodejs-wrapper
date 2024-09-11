@@ -24,6 +24,7 @@ import { CredentialsProviderFactory } from "../../common/lib/plugins/federated_a
 import { DatabaseDialect } from "../../common/lib/database_dialect/database_dialect";
 import { Credentials } from "aws-sdk";
 import { HostRole } from "../../common/lib/host_role";
+import { NullTelemetryFactory } from "../../common/lib/utils/telemetry/null_telemetry_factory";
 
 const testToken = "testToken";
 const defaultPort = 5432;
@@ -50,13 +51,14 @@ describe("federatedAuthTest", () => {
   let props: Map<string, any>;
 
   beforeEach(() => {
+    when(mockPluginService.getDialect()).thenReturn(mockDialectInstance);
+    when(mockPluginService.getTelemetryFactory()).thenReturn(new NullTelemetryFactory());
+    when(mockDialect.getDefaultPort()).thenReturn(defaultPort);
+    when(mockCredentialsProviderFactory.getAwsCredentialsProvider(anything(), anything(), anything())).thenResolve(instance(mockCredentials));
     props = new Map<string, any>();
     WrapperProperties.PLUGINS.set(props, "federatedAuth");
     WrapperProperties.DB_USER.set(props, dbUser);
     spyPlugin = spy(new FederatedAuthPlugin(instance(mockPluginService), instance(mockCredentialsProviderFactory)));
-    when(mockPluginService.getDialect()).thenReturn(mockDialectInstance);
-    when(mockDialect.getDefaultPort()).thenReturn(defaultPort);
-    when(mockCredentialsProviderFactory.getAwsCredentialsProvider(anything(), anything(), anything())).thenResolve(instance(mockCredentials));
   });
 
   afterEach(() => {
@@ -85,7 +87,7 @@ describe("federatedAuthTest", () => {
 
     FederatedAuthPlugin["tokenCache"].set(key, expiredTokenInfo);
 
-    when(spyIamUtils.generateAuthenticationToken(anything(), anything(), anything(), anything(), anything())).thenResolve(testToken);
+    when(spyIamUtils.generateAuthenticationToken(anything(), anything(), anything(), anything(), anything(), anything())).thenResolve(testToken);
 
     await spyPluginInstance.connect(hostInfo, props, true, mockConnectFunc);
 
@@ -96,7 +98,7 @@ describe("federatedAuthTest", () => {
   it("testNoCachedToken", async () => {
     const spyPluginInstance = instance(spyPlugin);
 
-    when(spyIamUtils.generateAuthenticationToken(anything(), anything(), anything(), anything(), anything())).thenResolve(testToken);
+    when(spyIamUtils.generateAuthenticationToken(anything(), anything(), anything(), anything(), anything(), anything())).thenResolve(testToken);
 
     await spyPluginInstance.connect(hostInfo, props, true, mockConnectFunc);
     expect(dbUser).toBe(WrapperProperties.USER.get(props));

@@ -66,7 +66,7 @@ export class WrapperProperties {
 
   static readonly INTERNAL_QUERY_TIMEOUT = new WrapperProperty<number>(
     "internal_query_timeout",
-    "Timeout in milliseconds for the driver to execute internal queries, such as the query for cluster topology",
+    "Timeout in milliseconds for the wrapper to execute internal queries, such as the query for cluster topology",
     20000
   );
 
@@ -256,6 +256,32 @@ export class WrapperProperties {
     "roundRobinDefaultWeight",
     "The default weight for any hosts that have not been configured with the `roundRobinHostWeightPairs` parameter.",
     1
+  );
+
+  static readonly ENABLE_TELEMETRY = new WrapperProperty<boolean>("enableTelemetry", "Enables telemetry and observability of the wrapper", false);
+
+  static readonly TELEMETRY_SUBMIT_TOPLEVEL = new WrapperProperty<boolean>(
+    "telemetrySubmitToplevel",
+    "Force submitting traces related to calls as top level traces.",
+    false
+  );
+
+  static readonly TELEMETRY_TRACES_BACKEND = new WrapperProperty<string>(
+    "telemetryTracesBackend",
+    "Method to export telemetry traces of the wrapper.",
+    null
+  );
+
+  static readonly TELEMETRY_METRICS_BACKEND = new WrapperProperty<string>(
+    "telemetryMetricsBackend",
+    "Method to export telemetry metrics of the wrapper.",
+    null
+  );
+
+  static readonly TELEMETRY_FAILOVER_ADDITIONAL_TOP_TRACE = new WrapperProperty<boolean>(
+    "telemetryFailoverAdditionalTopTrace",
+    "Post an additional top-level trace for failover process.",
+    false
   );
 
   static removeWrapperProperties(props: Map<string, any>): any {

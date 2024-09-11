@@ -25,16 +25,22 @@ import { AbstractConnectionPlugin } from "../abstract_connection_plugin";
 import { WrapperProperties } from "../wrapper_property";
 import { IamAuthUtils, TokenInfo } from "../utils/iam_auth_utils";
 import { ClientWrapper } from "../client_wrapper";
+import { AwsCredentialIdentityProvider } from "@smithy/types/dist-types/identity/awsCredentialIdentity";
+import { TelemetryTraceLevel } from "../utils/telemetry/telemetry_trace_level";
 
 export class IamAuthenticationPlugin extends AbstractConnectionPlugin {
   private static readonly SUBSCRIBED_METHODS = new Set<string>(["connect", "forceConnect"]);
   protected static readonly tokenCache = new Map<string, TokenInfo>();
+  private readonly telemetryFactory;
+  private readonly fetchTokenCounter;
   private pluginService: PluginService;
   rdsUtil: RdsUtils = new RdsUtils();
 
   constructor(pluginService: PluginService) {
     super();
     this.pluginService = pluginService;
+    this.telemetryFactory = this.pluginService.getTelemetryFactory();
+    this.fetchTokenCounter = this.telemetryFactory.createCounter("iam.fetchTokenCount");
   }
 
   getSubscribedMethods(): Set<string> {
@@ -89,9 +95,11 @@ export class IamAuthenticationPlugin extends AbstractConnectionPlugin {
         host,
         port,
         region,
-        WrapperProperties.USER.get(props),
-        AwsCredentialsManager.getProvider(hostInfo, props)
+        user,
+        AwsCredentialsManager.getProvider(hostInfo, props),
+        this.pluginService
       );
+      this.fetchTokenCounter.inc();
       logger.debug(Messages.get("AuthenticationToken.generatedNewToken", token));
       WrapperProperties.PASSWORD.set(props, token);
       IamAuthenticationPlugin.tokenCache.set(cacheKey, new TokenInfo(token, tokenExpiry));
@@ -114,9 +122,11 @@ export class IamAuthenticationPlugin extends AbstractConnectionPlugin {
         host,
         port,
         region,
-        WrapperProperties.USER.get(props),
-        AwsCredentialsManager.getProvider(hostInfo, props)
+        user,
+        AwsCredentialsManager.getProvider(hostInfo, props),
+        this.pluginService
       );
+      this.fetchTokenCounter.inc();
       logger.debug(Messages.get("AuthenticationToken.generatedNewToken", token));
       WrapperProperties.PASSWORD.set(props, token);
       IamAuthenticationPlugin.tokenCache.set(cacheKey, new TokenInfo(token, tokenExpiry));

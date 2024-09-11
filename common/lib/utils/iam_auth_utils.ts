@@ -22,8 +22,12 @@ import { Messages } from "./messages";
 import { RdsUtils } from "./rds_utils";
 import { Signer } from "@aws-sdk/rds-signer";
 import { AwsCredentialIdentityProvider, AwsCredentialIdentity } from "@smithy/types/dist-types/identity/awsCredentialIdentity";
+import { PluginService } from "../plugin_service";
+import { TelemetryTraceLevel } from "./telemetry/telemetry_trace_level";
 
 export class IamAuthUtils {
+  private static readonly TELEMETRY_FETCH_TOKEN = "fetch IAM token";
+
   public static getIamHost(props: Map<string, any>, hostInfo: HostInfo): string {
     return WrapperProperties.IAM_HOST.get(props) ? WrapperProperties.IAM_HOST.get(props) : hostInfo.host;
   }
@@ -64,17 +68,22 @@ export class IamAuthUtils {
     port: number,
     region: string,
     user: string,
-    credentials: AwsCredentialIdentity | AwsCredentialIdentityProvider
+    credentials: AwsCredentialIdentity | AwsCredentialIdentityProvider,
+    pluginService: PluginService
   ): Promise<string> {
-    const signer = new Signer({
-      hostname: hostname,
-      port: port,
-      region: region,
-      credentials,
-      username: user
-    });
+    const telemetryFactory = pluginService.getTelemetryFactory();
+    const telemetryContext = telemetryFactory.openTelemetryContext(IamAuthUtils.TELEMETRY_FETCH_TOKEN, TelemetryTraceLevel.NESTED);
+    return await telemetryContext.start(async () => {
+      const signer = new Signer({
+        hostname: hostname,
+        port: port,
+        region: region,
+        credentials,
+        username: user
+      });
 
-    return signer.getAuthToken();
+      return signer.getAuthToken();
+    });
   }
 }
 

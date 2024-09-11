@@ -37,6 +37,7 @@ import { anything, instance, mock, reset, resetCalls, spy, verify, when } from "
 import { Messages } from "../../common/lib/utils/messages";
 import { HostChangeOptions } from "../../common/lib/host_change_options";
 import { ClientWrapper } from "../../common/lib/client_wrapper";
+import { NullTelemetryFactory } from "../../common/lib/utils/telemetry/null_telemetry_factory";
 
 const builder = new HostInfoBuilder({ hostAvailabilityStrategy: new SimpleHostAvailabilityStrategy() });
 
@@ -85,6 +86,7 @@ describe("reader failover handler", () => {
     when(mockPluginService.getHostListProvider()).thenReturn(instance(mockRdsHostListProvider));
     when(mockPluginService.getCurrentClient()).thenReturn(instance(mockAwsClient));
     when(mockPluginService.abortCurrentClient()).thenResolve();
+    when(mockPluginService.getTelemetryFactory()).thenReturn(new NullTelemetryFactory());
     properties.clear();
   });
 

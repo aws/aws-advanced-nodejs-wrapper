@@ -29,6 +29,7 @@ import { ConnectionProvider } from "../connection_provider";
 import { AwsWrapperError } from "../utils/errors";
 import { HostAvailability } from "../host_availability/host_availability";
 import { ClientWrapper } from "../client_wrapper";
+import { TelemetryTraceLevel } from "../utils/telemetry/telemetry_trace_level";
 
 export class DefaultPlugin extends AbstractConnectionPlugin {
   id: string = uniqueId("_defaultPlugin");
@@ -96,7 +97,10 @@ export class DefaultPlugin extends AbstractConnectionPlugin {
   }
 
   private async connectInternal(hostInfo: HostInfo, props: Map<string, any>, connProvider: ConnectionProvider): Promise<ClientWrapper> {
-    const result = await connProvider.connect(hostInfo, this.pluginService, props);
+    const telemetryFactory = this.pluginService.getTelemetryFactory();
+    const telemetryContext = telemetryFactory.openTelemetryContext(connProvider.getTargetName(), TelemetryTraceLevel.NESTED);
+
+    const result = await telemetryContext.start(async () => await connProvider.connect(hostInfo, this.pluginService, props));
     this.pluginService.setAvailability(hostInfo.allAliases, HostAvailability.AVAILABLE);
     await this.pluginService.updateDialect(result);
     return result;
@@ -104,7 +108,14 @@ export class DefaultPlugin extends AbstractConnectionPlugin {
 
   override async execute<Type>(methodName: string, methodFunc: () => Promise<Type>): Promise<Type> {
     logger.debug(Messages.get("DefaultPlugin.executingMethod", methodName));
-    return await methodFunc();
+
+    const telemetryFactory = this.pluginService.getTelemetryFactory();
+    const telemetryContext = telemetryFactory.openTelemetryContext(
+      `${this.pluginService.getTargetName()} - ${methodName}`,
+      TelemetryTraceLevel.NESTED
+    );
+
+    return await telemetryContext.start(async () => await methodFunc());
   }
 
   override notifyConnectionChanged(changes: Set<HostChangeOptions>): Promise<OldConnectionSuggestionAction> {

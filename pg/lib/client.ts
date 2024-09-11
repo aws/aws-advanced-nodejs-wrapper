@@ -29,6 +29,7 @@ import { Messages } from "../../common/lib/utils/messages";
 import { TransactionIsolationLevel } from "../../common/lib/utils/transaction_isolation_level";
 import { ClientWrapper } from "../../common/lib/client_wrapper";
 import { RdsMultiAZPgDatabaseDialect } from "./dialect/rds_multi_az_pg_database_dialect";
+import { TelemetryTraceLevel } from "../../common/lib/utils/telemetry/telemetry_trace_level";
 
 export class AwsPGClient extends AwsClient {
   private static readonly knownDialectsByCode: Map<string, DatabaseDialect> = new Map([
@@ -52,15 +53,17 @@ export class AwsPGClient extends AwsClient {
 
   async connect(): Promise<void> {
     await this.internalConnect();
+    const context = this.telemetryFactory.openTelemetryContext("AwsClient.connect", TelemetryTraceLevel.TOP_LEVEL);
+    return await context.start(async () => {
+      const hostInfo = this.pluginService.getCurrentHostInfo();
 
-    const hostInfo = this.pluginService.getCurrentHostInfo();
-    if (hostInfo == null) {
-      throw new AwsWrapperError("HostInfo was not provided.");
-    }
-    const result: ClientWrapper = await this.pluginManager.connect(hostInfo, this.properties, true);
-    await this.pluginService.setCurrentClient(result, result.hostInfo);
-    await this.internalPostConnect();
-    return;
+      if (hostInfo == null) {
+        throw new AwsWrapperError("HostInfo was not provided.");
+      }
+      const result: ClientWrapper = await this.pluginManager.connect(hostInfo, this.properties, true);
+      await this.pluginService.setCurrentClient(result, result.hostInfo);
+      await this.internalPostConnect();
+    });
   }
 
   executeQuery(props: Map<string, any>, sql: string, targetClient?: ClientWrapper): Promise<QueryResult> {
@@ -71,17 +74,20 @@ export class AwsPGClient extends AwsClient {
     }
   }
 
-  query(text: string): Promise<QueryResult> {
-    return this.pluginManager.execute(
-      this.pluginService.getCurrentHostInfo(),
-      this.properties,
-      "query",
-      async () => {
-        await this.pluginService.updateState(text);
-        return this.targetClient?.client.query(text);
-      },
-      text
-    );
+  async query(text: string): Promise<QueryResult> {
+    const context = this.telemetryFactory.openTelemetryContext("awsClient.query", TelemetryTraceLevel.TOP_LEVEL);
+    return await context.start(async () => {
+      return await this.pluginManager.execute(
+        this.pluginService.getCurrentHostInfo(),
+        this.properties,
+        "query",
+        async () => {
+          await this.pluginService.updateState(text);
+          return this.targetClient?.client.query(text);
+        },
+        text
+      );
+    });
   }
 
   async updateSessionStateReadOnly(readOnly: boolean): Promise<QueryResult | void> {

@@ -22,11 +22,13 @@ import { sleep } from "../../utils/utils";
 import { AwsWrapperError } from "../../utils/errors";
 import { uniqueId } from "lodash";
 import { PluginService } from "../../plugin_service";
+import { TelemetryCounter } from "../../utils/telemetry/telemetry_counter";
 
 export class MonitorConnectionContext {
   readonly failureDetectionIntervalMillis: number;
   private readonly failureDetectionTimeMillis: number;
   private readonly failureDetectionCount: number;
+  private readonly telemetryAbortedConnectionCounter: TelemetryCounter;
   readonly clientToAbort: ClientWrapper;
   readonly monitor: Monitor;
   readonly pluginService: PluginService;
@@ -46,7 +48,8 @@ export class MonitorConnectionContext {
     failureDetectionTimeMillis: number,
     failureDetectionIntervalMillis: number,
     failureDetectionCount: number,
-    pluginService: PluginService
+    pluginService: PluginService,
+    telemetryAbortedConnectionCounter: TelemetryCounter
   ) {
     this.monitor = monitor;
     this.clientToAbort = clientToAbort;
@@ -54,6 +57,7 @@ export class MonitorConnectionContext {
     this.failureDetectionIntervalMillis = failureDetectionIntervalMillis;
     this.failureDetectionCount = failureDetectionCount;
     this.pluginService = pluginService;
+    this.telemetryAbortedConnectionCounter = telemetryAbortedConnectionCounter;
   }
 
   resetInvalidHostStartTimeNano(): void {
@@ -71,6 +75,7 @@ export class MonitorConnectionContext {
 
     try {
       await this.pluginService.tryClosingTargetClient(this.clientToAbort);
+      this.telemetryAbortedConnectionCounter.inc();
     } catch (error: any) {
       // ignore
       logger.debug(Messages.get("MonitorConnectionContext.exceptionAbortingConnection", error.message));
