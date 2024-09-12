@@ -317,6 +317,9 @@ export class ReadWriteSplittingPlugin extends AbstractConnectionPlugin {
     } else if (this.writerTargetClient) {
       await this.switchCurrentTargetClientTo(this.writerTargetClient, writerHost);
     }
+    // TODO: check if reader is from internal connection pool
+    await this.closeTargetClientIfIdle(this.readerTargetClient);
+
     logger.debug(Messages.get("ReadWriteSplittingPlugin.switchedFromReaderToWriter", writerHost.url));
   }
 
@@ -342,6 +345,9 @@ export class ReadWriteSplittingPlugin extends AbstractConnectionPlugin {
         await this.initializeReaderClient(hosts);
       }
     }
+
+    // TODO: check if writer is from internal connection pool
+    await this.closeTargetClientIfIdle(this.writerTargetClient);
   }
 
   async isTargetClientUsable(targetClient: ClientWrapper | undefined): Promise<boolean> {
