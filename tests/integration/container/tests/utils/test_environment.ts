@@ -167,7 +167,7 @@ export class TestEnvironment {
     return this.proxyInstances[0];
   }
 
-  get aurora_region(): string {
+  get auroraRegion(): string {
     return this.info.auroraRegion;
   }
 

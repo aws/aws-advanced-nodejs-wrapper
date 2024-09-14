@@ -65,7 +65,7 @@ let env: TestEnvironment;
 let driver;
 let initClientFunc: (props: any) => any;
 
-const auroraTestUtility = new AuroraTestUtility();
+let auroraTestUtility;
 let enhancedFailureMonitoringPerfDataList: PerfStatMonitoring[] = [];
 
 async function initDefaultConfig(host: string, port: number): Promise<any> {
@@ -146,6 +146,7 @@ async function executeFailureDetectionTimeEfmEnabled(
   detectionCount: number,
   sleepDelayMillis: number
 ) {
+  auroraTestUtility = new AuroraTestUtility((await TestEnvironment.getCurrent()).auroraRegion);
   const config = await initDefaultConfig(env.proxyDatabaseInfo.writerInstanceEndpoint, env.proxyDatabaseInfo.clusterEndpointPort);
   config["plugins"] = "efm";
   config[WrapperProperties.FAILURE_DETECTION_TIME_MS.name] = detectionTimeMillis;

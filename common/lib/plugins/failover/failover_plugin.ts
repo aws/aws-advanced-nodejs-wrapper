@@ -15,7 +15,6 @@
 */
 
 import { AbstractConnectionPlugin } from "../../abstract_connection_plugin";
-import { method, uniqueId } from "lodash";
 import { logger } from "../../../logutils";
 import { HostInfo } from "../../host_info";
 import { OldConnectionSuggestionAction } from "../../old_connection_suggestion_action";
@@ -62,7 +61,6 @@ export class FailoverPlugin extends AbstractConnectionPlugin {
   protected failoverReaderConnectTimeoutMsSetting: number = WrapperProperties.FAILOVER_READER_CONNECT_TIMEOUT_MS.defaultValue;
   protected isClosed: boolean = false;
   failoverMode: FailoverMode | null = null;
-  id: string = uniqueId("_failoverPlugin");
 
   private hostListProviderService?: HostListProviderService;
   private pluginService: PluginService;
@@ -84,7 +82,6 @@ export class FailoverPlugin extends AbstractConnectionPlugin {
     writerFailoverHandler?: ClusterAwareWriterFailoverHandler
   ) {
     super();
-    logger.debug(`TestPlugin constructor id: ${this.id}`);
     this._properties = properties;
     this.pluginService = pluginService;
     this._rdsHelper = rdsHelper;
@@ -174,7 +171,7 @@ export class FailoverPlugin extends AbstractConnectionPlugin {
         }
       }
     }
-    logger.info(Messages.get("Failover.invalidNode"), currentHost);
+    logger.info(Messages.get("Failover.invalidHost", currentHost?.host ?? "empty host"));
     return Promise.resolve();
   }
 
@@ -244,7 +241,6 @@ export class FailoverPlugin extends AbstractConnectionPlugin {
     isInitialConnection: boolean,
     connectFunc: () => Promise<ClientWrapper>
   ): Promise<ClientWrapper> {
-    logger.debug(`Start connect for test plugin: ${this.id}`);
     try {
       return await this.connectInternal(hostInfo, props, isInitialConnection, connectFunc);
     } catch (e: any) {

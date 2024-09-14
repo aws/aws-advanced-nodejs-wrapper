@@ -17,7 +17,6 @@
 import { getTimeoutTask } from "./utils";
 import { Messages } from "./messages";
 import { AwsWrapperError, InternalQueryTimeoutError } from "./errors";
-import { logger } from "../../logutils";
 import { WrapperProperties } from "../wrapper_property";
 
 export class ClientUtils {
@@ -30,7 +29,6 @@ export class ClientUtils {
     );
     return await Promise.race([timeoutTask, newPromise])
       .catch((error: any) => {
-        logger.debug(error);
         if (error instanceof InternalQueryTimeoutError) {
           throw error;
         }
