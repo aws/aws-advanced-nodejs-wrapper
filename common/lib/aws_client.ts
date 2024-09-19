@@ -16,7 +16,6 @@
 
 import { PluginServiceManagerContainer } from "./plugin_service_manager_container";
 import { PluginService } from "./plugin_service";
-import { HostInfo } from "./host_info";
 import { ErrorHandler } from "./error_handler";
 import { DatabaseDialect, DatabaseType } from "./database_dialect/database_dialect";
 import { ConnectionUrlParser } from "./utils/connection_url_parser";

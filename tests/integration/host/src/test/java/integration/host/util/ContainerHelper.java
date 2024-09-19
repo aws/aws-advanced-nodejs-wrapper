@@ -51,7 +51,7 @@ public class ContainerHelper {
 
   private static final String MYSQL_CONTAINER_IMAGE_NAME = "mysql:latest";
   private static final String POSTGRES_CONTAINER_IMAGE_NAME = "postgres:latest";
-  private static final DockerImageName TOXIPROXY_IMAGE = DockerImageName.parse("shopify/toxiproxy:2.1.4");
+  private static final DockerImageName TOXIPROXY_IMAGE = DockerImageName.parse("ghcr.io/shopify/toxiproxy:2.9.0");
 
   private static final String RETRIEVE_TOPOLOGY_SQL_POSTGRES =
       "SELECT SERVER_ID, SESSION_ID FROM aurora_replica_status() "
@@ -92,7 +92,7 @@ public class ContainerHelper {
     if (filter != null) {
         exitCode = execInContainer(container, consumer, "npm", "run", "integration", "--", "-t", filter);
     } else {
-        exitCode = execInContainer(container, consumer, "npm", "run", "integration");
+        exitCode = execInContainer(container, consumer, "npm", "run", "integration", "--abort-on-uncaught-exception");
     }
 
     System.out.println("==== Container console feed ==== <<<<");
@@ -161,6 +161,7 @@ public class ContainerHelper {
 
     return container
         .withEnv("LOG_LEVEL", "silly")
+        .withEnv("UV_THREADPOOL_SIZE", "10")
         .withFileSystemBind("../../../pg", "/app/pg", BindMode.READ_ONLY)
         .withFileSystemBind("../../../mysql", "/app/mysql", BindMode.READ_ONLY)
         .withFileSystemBind("../../../common", "/app/common", BindMode.READ_ONLY)

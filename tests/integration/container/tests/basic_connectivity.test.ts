@@ -26,7 +26,7 @@ import { features } from "./config";
 const itIf = !features.includes(TestEnvironmentFeatures.PERFORMANCE) ? it : it.skip;
 
 let client: any;
-const auroraTestUtility = new AuroraTestUtility();
+let auroraTestUtility: AuroraTestUtility;
 
 async function executeInstanceQuery(client: any, engine: DatabaseEngine, props: any): Promise<void> {
   client.on("error", (error: any) => {
@@ -41,6 +41,7 @@ async function executeInstanceQuery(client: any, engine: DatabaseEngine, props: 
 
 beforeEach(async () => {
   logger.info(`Test started: ${expect.getState().currentTestName}`);
+  auroraTestUtility = new AuroraTestUtility((await TestEnvironment.getCurrent()).auroraRegion);
   await ProxyHelper.enableAllConnectivity();
   client = null;
 });

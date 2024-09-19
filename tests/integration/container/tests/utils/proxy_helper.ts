@@ -18,6 +18,7 @@ import { TestEnvironment } from "./test_environment";
 import { ProxyInfo } from "./proxy_info";
 import { Bandwidth, ICreateToxicBody } from "toxiproxy-node-client";
 import { DatabaseEngine } from "./database_engine";
+import { logger } from "../../../../../common/logutils";
 
 export class ProxyHelper {
   static async disableAllConnectivity(engine: DatabaseEngine) {
@@ -34,6 +35,7 @@ export class ProxyHelper {
 
   static async disableConnectivity(engine: DatabaseEngine, instanceName: string) {
     const env = await TestEnvironment.getCurrent();
+    logger.debug("disabling connectivity to: " + instanceName);
     await ProxyHelper.disableProxyConnectivity(env.getProxyInfo(instanceName));
   }
 

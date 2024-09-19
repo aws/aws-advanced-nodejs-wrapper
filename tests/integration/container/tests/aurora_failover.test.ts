@@ -34,7 +34,7 @@ let client: any;
 let secondaryClient: any;
 let initClientFunc: (props: any) => any;
 
-const auroraTestUtility = new AuroraTestUtility();
+let auroraTestUtility: AuroraTestUtility;
 
 async function initDefaultConfig(host: string, port: number, connectToProxy: boolean): Promise<any> {
   let config: any = {
@@ -58,6 +58,7 @@ describe("aurora failover", () => {
     logger.info(`Test started: ${expect.getState().currentTestName}`);
     env = await TestEnvironment.getCurrent();
 
+    auroraTestUtility = new AuroraTestUtility(env.auroraRegion);
     driver = DriverHelper.getDriverForDatabaseEngine(env.engine);
     initClientFunc = DriverHelper.getClient(driver);
     await ProxyHelper.enableAllConnectivity();
