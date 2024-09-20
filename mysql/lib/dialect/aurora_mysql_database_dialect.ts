@@ -22,6 +22,7 @@ import { HostInfo } from "../../../common/lib/host_info";
 import { TopologyAwareDatabaseDialect } from "../../../common/lib/topology_aware_database_dialect";
 import { HostRole } from "../../../common/lib/host_role";
 import { ClientWrapper } from "../../../common/lib/client_wrapper";
+import { DatabaseDialectCodes } from "../../../common/lib/database_dialect/database_dialect_codes";
 
 export class AuroraMySQLDatabaseDialect extends MySQLDatabaseDialect implements TopologyAwareDatabaseDialect {
   private static readonly TOPOLOGY_QUERY: string =
@@ -80,5 +81,9 @@ export class AuroraMySQLDatabaseDialect extends MySQLDatabaseDialect implements 
 
   getDialectName(): string {
     return this.dialectName;
+  }
+
+  getDialectUpdateCandidates(): string[] {
+    return [DatabaseDialectCodes.RDS_MULTI_AZ_MYSQL];
   }
 }

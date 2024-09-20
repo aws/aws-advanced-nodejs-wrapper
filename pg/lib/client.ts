@@ -28,12 +28,14 @@ import { AwsWrapperError, UnsupportedMethodError } from "../../common/lib/utils/
 import { Messages } from "../../common/lib/utils/messages";
 import { TransactionIsolationLevel } from "../../common/lib/utils/transaction_isolation_level";
 import { ClientWrapper } from "../../common/lib/client_wrapper";
+import { RdsMultiAZPgDatabaseDialect } from "./dialect/rds_multi_az_pg_database_dialect";
 
 export class AwsPGClient extends AwsClient {
   private static readonly knownDialectsByCode: Map<string, DatabaseDialect> = new Map([
     [DatabaseDialectCodes.PG, new PgDatabaseDialect()],
     [DatabaseDialectCodes.RDS_PG, new RdsPgDatabaseDialect()],
-    [DatabaseDialectCodes.AURORA_PG, new AuroraPgDatabaseDialect()]
+    [DatabaseDialectCodes.AURORA_PG, new AuroraPgDatabaseDialect()],
+    [DatabaseDialectCodes.RDS_MULTI_AZ_PG, new RdsMultiAZPgDatabaseDialect()]
   ]);
 
   constructor(config: any) {
