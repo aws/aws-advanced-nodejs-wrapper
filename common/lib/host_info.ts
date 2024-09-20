@@ -28,7 +28,7 @@ export class HostInfo {
   readonly host: string;
   readonly port: number;
   role: HostRole;
-  readonly weight: number; // Greater or equal 0. Lesser the weight, the healthier node.
+  readonly weight: number; // Greater or equal 0. Lesser the weight, the healthier host.
   readonly lastUpdateTime: number;
   availability: HostAvailability;
   aliases: Set<string> = new Set<string>();
