@@ -369,11 +369,11 @@ export class FailoverPlugin extends AbstractConnectionPlugin {
     }
 
     if (!result || !result.isConnected || !result.client) {
-      // "Unable to establish SQL connection to writer node"
+      // "Unable to establish SQL connection to writer host"
       throw new FailoverFailedError(Messages.get("Failover.unableToConnectToWriter"));
     }
 
-    // successfully re-connected to a writer node
+    // successfully re-connected to a writer host
     const writerHostInfo = getWriter(result.topology);
     if (!writerHostInfo) {
       throw new AwsWrapperError();

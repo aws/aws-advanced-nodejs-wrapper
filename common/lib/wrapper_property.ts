@@ -194,9 +194,9 @@ export class WrapperProperties {
     "false"
   );
 
-  static readonly ENABLE_GREEN_NODE_REPLACEMENT = new WrapperProperty<boolean>(
-    "enableGreenNodeReplacement",
-    "Enables replacing a green node host name with the original hostname after a blue/green switchover and the green name no longer resolves.",
+  static readonly ENABLE_GREEN_HOST_REPLACEMENT = new WrapperProperty<boolean>(
+    "enableGreenHostReplacement",
+    "Enables replacing a green host name with the original hostname after a blue/green switchover and the green name no longer resolves.",
     "false"
   );
 

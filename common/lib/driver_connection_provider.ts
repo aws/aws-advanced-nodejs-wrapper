@@ -63,7 +63,7 @@ export class DriverConnectionProvider implements ConnectionProvider {
         .build();
       resultTargetClient = targetClient;
     } catch (e: any) {
-      if (!WrapperProperties.ENABLE_GREEN_NODE_REPLACEMENT.get(props)) {
+      if (!WrapperProperties.ENABLE_GREEN_HOST_REPLACEMENT.get(props)) {
         throw e;
       }
 

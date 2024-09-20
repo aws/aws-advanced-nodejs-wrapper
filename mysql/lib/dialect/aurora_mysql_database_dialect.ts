@@ -48,9 +48,9 @@ export class AuroraMySQLDatabaseDialect extends MySQLDatabaseDialect implements 
       const hostName: string = row["server_id"];
       const isWriter: boolean = row["is_writer"];
       const cpuUtilization: number = row["cpu"];
-      const nodeLag: number = row["lag"];
+      const hostLag: number = row["lag"];
       const lastUpdateTime: number = row["last_update_timestamp"] ? Date.parse(row["last_update_timestamp"]) : Date.now();
-      const host: HostInfo = hostListProvider.createHost(hostName, isWriter, Math.round(nodeLag) * 100 + Math.round(cpuUtilization), lastUpdateTime);
+      const host: HostInfo = hostListProvider.createHost(hostName, isWriter, Math.round(hostLag) * 100 + Math.round(cpuUtilization), lastUpdateTime);
       hosts.push(host);
     });
     return hosts;

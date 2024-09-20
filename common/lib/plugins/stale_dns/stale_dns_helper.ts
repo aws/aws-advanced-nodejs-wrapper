@@ -114,7 +114,7 @@ export class StaleDnsHelper {
 
     if (this.writerHostAddress !== clusterInetAddress) {
       // DNS resolves a cluster endpoint to a wrong writer
-      // opens a connection to a proper writer node
+      // opens a connection to a proper writer host
       logger.debug(Messages.get("StaleDnsHelper.staleDnsDetected", this.writerHostInfo.host));
 
       let targetClient;

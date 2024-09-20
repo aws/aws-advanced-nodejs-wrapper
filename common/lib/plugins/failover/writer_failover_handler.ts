@@ -379,13 +379,13 @@ class WaitForNewWriterHandlerTask {
         if (topology && topology.length > 0) {
           if (topology.length === 1) {
             // The currently connected reader is in a middle of failover. It's not yet connected
-            // to a new writer and works in as "standalone" node. The handler needs to
+            // to a new writer and works in as "standalone" host. The handler needs to
             // wait till the reader gets connected to entire cluster and fetch a proper
             // cluster topology.
 
             // do nothing
             logger.info(
-              Messages.get("ClusterAwareWriterFailoverHandler.standaloneNode", this.currentReaderHost == null ? "" : this.currentReaderHost.url)
+              Messages.get("ClusterAwareWriterFailoverHandler.standaloneHost", this.currentReaderHost == null ? "" : this.currentReaderHost.url)
             );
           } else {
             this.currentTopology = topology;
