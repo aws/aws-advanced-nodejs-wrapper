@@ -32,7 +32,7 @@ export class PgDatabaseDialect implements DatabaseDialect {
   }
 
   getDialectUpdateCandidates(): string[] {
-    return [DatabaseDialectCodes.AURORA_PG, DatabaseDialectCodes.RDS_PG];
+    return [DatabaseDialectCodes.RDS_MULTI_AZ_PG, DatabaseDialectCodes.AURORA_PG, DatabaseDialectCodes.RDS_PG];
   }
 
   getHostAliasQuery(): string {

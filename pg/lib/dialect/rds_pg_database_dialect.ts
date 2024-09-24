@@ -24,7 +24,7 @@ export class RdsPgDatabaseDialect extends PgDatabaseDialect {
     "FROM pg_settings WHERE name='rds.extensions'";
 
   getDialectUpdateCandidates(): string[] {
-    return [DatabaseDialectCodes.AURORA_PG];
+    return [DatabaseDialectCodes.RDS_MULTI_AZ_PG, DatabaseDialectCodes.AURORA_PG];
   }
 
   async isDialect(targetClient: ClientWrapper): Promise<boolean> {

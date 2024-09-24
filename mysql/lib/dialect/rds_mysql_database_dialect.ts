@@ -20,7 +20,7 @@ import { ClientWrapper } from "../../../common/lib/client_wrapper";
 
 export class RdsMySQLDatabaseDialect extends MySQLDatabaseDialect {
   getDialectUpdateCandidates(): string[] {
-    return [DatabaseDialectCodes.AURORA_MYSQL];
+    return [DatabaseDialectCodes.RDS_MULTI_AZ_MYSQL, DatabaseDialectCodes.AURORA_MYSQL];
   }
 
   async isDialect(targetClient: ClientWrapper): Promise<boolean> {

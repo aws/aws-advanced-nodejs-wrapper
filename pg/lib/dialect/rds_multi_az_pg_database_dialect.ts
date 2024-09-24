@@ -42,13 +42,13 @@ export class RdsMultiAZPgDatabaseDialect extends PgDatabaseDialect implements To
   private static readonly IS_READER_QUERY: string = "SELECT pg_is_in_recovery()";
 
   async isDialect(targetClient: ClientWrapper): Promise<boolean> {
-    const res = await targetClient.client.query(RdsMultiAZPgDatabaseDialect.WRITER_HOST_FUNC_EXIST_QUERY);
+    const res = await targetClient.client.query(RdsMultiAZPgDatabaseDialect.WRITER_HOST_FUNC_EXIST_QUERY).catch(() => false);
 
     if (!res) {
       return false;
     }
 
-    return !!(await targetClient.client.query(RdsMultiAZPgDatabaseDialect.TOPOLOGY_QUERY));
+    return !!(await targetClient.client.query(RdsMultiAZPgDatabaseDialect.FETCH_WRITER_HOST_QUERY).catch(() => false));
   }
 
   getHostListProvider(props: Map<string, any>, originalUrl: string, hostListProviderService: HostListProviderService): HostListProvider {

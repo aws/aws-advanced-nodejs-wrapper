@@ -40,13 +40,16 @@ export class RdsMultiAZMySQLDatabaseDialect extends MySQLDatabaseDialect impleme
   private static readonly IS_READER_QUERY: string = "SELECT @@read_only";
 
   async isDialect(targetClient: ClientWrapper): Promise<boolean> {
-    const res = await targetClient.client.promise().query(RdsMultiAZMySQLDatabaseDialect.TOPOLOGY_TABLE_EXIST_QUERY);
+    const res = await targetClient.client
+      .promise()
+      .query(RdsMultiAZMySQLDatabaseDialect.TOPOLOGY_TABLE_EXIST_QUERY)
+      .catch(() => false);
 
     if (!res) {
       return false;
     }
 
-    return !!(await targetClient.client.promise().query(RdsMultiAZMySQLDatabaseDialect.TOPOLOGY_QUERY));
+    return !!(await targetClient.client.promise().query(RdsMultiAZMySQLDatabaseDialect.TOPOLOGY_QUERY).catch(() => false));
   }
 
   getHostListProvider(props: Map<string, any>, originalUrl: string, hostListProviderService: HostListProviderService): HostListProvider {
