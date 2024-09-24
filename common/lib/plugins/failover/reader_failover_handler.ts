@@ -184,7 +184,7 @@ export class ClusterAwareReaderFailoverHandler implements ReaderFailoverHandler 
         throw new AwsWrapperError("Connection attempt task timed out.");
       })
       .catch((error) => {
-        if (error instanceof InternalQueryTimeoutError || error instanceof AggregateError && error.message.includes("All promises were rejected")) {
+        if (error instanceof InternalQueryTimeoutError || (error instanceof AggregateError && error.message.includes("All promises were rejected"))) {
           // ignore so the next task batch can be attempted
           return ClusterAwareReaderFailoverHandler.FAILED_READER_FAILOVER_RESULT;
         }
