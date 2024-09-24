@@ -107,9 +107,8 @@ export class ConnectionStringHostListProvider implements StaticHostListProvider 
       .withAvailability(HostAvailability.AVAILABLE)
       .withWeight(weight)
       .withLastUpdateTime(lastUpdateTime)
+      .withHostId(host)
       .build();
-    hostInfo.addAlias(host);
-    hostInfo.hostId = host;
     return hostInfo;
   }
 
