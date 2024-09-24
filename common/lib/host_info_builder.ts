@@ -80,11 +80,6 @@ export class HostInfoBuilder {
     return this;
   }
 
-  withHostAvailabilityStrategy(hostAvailabilityStrategy: HostAvailabilityStrategy): HostInfoBuilder {
-    this.hostAvailabilityStrategy = hostAvailabilityStrategy;
-    return this;
-  }
-
   withLastUpdateTime(lastUpdateTime: number): HostInfoBuilder {
     this.lastUpdateTime = lastUpdateTime;
     return this;
@@ -92,7 +87,7 @@ export class HostInfoBuilder {
 
   copyFrom(hostInfo: HostInfo): HostInfoBuilder {
     this.host = hostInfo.host;
-    this.hostId = hostInfo.hostId ?? "";
+    this.hostId = hostInfo.hostId;
     this.port = hostInfo.port;
     this.availability = hostInfo.availability;
     this.role = hostInfo.role;
@@ -106,16 +101,15 @@ export class HostInfoBuilder {
     if (!this.host) {
       throw new AwsWrapperError("host parameter must be set");
     }
-    const hostInfo = new HostInfo(
+    return new HostInfo(
       this.host,
       this.port,
       this.role,
       this.availability,
       this.weight,
       this.lastUpdateTime,
-      this.hostAvailabilityStrategy
+      this.hostAvailabilityStrategy,
+      this.hostId
     );
-    hostInfo.hostId = this.hostId;
-    return hostInfo;
   }
 }

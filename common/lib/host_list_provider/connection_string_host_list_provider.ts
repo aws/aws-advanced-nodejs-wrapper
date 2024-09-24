@@ -99,7 +99,7 @@ export class ConnectionStringHostListProvider implements StaticHostListProvider 
   }
 
   createHost(host: string, isWriter: boolean, weight: number, lastUpdateTime: number): HostInfo {
-    const hostInfo: HostInfo = this.hostListProviderService
+    return this.hostListProviderService
       .getHostInfoBuilder()
       .withHost(host ?? "")
       .withPort(this.initialPort)
@@ -107,10 +107,8 @@ export class ConnectionStringHostListProvider implements StaticHostListProvider 
       .withAvailability(HostAvailability.AVAILABLE)
       .withWeight(weight)
       .withLastUpdateTime(lastUpdateTime)
+      .withHostId(host)
       .build();
-    hostInfo.addAlias(host);
-    hostInfo.hostId = host;
-    return hostInfo;
   }
 
   getHostProviderType(): string {

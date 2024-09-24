@@ -33,7 +33,7 @@ export class HostInfo {
   availability: HostAvailability;
   aliases: Set<string> = new Set<string>();
   allAliases: Set<string> = new Set<string>();
-  hostId?: string;
+  hostId: string;
   hostAvailabilityStrategy: HostAvailabilityStrategy;
 
   constructor(
@@ -43,7 +43,8 @@ export class HostInfo {
     availability: HostAvailability = HostAvailability.AVAILABLE,
     weight: number = HostInfo.DEFAULT_WEIGHT,
     lastUpdateTime: number = Date.now(),
-    hostAvailabilityStrategy: HostAvailabilityStrategy = new SimpleHostAvailabilityStrategy()
+    hostAvailabilityStrategy: HostAvailabilityStrategy = new SimpleHostAvailabilityStrategy(),
+    hostId: string = ""
   ) {
     if (weight < 0) {
       throw new AwsWrapperError(Messages.get("HostInfo.weightLessThanZero"));
@@ -56,7 +57,8 @@ export class HostInfo {
     this.weight = weight;
     this.lastUpdateTime = lastUpdateTime;
     this.hostAvailabilityStrategy = hostAvailabilityStrategy;
-    this.allAliases.add(this.asAlias);
+    this.allAliases.add(this.asAlias).add(this.host);
+    this.hostId = hostId;
   }
 
   isPortSpecified(): boolean {

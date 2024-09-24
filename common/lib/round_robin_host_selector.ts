@@ -71,7 +71,7 @@ export class RoundRobinHostSelector implements HostSelector {
         targetHostIndex = 0;
       }
 
-      const weight = clusterInfo.clusterWeightsMap.get(eligibleHosts[targetHostIndex].hostId!);
+      const weight = clusterInfo.clusterWeightsMap.get(eligibleHosts[targetHostIndex].hostId);
 
       clusterInfo.weightCounter = weight ?? clusterInfo.defaultWeight;
     }

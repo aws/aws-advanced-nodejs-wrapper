@@ -314,7 +314,7 @@ export class RdsHostListProvider implements DynamicHostListProvider {
     const endpoint: string | null = this.getHostEndpoint(host);
     const port: number | undefined = this.clusterInstanceTemplate?.isPortSpecified() ? this.clusterInstanceTemplate?.port : this.initialHost?.port;
 
-    const hostInfo: HostInfo = this.hostListProviderService
+    return this.hostListProviderService
       .getHostInfoBuilder()
       .withHost(endpoint ?? "")
       .withPort(port ?? -1)
@@ -322,10 +322,8 @@ export class RdsHostListProvider implements DynamicHostListProvider {
       .withAvailability(HostAvailability.AVAILABLE)
       .withWeight(weight)
       .withLastUpdateTime(lastUpdateTime)
+      .withHostId(host)
       .build();
-    hostInfo.addAlias(host);
-    hostInfo.hostId = host;
-    return hostInfo;
   }
 
   private getHostEndpoint(hostName: string): string | null {
