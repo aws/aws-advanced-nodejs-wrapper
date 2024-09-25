@@ -330,7 +330,7 @@ class ConnectionAttemptTask {
   }
 
   async performFinalCleanup() {
-    if (this.selectedTask !== this.taskId) {
+    if (this.selectedTask !== this.taskId && this.targetClient.host === this.newHost) {
       await this.pluginService.tryClosingTargetClient(this.targetClient);
     }
   }
