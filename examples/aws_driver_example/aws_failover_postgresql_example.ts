@@ -1,0 +1,110 @@
+/*
+  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ 
+  Licensed under the Apache License, Version 2.0 (the "License").
+  You may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+ 
+  http://www.apache.org/licenses/LICENSE-2.0
+ 
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+*/
+
+import { AwsPGClient } from "../../pg/lib";
+import { QueryResult } from "pg";
+import { FailoverFailedError, FailoverSuccessError, TransactionResolutionUnknownError } from "../../common/lib/utils/errors";
+
+const postgresHost = "postgresql://db-identifier.XYZ.us-east-2.rds.amazonaws.com";
+const username = "john_smith";
+const password = "password";
+const database = "employees";
+const port = 5432;
+
+const client = new AwsPGClient({
+  // Configure connection parameters, failover plugin enabled by default
+  host: postgresHost,
+  port,
+  user: username,
+  password: password,
+  database
+});
+
+// Setup Step: Open connection and create tables - uncomment this section to create table and test values
+try {
+  await client.connect();
+  await setInitialSessionSettings(client);
+  await queryWithFailoverHandling(client,
+      "CREATE TABLE bank_test (name varchar(40), account_balance int)");
+  await queryWithFailoverHandling(client,
+      "INSERT INTO bank_test VALUES ('Jane Doe', 200), ('John Smith', 200)");
+} catch (error: any) {
+  throw error;
+}
+
+
+// Transaction Step: Open connection and perform transaction
+try {
+  await client.connect();
+  await setInitialSessionSettings(client);
+  // Example query 
+  const result = await queryWithFailoverHandling(client, "UPDATE bank_test SET account_balance=account_balance - 100 WHERE name='Jane Doe'");
+  console.log(result);
+} catch (error) {
+  if (error instanceof FailoverFailedError) {
+    // User application should open a new connection, check the results of the failed transaction and re-run it if
+    // needed. See:
+    // https://github.com/aws/aws-advanced-nodejs-wrapper/blob/main/docs/using-the-nodejs-wrapper/using-plugins/UsingTheFailoverPlugin.md#failoverfailederror
+    throw error;
+  } else if (error instanceof TransactionResolutionUnknownError) {
+    // User application should check the status of the failed transaction and restart it if needed. See:
+    // https://github.com/aws/aws-advanced-nodejs-wrapper/blob/main/docs/using-the-nodejs-wrapper/using-plugins/UsingTheFailoverPlugin.md#transactionresolutionunknownerror
+    throw error;
+  } else {
+    // Unexpected exception unrelated to failover. This should be handled by the user application.
+    throw error;
+  }
+} finally {
+  await client.end();
+}
+
+async function setInitialSessionSettings(client: AwsPGClient) {
+  try {
+    // User can edit settings
+    const res = await client.query("SET TIME ZONE UTC");
+  } catch (error: any) {
+    throw error;
+  } 
+}
+
+async function queryWithFailoverHandling(client: AwsPGClient, query: string): Promise<QueryResult|void> {
+  try {
+    const result = await client.query(query);
+    console.log(result);
+  } catch (error) {
+    console.log(error);
+    if (error instanceof FailoverFailedError) {
+      // Connection failed, and Node.js wrapper failed to reconnect to a new instance.
+      throw error;
+    } else if (error instanceof FailoverSuccessError) {
+      // Query execution failed and Node.js wrapper successfully failed over to a new elected writer node.
+      try {
+        // Re-open and reconfigure the connection
+        await client.connect();
+        await setInitialSessionSettings(client);
+        // Re-run query 
+        await client.query(query);
+      } catch (e: any) {
+        throw e;
+      }
+      return;
+    } else if (error instanceof TransactionResolutionUnknownError) {
+      // Transaction resolution unknown. Please re-configure session state if required and try
+      // restarting transaction."
+      throw error;
+    } 
+  } 
+}
