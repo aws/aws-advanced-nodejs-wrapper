@@ -93,16 +93,8 @@ export class RdsMultiAZPgDatabaseDialect extends PgDatabaseDialect implements To
       const port: number = row["port"];
       const isWriter: boolean = id === writerHostId;
 
-      // const host: HostInfo = hostListProvider.createHost(endpoint, isWriter, 0, Date.now(), port);
-      const host: HostInfo = new HostInfoBuilder({ hostAvailabilityStrategy: new SimpleHostAvailabilityStrategy() })
-        .withHost(endpoint)
-        .withPort(port ?? -1)
-        .withRole(isWriter ? HostRole.WRITER : HostRole.READER)
-        .withAvailability(HostAvailability.AVAILABLE)
-        .withWeight(0)
-        .withLastUpdateTime(Date.now())
-        .withHostId(id)
-        .build();
+      const host: HostInfo = hostListProvider.createHost(endpoint.substring(0, endpoint.indexOf(".")), isWriter, 0, Date.now(), port);
+      host.hostId = id;
       host.addAlias(endpoint);
       hostMap.set(host.host, host);
     });

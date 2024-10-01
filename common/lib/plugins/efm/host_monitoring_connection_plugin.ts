@@ -179,7 +179,9 @@ export class HostMonitoringConnectionPlugin extends AbstractConnectionPlugin imp
           await this.pluginService.fillAliases(this.pluginService.getCurrentClient().targetClient!, this.monitoringHostInfo);
         }
       } catch (error: any) {
-        logger.debug(Messages.get("HostMonitoringConnectionPlugin.errorIdentifyingConnection", error.message));
+        if (!(error instanceof AwsWrapperError)) {
+          logger.debug(Messages.get("HostMonitoringConnectionPlugin.errorIdentifyingConnection", error.message));
+        }
         throw error;
       }
     }
