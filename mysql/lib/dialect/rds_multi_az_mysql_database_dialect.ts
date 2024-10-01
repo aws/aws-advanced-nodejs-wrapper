@@ -135,6 +135,6 @@ export class RdsMultiAZMySQLDatabaseDialect extends MySQLDatabaseDialect impleme
   }
 
   getDialectUpdateCandidates(): string[] {
-    return [""];
+    return [];
   }
 }

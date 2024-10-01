@@ -199,7 +199,7 @@ class MockTargetClient {
   }
 }
 
-describe("test mysqlDialects", () => {
+describe("test dialects", () => {
   it.each([
     [LOCALHOST, DatabaseDialectCodes.MYSQL, DatabaseType.MYSQL],
     [RDS_DATABASE, DatabaseDialectCodes.RDS_MYSQL, DatabaseType.MYSQL],

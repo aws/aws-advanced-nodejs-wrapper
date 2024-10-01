@@ -134,6 +134,6 @@ export class RdsMultiAZPgDatabaseDialect extends PgDatabaseDialect implements To
   }
 
   getDialectUpdateCandidates(): string[] {
-    return [""];
+    return [];
   }
 }

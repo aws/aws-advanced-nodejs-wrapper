@@ -23,7 +23,7 @@ export class DatabaseDialectCodes {
   static readonly AURORA_PG: string = "aurora-pg";
   static readonly RDS_PG: string = "rds-pg";
   // https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/multi-az-db-clusters-concepts.html
-  public static readonly RDS_MULTI_AZ_PG: string = "rds-multi-az-pg";
+  static readonly RDS_MULTI_AZ_PG: string = "rds-multi-az-pg";
   static readonly PG: string = "pg";
   static readonly CUSTOM: string = "custom";
 }
