@@ -14,18 +14,18 @@
   limitations under the License.
 */
 
-import { AwsPGClient } from "../../pg/lib";
+import { AwsMySQLClient } from "../../mysql/lib";
 import { FailoverFailedError, FailoverSuccessError, TransactionResolutionUnknownError } from "../../common/lib/utils/errors";
 
-const postgresHost = "db-identifier.XYZ.us-east-2.rds.amazonaws.com";
+const mysqlHost = "db-identifier.XYZ.us-east-2.rds.amazonaws.com";
 const username = "john_smith";
 const password = "employees";
 const database = "database";
 const port = 5432;
 
-const client = new AwsPGClient({
+const client = new AwsMySQLClient({
   // Configure connection parameters, failover plugin enabled by default.
-  host: postgresHost,
+  host: mysqlHost,
   port: port,
   user: username,
   password: password,
@@ -51,7 +51,7 @@ try {
   await client.connect();
   await setInitialSessionSettings(client);
 
-  // Example query.
+  // Example query 
   const result = await queryWithFailoverHandling(client, "UPDATE bank_test SET account_balance=account_balance - 100 WHERE name='Jane Doe'");
   console.log(result);
   
@@ -74,14 +74,14 @@ try {
   await client.end();
 }
 
-async function setInitialSessionSettings(client: AwsPGClient) {
+async function setInitialSessionSettings(client: AwsMySQLClient) {
   // User can edit settings.
-  await client.query("SET TIME ZONE UTC");
+  await client.query({ sql: "SET time_zone = 'UTC'"});
 }
 
-async function queryWithFailoverHandling(client: AwsPGClient, query: string) {
+async function queryWithFailoverHandling(client: AwsMySQLClient, query: string) {
   try {
-    const result = await client.query(query);
+    const result = await client.query({sql: query});
     return result;
   } catch (error) {
     if (error instanceof FailoverFailedError) {
@@ -93,7 +93,7 @@ async function queryWithFailoverHandling(client: AwsPGClient, query: string) {
       await client.connect();
       await setInitialSessionSettings(client);
       // Re-run query 
-      return await client.query(query);
+      return await client.query({sql: query});
     } else if (error instanceof TransactionResolutionUnknownError) {
       // Transaction resolution unknown. Please re-configure session state if required and try
       // restarting transaction.

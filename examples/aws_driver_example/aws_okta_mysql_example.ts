@@ -14,25 +14,41 @@
   limitations under the License.
 */
 
+import { readFileSync } from "fs";
 import { AwsMySQLClient } from "../../mysql/lib";
 
 const mysqlHost = "db-identifier.XYZ.us-east-2.rds.amazonaws.com";
-const username = "john_smith";
-const password = "password";
-const port = 3306;
+const idpEndpoint = "123456789.okta.com";
+const appId = "abc12345678";
+const iamRoleArn = "arn:aws:iam::123456789:role/OktaAccessRole";
+const iamIdpArn = "arn:aws:iam::123456789:saml-provider/OktaSAMLIdp";
+const iamRegion = "us-east-1";
+const idpUsername = "jsmith";
+const idpPassword = "password";
+const dbUser = "john_smith";
+
 
 const client = new AwsMySQLClient({
-  // Configure connection parameters.
+  // Enable Okta authentication and configure connection parameters.
   host: mysqlHost,
-  port: port,
-  user: username,
-  password: password
+  idpEndpoint: idpEndpoint,
+  appId: appId,
+  iamRoleArn: iamRoleArn,
+  iamIdpArn: iamIdpArn,
+  iamRegion: iamRegion,
+  idpUsername: idpUsername,
+  idpPassword: idpPassword,
+  dbUser: dbUser,
+  plugins: "okta",
+  ssl: {
+    ca: readFileSync("path/to/ssl/certificate.pem").toString()
+  }
 });
 
 // Attempt connection.
 try {
   await client.connect();
-  const result = await client.query({ sql: "SELECT @@aurora_server_id" });
+  const result = await client.query({ sql: "select 1" });
   console.log(result);
 } finally {
   await client.end();

@@ -18,20 +18,20 @@ import { AwsPGClient } from "../../pg/lib";
 
 const postgresHost = "db-identifier.XYZ.us-east-2.rds.amazonaws.com";
 const username = "john_smith";
-const database = "employees";
 const password = "password"
+const database = "employees";
 const port = 5432;
 
 const client = new AwsPGClient({
-  // Configure connection parameters
+  // Configure connection parameters.
   host: postgresHost,
-  port,
+  port: port,
   user: username,
   password: password,
-  database
+  database: database
 });
 
-// Attempt connection
+// Attempt connection.
 try {
   await client.connect();
   const result = await client.query("select aurora_db_instance_identifier()");

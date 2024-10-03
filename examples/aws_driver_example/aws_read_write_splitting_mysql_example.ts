@@ -14,22 +14,22 @@
   limitations under the License.
 */
 
-import { AwsPGClient } from "../../pg/lib";
+import { AwsMySQLClient } from "../../mysql/lib";
 import { FailoverFailedError, FailoverSuccessError, TransactionResolutionUnknownError } from "../../common/lib/utils/errors";
 
-const postgresHost = "db-identifier.XYZ.us-east-2.rds.amazonaws.com";
+const mysqlHost = "db-identifier.XYZ.us-east-2.rds.amazonaws.com";
 const username = "john_smith";
 const password = "employees";
 const database = "database";
 const port = 5432;
 
-const client = new AwsPGClient({
-  // Configure connection parameters, failover plugin enabled by default.
-  host: postgresHost,
+const client = new AwsMySQLClient({
+  // Configure connection parameters. Enable readWriteSplitting, failover, and efm2 plugins. 
   port: port,
   user: username,
   password: password,
-  database: database
+  database: database, 
+  plugins: "readWriteSplitting, failover, efm"
 });
 
 // Setup Step: Open connection and create tables - uncomment this section to create table and test values.
@@ -37,9 +37,9 @@ const client = new AwsPGClient({
   await client.connect();
   await setInitialSessionSettings(client);
   await queryWithFailoverHandling(client,
-      "CREATE TABLE bank_test (name varchar(40), account_balance int)");
+      "CREATE TABLE bank_test (id int primary key, name varchar(40), account_balance int)");
   await queryWithFailoverHandling(client,
-      "INSERT INTO bank_test VALUES ('Jane Doe', 200), ('John Smith', 200)");
+      "INSERT INTO bank_test VALUES (0, 'Jane Doe', 200), (1, 'John Smith', 200), (2, 'Sally Smith', 200), (3, 'Joe Smith', 200)");
 } catch (error: any) {
   // Additional error handling can be added here. See transaction step for an example. 
   throw error;
@@ -51,10 +51,17 @@ try {
   await client.connect();
   await setInitialSessionSettings(client);
 
-  // Example query.
+  // Example query 
   const result = await queryWithFailoverHandling(client, "UPDATE bank_test SET account_balance=account_balance - 100 WHERE name='Jane Doe'");
   console.log(result);
-  
+
+  // Internally switch to a reader connection.
+  await client.setReadOnly(true);
+
+  for (let i = 0; i < 4; i++) {
+    await queryWithFailoverHandling(client, "SELECT * FROM bank_test WHERE id = " + i);
+  }
+
 } catch (error) {
   if (error instanceof FailoverFailedError) {
     // User application should open a new connection, check the results of the failed transaction and re-run it if
@@ -74,14 +81,14 @@ try {
   await client.end();
 }
 
-async function setInitialSessionSettings(client: AwsPGClient) {
+async function setInitialSessionSettings(client: AwsMySQLClient) {
   // User can edit settings.
-  await client.query("SET TIME ZONE UTC");
+  await client.query({ sql: "SET time_zone = 'UTC'"});
 }
 
-async function queryWithFailoverHandling(client: AwsPGClient, query: string) {
+async function queryWithFailoverHandling(client: AwsMySQLClient, query: string) {
   try {
-    const result = await client.query(query);
+    const result = await client.query({sql: query});
     return result;
   } catch (error) {
     if (error instanceof FailoverFailedError) {
@@ -89,11 +96,11 @@ async function queryWithFailoverHandling(client: AwsPGClient, query: string) {
       throw error;
     } else if (error instanceof FailoverSuccessError) {
       // Query execution failed and Node.js wrapper successfully failed over to a new elected writer instance.
-      // Re-open and reconfigure the connection.
+      // Re-open and reconfigure the connection
       await client.connect();
       await setInitialSessionSettings(client);
       // Re-run query 
-      return await client.query(query);
+      return await client.query({sql: query});
     } else if (error instanceof TransactionResolutionUnknownError) {
       // Transaction resolution unknown. Please re-configure session state if required and try
       // restarting transaction.
