@@ -24,10 +24,8 @@ import { Messages } from "../../../common/lib/utils/messages";
 import { logger } from "../../../common/logutils";
 import { AwsWrapperError } from "../../../common/lib/utils/errors";
 import { TopologyAwareDatabaseDialect } from "../../../common/lib/topology_aware_database_dialect";
-import { HostAvailability } from "../../../common/lib/host_availability/host_availability";
-import { HostInfoBuilder } from "../../../common/lib/host_info_builder";
-import { SimpleHostAvailabilityStrategy } from "../../../common/lib/host_availability/simple_host_availability_strategy";
 import { RdsHostListProvider } from "../../../common/lib/host_list_provider/rds_host_list_provider";
+import { FailoverRestriction } from "../../../common/lib/plugins/failover/failover_restriction";
 
 export class RdsMultiAZMySQLDatabaseDialect extends MySQLDatabaseDialect implements TopologyAwareDatabaseDialect {
   private static readonly TOPOLOGY_QUERY: string = "SELECT id, endpoint, port FROM mysql.rds_topology";
@@ -139,5 +137,9 @@ export class RdsMultiAZMySQLDatabaseDialect extends MySQLDatabaseDialect impleme
 
   getDialectUpdateCandidates(): string[] {
     return [];
+  }
+
+  getFailoverRestrictions(): FailoverRestriction[] {
+    return [FailoverRestriction.DISABLE_TASK_A, FailoverRestriction.ENABLE_WRITER_IN_TASK_B];
   }
 }

@@ -22,29 +22,31 @@ import { logger } from "../../../../common/logutils";
 import { DatabaseEngine } from "./utils/database_engine";
 import { TestEnvironmentFeatures } from "./utils/test_environment_features";
 import { features } from "./config";
+import { DatabaseEngineDeployment } from "./utils/database_engine_deployment";
 
-const itIf = !features.includes(TestEnvironmentFeatures.PERFORMANCE) ? it : it.skip;
+const itIf = !features.includes(TestEnvironmentFeatures.PERFORMANCE) ? it : it;
 
 let client: any;
 let auroraTestUtility: AuroraTestUtility;
 
-async function executeInstanceQuery(client: any, engine: DatabaseEngine, props: any): Promise<void> {
+async function executeInstanceQuery(client: any, engine: DatabaseEngine, deployment: DatabaseEngineDeployment, props: any): Promise<void> {
   client.on("error", (error: any) => {
     logger.debug(error.message);
   });
   await client.connect();
 
-  const res = await DriverHelper.executeInstanceQuery(engine, client);
+  const res = await DriverHelper.executeInstanceQuery(engine, deployment, client);
 
   expect(res).not.toBeNull();
 }
 
 beforeEach(async () => {
   logger.info(`Test started: ${expect.getState().currentTestName}`);
-  auroraTestUtility = new AuroraTestUtility((await TestEnvironment.getCurrent()).auroraRegion);
+  auroraTestUtility = new AuroraTestUtility((await TestEnvironment.getCurrent()).region);
   await ProxyHelper.enableAllConnectivity();
+  await TestEnvironment.verifyClusterStatus();
   client = null;
-});
+}, 1000000);
 
 afterEach(async () => {
   if (client !== null) {
@@ -76,7 +78,7 @@ describe("basic_connectivity", () => {
       props = DriverHelper.addDriverSpecificConfiguration(props, env.engine);
       client = initClientFunc(props);
 
-      await executeInstanceQuery(client, env.engine, props);
+      await executeInstanceQuery(client, env.engine, env.deployment, props);
     },
     1000000
   );
@@ -99,7 +101,7 @@ describe("basic_connectivity", () => {
       props = DriverHelper.addDriverSpecificConfiguration(props, env.engine);
 
       client = initClientFunc(props);
-      await executeInstanceQuery(client, env.engine, props);
+      await executeInstanceQuery(client, env.engine, env.deployment, props);
     },
     1000000
   );
@@ -122,7 +124,7 @@ describe("basic_connectivity", () => {
       props = DriverHelper.addDriverSpecificConfiguration(props, env.engine);
 
       client = initClientFunc(props);
-      await executeInstanceQuery(client, env.engine, props);
+      await executeInstanceQuery(client, env.engine, env.deployment, props);
     },
     1000000
   );
@@ -150,7 +152,7 @@ describe("basic_connectivity", () => {
       });
       await client.connect();
 
-      const res = await DriverHelper.executeInstanceQuery(env.engine, client);
+      const res = await DriverHelper.executeInstanceQuery(env.engine, env.deployment, client);
 
       expect(res).not.toBeNull();
     },

@@ -15,21 +15,19 @@
 */
 
 import {
-  CreateDBClusterCommand,
-  DeleteDBInstanceCommand,
   DescribeDBClustersCommand,
   DescribeDBInstancesCommand,
   FailoverDBClusterCommand,
-  RDSClient
+  RDSClient,
+  RebootDBInstanceCommand
 } from "@aws-sdk/client-rds";
-import { TestInstanceInfo } from "./test_instance_info";
 import { TestEnvironment } from "./test_environment";
 import * as dns from "dns";
 import { DBInstance } from "@aws-sdk/client-rds/dist-types/models/models_0";
-import { DatabaseEngine } from "./database_engine";
 import { AwsClient } from "../../../../../common/lib/aws_client";
 import { DriverHelper } from "./driver_helper";
 import { sleep } from "../../../../../common/lib/utils/utils";
+import { logger } from "../../../../../common/logutils";
 
 export class AuroraTestUtility {
   private client: RDSClient;
@@ -66,58 +64,20 @@ export class AuroraTestUtility {
     }
   }
 
-  async createDbInstance(instanceId: string): Promise<TestInstanceInfo> {
-    const environment = await TestEnvironment.getCurrent();
-    if (await this.doesDbInstanceExists(instanceId)) {
-      await this.deleteDbInstance(instanceId);
+  async waitUntilInstanceHasRightState(instanceId: string, ...allowedStatues: string[]) {
+    let instanceInfo = await this.getDbInstance(instanceId);
+    if (instanceInfo === null) {
+      throw new Error("invalid instance");
     }
-
-    const input = {
-      DBClusterIdentifier: environment.info.auroraClusterName,
-      DBInstanceIdentifier: instanceId,
-      DBInstanceClass: "db.r5.large",
-      Engine: this.getAuroraEngineName(environment.engine),
-      PubliclyAccessible: true
-    };
-    const command = new CreateDBClusterCommand(input);
-    await this.client.send(command);
-
-    const instance = await this.waitUntilInstanceHasDesiredStatus(instanceId);
-    if (instance == null) {
-      throw new Error("failed to create instance");
-    }
-
-    return new TestInstanceInfo(instance);
-  }
-
-  async deleteDbInstance(instanceId: string) {
-    const input = {
-      DBInstanceIdentifier: instanceId
-    };
-    const command = new DeleteDBInstanceCommand(input);
-    await this.client.send(command);
-    await this.waitUntilInstanceHasDesiredStatus(instanceId, "deleted");
-  }
-
-  async waitUntilInstanceHasDesiredStatus(instanceId: string, desiredStatus: string = "available", waitTimeMins = 15) {
-    const current = new Date();
-    const stopTime = current.setMinutes(current.getMinutes() + waitTimeMins * 60);
-    while (new Date().getTime() <= stopTime) {
-      try {
-        const instance = await this.getDbInstance(instanceId);
-        if (!this.isNullOrUndefined(instance)) {
-          return instance;
-        }
-      } catch (err: any) {
-        if (err.name === "DBInstanceNotFoundFault" && desiredStatus === "deleted") {
-          return null;
-        }
-      }
-
+    let status = instanceInfo["DBInstanceStatus"];
+    const waitTilTime: number = Date.now() + 15 * 60 * 1000; // 15 minutes
+    while (status && !allowedStatues.includes(status.toLowerCase()) && waitTilTime > Date.now()) {
       await sleep(1000);
+      instanceInfo = await this.getDbInstance(instanceId);
+      if (instanceInfo !== null) {
+        status = instanceInfo["DBInstanceStatus"];
+      }
     }
-
-    throw new Error("instance description timed out");
   }
 
   async waitUntilClusterHasDesiredStatus(clusterId: string, desiredStatus: string = "available") {
@@ -131,6 +91,21 @@ export class AuroraTestUtility {
       clusterInfo = await this.getDbCluster(clusterId);
       if (clusterInfo !== null) {
         status = clusterInfo["Status"];
+      }
+    }
+  }
+
+  async rebootInstance(instanceId: string) {
+    let attempts = 5;
+    while (--attempts > 0) {
+      try {
+        const command = new RebootDBInstanceCommand({
+          DBInstanceIdentifier: instanceId
+        });
+        await this.client.send(command);
+      } catch (error: any) {
+        logger.debug(`rebootDbInstance ${instanceId} failed: ${error.message}`);
+        await sleep(1000);
       }
     }
   }
@@ -194,7 +169,7 @@ export class AuroraTestUtility {
       try {
         const result = await this.client.send(command);
         if (!this.isNullOrUndefined(result["DBCluster"])) {
-          await TestEnvironment.updateWriter();
+          await TestEnvironment.verifyClusterStatus();
           return;
         }
 
@@ -220,8 +195,8 @@ export class AuroraTestUtility {
   }
 
   async queryInstanceId(client: AwsClient) {
-    const engine = (await TestEnvironment.getCurrent()).engine;
-    return await DriverHelper.executeInstanceQuery(engine, client);
+    const testEnvironment: TestEnvironment = await TestEnvironment.getCurrent();
+    return await DriverHelper.executeInstanceQuery(testEnvironment.engine, testEnvironment.deployment, client);
   }
 
   async isDbInstanceWriter(instanceId: string, clusterId?: string) {
@@ -259,17 +234,6 @@ export class AuroraTestUtility {
     }
 
     return instance.DBInstanceIdentifier;
-  }
-
-  getAuroraEngineName(engine: DatabaseEngine) {
-    switch (engine) {
-      case DatabaseEngine.PG:
-        return "aurora-postgresql";
-      case DatabaseEngine.MYSQL:
-        return "aurora-mysql";
-      default:
-        throw new Error("invalid engine");
-    }
   }
 
   isNullOrUndefined(value: any): boolean {

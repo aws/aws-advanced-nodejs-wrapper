@@ -17,6 +17,7 @@
 import { HostListProvider } from "../host_list_provider/host_list_provider";
 import { HostListProviderService } from "../host_list_provider_service";
 import { ClientWrapper } from "../client_wrapper";
+import { FailoverRestriction } from "../plugins/failover/failover_restriction";
 
 export enum DatabaseType {
   MYSQL,
@@ -37,6 +38,7 @@ export interface DatabaseDialect {
   getConnectFunc(targetClient: any): () => Promise<any>;
   getDatabaseType(): DatabaseType;
   getDialectName(): string;
+  getFailoverRestrictions(): FailoverRestriction[];
   doesStatementSetReadOnly(statement: string): boolean | undefined;
   doesStatementSetTransactionIsolation(statement: string): number | undefined;
   doesStatementSetAutoCommit(statement: string): boolean | undefined;

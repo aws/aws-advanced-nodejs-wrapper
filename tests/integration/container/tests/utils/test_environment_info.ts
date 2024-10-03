@@ -23,7 +23,7 @@ export class TestEnvironmentInfo {
   private readonly _awsAccessKeyId: string;
   private readonly _awsSecretAccessKey: string;
   private readonly _awsSessionToken: string;
-  private readonly _auroraRegion: string;
+  private readonly _region: string;
   private readonly _auroraClusterName: string;
   private readonly _iamUserName: string;
   private readonly _databaseInfo: TestDatabaseInfo;
@@ -34,7 +34,7 @@ export class TestEnvironmentInfo {
     this._awsAccessKeyId = String(testInfo["awsAccessKeyId"]);
     this._awsSecretAccessKey = String(testInfo["awsSecretAccessKey"]);
     this._awsSessionToken = String(testInfo["awsSessionToken"]);
-    this._auroraRegion = String(testInfo["auroraRegion"]);
+    this._region = String(testInfo["region"]);
     this._auroraClusterName = String(testInfo["auroraClusterName"]);
     this._iamUserName = String(testInfo["iamUsername"]);
 
@@ -58,8 +58,8 @@ export class TestEnvironmentInfo {
     return this._awsSessionToken;
   }
 
-  get auroraRegion(): string {
-    return this._auroraRegion;
+  get region(): string {
+    return this._region;
   }
 
   get auroraClusterName(): string {

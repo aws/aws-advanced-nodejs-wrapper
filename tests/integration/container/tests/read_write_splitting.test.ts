@@ -72,14 +72,14 @@ describe("aurora read write splitting", () => {
   beforeEach(async () => {
     logger.info(`Test started: ${expect.getState().currentTestName}`);
     env = await TestEnvironment.getCurrent();
-    auroraTestUtility = new AuroraTestUtility(env.auroraRegion);
+    auroraTestUtility = new AuroraTestUtility(env.region);
 
     driver = DriverHelper.getDriverForDatabaseEngine(env.engine);
     initClientFunc = DriverHelper.getClient(driver);
     await ProxyHelper.enableAllConnectivity();
     client = null;
-    await TestEnvironment.updateWriter();
-  });
+    await TestEnvironment.verifyClusterStatus();
+  }, 1000000);
 
   afterEach(async () => {
     if (client !== null) {
@@ -318,7 +318,7 @@ describe("aurora read write splitting", () => {
 
       // Crash instance 1 and nominate a new writer
       await auroraTestUtility.failoverClusterAndWaitUntilWriterChanged();
-      await TestEnvironment.updateWriter();
+      await TestEnvironment.verifyClusterStatus();
 
       await expect(async () => {
         await auroraTestUtility.queryInstanceId(client);

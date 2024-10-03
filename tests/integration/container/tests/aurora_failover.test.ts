@@ -58,16 +58,15 @@ describe("aurora failover", () => {
     logger.info(`Test started: ${expect.getState().currentTestName}`);
     env = await TestEnvironment.getCurrent();
 
-    auroraTestUtility = new AuroraTestUtility(env.auroraRegion);
+    auroraTestUtility = new AuroraTestUtility(env.region);
     driver = DriverHelper.getDriverForDatabaseEngine(env.engine);
     initClientFunc = DriverHelper.getClient(driver);
     await ProxyHelper.enableAllConnectivity();
-    await TestEnvironment.updateWriter();
+    await TestEnvironment.verifyClusterStatus();
 
     client = null;
     secondaryClient = null;
-    await TestEnvironment.updateWriter();
-  });
+  }, 1000000);
 
   afterEach(async () => {
     if (client !== null) {

@@ -19,6 +19,7 @@ import { AwsMySQLClient } from "../../../../../mysql/lib";
 import { AwsPGClient } from "../../../../../pg/lib";
 import { DatabaseEngine } from "./database_engine";
 import { AwsClient } from "../../../../../common/lib/aws_client";
+import { DatabaseEngineDeployment } from "./database_engine_deployment";
 
 export class DriverHelper {
   static getClient(driver: TestDriver) {
@@ -43,24 +44,38 @@ export class DriverHelper {
     }
   }
 
-  static getInstanceIdSql(engine: DatabaseEngine): string {
-    switch (engine) {
-      case DatabaseEngine.PG:
-        return "SELECT aurora_db_instance_identifier()";
-      case DatabaseEngine.MYSQL:
-        return "SELECT @@aurora_server_id as id";
+  static getInstanceIdSql(engine: DatabaseEngine, deployment: DatabaseEngineDeployment): string {
+    switch (deployment) {
+      case DatabaseEngineDeployment.AURORA:
+        switch (engine) {
+          case DatabaseEngine.PG:
+            return "SELECT aurora_db_instance_identifier() as id";
+          case DatabaseEngine.MYSQL:
+            return "SELECT @@aurora_server_id as id";
+          default:
+            throw new Error("invalid engine");
+        }
+      case DatabaseEngineDeployment.RDS_MULTI_AZ_CLUSTER:
+        switch (engine) {
+          case DatabaseEngine.PG:
+            return "SELECT SUBSTRING(endpoint FROM 0 FOR POSITION('.' IN endpoint)) as id FROM rds_tools.show_topology() WHERE id IN (SELECT dbi_resource_id FROM rds_tools.dbi_resource_id())";
+          case DatabaseEngine.MYSQL:
+            return "SELECT SUBSTRING_INDEX(endpoint, '.', 1) as id FROM mysql.rds_topology WHERE id=@@server_id";
+          default:
+            throw new Error("invalid engine");
+        }
       default:
-        throw new Error("invalid engine");
+        throw new Error("invalid deployment");
     }
   }
 
-  static async executeInstanceQuery(engine: DatabaseEngine, client: AwsClient) {
-    const sql = DriverHelper.getInstanceIdSql(engine);
+  static async executeInstanceQuery(engine: DatabaseEngine, deployment: DatabaseEngineDeployment, client: AwsClient) {
+    const sql = DriverHelper.getInstanceIdSql(engine, deployment);
     let result;
     switch (engine) {
       case DatabaseEngine.PG:
         return await (client as AwsPGClient).query(sql).then((result) => {
-          return result.rows[0]["aurora_db_instance_identifier"];
+          return result.rows[0]["id"];
         });
       case DatabaseEngine.MYSQL:
         result = await (client as AwsMySQLClient).query({ sql: sql });
@@ -95,6 +110,8 @@ export class DriverHelper {
   static addDriverSpecificConfiguration(props: any, engine: DatabaseEngine, performance: boolean = false) {
     if (engine === DatabaseEngine.PG && !performance) {
       props["query_timeout"] = 10000;
+      // props["ssl"] = { ca: readFileSync("/app/global-bundle.pem").toString() };
+      props["ssl"] = { rejectUnauthorized: false };
     } else if (engine === DatabaseEngine.PG && performance) {
       props["query_timeout"] = 120000;
       props["connectionTimeoutMillis"] = 400;
@@ -104,7 +121,6 @@ export class DriverHelper {
       props["monitoring_internal_query_timeout"] = 400;
       props["internal_query_timeout"] = 120000;
     }
-
     return props;
   }
 }

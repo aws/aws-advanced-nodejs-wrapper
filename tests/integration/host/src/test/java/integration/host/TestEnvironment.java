@@ -189,11 +189,4 @@ public class TestEnvironment {
     }
     return true;
   }
-
-  public static boolean isAwsDatabase() {
-    DatabaseEngineDeployment deployment =
-        getCurrent().getInfo().getRequest().getDatabaseEngineDeployment();
-    return DatabaseEngineDeployment.AURORA.equals(deployment)
-        || DatabaseEngineDeployment.RDS.equals(deployment);
-  }
 }

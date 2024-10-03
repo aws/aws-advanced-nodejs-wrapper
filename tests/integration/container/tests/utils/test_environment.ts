@@ -43,13 +43,79 @@ export class TestEnvironment {
     return TestEnvironment.env;
   }
 
-  static async updateWriter() {
+  static async verifyClusterStatus() {
     const info = TestEnvironment.env?.info;
-    if (info?.request.deployment === DatabaseEngineDeployment.AURORA) {
-      const auroraUtility = new AuroraTestUtility(info.auroraRegion);
-      await auroraUtility.waitUntilClusterHasDesiredStatus(info.auroraClusterName);
-      info.databaseInfo.moveInstanceFirst(await auroraUtility.getClusterWriterInstanceId(info.auroraClusterName));
-      info.proxyDatabaseInfo.moveInstanceFirst(await auroraUtility.getClusterWriterInstanceId(info.auroraClusterName));
+    if (info?.request.deployment === DatabaseEngineDeployment.AURORA || info?.request.deployment === DatabaseEngineDeployment.RDS_MULTI_AZ_CLUSTER) {
+      let remainingTries = 3;
+      let success = false;
+
+      while (remainingTries-- > 0 && !success) {
+        try {
+          const auroraUtility = new AuroraTestUtility(info.region);
+          await auroraUtility.waitUntilClusterHasDesiredStatus(info.auroraClusterName);
+          info.databaseInfo.moveInstanceFirst(await auroraUtility.getClusterWriterInstanceId(info.auroraClusterName));
+          info.proxyDatabaseInfo.moveInstanceFirst(await auroraUtility.getClusterWriterInstanceId(info.auroraClusterName));
+          success = true;
+        } catch (error: any) {
+          switch (info?.request.deployment) {
+            case DatabaseEngineDeployment.AURORA:
+              await this.rebootAllClusterInstances();
+              break;
+            case DatabaseEngineDeployment.RDS_MULTI_AZ_CLUSTER:
+              await this.rebootCluster();
+              break;
+            default:
+              throw new Error(`Unsupported deployment ${info?.request.deployment}`);
+          }
+        }
+      }
+
+      if (!success) {
+        fail(`Cluster ${info.auroraClusterName} is not healthy`);
+      }
+    }
+  }
+
+  static async rebootAllClusterInstances() {
+    const info = TestEnvironment.env?.info;
+    const auroraUtility = new AuroraTestUtility(info?.region);
+    if (!info?.auroraClusterName) {
+      fail(`Invalid cluster`);
+    }
+    await auroraUtility.waitUntilClusterHasDesiredStatus(info.auroraClusterName!);
+
+    const instanceIds: (string | undefined)[] | undefined = info?.databaseInfo.instances.map((instance) => instance.instanceId);
+    for (const instance in instanceIds) {
+      await auroraUtility.rebootInstance(instance);
+    }
+    await auroraUtility.waitUntilClusterHasDesiredStatus(info.auroraClusterName!);
+    for (const instance in instanceIds) {
+      await auroraUtility.waitUntilInstanceHasRightState(instance);
+    }
+  }
+
+  static async rebootCluster() {
+    const info = TestEnvironment.env?.info;
+    const auroraUtility = new AuroraTestUtility(info?.region);
+    if (!info?.auroraClusterName) {
+      fail(`Invalid cluster`);
+    }
+    await auroraUtility.waitUntilClusterHasDesiredStatus(info.auroraClusterName!);
+
+    const instanceIds: (string | undefined)[] | undefined = info?.databaseInfo.instances.map((instance) => instance.instanceId);
+    for (const instance in instanceIds) {
+      await auroraUtility.waitUntilInstanceHasRightState(
+        instance,
+        "available",
+        "storage-optimization",
+        "incompatible-credentials",
+        "incompatible-parameters",
+        "unavailable"
+      );
+      await auroraUtility.rebootInstance(instance);
+    }
+    for (const instance in instanceIds) {
+      await auroraUtility.waitUntilInstanceHasRightState(instance);
     }
   }
 
@@ -167,12 +233,16 @@ export class TestEnvironment {
     return this.proxyInstances[0];
   }
 
-  get auroraRegion(): string {
-    return this.info.auroraRegion;
+  get region(): string {
+    return this.info.region;
   }
 
   get engine(): DatabaseEngine {
     return this.info.request.engine;
+  }
+
+  get deployment(): DatabaseEngineDeployment {
+    return this.info.request.deployment;
   }
 
   private static createProxyUrl(host: string, port: number) {
