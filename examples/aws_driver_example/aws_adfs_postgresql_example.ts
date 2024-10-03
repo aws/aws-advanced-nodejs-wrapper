@@ -17,7 +17,7 @@
 import { readFileSync } from "fs";
 import { AwsPGClient } from "../../pg/lib";
 
-const postgresHost = "postgresql://db-identifier.XYZ.us-east-2.rds.amazonaws.com";
+const postgresHost = "db-identifier.XYZ.us-east-2.rds.amazonaws.com";
 const idpEndpoint = "123456789.okta.com";
 const iamRoleArn = "arn:aws:iam::123456789:role/OktaAccessRole";
 const iamIdpArn = "arn:aws:iam::123456789:saml-provider/OktaSAMLIdp";
