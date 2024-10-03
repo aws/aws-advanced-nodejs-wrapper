@@ -21,6 +21,7 @@ const us_east_region_cluster_read_only = "database-test-name.cluster-ro-XYZ.us-e
 const us_east_region_instance = "instance-test-name.XYZ.us-east-2.rds.amazonaws.com";
 const us_east_region_proxy = "proxy-test-name.proxy-XYZ.us-east-2.rds.amazonaws.com";
 const us_east_region_custom_domain = "custom-test-name.cluster-custom-XYZ.us-east-2.rds.amazonaws.com";
+const us_east_region_limitless_db_shard_group = "database-test-name.shardgrp-XYZ.us-east-2.rds.amazonaws.com";
 const usEastRegionElbUrl = "elb-name.elb.us-east-2.amazonaws.com";
 
 const china_region_cluster = "database-test-name.cluster-XYZ.rds.cn-northwest-1.amazonaws.com.cn";
@@ -33,6 +34,8 @@ const china_region_proxy = "proxy-test-name.proxy-XYZ.rds.cn-northwest-1.amazona
 const old_china_region_proxy = "proxy-test-name.proxy-XYZ.cn-northwest-1.rds.amazonaws.com.cn";
 const china_region_custom_domain = "custom-test-name.cluster-custom-XYZ.rds.cn-northwest-1.amazonaws.com.cn";
 const old_china_region_custom_domain = "custom-test-name.cluster-custom-XYZ.cn-northwest-1.rds.amazonaws.com.cn";
+const china_region_limitless_db_shard_group = "database-test-name.shardgrp-XYZ.rds.cn-northwest-1.amazonaws.com.cn";
+const old_china_region_limitless_db_shard_group = "database-test-name.shardgrp-XYZ.cn-northwest-1.rds.amazonaws.com.cn";
 
 const usIsobEastRegionCluster = "database-test-name.cluster-XYZ.rds.us-isob-east-1.sc2s.sgov.gov";
 const usIsobEastRegionClusterReadOnly = "database-test-name.cluster-ro-XYZ.rds.us-isob-east-1.sc2s.sgov.gov";
@@ -100,16 +103,19 @@ describe("test_rds_utils", () => {
     [us_east_region_instance],
     [us_east_region_proxy],
     [us_east_region_custom_domain],
+    [us_east_region_limitless_db_shard_group],
     [china_region_cluster],
     [china_region_cluster_read_only],
     [china_region_instance],
     [china_region_proxy],
     [china_region_custom_domain],
+    [china_region_limitless_db_shard_group],
     [old_china_region_cluster],
     [old_china_region_cluster_read_only],
     [old_china_region_instance],
     [old_china_region_proxy],
     [old_china_region_custom_domain],
+    [old_china_region_limitless_db_shard_group],
     [usIsobEastRegionCluster],
     [usIsobEastRegionClusterReadOnly],
     [usIsobEastRegionInstance],
@@ -136,16 +142,19 @@ describe("test_rds_utils", () => {
     ["?.XYZ.us-east-2.rds.amazonaws.com", us_east_region_instance],
     ["?.XYZ.us-east-2.rds.amazonaws.com", us_east_region_proxy],
     ["?.XYZ.us-east-2.rds.amazonaws.com", us_east_region_custom_domain],
+    ["?.XYZ.us-east-2.rds.amazonaws.com", us_east_region_limitless_db_shard_group],
     ["?.XYZ.rds.cn-northwest-1.amazonaws.com.cn", china_region_cluster],
     ["?.XYZ.rds.cn-northwest-1.amazonaws.com.cn", china_region_cluster_read_only],
     ["?.XYZ.rds.cn-northwest-1.amazonaws.com.cn", china_region_instance],
     ["?.XYZ.rds.cn-northwest-1.amazonaws.com.cn", china_region_proxy],
     ["?.XYZ.rds.cn-northwest-1.amazonaws.com.cn", china_region_custom_domain],
+    ["?.XYZ.rds.cn-northwest-1.amazonaws.com.cn", china_region_limitless_db_shard_group],
     ["?.XYZ.cn-northwest-1.rds.amazonaws.com.cn", old_china_region_cluster],
     ["?.XYZ.cn-northwest-1.rds.amazonaws.com.cn", old_china_region_cluster_read_only],
     ["?.XYZ.cn-northwest-1.rds.amazonaws.com.cn", old_china_region_instance],
     ["?.XYZ.cn-northwest-1.rds.amazonaws.com.cn", old_china_region_proxy],
     ["?.XYZ.cn-northwest-1.rds.amazonaws.com.cn", old_china_region_custom_domain],
+    ["?.XYZ.cn-northwest-1.rds.amazonaws.com.cn", old_china_region_limitless_db_shard_group],
     ["?.XYZ.rds.us-gov-east-1.amazonaws.com", usGovEastRegionCluster],
     ["?.XYZ.rds.us-isob-east-1.sc2s.sgov.gov", usIsobEastRegionCluster],
     ["?.XYZ.rds.us-isob-east-1.sc2s.sgov.gov", usIsobEastRegionClusterReadOnly],
@@ -207,14 +216,17 @@ describe("test_rds_utils", () => {
     [us_east_region_instance],
     [us_east_region_proxy],
     [us_east_region_custom_domain],
+    [us_east_region_limitless_db_shard_group],
     [china_region_cluster_read_only],
     [china_region_instance],
     [china_region_proxy],
     [china_region_custom_domain],
+    [china_region_limitless_db_shard_group],
     [old_china_region_cluster_read_only],
     [old_china_region_instance],
     [old_china_region_proxy],
     [old_china_region_custom_domain],
+    [old_china_region_limitless_db_shard_group],
     [usIsobEastRegionClusterReadOnly],
     [usIsobEastRegionInstance],
     [usIsobEastRegionProxy],
@@ -244,14 +256,17 @@ describe("test_rds_utils", () => {
     [us_east_region_instance],
     [us_east_region_proxy],
     [us_east_region_custom_domain],
+    [us_east_region_limitless_db_shard_group],
     [china_region_cluster],
     [china_region_instance],
     [china_region_proxy],
     [china_region_custom_domain],
+    [china_region_limitless_db_shard_group],
     [old_china_region_cluster],
     [old_china_region_instance],
     [old_china_region_proxy],
     [old_china_region_custom_domain],
+    [old_china_region_limitless_db_shard_group],
     [usIsobEastRegionCluster],
     [usIsobEastRegionInstance],
     [usIsobEastRegionProxy],
@@ -264,6 +279,14 @@ describe("test_rds_utils", () => {
     const target = new RdsUtils();
     expect(target.isReaderClusterDns(val)).toBeFalsy();
   });
+
+  it.each([[us_east_region_limitless_db_shard_group], [china_region_limitless_db_shard_group], [old_china_region_limitless_db_shard_group]])(
+    "test_is_limitless_dns",
+    (val) => {
+      const target = new RdsUtils();
+      expect(target.isLimitlessDbShardGroupDns(val)).toBeTruthy();
+    }
+  );
 
   it("test_get_rds_cluster_host_url", () => {
     const expected: string = "foo.cluster-xyz.us-west-1.rds.amazonaws.com";

@@ -20,9 +20,10 @@
     "lint": "eslint --fix --ext .ts .",
     "test": "cross-env NODE_OPTIONS=\"$NODE_OPTIONS --experimental-vm-modules\" npx jest --config=jest.unit.config.json",
     "fix-imports": "babel --extensions \".js\" dist -d dist",
-    "copy-log-files": "copyfiles common/lib/utils/locales/en.json dist/",
     "build": "tsc",
-    "prepublish": "npm run build && npm run copy-log-files && npm run fix-imports && npm pack --pack-destination ./build"
+    "clean": "rimraf --preserve-root dist",
+    "copy-files": "copyfiles common/lib/utils/locales/*.json dist/",
+    "prepublish": "npm run clean && npm run build && npm run fix-imports && npm run copy-files && npm pack --pack-destination ./build"
   },
   "lint-staged": {
     "*.ts": [
@@ -86,6 +87,7 @@
     "pg": "^8.13.1",
     "prettier": "^3.3.3",
     "querystring": "^0.2.1",
+    "rimraf": "^6.0.1",
     "toxiproxy-node-client": "^3.0.0",
     "ts-jest": "^29.2.5",
     "ts-mockito": "^2.6.1",
@@ -96,6 +98,7 @@
   },
   "dependencies": {
     "@types/i18n": "^0.13.12",
+    "async-mutex": "^0.5.0",
     "dotenv": "^16.4.5",
     "i18n": "^0.15.1",
     "winston": "3.15.0"

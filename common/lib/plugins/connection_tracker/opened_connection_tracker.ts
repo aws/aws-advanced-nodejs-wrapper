@@ -42,7 +42,7 @@ export class OpenedConnectionTracker {
 
     const instanceEndpoint = [...aliases]
       .filter((x) => OpenedConnectionTracker.rdsUtils.isRdsInstance(OpenedConnectionTracker.rdsUtils.removePort(x)))
-      .reduce((max, s) => (s > max ? s : max));
+      .reduce((max, s) => (s > max ? s : max), "");
 
     if (!instanceEndpoint) {
       logger.debug(Messages.get("OpenedConnectionTracker.unableToPopulateOpenedConnectionQueue", hostInfo.host));

@@ -275,7 +275,7 @@ export class PluginManager {
     return false;
   }
 
-  getHostInfoByStrategy(role: HostRole, strategy: string): HostInfo {
+  getHostInfoByStrategy(role: HostRole, strategy: string, hosts?: HostInfo[]): HostInfo {
     for (const plugin of this._plugins) {
       const pluginSubscribedMethods = plugin.getSubscribedMethods();
       const isSubscribed =
@@ -283,7 +283,7 @@ export class PluginManager {
 
       if (isSubscribed) {
         try {
-          const host = plugin.getHostInfoByStrategy(role, strategy);
+          const host = plugin.getHostInfoByStrategy(role, strategy, hosts);
           if (host) {
             return host;
           }

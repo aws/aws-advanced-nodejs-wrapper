@@ -113,12 +113,15 @@ export class DefaultPlugin extends AbstractConnectionPlugin {
     return this.connectionProviderManager.acceptsStrategy(role, strategy);
   }
 
-  override getHostInfoByStrategy(role: HostRole, strategy: string): HostInfo {
+  override getHostInfoByStrategy(role: HostRole, strategy: string, hosts?: HostInfo[]): HostInfo {
     if (role === HostRole.UNKNOWN) {
       throw new AwsWrapperError(Messages.get("DefaultConnectionPlugin.unknownRoleRequested"));
     }
 
-    const hosts = this.pluginService.getHosts();
+    if (!hosts) {
+      hosts = this.pluginService.getHosts();
+    }
+
     if (hosts.length < 1) {
       throw new AwsWrapperError(Messages.get("DefaultConnectionPlugin.noHostsAvailable"));
     }

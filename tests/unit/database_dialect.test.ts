@@ -262,6 +262,8 @@ describe("test database dialects", () => {
     const expectedDialectClass: DatabaseDialect | undefined = expectedDialect!.dialects.get(expectedDialectCode);
     expect(expectedDialectClass).not.toBeUndefined();
 
+    DatabaseDialectManager.resetEndpointCache();
+
     const mockTargetClient = new MockTargetClient(expectedDialect!.inputs, expectedDialect!.output);
     const currentHostInfo = new HostInfoBuilder({
       host: "foo",

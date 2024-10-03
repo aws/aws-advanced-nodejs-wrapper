@@ -19,7 +19,7 @@ import { HostRole } from "./host_role";
 import { HostInfo } from "./host_info";
 import { HostSelector } from "./host_selector";
 import { RandomHostSelector } from "./random_host_selector";
-import { AwsWrapperError } from "./utils/errors";
+import { UnsupportedStrategyError } from "./utils/errors";
 import { WrapperProperties } from "./wrapper_property";
 import { Messages } from "./utils/messages";
 import { RdsUtils } from "./utils/rds_utils";
@@ -106,7 +106,7 @@ export class DriverConnectionProvider implements ConnectionProvider {
   getHostInfoByStrategy(hosts: HostInfo[], role: HostRole, strategy: string, props?: Map<string, any>): HostInfo {
     const acceptedStrategy = DriverConnectionProvider.acceptedStrategies.get(strategy);
     if (!acceptedStrategy) {
-      throw new AwsWrapperError(Messages.get("ConnectionProvider.unsupportedHostSelectorStrategy", strategy, "DriverConnectionProvider"));
+      throw new UnsupportedStrategyError(Messages.get("ConnectionProvider.unsupportedHostSelectorStrategy", strategy, "DriverConnectionProvider"));
     }
     return acceptedStrategy.getHost(hosts, role, props);
   }

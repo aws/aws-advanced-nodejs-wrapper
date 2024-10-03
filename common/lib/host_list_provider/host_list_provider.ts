@@ -40,4 +40,6 @@ export interface HostListProvider {
   createHost(host: string, isWriter: boolean, weight: number, lastUpdateTime: number, port?: number): HostInfo;
 
   getHostProviderType(): string;
+
+  getClusterId(): string;
 }

@@ -102,7 +102,7 @@ export class HostInfo {
   }
 
   get url() {
-    let url = this.isPortSpecified() ? `${this.host}:${this.port}` : this.host;
+    let url = this.hostAndPort;
     if (!url.endsWith("/")) {
       url += "/";
     }
@@ -110,8 +110,18 @@ export class HostInfo {
     return url;
   }
 
+  get hostAndPort() {
+    return this.isPortSpecified() ? `${this.host}:${this.port}` : this.host;
+  }
+
   equals(other: HostInfo): boolean {
-    return this.port === other.port && this.availability === other.availability && this.role === other.role && this.weight === other.weight;
+    return (
+      this.host === other.host &&
+      this.port === other.port &&
+      this.availability === other.availability &&
+      this.role === other.role &&
+      this.weight === other.weight
+    );
   }
 
   getAvailability(): HostAvailability {

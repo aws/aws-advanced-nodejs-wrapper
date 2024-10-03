@@ -54,5 +54,5 @@ export interface ConnectionPlugin {
 
   acceptsStrategy(role: HostRole, strategy: string): boolean;
 
-  getHostInfoByStrategy(role: HostRole, strategy: string): HostInfo | undefined;
+  getHostInfoByStrategy(role: HostRole, strategy: string, hosts?: HostInfo[]): HostInfo | undefined;
 }

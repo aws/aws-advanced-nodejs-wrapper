@@ -69,7 +69,7 @@ export abstract class AbstractConnectionPlugin implements ConnectionPlugin {
     return false;
   }
 
-  getHostInfoByStrategy(role: HostRole, strategy: string): HostInfo | undefined {
+  getHostInfoByStrategy(role: HostRole, strategy: string, hosts?: HostInfo[]): HostInfo | undefined {
     throw new Error("getHostInfoByStrategy is not supported by this plugin.");
   }
 }

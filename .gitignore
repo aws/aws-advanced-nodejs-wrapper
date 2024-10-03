@@ -141,3 +141,4 @@ build/**/*
 /benchmark/*
 
 */.DS_Store
+/.run/All unit tests.run.xml

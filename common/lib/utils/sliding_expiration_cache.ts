@@ -77,10 +77,21 @@ export class SlidingExpirationCache<K, V> {
     return cacheItem?.item ?? null;
   }
 
-  get(key: K): V | undefined {
+  get(key: K, itemExpirationNanos?: bigint): V | undefined {
     this.cleanUp();
     const cacheItem = this.map.get(key);
-    return cacheItem?.item ?? undefined;
+    if (cacheItem?.item && itemExpirationNanos) {
+      cacheItem.updateExpiration(itemExpirationNanos);
+      return cacheItem.item;
+    }
+    return cacheItem?.item;
+  }
+
+  put(key: K, value: V, itemExpirationNanos: bigint): V | null {
+    this.cleanUp();
+    const cacheItem = new CacheItem(value, getTimeInNanos() + itemExpirationNanos);
+    this.map.set(key, cacheItem);
+    return cacheItem.item;
   }
 
   remove(key: K): void {

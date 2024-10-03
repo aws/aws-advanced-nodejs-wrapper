@@ -62,7 +62,6 @@ const defaultRefreshRateNano: number = 5 * 1_000_000_000;
 
 function createHost(config: any): HostInfo {
   const info = new HostInfoBuilder(config);
-  info.withLastUpdateTime(updateTime);
   return info.build();
 }
 

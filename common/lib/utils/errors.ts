@@ -24,6 +24,8 @@ export class AwsWrapperError extends Error {
   }
 }
 
+export class UnsupportedStrategyError extends AwsWrapperError {}
+
 export class UnsupportedMethodError extends AwsWrapperError {}
 
 export class IllegalArgumentError extends AwsWrapperError {}

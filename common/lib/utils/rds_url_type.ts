@@ -18,9 +18,10 @@ export class RdsUrlType {
   public static readonly IP_ADDRESS = new RdsUrlType(false, false);
   public static readonly RDS_WRITER_CLUSTER = new RdsUrlType(true, true);
   public static readonly RDS_READER_CLUSTER = new RdsUrlType(true, true);
-  public static readonly RDS_CUSTOM_CLUSTER = new RdsUrlType(true, true);
+  public static readonly RDS_CUSTOM_CLUSTER = new RdsUrlType(true, false);
   public static readonly RDS_PROXY = new RdsUrlType(true, false);
   public static readonly RDS_INSTANCE = new RdsUrlType(true, false);
+  public static readonly RDS_AURORA_LIMITLESS_DB_SHARD_GROUP = new RdsUrlType(true, false);
   public static readonly OTHER = new RdsUrlType(false, false);
 
   private constructor(
