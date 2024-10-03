@@ -58,16 +58,15 @@ describe("aurora failover", () => {
     logger.info(`Test started: ${expect.getState().currentTestName}`);
     env = await TestEnvironment.getCurrent();
 
-    auroraTestUtility = new AuroraTestUtility(env.auroraRegion);
+    auroraTestUtility = new AuroraTestUtility(env.region);
     driver = DriverHelper.getDriverForDatabaseEngine(env.engine);
     initClientFunc = DriverHelper.getClient(driver);
     await ProxyHelper.enableAllConnectivity();
-    await TestEnvironment.updateWriter();
+    await TestEnvironment.verifyClusterStatus();
 
     client = null;
     secondaryClient = null;
-    await TestEnvironment.updateWriter();
-  });
+  }, 1320000);
 
   afterEach(async () => {
     if (client !== null) {
@@ -86,7 +85,7 @@ describe("aurora failover", () => {
       }
     }
     logger.info(`Test finished: ${expect.getState().currentTestName}`);
-  }, 1000000);
+  }, 1320000);
 
   itIf(
     "fails from writer to new writer on connection invocation",
@@ -114,7 +113,7 @@ describe("aurora failover", () => {
       expect(await auroraTestUtility.isDbInstanceWriter(currentConnectionId)).toBe(true);
       expect(currentConnectionId).not.toBe(initialWriterId);
     },
-    1000000
+    1320000
   );
 
   itIf(
@@ -164,7 +163,7 @@ describe("aurora failover", () => {
 
       await DriverHelper.executeQuery(env.engine, client, "DROP TABLE IF EXISTS test3_3");
     },
-    1000000
+    1320000
   );
 
   itIf(
@@ -196,7 +195,7 @@ describe("aurora failover", () => {
       expect(await auroraTestUtility.isDbInstanceWriter(currentConnectionId)).toBe(true);
       expect(currentConnectionId).not.toBe(initialWriterId);
     },
-    1000000
+    1320000
   );
 
   itIf(
@@ -249,6 +248,6 @@ describe("aurora failover", () => {
         expect(currentConnectionId).toBe(initialWriterId);
       }
     },
-    1000000
+    1320000
   );
 });

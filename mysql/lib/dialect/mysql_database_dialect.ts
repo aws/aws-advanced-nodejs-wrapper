@@ -23,6 +23,7 @@ import { DatabaseDialectCodes } from "../../../common/lib/database_dialect/datab
 import { TransactionIsolationLevel } from "../../../common/lib/utils/transaction_isolation_level";
 import { ClientWrapper } from "../../../common/lib/client_wrapper";
 import { ClientUtils } from "../../../common/lib/utils/client_utils";
+import { FailoverRestriction } from "../../../common/lib/plugins/failover/failover_restriction";
 
 export class MySQLDatabaseDialect implements DatabaseDialect {
   protected dialectName: string = this.constructor.name;
@@ -110,6 +111,10 @@ export class MySQLDatabaseDialect implements DatabaseDialect {
 
   getDialectName(): string {
     return this.dialectName;
+  }
+
+  getFailoverRestrictions(): FailoverRestriction[] {
+    return [];
   }
 
   doesStatementSetReadOnly(statement: string): boolean | undefined {

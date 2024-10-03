@@ -93,6 +93,7 @@ tasks.register<Test>("test-aurora-postgres") {
         systemProperty("exclude-performance", "true")
         systemProperty("exclude-mysql-driver", "true")
         systemProperty("exclude-mysql-engine", "true")
+        systemProperty("exclude-multi-az", "true")
     }
 }
 
@@ -105,6 +106,7 @@ tasks.register<Test>("test-aurora-mysql") {
         systemProperty("exclude-performance", "true")
         systemProperty("exclude-pg-driver", "true")
         systemProperty("exclude-pg-engine", "true")
+        systemProperty("exclude-multi-az", "true")
     }
 }
 
@@ -133,6 +135,31 @@ tasks.register<Test>("test-aurora-mysql-performance") {
         systemProperty("exclude-docker", "true")
         systemProperty("exclude-pg-driver", "true")
         systemProperty("exclude-pg-engine", "true")
+    }
+}
+
+
+tasks.register<Test>("test-multi-az-postgres") {
+    group = "verification"
+    filter.includeTestsMatching("integration.host.TestRunner.runTests")
+    doFirst {
+        systemProperty("exclude-docker", "true")
+        systemProperty("exclude-performance", "true")
+        systemProperty("exclude-mysql-driver", "true")
+        systemProperty("exclude-mysql-engine", "true")
+        systemProperty("exclude-aurora", "true")
+    }
+}
+
+tasks.register<Test>("test-multi-az-mysql") {
+    group = "verification"
+    filter.includeTestsMatching("integration.host.TestRunner.runTests")
+    doFirst {
+        systemProperty("exclude-docker", "true")
+        systemProperty("exclude-performance", "true")
+        systemProperty("exclude-pg-driver", "true")
+        systemProperty("exclude-pg-engine", "true")
+        systemProperty("exclude-aurora", "true")
     }
 }
 
@@ -206,3 +233,26 @@ tasks.register<Test>("debug-aurora-mysql-performance") {
     }
 }
 
+tasks.register<Test>("debug-multi-az-mysql") {
+    group = "verification"
+    filter.includeTestsMatching("integration.host.TestRunner.debugTests")
+    doFirst {
+        systemProperty("exclude-docker", "true")
+        systemProperty("exclude-performance", "true")
+        systemProperty("exclude-pg-driver", "true")
+        systemProperty("exclude-pg-engine", "true")
+        systemProperty("exclude-aurora", "true")
+    }
+}
+
+tasks.register<Test>("debug-multi-az-postgres") {
+    group = "verification"
+    filter.includeTestsMatching("integration.host.TestRunner.debugTests")
+    doFirst {
+        systemProperty("exclude-docker", "true")
+        systemProperty("exclude-performance", "true")
+        systemProperty("exclude-mysql-driver", "true")
+        systemProperty("exclude-mysql-engine", "true")
+        systemProperty("exclude-aurora", "true")
+    }
+}

@@ -22,6 +22,7 @@ import { HostRole } from "../../common/lib/host_role";
 import { AwsWrapperError } from "../../common/lib/utils/errors";
 import { anything, instance, mock, reset, verify, when } from "ts-mockito";
 import { ClientWrapper } from "../../common/lib/client_wrapper";
+import { PgDatabaseDialect } from "../../pg/lib/dialect/pg_database_dialect";
 
 const host1 = new HostInfo("writer", 1234, HostRole.WRITER);
 const host2 = new HostInfo("reader1", 1234, HostRole.READER);
@@ -31,6 +32,7 @@ const host5 = new HostInfo("reader4", 1234, HostRole.READER);
 const host6 = new HostInfo("reader5", 1234, HostRole.READER);
 const defaultHosts = [host1, host2, host3, host4, host5, host6];
 const properties = new Map();
+const dialect = new PgDatabaseDialect();
 const clientWrapper: ClientWrapper = {
   client: undefined,
   hostInfo: mock(HostInfo),
@@ -42,6 +44,9 @@ const mockTargetClient = { client: 123 };
 const mockPluginService = mock(PluginService);
 
 describe("reader failover handler", () => {
+  beforeEach(() => {
+    when(mockPluginService.getDialect()).thenReturn(dialect);
+  });
   afterEach(() => {
     reset(mockPluginService);
   });

@@ -72,14 +72,14 @@ describe("aurora read write splitting", () => {
   beforeEach(async () => {
     logger.info(`Test started: ${expect.getState().currentTestName}`);
     env = await TestEnvironment.getCurrent();
-    auroraTestUtility = new AuroraTestUtility(env.auroraRegion);
+    auroraTestUtility = new AuroraTestUtility(env.region);
 
     driver = DriverHelper.getDriverForDatabaseEngine(env.engine);
     initClientFunc = DriverHelper.getClient(driver);
     await ProxyHelper.enableAllConnectivity();
     client = null;
-    await TestEnvironment.updateWriter();
-  });
+    await TestEnvironment.verifyClusterStatus();
+  }, 1320000);
 
   afterEach(async () => {
     if (client !== null) {
@@ -90,7 +90,7 @@ describe("aurora read write splitting", () => {
       }
     }
     logger.info(`Test finished: ${expect.getState().currentTestName}`);
-  }, 1000000);
+  }, 1320000);
 
   it.skip("test connect to writer switch set read only", async () => {
     const config = await initDefaultConfig(env.databaseInfo.writerInstanceEndpoint, env.databaseInfo.instanceEndpointPort, false);
@@ -125,7 +125,7 @@ describe("aurora read write splitting", () => {
     const currentId3 = await auroraTestUtility.queryInstanceId(client);
     expect(currentId3).toStrictEqual(readerId);
     expect(await auroraTestUtility.isDbInstanceWriter(currentId3)).toStrictEqual(false);
-  }, 1000000);
+  }, 1320000);
 
   itIf(
     "test set read only false in read only transaction",
@@ -166,7 +166,7 @@ describe("aurora read write splitting", () => {
       const currentConnectionId1 = await auroraTestUtility.queryInstanceId(client);
       expect(currentConnectionId1).toStrictEqual(initialWriterId);
     },
-    1000000
+    1320000
   );
 
   itIf(
@@ -210,7 +210,7 @@ describe("aurora read write splitting", () => {
 
       await DriverHelper.executeQuery(env.engine, client, "DROP TABLE IF EXISTS test3_3");
     },
-    1000000
+    1320000
   );
 
   itIf(
@@ -238,7 +238,7 @@ describe("aurora read write splitting", () => {
         await client.setReadOnly(false);
       }).rejects.toThrow();
     },
-    1000000
+    1320000
   );
 
   itIf(
@@ -277,7 +277,7 @@ describe("aurora read write splitting", () => {
       const currentReaderId2 = await auroraTestUtility.queryInstanceId(client);
       expect(currentReaderId2).not.toBe(initialWriterId);
     },
-    1000000
+    1320000
   );
 
   itIf(
@@ -318,7 +318,7 @@ describe("aurora read write splitting", () => {
 
       // Crash instance 1 and nominate a new writer
       await auroraTestUtility.failoverClusterAndWaitUntilWriterChanged();
-      await TestEnvironment.updateWriter();
+      await TestEnvironment.verifyClusterStatus();
 
       await expect(async () => {
         await auroraTestUtility.queryInstanceId(client);
@@ -336,7 +336,7 @@ describe("aurora read write splitting", () => {
       const currentId = await auroraTestUtility.queryInstanceId(client);
       expect(currentId).toStrictEqual(newWriterId);
     },
-    1000000
+    1320000
   );
 
   itIf(
@@ -402,7 +402,7 @@ describe("aurora read write splitting", () => {
       // const currentReaderId2 = await auroraTestUtility.queryInstanceId(client);
       // expect(currentReaderId2).toStrictEqual(otherReaderId);
     },
-    1000000
+    1320000
   );
 
   itIf(
@@ -453,6 +453,6 @@ describe("aurora read write splitting", () => {
       const currentId2 = await auroraTestUtility.queryInstanceId(client);
       expect(currentId2).toStrictEqual(initialWriterId);
     },
-    1000000
+    1320000
   );
 });

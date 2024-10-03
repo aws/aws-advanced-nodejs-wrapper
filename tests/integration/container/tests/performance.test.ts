@@ -65,7 +65,7 @@ let env: TestEnvironment;
 let driver;
 let initClientFunc: (props: any) => any;
 
-let auroraTestUtility;
+let auroraTestUtility: AuroraTestUtility;
 let enhancedFailureMonitoringPerfDataList: PerfStatMonitoring[] = [];
 
 async function initDefaultConfig(host: string, port: number): Promise<any> {
@@ -146,7 +146,7 @@ async function executeFailureDetectionTimeEfmEnabled(
   detectionCount: number,
   sleepDelayMillis: number
 ) {
-  auroraTestUtility = new AuroraTestUtility((await TestEnvironment.getCurrent()).auroraRegion);
+  auroraTestUtility = new AuroraTestUtility((await TestEnvironment.getCurrent()).region);
   const config = await initDefaultConfig(env.proxyDatabaseInfo.writerInstanceEndpoint, env.proxyDatabaseInfo.clusterEndpointPort);
   config["plugins"] = "efm";
   config[WrapperProperties.FAILURE_DETECTION_TIME_MS.name] = detectionTimeMillis;
@@ -268,16 +268,16 @@ describe("performance", () => {
   });
 
   afterEach(async () => {
-    await TestEnvironment.updateWriter();
+    await TestEnvironment.verifyClusterStatus();
     logger.info(`Test finished: ${expect.getState().currentTestName}`);
-  }, 1000000);
+  }, 1320000);
 
   itIf(
     "failure detection with efm enabled",
     async () => {
       await testFailureDetectionTimeEfmEnabled();
     },
-    10000000
+    13200000
   );
 
   itIf(
@@ -285,7 +285,7 @@ describe("performance", () => {
     async () => {
       await testFailureDetectionTimeFailoverAndEfmEnabled();
     },
-    10000000
+    13200000
   );
 });
 

@@ -15,5 +15,6 @@
 */
 
 export enum FailoverRestriction {
-  DISABLE_TASK_A
+  DISABLE_TASK_A,
+  ENABLE_WRITER_IN_TASK_B
 }

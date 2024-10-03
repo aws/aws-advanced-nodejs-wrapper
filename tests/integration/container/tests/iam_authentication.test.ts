@@ -81,9 +81,9 @@ describe("iam authentication", () => {
   });
 
   afterEach(async () => {
-    await TestEnvironment.updateWriter();
+    await TestEnvironment.verifyClusterStatus();
     logger.info(`Test finished: ${expect.getState().currentTestName}`);
-  }, 1000000);
+  }, 1320000);
 
   itIf(
     "iam wrong database username",
