@@ -66,4 +66,13 @@ describe("oktaCredentialsProviderTest", () => {
 
     expect(samlAssertion).toBe(expectedSamlAssertion);
   });
+  it("testGetSamlAssertionUrlScheme", async () => {
+    WrapperProperties.IDP_ENDPOINT.set(props, `https://${endpoint}`);
+
+    mockedAxios.request.mockResolvedValueOnce(postResponse).mockResolvedValueOnce(getResponse);
+    const spyCredentialsFactory = spy(new OktaCredentialsProviderFactory());
+    const samlAssertion = await instance(spyCredentialsFactory).getSamlAssertion(props);
+
+    expect(samlAssertion).toBe(expectedSamlAssertion);
+  });
 });

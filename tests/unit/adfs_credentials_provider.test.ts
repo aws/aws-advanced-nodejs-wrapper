@@ -21,25 +21,45 @@ import { AdfsCredentialsProviderFactory } from "../../common/lib/plugins/federat
 
 const props = new Map<string, any>();
 
+const signInPageHtml = "tests/unit/resources/federated_auth/adfs-sign-in-page.html";
+const adfsSamlHtml = "tests/unit/resources/federated_auth/adfs-saml.html";
+const samlAssertionTxt = "tests/unit/resources/federated_auth/saml-assertion.txt";
+
+const signInPage = readFileSync(signInPageHtml, "utf8");
+const adfsSaml = readFileSync(adfsSamlHtml, "utf8");
+const expectedSamlAssertion = readFileSync(samlAssertionTxt, "utf8").trimEnd();
+
+
 describe("adfsTest", () => {
-  it("testGetSamlAssertion", async () => {
-    WrapperProperties.IDP_ENDPOINT.set(props, "ec2amaz-ab3cdef.example.com");
+  beforeEach(() => {
     WrapperProperties.IDP_USERNAME.set(props, "someFederatedUsername@example.com");
     WrapperProperties.IDP_PASSWORD.set(props, "somePassword");
-
-    const signInPageHtml = "tests/unit/resources/federated_auth/adfs-sign-in-page.html";
-    const adfsSamlHtml = "tests/unit/resources/federated_auth/adfs-saml.html";
-    const samlAssertionTxt = "tests/unit/resources/federated_auth/saml-assertion.txt";
-
-    const signInPage = readFileSync(signInPageHtml, "utf8");
-    const adfsSaml = readFileSync(adfsSamlHtml, "utf8");
-    const expectedSamlAssertion = readFileSync(samlAssertionTxt, "utf8").trimEnd();
+  })
+  it("testGetSamlAssertion", async () => {
+    WrapperProperties.IDP_ENDPOINT.set(props, "ec2amaz-ab3cdef.example.com");
 
     const spyCredentialsFactory = spy(new AdfsCredentialsProviderFactory());
     const spyCredentialsFactoryInstance = instance(spyCredentialsFactory);
     when(spyCredentialsFactory.getSignInPageBody(anything(), anything())).thenResolve(signInPage);
     when(spyCredentialsFactory.getFormActionBody(anything(), anything(), anything())).thenResolve(adfsSaml);
 
+    const samlAssertion = await spyCredentialsFactoryInstance.getSamlAssertion(props);
+    expect(samlAssertion).toBe(expectedSamlAssertion);
+
+    const params = spyCredentialsFactoryInstance["getParametersFromHtmlBody"](signInPage, props);
+    expect(params["UserName"]).toBe("someFederatedUsername@example.com");
+    expect(params["Password"]).toBe("somePassword");
+    expect(params["Kmsi"]).toBe("true");
+    expect(params["AuthMethod"]).toBe("FormsAuthentication");
+  });
+  it("testGetSamlAssertionUrlScheme", async () => {
+    WrapperProperties.IDP_ENDPOINT.set(props, "https://ec2amaz-ab3cdef.example.com");
+
+    const spyCredentialsFactory = spy(new AdfsCredentialsProviderFactory());
+    const spyCredentialsFactoryInstance = instance(spyCredentialsFactory);
+    when(spyCredentialsFactory.getSignInPageBody(anything(), anything())).thenResolve(signInPage);
+    when(spyCredentialsFactory.getFormActionBody(anything(), anything(), anything())).thenResolve(adfsSaml);
+    
     const samlAssertion = await spyCredentialsFactoryInstance.getSamlAssertion(props);
     expect(samlAssertion).toBe(expectedSamlAssertion);
 
