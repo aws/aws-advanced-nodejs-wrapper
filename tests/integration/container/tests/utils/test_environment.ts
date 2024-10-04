@@ -1,12 +1,12 @@
 /*
   Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
- 
+
   Licensed under the Apache License, Version 2.0 (the "License").
   You may not use this file except in compliance with the License.
   You may obtain a copy of the License at
- 
+
   http://www.apache.org/licenses/LICENSE-2.0
- 
+
   Unless required by applicable law or agreed to in writing, software
   distributed under the License is distributed on an "AS IS" BASIS,
   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,6 +24,18 @@ import { TestDatabaseInfo } from "./test_database_info";
 import { DatabaseEngine } from "./database_engine";
 import { AuroraTestUtility } from "./aurora_test_utility";
 import { DatabaseEngineDeployment } from "./database_engine_deployment";
+import { AsyncHooksContextManager } from "@opentelemetry/context-async-hooks";
+import { context } from "@opentelemetry/api";
+import { NodeSDK } from "@opentelemetry/sdk-node";
+import { AWSXRayPropagator } from "@opentelemetry/propagator-aws-xray";
+import { HttpInstrumentation } from "@opentelemetry/instrumentation-http";
+import { AwsInstrumentation } from "@opentelemetry/instrumentation-aws-sdk";
+import { AWSXRayIdGenerator } from "@opentelemetry/id-generator-aws-xray";
+import { OTLPTraceExporter } from "@opentelemetry/exporter-trace-otlp-grpc";
+import { Resource } from "@opentelemetry/resources";
+import { ATTR_SERVICE_NAME } from "@opentelemetry/semantic-conventions";
+import { PeriodicExportingMetricReader } from "@opentelemetry/sdk-metrics";
+import { OTLPMetricExporter } from "@opentelemetry/exporter-metrics-otlp-grpc";
 
 export class TestEnvironment {
   private static env?: TestEnvironment;
@@ -130,6 +142,51 @@ export class TestEnvironment {
     if (env.features.includes(TestEnvironmentFeatures.NETWORK_OUTAGES_ENABLED)) {
       await TestEnvironment.initProxies(env);
     }
+
+    const contextManager = new AsyncHooksContextManager();
+    contextManager.enable();
+    context.setGlobalContextManager(contextManager);
+
+    const traceExporter = new OTLPTraceExporter({
+      url: `http://${env.info.tracesTelemetryInfo.endpoint}:${env.info.tracesTelemetryInfo.endpointPort}`
+    });
+    const resource = Resource.default().merge(
+      new Resource({
+        [ATTR_SERVICE_NAME]: "aws-advanced-nodejs-wrapper"
+      })
+    );
+
+    const metricReader = new PeriodicExportingMetricReader({
+      exporter: new OTLPMetricExporter({
+        url: `http://${env.info.metricsTelemetryInfo.endpoint}:${env.info.metricsTelemetryInfo.endpointPort}`
+      }),
+      exportIntervalMillis: 1000
+    });
+
+    const sdk = new NodeSDK({
+      textMapPropagator: new AWSXRayPropagator(),
+      instrumentations: [
+        new HttpInstrumentation(),
+        new AwsInstrumentation({
+          suppressInternalInstrumentation: true
+        })
+      ],
+      resource: resource,
+      traceExporter: traceExporter,
+      metricReader: metricReader,
+      idGenerator: new AWSXRayIdGenerator()
+    });
+
+    // this enables the API to record telemetry
+    sdk.start();
+    // gracefully shut down the SDK on process exit
+    process.on("SIGTERM", () => {
+      sdk
+        .shutdown()
+        .then(() => console.log("Tracing and Metrics terminated"))
+        .catch((error) => console.log("Error terminating tracing and metrics", error))
+        .finally(() => process.exit(0));
+    });
 
     return env;
   }

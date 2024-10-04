@@ -48,7 +48,10 @@ async function initDefaultConfig(host: string, port: number, connectToProxy: boo
     password: env.databaseInfo.password,
     port: port,
     plugins: "failover",
-    failoverTimeoutMs: 250000
+    failoverTimeoutMs: 250000,
+    enableTelemetry: true,
+    telemetryTracesBackend: "OTLP",
+    telemetryMetricsBackend: "OTLP"
   };
   if (connectToProxy) {
     config["clusterInstanceHostPattern"] = "?." + env.proxyDatabaseInfo.instanceEndpointSuffix;

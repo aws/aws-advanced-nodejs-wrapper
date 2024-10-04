@@ -33,6 +33,7 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.containers.ToxiproxyContainer;
 import org.testcontainers.containers.output.FrameConsumerResultCallback;
 import org.testcontainers.containers.output.OutputFrame;
+import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.images.builder.ImageFromDockerfile;
 import org.testcontainers.images.builder.dockerfile.DockerfileBuilder;
 import org.testcontainers.utility.DockerImageName;
@@ -52,6 +53,9 @@ public class ContainerHelper {
   private static final String MYSQL_CONTAINER_IMAGE_NAME = "mysql:latest";
   private static final String POSTGRES_CONTAINER_IMAGE_NAME = "postgres:latest";
   private static final DockerImageName TOXIPROXY_IMAGE = DockerImageName.parse("ghcr.io/shopify/toxiproxy:2.9.0");
+
+  private static final String XRAY_TELEMETRY_IMAGE_NAME = "amazon/aws-xray-daemon";
+  private static final String OTLP_TELEMETRY_IMAGE_NAME = "amazon/aws-otel-collector";
 
   private static final String RETRIEVE_TOPOLOGY_SQL_POSTGRES =
       "SELECT SERVER_ID, SESSION_ID FROM aurora_replica_status() "
@@ -308,5 +312,68 @@ public class ContainerHelper {
         .withNetworkAliases(
             "proxy-instance-" + instance.getInstanceId(),
             instance.getHost() + proxyDomainNameSuffix);
+  }
+
+  // This container supports traces to AWS XRay.
+  public GenericContainer<?> createTelemetryXrayContainer(
+      String xrayAwsRegion,
+      Network network,
+      String networkAlias) {
+
+    return new FixedExposedPortContainer<>(
+        new ImageFromDockerfile("xray-daemon", true)
+            .withDockerfileFromBuilder(
+                builder -> builder
+                        .from(XRAY_TELEMETRY_IMAGE_NAME)
+                        .entryPoint("/xray",
+                          "-t", "0.0.0.0:2000",
+                          "-b", "0.0.0.0:2000",
+                          "--local-mode",
+                          "--log-level", "debug",
+                          "--region", xrayAwsRegion)
+                        .build()))
+        .withExposedPort(2000)
+        .waitingFor(Wait.forLogMessage(".*Starting proxy http server on 0.0.0.0:2000.*", 1))
+        .withNetworkAliases(networkAlias)
+        .withNetwork(network);
+  }
+
+  // This container supports traces and metrics to AWS CloudWatch/XRay
+  public GenericContainer<?> createTelemetryOtlpContainer(
+      Network network,
+      String networkAlias) {
+
+    return new FixedExposedPortContainer<>(DockerImageName.parse(OTLP_TELEMETRY_IMAGE_NAME))
+        .withExposedPort(2000)
+        .withExposedPort(1777)
+        .withExposedPort(4317)
+        .withExposedPort(4318)
+        .waitingFor(Wait.forLogMessage(".*Everything is ready. Begin running and processing data.*", 1))
+        .withNetworkAliases(networkAlias)
+        .withNetwork(network)
+        .withCopyFileToContainer(
+            MountableFile.forHostPath("./src/test/resources/otel-config.yaml"),
+            "/etc/otel-config.yaml");
+  }
+
+  public static class FixedExposedPortContainer<T extends FixedExposedPortContainer<T>> extends GenericContainer<T> {
+
+    public FixedExposedPortContainer(ImageFromDockerfile withDockerfileFromBuilder) {
+      super(withDockerfileFromBuilder);
+    }
+
+    public FixedExposedPortContainer(final DockerImageName dockerImageName) {
+      super(dockerImageName);
+    }
+
+    public T withFixedExposedPort(int hostPort, int containerPort, InternetProtocol protocol) {
+      super.addFixedExposedPort(hostPort, containerPort, protocol);
+      return self();
+    }
+
+    public T withExposedPort(Integer port) {
+      super.addExposedPort(port);
+      return self();
+    }
   }
 }
