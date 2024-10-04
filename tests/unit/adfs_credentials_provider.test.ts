@@ -35,6 +35,7 @@ describe("adfsTest", () => {
     WrapperProperties.IDP_USERNAME.set(props, "someFederatedUsername@example.com");
     WrapperProperties.IDP_PASSWORD.set(props, "somePassword");
   })
+  
   it("testGetSamlAssertion", async () => {
     WrapperProperties.IDP_ENDPOINT.set(props, "ec2amaz-ab3cdef.example.com");
 
@@ -52,6 +53,7 @@ describe("adfsTest", () => {
     expect(params["Kmsi"]).toBe("true");
     expect(params["AuthMethod"]).toBe("FormsAuthentication");
   });
+  
   it("testGetSamlAssertionUrlScheme", async () => {
     WrapperProperties.IDP_ENDPOINT.set(props, "https://ec2amaz-ab3cdef.example.com");
 

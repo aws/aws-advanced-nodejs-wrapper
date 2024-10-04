@@ -60,5 +60,5 @@ export abstract class SamlCredentialsProviderFactory implements CredentialsProvi
       return `https://${idpEndpoint}`;
     }
     return idpEndpoint;
-      }
+  }
 }

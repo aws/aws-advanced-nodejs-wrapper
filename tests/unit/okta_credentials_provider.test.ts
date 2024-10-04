@@ -66,6 +66,7 @@ describe("oktaCredentialsProviderTest", () => {
 
     expect(samlAssertion).toBe(expectedSamlAssertion);
   });
+  
   it("testGetSamlAssertionUrlScheme", async () => {
     WrapperProperties.IDP_ENDPOINT.set(props, `https://${endpoint}`);
 
