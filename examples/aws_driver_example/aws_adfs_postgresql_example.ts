@@ -42,16 +42,10 @@ const client = new AwsPGClient({
   ssl: {
     ca: readFileSync("path/to/ssl/certificate.pem").toString()
   }
-  // Optional: The httpsAgentOptions property adds parameters to the httpsAgent that connects to the hosting URL.
-  // For more information see: https://nodejs.org/api/https.html#class-httpsagent
-  // Option 1: Disable server side SSL verification.
+  // Optional: Disable server side SSL verification, this is useful when testing in local environments and is not 
+  // recommended for production. For more information see: https://nodejs.org/api/https.html#class-httpsagent
   /* httpsAgentOptions: {
    rejectUnauthorized: false
-  } */
-  // Option 2: Provide certificates for authentication.
-  /* httpsAgentOptions: {
-   cert: fs.readFileSync("./usercert.pem"),
-   key: fs.readFileSync("./key.pem"),
   } */
 });
 

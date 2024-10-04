@@ -27,7 +27,6 @@ const idpUsername = "jsmith";
 const idpPassword = "password";
 const dbUser = "john_smith";
 
-
 const client = new AwsMySQLClient({
   // Enable Okta authentication and configure connection parameters.
   host: mysqlHost,

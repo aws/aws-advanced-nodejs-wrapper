@@ -45,7 +45,6 @@ const client = new AwsPGClient({
   throw error;
 } */
 
-
 // Transaction Step: Open connection and perform transaction.
 try {
   await client.connect();
