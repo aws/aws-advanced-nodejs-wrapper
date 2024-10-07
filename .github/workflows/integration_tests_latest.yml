@@ -1,15 +1,22 @@
-name: Aurora Performance Tests
+name: Integration Tests Latest
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - "**/*.md"
+      - "**/*.jpg"
+      - "**/README.txt"
+      - "**/LICENSE.txt"
+      - "docs/**"
+      - "ISSUE_TEMPLATE/**"
+      - "**/remove-old-artifacts.yml"
 
 jobs:
   run-integration-tests:
-    strategy:
-      matrix:
-        db: [mysql, pg]
-
-    name: Run Aurora ${{ matrix.db }} container performance tests
+    name: Run Integration Tests with Latest
     runs-on: ubuntu-latest
 
     steps:
@@ -53,7 +60,7 @@ jobs:
 
       - name: Run Integration Tests
         run: |
-          ./gradlew --no-parallel --no-daemon test-aurora-${{ matrix.db }}-performance --info
+          ./gradlew --no-parallel --no-daemon test-aurora --info
         env:
           AURORA_CLUSTER_DOMAIN: ${{ secrets.DB_CONN_SUFFIX }}
           AURORA_DB_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
@@ -61,8 +68,8 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ env.TEMP_AWS_SECRET_ACCESS_KEY }}
           AWS_SESSION_TOKEN: ${{ env.TEMP_AWS_SESSION_TOKEN }}
           NUM_INSTANCES: 5
-          AURORA_MYSQL_DB_ENGINE_VERSION: "default"
-          AURORA_PG_DB_ENGINE_VERSION: "default"
+          AURORA_MYSQL_DB_ENGINE_VERSION: "latest"
+          AURORA_PG_DB_ENGINE_VERSION: "latest"
 
       - name: "Get Github Action IP"
         if: always()
@@ -79,10 +86,10 @@ jobs:
             --cidr ${{ steps.ip.outputs.ipv4 }}/32 \
           2>&1 > /dev/null;
 
-      - name: Archive Performance results
+      - name: Archive results
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.db }}-performance-results
+          name: integration-report-latest
           path: ./tests/integration/container/reports
           retention-days: 5
