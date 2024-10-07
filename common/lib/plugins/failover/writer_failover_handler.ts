@@ -135,7 +135,7 @@ export class ClusterAwareWriterFailoverHandler implements WriterFailoverHandler 
         throw new AwsWrapperError("Connection attempt task timed out.");
       })
       .catch((error: any) => {
-        logger.info("ClusterAwareWriterFailoverHandler.failedToConnectToWriterInstance");
+        logger.info(Messages.get("ClusterAwareWriterFailoverHandler.failedToConnectToWriterInstance"));
         if (JSON.stringify(error).includes("Connection attempt task timed out.")) {
           return new WriterFailoverResult(false, false, [], "None", null);
         }

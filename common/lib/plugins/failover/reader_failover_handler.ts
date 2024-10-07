@@ -24,6 +24,8 @@ import { AwsWrapperError, InternalQueryTimeoutError } from "../../utils/errors";
 import { logger } from "../../../logutils";
 import { Messages } from "../../utils/messages";
 import { WrapperProperties } from "../../wrapper_property";
+import { ReaderTaskSelectorHandler } from "./reader_task_selector";
+import { uniqueId } from "lodash";
 
 export interface ReaderFailoverHandler {
   failover(hosts: HostInfo[], currentHost: HostInfo): Promise<ReaderFailoverResult>;
@@ -40,6 +42,7 @@ export class ClusterAwareReaderFailoverHandler implements ReaderFailoverHandler 
   private readonly timeoutMs: number;
   private readonly enableFailoverStrictReader: boolean;
   private readonly pluginService: PluginService;
+  private taskHandler: ReaderTaskSelectorHandler = new ReaderTaskSelectorHandler();
 
   constructor(
     pluginService: PluginService,
@@ -148,10 +151,12 @@ export class ClusterAwareReaderFailoverHandler implements ReaderFailoverHandler 
   }
 
   async getConnectionFromHostGroup(hosts: HostInfo[]): Promise<ReaderFailoverResult> {
+    const failoverTaskId: string = uniqueId("ReaderFailoverTask_");
+    this.taskHandler.trackFailoverTask(failoverTaskId);
     for (let i = 0; i < hosts.length; i += 2) {
       // submit connection attempt tasks in batches of 2
       try {
-        const result = await this.getResultFromNextTaskBatch(hosts, i);
+        const result = await this.getResultFromNextTaskBatch(hosts, i, failoverTaskId);
         if (result && (result.isConnected || result.exception)) {
           return result;
         }
@@ -169,12 +174,12 @@ export class ClusterAwareReaderFailoverHandler implements ReaderFailoverHandler 
     return new ReaderFailoverResult(null, null, false);
   }
 
-  async getResultFromNextTaskBatch(hosts: HostInfo[], i: number): Promise<ReaderFailoverResult> {
+  async getResultFromNextTaskBatch(hosts: HostInfo[], i: number, failoverTaskId: string): Promise<ReaderFailoverResult> {
     const timer: any = {};
     const timeoutTask = getTimeoutTask(timer, "Connection attempt task timed out.", this.timeoutMs);
 
     const numTasks = i + 1 < hosts.length ? 2 : 1;
-    const getResultTask = this.getResultTask(hosts, numTasks, i);
+    const getResultTask = this.getResultTask(hosts, numTasks, i, failoverTaskId);
 
     return await Promise.race([timeoutTask, getResultTask])
       .then((result) => {
@@ -195,34 +200,17 @@ export class ClusterAwareReaderFailoverHandler implements ReaderFailoverHandler 
       });
   }
 
-  async getResultTask(hosts: HostInfo[], numTasks: number, i: number) {
+  async getResultTask(hosts: HostInfo[], numTasks: number, i: number, failoverTaskId: string) {
     const tasks: Promise<ReaderFailoverResult>[] = [];
-    let selectedTask = -1;
-    const firstTask = new ConnectionAttemptTask(this.initialConnectionProps, this.pluginService, hosts[i], i);
+    const firstTask = new ConnectionAttemptTask(this.initialConnectionProps, this.pluginService, hosts[i], i, this.taskHandler, failoverTaskId);
     tasks.push(firstTask.call());
     let secondTask: ConnectionAttemptTask;
     if (numTasks === 2) {
-      secondTask = new ConnectionAttemptTask(this.initialConnectionProps, this.pluginService, hosts[i + 1], i + 1);
+      secondTask = new ConnectionAttemptTask(this.initialConnectionProps, this.pluginService, hosts[i + 1], i + 1, this.taskHandler, failoverTaskId);
       tasks.push(secondTask.call());
     }
 
-    return await Promise.any(tasks)
-      .then(async (result) => {
-        if (numTasks === 2 && !result.isConnected) {
-          if (result.taskId === i) {
-            selectedTask = i;
-            return await tasks[1];
-          } else if (result.taskId === i + 1) {
-            selectedTask = i + 1;
-            return await tasks[0];
-          }
-        }
-        return result;
-      })
-      .finally(() => {
-        firstTask.selectedTask = selectedTask;
-        secondTask.selectedTask = selectedTask;
-      });
+    return await Promise.any(tasks);
   }
 
   getReaderHostsByPriority(hosts: HostInfo[]): HostInfo[] {
@@ -287,14 +275,23 @@ class ConnectionAttemptTask {
   newHost: HostInfo;
   targetClient: any;
   taskId: number;
-  selectedTask: number;
+  taskHandler: ReaderTaskSelectorHandler;
+  failoverTaskId: string;
 
-  constructor(initialConnectionProps: Map<string, any>, pluginService: PluginService, newHost: HostInfo, taskId: number) {
+  constructor(
+    initialConnectionProps: Map<string, any>,
+    pluginService: PluginService,
+    newHost: HostInfo,
+    taskId: number,
+    taskSelector: ReaderTaskSelectorHandler,
+    failoverTaskId: string
+  ) {
     this.initialConnectionProps = initialConnectionProps;
     this.pluginService = pluginService;
     this.newHost = newHost;
     this.taskId = taskId;
-    this.selectedTask = taskId;
+    this.taskHandler = taskSelector;
+    this.failoverTaskId = failoverTaskId;
   }
 
   async call(): Promise<ReaderFailoverResult> {
@@ -311,9 +308,13 @@ class ConnectionAttemptTask {
       this.targetClient = await this.pluginService.forceConnect(this.newHost, copy);
       this.pluginService.setAvailability(this.newHost.allAliases, HostAvailability.AVAILABLE);
       logger.info(Messages.get("ClusterAwareReaderFailoverHandler.successfulReaderConnection", this.newHost.host));
-      return new ReaderFailoverResult(this.targetClient, this.newHost, true, undefined, this.taskId);
+      if (this.taskHandler.getSelectedConnectionAttemptTask(this.failoverTaskId) === -1) {
+        this.taskHandler.setSelectedConnectionAttemptTask(this.failoverTaskId, this.taskId);
+        return new ReaderFailoverResult(this.targetClient, this.newHost, true, undefined, this.taskId);
+      }
+      await this.pluginService.tryClosingTargetClient(this.targetClient);
+      return new ReaderFailoverResult(null, null, false, undefined, this.taskId);
     } catch (error) {
-      this.selectedTask = -1;
       this.pluginService.setAvailability(this.newHost.allAliases, HostAvailability.NOT_AVAILABLE);
       if (error instanceof Error) {
         // Propagate exceptions that are not caused by network errors.
@@ -330,7 +331,7 @@ class ConnectionAttemptTask {
   }
 
   async performFinalCleanup() {
-    if (this.selectedTask !== this.taskId && this.targetClient.host === this.newHost) {
+    if (this.taskHandler.getSelectedConnectionAttemptTask(this.failoverTaskId) !== this.taskId) {
       await this.pluginService.tryClosingTargetClient(this.targetClient);
     }
   }
