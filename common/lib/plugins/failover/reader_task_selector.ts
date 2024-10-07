@@ -14,6 +14,27 @@
   limitations under the License.
 */
 
-export class ReaderTaskSelector {
-  public selectedTask: number = -1;
+/**
+ * This class tracks which connection attempt task in a failover session has already been completed, so other tasks can clean up their resources accordingly.
+ * Throughout the lifespan of an AwsClient the ClusterAwareReaderFailoverHandler is only initialized once when creating the AwsClient.
+ * When failover occurs and the underlying target client changes, the ClusterAwareReaderFailoverHandler does not get reinitialized.
+ * This means the same failover handler may be used for several different failover tasks.
+ * During each failover task, the handler sends batches of connection attempt tasks.
+ * Since connection attempts cannot be aborted, there may be scenarios where connection attempts succeeded after failover has completed and another connection has already been returned to the client application.
+ * When this occurs, the connection attempt task needs to know if another connection attempt task from this failover session has already completed. This class helps achieve that.
+ */
+export class ReaderTaskSelectorHandler {
+  protected tasks: Map<string, number> = new Map();
+
+  public trackFailoverTask(failoverTaskId: string) {
+    this.tasks.set(failoverTaskId, -1);
+  }
+
+  public getSelectedConnectionAttemptTask(failoverTaskId: string): number | undefined {
+    return this.tasks.get(failoverTaskId);
+  }
+
+  public setSelectedConnectionAttemptTask(failoverTaskId: string, taskId: number){
+    this.tasks.set(failoverTaskId, taskId);
+  }
 }
