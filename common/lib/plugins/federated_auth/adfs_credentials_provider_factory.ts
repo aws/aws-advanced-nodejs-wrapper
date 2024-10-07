@@ -53,13 +53,13 @@ export class AdfsCredentialsProviderFactory extends SamlCredentialsProviderFacto
   }
 
   getSignInPageUrl(props: Map<string, any>): string {
-    const idpEndpoint = WrapperProperties.IDP_ENDPOINT.get(props);
+    const idpEndpoint = this.formatIdpEndpoint(WrapperProperties.IDP_ENDPOINT.get(props));
     const idpPort = WrapperProperties.IDP_PORT.get(props);
     const rpId = WrapperProperties.RELAYING_PARTY_ID.get(props);
     if (!idpPort || !rpId) {
       throw new AwsWrapperError("Invalid sign in page URL.");
     }
-    return `https://${idpEndpoint}:${idpPort}/adfs/ls/IdpInitiatedSignOn.aspx?loginToRp=${rpId}`;
+    return `${idpEndpoint}:${idpPort}/adfs/ls/IdpInitiatedSignOn.aspx?loginToRp=${rpId}`;
   }
 
   async getSignInPageBody(url: string, props: Map<string, any>): Promise<string> {
@@ -145,12 +145,12 @@ export class AdfsCredentialsProviderFactory extends SamlCredentialsProviderFacto
   }
 
   getFormActionUrl(props: Map<string, any>, action: string): string {
-    const idpEndpoint = WrapperProperties.IDP_ENDPOINT.get(props);
+    const idpEndpoint = this.formatIdpEndpoint(WrapperProperties.IDP_ENDPOINT.get(props));
     const idpPort = WrapperProperties.IDP_PORT.get(props);
     if (!idpEndpoint) {
       throw new AwsWrapperError("Invalid Https url");
     }
-    return `https://${idpEndpoint}:${idpPort}${action}`;
+    return `${idpEndpoint}:${idpPort}${action}`;
   }
 
   private getInputTagsFromHtml(body: string): Array<string> {

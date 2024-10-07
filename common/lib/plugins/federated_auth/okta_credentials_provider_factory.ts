@@ -29,21 +29,21 @@ export class OktaCredentialsProviderFactory extends SamlCredentialsProviderFacto
   private static readonly SAML_RESPONSE_PATTERN = new RegExp('SAMLResponse(?:.|\\n)*value="(?<saml>[^"]+)"');
 
   getSamlUrl(props: Map<string, any>) {
-    const idpHost = WrapperProperties.IDP_ENDPOINT.get(props);
+    const idpHost =  this.formatIdpEndpoint(WrapperProperties.IDP_ENDPOINT.get(props));
     const appId = WrapperProperties.APP_ID.get(props);
-    const baseUri = `https://${idpHost}/app/${OktaCredentialsProviderFactory.OKTA_AWS_APP_NAME}/${appId}/sso/saml`;
+    const baseUri = `${idpHost}/app/${OktaCredentialsProviderFactory.OKTA_AWS_APP_NAME}/${appId}/sso/saml`;
     SamlUtils.validateUrl(baseUri);
     return baseUri;
   }
 
   async getSessionToken(props: Map<string, any>): Promise<string> {
-    const idpHost = WrapperProperties.IDP_ENDPOINT.get(props);
+    const idpHost = this.formatIdpEndpoint(WrapperProperties.IDP_ENDPOINT.get(props));
     const idpUser = WrapperProperties.IDP_USERNAME.get(props);
     const idpPassword = WrapperProperties.IDP_PASSWORD.get(props);
 
     const httpsAgent = new https.Agent(WrapperProperties.HTTPS_AGENT_OPTIONS.get(props));
 
-    const sessionTokenEndpoint = `https://${idpHost}/api/v1/authn`;
+    const sessionTokenEndpoint = `${idpHost}/api/v1/authn`;
 
     const data = JSON.stringify({
       username: idpUser,
