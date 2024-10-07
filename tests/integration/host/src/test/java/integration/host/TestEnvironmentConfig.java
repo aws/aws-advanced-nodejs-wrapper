@@ -25,7 +25,7 @@ public class TestEnvironmentConfig implements AutoCloseable {
   private static final String PROXIED_DOMAIN_NAME_SUFFIX = ".proxied";
   protected static final int PROXY_CONTROL_PORT = 8474;
   private final TestEnvironmentInfo info =
-          new TestEnvironmentInfo(); // only this info is passed to test container
+      new TestEnvironmentInfo(); // only this info is passed to test container
 
   // The following variables are local to host portion of test environment. They are not shared with a
   // test container.
@@ -72,7 +72,7 @@ public class TestEnvironmentConfig implements AutoCloseable {
 
         if (request.getFeatures().contains(TestEnvironmentFeatures.FAILOVER_SUPPORTED)) {
           throw new UnsupportedOperationException(
-                  TestEnvironmentFeatures.FAILOVER_SUPPORTED.toString());
+              TestEnvironmentFeatures.FAILOVER_SUPPORTED.toString());
         }
 
         break;
@@ -109,8 +109,8 @@ public class TestEnvironmentConfig implements AutoCloseable {
         env.numOfInstances = env.info.getRequest().getNumOfInstances();
         if (env.numOfInstances < 1 || env.numOfInstances > 15) {
           LOGGER.warning(
-                  env.numOfInstances + " instances were requested but the requested number must be "
-                          + "between 1 and 15. 5 instances will be used as a default.");
+              env.numOfInstances + " instances were requested but the requested number must be "
+                  + "between 1 and 15. 5 instances will be used as a default.");
           env.numOfInstances = 5;
         }
         break;
@@ -122,44 +122,44 @@ public class TestEnvironmentConfig implements AutoCloseable {
       case MYSQL:
         for (int i = 1; i <= env.numOfInstances; i++) {
           env.databaseContainers.add(
-                  containerHelper.createMysqlContainer(
-                          env.network,
-                          DATABASE_CONTAINER_NAME_PREFIX + i,
-                          env.info.getDatabaseInfo().getDefaultDbName(),
-                          env.info.getDatabaseInfo().getUsername(),
-                          env.info.getDatabaseInfo().getPassword()));
+              containerHelper.createMysqlContainer(
+                  env.network,
+                  DATABASE_CONTAINER_NAME_PREFIX + i,
+                  env.info.getDatabaseInfo().getDefaultDbName(),
+                  env.info.getDatabaseInfo().getUsername(),
+                  env.info.getDatabaseInfo().getPassword()));
           env.databaseContainers.get(0).start();
 
           env.info
-                  .getDatabaseInfo()
-                  .getInstances()
-                  .add(
-                          new TestInstanceInfo(
-                                  DATABASE_CONTAINER_NAME_PREFIX + i,
-                                  DATABASE_CONTAINER_NAME_PREFIX + i,
-                                  3306));
+              .getDatabaseInfo()
+              .getInstances()
+              .add(
+                  new TestInstanceInfo(
+                      DATABASE_CONTAINER_NAME_PREFIX + i,
+                      DATABASE_CONTAINER_NAME_PREFIX + i,
+                      3306));
         }
         break;
 
       case PG:
         for (int i = 1; i <= env.numOfInstances; i++) {
           env.databaseContainers.add(
-                  containerHelper.createPostgresContainer(
-                          env.network,
-                          DATABASE_CONTAINER_NAME_PREFIX + i,
-                          env.info.getDatabaseInfo().getDefaultDbName(),
-                          env.info.getDatabaseInfo().getUsername(),
-                          env.info.getDatabaseInfo().getPassword()));
+              containerHelper.createPostgresContainer(
+                  env.network,
+                  DATABASE_CONTAINER_NAME_PREFIX + i,
+                  env.info.getDatabaseInfo().getDefaultDbName(),
+                  env.info.getDatabaseInfo().getUsername(),
+                  env.info.getDatabaseInfo().getPassword()));
           env.databaseContainers.get(0).start();
 
           env.info
-                  .getDatabaseInfo()
-                  .getInstances()
-                  .add(
-                          new TestInstanceInfo(
-                                  DATABASE_CONTAINER_NAME_PREFIX + i,
-                                  DATABASE_CONTAINER_NAME_PREFIX + i,
-                                  5432));
+              .getDatabaseInfo()
+              .getInstances()
+              .add(
+                  new TestInstanceInfo(
+                      DATABASE_CONTAINER_NAME_PREFIX + i,
+                      DATABASE_CONTAINER_NAME_PREFIX + i,
+                      5432));
         }
         break;
 
@@ -182,8 +182,8 @@ public class TestEnvironmentConfig implements AutoCloseable {
         env.numOfInstances = env.info.getRequest().getNumOfInstances();
         if (env.numOfInstances < 1 || env.numOfInstances > 15) {
           LOGGER.warning(
-                  env.numOfInstances + " instances were requested but the requested number must be "
-                          + "between 1 and 15. 5 instances will be used as a default.");
+              env.numOfInstances + " instances were requested but the requested number must be "
+                  + "between 1 and 15. 5 instances will be used as a default.");
           env.numOfInstances = 5;
         }
 
@@ -197,55 +197,55 @@ public class TestEnvironmentConfig implements AutoCloseable {
   private static void createAuroraDbCluster(TestEnvironmentConfig env, int numOfInstances) {
 
     env.info.setAuroraRegion(
-            !StringUtils.isNullOrEmpty(System.getenv("AURORA_DB_REGION"))
-                    ? System.getenv("AURORA_DB_REGION")
-                    : "us-east-1");
+        !StringUtils.isNullOrEmpty(System.getenv("AURORA_DB_REGION"))
+            ? System.getenv("AURORA_DB_REGION")
+            : "us-east-1");
 
     env.reuseAuroraDbCluster =
-            !StringUtils.isNullOrEmpty(System.getenv("REUSE_AURORA_CLUSTER"))
-                    && Boolean.parseBoolean(System.getenv("REUSE_AURORA_CLUSTER"));
+        !StringUtils.isNullOrEmpty(System.getenv("REUSE_AURORA_CLUSTER"))
+            && Boolean.parseBoolean(System.getenv("REUSE_AURORA_CLUSTER"));
     env.auroraClusterName = System.getenv("AURORA_CLUSTER_NAME"); // "cluster-mysql"
     env.auroraClusterDomain =
-            System.getenv("AURORA_CLUSTER_DOMAIN"); // "XYZ.us-west-2.rds.amazonaws.com"
+        System.getenv("AURORA_CLUSTER_DOMAIN"); // "XYZ.us-west-2.rds.amazonaws.com"
     env.auroraMySqlDbEngineVersion =
-            System.getenv("AURORA_MYSQL_DB_ENGINE_VERSION"); // "latest", "default"
+        System.getenv("AURORA_MYSQL_DB_ENGINE_VERSION"); // "latest", "default"
     env.auroraPgDbEngineVersion =
-            System.getenv("AURORA_PG_ENGINE_VERSION");
+        System.getenv("AURORA_PG_ENGINE_VERSION");
 
     if (StringUtils.isNullOrEmpty(env.auroraClusterDomain)) {
       throw new RuntimeException("Environment variable AURORA_CLUSTER_DOMAIN is required.");
     }
 
     env.auroraUtil =
-            new AuroraTestUtility(
-                    env.info.getAuroraRegion(),
-                    env.awsAccessKeyId,
-                    env.awsSecretAccessKey,
-                    env.awsSessionToken);
+        new AuroraTestUtility(
+            env.info.getAuroraRegion(),
+            env.awsAccessKeyId,
+            env.awsSecretAccessKey,
+            env.awsSessionToken);
 
     ArrayList<TestInstanceInfo> instances = new ArrayList<>();
 
     if (env.reuseAuroraDbCluster) {
       if (!env.auroraUtil.doesClusterExist(env.auroraClusterName)) {
         throw new RuntimeException(
-                "It's requested to reuse existing DB cluster but it doesn't exist: "
-                        + env.auroraClusterName
-                        + "."
-                        + env.auroraClusterDomain);
+            "It's requested to reuse existing DB cluster but it doesn't exist: "
+                + env.auroraClusterName
+                + "."
+                + env.auroraClusterDomain);
       }
       LOGGER.finer(
-              "Reuse existing cluster " + env.auroraClusterName + ".cluster-" + env.auroraClusterDomain);
+          "Reuse existing cluster " + env.auroraClusterName + ".cluster-" + env.auroraClusterDomain);
 
       DBCluster clusterInfo = env.auroraUtil.getClusterInfo(env.auroraClusterName);
 
       DatabaseEngine existingClusterDatabaseEngine = env.auroraUtil.getClusterEngine(clusterInfo);
       if (existingClusterDatabaseEngine != env.info.getRequest().getDatabaseEngine()) {
         throw new RuntimeException(
-                "Existing cluster is "
-                        + existingClusterDatabaseEngine
-                        + " cluster. "
-                        + env.info.getRequest().getDatabaseEngine()
-                        + " is expected.");
+            "Existing cluster is "
+                + existingClusterDatabaseEngine
+                + " cluster. "
+                + env.info.getRequest().getDatabaseEngine()
+                + " is expected.");
       }
 
       env.info.setDatabaseEngine(clusterInfo.engine());
@@ -270,20 +270,20 @@ public class TestEnvironmentConfig implements AutoCloseable {
         String instanceClass = getAuroraInstanceClass(env.info.getRequest());
 
         env.auroraClusterDomain =
-                env.auroraUtil.createCluster(
-                        env.info.getDatabaseInfo().getUsername(),
-                        env.info.getDatabaseInfo().getPassword(),
-                        env.info.getDatabaseInfo().getDefaultDbName(),
-                        env.auroraClusterName,
-                        engine,
-                        instanceClass,
-                        engineVersion,
-                        numOfInstances,
-                        instances);
+            env.auroraUtil.createCluster(
+                env.info.getDatabaseInfo().getUsername(),
+                env.info.getDatabaseInfo().getPassword(),
+                env.info.getDatabaseInfo().getDefaultDbName(),
+                env.auroraClusterName,
+                engine,
+                instanceClass,
+                engineVersion,
+                numOfInstances,
+                instances);
         env.info.setDatabaseEngine(engine);
         env.info.setDatabaseEngineVersion(engineVersion);
         LOGGER.finer(
-                "Created a new cluster " + env.auroraClusterName + ".cluster-" + env.auroraClusterDomain);
+            "Created a new cluster " + env.auroraClusterName + ".cluster-" + env.auroraClusterDomain);
       } catch (Exception e) {
 
         LOGGER.finer("Error creating a cluster " + env.auroraClusterName + ". " + e.getMessage());
@@ -302,12 +302,12 @@ public class TestEnvironmentConfig implements AutoCloseable {
     int port = getPort(env.info.getRequest());
 
     env.info
-            .getDatabaseInfo()
-            .setClusterEndpoint(env.auroraClusterName + ".cluster-" + env.auroraClusterDomain, port);
+        .getDatabaseInfo()
+        .setClusterEndpoint(env.auroraClusterName + ".cluster-" + env.auroraClusterDomain, port);
     env.info
-            .getDatabaseInfo()
-            .setClusterReadOnlyEndpoint(
-                    env.auroraClusterName + ".cluster-ro-" + env.auroraClusterDomain, port);
+        .getDatabaseInfo()
+        .setClusterReadOnlyEndpoint(
+            env.auroraClusterName + ".cluster-ro-" + env.auroraClusterDomain, port);
     env.info.getDatabaseInfo().setInstanceEndpointSuffix(env.auroraClusterDomain, port);
 
     env.info.getDatabaseInfo().getInstances().clear();
@@ -351,11 +351,11 @@ public class TestEnvironmentConfig implements AutoCloseable {
       case MYSQL:
         engineName = "aurora-mysql";
         systemPropertyVersion = env.auroraMySqlDbEngineVersion;
-        break;
+      break;
       case PG:
         engineName = "aurora-postgresql";
         systemPropertyVersion = env.auroraPgDbEngineVersion;
-        break;
+      break;
       default:
         throw new NotImplementedException(request.getDatabaseEngine().toString());
     }
@@ -399,17 +399,17 @@ public class TestEnvironmentConfig implements AutoCloseable {
 
   private static void initDatabaseParams(TestEnvironmentConfig env) {
     final String dbName =
-            !StringUtils.isNullOrEmpty(System.getenv("DB_DATABASE_NAME"))
-                    ? System.getenv("DB_DATABASE_NAME")
-                    : "test_database";
+        !StringUtils.isNullOrEmpty(System.getenv("DB_DATABASE_NAME"))
+            ? System.getenv("DB_DATABASE_NAME")
+            : "test_database";
     final String dbUsername =
-            !StringUtils.isNullOrEmpty(System.getenv("DB_USERNAME"))
-                    ? System.getenv("DB_USERNAME")
-                    : "test_user";
+        !StringUtils.isNullOrEmpty(System.getenv("DB_USERNAME"))
+            ? System.getenv("DB_USERNAME")
+            : "test_user";
     final String dbPassword =
-            !StringUtils.isNullOrEmpty(System.getenv("DB_PASSWORD"))
-                    ? System.getenv("DB_PASSWORD")
-                    : "secret_password";
+        !StringUtils.isNullOrEmpty(System.getenv("DB_PASSWORD"))
+            ? System.getenv("DB_PASSWORD")
+            : "secret_password";
 
     env.info.setDatabaseInfo(new TestDatabaseInfo());
     env.info.getDatabaseInfo().setUsername(dbUsername);
@@ -430,9 +430,9 @@ public class TestEnvironmentConfig implements AutoCloseable {
     }
 
     if (env.info
-            .getRequest()
-            .getFeatures()
-            .contains(TestEnvironmentFeatures.AWS_CREDENTIALS_ENABLED)) {
+        .getRequest()
+        .getFeatures()
+        .contains(TestEnvironmentFeatures.AWS_CREDENTIALS_ENABLED)) {
       env.info.setAwsAccessKeyId(env.awsAccessKeyId);
       env.info.setAwsSecretAccessKey(env.awsSecretAccessKey);
       if (!StringUtils.isNullOrEmpty(env.awsSessionToken)) {
@@ -457,13 +457,13 @@ public class TestEnvironmentConfig implements AutoCloseable {
     int proxyPort = 0;
     for (TestInstanceInfo instance : env.info.getDatabaseInfo().getInstances()) {
       ToxiproxyContainer container =
-              containerHelper.createProxyContainer(env.network, instance, PROXIED_DOMAIN_NAME_SUFFIX);
+          containerHelper.createProxyContainer(env.network, instance, PROXIED_DOMAIN_NAME_SUFFIX);
 
       container.start();
       env.proxyContainers.add(container);
 
       ToxiproxyContainer.ContainerProxy proxy =
-              container.getProxy(instance.getHost(), instance.getPort());
+          container.getProxy(instance.getHost(), instance.getPort());
 
       if (proxyPort != 0 && proxyPort != proxy.getOriginalProxyPort()) {
         throw new RuntimeException("DB cluster proxies should be on the same port.");
@@ -473,52 +473,52 @@ public class TestEnvironmentConfig implements AutoCloseable {
 
     if (!StringUtils.isNullOrEmpty(env.info.getDatabaseInfo().getClusterEndpoint())) {
       env.proxyContainers.add(
-              containerHelper.createAndStartProxyContainer(
-                      env.network,
-                      "proxy-cluster",
-                      env.info.getDatabaseInfo().getClusterEndpoint() + PROXIED_DOMAIN_NAME_SUFFIX,
-                      env.info.getDatabaseInfo().getClusterEndpoint(),
-                      port,
-                      proxyPort));
+          containerHelper.createAndStartProxyContainer(
+              env.network,
+              "proxy-cluster",
+              env.info.getDatabaseInfo().getClusterEndpoint() + PROXIED_DOMAIN_NAME_SUFFIX,
+              env.info.getDatabaseInfo().getClusterEndpoint(),
+              port,
+              proxyPort));
 
       env.info
-              .getProxyDatabaseInfo()
-              .setClusterEndpoint(
-                      env.info.getDatabaseInfo().getClusterEndpoint() + PROXIED_DOMAIN_NAME_SUFFIX,
-                      proxyPort);
+          .getProxyDatabaseInfo()
+          .setClusterEndpoint(
+              env.info.getDatabaseInfo().getClusterEndpoint() + PROXIED_DOMAIN_NAME_SUFFIX,
+              proxyPort);
     }
 
     if (!StringUtils.isNullOrEmpty(env.info.getDatabaseInfo().getClusterReadOnlyEndpoint())) {
       env.proxyContainers.add(
-              containerHelper.createAndStartProxyContainer(
-                      env.network,
-                      "proxy-ro-cluster",
-                      env.info.getDatabaseInfo().getClusterReadOnlyEndpoint() + PROXIED_DOMAIN_NAME_SUFFIX,
-                      env.info.getDatabaseInfo().getClusterReadOnlyEndpoint(),
-                      port,
-                      proxyPort));
+          containerHelper.createAndStartProxyContainer(
+              env.network,
+              "proxy-ro-cluster",
+              env.info.getDatabaseInfo().getClusterReadOnlyEndpoint() + PROXIED_DOMAIN_NAME_SUFFIX,
+              env.info.getDatabaseInfo().getClusterReadOnlyEndpoint(),
+              port,
+              proxyPort));
 
       env.info
-              .getProxyDatabaseInfo()
-              .setClusterReadOnlyEndpoint(
-                      env.info.getDatabaseInfo().getClusterReadOnlyEndpoint() + PROXIED_DOMAIN_NAME_SUFFIX,
-                      proxyPort);
+          .getProxyDatabaseInfo()
+          .setClusterReadOnlyEndpoint(
+              env.info.getDatabaseInfo().getClusterReadOnlyEndpoint() + PROXIED_DOMAIN_NAME_SUFFIX,
+              proxyPort);
     }
 
     if (!StringUtils.isNullOrEmpty(env.info.getDatabaseInfo().getInstanceEndpointSuffix())) {
       env.info
-              .getProxyDatabaseInfo()
-              .setInstanceEndpointSuffix(
-                      env.info.getDatabaseInfo().getInstanceEndpointSuffix() + PROXIED_DOMAIN_NAME_SUFFIX,
-                      proxyPort);
+          .getProxyDatabaseInfo()
+          .setInstanceEndpointSuffix(
+              env.info.getDatabaseInfo().getInstanceEndpointSuffix() + PROXIED_DOMAIN_NAME_SUFFIX,
+              proxyPort);
     }
 
     for (TestInstanceInfo instanceInfo : env.info.getDatabaseInfo().getInstances()) {
       TestInstanceInfo proxyInstanceInfo =
-              new TestInstanceInfo(
-                      instanceInfo.getInstanceId(),
-                      instanceInfo.getHost() + PROXIED_DOMAIN_NAME_SUFFIX,
-                      proxyPort);
+          new TestInstanceInfo(
+              instanceInfo.getInstanceId(),
+              instanceInfo.getHost() + PROXIED_DOMAIN_NAME_SUFFIX,
+              proxyPort);
       env.info.getProxyDatabaseInfo().getInstances().add(proxyInstanceInfo);
     }
   }
@@ -527,22 +527,22 @@ public class TestEnvironmentConfig implements AutoCloseable {
     final ContainerHelper containerHelper = new ContainerHelper();
 
     env.testContainer = containerHelper.createTestContainer(
-            "aws/rds-test-container",
-            getContainerBaseImageName(env.info.getRequest()));
+        "aws/rds-test-container",
+        getContainerBaseImageName(env.info.getRequest()));
 
     env.testContainer
-            .withNetworkAliases(TEST_CONTAINER_NAME)
-            .withNetwork(env.network)
-            .withEnv("TEST_ENV_INFO_JSON", getEnvironmentInfoAsString(env))
-            .withEnv("TEST_ENV_DESCRIPTION", env.info.getRequest().getDisplayName());
+        .withNetworkAliases(TEST_CONTAINER_NAME)
+        .withNetwork(env.network)
+        .withEnv("TEST_ENV_INFO_JSON", getEnvironmentInfoAsString(env))
+        .withEnv("TEST_ENV_DESCRIPTION", env.info.getRequest().getDisplayName());
     if (env.info
-            .getRequest()
-            .getFeatures()
-            .contains(TestEnvironmentFeatures.AWS_CREDENTIALS_ENABLED)) {
+        .getRequest()
+        .getFeatures()
+        .contains(TestEnvironmentFeatures.AWS_CREDENTIALS_ENABLED)) {
       env.testContainer
-              .withEnv("AWS_ACCESS_KEY_ID", env.awsAccessKeyId)
-              .withEnv("AWS_SECRET_ACCESS_KEY", env.awsSecretAccessKey)
-              .withEnv("AWS_SESSION_TOKEN", env.awsSessionToken);
+          .withEnv("AWS_ACCESS_KEY_ID", env.awsAccessKeyId)
+          .withEnv("AWS_SECRET_ACCESS_KEY", env.awsSecretAccessKey)
+          .withEnv("AWS_SESSION_TOKEN", env.awsSessionToken);
     }
 
     env.testContainer.start();
@@ -551,45 +551,45 @@ public class TestEnvironmentConfig implements AutoCloseable {
   private static String getContainerBaseImageName(TestEnvironmentRequest request) {
     return "node:21";
   }
-
+  
 
   private static void configureIamAccess(TestEnvironmentConfig env) {
 
     if (env.info.getRequest().getDatabaseEngineDeployment() != DatabaseEngineDeployment.AURORA) {
       throw new UnsupportedOperationException(
-              env.info.getRequest().getDatabaseEngineDeployment().toString());
+          env.info.getRequest().getDatabaseEngineDeployment().toString());
     }
 
     env.info.setIamUsername(
-            !StringUtils.isNullOrEmpty(System.getenv("IAM_USER"))
-                    ? System.getenv("IAM_USER")
-                    : "jane_doe");
+        !StringUtils.isNullOrEmpty(System.getenv("IAM_USER"))
+            ? System.getenv("IAM_USER")
+            : "jane_doe");
     if (!env.reuseAuroraDbCluster) {
       try {
         Class.forName(DriverHelper.getDriverClassname(env.info.getRequest().getDatabaseEngine()));
       } catch (ClassNotFoundException e) {
         throw new RuntimeException(
-                "Driver not found: "
-                        + DriverHelper.getDriverClassname(env.info.getRequest().getDatabaseEngine()),
-                e);
+            "Driver not found: "
+                + DriverHelper.getDriverClassname(env.info.getRequest().getDatabaseEngine()),
+            e);
       }
 
       final String url =
-              String.format(
-                      "%s%s:%d/%s",
-                      DriverHelper.getDriverProtocol(env.info.getRequest().getDatabaseEngine()),
-                      env.info.getDatabaseInfo().getClusterEndpoint(),
-                      env.info.getDatabaseInfo().getClusterEndpointPort(),
-                      env.info.getDatabaseInfo().getDefaultDbName());
+          String.format(
+              "%s%s:%d/%s",
+              DriverHelper.getDriverProtocol(env.info.getRequest().getDatabaseEngine()),
+              env.info.getDatabaseInfo().getClusterEndpoint(),
+              env.info.getDatabaseInfo().getClusterEndpointPort(),
+              env.info.getDatabaseInfo().getDefaultDbName());
 
       try {
         env.auroraUtil.addAuroraAwsIamUser(
-                env.info.getRequest().getDatabaseEngine(),
-                url,
-                env.info.getDatabaseInfo().getUsername(),
-                env.info.getDatabaseInfo().getPassword(),
-                env.info.getIamUsername(),
-                env.info.getDatabaseInfo().getDefaultDbName());
+            env.info.getRequest().getDatabaseEngine(),
+            url,
+            env.info.getDatabaseInfo().getUsername(),
+            env.info.getDatabaseInfo().getPassword(),
+            env.info.getIamUsername(),
+            env.info.getDatabaseInfo().getDefaultDbName());
 
       } catch (SQLException e) {
         throw new RuntimeException("Error configuring IAM access.", e);

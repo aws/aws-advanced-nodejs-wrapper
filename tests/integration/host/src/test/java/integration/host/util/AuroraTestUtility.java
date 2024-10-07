@@ -37,7 +37,6 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.time.Duration;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.Properties;
@@ -64,15 +63,12 @@ import software.amazon.awssdk.services.rds.model.CreateDbClusterRequest;
 import software.amazon.awssdk.services.rds.model.CreateDbInstanceRequest;
 import software.amazon.awssdk.services.rds.model.DBCluster;
 import software.amazon.awssdk.services.rds.model.DBClusterMember;
-import software.amazon.awssdk.services.rds.model.DBEngineVersion;
 import software.amazon.awssdk.services.rds.model.DBInstance;
 import software.amazon.awssdk.services.rds.model.DbClusterNotFoundException;
 import software.amazon.awssdk.services.rds.model.DeleteDbClusterResponse;
 import software.amazon.awssdk.services.rds.model.DeleteDbInstanceRequest;
 import software.amazon.awssdk.services.rds.model.DescribeDbClustersRequest;
 import software.amazon.awssdk.services.rds.model.DescribeDbClustersResponse;
-import software.amazon.awssdk.services.rds.model.DescribeDbEngineVersionsRequest;
-import software.amazon.awssdk.services.rds.model.DescribeDbEngineVersionsResponse;
 import software.amazon.awssdk.services.rds.model.DescribeDbInstancesResponse;
 import software.amazon.awssdk.services.rds.model.FailoverDbClusterResponse;
 import software.amazon.awssdk.services.rds.model.Filter;
@@ -135,14 +131,14 @@ public class AuroraTestUtility {
   }
 
   public AuroraTestUtility(
-          String region, String awsAccessKeyId, String awsSecretAccessKey, String awsSessionToken) {
+      String region, String awsAccessKeyId, String awsSecretAccessKey, String awsSessionToken) {
 
     this(
-            getRegionInternal(region),
-            StaticCredentialsProvider.create(
-                    StringUtils.isNullOrEmpty(awsSessionToken)
-                            ? AwsBasicCredentials.create(awsAccessKeyId, awsSecretAccessKey)
-                            : AwsSessionCredentials.create(awsAccessKeyId, awsSecretAccessKey, awsSessionToken)));
+        getRegionInternal(region),
+        StaticCredentialsProvider.create(
+            StringUtils.isNullOrEmpty(awsSessionToken)
+                ? AwsBasicCredentials.create(awsAccessKeyId, awsSecretAccessKey)
+                : AwsSessionCredentials.create(awsAccessKeyId, awsSecretAccessKey, awsSessionToken)));
   }
 
   /**
@@ -156,15 +152,15 @@ public class AuroraTestUtility {
     dbRegion = region;
 
     rdsClient =
-            RdsClient.builder().region(dbRegion).credentialsProvider(credentialsProvider).build();
+        RdsClient.builder().region(dbRegion).credentialsProvider(credentialsProvider).build();
 
     ec2Client =
-            Ec2Client.builder().region(dbRegion).credentialsProvider(credentialsProvider).build();
+        Ec2Client.builder().region(dbRegion).credentialsProvider(credentialsProvider).build();
   }
 
   protected static Region getRegionInternal(String rdsRegion) {
     Optional<Region> regionOptional =
-            Region.regions().stream().filter(r -> r.id().equalsIgnoreCase(rdsRegion)).findFirst();
+        Region.regions().stream().filter(r -> r.id().equalsIgnoreCase(rdsRegion)).findFirst();
 
     if (regionOptional.isPresent()) {
       return regionOptional.get();
@@ -188,16 +184,16 @@ public class AuroraTestUtility {
    * @throws InterruptedException when clusters have not started after 30 minutes
    */
   public String createCluster(
-          String username,
-          String password,
-          String dbName,
-          String identifier,
-          String engine,
-          String instanceClass,
-          String version,
-          int numOfInstances,
-          ArrayList<TestInstanceInfo> instances)
-          throws InterruptedException {
+      String username,
+      String password,
+      String dbName,
+      String identifier,
+      String engine,
+      String instanceClass,
+      String version,
+      int numOfInstances,
+      ArrayList<TestInstanceInfo> instances)
+      throws InterruptedException {
     dbUsername = username;
     dbPassword = password;
     this.dbName = dbName;
@@ -221,18 +217,18 @@ public class AuroraTestUtility {
     final Tag testRunnerTag = Tag.builder().key("env").value("test-runner").build();
 
     final CreateDbClusterRequest dbClusterRequest =
-            CreateDbClusterRequest.builder()
-                    .dbClusterIdentifier(dbIdentifier)
-                    .databaseName(dbName)
-                    .masterUsername(dbUsername)
-                    .masterUserPassword(dbPassword)
-                    .sourceRegion(dbRegion.id())
-                    .enableIAMDatabaseAuthentication(true)
-                    .engine(dbEngine)
-                    .engineVersion(dbEngineVersion)
-                    .storageEncrypted(true)
-                    .tags(testRunnerTag)
-                    .build();
+        CreateDbClusterRequest.builder()
+            .dbClusterIdentifier(dbIdentifier)
+            .databaseName(dbName)
+            .masterUsername(dbUsername)
+            .masterUserPassword(dbPassword)
+            .sourceRegion(dbRegion.id())
+            .enableIAMDatabaseAuthentication(true)
+            .engine(dbEngine)
+            .engineVersion(dbEngineVersion)
+            .storageEncrypted(true)
+            .tags(testRunnerTag)
+            .build();
 
     rdsClient.createDBCluster(dbClusterRequest);
 
@@ -240,46 +236,46 @@ public class AuroraTestUtility {
     for (int i = 1; i <= numOfInstances; i++) {
       final String instanceName = dbIdentifier + "-" + i;
       rdsClient.createDBInstance(
-              CreateDbInstanceRequest.builder()
-                      .dbClusterIdentifier(dbIdentifier)
-                      .dbInstanceIdentifier(instanceName)
-                      .dbInstanceClass(dbInstanceClass)
-                      .engine(dbEngine)
-                      .engineVersion(dbEngineVersion)
-                      .publiclyAccessible(true)
-                      .tags(testRunnerTag)
-                      .build());
+          CreateDbInstanceRequest.builder()
+              .dbClusterIdentifier(dbIdentifier)
+              .dbInstanceIdentifier(instanceName)
+              .dbInstanceClass(dbInstanceClass)
+              .engine(dbEngine)
+              .engineVersion(dbEngineVersion)
+              .publiclyAccessible(true)
+              .tags(testRunnerTag)
+              .build());
     }
 
     // Wait for all instances to be up
     final RdsWaiter waiter = rdsClient.waiter();
     WaiterResponse<DescribeDbInstancesResponse> waiterResponse =
-            waiter.waitUntilDBInstanceAvailable(
-                    (requestBuilder) ->
-                            requestBuilder.filters(
-                                    Filter.builder().name("db-cluster-id").values(dbIdentifier).build()),
-                    (configurationBuilder) -> configurationBuilder.waitTimeout(Duration.ofMinutes(30)));
+        waiter.waitUntilDBInstanceAvailable(
+            (requestBuilder) ->
+                requestBuilder.filters(
+                    Filter.builder().name("db-cluster-id").values(dbIdentifier).build()),
+            (configurationBuilder) -> configurationBuilder.waitTimeout(Duration.ofMinutes(30)));
 
     if (waiterResponse.matched().exception().isPresent()) {
       deleteCluster();
       throw new InterruptedException(
-              "Unable to start AWS RDS Cluster & Instances after waiting for 30 minutes");
+          "Unable to start AWS RDS Cluster & Instances after waiting for 30 minutes");
     }
 
     final DescribeDbInstancesResponse dbInstancesResult =
-            rdsClient.describeDBInstances(
-                    (builder) ->
-                            builder.filters(
-                                    Filter.builder().name("db-cluster-id").values(dbIdentifier).build()));
+        rdsClient.describeDBInstances(
+            (builder) ->
+                builder.filters(
+                    Filter.builder().name("db-cluster-id").values(dbIdentifier).build()));
     final String endpoint = dbInstancesResult.dbInstances().get(0).endpoint().address();
     final String clusterDomainPrefix = endpoint.substring(endpoint.indexOf('.') + 1);
 
     for (DBInstance instance : dbInstancesResult.dbInstances()) {
       this.instances.add(
-              new TestInstanceInfo(
-                      instance.dbInstanceIdentifier(),
-                      instance.endpoint().address(),
-                      instance.endpoint().port()));
+          new TestInstanceInfo(
+              instance.dbInstanceIdentifier(),
+              instance.endpoint().address(),
+              instance.endpoint().port()));
     }
 
     return clusterDomainPrefix;
@@ -317,13 +313,13 @@ public class AuroraTestUtility {
 
     try {
       ec2Client.authorizeSecurityGroupIngress(
-              (builder) ->
-                      builder
-                              .groupName(dbSecGroup)
-                              .cidrIp(ipAddress + "/32")
-                              .ipProtocol("-1") // All protocols
-                              .fromPort(0) // For all ports
-                              .toPort(65535));
+          (builder) ->
+              builder
+                  .groupName(dbSecGroup)
+                  .cidrIp(ipAddress + "/32")
+                  .ipProtocol("-1") // All protocols
+                  .fromPort(0) // For all ports
+                  .toPort(65535));
     } catch (Ec2Exception exception) {
       if (!DUPLICATE_IP_ERROR_CODE.equalsIgnoreCase(exception.awsErrorDetails().errorCode())) {
         throw exception;
@@ -333,15 +329,15 @@ public class AuroraTestUtility {
 
   private boolean ipExists(String ipAddress) {
     final DescribeSecurityGroupsResponse response =
-            ec2Client.describeSecurityGroups(
-                    (builder) ->
-                            builder
-                                    .groupNames(dbSecGroup)
-                                    .filters(
-                                            software.amazon.awssdk.services.ec2.model.Filter.builder()
-                                                    .name("ip-permission.cidr")
-                                                    .values(ipAddress + "/32")
-                                                    .build()));
+        ec2Client.describeSecurityGroups(
+            (builder) ->
+                builder
+                    .groupNames(dbSecGroup)
+                    .filters(
+                        software.amazon.awssdk.services.ec2.model.Filter.builder()
+                            .name("ip-permission.cidr")
+                            .values(ipAddress + "/32")
+                            .build()));
 
     return response != null && !response.securityGroups().isEmpty();
   }
@@ -355,13 +351,13 @@ public class AuroraTestUtility {
     }
     try {
       ec2Client.revokeSecurityGroupIngress(
-              (builder) ->
-                      builder
-                              .groupName(dbSecGroup)
-                              .cidrIp(ipAddress + "/32")
-                              .ipProtocol("-1") // All protocols
-                              .fromPort(0) // For all ports
-                              .toPort(65535));
+          (builder) ->
+              builder
+                  .groupName(dbSecGroup)
+                  .cidrIp(ipAddress + "/32")
+                  .ipProtocol("-1") // All protocols
+                  .fromPort(0) // For all ports
+                  .toPort(65535));
     } catch (Ec2Exception exception) {
       // Ignore
     }
@@ -385,10 +381,10 @@ public class AuroraTestUtility {
     for (int i = 1; i <= numOfInstances; i++) {
       try {
         rdsClient.deleteDBInstance(
-                DeleteDbInstanceRequest.builder()
-                        .dbInstanceIdentifier(dbIdentifier + "-" + i)
-                        .skipFinalSnapshot(true)
-                        .build());
+            DeleteDbInstanceRequest.builder()
+                .dbInstanceIdentifier(dbIdentifier + "-" + i)
+                .skipFinalSnapshot(true)
+                .build());
       } catch (Exception ex) {
         LOGGER.finest("Error deleting instance " + dbIdentifier + "-" + i + ". " + ex.getMessage());
         // Ignore this error and continue with other instances
@@ -397,12 +393,12 @@ public class AuroraTestUtility {
 
     // Tear down cluster
     rdsClient.deleteDBCluster(
-            (builder -> builder.skipFinalSnapshot(true).dbClusterIdentifier(dbIdentifier)));
+        (builder -> builder.skipFinalSnapshot(true).dbClusterIdentifier(dbIdentifier)));
   }
 
   public boolean doesClusterExist(final String clusterId) {
     final DescribeDbClustersRequest request =
-            DescribeDbClustersRequest.builder().dbClusterIdentifier(clusterId).build();
+        DescribeDbClustersRequest.builder().dbClusterIdentifier(clusterId).build();
     try {
       rdsClient.describeDBClusters(request);
     } catch (DbClusterNotFoundException ex) {
@@ -413,7 +409,7 @@ public class AuroraTestUtility {
 
   public DBCluster getClusterInfo(final String clusterId) {
     final DescribeDbClustersRequest request =
-            DescribeDbClustersRequest.builder().dbClusterIdentifier(clusterId).build();
+        DescribeDbClustersRequest.builder().dbClusterIdentifier(clusterId).build();
     final DescribeDbClustersResponse response = rdsClient.describeDBClusters(request);
     if (!response.hasDbClusters()) {
       throw new RuntimeException("Cluster " + clusterId + " not found.");
@@ -435,38 +431,38 @@ public class AuroraTestUtility {
 
   public List<TestInstanceInfo> getClusterInstanceIds(final String clusterId) {
     final DescribeDbInstancesResponse dbInstancesResult =
-            rdsClient.describeDBInstances(
-                    (builder) ->
-                            builder.filters(Filter.builder().name("db-cluster-id").values(clusterId).build()));
+        rdsClient.describeDBInstances(
+            (builder) ->
+                builder.filters(Filter.builder().name("db-cluster-id").values(clusterId).build()));
 
     List<TestInstanceInfo> result = new ArrayList<>();
     for (DBInstance instance : dbInstancesResult.dbInstances()) {
       result.add(
-              new TestInstanceInfo(
-                      instance.dbInstanceIdentifier(),
-                      instance.endpoint().address(),
-                      instance.endpoint().port()));
+          new TestInstanceInfo(
+              instance.dbInstanceIdentifier(),
+              instance.endpoint().address(),
+              instance.endpoint().port()));
     }
     return result;
   }
 
   public void addAuroraAwsIamUser(
-          DatabaseEngine databaseEngine,
-          String connectionUrl,
-          String userName,
-          String password,
-          String dbUser,
-          String databaseName)
-          throws SQLException {
+      DatabaseEngine databaseEngine,
+      String connectionUrl,
+      String userName,
+      String password,
+      String dbUser,
+      String databaseName)
+      throws SQLException {
 
     try (final Connection conn = DriverManager.getConnection(connectionUrl, userName, password);
-         final Statement stmt = conn.createStatement()) {
+        final Statement stmt = conn.createStatement()) {
 
       switch (databaseEngine) {
         case MYSQL:
           stmt.execute("DROP USER IF EXISTS " + dbUser + ";");
           stmt.execute(
-                  "CREATE USER " + dbUser + " IDENTIFIED WITH AWSAuthenticationPlugin AS 'RDS';");
+              "CREATE USER " + dbUser + " IDENTIFIED WITH AWSAuthenticationPlugin AS 'RDS';");
           stmt.execute("GRANT ALL PRIVILEGES ON " + databaseName + ".* TO '" + dbUser + "'@'%';");
           break;
         case PG:
