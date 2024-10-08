@@ -25,6 +25,7 @@ import { HostInfoBuilder } from "../../common/lib/host_info_builder";
 import { SimpleHostAvailabilityStrategy } from "../../common/lib/host_availability/simple_host_availability_strategy";
 
 export class BenchmarkPlugin implements ConnectionPlugin {
+  name: string = this.constructor.name;
   resources: Array<string> = new Array<string>();
 
   getSubscribedMethods(): Set<string> {
@@ -64,9 +65,10 @@ export class BenchmarkPlugin implements ConnectionPlugin {
     return Promise.resolve(OldConnectionSuggestionAction.NO_OPINION);
   }
 
-  notifyHostListChanged(changes: Map<string, Set<HostChangeOptions>>): void {
+  notifyHostListChanged(changes: Map<string, Set<HostChangeOptions>>): Promise<void> {
     logger.debug(`notifyHostListChanged = ${JSON.stringify(Array.from(changes))}`);
     this.resources.push("notifyHostListChanged");
+    return Promise.resolve();
   }
 
   acceptsStrategy(role: HostRole, strategy: string): boolean {
