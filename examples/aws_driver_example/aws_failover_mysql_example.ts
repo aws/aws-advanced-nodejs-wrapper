@@ -88,8 +88,7 @@ async function queryWithFailoverHandling(client: AwsMySQLClient, query: string) 
       throw error;
     } else if (error instanceof FailoverSuccessError) {
       // Query execution failed and Node.js wrapper successfully failed over to a new elected writer instance.
-      // Re-open and reconfigure the connection.
-      await client.connect();
+      // Reconfigure the connection.
       await setInitialSessionSettings(client);
       // Re-run query 
       return await client.query({sql: query});
