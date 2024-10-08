@@ -42,7 +42,7 @@ const client = new AwsPGClient({
   ssl: {
     ca: readFileSync("path/to/ssl/certificate.pem").toString()
   }
-  // Optional: Disable server side SSL verification, this is useful when testing in local environments and is not 
+  // Optional: Disable server side SSL verification, this is useful when testing in local environments and is not
   // recommended for production. For more information see: https://nodejs.org/api/https.html#class-httpsagent
   /* httpsAgentOptions: {
    rejectUnauthorized: false

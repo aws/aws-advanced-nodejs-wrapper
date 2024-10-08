@@ -93,41 +93,39 @@ describe("aurora read write splitting", () => {
   }, 1000000);
 
   it.skip("test connect to writer switch set read only", async () => {
-      const config = await initDefaultConfig(env.databaseInfo.writerInstanceEndpoint, env.databaseInfo.instanceEndpointPort, false);
-      client = initClientFunc(config);
+    const config = await initDefaultConfig(env.databaseInfo.writerInstanceEndpoint, env.databaseInfo.instanceEndpointPort, false);
+    client = initClientFunc(config);
 
-      client.on("error", (error: any) => {
-        logger.debug(`event emitter threw error: ${error.message}`);
-        logger.debug(error.stack);
-      });
+    client.on("error", (error: any) => {
+      logger.debug(`event emitter threw error: ${error.message}`);
+      logger.debug(error.stack);
+    });
 
-      await client.connect();
-      const initialWriterId = await auroraTestUtility.queryInstanceId(client);
-      expect(await auroraTestUtility.isDbInstanceWriter(initialWriterId)).toStrictEqual(true);
+    await client.connect();
+    const initialWriterId = await auroraTestUtility.queryInstanceId(client);
+    expect(await auroraTestUtility.isDbInstanceWriter(initialWriterId)).toStrictEqual(true);
 
-      await client.setReadOnly(true);
-      const readerId = await auroraTestUtility.queryInstanceId(client);
-      expect(readerId).not.toBe(initialWriterId);
+    await client.setReadOnly(true);
+    const readerId = await auroraTestUtility.queryInstanceId(client);
+    expect(readerId).not.toBe(initialWriterId);
 
-      await client.setReadOnly(true);
-      const currentId0 = await auroraTestUtility.queryInstanceId(client);
-      expect(currentId0).toStrictEqual(readerId);
+    await client.setReadOnly(true);
+    const currentId0 = await auroraTestUtility.queryInstanceId(client);
+    expect(currentId0).toStrictEqual(readerId);
 
-      await client.setReadOnly(false);
-      const currentId1 = await auroraTestUtility.queryInstanceId(client);
-      expect(currentId1).toStrictEqual(initialWriterId);
+    await client.setReadOnly(false);
+    const currentId1 = await auroraTestUtility.queryInstanceId(client);
+    expect(currentId1).toStrictEqual(initialWriterId);
 
-      await client.setReadOnly(false);
-      const currentId2 = await auroraTestUtility.queryInstanceId(client);
-      expect(currentId2).toStrictEqual(initialWriterId);
+    await client.setReadOnly(false);
+    const currentId2 = await auroraTestUtility.queryInstanceId(client);
+    expect(currentId2).toStrictEqual(initialWriterId);
 
-      await client.setReadOnly(true);
-      const currentId3 = await auroraTestUtility.queryInstanceId(client);
-      expect(currentId3).toStrictEqual(readerId);
-      expect(await auroraTestUtility.isDbInstanceWriter(currentId3)).toStrictEqual(false);
-    },
-    1000000
-  );
+    await client.setReadOnly(true);
+    const currentId3 = await auroraTestUtility.queryInstanceId(client);
+    expect(currentId3).toStrictEqual(readerId);
+    expect(await auroraTestUtility.isDbInstanceWriter(currentId3)).toStrictEqual(false);
+  }, 1000000);
 
   itIf(
     "test set read only false in read only transaction",

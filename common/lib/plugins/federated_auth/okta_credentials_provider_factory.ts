@@ -29,7 +29,7 @@ export class OktaCredentialsProviderFactory extends SamlCredentialsProviderFacto
   private static readonly SAML_RESPONSE_PATTERN = new RegExp('SAMLResponse(?:.|\\n)*value="(?<saml>[^"]+)"');
 
   getSamlUrl(props: Map<string, any>) {
-    const idpHost =  this.formatIdpEndpoint(WrapperProperties.IDP_ENDPOINT.get(props));
+    const idpHost = this.formatIdpEndpoint(WrapperProperties.IDP_ENDPOINT.get(props));
     const appId = WrapperProperties.APP_ID.get(props);
     const baseUri = `${idpHost}/app/${OktaCredentialsProviderFactory.OKTA_AWS_APP_NAME}/${appId}/sso/saml`;
     SamlUtils.validateUrl(baseUri);

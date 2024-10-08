@@ -34,7 +34,7 @@ export class ReaderTaskSelectorHandler {
     return this.tasks.get(failoverTaskId);
   }
 
-  public setSelectedConnectionAttemptTask(failoverTaskId: string, taskId: number){
+  public setSelectedConnectionAttemptTask(failoverTaskId: string, taskId: number) {
     this.tasks.set(failoverTaskId, taskId);
   }
 }

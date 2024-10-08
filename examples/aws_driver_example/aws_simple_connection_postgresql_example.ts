@@ -18,7 +18,7 @@ import { AwsPGClient } from "../../pg/lib";
 
 const postgresHost = "db-identifier.XYZ.us-east-2.rds.amazonaws.com";
 const username = "john_smith";
-const password = "password"
+const password = "password";
 const database = "employees";
 const port = 5432;
 
