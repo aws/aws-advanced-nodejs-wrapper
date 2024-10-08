@@ -49,7 +49,10 @@ export class RdsMultiAZMySQLDatabaseDialect extends MySQLDatabaseDialect impleme
       return false;
     }
 
-    return !!(await targetClient.client.promise().query(RdsMultiAZMySQLDatabaseDialect.TOPOLOGY_QUERY).catch(() => false));
+    return !!(await targetClient.client
+      .promise()
+      .query(RdsMultiAZMySQLDatabaseDialect.TOPOLOGY_QUERY)
+      .catch(() => false));
   }
 
   getHostListProvider(props: Map<string, any>, originalUrl: string, hostListProviderService: HostListProviderService): HostListProvider {

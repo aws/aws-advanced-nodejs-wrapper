@@ -54,8 +54,8 @@ export abstract class SamlCredentialsProviderFactory implements CredentialsProvi
 
   abstract getSamlAssertion(props: Map<string, any>): Promise<string>;
 
-  formatIdpEndpoint(idpEndpoint: string): string{
-    // Only add "https://" if user has passed their idpEndpoint without the URL scheme. 
+  formatIdpEndpoint(idpEndpoint: string): string {
+    // Only add "https://" if user has passed their idpEndpoint without the URL scheme.
     if (!idpEndpoint.startsWith("https://")) {
       return `https://${idpEndpoint}`;
     }

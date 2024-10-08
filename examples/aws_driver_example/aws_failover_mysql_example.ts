@@ -50,10 +50,9 @@ try {
   await client.connect();
   await setInitialSessionSettings(client);
 
-  // Example query 
+  // Example query
   const result = await queryWithFailoverHandling(client, "UPDATE bank_test SET account_balance=account_balance - 100 WHERE name='Jane Doe'");
   console.log(result);
-  
 } catch (error) {
   if (error instanceof FailoverFailedError) {
     // User application should open a new connection, check the results of the failed transaction and re-run it if
@@ -68,19 +67,18 @@ try {
     // Unexpected exception unrelated to failover. This should be handled by the user application.
     throw error;
   }
-  
 } finally {
   await client.end();
 }
 
 async function setInitialSessionSettings(client: AwsMySQLClient) {
   // User can edit settings.
-  await client.query({ sql: "SET time_zone = 'UTC'"});
+  await client.query({ sql: "SET time_zone = 'UTC'" });
 }
 
 async function queryWithFailoverHandling(client: AwsMySQLClient, query: string) {
   try {
-    const result = await client.query({sql: query});
+    const result = await client.query({ sql: query });
     return result;
   } catch (error) {
     if (error instanceof FailoverFailedError) {
@@ -90,12 +88,12 @@ async function queryWithFailoverHandling(client: AwsMySQLClient, query: string) 
       // Query execution failed and Node.js wrapper successfully failed over to a new elected writer instance.
       // Reconfigure the connection.
       await setInitialSessionSettings(client);
-      // Re-run query 
-      return await client.query({sql: query});
+      // Re-run query
+      return await client.query({ sql: query });
     } else if (error instanceof TransactionResolutionUnknownError) {
       // Transaction resolution unknown. Please re-configure session state if required and try
       // restarting transaction.
       throw error;
-    } 
-  } 
+    }
+  }
 }

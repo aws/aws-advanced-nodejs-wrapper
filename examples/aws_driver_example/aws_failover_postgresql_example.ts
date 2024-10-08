@@ -53,7 +53,6 @@ try {
   // Example query.
   const result = await queryWithFailoverHandling(client, "UPDATE bank_test SET account_balance=account_balance - 100 WHERE name='Jane Doe'");
   console.log(result);
-  
 } catch (error) {
   if (error instanceof FailoverFailedError) {
     // User application should open a new connection, check the results of the failed transaction and re-run it if
@@ -68,7 +67,6 @@ try {
     // Unexpected exception unrelated to failover. This should be handled by the user application.
     throw error;
   }
-  
 } finally {
   await client.end();
 }
@@ -90,12 +88,12 @@ async function queryWithFailoverHandling(client: AwsPGClient, query: string) {
       // Query execution failed and Node.js wrapper successfully failed over to a new elected writer instance.
       // Reconfigure the connection.
       await setInitialSessionSettings(client);
-      // Re-run query 
+      // Re-run query
       return await client.query(query);
     } else if (error instanceof TransactionResolutionUnknownError) {
       // Transaction resolution unknown. Please re-configure session state if required and try
       // restarting transaction.
       throw error;
-    } 
-  } 
+    }
+  }
 }
