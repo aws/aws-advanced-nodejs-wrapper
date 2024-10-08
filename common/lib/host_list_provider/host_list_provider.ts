@@ -37,7 +37,7 @@ export interface HostListProvider {
 
   identifyConnection(targetClient: ClientWrapper, dialect: DatabaseDialect): Promise<HostInfo | void | null>;
 
-  createHost(host: string, isWriter: boolean, weight: number, lastUpdateTime: number): HostInfo;
+  createHost(host: string, isWriter: boolean, weight: number, lastUpdateTime: number, port?: number): HostInfo;
 
   getHostProviderType(): string;
 }

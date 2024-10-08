@@ -98,11 +98,11 @@ export class ConnectionStringHostListProvider implements StaticHostListProvider 
     return topology.filter((hostInfo) => instance === hostInfo.hostId)[0];
   }
 
-  createHost(host: string, isWriter: boolean, weight: number, lastUpdateTime: number): HostInfo {
+  createHost(host: string, isWriter: boolean, weight: number, lastUpdateTime: number, port?: number): HostInfo {
     return this.hostListProviderService
       .getHostInfoBuilder()
       .withHost(host ?? "")
-      .withPort(this.initialPort)
+      .withPort(port ?? this.initialPort)
       .withRole(isWriter ? HostRole.WRITER : HostRole.READER)
       .withAvailability(HostAvailability.AVAILABLE)
       .withWeight(weight)

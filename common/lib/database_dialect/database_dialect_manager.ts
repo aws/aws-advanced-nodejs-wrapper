@@ -92,6 +92,7 @@ export class DatabaseDialectManager implements DatabaseDialectProvider {
     if (this.dbType === DatabaseType.MYSQL) {
       const type = this.rdsHelper.identifyRdsType(host);
       if (type.isRdsCluster) {
+        this.canUpdate = true;
         this.dialectCode = DatabaseDialectCodes.AURORA_MYSQL;
         this.dialect = <DatabaseDialect>this.knownDialectsByCode.get(DatabaseDialectCodes.AURORA_MYSQL);
         this.logCurrentDialect();
@@ -116,6 +117,7 @@ export class DatabaseDialectManager implements DatabaseDialectProvider {
     if (this.dbType === DatabaseType.POSTGRES) {
       const type = this.rdsHelper.identifyRdsType(host);
       if (type.isRdsCluster) {
+        this.canUpdate = true;
         this.dialectCode = DatabaseDialectCodes.AURORA_PG;
         this.dialect = <DatabaseDialect>this.knownDialectsByCode.get(DatabaseDialectCodes.AURORA_PG);
         this.logCurrentDialect();

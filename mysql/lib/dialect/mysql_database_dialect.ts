@@ -33,7 +33,7 @@ export class MySQLDatabaseDialect implements DatabaseDialect {
   }
 
   getDialectUpdateCandidates(): string[] {
-    return [DatabaseDialectCodes.AURORA_MYSQL, DatabaseDialectCodes.RDS_MYSQL];
+    return [DatabaseDialectCodes.RDS_MULTI_AZ_MYSQL, DatabaseDialectCodes.AURORA_MYSQL, DatabaseDialectCodes.RDS_MYSQL];
   }
 
   getHostAliasQuery(): string {

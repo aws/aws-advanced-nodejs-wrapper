@@ -22,7 +22,6 @@ import { RdsMySQLDatabaseDialect } from "../../mysql/lib/dialect/rds_mysql_datab
 import { RdsPgDatabaseDialect } from "../../pg/lib/dialect/rds_pg_database_dialect";
 import { DatabaseDialect, DatabaseType } from "../../common/lib/database_dialect/database_dialect";
 import { DatabaseDialectCodes } from "../../common/lib/database_dialect/database_dialect_codes";
-import { DatabaseDialectManager } from "../../common/lib/database_dialect/database_dialect_manager";
 import { PluginService } from "../../common/lib/plugin_service";
 import { PluginServiceManagerContainer } from "../../common/lib/plugin_service_manager_container";
 import { AwsPGClient } from "../../pg/lib";
@@ -30,31 +29,46 @@ import { WrapperProperties } from "../../common/lib/wrapper_property";
 import { HostInfoBuilder } from "../../common/lib/host_info_builder";
 import { SimpleHostAvailabilityStrategy } from "../../common/lib/host_availability/simple_host_availability_strategy";
 import { ClientWrapper } from "../../common/lib/client_wrapper";
-
-const mysqlDialect = new MySQLDatabaseDialect();
-const rdsMysqlDialect = new RdsMySQLDatabaseDialect();
-const auroraMysqlDialect = new AuroraMySQLDatabaseDialect();
-const pgDialect = new PgDatabaseDialect();
-const rdsPgDialect = new RdsPgDatabaseDialect();
-const auroraPgDialect = new AuroraPgDatabaseDialect();
+import { RdsMultiAZMySQLDatabaseDialect } from "../../mysql/lib/dialect/rds_multi_az_mysql_database_dialect";
+import { RdsMultiAZPgDatabaseDialect } from "../../pg/lib/dialect/rds_multi_az_pg_database_dialect";
+import { DatabaseDialectManager } from "../../common/lib/database_dialect/database_dialect_manager";
 
 const LOCALHOST = "localhost";
 const RDS_DATABASE = "database-1.xyz.us-east-2.rds.amazonaws.com";
 const RDS_AURORA_DATABASE = "database-2.cluster-xyz.us-east-2.rds.amazonaws.com";
 
-const mysqlDialects = new Map([
-  [DatabaseDialectCodes.MYSQL, mysqlDialect],
-  [DatabaseDialectCodes.RDS_MYSQL, rdsMysqlDialect],
-  [DatabaseDialectCodes.AURORA_MYSQL, auroraMysqlDialect]
+const mysqlDialects: Map<DatabaseDialectCodes, DatabaseDialect> = new Map([
+  [DatabaseDialectCodes.MYSQL, new MySQLDatabaseDialect()],
+  [DatabaseDialectCodes.RDS_MYSQL, new RdsMySQLDatabaseDialect()],
+  [DatabaseDialectCodes.AURORA_MYSQL, new AuroraMySQLDatabaseDialect()],
+  [DatabaseDialectCodes.RDS_MULTI_AZ_MYSQL, new RdsMultiAZMySQLDatabaseDialect()]
 ]);
 
-const pgDialects = new Map([
-  [DatabaseDialectCodes.PG, pgDialect],
-  [DatabaseDialectCodes.RDS_PG, rdsPgDialect],
-  [DatabaseDialectCodes.AURORA_PG, auroraPgDialect]
+const pgDialects: Map<DatabaseDialectCodes, DatabaseDialect> = new Map([
+  [DatabaseDialectCodes.PG, new PgDatabaseDialect()],
+  [DatabaseDialectCodes.RDS_PG, new RdsPgDatabaseDialect()],
+  [DatabaseDialectCodes.AURORA_PG, new AuroraPgDatabaseDialect()],
+  [DatabaseDialectCodes.RDS_MULTI_AZ_PG, new RdsMultiAZPgDatabaseDialect()]
 ]);
 
-const mysqlVersionCommentResult = [
+const MYSQL_QUERY = "SHOW VARIABLES LIKE 'version_comment'";
+const RDS_MYSQL_QUERY = "SHOW VARIABLES LIKE 'version_comment'";
+const AURORA_MYSQL_QUERY = "SHOW VARIABLES LIKE 'aurora_version'";
+const TAZ_MYSQL_QUERIES: string[] = [
+  "SELECT 1 AS tmp FROM information_schema.tables WHERE" + " table_schema = 'mysql' AND table_name = 'rds_topology'",
+  "SELECT id, endpoint, port FROM mysql.rds_topology"
+];
+const PG_QUERY = "SELECT 1 FROM pg_proc LIMIT 1";
+const RDS_PG_QUERY =
+  "SELECT (setting LIKE '%rds_tools%') AS rds_tools, (setting LIKE '%aurora_stat_utils%') AS aurora_stat_utils " +
+  "FROM pg_settings WHERE name='rds.extensions'";
+const AURORA_PG_QUERY = "SELECT (setting LIKE '%aurora_stat_utils%') AS aurora_stat_utils FROM pg_settings WHERE name='rds.extensions'";
+const TAZ_PG_QUERIES: string[] = [
+  "SELECT 1 AS tmp FROM information_schema.routines WHERE routine_schema='rds_tools' AND routine_name='multi_az_db_cluster_source_dbi_resource_id'",
+  "SELECT multi_az_db_cluster_source_dbi_resource_id FROM rds_tools.multi_az_db_cluster_source_dbi_resource_id()"
+];
+
+const mysqlResult = [
   [
     {
       Variable_name: "version_comment",
@@ -62,7 +76,7 @@ const mysqlVersionCommentResult = [
     }
   ]
 ];
-const rdsMysqlVersionCommentResult = [
+const rdsMysqlResult = [
   [
     {
       Variable_name: "version_comment",
@@ -70,7 +84,7 @@ const rdsMysqlVersionCommentResult = [
     }
   ]
 ];
-const mysqlAuroraQueryResult = [
+const mysqlAuroraResult = [
   [
     {
       Variable_name: "aurora_version",
@@ -78,36 +92,106 @@ const mysqlAuroraQueryResult = [
     }
   ]
 ];
-const pgProcResult = {
+const tazMySQLResult = [
+  [
+    {
+      Variable_name: "id",
+      Value: "315637017"
+    },
+    {
+      Variable_name: "endpoint",
+      Value: "db-instance.hash.region.rds.amazonaws.com"
+    },
+    {
+      Variable_name: "port",
+      Value: "3306s"
+    }
+  ]
+];
+
+const pgResult = {
   rows: [{ "?column?": 1 }]
 };
-const pgExtensionsResult = {
+const pgRdsResult = {
   rows: [{ rds_tools: true, aurora_stat_utils: false }]
 };
-const pgAuroraStatUtilsResult = {
+const pgAuroraResult = {
   rows: [{ aurora_stat_utils: true }]
 };
+const tazPgResult = {
+  rows: [{ multi_az_db_cluster_source_dbi_resource_id: "db-GRC4XL62OGZSWSV4OWABAJM5HNI" }]
+};
+
+type DialectInputOutput = {
+  dialects: Map<DatabaseDialectCodes, DatabaseDialect>;
+  inputs: string[];
+  output: any;
+};
+
+const expectedDialectMapping: Map<DatabaseDialectCodes, DialectInputOutput> = new Map([
+  [DatabaseDialectCodes.MYSQL, { dialects: mysqlDialects, inputs: [MYSQL_QUERY], output: mysqlResult }],
+  [
+    DatabaseDialectCodes.RDS_MYSQL,
+    {
+      dialects: mysqlDialects,
+      inputs: [RDS_MYSQL_QUERY],
+      output: rdsMysqlResult
+    }
+  ],
+  [
+    DatabaseDialectCodes.AURORA_MYSQL,
+    {
+      dialects: mysqlDialects,
+      inputs: [AURORA_MYSQL_QUERY],
+      output: mysqlAuroraResult
+    }
+  ],
+  [
+    DatabaseDialectCodes.RDS_MULTI_AZ_MYSQL,
+    {
+      dialects: mysqlDialects,
+      inputs: TAZ_MYSQL_QUERIES,
+      output: tazMySQLResult
+    }
+  ],
+  [DatabaseDialectCodes.PG, { dialects: pgDialects, inputs: [PG_QUERY], output: pgResult }],
+  [DatabaseDialectCodes.RDS_PG, { dialects: pgDialects, inputs: [PG_QUERY, RDS_PG_QUERY], output: pgRdsResult }],
+  [
+    DatabaseDialectCodes.AURORA_PG,
+    {
+      dialects: pgDialects,
+      inputs: [PG_QUERY, AURORA_PG_QUERY],
+      output: pgAuroraResult
+    }
+  ],
+  [
+    DatabaseDialectCodes.RDS_MULTI_AZ_PG,
+    {
+      dialects: pgDialects,
+      inputs: TAZ_PG_QUERIES,
+      output: tazPgResult
+    }
+  ]
+]);
 
 const pluginServiceManagerContainer = new PluginServiceManagerContainer();
 const mockClient = new AwsPGClient({});
 
 class MockTargetClient {
-  readonly expectedResults;
-  counter = 0;
+  readonly expectedInputs: string[];
+  readonly expectedResultSet: any[];
 
-  constructor(expectedResults: any[]) {
-    this.expectedResults = expectedResults;
+  constructor(expectedInputs: string[], expectedResultSet: any[]) {
+    this.expectedInputs = expectedInputs;
+    this.expectedResultSet = expectedResultSet;
   }
 
   query(sql: any) {
-    const response = this.expectedResults[this.counter];
-    if (this.counter < this.expectedResults.length - 1) {
-      this.counter++;
+    if (this.expectedInputs.includes(sql)) {
+      return Promise.resolve(this.expectedResultSet);
     }
-    if (response instanceof Error) {
-      return Promise.reject(response);
-    }
-    return Promise.resolve(response);
+
+    return Promise.reject(new Error("Unsupported query"));
   }
 
   promise() {
@@ -117,21 +201,23 @@ class MockTargetClient {
 
 describe("test dialects", () => {
   it.each([
-    [mysqlDialects, LOCALHOST, mysqlDialect, DatabaseType.MYSQL],
-    [mysqlDialects, RDS_DATABASE, rdsMysqlDialect, DatabaseType.MYSQL],
-    [mysqlDialects, RDS_AURORA_DATABASE, auroraMysqlDialect, DatabaseType.MYSQL],
-    [pgDialects, LOCALHOST, pgDialect, DatabaseType.POSTGRES],
-    [pgDialects, RDS_DATABASE, rdsPgDialect, DatabaseType.POSTGRES],
-    [pgDialects, RDS_AURORA_DATABASE, auroraPgDialect, DatabaseType.POSTGRES]
-  ])(
-    "get initial dialect",
-    async (knownDialects: Map<string, DatabaseDialect>, host: string, expectedDialect: DatabaseDialect, dbType: DatabaseType) => {
-      const props = new Map();
-      props.set(WrapperProperties.HOST.name, host);
-      const dialectManager = new DatabaseDialectManager(knownDialects, dbType, props);
-      expect(dialectManager.getDialect(props)).toBe(expectedDialect);
-    }
-  );
+    [LOCALHOST, DatabaseDialectCodes.MYSQL, DatabaseType.MYSQL],
+    [RDS_DATABASE, DatabaseDialectCodes.RDS_MYSQL, DatabaseType.MYSQL],
+    [RDS_AURORA_DATABASE, DatabaseDialectCodes.AURORA_MYSQL, DatabaseType.MYSQL],
+    [LOCALHOST, DatabaseDialectCodes.PG, DatabaseType.POSTGRES],
+    [RDS_DATABASE, DatabaseDialectCodes.RDS_PG, DatabaseType.POSTGRES],
+    [RDS_AURORA_DATABASE, DatabaseDialectCodes.AURORA_PG, DatabaseType.POSTGRES]
+  ])("get initial dialect", async (host: string, expectedDialectCode: DatabaseDialectCodes, dbType: DatabaseType) => {
+    const props = new Map();
+    props.set(WrapperProperties.HOST.name, host);
+    const expectedDialect: DialectInputOutput | undefined = expectedDialectMapping.get(expectedDialectCode);
+    const expectedDialectClass: DatabaseDialect | undefined = expectedDialect!.dialects.get(expectedDialectCode);
+    expect(expectedDialect).not.toBeUndefined();
+    expect(expectedDialectClass).not.toBeUndefined();
+
+    const dialectManager = new DatabaseDialectManager(expectedDialect!.dialects, dbType, props);
+    expect(dialectManager.getDialect(props)).toBe(expectedDialectClass);
+  });
 
   // Cases:
   // MySQLDatabaseDialect unchanged
@@ -140,53 +226,56 @@ describe("test dialects", () => {
   // MySQLDatabaseDialect to RdsMySQLDatabaseDialect
   // MySQLDatabaseDialect to AuroraMySQLDatabaseDialect
   // RdsMySQLDatabaseDialect to AuroraMySQLDatabaseDialect
+  // RdsMySQLDatabaseDialect to RdsMultiAZMySQLDatabaseDialect
+  // AuroraMySQLDatabaseDialect to RdsMultiAZMySQLDatabaseDialect
+  //
   // PgDatabaseDialect unchanged
   // RdsPgDatabaseDialect unchanged
   // AuroraPgDatabaseDialect unchanged
   // PgDatabaseDialect to RdsPgDatabaseDialect
   // PgDatabaseDialect to AuroraPgDatabaseDialect
   // RdsPgDatabaseDialect to AuroraPgDatabaseDialect
+  // RdsPgDatabaseDialect to RdsMultiAZPgDatabaseDialect
+  // AuroraPgDatabaseDialect to RdsMultiAZPgDatabaseDialect
   it.each([
-    [mysqlDialects, LOCALHOST, DatabaseType.MYSQL, mysqlDialect, [new Error()]],
-    [mysqlDialects, RDS_DATABASE, DatabaseType.MYSQL, rdsMysqlDialect, [new Error(), rdsMysqlVersionCommentResult]],
-    [mysqlDialects, RDS_AURORA_DATABASE, DatabaseType.MYSQL, auroraMysqlDialect, [mysqlAuroraQueryResult]],
-    [mysqlDialects, LOCALHOST, DatabaseType.MYSQL, rdsMysqlDialect, [new Error(), rdsMysqlVersionCommentResult]],
-    [mysqlDialects, LOCALHOST, DatabaseType.MYSQL, auroraMysqlDialect, [mysqlAuroraQueryResult]],
-    [mysqlDialects, RDS_DATABASE, DatabaseType.MYSQL, auroraMysqlDialect, [mysqlAuroraQueryResult]],
-    [pgDialects, LOCALHOST, DatabaseType.POSTGRES, pgDialect, [new Error()]],
-    [pgDialects, RDS_DATABASE, DatabaseType.POSTGRES, rdsPgDialect, [new Error(), pgExtensionsResult]],
-    [pgDialects, RDS_AURORA_DATABASE, DatabaseType.POSTGRES, auroraPgDialect, [pgProcResult, pgAuroraStatUtilsResult]],
-    [pgDialects, LOCALHOST, DatabaseType.POSTGRES, rdsPgDialect, [new Error(), pgProcResult, pgExtensionsResult]],
-    [pgDialects, LOCALHOST, DatabaseType.POSTGRES, auroraPgDialect, [pgProcResult, pgAuroraStatUtilsResult]],
-    [pgDialects, RDS_DATABASE, DatabaseType.POSTGRES, auroraPgDialect, [pgProcResult, pgAuroraStatUtilsResult]]
-  ])(
-    "update dialect",
-    async (
-      knownDialects: Map<string, DatabaseDialect>,
-      host: string,
-      dbType: DatabaseType,
-      expectedDialect: DatabaseDialect,
-      expectedResults: any[]
-    ) => {
-      const props = new Map();
-      props.set(WrapperProperties.HOST.name, host);
+    [DatabaseType.MYSQL, LOCALHOST, DatabaseDialectCodes.MYSQL],
+    [DatabaseType.MYSQL, RDS_DATABASE, DatabaseDialectCodes.RDS_MYSQL],
+    [DatabaseType.MYSQL, RDS_AURORA_DATABASE, DatabaseDialectCodes.AURORA_MYSQL],
+    [DatabaseType.MYSQL, LOCALHOST, DatabaseDialectCodes.RDS_MYSQL],
+    [DatabaseType.MYSQL, LOCALHOST, DatabaseDialectCodes.AURORA_MYSQL],
+    [DatabaseType.MYSQL, RDS_DATABASE, DatabaseDialectCodes.AURORA_MYSQL],
+    [DatabaseType.MYSQL, RDS_DATABASE, DatabaseDialectCodes.RDS_MULTI_AZ_MYSQL],
+    [DatabaseType.MYSQL, RDS_AURORA_DATABASE, DatabaseDialectCodes.RDS_MULTI_AZ_MYSQL],
+    [DatabaseType.POSTGRES, LOCALHOST, DatabaseDialectCodes.PG],
+    [DatabaseType.POSTGRES, RDS_DATABASE, DatabaseDialectCodes.RDS_PG],
+    [DatabaseType.POSTGRES, RDS_AURORA_DATABASE, DatabaseDialectCodes.AURORA_PG],
+    [DatabaseType.POSTGRES, LOCALHOST, DatabaseDialectCodes.RDS_PG],
+    [DatabaseType.POSTGRES, LOCALHOST, DatabaseDialectCodes.AURORA_PG],
+    [DatabaseType.POSTGRES, RDS_DATABASE, DatabaseDialectCodes.AURORA_PG],
+    [DatabaseType.POSTGRES, RDS_DATABASE, DatabaseDialectCodes.RDS_MULTI_AZ_PG],
+    [DatabaseType.POSTGRES, RDS_AURORA_DATABASE, DatabaseDialectCodes.RDS_MULTI_AZ_PG]
+  ])("update dialect", async (databaseType: DatabaseType, host: string, expectedDialectCode: DatabaseDialectCodes) => {
+    const props = new Map();
+    props.set(WrapperProperties.HOST.name, host);
+    const expectedDialect: DialectInputOutput | undefined = expectedDialectMapping.get(expectedDialectCode);
+    expect(expectedDialect).not.toBeUndefined();
+    const expectedDialectClass: DatabaseDialect | undefined = expectedDialect!.dialects.get(expectedDialectCode);
+    expect(expectedDialectClass).not.toBeUndefined();
 
-      const mockTargetClient = new MockTargetClient(expectedResults);
-      const currentHostInfo = new HostInfoBuilder({
-        host: "foo",
-        port: 1234,
-        hostAvailabilityStrategy: new SimpleHostAvailabilityStrategy()
-      }).build();
+    const mockTargetClient = new MockTargetClient(expectedDialect!.inputs, expectedDialect!.output);
+    const currentHostInfo = new HostInfoBuilder({
+      host: "foo",
+      port: 1234,
+      hostAvailabilityStrategy: new SimpleHostAvailabilityStrategy()
+    }).build();
 
-      const mockClientWrapper: ClientWrapper = {
-        client: mockTargetClient,
-        hostInfo: currentHostInfo,
-        properties: new Map<string, any>()
-      };
-
-      const pluginService = new PluginService(pluginServiceManagerContainer, mockClient, dbType, knownDialects, props);
-      await pluginService.updateDialect(mockClientWrapper);
-      expect(pluginService.getDialect()).toBe(expectedDialect);
-    }
-  );
+    const mockClientWrapper: ClientWrapper = {
+      client: mockTargetClient,
+      hostInfo: currentHostInfo,
+      properties: new Map<string, any>()
+    };
+    const pluginService = new PluginService(pluginServiceManagerContainer, mockClient, databaseType, expectedDialect!.dialects, props);
+    await pluginService.updateDialect(mockClientWrapper);
+    expect(pluginService.getDialect()).toBe(expectedDialectClass);
+  });
 });

@@ -22,6 +22,7 @@ import { TopologyAwareDatabaseDialect } from "../../../common/lib/topology_aware
 import { HostInfo } from "../../../common/lib/host_info";
 import { HostRole } from "../../../common/lib/host_role";
 import { ClientWrapper } from "../../../common/lib/client_wrapper";
+import { DatabaseDialectCodes } from "../../../common/lib/database_dialect/database_dialect_codes";
 
 export class AuroraPgDatabaseDialect extends PgDatabaseDialect implements TopologyAwareDatabaseDialect {
   private static readonly TOPOLOGY_QUERY: string =
@@ -85,5 +86,9 @@ export class AuroraPgDatabaseDialect extends PgDatabaseDialect implements Topolo
 
   getDialectName() {
     return this.dialectName;
+  }
+
+  getDialectUpdateCandidates(): string[] {
+    return [DatabaseDialectCodes.RDS_MULTI_AZ_PG];
   }
 }

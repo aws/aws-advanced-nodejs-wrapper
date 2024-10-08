@@ -34,10 +34,9 @@ import { DatabaseDialect } from "../database_dialect/database_dialect";
 import { ClientWrapper } from "../client_wrapper";
 
 export class RdsHostListProvider implements DynamicHostListProvider {
-  private readonly hostListProviderService: HostListProviderService;
   private readonly originalUrl: string;
   private readonly rdsHelper: RdsUtils;
-  private readonly properties: Map<string, any>;
+  protected readonly properties: Map<string, any>;
   private rdsUrlType: RdsUrlType;
   private initialHostList: HostInfo[];
   private initialHost: HostInfo;
@@ -45,6 +44,7 @@ export class RdsHostListProvider implements DynamicHostListProvider {
   private suggestedClusterIdRefreshRateNano: number = 10 * 60 * 1_000_000_000; // 10 minutes
   private hostList?: HostInfo[];
   protected readonly connectionUrlParser: ConnectionUrlParser;
+  protected readonly hostListProviderService: HostListProviderService;
 
   public static readonly suggestedPrimaryClusterIdCache: CacheMap<string, string> = new CacheMap<string, string>();
 
@@ -264,7 +264,7 @@ export class RdsHostListProvider implements DynamicHostListProvider {
     }
   }
 
-  private isTopologyAwareDatabaseDialect(arg: any): arg is TopologyAwareDatabaseDialect {
+  protected isTopologyAwareDatabaseDialect(arg: any): arg is TopologyAwareDatabaseDialect {
     return arg;
   }
 
@@ -309,10 +309,12 @@ export class RdsHostListProvider implements DynamicHostListProvider {
     return hosts;
   }
 
-  createHost(host: string, isWriter: boolean, weight: number, lastUpdateTime: number): HostInfo {
+  createHost(host: string, isWriter: boolean, weight: number, lastUpdateTime: number, port?: number): HostInfo {
     host = !host ? "?" : host;
     const endpoint: string | null = this.getHostEndpoint(host);
-    const port: number | undefined = this.clusterInstanceTemplate?.isPortSpecified() ? this.clusterInstanceTemplate?.port : this.initialHost?.port;
+    if (!port) {
+      port = this.clusterInstanceTemplate?.isPortSpecified() ? this.clusterInstanceTemplate?.port : this.initialHost?.port;
+    }
 
     return this.hostListProviderService
       .getHostInfoBuilder()

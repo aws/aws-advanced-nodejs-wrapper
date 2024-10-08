@@ -40,6 +40,7 @@ import { ClientWrapper } from "./client_wrapper";
 import { logger } from "../logutils";
 import { Messages } from "./utils/messages";
 import { getWriter } from "./utils/utils";
+import { DatabaseDialectCodes } from "./database_dialect/database_dialect_codes";
 
 export class PluginService implements ErrorHandler, HostListProviderService {
   private readonly _currentClient: AwsClient;
@@ -60,7 +61,7 @@ export class PluginService implements ErrorHandler, HostListProviderService {
     container: PluginServiceManagerContainer,
     client: AwsClient,
     dbType: DatabaseType,
-    knownDialectsByCode: Map<string, DatabaseDialect>,
+    knownDialectsByCode: Map<DatabaseDialectCodes, DatabaseDialect>,
     props: Map<string, any>
   ) {
     this._currentClient = client;

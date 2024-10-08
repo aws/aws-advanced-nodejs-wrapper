@@ -92,9 +92,7 @@ describe("aurora read write splitting", () => {
     logger.info(`Test finished: ${expect.getState().currentTestName}`);
   }, 1000000);
 
-  itIf.skip(
-    "test connect to writer switch set read only",
-    async () => {
+  it.skip("test connect to writer switch set read only", async () => {
       const config = await initDefaultConfig(env.databaseInfo.writerInstanceEndpoint, env.databaseInfo.instanceEndpointPort, false);
       client = initClientFunc(config);
 

@@ -30,12 +30,14 @@ import { AwsWrapperError, UnsupportedMethodError } from "../../common/lib/utils/
 import { Messages } from "../../common/lib/utils/messages";
 import { ClientWrapper } from "../../common/lib/client_wrapper";
 import { ClientUtils } from "../../common/lib/utils/client_utils";
+import { RdsMultiAZMySQLDatabaseDialect } from "./dialect/rds_multi_az_mysql_database_dialect";
 
 export class AwsMySQLClient extends AwsClient {
   private static readonly knownDialectsByCode: Map<string, DatabaseDialect> = new Map([
     [DatabaseDialectCodes.MYSQL, new MySQLDatabaseDialect()],
     [DatabaseDialectCodes.RDS_MYSQL, new RdsMySQLDatabaseDialect()],
-    [DatabaseDialectCodes.AURORA_MYSQL, new AuroraMySQLDatabaseDialect()]
+    [DatabaseDialectCodes.AURORA_MYSQL, new AuroraMySQLDatabaseDialect()],
+    [DatabaseDialectCodes.RDS_MULTI_AZ_MYSQL, new RdsMultiAZMySQLDatabaseDialect()]
   ]);
 
   constructor(config: any) {
