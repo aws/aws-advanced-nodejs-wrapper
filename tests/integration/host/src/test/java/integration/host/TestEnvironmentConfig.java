@@ -35,6 +35,11 @@ public class TestEnvironmentConfig implements AutoCloseable {
   private String auroraClusterName; // "cluster-mysql"
   private String auroraClusterDomain; // "XYZ.us-west-2.rds.amazonaws.com"
 
+  // Expected values: "latest", "default", or engine version, for example, "15.4"
+  // If left as empty, will use default version
+  public String auroraMySqlDbEngineVersion;
+  public String auroraPgDbEngineVersion;
+
   private String awsAccessKeyId;
   private String awsSecretAccessKey;
   private String awsSessionToken;
@@ -202,6 +207,10 @@ public class TestEnvironmentConfig implements AutoCloseable {
     env.auroraClusterName = System.getenv("AURORA_CLUSTER_NAME"); // "cluster-mysql"
     env.auroraClusterDomain =
         System.getenv("AURORA_CLUSTER_DOMAIN"); // "XYZ.us-west-2.rds.amazonaws.com"
+    env.auroraMySqlDbEngineVersion =
+        System.getenv("AURORA_MYSQL_DB_ENGINE_VERSION"); // "latest", "default"
+    env.auroraPgDbEngineVersion =
+        System.getenv("AURORA_PG_ENGINE_VERSION");
 
     if (StringUtils.isNullOrEmpty(env.auroraClusterDomain)) {
       throw new RuntimeException("Environment variable AURORA_CLUSTER_DOMAIN is required.");
@@ -251,7 +260,13 @@ public class TestEnvironmentConfig implements AutoCloseable {
 
       try {
         String engine = getAuroraDbEngine(env.info.getRequest());
-        String engineVersion = getAuroraDbEngineVersion(env.info.getRequest());
+
+        String engineVersion = getAuroraDbEngineVersion(env);
+        if (StringUtils.isNullOrEmpty(engineVersion)) {
+          throw new RuntimeException("Failed to get engine version.");
+        }
+        LOGGER.finer("Using " + engine + " " + engineVersion);
+
         String instanceClass = getAuroraInstanceClass(env.info.getRequest());
 
         env.auroraClusterDomain =
@@ -328,14 +343,36 @@ public class TestEnvironmentConfig implements AutoCloseable {
     }
   }
 
-  private static String getAuroraDbEngineVersion(TestEnvironmentRequest request) {
+  private static String getAuroraDbEngineVersion(TestEnvironmentConfig env) {
+    String engineName;
+    String systemPropertyVersion;
+    TestEnvironmentRequest request = env.info.getRequest();
     switch (request.getDatabaseEngine()) {
       case MYSQL:
-        return "8.0.mysql_aurora.3.04.0";
+        engineName = "aurora-mysql";
+        systemPropertyVersion = env.auroraMySqlDbEngineVersion;
+      break;
       case PG:
-        return "15.2";
+        engineName = "aurora-postgresql";
+        systemPropertyVersion = env.auroraPgDbEngineVersion;
+      break;
       default:
         throw new NotImplementedException(request.getDatabaseEngine().toString());
+    }
+    return findAuroraDbEngineVersion(env, engineName, systemPropertyVersion.toLowerCase());
+  }
+
+  private static String findAuroraDbEngineVersion(TestEnvironmentConfig env, String engineName, String systemPropertyVersion) {
+    if (systemPropertyVersion == null) {
+      return env.auroraUtil.getDefaultVersion(engineName);
+    }
+    switch (systemPropertyVersion) {
+      case "default":
+        return env.auroraUtil.getDefaultVersion(engineName);
+      case "latest":
+        return env.auroraUtil.getLatestVersion(engineName);
+      default:
+        return systemPropertyVersion;
     }
   }
 

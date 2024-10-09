@@ -1,4 +1,4 @@
-name: Integration Tests
+name: Integration Tests Default
 
 on:
   workflow_dispatch:
@@ -16,7 +16,7 @@ on:
 
 jobs:
   run-integration-tests:
-    name: Run Integration Tests
+    name: Run Integration Tests with Default
     runs-on: ubuntu-latest
 
     steps:
@@ -68,6 +68,8 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ env.TEMP_AWS_SECRET_ACCESS_KEY }}
           AWS_SESSION_TOKEN: ${{ env.TEMP_AWS_SESSION_TOKEN }}
           NUM_INSTANCES: 5
+          AURORA_MYSQL_DB_ENGINE_VERSION: "default"
+          AURORA_PG_DB_ENGINE_VERSION: "default"
 
       - name: "Get Github Action IP"
         if: always()
@@ -88,6 +90,6 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: integration-report
+          name: integration-report-default
           path: ./tests/integration/container/reports
           retention-days: 5
