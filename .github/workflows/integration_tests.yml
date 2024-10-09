@@ -5,6 +5,7 @@ on:
   push:
     branches:
       - main
+      - chore/use-mysql2promise-api
     paths-ignore:
       - "**/*.md"
       - "**/*.jpg"

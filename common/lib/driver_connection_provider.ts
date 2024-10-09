@@ -53,7 +53,7 @@ export class DriverConnectionProvider implements ConnectionProvider {
     let connectionHostInfo: HostInfo;
 
     try {
-      const targetClient: any = pluginService.createTargetClient(props);
+      const targetClient: any = await Promise.resolve(pluginService.createTargetClient(props));
       const connFunc = pluginService.getConnectFunc(targetClient);
       await connFunc();
       connectionHostInfo = new HostInfoBuilder({

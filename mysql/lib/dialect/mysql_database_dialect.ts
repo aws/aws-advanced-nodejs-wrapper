@@ -42,7 +42,6 @@ export class MySQLDatabaseDialect implements DatabaseDialect {
 
   async getHostAliasAndParseResults(targetClient: ClientWrapper): Promise<string> {
     return targetClient.client
-      .promise()
       .query(this.getHostAliasQuery())
       .then(([rows]: any) => {
         return rows[0]["CONCAT(@@hostname, ':', @@port)"];
@@ -58,7 +57,7 @@ export class MySQLDatabaseDialect implements DatabaseDialect {
 
   async isDialect(targetClient: ClientWrapper): Promise<boolean> {
     return await targetClient.client
-      .promise()
+
       .query(this.getServerVersionQuery())
       .then(([rows]: any) => {
         return rows[0]["Value"].toLowerCase().includes("mysql");
@@ -74,7 +73,7 @@ export class MySQLDatabaseDialect implements DatabaseDialect {
 
   async tryClosingTargetClient(targetClient: ClientWrapper) {
     try {
-      await ClientUtils.queryWithTimeout(targetClient.client.promise().destroy(), targetClient.properties);
+      await ClientUtils.queryWithTimeout(targetClient.client.destroy(), targetClient.properties);
     } catch (error: any) {
       // ignore
     }
@@ -84,7 +83,7 @@ export class MySQLDatabaseDialect implements DatabaseDialect {
     try {
       return await ClientUtils.queryWithTimeout(
         targetClient.client
-          .promise()
+
           .query({ sql: "SELECT 1" })
           .then(() => {
             return true;
@@ -101,12 +100,7 @@ export class MySQLDatabaseDialect implements DatabaseDialect {
 
   getConnectFunc(targetClient: any): () => Promise<any> {
     return async () => {
-      return await targetClient
-        .promise()
-        .connect()
-        .catch((error: any) => {
-          throw error;
-        });
+      return targetClient;
     };
   }
 
@@ -179,6 +173,6 @@ export class MySQLDatabaseDialect implements DatabaseDialect {
   }
 
   async rollback(targetClient: ClientWrapper): Promise<any> {
-    return await targetClient.client.promise().rollback();
+    return await targetClient.client.rollback();
   }
 }
