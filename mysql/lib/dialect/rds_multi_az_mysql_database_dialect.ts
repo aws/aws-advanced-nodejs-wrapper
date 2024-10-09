@@ -41,7 +41,7 @@ export class RdsMultiAZMySQLDatabaseDialect extends MySQLDatabaseDialect impleme
 
   async isDialect(targetClient: ClientWrapper): Promise<boolean> {
     const res = await targetClient.client
-      .promise()
+      
       .query(RdsMultiAZMySQLDatabaseDialect.TOPOLOGY_TABLE_EXIST_QUERY)
       .catch(() => false);
 
@@ -50,7 +50,7 @@ export class RdsMultiAZMySQLDatabaseDialect extends MySQLDatabaseDialect impleme
     }
 
     return !!(await targetClient.client
-      .promise()
+      
       .query(RdsMultiAZMySQLDatabaseDialect.TOPOLOGY_QUERY)
       .catch(() => false));
   }
@@ -70,7 +70,7 @@ export class RdsMultiAZMySQLDatabaseDialect extends MySQLDatabaseDialect impleme
         writerHostId = await this.identifyConnection(targetClient, new Map<string, any>());
       }
 
-      const res = await targetClient.client.promise().query(RdsMultiAZMySQLDatabaseDialect.TOPOLOGY_QUERY);
+      const res = await targetClient.client.query(RdsMultiAZMySQLDatabaseDialect.TOPOLOGY_QUERY);
       const rows: any[] = res[0];
       return this.processTopologyQueryResults(hostListProvider, writerHostId, rows);
     } catch (error: any) {
@@ -79,7 +79,7 @@ export class RdsMultiAZMySQLDatabaseDialect extends MySQLDatabaseDialect impleme
   }
 
   private async executeTopologyRelatedQuery(targetClient: ClientWrapper, query: string, resultColumnName?: string): Promise<string> {
-    const res = await targetClient.client.promise().query(query);
+    const res = await targetClient.client.query(query);
     const rows: any[] = res[0];
     if (rows.length > 0) {
       return rows[0][resultColumnName ?? 0];

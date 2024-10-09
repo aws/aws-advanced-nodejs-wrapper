@@ -17,7 +17,7 @@
 import { QueryOptions } from "mysql2/typings/mysql/lib/protocol/sequences/Query";
 import { AwsClient } from "../../common/lib/aws_client";
 import { WrapperProperties } from "../../common/lib/wrapper_property";
-import { createConnection, Query } from "mysql2";
+import { createConnection, Query } from "mysql2/promise";
 import { MySQLErrorHandler } from "./mysql_error_handler";
 import { MySQLConnectionUrlParser } from "./mysql_connection_url_parser";
 import { DatabaseDialect, DatabaseType } from "../../common/lib/database_dialect/database_dialect";
@@ -66,9 +66,9 @@ export class AwsMySQLClient extends AwsClient {
       this.isConnected = true;
     }
     if (targetClient) {
-      return await ClientUtils.queryWithTimeout(targetClient?.client.promise().query({ sql: sql }), props);
+      return await ClientUtils.queryWithTimeout(targetClient?.client.query({ sql: sql }), props);
     } else {
-      return await ClientUtils.queryWithTimeout(this.targetClient?.client.promise().query({ sql: sql }), props);
+      return await ClientUtils.queryWithTimeout(this.targetClient?.client.query({ sql: sql }), props);
     }
   }
 
@@ -84,7 +84,7 @@ export class AwsMySQLClient extends AwsClient {
       "query",
       async () => {
         await this.pluginService.updateState(options.sql);
-        return await ClientUtils.queryWithTimeout(this.targetClient?.client?.promise().query(options, callback), this.properties);
+        return await ClientUtils.queryWithTimeout(this.targetClient?.client?.query(options, callback), this.properties);
       },
       options
     );
@@ -98,7 +98,7 @@ export class AwsMySQLClient extends AwsClient {
       this.properties,
       "query",
       async () => {
-        return await ClientUtils.queryWithTimeout(this.targetClient?.client?.promise().query(options, callback), this.properties);
+        return await ClientUtils.queryWithTimeout(this.targetClient?.client?.query(options, callback), this.properties);
       },
       options
     );
@@ -209,12 +209,9 @@ export class AwsMySQLClient extends AwsClient {
       "end",
       () => {
         return ClientUtils.queryWithTimeout(
-          this.targetClient?.client
-            ?.promise()
-            .end()
-            .catch((error: any) => {
-              // ignore
-            }),
+          this.targetClient?.client?.end().catch((error: any) => {
+            // ignore
+          }),
           this.properties
         );
       },
@@ -231,7 +228,7 @@ export class AwsMySQLClient extends AwsClient {
       "rollback",
       async () => {
         this.pluginService.updateInTransaction("rollback");
-        return await this.targetClient?.client?.promise().rollback();
+        return await this.targetClient?.client?.rollback();
       },
       null
     );

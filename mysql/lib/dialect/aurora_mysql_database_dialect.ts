@@ -40,7 +40,7 @@ export class AuroraMySQLDatabaseDialect extends MySQLDatabaseDialect implements 
   }
 
   async queryForTopology(targetClient: ClientWrapper, hostListProvider: HostListProvider): Promise<HostInfo[]> {
-    const res = await targetClient.client.promise().query(AuroraMySQLDatabaseDialect.TOPOLOGY_QUERY);
+    const res = await targetClient.client.query(AuroraMySQLDatabaseDialect.TOPOLOGY_QUERY);
     const hosts: HostInfo[] = [];
     const rows: any[] = res[0];
     rows.forEach((row) => {
@@ -58,18 +58,17 @@ export class AuroraMySQLDatabaseDialect extends MySQLDatabaseDialect implements 
   }
 
   async identifyConnection(targetClient: ClientWrapper, props: Map<string, any>): Promise<string> {
-    const res = await targetClient.client.promise().query(AuroraMySQLDatabaseDialect.HOST_ID_QUERY);
+    const res = await targetClient.client.query(AuroraMySQLDatabaseDialect.HOST_ID_QUERY);
     return res[0][0]["host"] ?? "";
   }
 
   async getHostRole(targetClient: ClientWrapper, props: Map<string, any>): Promise<HostRole> {
-    const res = await targetClient.client.promise().query(AuroraMySQLDatabaseDialect.IS_READER_QUERY);
+    const res = await targetClient.client.query(AuroraMySQLDatabaseDialect.IS_READER_QUERY);
     return Promise.resolve(res[0]["is_reader"] === "true" ? HostRole.READER : HostRole.WRITER);
   }
 
   async isDialect(targetClient: ClientWrapper): Promise<boolean> {
     return targetClient.client
-      .promise()
       .query(AuroraMySQLDatabaseDialect.AURORA_VERSION_QUERY)
       .then(([rows]: any) => {
         return !!rows[0]["Value"];
