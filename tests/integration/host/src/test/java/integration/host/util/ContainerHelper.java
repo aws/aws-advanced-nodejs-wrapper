@@ -227,7 +227,14 @@ public class ContainerHelper {
       dockerClient.execStartCmd(execCreateCmdResponse.getId()).exec(callback).awaitCompletion();
     }
 
-    return dockerClient.inspectExecCmd(execCreateCmdResponse.getId()).exec().getExitCodeLong();
+    Long exitCode = dockerClient.inspectExecCmd(execCreateCmdResponse.getId()).exec().getExitCodeLong();
+    if (exitCode != 0) {
+      // Wait 5 minutes in case there are any dangling promises waiting to complete.
+      Thread.sleep(5 * 60 * 1000);
+      exitCode = dockerClient.inspectExecCmd(execCreateCmdResponse.getId()).exec().getExitCodeLong();
+    }
+
+    return exitCode;
   }
 
   protected boolean isRunning(InspectContainerResponse containerInfo) {
