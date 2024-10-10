@@ -22,6 +22,7 @@ import { AwsWrapperError } from "../../../common/lib/utils/errors";
 import { DatabaseDialectCodes } from "../../../common/lib/database_dialect/database_dialect_codes";
 import { TransactionIsolationLevel } from "../../../common/lib/utils/transaction_isolation_level";
 import { ClientWrapper } from "../../../common/lib/client_wrapper";
+import { FailoverRestriction } from "../../../common/lib/plugins/failover/failover_restriction";
 
 export class PgDatabaseDialect implements DatabaseDialect {
   protected dialectName: string = this.constructor.name;
@@ -102,6 +103,10 @@ export class PgDatabaseDialect implements DatabaseDialect {
 
   getDialectName(): string {
     return this.dialectName;
+  }
+
+  getFailoverRestrictions(): FailoverRestriction[] {
+    return [];
   }
 
   doesStatementSetAutoCommit(statement: string): boolean | undefined {

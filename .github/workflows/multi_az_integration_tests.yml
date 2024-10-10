@@ -1,4 +1,4 @@
-name: Integration Tests Latest
+name: Multi-AZ Integration Tests
 
 on:
   workflow_dispatch:
@@ -16,15 +16,16 @@ on:
 
 jobs:
   run-integration-tests:
-    name: Run Integration Tests with Latest
+    name: Run Integration Tests
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        dbEngine: ["multi-az-mysql", "multi-az-postgres"]
 
     steps:
       - name: Clone repository
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 50
-
       - name: "Set up JDK 8"
         uses: actions/setup-java@v3
         with:
@@ -60,16 +61,15 @@ jobs:
 
       - name: Run Integration Tests
         run: |
-          ./gradlew --no-parallel --no-daemon test-aurora --info
+          ./gradlew --no-parallel --no-daemon test-${{ matrix.dbEngine }} --info
         env:
           RDS_CLUSTER_DOMAIN: ${{ secrets.DB_CONN_SUFFIX }}
           RDS_DB_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
           AWS_ACCESS_KEY_ID: ${{ env.TEMP_AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ env.TEMP_AWS_SECRET_ACCESS_KEY }}
           AWS_SESSION_TOKEN: ${{ env.TEMP_AWS_SESSION_TOKEN }}
-          NUM_INSTANCES: 5
-          AURORA_MYSQL_DB_ENGINE_VERSION: "latest"
-          AURORA_PG_DB_ENGINE_VERSION: "latest"
+          RDS_MYSQL_DB_ENGINE_VERSION: "default"
+          RDS_PG_DB_ENGINE_VERSION: "default"
 
       - name: "Get Github Action IP"
         if: always()
@@ -90,6 +90,6 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: integration-report-latest
+          name: integration-report-${{ matrix.dbEngine }}
           path: ./tests/integration/container/reports
           retention-days: 5

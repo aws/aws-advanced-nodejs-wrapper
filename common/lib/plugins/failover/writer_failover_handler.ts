@@ -20,12 +20,13 @@ import { ClusterAwareReaderFailoverHandler } from "./reader_failover_handler";
 import { PluginService } from "../../plugin_service";
 import { HostAvailability } from "../../host_availability/host_availability";
 import { AwsWrapperError } from "../../utils/errors";
-import { getWriter, maskProperties } from "../../utils/utils";
+import { getWriter, logTopology, maskProperties } from "../../utils/utils";
 import { ReaderFailoverResult } from "./reader_failover_result";
 import { Messages } from "../../utils/messages";
 import { logger } from "../../../logutils";
 import { WrapperProperties } from "../../wrapper_property";
 import { ClientWrapper } from "../../client_wrapper";
+import { FailoverRestriction } from "./failover_restriction";
 
 export interface WriterFailoverHandler {
   failover(currentTopology: HostInfo[]): Promise<WriterFailoverResult>;
@@ -104,11 +105,14 @@ export class ClusterAwareWriterFailoverHandler implements WriterFailoverHandler 
     const taskB = waitForNewWriterHandlerTask.call();
 
     let selectedTask = "";
-    const failoverTask = Promise.any([taskA, taskB])
+    const singleTask: boolean = this.pluginService.getDialect().getFailoverRestrictions().includes(FailoverRestriction.DISABLE_TASK_A);
+    const failoverTaskPromise = singleTask ? taskB : Promise.any([taskA, taskB]);
+
+    const failoverTask = failoverTaskPromise
       .then((result) => {
         selectedTask = result.taskName;
         // If the first resolved promise is connected or has an error, return it.
-        if (result.isConnected || result.exception) {
+        if (result.isConnected || result.exception || singleTask) {
           return result;
         }
 
@@ -369,6 +373,8 @@ class WaitForNewWriterHandlerTask {
   }
 
   async refreshTopologyAndConnectToNewWriter(): Promise<boolean> {
+    const allowOldWriter: boolean = this.pluginService.getDialect().getFailoverRestrictions().includes(FailoverRestriction.ENABLE_WRITER_IN_TASK_B);
+
     while (this.pluginService.getCurrentClient() && Date.now() < this.endTime && !this.failoverCompleted) {
       try {
         if (this.currentReaderTargetClient) {
@@ -390,8 +396,9 @@ class WaitForNewWriterHandlerTask {
           } else {
             this.currentTopology = topology;
             const writerCandidate = getWriter(this.currentTopology);
-            if (writerCandidate && !this.isSame(writerCandidate, this.originalWriterHost)) {
+            if (writerCandidate && (allowOldWriter || !this.isSame(writerCandidate, this.originalWriterHost))) {
               // new writer is available, and it's different from the previous writer
+              logger.debug(logTopology(this.currentTopology, "[Task B] "));
               if (await this.connectToWriter(writerCandidate)) {
                 return true;
               }

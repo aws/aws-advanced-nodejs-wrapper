@@ -26,6 +26,7 @@ import { Messages } from "../../utils/messages";
 import { WrapperProperties } from "../../wrapper_property";
 import { ReaderTaskSelectorHandler } from "./reader_task_selector";
 import { uniqueId } from "lodash";
+import { FailoverRestriction } from "./failover_restriction";
 
 export interface ReaderFailoverHandler {
   failover(hosts: HostInfo[], currentHost: HostInfo): Promise<ReaderFailoverResult>;
@@ -216,9 +217,11 @@ export class ClusterAwareReaderFailoverHandler implements ReaderFailoverHandler 
   getReaderHostsByPriority(hosts: HostInfo[]): HostInfo[] {
     const activeReaders: HostInfo[] = [];
     const downHostList: HostInfo[] = [];
+    let writerHost: HostInfo | null = null;
 
     hosts.forEach((host) => {
       if (host.role === HostRole.WRITER) {
+        writerHost = host;
         return;
       }
 
@@ -232,8 +235,15 @@ export class ClusterAwareReaderFailoverHandler implements ReaderFailoverHandler 
     shuffleList(activeReaders);
     shuffleList(downHostList);
 
+    const numOfReaders = downHostList.length + activeReaders.length;
     const hostsByPriority: HostInfo[] = [...activeReaders];
     hostsByPriority.push(...downHostList);
+    if (
+      writerHost !== null &&
+      (numOfReaders === 0 || this.pluginService.getDialect().getFailoverRestrictions().includes(FailoverRestriction.ENABLE_WRITER_IN_TASK_B))
+    ) {
+      hostsByPriority.push(writerHost);
+    }
 
     return hostsByPriority;
   }

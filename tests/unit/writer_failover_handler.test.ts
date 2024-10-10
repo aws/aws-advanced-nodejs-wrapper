@@ -26,6 +26,7 @@ import { ReaderFailoverResult } from "../../common/lib/plugins/failover/reader_f
 import { AwsPGClient } from "../../pg/lib";
 import { WriterFailoverResult } from "../../common/lib/plugins/failover/writer_failover_result";
 import { ClientWrapper } from "../../common/lib/client_wrapper";
+import { PgDatabaseDialect } from "../../pg/lib/dialect/pg_database_dialect";
 
 const builder = new HostInfoBuilder({ hostAvailabilityStrategy: new SimpleHostAvailabilityStrategy() });
 
@@ -63,6 +64,8 @@ describe("writer failover handler", () => {
     newWriterHost.addAlias("new-writer-host");
     readerA.addAlias("reader-a-host");
     readerB.addAlias("reader-b-host");
+
+    when(mockPluginService.getDialect()).thenReturn(new PgDatabaseDialect());
   });
 
   afterEach(() => {
