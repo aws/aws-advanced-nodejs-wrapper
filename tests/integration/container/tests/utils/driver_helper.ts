@@ -110,7 +110,6 @@ export class DriverHelper {
   static addDriverSpecificConfiguration(props: any, engine: DatabaseEngine, performance: boolean = false) {
     if (engine === DatabaseEngine.PG && !performance) {
       props["query_timeout"] = 10000;
-      // props["ssl"] = { ca: readFileSync("/app/global-bundle.pem").toString() };
       props["ssl"] = { rejectUnauthorized: false };
     } else if (engine === DatabaseEngine.PG && performance) {
       props["query_timeout"] = 120000;

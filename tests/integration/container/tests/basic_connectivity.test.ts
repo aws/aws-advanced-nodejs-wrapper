@@ -24,7 +24,7 @@ import { TestEnvironmentFeatures } from "./utils/test_environment_features";
 import { features } from "./config";
 import { DatabaseEngineDeployment } from "./utils/database_engine_deployment";
 
-const itIf = !features.includes(TestEnvironmentFeatures.PERFORMANCE) ? it : it;
+const itIf = !features.includes(TestEnvironmentFeatures.PERFORMANCE) ? it : it.skip;
 
 let client: any;
 let auroraTestUtility: AuroraTestUtility;

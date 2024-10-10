@@ -97,7 +97,7 @@ export class AuroraTestUtility {
 
   async rebootInstance(instanceId: string) {
     let attempts = 5;
-    while (--attempts > 0) {
+    while (attempts-- > 0) {
       try {
         const command = new RebootDBInstanceCommand({
           DBInstanceIdentifier: instanceId
