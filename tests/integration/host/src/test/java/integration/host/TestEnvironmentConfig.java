@@ -404,7 +404,7 @@ public class TestEnvironmentConfig implements AutoCloseable {
         systemPropertyVersion = env.rdsMySqlDbEngineVersion;
         break;
       case PG:
-        engineName = "postgresql";
+        engineName = "postgres";
         systemPropertyVersion = env.rdsPgDbEngineVersion;
         break;
       default:
