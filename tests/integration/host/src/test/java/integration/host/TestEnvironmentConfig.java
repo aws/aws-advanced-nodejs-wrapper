@@ -372,7 +372,7 @@ public class TestEnvironmentConfig implements AutoCloseable {
   private static String getDbEngine(TestEnvironmentRequest request) {
     switch (request.getDatabaseEngineDeployment()) {
       case AURORA:
-        return "aurora-" + getEngine(request);
+        return getAuroraEngine(request);
       case RDS:
       case RDS_MULTI_AZ_CLUSTER:
         return getEngine(request);
@@ -443,6 +443,17 @@ public class TestEnvironmentConfig implements AutoCloseable {
         return env.auroraUtil.getLatestVersion(engineName);
       default:
         return systemPropertyVersion;
+    }
+  }
+
+  private static String getAuroraEngine(TestEnvironmentRequest request) {
+    switch (request.getDatabaseEngine()) {
+      case MYSQL:
+        return "aurora-mysql";
+      case PG:
+        return "aurora-postgresql";
+      default:
+        throw new NotImplementedException(request.getDatabaseEngine().toString());
     }
   }
 
