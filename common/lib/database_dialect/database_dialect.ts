@@ -35,7 +35,6 @@ export interface DatabaseDialect {
   tryClosingTargetClient(targetClient: ClientWrapper): Promise<void>;
   rollback(targetClient: ClientWrapper): Promise<any>;
   isClientValid(targetClient: ClientWrapper): Promise<boolean>;
-  getConnectFunc(targetClient: any): () => Promise<any>;
   getDatabaseType(): DatabaseType;
   getDialectName(): string;
   getFailoverRestrictions(): FailoverRestriction[];
@@ -44,4 +43,6 @@ export interface DatabaseDialect {
   doesStatementSetAutoCommit(statement: string): boolean | undefined;
   doesStatementSetSchema(statement: string): string | undefined;
   doesStatementSetCatalog(statement: string): string | undefined;
+  connect(targetClient: any): Promise<any>;
+  end(clientWrapper: ClientWrapper | undefined): Promise<void>;
 }

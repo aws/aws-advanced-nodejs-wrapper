@@ -5,6 +5,7 @@ on:
   push:
     branches:
       - main
+      - chore/end-refactoring
     paths-ignore:
       - "**/*.md"
       - "**/*.jpg"

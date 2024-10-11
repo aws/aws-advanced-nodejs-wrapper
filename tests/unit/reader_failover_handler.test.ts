@@ -23,6 +23,7 @@ import { AwsWrapperError } from "../../common/lib/utils/errors";
 import { anything, instance, mock, reset, verify, when } from "ts-mockito";
 import { ClientWrapper } from "../../common/lib/client_wrapper";
 import { PgDatabaseDialect } from "../../pg/lib/dialect/pg_database_dialect";
+import { FailoverRestriction } from "../../common/lib/plugins/failover/failover_restriction";
 
 const host1 = new HostInfo("writer", 1234, HostRole.WRITER);
 const host2 = new HostInfo("reader1", 1234, HostRole.READER);
@@ -32,7 +33,7 @@ const host5 = new HostInfo("reader4", 1234, HostRole.READER);
 const host6 = new HostInfo("reader5", 1234, HostRole.READER);
 const defaultHosts = [host1, host2, host3, host4, host5, host6];
 const properties = new Map();
-const dialect = new PgDatabaseDialect();
+const dialect = mock(PgDatabaseDialect);
 const clientWrapper: ClientWrapper = {
   client: undefined,
   hostInfo: mock(HostInfo),
@@ -45,7 +46,8 @@ const mockPluginService = mock(PluginService);
 
 describe("reader failover handler", () => {
   beforeEach(() => {
-    when(mockPluginService.getDialect()).thenReturn(dialect);
+    when(dialect.getFailoverRestrictions()).thenReturn([]);
+    when(mockPluginService.getDialect()).thenReturn(instance(dialect));
   });
   afterEach(() => {
     reset(mockPluginService);
@@ -96,7 +98,7 @@ describe("reader failover handler", () => {
 
     when(mockPluginService.getHosts()).thenReturn(hosts);
     when(mockPluginService.createTargetClient(anything())).thenReturn(mockTargetClient);
-    when(mockPluginService.getConnectFunc(anything())).thenReturn(() => Promise.resolve());
+    when(dialect.connect(anything())).thenResolve(mockTargetClient);
     when(mockPluginService.forceConnect(anything(), properties)).thenCall(async () => {
       await new Promise((resolve, reject) => {
         timeoutId = setTimeout(resolve, 20000);
