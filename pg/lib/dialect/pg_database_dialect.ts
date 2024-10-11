@@ -91,10 +91,8 @@ export class PgDatabaseDialect implements DatabaseDialect {
     }
   }
 
-  getConnectFunc(targetClient: any): () => Promise<any> {
-    return async () => {
-      return await targetClient.connect();
-    };
+  async connect(targetClient: any): Promise<any> {
+    return await targetClient.connect();
   }
 
   getDatabaseType(): DatabaseType {
@@ -159,5 +157,9 @@ export class PgDatabaseDialect implements DatabaseDialect {
 
   async rollback(targetClient: ClientWrapper): Promise<any> {
     return await targetClient.client.rollback();
+  }
+
+  end(clientWrapper: ClientWrapper): Promise<void> {
+    return clientWrapper.client.end();
   }
 }

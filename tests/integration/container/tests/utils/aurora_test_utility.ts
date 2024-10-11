@@ -55,15 +55,6 @@ export class AuroraTestUtility {
     return instances[0];
   }
 
-  async doesDbInstanceExists(instanceId: string) {
-    try {
-      const res = await this.getDbInstance(instanceId);
-      return !this.isNullOrUndefined(res);
-    } catch (err) {
-      return false;
-    }
-  }
-
   async waitUntilInstanceHasRightState(instanceId: string, ...allowedStatuses: string[]) {
     let instanceInfo = await this.getDbInstance(instanceId);
     if (instanceInfo === null) {
@@ -155,21 +146,25 @@ export class AuroraTestUtility {
   }
 
   async failoverCluster(clusterId?: string) {
+    const info = (await TestEnvironment.getCurrent()).info;
     if (clusterId == null) {
-      clusterId = (await TestEnvironment.getCurrent()).info.auroraClusterName;
+      clusterId = info.auroraClusterName;
     }
 
     await this.waitUntilClusterHasDesiredStatus(clusterId);
 
-    const remainingAttempts = 10;
+    let remainingAttempts = 10;
     const command = new FailoverDBClusterCommand({
       DBClusterIdentifier: clusterId
     });
-    for (let i = remainingAttempts; i > 0; i--) {
+    const auroraUtility = new AuroraTestUtility(info.region);
+    while (remainingAttempts-- > 0) {
       try {
         const result = await this.client.send(command);
         if (!this.isNullOrUndefined(result["DBCluster"])) {
-          await TestEnvironment.verifyClusterStatus();
+          await auroraUtility.waitUntilClusterHasDesiredStatus(clusterId);
+          info.databaseInfo.moveInstanceFirst(await auroraUtility.getClusterWriterInstanceId(clusterId));
+          info.proxyDatabaseInfo.moveInstanceFirst(await auroraUtility.getClusterWriterInstanceId(clusterId));
           return;
         }
 

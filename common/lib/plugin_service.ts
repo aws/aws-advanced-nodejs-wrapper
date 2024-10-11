@@ -401,10 +401,6 @@ export class PluginService implements ErrorHandler, HostListProviderService {
     }
   }
 
-  getConnectFunc(targetClient: any): () => Promise<any> {
-    return this.getDialect().getConnectFunc(targetClient);
-  }
-
   getSessionStateService() {
     return this.sessionStateService;
   }

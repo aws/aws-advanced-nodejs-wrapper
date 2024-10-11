@@ -21,6 +21,7 @@ import { ClientWrapper } from "./client_wrapper";
 
 export interface ConnectionProvider {
   connect(hostInfo: HostInfo, pluginService: PluginService, props: Map<string, any>): Promise<ClientWrapper>;
+  end(pluginService: PluginService, clientWrapper: ClientWrapper): Promise<void>;
   acceptsUrl(hostInfo: HostInfo, props: Map<string, any>): boolean;
   acceptsStrategy(role: HostRole, strategy: string): boolean;
   getHostInfoByStrategy(hosts: HostInfo[], role: HostRole, strategy: string, props?: Map<string, any>): HostInfo;

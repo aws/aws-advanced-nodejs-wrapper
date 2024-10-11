@@ -99,10 +99,8 @@ export class MySQLDatabaseDialect implements DatabaseDialect {
     }
   }
 
-  getConnectFunc(targetClient: any): () => Promise<any> {
-    return async () => {
-      return targetClient;
-    };
+  connect(targetClient: any): Promise<any> {
+    return targetClient;
   }
 
   getDatabaseType(): DatabaseType {
@@ -179,5 +177,9 @@ export class MySQLDatabaseDialect implements DatabaseDialect {
 
   async rollback(targetClient: ClientWrapper): Promise<any> {
     return await targetClient.client.rollback();
+  }
+
+  end(clientWrapper: ClientWrapper): Promise<void> {
+    return clientWrapper.client.end();
   }
 }

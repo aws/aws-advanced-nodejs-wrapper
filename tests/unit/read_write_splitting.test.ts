@@ -102,7 +102,7 @@ describe("reader write splitting test", () => {
     when(await mockWriterClient.isValid()).thenReturn(true);
     when(mockPluginService.getCurrentHostInfo()).thenReturn(writerHost);
     when(mockPluginService.getDialect()).thenReturn(mockDialect);
-    when(mockDialect.getConnectFunc(anything())).thenReturn(() => Promise.resolve());
+    when(mockDialect.connect(anything())).thenReturn(Promise.resolve(mockReaderClient));
     when(mockPluginService.connect(anything(), anything())).thenResolve(mockReaderWrapper);
 
     const target = new ReadWriteSplittingPlugin(
@@ -128,7 +128,7 @@ describe("reader write splitting test", () => {
     when(await mockReaderClient.isValid()).thenReturn(true);
     when(mockPluginService.getCurrentHostInfo()).thenReturn(readerHost1);
     when(mockPluginService.getDialect()).thenReturn(mockDialect);
-    when(mockDialect.getConnectFunc(anything())).thenReturn(() => Promise.resolve());
+    when(mockDialect.connect(anything())).thenReturn(Promise.resolve(mockReaderClient));
     when(mockPluginService.connect(anything(), anything())).thenResolve(mockWriterWrapper);
 
     const target = new ReadWriteSplittingPlugin(
@@ -154,7 +154,7 @@ describe("reader write splitting test", () => {
     when(await mockReaderClient.isValid()).thenReturn(true);
     when(mockPluginService.getCurrentHostInfo()).thenReturn(readerHost1);
     when(mockPluginService.getDialect()).thenReturn(mockDialect);
-    when(mockDialect.getConnectFunc(anything())).thenReturn(() => Promise.resolve());
+    when(mockDialect.connect(anything())).thenReturn(Promise.resolve(mockReaderClient));
     when(mockPluginService.connect(anything(), anything())).thenResolve(mockReaderWrapper);
 
     const target = new ReadWriteSplittingPlugin(
@@ -180,7 +180,7 @@ describe("reader write splitting test", () => {
     when(await mockWriterClient.isValid()).thenReturn(true);
     when(mockPluginService.getCurrentHostInfo()).thenReturn(writerHost);
     when(mockPluginService.getDialect()).thenReturn(mockDialect);
-    when(mockDialect.getConnectFunc(anything())).thenReturn(() => Promise.resolve());
+    when(mockDialect.connect(anything())).thenReturn(Promise.resolve(mockReaderClient));
     when(mockPluginService.connect(anything(), anything())).thenResolve(mockReaderWrapper);
 
     const target = new ReadWriteSplittingPlugin(
@@ -208,7 +208,7 @@ describe("reader write splitting test", () => {
     when(mockWriterClient.targetClient && (await mockPluginService.isClientValid(mockWriterClient.targetClient))).thenReturn(true);
     when(mockPluginService.getCurrentHostInfo()).thenReturn(writerHost);
     when(mockPluginService.getDialect()).thenReturn(mockDialect);
-    when(mockDialect.getConnectFunc(anything())).thenReturn(() => Promise.resolve());
+    when(mockDialect.connect(anything())).thenReturn(Promise.resolve(mockReaderClient));
     when(mockPluginService.connect(anything(), anything())).thenReturn(Promise.resolve(mockWriterWrapper));
 
     const target = new ReadWriteSplittingPlugin(

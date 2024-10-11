@@ -209,9 +209,12 @@ export class AwsMySQLClient extends AwsClient {
       "end",
       () => {
         return ClientUtils.queryWithTimeout(
-          this.targetClient?.client?.end().catch((error: any) => {
-            // ignore
-          }),
+          this.pluginService
+            .getDialect()
+            .end(this.targetClient)
+            .catch((error: any) => {
+              // ignore
+            }),
           this.properties
         );
       },
