@@ -104,7 +104,7 @@ export class OpenedConnectionTracker {
       if (!client) {
         continue;
       }
-      await this.pluginService.tryClosingTargetClient(client);
+      await this.pluginService.abortTargetClient(client);
     }
   }
 

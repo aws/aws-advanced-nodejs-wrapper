@@ -137,7 +137,7 @@ export class HostMonitoringConnectionPlugin extends AbstractConnectionPlugin imp
 
           if (!targetClient || !isClientValid) {
             if (targetClient) {
-              await this.pluginService.tryClosingTargetClient(targetClient);
+              await this.pluginService.abortTargetClient(targetClient);
             }
             // eslint-disable-next-line no-unsafe-finally
             throw new AwsWrapperError(Messages.get("HostMonitoringConnectionPlugin.unavailableHost", monitoringHostInfo.host));

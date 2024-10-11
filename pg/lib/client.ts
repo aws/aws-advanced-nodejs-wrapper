@@ -31,6 +31,8 @@ import { ClientWrapper } from "../../common/lib/client_wrapper";
 import { RdsMultiAZPgDatabaseDialect } from "./dialect/rds_multi_az_pg_database_dialect";
 import { HostInfo } from "../../common/lib/host_info";
 import { TelemetryTraceLevel } from "../../common/lib/utils/telemetry/telemetry_trace_level";
+import { NodePostgresDriverDialect } from "./dialect/node_postgres_driver_dialect";
+import { ClientUtils } from "../../common/lib/utils/client_utils";
 
 export class AwsPGClient extends AwsClient {
   private static readonly knownDialectsByCode: Map<string, DatabaseDialect> = new Map([
@@ -41,14 +43,14 @@ export class AwsPGClient extends AwsClient {
   ]);
 
   constructor(config: any) {
-    super(config, new PgErrorHandler(), DatabaseType.POSTGRES, AwsPGClient.knownDialectsByCode, new PgConnectionUrlParser());
-    this._createClientFunc = (config: Map<string, any>) => {
-      const targetClient: Client = new Client(WrapperProperties.removeWrapperProperties(config));
-      targetClient.on("error", (error: any) => {
-        this.emit("error", error);
-      });
-      return targetClient;
-    };
+    super(
+      config,
+      new PgErrorHandler(),
+      DatabaseType.POSTGRES,
+      AwsPGClient.knownDialectsByCode,
+      new PgConnectionUrlParser(),
+      new NodePostgresDriverDialect()
+    );
     this.resetState();
   }
 
@@ -217,8 +219,11 @@ export class AwsPGClient extends AwsClient {
       this.properties,
       "rollback",
       async () => {
-        this.pluginService.updateInTransaction("rollback");
-        return await this.targetClient?.client?.rollback();
+        if (this.targetClient) {
+          this.pluginService.updateInTransaction("rollback");
+          return await this.pluginService.getDriverDialect().rollback(this.targetClient);
+        }
+        return null;
       },
       null
     );

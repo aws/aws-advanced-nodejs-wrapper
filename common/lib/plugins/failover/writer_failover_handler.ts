@@ -226,7 +226,7 @@ class ReconnectToWriterHandlerTask {
     try {
       while (latestTopology.length === 0 && Date.now() < this.endTime && !this.failoverCompleted) {
         if (this.currentClient) {
-          await this.pluginService.tryClosingTargetClient(this.currentClient);
+          await this.pluginService.abortTargetClient(this.currentClient);
         }
 
         try {
@@ -264,7 +264,7 @@ class ReconnectToWriterHandlerTask {
       return new WriterFailoverResult(false, false, [], ClusterAwareWriterFailoverHandler.RECONNECT_WRITER_TASK, null);
     } finally {
       if (this.currentClient && !success) {
-        await this.pluginService.tryClosingTargetClient(this.currentClient);
+        await this.pluginService.abortTargetClient(this.currentClient);
       }
       logger.info(Messages.get("ClusterAwareWriterFailoverHandler.taskAFinished"));
     }
@@ -276,7 +276,7 @@ class ReconnectToWriterHandlerTask {
 
     // Task B was returned.
     if (selectedTask && selectedTask === ClusterAwareWriterFailoverHandler.WAIT_NEW_WRITER_TASK && this.currentClient) {
-      await this.pluginService.tryClosingTargetClient(this.currentClient);
+      await this.pluginService.abortTargetClient(this.currentClient);
     }
   }
 }
@@ -439,7 +439,7 @@ class WaitForNewWriterHandlerTask {
       } catch (error) {
         this.pluginService.setAvailability(writerCandidate.allAliases, HostAvailability.NOT_AVAILABLE);
         if (targetClient) {
-          await this.pluginService.tryClosingTargetClient(targetClient);
+          await this.pluginService.abortTargetClient(targetClient);
         }
         return false;
       }
@@ -478,13 +478,13 @@ class WaitForNewWriterHandlerTask {
   async performFinalCleanup(): Promise<void> {
     // Close the reader connection if it's not needed.
     if (this.currentReaderTargetClient && this.currentClient !== this.currentReaderTargetClient) {
-      await this.pluginService.tryClosingTargetClient(this.currentReaderTargetClient);
+      await this.pluginService.abortTargetClient(this.currentReaderTargetClient);
     }
   }
 
   async callCloseClient(targetClient: ClientWrapper | null) {
     if (targetClient) {
-      await this.pluginService.tryClosingTargetClient(targetClient);
+      await this.pluginService.abortTargetClient(targetClient);
     }
   }
 }

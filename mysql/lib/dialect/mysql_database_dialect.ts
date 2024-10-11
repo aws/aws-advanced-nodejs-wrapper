@@ -17,18 +17,15 @@
 import { DatabaseDialect, DatabaseType } from "../../../common/lib/database_dialect/database_dialect";
 import { HostListProviderService } from "../../../common/lib/host_list_provider_service";
 import { HostListProvider } from "../../../common/lib/host_list_provider/host_list_provider";
-import { ConnectionStringHostListProvider } from "../../../common/lib/host_list_provider/connection_string_host_list_provider";
+import {
+  ConnectionStringHostListProvider
+} from "../../../common/lib/host_list_provider/connection_string_host_list_provider";
 import { AwsWrapperError } from "../../../common/lib/utils/errors";
 import { DatabaseDialectCodes } from "../../../common/lib/database_dialect/database_dialect_codes";
 import { TransactionIsolationLevel } from "../../../common/lib/utils/transaction_isolation_level";
 import { ClientWrapper } from "../../../common/lib/client_wrapper";
 import { ClientUtils } from "../../../common/lib/utils/client_utils";
 import { FailoverRestriction } from "../../../common/lib/plugins/failover/failover_restriction";
-import { AwsPoolClient } from "../../../common/lib/aws_pool_client";
-import { AwsMysqlPoolClient } from "../mysql_pool_client";
-import { AwsPoolConfig } from "../../../common/lib/aws_pool_config";
-import { WrapperProperties } from "../../../common/lib/wrapper_property";
-import { PoolOptions } from "mysql2/promise";
 
 export class MySQLDatabaseDialect implements DatabaseDialect {
   protected dialectName: string = this.constructor.name;
@@ -73,20 +70,8 @@ export class MySQLDatabaseDialect implements DatabaseDialect {
       });
   }
 
-  getAwsPoolClient(props: PoolOptions): AwsPoolClient {
-    return new AwsMysqlPoolClient(props);
-  }
-
   getHostListProvider(props: Map<string, any>, originalUrl: string, hostListProviderService: HostListProviderService): HostListProvider {
     return new ConnectionStringHostListProvider(props, originalUrl, this.getDefaultPort(), hostListProviderService);
-  }
-
-  async tryClosingTargetClient(targetClient: ClientWrapper) {
-    try {
-      await ClientUtils.queryWithTimeout(targetClient.client.destroy(), targetClient.properties);
-    } catch (error: any) {
-      // ignore
-    }
   }
 
   async isClientValid(targetClient: ClientWrapper): Promise<boolean> {
@@ -106,10 +91,6 @@ export class MySQLDatabaseDialect implements DatabaseDialect {
     } catch (error) {
       return false;
     }
-  }
-
-  connect(targetClient: any): Promise<any> {
-    return targetClient;
   }
 
   getDatabaseType(): DatabaseType {
@@ -182,24 +163,5 @@ export class MySQLDatabaseDialect implements DatabaseDialect {
 
   doesStatementSetSchema(statement: string): string | undefined {
     return undefined;
-  }
-
-  async rollback(targetClient: ClientWrapper): Promise<any> {
-    return await targetClient.client.rollback();
-  }
-
-  preparePoolClientProperties(props: Map<string, any>, poolConfig: AwsPoolConfig | undefined): any {
-    const finalPoolConfig: PoolOptions = {};
-    const finalClientProps = WrapperProperties.removeWrapperProperties(props);
-
-    Object.assign(finalPoolConfig, finalClientProps);
-    finalPoolConfig.connectionLimit = poolConfig?.maxConnections;
-    finalPoolConfig.maxIdle = poolConfig?.maxIdleConnections;
-    finalPoolConfig.idleTimeout = poolConfig?.idleTimeoutMillis;
-    return finalPoolConfig;
-  }
-
-  async end(clientWrapper: ClientWrapper): Promise<void> {
-    return await clientWrapper.client.end();
   }
 }

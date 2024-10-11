@@ -31,7 +31,7 @@ import { logger } from "../logutils";
 import { maskProperties } from "./utils/utils";
 import { ClientWrapper } from "./client_wrapper";
 import { RoundRobinHostSelector } from "./round_robin_host_selector";
-import { DatabaseDialect } from "./database_dialect/database_dialect";
+import { DriverDialect } from "./driver_dialect/driver_dialect";
 
 export class DriverConnectionProvider implements ConnectionProvider {
   private static readonly acceptedStrategies: Map<string, HostSelector> = new Map([
@@ -53,9 +53,9 @@ export class DriverConnectionProvider implements ConnectionProvider {
     const resultProps = new Map(props);
     let connectionHostInfo: HostInfo;
 
+    const driverDialect: DriverDialect = pluginService.getDriverDialect();
     try {
-      const targetClient: any = await Promise.resolve(pluginService.createTargetClient(props));
-      await pluginService.getDialect().connect(targetClient);
+      const targetClient: any = await driverDialect.connect(props);
       connectionHostInfo = new HostInfoBuilder({
         hostAvailabilityStrategy: hostInfo.hostAvailabilityStrategy
       })
@@ -108,9 +108,7 @@ export class DriverConnectionProvider implements ConnectionProvider {
           JSON.stringify(Object.fromEntries(maskProperties(resultProps)))
       );
 
-      const newTargetClient = pluginService.createTargetClient(resultProps);
-      await pluginService.getDialect().connect(newTargetClient);
-      resultTargetClient = newTargetClient;
+      resultTargetClient = driverDialect.connect(resultProps);
     }
 
     return {
@@ -124,7 +122,7 @@ export class DriverConnectionProvider implements ConnectionProvider {
     if (clientWrapper === undefined) {
       return;
     }
-    return await pluginService.getDialect().end(clientWrapper);
+    return await pluginService.getDriverDialect().end(clientWrapper);
   }
 
   getHostInfoByStrategy(hosts: HostInfo[], role: HostRole, strategy: string, props?: Map<string, any>): HostInfo {

@@ -287,7 +287,7 @@ export class MonitorImpl implements Monitor {
 
   async endMonitoringClient() {
     if (this.monitoringClient) {
-      await this.pluginService.tryClosingTargetClient(this.monitoringClient);
+      await this.pluginService.abortTargetClient(this.monitoringClient);
       this.monitoringClient = null;
     }
   }

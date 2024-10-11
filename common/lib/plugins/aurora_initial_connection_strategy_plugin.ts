@@ -137,7 +137,7 @@ export class AuroraInitialConnectionStrategyPlugin extends AbstractConnectionPlu
           if (writerCandidate) {
             if (writerCandidate.role !== HostRole.WRITER) {
               // Shouldn't be here. But let's try again.
-              await this.pluginService.tryClosingTargetClient(writerCandidateClient);
+              await this.pluginService.abortTargetClient(writerCandidateClient);
               await sleep(retryDelayMs);
               continue;
             }
@@ -154,7 +154,7 @@ export class AuroraInitialConnectionStrategyPlugin extends AbstractConnectionPlu
           // If the new connection resolves to a reader instance, this means the topology is outdated.
           // Force refresh to update the topology.
           await this.pluginService.forceRefreshHostList(writerCandidateClient);
-          await this.pluginService.tryClosingTargetClient(writerCandidateClient);
+          await this.pluginService.abortTargetClient(writerCandidateClient);
           await sleep(retryDelayMs);
           continue;
         }
@@ -165,7 +165,7 @@ export class AuroraInitialConnectionStrategyPlugin extends AbstractConnectionPlu
         }
         return writerCandidateClient;
       } catch (error: any) {
-        await this.pluginService.tryClosingTargetClient(writerCandidateClient);
+        await this.pluginService.abortTargetClient(writerCandidateClient);
         if (this.pluginService.isLoginError(error) || !writerCandidate) {
           throw error;
         } else if (writerCandidate) {
@@ -211,7 +211,7 @@ export class AuroraInitialConnectionStrategyPlugin extends AbstractConnectionPlu
                 }
                 return readerCandidateClient;
               }
-              await this.pluginService.tryClosingTargetClient(readerCandidateClient);
+              await this.pluginService.abortTargetClient(readerCandidateClient);
               await sleep(retryDelayMs);
               continue;
             }
@@ -240,7 +240,7 @@ export class AuroraInitialConnectionStrategyPlugin extends AbstractConnectionPlu
             }
             return readerCandidateClient;
           }
-          await this.pluginService.tryClosingTargetClient(readerCandidateClient);
+          await this.pluginService.abortTargetClient(readerCandidateClient);
           await sleep(retryDelayMs);
           continue;
         }
@@ -250,7 +250,7 @@ export class AuroraInitialConnectionStrategyPlugin extends AbstractConnectionPlu
         }
         return readerCandidateClient;
       } catch (error: any) {
-        await this.pluginService.tryClosingTargetClient(readerCandidateClient);
+        await this.pluginService.abortTargetClient(readerCandidateClient);
         if (this.pluginService.isLoginError(error) || !readerCandidate) {
           throw error;
         } else if (readerCandidate) {

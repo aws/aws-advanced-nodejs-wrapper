@@ -129,14 +129,14 @@ export class StaleDnsHelper {
         const newProps = new Map<string, any>(props);
         newProps.set(WrapperProperties.HOST.name, this.writerHostInfo.host);
         targetClient = await this.pluginService.connect(this.writerHostInfo, newProps);
-        await this.pluginService.tryClosingTargetClient(currentTargetClient);
+        await this.pluginService.abortTargetClient(currentTargetClient);
 
         if (isInitialConnection) {
           hostListProviderService.setInitialConnectionHostInfo(this.writerHostInfo);
         }
         return targetClient;
       } catch (error: any) {
-        await this.pluginService.tryClosingTargetClient(targetClient);
+        await this.pluginService.abortTargetClient(targetClient);
       }
     }
     return currentTargetClient;

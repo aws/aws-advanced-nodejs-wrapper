@@ -16,8 +16,7 @@
 
 import { QueryOptions } from "mysql2/typings/mysql/lib/protocol/sequences/Query";
 import { AwsClient } from "../../common/lib/aws_client";
-import { WrapperProperties } from "../../common/lib/wrapper_property";
-import { createConnection, Query } from "mysql2/promise";
+import { Query } from "mysql2/promise";
 import { MySQLErrorHandler } from "./mysql_error_handler";
 import { MySQLConnectionUrlParser } from "./mysql_connection_url_parser";
 import { DatabaseDialect, DatabaseType } from "../../common/lib/database_dialect/database_dialect";
@@ -33,7 +32,7 @@ import { ClientUtils } from "../../common/lib/utils/client_utils";
 import { RdsMultiAZMySQLDatabaseDialect } from "./dialect/rds_multi_az_mysql_database_dialect";
 import { HostInfo } from "../../common/lib/host_info";
 import { TelemetryTraceLevel } from "../../common/lib/utils/telemetry/telemetry_trace_level";
-import { ConnectionProviderManager } from "../../common/lib/connection_provider_manager";
+import { MySQL2DriverDialect } from "./dialect/mysql2_driver_dialect";
 
 export class AwsMySQLClient extends AwsClient {
   private static readonly knownDialectsByCode: Map<string, DatabaseDialect> = new Map([
@@ -44,10 +43,14 @@ export class AwsMySQLClient extends AwsClient {
   ]);
 
   constructor(config: any) {
-    super(config, new MySQLErrorHandler(), DatabaseType.MYSQL, AwsMySQLClient.knownDialectsByCode, new MySQLConnectionUrlParser());
-    this._createClientFunc = (config: Map<string, any>) => {
-      return createConnection(WrapperProperties.removeWrapperProperties(config));
-    };
+    super(
+      config,
+      new MySQLErrorHandler(),
+      DatabaseType.MYSQL,
+      AwsMySQLClient.knownDialectsByCode,
+      new MySQLConnectionUrlParser(),
+      new MySQL2DriverDialect()
+    );
     this.resetState();
   }
 
@@ -245,8 +248,11 @@ export class AwsMySQLClient extends AwsClient {
       this.properties,
       "rollback",
       async () => {
-        this.pluginService.updateInTransaction("rollback");
-        return await this.targetClient?.client?.rollback();
+        if (this.targetClient) {
+          this.pluginService.updateInTransaction("rollback");
+          return await this.pluginService.getDriverDialect().rollback(this.targetClient);
+        }
+        return null;
       },
       null
     );

@@ -104,7 +104,7 @@ export class InternalPooledConnectionProvider implements PooledConnectionProvide
       }
     }
 
-    const dialect = pluginService.getDialect();
+    const dialect = pluginService.getDriverDialect();
     const preparedConfig = dialect.preparePoolClientProperties(props, this._poolConfig);
 
     this.internalPool = this.databasePools.computeIfAbsent(
