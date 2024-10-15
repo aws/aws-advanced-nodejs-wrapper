@@ -29,6 +29,7 @@ import { Messages } from "../../common/lib/utils/messages";
 import { TransactionIsolationLevel } from "../../common/lib/utils/transaction_isolation_level";
 import { ClientWrapper } from "../../common/lib/client_wrapper";
 import { RdsMultiAZPgDatabaseDialect } from "./dialect/rds_multi_az_pg_database_dialect";
+import { HostInfo } from "../../common/lib/host_info";
 import { TelemetryTraceLevel } from "../../common/lib/utils/telemetry/telemetry_trace_level";
 
 export class AwsPGClient extends AwsClient {
@@ -191,12 +192,13 @@ export class AwsPGClient extends AwsClient {
   }
 
   async end() {
+    const hostInfo: HostInfo | null = this.pluginService.getCurrentHostInfo();
     const result = await this.pluginManager.execute(
-      this.pluginService.getCurrentHostInfo(),
+      hostInfo,
       this.properties,
       "end",
       () => {
-        return this.targetClient?.client?.end();
+        return this.pluginService.getConnectionProvider(hostInfo, this.properties).end(this.pluginService, this.targetClient?.client);
       },
       null
     );

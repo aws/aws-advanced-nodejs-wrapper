@@ -24,6 +24,7 @@ import { PluginManager } from "./plugin_manager";
 import { EventEmitter } from "stream";
 import { DriverConnectionProvider } from "./driver_connection_provider";
 import { ClientWrapper } from "./client_wrapper";
+import { ConnectionProviderManager } from "./connection_provider_manager";
 import { DefaultTelemetryFactory } from "./utils/telemetry/default_telemetry_factory";
 import { TelemetryFactory } from "./utils/telemetry/telemetry_factory";
 import { ConnectionProviderManager } from "./connection_provider_manager";
@@ -60,15 +61,10 @@ export abstract class AwsClient extends EventEmitter {
 
     this.properties = new Map<string, any>(Object.entries(config));
 
-    const defaultConnProvider = new DriverConnectionProvider();
-    const effectiveConnProvider = null;
-    // TODO: check for configuration profile to update the effectiveConnProvider
-
     this.telemetryFactory = new DefaultTelemetryFactory(this.properties);
-
     const container = new PluginServiceManagerContainer();
     this.pluginService = new PluginService(container, this, dbType, knownDialectsByCode, this.properties);
-    this.pluginManager = new PluginManager(container, this.properties, defaultConnProvider, effectiveConnProvider, this.telemetryFactory);
+    this.pluginManager = new PluginManager(container, this.properties, new ConnectionProviderManager(new DriverConnectionProvider(), null), this.telemetryFactory);
   }
 
   private async setup() {

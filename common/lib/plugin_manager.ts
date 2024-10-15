@@ -24,9 +24,9 @@ import { HostListProviderService } from "./host_list_provider_service";
 import { HostChangeOptions } from "./host_change_options";
 import { OldConnectionSuggestionAction } from "./old_connection_suggestion_action";
 import { HostRole } from "./host_role";
-import { ConnectionProvider } from "./connection_provider";
 import { ClientWrapper } from "./client_wrapper";
 import { CanReleaseResources } from "./can_release_resources";
+import { ConnectionProviderManager } from "./connection_provider_manager";
 import { TelemetryFactory } from "./utils/telemetry/telemetry_factory";
 import { TelemetryTraceLevel } from "./utils/telemetry/telemetry_trace_level";
 
@@ -68,25 +68,22 @@ export class PluginManager {
   private static readonly NOTIFY_CONNECTION_CHANGED_METHOD: string = "notifyConnectionChanged";
   private static readonly ACCEPTS_STRATEGY_METHOD: string = "acceptsStrategy";
   private static readonly GET_HOST_INFO_BY_STRATEGY_METHOD: string = "getHostInfoByStrategy";
-  private readonly defaultConnProvider;
-  private readonly effectiveConnProvider;
   private readonly props: Map<string, any>;
   private _plugins: ConnectionPlugin[] = [];
+  private readonly connectionProviderManager: ConnectionProviderManager;
   private pluginServiceManagerContainer: PluginServiceManagerContainer;
   protected telemetryFactory: TelemetryFactory;
 
   constructor(
     pluginServiceManagerContainer: PluginServiceManagerContainer,
     props: Map<string, any>,
-    defaultConnProvider: ConnectionProvider,
-    effectiveConnProvider: ConnectionProvider | null,
+    connectionProviderManager: ConnectionProviderManager,
     telemetryFactory: TelemetryFactory
   ) {
     this.pluginServiceManagerContainer = pluginServiceManagerContainer;
     this.pluginServiceManagerContainer.pluginManager = this;
+    this.connectionProviderManager = connectionProviderManager;
     this.props = props;
-    this.defaultConnProvider = defaultConnProvider;
-    this.effectiveConnProvider = effectiveConnProvider;
     this.telemetryFactory = telemetryFactory;
   }
 
@@ -100,8 +97,7 @@ export class PluginManager {
         this._plugins = await ConnectionPluginChainBuilder.getPlugins(
           this.pluginServiceManagerContainer.pluginService,
           this.props,
-          this.defaultConnProvider,
-          this.effectiveConnProvider
+          this.connectionProviderManager
         );
       }
     }
@@ -307,6 +303,10 @@ export class PluginManager {
         await plugin.releaseResources();
       }
     }
+  }
+
+  getConnectionProvider(hostInfo: HostInfo | null, props: Map<string, any>) {
+    return this.connectionProviderManager.getConnectionProvider(hostInfo, props);
   }
 
   private implementsCanReleaseResources(plugin: any): plugin is CanReleaseResources {

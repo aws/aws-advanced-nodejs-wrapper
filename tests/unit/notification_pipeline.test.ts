@@ -22,6 +22,7 @@ import { DefaultPlugin } from "../../common/lib/plugins/default_plugin";
 import { instance, mock } from "ts-mockito";
 import { PluginService } from "../../common/lib/plugin_service";
 import { DriverConnectionProvider } from "../../common/lib/driver_connection_provider";
+import { ConnectionProviderManager } from "../../common/lib/connection_provider_manager";
 import { NullTelemetryFactory } from "../../common/lib/utils/telemetry/null_telemetry_factory";
 
 class TestPlugin extends DefaultPlugin {
@@ -53,8 +54,8 @@ describe("notificationPipelineTest", () => {
   let plugin: TestPlugin;
 
   beforeEach(() => {
-    pluginManager = new PluginManager(container, props, new DriverConnectionProvider(), null, new NullTelemetryFactory());
-    plugin = new TestPlugin(instance(mockPluginService), new DriverConnectionProvider(), null);
+    pluginManager = new PluginManager(container, props, new ConnectionProviderManager(new DriverConnectionProvider(), null, new NullTelemetryFactory()));
+    plugin = new TestPlugin(instance(mockPluginService), new ConnectionProviderManager(new DriverConnectionProvider(), null));
     pluginManager["_plugins"] = [plugin];
   });
 

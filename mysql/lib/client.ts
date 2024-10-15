@@ -31,6 +31,7 @@ import { Messages } from "../../common/lib/utils/messages";
 import { ClientWrapper } from "../../common/lib/client_wrapper";
 import { ClientUtils } from "../../common/lib/utils/client_utils";
 import { RdsMultiAZMySQLDatabaseDialect } from "./dialect/rds_multi_az_mysql_database_dialect";
+import { HostInfo } from "../../common/lib/host_info";
 import { TelemetryTraceLevel } from "../../common/lib/utils/telemetry/telemetry_trace_level";
 import { ConnectionProviderManager } from "../../common/lib/connection_provider_manager";
 
@@ -210,16 +211,16 @@ export class AwsMySQLClient extends AwsClient {
   }
 
   async end() {
+    const hostInfo: HostInfo | null = this.pluginService.getCurrentHostInfo();
     const result = await this.pluginManager.execute(
       this.pluginService.getCurrentHostInfo(),
       this.properties,
       "end",
       () => {
-        const newConnProviderManager = new ConnectionProviderManager(this.pluginService.getConnectionProvider());
         return ClientUtils.queryWithTimeout(
-          newConnProviderManager
-            .getConnectionProvider(this.pluginService.getCurrentHostInfo()!, this.properties)
-            .end(this.pluginService, this.targetClient!)
+          this.pluginService
+            .getConnectionProvider(hostInfo, this.properties)
+            .end(this.pluginService, this.targetClient?.client)
             .catch((error: any) => {
               // ignore
             }),

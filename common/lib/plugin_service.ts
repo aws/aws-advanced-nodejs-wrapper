@@ -147,6 +147,10 @@ export class PluginService implements ErrorHandler, HostListProviderService {
     return this.getCurrentClient().connectionUrlParser;
   }
 
+  getConnectionProvider(hostInfo: HostInfo | null, props: Map<string, any>): ConnectionProvider | undefined {
+    return this.pluginServiceManagerContainer.pluginManager?.getConnectionProvider(hostInfo, props);
+  }
+
   getDialect(): DatabaseDialect {
     return this.dialect;
   }

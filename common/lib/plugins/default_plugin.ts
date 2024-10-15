@@ -34,25 +34,12 @@ import { TelemetryTraceLevel } from "../utils/telemetry/telemetry_trace_level";
 export class DefaultPlugin extends AbstractConnectionPlugin {
   id: string = uniqueId("_defaultPlugin");
   private readonly pluginService: PluginService;
-  private readonly connProviderManager: ConnectionProviderManager;
-  private readonly effectiveConnProvider: ConnectionProvider | null = null;
-  private readonly defaultConnProvider: ConnectionProvider;
+  private readonly connectionProviderManager: ConnectionProviderManager;
 
-  constructor(
-    pluginService: PluginService,
-    defaultConnProvider: ConnectionProvider,
-    effectiveConnProvider: ConnectionProvider | null,
-    connectionProviderManager?: ConnectionProviderManager
-  ) {
+  constructor(pluginService: PluginService, connectionProviderManager: ConnectionProviderManager) {
     super();
     this.pluginService = pluginService;
-    this.defaultConnProvider = defaultConnProvider;
-    this.effectiveConnProvider = effectiveConnProvider;
-    if (connectionProviderManager) {
-      this.connProviderManager = connectionProviderManager;
-    } else {
-      this.connProviderManager = new ConnectionProviderManager(defaultConnProvider);
-    }
+    this.connectionProviderManager = connectionProviderManager;
   }
 
   override getSubscribedMethods(): Set<string> {
@@ -65,7 +52,7 @@ export class DefaultPlugin extends AbstractConnectionPlugin {
     isInitialConnection: boolean,
     forceConnectFunc: () => Promise<ClientWrapper>
   ): Promise<ClientWrapper> {
-    return await this.connectInternal(hostInfo, props, this.defaultConnProvider);
+    return await this.connectInternal(hostInfo, props, this.connectionProviderManager.getConnectionProvider(hostInfo, props));
   }
 
   override initHostProvider(
@@ -83,17 +70,7 @@ export class DefaultPlugin extends AbstractConnectionPlugin {
     isInitialConnection: boolean,
     connectFunc: () => Promise<ClientWrapper>
   ): Promise<ClientWrapper> {
-    let connProvider = null;
-
-    if (this.effectiveConnProvider && this.effectiveConnProvider.acceptsUrl(hostInfo, props)) {
-      connProvider = this.effectiveConnProvider;
-    }
-
-    if (!connProvider) {
-      connProvider = this.connProviderManager.getConnectionProvider(hostInfo, props);
-    }
-
-    return this.connectInternal(hostInfo, props, connProvider);
+    return await this.connectInternal(hostInfo, props, this.connectionProviderManager.getConnectionProvider(hostInfo, props));
   }
 
   private async connectInternal(hostInfo: HostInfo, props: Map<string, any>, connProvider: ConnectionProvider): Promise<ClientWrapper> {
@@ -131,11 +108,7 @@ export class DefaultPlugin extends AbstractConnectionPlugin {
       // Users must request either a writer or a reader role.
       return false;
     }
-
-    if (this.effectiveConnProvider) {
-      return this.effectiveConnProvider.acceptsStrategy(role, strategy);
-    }
-    return this.connProviderManager.acceptsStrategy(role, strategy);
+    return this.connectionProviderManager.acceptsStrategy(role, strategy);
   }
 
   override getHostInfoByStrategy(role: HostRole, strategy: string): HostInfo {
@@ -148,10 +121,6 @@ export class DefaultPlugin extends AbstractConnectionPlugin {
       throw new AwsWrapperError(Messages.get("DefaultConnectionPlugin.noHostsAvailable"));
     }
 
-    if (this.effectiveConnProvider) {
-      return this.effectiveConnProvider.getHostInfoByStrategy(hosts, role, strategy, this.pluginService.props);
-    }
-
-    return this.connProviderManager.getHostInfoByStrategy(hosts, role, strategy, this.pluginService.props);
+    return this.connectionProviderManager.getHostInfoByStrategy(hosts, role, strategy, this.pluginService.props);
   }
 }
