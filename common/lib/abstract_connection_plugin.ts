@@ -43,7 +43,14 @@ export abstract class AbstractConnectionPlugin implements ConnectionPlugin {
     return forceConnectFunc();
   }
 
-  execute<T>(methodName: string, methodFunc: () => Promise<T>, methodArgs: any[]): Promise<T> {
+  execute<T>(
+    methodName: string,
+    methodFunc: () => Promise<T>,
+    methodArgs: any[],
+    resultClass?: T,
+    exceptionClass?: Error,
+    methodInvokeOn?: object
+  ): Promise<T> {
     return methodFunc();
   }
 
