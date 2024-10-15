@@ -23,10 +23,14 @@ import { QueryResult } from "pg";
 import { ProxyHelper } from "./utils/proxy_helper";
 import { RdsUtils } from "../../../../common/lib/utils/rds_utils";
 import { logger } from "../../../../common/logutils";
-import { features } from "./config";
+import { features, instanceCount } from "./config";
 import { TestEnvironmentFeatures } from "./utils/test_environment_features";
 
-const itIf = features.includes(TestEnvironmentFeatures.FAILOVER_SUPPORTED) && !features.includes(TestEnvironmentFeatures.PERFORMANCE) ? it : it.skip;
+const itIf =
+  features.includes(TestEnvironmentFeatures.FAILOVER_SUPPORTED) && !features.includes(TestEnvironmentFeatures.PERFORMANCE) && instanceCount >= 2
+    ? it
+    : it.skip;
+const itIfTwoInstance = instanceCount == 2 ? itIf : it.skip;
 
 let env: TestEnvironment;
 let driver;
@@ -198,7 +202,7 @@ describe("aurora failover", () => {
     1320000
   );
 
-  itIf(
+  itIfTwoInstance(
     "fails from reader to writer",
     async () => {
       // Connect to writer instance

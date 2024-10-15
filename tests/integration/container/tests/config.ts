@@ -31,3 +31,4 @@ if (infoJson === undefined) {
 }
 const testInfo = JSON.parse(infoJson);
 export const features = testInfo.request.features;
+export const instanceCount = testInfo.request.numOfInstances;

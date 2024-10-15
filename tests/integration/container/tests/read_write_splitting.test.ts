@@ -23,9 +23,11 @@ import { QueryResult } from "pg";
 import { ProxyHelper } from "./utils/proxy_helper";
 import { logger } from "../../../../common/logutils";
 import { TestEnvironmentFeatures } from "./utils/test_environment_features";
-import { features } from "./config";
+import { features, instanceCount } from "./config";
 
-const itIf = !features.includes(TestEnvironmentFeatures.PERFORMANCE) && features.includes(TestEnvironmentFeatures.IAM) ? it : it.skip;
+const itIf =
+  !features.includes(TestEnvironmentFeatures.PERFORMANCE) && features.includes(TestEnvironmentFeatures.IAM) && instanceCount >= 2 ? it : it.skip;
+const itIfMinThreeInstance = instanceCount >= 3 ? itIf : it.skip;
 
 let env: TestEnvironment;
 let driver;
@@ -241,7 +243,7 @@ describe("aurora read write splitting", () => {
     1320000
   );
 
-  itIf(
+  itIfMinThreeInstance(
     "test set read only all readers down",
     async () => {
       const config = await initDefaultConfig(env.proxyDatabaseInfo.writerInstanceEndpoint, env.proxyDatabaseInfo.instanceEndpointPort, true);
@@ -280,7 +282,7 @@ describe("aurora read write splitting", () => {
     1320000
   );
 
-  itIf(
+  itIfMinThreeInstance(
     "test failover to new writer set read only true false",
     async () => {
       // Connect to writer instance
@@ -339,7 +341,7 @@ describe("aurora read write splitting", () => {
     1320000
   );
 
-  itIf(
+  itIfMinThreeInstance(
     "test failover to new reader set read only false true",
     async () => {
       // Connect to writer instance
@@ -405,7 +407,7 @@ describe("aurora read write splitting", () => {
     1320000
   );
 
-  itIf(
+  itIfMinThreeInstance(
     "test failover reader to writer set read only true false",
     async () => {
       // Connect to writer instance
