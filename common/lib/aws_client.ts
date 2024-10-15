@@ -157,4 +157,8 @@ export abstract class AwsClient extends EventEmitter {
   }
 
   abstract executeQuery(props: Map<string, any>, query: string, targetClient?: ClientWrapper): any;
+
+  getPluginInstance<T>(iface: any): T {
+    return this.pluginManager.getPluginInstance(iface);
+  }
 }
