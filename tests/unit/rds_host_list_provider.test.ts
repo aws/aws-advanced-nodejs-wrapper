@@ -15,7 +15,7 @@
 */
 
 import { RdsHostListProvider } from "../../common/lib/host_list_provider/rds_host_list_provider";
-import { anyFunction, anyString, anything, instance, mock, reset, spy, verify, when } from "ts-mockito";
+import { anything, instance, mock, reset, spy, verify, when } from "ts-mockito";
 import { PluginService } from "../../common/lib/plugin_service";
 import { AwsClient } from "../../common/lib/aws_client";
 import { HostInfo } from "../../common/lib/host_info";
@@ -28,11 +28,13 @@ import { sleep } from "../../common/lib/utils/utils";
 import { HostRole } from "../../common/lib/host_role";
 import { AuroraPgDatabaseDialect } from "../../pg/lib/dialect/aurora_pg_database_dialect";
 import { ClientWrapper } from "../../common/lib/client_wrapper";
+import { PgConnectionUrlParser } from "../../pg/lib/pg_connection_url_parser";
+import { PgClientWrapper } from "../../common/lib/pg_client_wrapper";
 
 const mockClient: AwsClient = mock(AwsPGClient);
 const mockDialect: AuroraPgDatabaseDialect = mock(AuroraPgDatabaseDialect);
 const mockPluginService: PluginService = mock(PluginService);
-const mockConnectionUrlParser: ConnectionUrlParser = mock(ConnectionUrlParser);
+const connectionUrlParser: ConnectionUrlParser = new PgConnectionUrlParser();
 const updateTime: number = Date.now();
 
 const hosts: HostInfo[] = [
@@ -52,11 +54,7 @@ const currentHostInfo = createHost({
   hostAvailabilityStrategy: new SimpleHostAvailabilityStrategy()
 });
 
-const clientWrapper: ClientWrapper = {
-  client: undefined,
-  hostInfo: currentHostInfo,
-  properties: new Map<string, any>()
-};
+const clientWrapper: ClientWrapper = new PgClientWrapper(undefined, currentHostInfo, new Map<string, any>());
 
 const mockClientWrapper: ClientWrapper = mock(clientWrapper);
 
@@ -75,7 +73,6 @@ function getRdsHostListProvider(originalHost: string): RdsHostListProvider {
       host: originalHost
     })
   ];
-  when(mockConnectionUrlParser.getHostsFromConnectionUrl(anyString(), anything(), anything(), anyFunction())).thenReturn(host);
 
   const provider = new RdsHostListProvider(new Map<string, any>(), originalHost, instance(mockPluginService));
   provider.init();
@@ -88,7 +85,7 @@ describe("testRdsHostListProvider", () => {
     when(mockClient.isValid()).thenResolve(true);
     when(mockPluginService.getDialect()).thenReturn(instance(mockDialect));
     when(mockPluginService.getCurrentHostInfo()).thenReturn(currentHostInfo);
-    when(mockPluginService.getConnectionUrlParser()).thenReturn(instance(mockConnectionUrlParser));
+    when(mockPluginService.getConnectionUrlParser()).thenReturn(connectionUrlParser);
     when(mockPluginService.getCurrentClient()).thenReturn(instance(mockClient));
     when(mockPluginService.getHostInfoBuilder()).thenReturn(new HostInfoBuilder({ hostAvailabilityStrategy: new SimpleHostAvailabilityStrategy() }));
   });
@@ -164,7 +161,6 @@ describe("testRdsHostListProvider", () => {
         host: "someUrl"
       })
     ];
-    when(mockConnectionUrlParser.getHostsFromConnectionUrl(anyString(), anything(), anything(), anyFunction())).thenReturn(initialHosts);
 
     const rdsHostListProvider = getRdsHostListProvider("someUrl");
     const spiedProvider = spy(rdsHostListProvider);
@@ -174,7 +170,9 @@ describe("testRdsHostListProvider", () => {
 
     const result = await rdsHostListProvider.getTopology(mockClientWrapper, true);
     expect(result.hosts).toBeTruthy();
-    expect(result.hosts).toEqual(initialHosts);
+    for (let i = 0; i < result.hosts.length; i++) {
+      expect(result.hosts[i].equals(initialHosts[i])).toBeTruthy();
+    }
     verify(spiedProvider.queryForTopology(anything(), anything())).atMost(1);
   });
 
@@ -270,13 +268,6 @@ describe("testRdsHostListProvider", () => {
 
     when(mockPluginService.isClientValid(anything())).thenResolve(true);
 
-    when(mockConnectionUrlParser.getHostsFromConnectionUrl(anyString(), anything(), anything(), anyFunction())).thenReturn([
-      createHost({
-        hostAvailabilityStrategy: new SimpleHostAvailabilityStrategy(),
-        host: "cluster-a.cluster-xyz.us-east-2.rds.amazonaws.com"
-      })
-    ]);
-
     const topologyClusterA: HostInfo[] = [
       createHost({
         hostAvailabilityStrategy: new SimpleHostAvailabilityStrategy(),
@@ -319,13 +310,6 @@ describe("testRdsHostListProvider", () => {
 
     when(mockPluginService.isClientValid(anything())).thenResolve(true);
 
-    when(mockConnectionUrlParser.getHostsFromConnectionUrl(anyString(), anything(), anything(), anyFunction())).thenReturn([
-      createHost({
-        hostAvailabilityStrategy: new SimpleHostAvailabilityStrategy(),
-        host: "cluster-a.cluster-xyz.us-east-2.rds.amazonaws.com"
-      })
-    ]);
-
     const topologyClusterA: HostInfo[] = [
       createHost({
         hostAvailabilityStrategy: new SimpleHostAvailabilityStrategy(),
@@ -353,7 +337,7 @@ describe("testRdsHostListProvider", () => {
     const topologyProvider1: HostInfo[] = await provider1.refresh(mockClientWrapper);
     expect(topologyProvider1).toEqual(topologyClusterA);
 
-    const provider2 = getRdsHostListProvider("instance-a-3.xyz.us-east-2.rds.amazonaws.com/");
+    const provider2 = getRdsHostListProvider("instance-a-3.xyz.us-east-2.rds.amazonaws.com");
 
     expect(provider2.clusterId).toEqual(provider1.clusterId);
     expect(provider1.isPrimaryClusterId).toBeTruthy();
@@ -367,13 +351,6 @@ describe("testRdsHostListProvider", () => {
     RdsHostListProvider.clearAll();
 
     when(mockPluginService.isClientValid(anything())).thenResolve(true);
-
-    when(mockConnectionUrlParser.getHostsFromConnectionUrl(anyString(), anything(), anything(), anyFunction())).thenReturn([
-      createHost({
-        hostAvailabilityStrategy: new SimpleHostAvailabilityStrategy(),
-        host: "instance-a-2.xyz.us-east-2.rds.amazonaws.com/"
-      })
-    ]);
 
     const topologyClusterA: HostInfo[] = [
       createHost({
@@ -393,7 +370,7 @@ describe("testRdsHostListProvider", () => {
       })
     ];
 
-    const provider1 = getRdsHostListProvider("instance-a-2.xyz.us-east-2.rds.amazonaws.com/");
+    const provider1 = getRdsHostListProvider("instance-a-2.xyz.us-east-2.rds.amazonaws.com");
     const spiedProvider1 = spy(provider1);
 
     when(spiedProvider1.queryForTopology(anything(), anything())).thenReturn(Promise.resolve(topologyClusterA));
@@ -402,7 +379,7 @@ describe("testRdsHostListProvider", () => {
     const topologyProvider1: HostInfo[] = await provider1.refresh(mockClientWrapper);
     expect(topologyProvider1).toEqual(topologyClusterA);
 
-    const provider2 = getRdsHostListProvider("cluster-a.cluster-xyz.us-east-2.rds.amazonaws.com/");
+    const provider2 = getRdsHostListProvider("cluster-a.cluster-xyz.us-east-2.rds.amazonaws.com");
     const spiedProvider2 = spy(provider2);
 
     when(spiedProvider2.queryForTopology(anything(), anything())).thenReturn(Promise.resolve(topologyClusterA));
@@ -412,7 +389,7 @@ describe("testRdsHostListProvider", () => {
 
     expect(await provider2.refresh(instance(mockClientWrapper))).toEqual(topologyClusterA);
     expect(RdsHostListProvider.topologyCache.size()).toEqual(2);
-    expect(RdsHostListProvider.suggestedPrimaryClusterIdCache.get(provider1.clusterId)).toEqual("cluster-a.cluster-xyz.us-east-2.rds.amazonaws.com/");
+    expect(RdsHostListProvider.suggestedPrimaryClusterIdCache.get(provider1.clusterId)).toEqual("cluster-a.cluster-xyz.us-east-2.rds.amazonaws.com");
 
     expect(await provider1.forceRefresh(instance(mockClientWrapper))).toEqual(topologyClusterA);
     expect(provider2.clusterId).toEqual(provider1.clusterId);
@@ -422,7 +399,7 @@ describe("testRdsHostListProvider", () => {
   });
 
   it("testIdentifyConnectionWithInvalidHostIdQuery", async () => {
-    when(mockDialect.identifyConnection(anything(), anything())).thenThrow(new AwsWrapperError("bad things"));
+    when(mockDialect.identifyConnection(anything())).thenThrow(new AwsWrapperError("bad things"));
 
     const rdsHostListProvider = getRdsHostListProvider("foo");
     await expect(rdsHostListProvider.identifyConnection(instance(mockClientWrapper), instance(mockDialect))).rejects.toThrow(AwsWrapperError);

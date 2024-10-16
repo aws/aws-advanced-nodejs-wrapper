@@ -72,3 +72,7 @@ export function logAndThrowError(message: string) {
   logger.error(message);
   throw new AwsWrapperError(message);
 }
+
+export function equalsIgnoreCase(value1: string | null, value2: string | null): boolean {
+  return value1 != null && value2 != null && value1.localeCompare(value2, undefined, { sensitivity: "accent" }) === 0;
+}

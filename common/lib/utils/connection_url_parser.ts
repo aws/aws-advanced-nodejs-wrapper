@@ -35,7 +35,6 @@ export abstract class ConnectionUrlParser {
 
   private getHostInfo(host: string, port: string | undefined, role: HostRole, builder: HostInfoBuilder): HostInfo {
     const hostId = ConnectionUrlParser.rdsUtils.getRdsInstanceId(host);
-
     builder = builder.withHost(host).withRole(role);
 
     if (hostId) {
