@@ -20,6 +20,7 @@ export interface ErrorSimulatorConnectCallback {
   getErrorToRaise(hostInfo: HostInfo, props: Map<string, any>, isInitialConnection: boolean): Error | null;
 }
 
+// Implementation for testing purposes only.
 export class ErrorSimulatorConnectCallbackImpl implements ErrorSimulatorConnectCallback {
   getErrorToRaise(hostInfo: HostInfo, props: Map<string, any>, isInitialConnection: boolean): Error | null {
     return null;

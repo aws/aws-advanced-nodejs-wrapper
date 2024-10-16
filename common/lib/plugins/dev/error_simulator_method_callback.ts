@@ -18,8 +18,9 @@ export interface ErrorSimulatorMethodCallback {
   getErrorToRaise<T>(methodName: string, methodArgs: any[]): Error;
 }
 
+// Implementation for testing purposes only.
 export class ErrorSimulatorMethodCallbackImpl implements ErrorSimulatorMethodCallback {
   getErrorToRaise(methodName: string, methodArgs: any[]): Error {
-    return new Error("stub");
+    return new Error();
   }
 }

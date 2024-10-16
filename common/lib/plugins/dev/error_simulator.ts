@@ -14,10 +14,10 @@
   limitations under the License.
 */
 
-import { ErrorSimulatorExecuteJdbcMethodCallback } from "./error_simulator_method_callback";
+import { ErrorSimulatorMethodCallback } from "./error_simulator_method_callback";
 
 export interface ErrorSimulator {
   raiseErrorOnNextCall(throwable: Error, methodName?: string): void;
 
-  setCallback(errorSimulatorExecuteJdbcMethodCallback: ErrorSimulatorExecuteJdbcMethodCallback): void;
+  setCallback(errorSimulatorMethodCallback: ErrorSimulatorMethodCallback): void;
 }
