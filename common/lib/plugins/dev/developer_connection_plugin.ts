@@ -20,14 +20,14 @@ import { RdsUtils } from "../../utils/rds_utils";
 import { AbstractConnectionPlugin } from "../../abstract_connection_plugin";
 import { logger } from "../../../logutils";
 import { ErrorSimulator } from "./error_simulator";
-import { ErrorSimulatorExecuteJdbcMethodCallback } from "./error_simulator_execute_jdbc_method_callback";
+import { ErrorSimulatorMethodCallback } from "./error_simulator_method_callback";
 import { ErrorSimulatorManager } from "./error_simulator_manager";
 
 export class DeveloperConnectionPlugin extends AbstractConnectionPlugin implements ErrorSimulator {
   static ALL_METHODS = "*";
   static readonly subscribedMethods = new Set(DeveloperConnectionPlugin.ALL_METHODS);
 
-  private errorSimulatorExecuteJdbcMethodCallback: ErrorSimulatorExecuteJdbcMethodCallback | null;
+  private errorSimulatorMethodCallback: ErrorSimulatorMethodCallback | null;
   private nextMethodName: string | null;
   private nextError: Error | null;
   pluginService: PluginService;
@@ -40,7 +40,7 @@ export class DeveloperConnectionPlugin extends AbstractConnectionPlugin implemen
     rdsUtils: RdsUtils = new RdsUtils(),
     nextMethodName?: string,
     nextError?: Error,
-    errorSimulatorExecuteJdbcMethodCallback?: ErrorSimulatorExecuteJdbcMethodCallback
+    errorSimulatorMethodCallback?: ErrorSimulatorMethodCallback
   ) {
     super();
     this.pluginService = pluginService;
@@ -48,7 +48,7 @@ export class DeveloperConnectionPlugin extends AbstractConnectionPlugin implemen
     this.rdsUtils = rdsUtils;
     this.nextMethodName = nextMethodName ?? null;
     this.nextError = nextError ?? null;
-    this.errorSimulatorExecuteJdbcMethodCallback = errorSimulatorExecuteJdbcMethodCallback ?? null;
+    this.errorSimulatorMethodCallback = errorSimulatorMethodCallback ?? null;
   }
 
   getSubscribedMethods(): Set<string> {
@@ -60,40 +60,26 @@ export class DeveloperConnectionPlugin extends AbstractConnectionPlugin implemen
     this.nextMethodName = methodName ?? DeveloperConnectionPlugin.ALL_METHODS;
   }
 
-  setCallback(errorSimulatorExecuteJdbcMethodCallback: ErrorSimulatorExecuteJdbcMethodCallback): void {
-    this.errorSimulatorExecuteJdbcMethodCallback = errorSimulatorExecuteJdbcMethodCallback;
+  setCallback(errorSimulatorMethodCallback: ErrorSimulatorMethodCallback): void {
+    this.errorSimulatorMethodCallback = errorSimulatorMethodCallback;
   }
 
-  async execute<T>(
-    methodName: string,
-    methodFunc: () => Promise<T>,
-    methodArgs: any[],
-    resultClass?: T,
-    errorClass?: Error,
-    methodInvokeOn?: object
-  ): Promise<T> {
-    if (resultClass && errorClass && resultClass !== undefined && errorClass !== undefined) {
-      this.raiseErrorIfNeeded(resultClass, errorClass, methodName, methodArgs);
-      return methodFunc();
-    }
-    throw new Error("Result class and Error class should be defined.");
+  async execute<T>(methodName: string, methodFunc: () => Promise<T>, methodArgs: any[]): Promise<T> {
+    this.raiseErrorIfNeeded(methodName, methodArgs);
+    return methodFunc();
   }
 
-  raiseErrorIfNeeded<T>(resultClass: T, errorClass: Error | undefined, methodName: string, methodArgs: any[]) {
+  raiseErrorIfNeeded<T>(methodName: string, methodArgs: any[]) {
     if (this.nextError != null) {
       if (DeveloperConnectionPlugin.ALL_METHODS == this.nextMethodName || methodName == this.nextMethodName) {
-        this.raiseError(errorClass, this.nextError, methodName);
+        this.raiseError(this.nextError, methodName);
       }
-    } else if (this.errorSimulatorExecuteJdbcMethodCallback != null) {
-      this.raiseError(
-        errorClass,
-        this.errorSimulatorExecuteJdbcMethodCallback?.getErrorToRaise(resultClass, errorClass, methodName, methodArgs),
-        methodName
-      );
+    } else if (this.errorSimulatorMethodCallback != null) {
+      this.raiseError(this.errorSimulatorMethodCallback?.getErrorToRaise(methodName, methodArgs), methodName);
     }
   }
 
-  raiseError(errorClass: Error | undefined, throwable: Error, methodName: string) {
+  raiseError(throwable: Error, methodName: string) {
     if (throwable == null) {
       return;
     }
@@ -124,7 +110,7 @@ export class DeveloperConnectionPlugin extends AbstractConnectionPlugin implemen
     }
   }
 
-  raiseErrorOnConnect(throwable: Error|null) {
+  raiseErrorOnConnect(throwable: Error | null) {
     if (throwable == null) {
       return;
     }

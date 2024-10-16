@@ -14,6 +14,12 @@
   limitations under the License.
 */
 
-export interface ErrorSimulatorExecuteJdbcMethodCallback {
-  getErrorToRaise<T>(resultClass: T, errorClass: Error | undefined, methodName: string, methodArgs: any[]): Error;
+export interface ErrorSimulatorMethodCallback {
+  getErrorToRaise<T>(methodName: string, methodArgs: any[]): Error;
+}
+
+export class ErrorSimulatorMethodCallbackImpl implements ErrorSimulatorMethodCallback {
+  getErrorToRaise(methodName: string, methodArgs: any[]): Error {
+    return new Error("stub");
+  }
 }

@@ -20,8 +20,7 @@ import { WrapperProperties } from "../../common/lib/wrapper_property";
 import { anything, instance, mock, spy, when } from "ts-mockito";
 import { DeveloperConnectionPlugin } from "../../common/lib/plugins/dev/developer_connection_plugin";
 import { RdsUtils } from "../../common/lib/utils/rds_utils";
-import { ErrorSimulatorExecuteJdbcMethodCallback } from "../../common/lib/plugins/dev/error_simulator_execute_jdbc_method_callback";
-import { RdsUrlType } from "../../common/lib/utils/rds_url_type";
+import { ErrorSimulatorMethodCallback, ErrorSimulatorMethodCallbackImpl } from "../../common/lib/plugins/dev/error_simulator_method_callback";
 import { ErrorSimulatorManager } from "../../common/lib/plugins/dev/error_simulator_manager";
 import { ErrorSimulatorConnectCallback, ErrorSimulatorConnectCallbackImpl } from "../../common/lib/plugins/dev/error_simulator_connect_callback";
 
@@ -30,100 +29,127 @@ const hostInfo = new HostInfo("pg.testdb.us-east-2.rds.amazonaws.com", defaultPo
 
 const mockPluginService = mock(PluginService);
 const mockRdsUtils = mock(RdsUtils);
-const mockConnectFunc = jest.fn().mockImplementation(() => {
-  return;
-});
-
-const TEST_ERROR = new Error("test");
 
 const properties: Map<string, any> = new Map();
 let plugin: DeveloperConnectionPlugin;
 
-const mockConnectCallback: ErrorSimulatorConnectCallback = instance(mock(ErrorSimulatorConnectCallbackImpl));
+const mockConnectFunc = jest.fn().mockImplementation(() => {
+  return;
+});
+const mockFunction = () => {
+  return Promise.resolve();
+};
 
-when(mockRdsUtils.identifyRdsType(anything())).thenReturn(RdsUrlType.RDS_INSTANCE);
+const mockConnectCallback: ErrorSimulatorConnectCallback = mock(ErrorSimulatorConnectCallbackImpl);
+const mockMethodCallback: ErrorSimulatorMethodCallback = mock(ErrorSimulatorMethodCallbackImpl);
 
-function initializePlugin(nextMethodName?: string, nextError?: Error, ErrorSimulatorExecuteJdbcMethodCallback?: ErrorSimulatorExecuteJdbcMethodCallback) {
-  plugin = new DeveloperConnectionPlugin(instance(mockPluginService), properties, instance(mockRdsUtils), nextMethodName, nextError, ErrorSimulatorExecuteJdbcMethodCallback);
-}
+const TEST_ERROR = new Error("test");
 
 describe("testDevPlugin", () => {
-
-  it("testConnectionNoError", async () => {
+  beforeEach(() => {
     properties.set(WrapperProperties.PLUGINS.name, "dev");
-    initializePlugin();
-
-    var thrownErrors = 0;
-    try {
-      await plugin.connect(hostInfo, properties, false, mockConnectFunc)
-    } catch (error) {
-      thrownErrors++;
-    } 
-    expect(thrownErrors).toBe(0);
+    plugin = new DeveloperConnectionPlugin(instance(mockPluginService), properties, instance(mockRdsUtils), undefined, undefined, undefined);
   });
 
-  it("testRaiseErrorOnConnect", async () => { //TODO: fix way we check how it throws 
-    properties.set(WrapperProperties.PLUGINS.name, "dev");
-    initializePlugin();
+  it("testRaiseException", async () => {
+    await expect(plugin.connect(hostInfo, properties, false, mockConnectFunc)).toHaveReturned;
 
+    await expect(plugin.execute("query", mockFunction, [])).toHaveReturned;
+
+    plugin.raiseErrorOnNextCall(TEST_ERROR);
+
+    await expect(plugin.execute("query", mockFunction, [])).rejects.toEqual(TEST_ERROR);
+  });
+
+  it("testRaiseExceptionForMethodName", async () => {
+    await expect(plugin.connect(hostInfo, properties, false, mockConnectFunc)).toHaveReturned;
+
+    await expect(plugin.execute("query", mockFunction, [])).toHaveReturned;
+
+    plugin.raiseErrorOnNextCall(TEST_ERROR, "query");
+
+    await expect(plugin.execute("query", mockFunction, [])).rejects.toEqual(TEST_ERROR);
+  });
+
+  it("testRaiseExceptionForAnyMethodName", async () => {
+    await expect(plugin.connect(hostInfo, properties, false, mockConnectFunc)).toHaveReturned;
+
+    await expect(plugin.execute("query", mockFunction, [])).toHaveReturned;
+
+    plugin.raiseErrorOnNextCall(TEST_ERROR, "*");
+
+    await expect(plugin.execute("query", mockFunction, [])).rejects.toEqual(TEST_ERROR);
+  });
+
+  it("testRaiseExceptionForWrongMethodName", async () => {
+    await expect(plugin.connect(hostInfo, properties, false, mockConnectFunc)).toHaveReturned;
+
+    await expect(plugin.execute("query", mockFunction, [])).toHaveReturned;
+
+    plugin.raiseErrorOnNextCall(TEST_ERROR, "close");
+
+    await expect(plugin.execute("query", mockFunction, [])).toHaveReturned;
+  });
+
+  it("testRaiseExceptionWithCallback", async () => {
+    plugin.setCallback(instance(mockMethodCallback));
+
+    const mockArgs = ["test", "employees"];
+    when(mockMethodCallback.getErrorToRaise("query", mockArgs)).thenThrow(TEST_ERROR);
+
+    await expect(plugin.connect(hostInfo, properties, false, mockConnectFunc)).toHaveReturned;
+
+    await expect(plugin.execute("query", mockFunction, mockArgs)).rejects.toEqual(TEST_ERROR);
+
+    await expect(plugin.execute("query", mockFunction, ["test", "admin"])).toHaveReturned;
+  });
+
+  it("testRaiseNoExceptionWithCallback", async () => {
+    plugin.setCallback(instance(mockMethodCallback));
+
+    const mockArgs = ["test", "employees"];
+    when(mockMethodCallback.getErrorToRaise("query", mockArgs)).thenThrow(TEST_ERROR);
+
+    await expect(plugin.connect(hostInfo, properties, false, mockConnectFunc)).toHaveReturned;
+
+    await expect(plugin.execute("close", mockFunction, mockArgs)).toHaveReturned;
+
+    await expect(plugin.execute("close", mockFunction, ["test", "admin"])).toHaveReturned;
+  });
+
+  it("testRaiseErrorOnConnect", async () => {
     ErrorSimulatorManager.raiseErrorOnNextConnect(TEST_ERROR);
 
-    var thrownErrors = 0;
     try {
       await plugin.connect(hostInfo, properties, false, mockConnectFunc);
+      throw new Error("Dev plugin should throw TEST_ERROR on connect.");
     } catch (error) {
       expect(error).toBe(TEST_ERROR);
-      thrownErrors++;
-    } 
-    expect(thrownErrors).toBe(1);
+    }
 
-    try {
-      await plugin.connect(hostInfo, properties, false, mockConnectFunc);
-    } catch (error) {
-      thrownErrors++;
-    } 
-    expect(thrownErrors).toBe(1);
+    await expect(plugin.connect(hostInfo, properties, false, mockConnectFunc)).toHaveReturned;
   });
 
   it("testNoErrorOnConnectWithCallback", async () => {
-    properties.set(WrapperProperties.PLUGINS.name, "dev");
-    initializePlugin();
-
+    ErrorSimulatorManager.setCallback(instance(mockConnectCallback));
     when(mockConnectCallback.getErrorToRaise(anything(), anything(), anything())).thenReturn(null);
-    ErrorSimulatorManager.setCallback(mockConnectCallback);
-    
-    var thrownErrors = 0;
-    try {
-      await plugin.connect(hostInfo, properties, false, mockConnectFunc);
-    } catch (error) {
-      console.log(error);
-      thrownErrors++;
-    } 
-    expect(thrownErrors).toBe(0);
+
+    await expect(plugin.connect(hostInfo, properties, false, mockConnectFunc)).toHaveReturned;
   });
 
   it("testRaiseErrorOnConnectWithCallback", async () => {
-    properties.set(WrapperProperties.PLUGINS.name, "dev");
-    initializePlugin();
+    ErrorSimulatorManager.setCallback(instance(mockConnectCallback));
+    when(mockConnectCallback.getErrorToRaise(anything(), anything(), anything()))
+      .thenThrow(TEST_ERROR)
+      .thenReturn(null);
 
-    when(mockConnectCallback.getErrorToRaise(anything(), anything(), anything())).thenThrow(TEST_ERROR).thenReturn(null);
-
-    ErrorSimulatorManager.setCallback(mockConnectCallback);
-    expect(ErrorSimulatorManager.connectCallback).toBe(mockConnectCallback);
-
-    var thrownErrors = 0;
     try {
       await plugin.connect(hostInfo, properties, false, mockConnectFunc);
+      throw new Error("Dev plugin should throw TEST_ERROR on connect.");
     } catch (error) {
       expect(error).toBe(TEST_ERROR);
-      thrownErrors++;
-    } 
-    expect(thrownErrors).toBe(1);
-    try {
-      await plugin.connect(hostInfo, properties, false, mockConnectFunc);
-    } catch (error) {
-      thrownErrors++;
-    } 
-    expect(thrownErrors).toBe(1);
+    }
+
+    await expect(plugin.connect(hostInfo, properties, false, mockConnectFunc)).toHaveReturned;
   });
 });

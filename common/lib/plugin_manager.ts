@@ -27,6 +27,7 @@ import { HostRole } from "./host_role";
 import { ConnectionProvider } from "./connection_provider";
 import { ClientWrapper } from "./client_wrapper";
 import { CanReleaseResources } from "./can_release_resources";
+import { PluginService } from "./plugin_service";
 
 type PluginFunc<T> = (plugin: ConnectionPlugin, targetFunc: () => Promise<T>) => Promise<T>;
 
@@ -284,5 +285,14 @@ export class PluginManager {
 
   private implementsCanReleaseResources(plugin: any): plugin is CanReleaseResources {
     return plugin.releaseResources !== undefined;
+  }
+
+  getPluginInstance<T>(iface: any): T {
+    for (const p of this._plugins) {
+      if (p instanceof iface) {
+        return p as T;
+      }
+    }
+    throw new Error("Unable to retrieve plugin instance.");
   }
 }

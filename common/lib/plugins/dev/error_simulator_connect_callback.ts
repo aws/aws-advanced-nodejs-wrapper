@@ -17,21 +17,11 @@
 import { HostInfo } from "../../host_info";
 
 export interface ErrorSimulatorConnectCallback {
-  getErrorToRaise(
-    //driverProtocol: String,
-    hostInfo: HostInfo,
-    props: Map<string, any>,
-    isInitialConnection: boolean
-  ): Error|null;
+  getErrorToRaise(hostInfo: HostInfo, props: Map<string, any>, isInitialConnection: boolean): Error | null;
 }
 
-export class ErrorSimulatorConnectCallbackImpl implements ErrorSimulatorConnectCallback{
-  getErrorToRaise(
-    //driverProtocol: String,
-    hostInfo: HostInfo,
-    props: Map<string, any>,
-    isInitialConnection: boolean
-  ): Error|null {
+export class ErrorSimulatorConnectCallbackImpl implements ErrorSimulatorConnectCallback {
+  getErrorToRaise(hostInfo: HostInfo, props: Map<string, any>, isInitialConnection: boolean): Error | null {
     return null;
   }
 }
