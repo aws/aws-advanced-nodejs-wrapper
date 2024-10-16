@@ -79,7 +79,7 @@ export class DeveloperConnectionPlugin extends AbstractConnectionPlugin implemen
     }
   }
 
-  raiseError(throwable: Error, methodName: string) {
+  raiseError(throwable: Error | null, methodName: string) {
     if (throwable == null) {
       return;
     }

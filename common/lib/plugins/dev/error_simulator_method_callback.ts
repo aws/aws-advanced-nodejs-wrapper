@@ -15,12 +15,12 @@
 */
 
 export interface ErrorSimulatorMethodCallback {
-  getErrorToRaise<T>(methodName: string, methodArgs: any[]): Error;
+  getErrorToRaise<T>(methodName: string, methodArgs: any): Error | null;
 }
 
 // Implementation for testing purposes only.
 export class ErrorSimulatorMethodCallbackImpl implements ErrorSimulatorMethodCallback {
-  getErrorToRaise(methodName: string, methodArgs: any[]): Error {
+  getErrorToRaise(methodName: string, methodArgs: any): Error | null {
     return new Error();
   }
 }
