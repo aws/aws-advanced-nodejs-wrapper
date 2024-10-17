@@ -92,9 +92,17 @@ export class SlidingExpirationCache<K, V> {
   }
 
   removeIfExpired(key: K): void {
-    const cacheItem = this.map.get(key);
-    if (cacheItem == null || this.shouldCleanupItem(cacheItem)) {
-      this.removeAndDispose(key);
+    let item;
+    MapUtils.computeIfPresent(this.map, key, (key, cacheItem) => {
+      if (this.shouldCleanupItem(cacheItem)) {
+        item = cacheItem.item;
+        return null;
+      }
+      return cacheItem;
+    });
+
+    if (item != undefined && item != null && this._itemDisposalFunc != null) {
+      this._itemDisposalFunc(item);
     }
   }
 
