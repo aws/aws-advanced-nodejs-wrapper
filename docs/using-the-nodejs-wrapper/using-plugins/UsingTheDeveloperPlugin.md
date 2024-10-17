@@ -1,6 +1,7 @@
 ## Developer Plugin
 
-> :warning: The plugin is NOT intended to be used in production environments. It's designed for the purpose of testing.
+> [!WARNING]
+> The plugin is NOT intended to be used in production environments. It's designed for the purpose of testing.
 
 The Developer Plugin allows developers to inject an error to a connection and to verify how an application handles it.
 
@@ -45,7 +46,7 @@ params = {
 const client = new AwsPGClient(params);
 await client.connect();
 
-const simulator: Error Simulator = client.getPluginInstance<ErrorSimulator>(DeveloperConnectionPlugin);
+const simulator: ErrorSimulator = client.getPluginInstance<ErrorSimulator>(DeveloperConnectionPlugin);
 final Error testErrorToRaise = new Error("test");
 simulator.raiseErrorOnNextCall(testErrorToRaise, "query");
 
