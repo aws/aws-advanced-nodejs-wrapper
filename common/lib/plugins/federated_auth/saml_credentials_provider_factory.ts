@@ -56,7 +56,7 @@ export abstract class SamlCredentialsProviderFactory implements CredentialsProvi
 
   formatIdpEndpoint(idpEndpoint: string): string {
     // Only add "https://" if user has passed their idpEndpoint without the URL scheme.
-    if (!idpEndpoint.startsWith("https://")) {
+    if (idpEndpoint && !idpEndpoint.startsWith("https://")) {
       return `https://${idpEndpoint}`;
     }
     return idpEndpoint;

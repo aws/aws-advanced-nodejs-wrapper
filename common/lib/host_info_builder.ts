@@ -19,6 +19,7 @@ import { HostAvailability } from "./host_availability/host_availability";
 import { HostInfo } from "./host_info";
 import { HostAvailabilityStrategy } from "./host_availability/host_availability_strategy";
 import { AwsWrapperError } from "./utils/errors";
+import { Messages } from "./utils/messages";
 
 export class HostInfoBuilder {
   private host: string;
@@ -99,7 +100,7 @@ export class HostInfoBuilder {
 
   build() {
     if (!this.host) {
-      throw new AwsWrapperError("host parameter must be set");
+      throw new AwsWrapperError(Messages.get("HostInfo.noHostParameter"));
     }
     return new HostInfo(
       this.host,

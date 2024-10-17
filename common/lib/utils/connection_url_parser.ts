@@ -19,6 +19,8 @@ import { HostRole } from "../host_role";
 import { HostInfoBuilder } from "../host_info_builder";
 import { RdsUrlType } from "./rds_url_type";
 import { HostInfo } from "../host_info";
+import { AwsWrapperError } from "../utils/errors";
+import { Messages } from "./messages";
 
 export abstract class ConnectionUrlParser {
   protected static readonly HOST_SEPARATOR = ",";
@@ -70,6 +72,9 @@ export abstract class ConnectionUrlParser {
     fallbackPort: number,
     builderFunc: () => HostInfoBuilder
   ): HostInfo[] {
+    if (!initialConnection) {
+      throw new AwsWrapperError(Messages.get("HostInfo.noHostParameter"));
+    }
     const hostsList: HostInfo[] = [];
     const hosts: string[] = this.getHostPortPairsFromUrl(initialConnection);
     hosts.forEach((pair, i) => {

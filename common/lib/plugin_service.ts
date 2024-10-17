@@ -390,7 +390,7 @@ export class PluginService implements ErrorHandler, HostListProviderService {
         }
         return changes;
       }
-      throw new AwsWrapperError("HostInfo not found"); // Should not be reached
+      throw new AwsWrapperError(Messages.get("HostInfo.noHostParameter")); // Should not be reached
     }
   }
 

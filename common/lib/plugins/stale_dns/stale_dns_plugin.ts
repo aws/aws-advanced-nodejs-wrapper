@@ -22,6 +22,7 @@ import { HostInfo } from "../../host_info";
 import { HostChangeOptions } from "../../host_change_options";
 import { AwsWrapperError } from "../../utils/errors";
 import { ClientWrapper } from "../../client_wrapper";
+import { Messages } from "../../utils/messages";
 
 export class StaleDnsPlugin extends AbstractConnectionPlugin {
   private static readonly subscribedMethods: Set<string> = new Set<string>(["initHostProvider", "connect", "forceConnect", "notifyHostListChanged"]);
@@ -46,7 +47,7 @@ export class StaleDnsPlugin extends AbstractConnectionPlugin {
     connectFunc: () => Promise<ClientWrapper>
   ): Promise<ClientWrapper> {
     if (!this.hostListProviderService) {
-      throw new AwsWrapperError("HostListProviderService not found");
+      throw new AwsWrapperError(Messages.get("HostListProviderService.notFound"));
     }
     return await this.staleDnsHelper.getVerifiedConnection(hostInfo.host, isInitialConnection, this.hostListProviderService, properties, connectFunc);
   }
@@ -58,7 +59,7 @@ export class StaleDnsPlugin extends AbstractConnectionPlugin {
     connectFunc: () => Promise<ClientWrapper>
   ): Promise<ClientWrapper> {
     if (!this.hostListProviderService) {
-      throw new AwsWrapperError("HostListProviderService not found");
+      throw new AwsWrapperError(Messages.get("HostListProviderService.notFound"));
     }
     return await this.staleDnsHelper.getVerifiedConnection(hostInfo.host, isInitialConnection, this.hostListProviderService, properties, connectFunc);
   }
