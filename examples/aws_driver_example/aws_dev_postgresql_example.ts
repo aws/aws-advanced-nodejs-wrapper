@@ -42,7 +42,11 @@ const client = new AwsPGClient({
 ErrorSimulatorManager.raiseErrorOnNextConnect(errorToRaise);
 
 // Attempt connection. Throws errorToRaise.
-await client.connect();
+try {
+  await client.connect();
+} catch {
+  // Handle errorToRaise.   
+}
 
 // Another connection. Goes normal with no error.
 await client.connect();
@@ -52,7 +56,11 @@ const simulator: ErrorSimulator = client.getPluginInstance<ErrorSimulator>(Devel
 simulator.raiseErrorOnNextCall(errorToRaise, "query");
 
 // Query throws errorToRaise.
-const result = await client.query("select 1");
+try {
+  const result = await client.query("select 1");
+} catch {
+  // Handle errorToRaise. 
+}
 
 // Query executes normally without error.
 const anotherResult = await client.query("select 1");
@@ -73,7 +81,11 @@ simulator.setCallback(new TestErrorCallback());
 const mismatch = await client.query("select 2");
 
 // Query throws errorToRaise.
-const match = await client.query("select 1");
+try {
+  const match = await client.query("select 1");
+} catch {
+  // Handle errorToRaise. 
+}
 
 // Close connection.
 await client.end();

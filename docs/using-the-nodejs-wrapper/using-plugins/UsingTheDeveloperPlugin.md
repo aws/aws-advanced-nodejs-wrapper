@@ -17,14 +17,14 @@ In order to raise a test error while opening a new connection, first create an i
 
 Once the error is raised, it will be cleared and will not be raised again. This means that the next opened connection will not raise the error again.
 
-```
+```ts
 params = {
   plugins: "dev"
 };
 
 const client = new AwsPGClient(params);
 
-final Error testErrorToRaise = new Error("test");;
+const testErrorToRaise: Error = new Error("test");
 ErrorSimulatorManager.raiseErrorOnNextConnect(testErrorToRaise);
 
 await client.connect(); // that throws the error
@@ -38,7 +38,7 @@ It is possible to also simulate an error thrown in a connection after the connec
 
 Similar to previous case, the error is cleared up once it's raised and subsequent calls should behave normally.
 
-```
+```ts
 params = {
   plugins: "dev"
 };
@@ -51,7 +51,7 @@ const testErrorToRaise: Error = new Error("test");
 simulator.raiseErrorOnNextCall(testErrorToRaise, "query");
 
 const result = await client.query("select 1"); // that throws the error
-const anotherResult = await client.query("select 1");// it goes normal with no error
+const anotherResult = await client.query("select 1"); // it goes normal with no error
 ```
 
 It's possible to use a callback functions to check call parameters and decide whether to return an error or not. Check `ErrorSimulatorManager.setCallback` and `ErrorSimulator.setCallback` for more details.
