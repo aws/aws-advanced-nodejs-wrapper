@@ -47,7 +47,7 @@ const client = new AwsPGClient(params);
 await client.connect();
 
 const simulator: ErrorSimulator = client.getPluginInstance<ErrorSimulator>(DeveloperConnectionPlugin);
-final Error testErrorToRaise = new Error("test");
+const testErrorToRaise: Error = new Error("test");
 simulator.raiseErrorOnNextCall(testErrorToRaise, "query");
 
 const result = await client.query("select 1"); // that throws the error
