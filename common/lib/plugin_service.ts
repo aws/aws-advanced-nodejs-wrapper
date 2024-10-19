@@ -389,16 +389,14 @@ export class PluginService implements ErrorHandler, HostListProviderService {
     return await this.getDialect().isClientValid(targetClient);
   }
 
-  async tryClosingTargetClient(): Promise<void>;
-  async tryClosingTargetClient(targetClient: ClientWrapper): Promise<void>;
-  async tryClosingTargetClient(targetClient?: ClientWrapper): Promise<void>;
-  async tryClosingTargetClient(targetClient?: ClientWrapper | undefined): Promise<void> {
-    // Note: This last overload is only required because of the way typescript overloads work https://www.typescriptlang.org/docs/handbook/functions.html#overloads
-    if (targetClient) {
-      await this.getDialect().tryClosingTargetClient(targetClient);
-    } else if (this._currentClient.targetClient) {
+  async abortCurrentClient(): Promise<void> {
+    if (this._currentClient.targetClient) {
       await this.getDialect().tryClosingTargetClient(this._currentClient.targetClient);
     }
+  }
+
+  async tryClosingTargetClient(targetClient: ClientWrapper): Promise<void> {
+    await this.getDialect().tryClosingTargetClient(targetClient);
   }
 
   getSessionStateService() {

@@ -84,7 +84,7 @@ describe("reader failover handler", () => {
     when(mockRdsHostListProvider.getRdsUrlType()).thenReturn(RdsUrlType.RDS_WRITER_CLUSTER);
     when(mockPluginService.getHostListProvider()).thenReturn(instance(mockRdsHostListProvider));
     when(mockPluginService.getCurrentClient()).thenReturn(instance(mockAwsClient));
-    when(mockPluginService.tryClosingTargetClient()).thenResolve();
+    when(mockPluginService.abortCurrentClient()).thenResolve();
     properties.clear();
   });
 
@@ -399,11 +399,11 @@ describe("reader failover handler", () => {
 
     await plugin.invalidateCurrentClient();
 
-    when(mockPluginService.tryClosingTargetClient()).thenThrow(new Error("test"));
+    when(mockPluginService.abortCurrentClient()).thenThrow(new Error("test"));
 
     await plugin.invalidateCurrentClient();
 
-    verify(mockPluginService.tryClosingTargetClient()).twice();
+    verify(mockPluginService.abortCurrentClient()).twice();
   });
 
   it("test execute", async () => {
