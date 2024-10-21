@@ -172,17 +172,17 @@ export class InternalPooledConnectionProvider implements PooledConnectionProvide
   }
 
   logConnections() {
-    const poolString: string = "";
-
     for (const [key, val] of this.databasePools.entries) {
-      poolString.concat("\t[ ");
-      poolString.concat(key.toString()).concat(":");
-      poolString.concat("\n\t {");
-      poolString.concat("\n\t\t").concat(val.toString());
-      poolString.concat("\n\t }\n").concat("\t");
+      logger.debug(
+        "Internal Pooled Connection: \t\n[ " +
+          key.getPoolKeyString() +
+          "\n\t {\n\t\t\t" +
+          JSON.stringify(val.item.constructor.name) +
+          "\t(expirationTimeNs: " +
+          val.expirationTimeNs +
+          ")\n\t }\n]"
+      );
     }
-
-    logger.debug("Internal Pooled Connection: \n[\n" + poolString + "\n]");
   }
 
   setDatabasePools(connectionPools: SlidingExpirationCache<PoolKey, any>): void {

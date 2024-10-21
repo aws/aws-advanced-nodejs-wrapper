@@ -21,7 +21,6 @@ import { Messages } from "../../common/lib/utils/messages";
 import { AwsWrapperError } from "../../common/lib/utils/errors";
 
 export class AwsPgPoolClient implements AwsPoolClient {
-  targetClient?: ClientWrapper;
   targetPool: Pool;
 
   constructor(props: PoolConfig) {

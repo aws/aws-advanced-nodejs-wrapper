@@ -22,7 +22,6 @@ import { AwsWrapperError } from "../../common/lib/utils/errors";
 import { logger } from "../../common/logutils";
 
 export class AwsMysqlPoolClient implements AwsPoolClient {
-  targetClient?: ClientWrapper;
   targetPool: any;
   constructor(props: PoolOptions) {
     this.targetPool = createPool(props);
