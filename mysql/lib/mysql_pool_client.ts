@@ -40,13 +40,10 @@ export class AwsMysqlPoolClient implements AwsPoolClient {
   }
 
   getIdleCount(): number {
-    logger.debug("free connections : ", this.targetPool.pool._freeConnections.length);
     return this.targetPool.pool._freeConnections.length;
   }
 
   getTotalCount(): number {
-    logger.debug("all connections : ", this.targetPool.pool._allConnections.length);
-
     return this.targetPool.pool._allConnections.length;
   }
 

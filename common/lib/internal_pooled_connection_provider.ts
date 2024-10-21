@@ -103,10 +103,8 @@ export class InternalPooledConnectionProvider implements PooledConnectionProvide
           .build();
       }
     }
-    logger.debug("preparing dialect");
 
     const dialect = pluginService.getDialect();
-    logger.debug("preparing pool propertiesss");
     const preparedConfig = dialect.preparePoolClientProperties(props, this._poolConfig);
 
     this.internalPool = this.databasePools.computeIfAbsent(
