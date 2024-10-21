@@ -425,7 +425,7 @@ export class PluginService implements ErrorHandler, HostListProviderService {
   }
 
   getConnectionProvider(): ConnectionProvider {
-    return this.pluginServiceManagerContainer.pluginManager!.defaultConnProvider;
+    return this.pluginServiceManagerContainer.pluginManager!.getDefaultConnProvider();
   }
 
   async updateDialect(targetClient: ClientWrapper) {

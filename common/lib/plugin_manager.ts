@@ -68,13 +68,12 @@ export class PluginManager {
   private static readonly NOTIFY_CONNECTION_CHANGED_METHOD: string = "notifyConnectionChanged";
   private static readonly ACCEPTS_STRATEGY_METHOD: string = "acceptsStrategy";
   private static readonly GET_HOST_INFO_BY_STRATEGY_METHOD: string = "getHostInfoByStrategy";
+  private readonly defaultConnProvider;
   private readonly effectiveConnProvider;
   private readonly props: Map<string, any>;
   private _plugins: ConnectionPlugin[] = [];
   private pluginServiceManagerContainer: PluginServiceManagerContainer;
   protected telemetryFactory: TelemetryFactory;
-
-  public readonly defaultConnProvider;
 
   constructor(
     pluginServiceManagerContainer: PluginServiceManagerContainer,
