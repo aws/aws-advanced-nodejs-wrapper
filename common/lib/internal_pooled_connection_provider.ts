@@ -188,4 +188,8 @@ export class InternalPooledConnectionProvider implements PooledConnectionProvide
   setDatabasePools(connectionPools: SlidingExpirationCache<PoolKey, any>): void {
     this.databasePools = connectionPools;
   }
+
+  getTargetName(): string {
+    return this.constructor.name;
+  }
 }
