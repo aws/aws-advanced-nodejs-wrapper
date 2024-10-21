@@ -29,6 +29,7 @@ import { CanReleaseResources } from "./can_release_resources";
 import { ConnectionProviderManager } from "./connection_provider_manager";
 import { TelemetryFactory } from "./utils/telemetry/telemetry_factory";
 import { TelemetryTraceLevel } from "./utils/telemetry/telemetry_trace_level";
+import { ConnectionProvider } from "./connection_provider";
 
 type PluginFunc<T> = (plugin: ConnectionPlugin, targetFunc: () => Promise<T>) => Promise<T>;
 
@@ -305,7 +306,7 @@ export class PluginManager {
     }
   }
 
-  getConnectionProvider(hostInfo: HostInfo | null, props: Map<string, any>) {
+  getConnectionProvider(hostInfo: HostInfo | null, props: Map<string, any>): ConnectionProvider {
     return this.connectionProviderManager.getConnectionProvider(hostInfo, props);
   }
 
@@ -315,9 +316,5 @@ export class PluginManager {
 
   getTelemetryFactory(): TelemetryFactory {
     return this.telemetryFactory;
-  }
-
-  getDefaultConnProvider(): ConnectionProvider {
-    return this.defaultConnProvider;
   }
 }

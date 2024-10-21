@@ -134,8 +134,4 @@ export class DriverConnectionProvider implements ConnectionProvider {
     }
     return acceptedStrategy.getHost(hosts, role, props);
   }
-
-  getTargetName(): string {
-    return this.constructor.name;
-  }
 }

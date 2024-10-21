@@ -33,7 +33,7 @@ export class ConnectionProviderManager {
     ConnectionProviderManager.connProvider = connProvider;
   }
 
-  getConnectionProvider(hostInfo: HostInfo | null, props: Map<string, any>) {
+  getConnectionProvider(hostInfo: HostInfo | null, props: Map<string, any>): ConnectionProvider {
     if (hostInfo === null) {
       return this.defaultProvider;
     }

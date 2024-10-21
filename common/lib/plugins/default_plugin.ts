@@ -75,7 +75,10 @@ export class DefaultPlugin extends AbstractConnectionPlugin {
 
   private async connectInternal(hostInfo: HostInfo, props: Map<string, any>, connProvider: ConnectionProvider): Promise<ClientWrapper> {
     const telemetryFactory = this.pluginService.getTelemetryFactory();
-    const telemetryContext = telemetryFactory.openTelemetryContext(connProvider.getTargetName(), TelemetryTraceLevel.NESTED);
+    const telemetryContext = telemetryFactory.openTelemetryContext(
+      `${this.pluginService.getDialect().getDialectName()} - connect`,
+      TelemetryTraceLevel.NESTED
+    );
 
     const result = await telemetryContext.start(async () => await connProvider.connect(hostInfo, this.pluginService, props));
     this.pluginService.setAvailability(hostInfo.allAliases, HostAvailability.AVAILABLE);
@@ -88,7 +91,7 @@ export class DefaultPlugin extends AbstractConnectionPlugin {
 
     const telemetryFactory = this.pluginService.getTelemetryFactory();
     const telemetryContext = telemetryFactory.openTelemetryContext(
-      `${this.pluginService.getTargetName()} - ${methodName}`,
+      `${this.pluginService.getDialect().getDialectName()} - ${methodName}`,
       TelemetryTraceLevel.NESTED
     );
 
