@@ -18,6 +18,7 @@ import { instance, mock, spy, verify } from "ts-mockito";
 import { MonitorConnectionContext } from "../../common/lib/plugins/efm/monitor_connection_context";
 import { MonitorImpl } from "../../common/lib/plugins/efm/monitor";
 import { PluginService } from "../../common/lib/plugin_service";
+import { NullTelemetryFactory } from "../../common/lib/utils/telemetry/null_telemetry_factory";
 
 const mockPluginService: PluginService = mock(PluginService);
 const mockMonitor = mock(MonitorImpl);
@@ -42,7 +43,8 @@ describe("monitor connection context test", () => {
       FAILURE_DETECTION_TIME_MILLIS,
       FAILURE_DETECTION_INTERVAL_MILLIS,
       FAILURE_DETECTION_COUNT,
-      instance(mockPluginService)
+      instance(mockPluginService),
+      new NullTelemetryFactory().createCounter("counter")
     );
   });
 
@@ -113,7 +115,8 @@ describe("monitor connection context test", () => {
       FAILURE_DETECTION_TIME_MILLIS,
       FAILURE_DETECTION_INTERVAL_MILLIS,
       FAILURE_DETECTION_COUNT,
-      instance(mockPluginService)
+      instance(mockPluginService),
+      new NullTelemetryFactory().createCounter("counter")
     );
 
     await context.abortConnection();

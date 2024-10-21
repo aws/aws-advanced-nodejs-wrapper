@@ -27,21 +27,17 @@ import { HostRole } from "./host_role";
 import { ConnectionProvider } from "./connection_provider";
 import { ClientWrapper } from "./client_wrapper";
 import { CanReleaseResources } from "./can_release_resources";
+import { TelemetryFactory } from "./utils/telemetry/telemetry_factory";
+import { TelemetryTraceLevel } from "./utils/telemetry/telemetry_trace_level";
 
 type PluginFunc<T> = (plugin: ConnectionPlugin, targetFunc: () => Promise<T>) => Promise<T>;
 
 class PluginChain<T> {
   private readonly targetFunc: () => Promise<T>;
   private chain?: (pluginFunc: PluginFunc<T>, targetFunc: () => Promise<T>) => Promise<T>;
-  private readonly name: string;
-  private readonly hostInfo;
-  private readonly props;
 
-  constructor(hostInfo: HostInfo, props: Map<string, any>, name: string, targetFunc: () => Promise<T>) {
+  constructor(targetFunc: () => Promise<T>) {
     this.targetFunc = targetFunc;
-    this.name = name;
-    this.hostInfo = hostInfo;
-    this.props = props;
   }
 
   addToHead(plugin: ConnectionPlugin) {
@@ -77,18 +73,21 @@ export class PluginManager {
   private readonly props: Map<string, any>;
   private _plugins: ConnectionPlugin[] = [];
   private pluginServiceManagerContainer: PluginServiceManagerContainer;
+  protected telemetryFactory: TelemetryFactory;
 
   constructor(
     pluginServiceManagerContainer: PluginServiceManagerContainer,
     props: Map<string, any>,
     defaultConnProvider: ConnectionProvider,
-    effectiveConnProvider: ConnectionProvider | null
+    effectiveConnProvider: ConnectionProvider | null,
+    telemetryFactory: TelemetryFactory
   ) {
     this.pluginServiceManagerContainer = pluginServiceManagerContainer;
     this.pluginServiceManagerContainer.pluginManager = this;
     this.props = props;
     this.defaultConnProvider = defaultConnProvider;
     this.effectiveConnProvider = effectiveConnProvider;
+    this.telemetryFactory = telemetryFactory;
   }
 
   async init(): Promise<void>;
@@ -108,47 +107,68 @@ export class PluginManager {
     }
   }
 
-  execute<T>(hostInfo: HostInfo | null, props: Map<string, any>, methodName: string, methodFunc: () => Promise<T>, options: any): Promise<T> {
+  runMethodFuncWithTelemetry<T>(methodFunc: () => Promise<T>, name: string): Promise<T> {
+    const context = this.telemetryFactory.openTelemetryContext(name, TelemetryTraceLevel.NESTED);
+    return context.start(() => {
+      return methodFunc();
+    });
+  }
+
+  async execute<T>(hostInfo: HostInfo | null, props: Map<string, any>, methodName: string, methodFunc: () => Promise<T>, options: any): Promise<T> {
     if (hostInfo == null) {
       throw new AwsWrapperError("No host");
     }
-    return this.executeWithSubscribedPlugins(
-      hostInfo,
-      props,
-      methodName,
-      (plugin, nextPluginFunc) => plugin.execute(methodName, nextPluginFunc, options),
-      methodFunc
-    );
+
+    const telemetryContext = this.telemetryFactory.openTelemetryContext(methodName, TelemetryTraceLevel.NESTED);
+    return await telemetryContext.start(() => {
+      return this.executeWithSubscribedPlugins(
+        hostInfo,
+        props,
+        methodName,
+        (plugin, nextPluginFunc) => this.runMethodFuncWithTelemetry(() => plugin.execute(methodName, nextPluginFunc, options), plugin.name),
+        methodFunc
+      );
+    });
   }
 
-  connect(hostInfo: HostInfo | null, props: Map<string, any>, isInitialConnection: boolean): Promise<ClientWrapper> {
+  async connect(hostInfo: HostInfo | null, props: Map<string, any>, isInitialConnection: boolean): Promise<ClientWrapper> {
     if (hostInfo == null) {
       throw new AwsWrapperError("HostInfo was not provided.");
     }
-    return this.executeWithSubscribedPlugins<ClientWrapper>(
-      hostInfo,
-      props,
-      PluginManager.CONNECT_METHOD,
-      (plugin, nextPluginFunc) => plugin.connect(hostInfo, props, isInitialConnection, nextPluginFunc),
-      async () => {
-        throw new AwsWrapperError("Shouldn't be called.");
-      }
-    );
+
+    const telemetryContext = this.telemetryFactory.openTelemetryContext(PluginManager.CONNECT_METHOD, TelemetryTraceLevel.NESTED);
+    return await telemetryContext.start(() => {
+      return this.executeWithSubscribedPlugins<ClientWrapper>(
+        hostInfo,
+        props,
+        PluginManager.CONNECT_METHOD,
+        (plugin, nextPluginFunc) =>
+          this.runMethodFuncWithTelemetry(() => plugin.connect(hostInfo, props, isInitialConnection, nextPluginFunc), plugin.name),
+        async () => {
+          throw new AwsWrapperError("Shouldn't be called.");
+        }
+      );
+    });
   }
 
-  forceConnect(hostInfo: HostInfo | null, props: Map<string, any>, isInitialConnection: boolean): Promise<ClientWrapper> {
+  async forceConnect(hostInfo: HostInfo | null, props: Map<string, any>, isInitialConnection: boolean): Promise<ClientWrapper> {
     if (hostInfo == null) {
       throw new AwsWrapperError("HostInfo was not provided.");
     }
-    return this.executeWithSubscribedPlugins<ClientWrapper>(
-      hostInfo,
-      props,
-      PluginManager.FORCE_CONNECT_METHOD,
-      (plugin, nextPluginFunc) => plugin.forceConnect(hostInfo, props, isInitialConnection, nextPluginFunc),
-      async () => {
-        throw new AwsWrapperError("Shouldn't be called.");
-      }
-    );
+
+    const telemetryContext = this.telemetryFactory.openTelemetryContext(PluginManager.FORCE_CONNECT_METHOD, TelemetryTraceLevel.NESTED);
+    return await telemetryContext.start(() => {
+      return this.executeWithSubscribedPlugins<ClientWrapper>(
+        hostInfo,
+        props,
+        PluginManager.FORCE_CONNECT_METHOD,
+        (plugin, nextPluginFunc) =>
+          this.runMethodFuncWithTelemetry(() => plugin.forceConnect(hostInfo, props, isInitialConnection, nextPluginFunc), plugin.name),
+        async () => {
+          throw new AwsWrapperError("Shouldn't be called.");
+        }
+      );
+    });
   }
 
   executeWithSubscribedPlugins<T>(
@@ -160,14 +180,14 @@ export class PluginManager {
   ): Promise<T> {
     let chain = PluginManager.PLUGIN_CHAIN_CACHE.get([methodName, hostInfo]);
     if (!chain) {
-      chain = this.make_execute_pipeline(hostInfo, props, methodName, methodFunc);
+      chain = this.makeExecutePipeline(hostInfo, props, methodName, methodFunc);
       PluginManager.PLUGIN_CHAIN_CACHE.set([methodName, hostInfo], chain);
     }
     return chain.execute(pluginFunc);
   }
 
-  make_execute_pipeline<T>(hostInfo: HostInfo, props: Map<string, any>, name: string, methodFunc: () => Promise<T>): PluginChain<T> {
-    const chain = new PluginChain(hostInfo, props, name, methodFunc);
+  makeExecutePipeline<T>(hostInfo: HostInfo, props: Map<string, any>, name: string, methodFunc: () => Promise<T>): PluginChain<T> {
+    const chain = new PluginChain(methodFunc);
 
     for (let i = this._plugins.length - 1; i >= 0; i--) {
       const p = this._plugins[i];
@@ -180,15 +200,22 @@ export class PluginManager {
   }
 
   async initHostProvider(hostInfo: HostInfo, props: Map<string, any>, hostListProviderService: HostListProviderService): Promise<void> {
-    return await this.executeWithSubscribedPlugins(
-      hostInfo,
-      props,
-      "initHostProvider",
-      (plugin, nextPluginFunc) => Promise.resolve(plugin.initHostProvider(hostInfo, props, hostListProviderService, nextPluginFunc)),
-      () => {
-        throw new AwsWrapperError("Shouldn't be called");
-      }
-    );
+    const telemetryContext = this.telemetryFactory.openTelemetryContext("initHostProvider", TelemetryTraceLevel.NESTED);
+    return await telemetryContext.start(async () => {
+      return await this.executeWithSubscribedPlugins(
+        hostInfo,
+        props,
+        "initHostProvider",
+        (plugin, nextPluginFunc) =>
+          this.runMethodFuncWithTelemetry(
+            () => Promise.resolve(plugin.initHostProvider(hostInfo, props, hostListProviderService, nextPluginFunc)),
+            plugin.name
+          ),
+        () => {
+          throw new AwsWrapperError("Shouldn't be called");
+        }
+      );
+    });
   }
 
   protected async notifySubscribedPlugins(
@@ -284,5 +311,13 @@ export class PluginManager {
 
   private implementsCanReleaseResources(plugin: any): plugin is CanReleaseResources {
     return plugin.releaseResources !== undefined;
+  }
+
+  getTelemetryFactory(): TelemetryFactory {
+    return this.telemetryFactory;
+  }
+
+  getDefaultConnProvider(): ConnectionProvider {
+    return this.defaultConnProvider;
   }
 }

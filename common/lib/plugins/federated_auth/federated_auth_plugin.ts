@@ -26,6 +26,7 @@ import { Messages } from "../../utils/messages";
 import { CredentialsProviderFactory } from "./credentials_provider_factory";
 import { SamlUtils } from "../../utils/saml_utils";
 import { ClientWrapper } from "../../client_wrapper";
+import { TelemetryCounter } from "../../utils/telemetry/telemetry_counter";
 
 export class FederatedAuthPlugin extends AbstractConnectionPlugin {
   protected static readonly tokenCache = new Map<string, TokenInfo>();
@@ -33,6 +34,7 @@ export class FederatedAuthPlugin extends AbstractConnectionPlugin {
   protected pluginService: PluginService;
   private static readonly subscribedMethods = new Set<string>(["connect", "forceConnect"]);
   private readonly credentialsProviderFactory: CredentialsProviderFactory;
+  private readonly fetchTokenCounter: TelemetryCounter;
 
   public getSubscribedMethods(): Set<string> {
     return FederatedAuthPlugin.subscribedMethods;
@@ -42,6 +44,7 @@ export class FederatedAuthPlugin extends AbstractConnectionPlugin {
     super();
     this.credentialsProviderFactory = credentialsProviderFactory;
     this.pluginService = pluginService;
+    this.fetchTokenCounter = this.pluginService.getTelemetryFactory().createCounter("federatedAuth.fetchToken.count");
   }
 
   connect(
@@ -107,8 +110,10 @@ export class FederatedAuthPlugin extends AbstractConnectionPlugin {
       port,
       region,
       WrapperProperties.DB_USER.get(props),
-      await this.credentialsProviderFactory.getAwsCredentialsProvider(hostInfo.host, region, props)
+      await this.credentialsProviderFactory.getAwsCredentialsProvider(hostInfo.host, region, props),
+      this.pluginService
     );
+    this.fetchTokenCounter.inc();
     logger.debug(Messages.get("AuthenticationToken.generatedNewToken", token));
     WrapperProperties.PASSWORD.set(props, token);
     FederatedAuthPlugin.tokenCache.set(cacheKey, new TokenInfo(token, tokenExpiry));

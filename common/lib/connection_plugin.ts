@@ -22,6 +22,7 @@ import { HostRole } from "./host_role";
 import { ClientWrapper } from "./client_wrapper";
 
 export interface ConnectionPlugin {
+  name: string;
   getSubscribedMethods(): Set<string>;
 
   connect(

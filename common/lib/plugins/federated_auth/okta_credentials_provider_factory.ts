@@ -22,11 +22,23 @@ import { logger } from "../../../logutils";
 import { Messages } from "../../utils/messages";
 import { AwsWrapperError } from "../../utils/errors";
 import https from "https";
+import { PluginService } from "../../plugin_service";
+import { TelemetryFactory } from "../../utils/telemetry/telemetry_factory";
+import { TelemetryTraceLevel } from "../../utils/telemetry/telemetry_trace_level";
 
 export class OktaCredentialsProviderFactory extends SamlCredentialsProviderFactory {
   private static readonly OKTA_AWS_APP_NAME = "amazon_aws";
   private static readonly SESSION_TOKEN = "sessionToken";
   private static readonly SAML_RESPONSE_PATTERN = new RegExp('SAMLResponse(?:.|\\n)*value="(?<saml>[^"]+)"');
+  private static readonly TELEMETRY_FETCH_SAML = "Fetch OKTA SAML Assertion";
+  private readonly pluginService: PluginService;
+  private readonly telemetryFactory: TelemetryFactory;
+
+  constructor(pluginService: PluginService) {
+    super();
+    this.pluginService = pluginService;
+    this.telemetryFactory = this.pluginService.getTelemetryFactory();
+  }
 
   getSamlUrl(props: Map<string, any>) {
     const idpHost = this.formatIdpEndpoint(WrapperProperties.IDP_ENDPOINT.get(props));
@@ -75,38 +87,44 @@ export class OktaCredentialsProviderFactory extends SamlCredentialsProviderFacto
   }
 
   async getSamlAssertion(props: Map<string, any>): Promise<string> {
-    const oneTimeToken = await this.getSessionToken(props);
-    const uri = this.getSamlUrl(props);
-    SamlUtils.validateUrl(uri);
+    const telemetryContext = this.telemetryFactory.openTelemetryContext(
+      OktaCredentialsProviderFactory.TELEMETRY_FETCH_SAML,
+      TelemetryTraceLevel.NESTED
+    );
+    return await telemetryContext.start(async () => {
+      const oneTimeToken = await this.getSessionToken(props);
+      const uri = this.getSamlUrl(props);
+      SamlUtils.validateUrl(uri);
 
-    logger.debug(Messages.get("OktaCredentialsProviderFactory.samlAssertionUrl", uri));
+      logger.debug(Messages.get("OktaCredentialsProviderFactory.samlAssertionUrl", uri));
 
-    const httpsAgent = new https.Agent(WrapperProperties.HTTPS_AGENT_OPTIONS.get(props));
-    const getConfig = {
-      method: "get",
-      url: uri,
-      httpsAgent,
-      params: {
-        onetimetoken: oneTimeToken
+      const httpsAgent = new https.Agent(WrapperProperties.HTTPS_AGENT_OPTIONS.get(props));
+      const getConfig = {
+        method: "get",
+        url: uri,
+        httpsAgent,
+        params: {
+          onetimetoken: oneTimeToken
+        }
+      };
+
+      let resp;
+      try {
+        resp = await axios.request(getConfig);
+      } catch (e: any) {
+        if (Math.floor(e.response.status / 100) !== 2) {
+          throw new AwsWrapperError(
+            Messages.get("OktaCredentialsProviderFactory.samlRequestFailed", e.response.status, e.response.statusText, e.message)
+          );
+        }
+        throw new AwsWrapperError(Messages.get("SamlCredentialsProviderFactory.getSamlAssertionFailed", e.message));
       }
-    };
-
-    let resp;
-    try {
-      resp = await axios.request(getConfig);
-    } catch (e: any) {
-      if (Math.floor(e.response.status / 100) !== 2) {
-        throw new AwsWrapperError(
-          Messages.get("OktaCredentialsProviderFactory.samlRequestFailed", e.response.status, e.response.statusText, e.message)
-        );
+      const data: string = resp.data;
+      const match = data.match(OktaCredentialsProviderFactory.SAML_RESPONSE_PATTERN);
+      if (!match) {
+        throw new AwsWrapperError(Messages.get("OktaCredentialsProviderFactory.invalidSamlResponse"));
       }
-      throw new AwsWrapperError(Messages.get("SamlCredentialsProviderFactory.getSamlAssertionFailed", e.message));
-    }
-    const data: string = resp.data;
-    const match = data.match(OktaCredentialsProviderFactory.SAML_RESPONSE_PATTERN);
-    if (!match) {
-      throw new AwsWrapperError(Messages.get("OktaCredentialsProviderFactory.invalidSamlResponse"));
-    }
-    return match[1];
+      return match[1];
+    });
   }
 }

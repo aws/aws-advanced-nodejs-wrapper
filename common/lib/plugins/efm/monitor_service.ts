@@ -81,6 +81,9 @@ export class MonitorServiceImpl implements MonitorService {
       }
     }
 
+    const telemetryFactory = this.pluginService.getTelemetryFactory();
+    const abortedConnectionsCounter = telemetryFactory.createCounter("efm.connections.aborted");
+
     if (monitor) {
       const context = new MonitorConnectionContext(
         monitor,
@@ -88,7 +91,8 @@ export class MonitorServiceImpl implements MonitorService {
         failureDetectionTimeMillis,
         failureDetectionIntervalMillis,
         failureDetectionCount,
-        this.pluginService
+        this.pluginService,
+        abortedConnectionsCounter
       );
       monitor.startMonitoring(context);
       return context;

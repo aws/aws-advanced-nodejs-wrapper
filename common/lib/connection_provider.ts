@@ -25,4 +25,5 @@ export interface ConnectionProvider {
   acceptsUrl(hostInfo: HostInfo, props: Map<string, any>): boolean;
   acceptsStrategy(role: HostRole, strategy: string): boolean;
   getHostInfoByStrategy(hosts: HostInfo[], role: HostRole, strategy: string, props?: Map<string, any>): HostInfo;
+  getTargetName(): string;
 }

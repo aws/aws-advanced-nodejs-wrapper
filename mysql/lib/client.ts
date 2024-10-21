@@ -31,6 +31,7 @@ import { Messages } from "../../common/lib/utils/messages";
 import { ClientWrapper } from "../../common/lib/client_wrapper";
 import { ClientUtils } from "../../common/lib/utils/client_utils";
 import { RdsMultiAZMySQLDatabaseDialect } from "./dialect/rds_multi_az_mysql_database_dialect";
+import { TelemetryTraceLevel } from "../../common/lib/utils/telemetry/telemetry_trace_level";
 
 export class AwsMySQLClient extends AwsClient {
   private static readonly knownDialectsByCode: Map<string, DatabaseDialect> = new Map([
@@ -50,14 +51,16 @@ export class AwsMySQLClient extends AwsClient {
 
   async connect(): Promise<void> {
     await this.internalConnect();
-    const hostInfo = this.pluginService.getCurrentHostInfo();
-    if (hostInfo == null) {
-      throw new AwsWrapperError("HostInfo was not provided.");
-    }
-    const result: ClientWrapper = await this.pluginManager.connect(hostInfo, this.properties, true);
-    await this.pluginService.setCurrentClient(result, result.hostInfo);
-    await this.internalPostConnect();
-    return;
+    const context = this.telemetryFactory.openTelemetryContext("awsClient.connect", TelemetryTraceLevel.TOP_LEVEL);
+    return await context.start(async () => {
+      const hostInfo = this.pluginService.getCurrentHostInfo();
+      if (hostInfo == null) {
+        throw new AwsWrapperError("HostInfo was not provided.");
+      }
+      const result: ClientWrapper = await this.pluginManager.connect(hostInfo, this.properties, true);
+      await this.pluginService.setCurrentClient(result, result.hostInfo);
+      await this.internalPostConnect();
+    });
   }
 
   async executeQuery(props: Map<string, any>, sql: string, targetClient?: ClientWrapper): Promise<Query> {
@@ -78,16 +81,19 @@ export class AwsMySQLClient extends AwsClient {
       this.isConnected = true;
     }
     const host = this.pluginService.getCurrentHostInfo();
-    return this.pluginManager.execute(
-      host,
-      this.properties,
-      "query",
-      async () => {
-        await this.pluginService.updateState(options.sql);
-        return await ClientUtils.queryWithTimeout(this.targetClient?.client?.query(options, callback), this.properties);
-      },
-      options
-    );
+    const context = this.telemetryFactory.openTelemetryContext("awsClient.query", TelemetryTraceLevel.TOP_LEVEL);
+    return await context.start(async () => {
+      return await this.pluginManager.execute(
+        host,
+        this.properties,
+        "query",
+        async () => {
+          await this.pluginService.updateState(options.sql);
+          return await ClientUtils.queryWithTimeout(this.targetClient?.client?.query(options, callback), this.properties);
+        },
+        options
+      );
+    });
   }
 
   private async readOnlyQuery(options: QueryOptions, callback?: any): Promise<Query> {

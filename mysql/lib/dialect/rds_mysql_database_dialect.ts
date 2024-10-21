@@ -39,7 +39,7 @@ export class RdsMySQLDatabaseDialect extends MySQLDatabaseDialect {
     }
 
     return await targetClient.client
-      
+
       .query(this.getServerVersionQuery())
       .then(([rows]: any) => {
         return rows[0]["Value"].toLowerCase().includes("source distribution");
