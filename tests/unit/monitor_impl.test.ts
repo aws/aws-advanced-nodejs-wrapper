@@ -22,6 +22,7 @@ import { AwsClient } from "../../common/lib/aws_client";
 import { MonitorConnectionContext } from "../../common/lib/plugins/efm/monitor_connection_context";
 import { sleep } from "../../common/lib/utils/utils";
 import { ClientWrapper } from "../../common/lib/client_wrapper";
+import { NullTelemetryFactory } from "../../common/lib/utils/telemetry/null_telemetry_factory";
 
 class MonitorImplTest extends MonitorImpl {
   constructor(pluginService: PluginService, hostInfo: HostInfo, properties: Map<string, any>, monitorDisposalTimeMillis: number) {
@@ -55,6 +56,7 @@ describe("monitor impl test", () => {
 
     when(mockPluginService.getCurrentClient()).thenReturn(instance(mockClient));
     when(mockPluginService.forceConnect(anything(), anything())).thenResolve(mockClientWrapper);
+    when(mockPluginService.getTelemetryFactory()).thenReturn(new NullTelemetryFactory());
 
     monitor = new MonitorImplTest(instance(mockPluginService), instance(mockHostInfo), properties, 0);
     monitorSpy = spy(monitor);
@@ -105,7 +107,15 @@ describe("monitor impl test", () => {
   });
 
   it("run with context", async () => {
-    const monitorContextInstance = new MonitorConnectionContext(monitor, mockClient, 30000, 5000, 3);
+    const monitorContextInstance = new MonitorConnectionContext(
+      monitor,
+      mockClient,
+      30000,
+      5000,
+      3,
+      instance(mockPluginService),
+      new NullTelemetryFactory().createCounter("name")
+    );
     monitor.startMonitoring(monitorContextInstance);
     // Should end by itself.
     monitor.run();

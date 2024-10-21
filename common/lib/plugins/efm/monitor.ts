@@ -22,6 +22,9 @@ import { Messages } from "../../utils/messages";
 import { ClientWrapper } from "../../client_wrapper";
 import { sleep } from "../../utils/utils";
 import { WrapperProperties } from "../../wrapper_property";
+import { TelemetryFactory } from "../../utils/telemetry/telemetry_factory";
+import { TelemetryCounter } from "../../utils/telemetry/telemetry_counter";
+import { TelemetryTraceLevel } from "../../utils/telemetry/telemetry_trace_level";
 
 export interface Monitor {
   startMonitoring(context: MonitorConnectionContext): void;
@@ -60,6 +63,8 @@ export class MonitorImpl implements Monitor {
   private readonly properties: Map<string, any>;
   private readonly hostInfo: HostInfo;
   private readonly monitorDisposalTimeMillis: number;
+  private readonly telemetryFactory: TelemetryFactory;
+  private readonly instanceInvalidCounter: TelemetryCounter;
   private contextLastUsedTimestampNanos: number;
   private started = false;
   private stopped: boolean = false;
@@ -70,11 +75,13 @@ export class MonitorImpl implements Monitor {
 
   constructor(pluginService: PluginService, hostInfo: HostInfo, properties: Map<string, any>, monitorDisposalTimeMillis: number) {
     this.pluginService = pluginService;
+    this.telemetryFactory = this.pluginService.getTelemetryFactory();
     this.properties = properties;
     this.hostInfo = hostInfo;
     this.monitorDisposalTimeMillis = monitorDisposalTimeMillis;
-
     this.contextLastUsedTimestampNanos = this.getCurrentTimeNano();
+    const instanceId = this.hostInfo.hostId ?? this.hostInfo.host;
+    this.instanceInvalidCounter = this.telemetryFactory.createCounter(`efm.hostUnhealthy.count.${instanceId}`);
   }
 
   startRun() {
@@ -219,36 +226,41 @@ export class MonitorImpl implements Monitor {
    * @return whether the server is still alive and the elapsed time spent checking.
    */
   async checkConnectionStatus(): Promise<ConnectionStatus> {
-    const startNanos = this.getCurrentTimeNano();
-    try {
-      const clientIsValid = this.monitoringClient == null ? false : await this.pluginService.isClientValid(this.monitoringClient);
+    const connectContext = this.telemetryFactory.openTelemetryContext("Connection status check", TelemetryTraceLevel.FORCE_TOP_LEVEL);
+    connectContext.setAttribute("url", this.hostInfo.host);
+    return await connectContext.start(async () => {
+      const startNanos = this.getCurrentTimeNano();
+      try {
+        const clientIsValid = this.monitoringClient && (await this.pluginService.isClientValid(this.monitoringClient));
 
-      if (this.monitoringClient != null && clientIsValid) {
-        return Promise.resolve(new ConnectionStatus(clientIsValid, this.getCurrentTimeNano() - startNanos));
-      }
-
-      await this.endMonitoringClient();
-
-      // Open a new connection.
-      const monitoringConnProperties: Map<string, any> = new Map(this.properties);
-
-      for (const key of this.properties.keys()) {
-        if (!key.startsWith(WrapperProperties.MONITORING_PROPERTY_PREFIX)) {
-          continue;
+        if (this.monitoringClient !== null && clientIsValid) {
+          return Promise.resolve(new ConnectionStatus(clientIsValid, this.getCurrentTimeNano() - startNanos));
         }
 
-        monitoringConnProperties.set(key.substring(WrapperProperties.MONITORING_PROPERTY_PREFIX.length), this.properties.get(key));
-        monitoringConnProperties.delete(key);
-      }
+        await this.endMonitoringClient();
 
-      logger.debug(`Opening a monitoring connection to ${this.hostInfo.url}`);
-      this.monitoringClient = await this.pluginService.forceConnect(this.hostInfo, monitoringConnProperties);
-      logger.debug(`Successfully opened monitoring connection to ${this.hostInfo.url}`);
-      return Promise.resolve(new ConnectionStatus(true, this.getCurrentTimeNano() - startNanos));
-    } catch (error: any) {
-      await this.endMonitoringClient();
-      return Promise.resolve(new ConnectionStatus(false, this.getCurrentTimeNano() - startNanos));
-    }
+        // Open a new connection.
+        const monitoringConnProperties: Map<string, any> = new Map(this.properties);
+
+        for (const key of this.properties.keys()) {
+          if (!key.startsWith(WrapperProperties.MONITORING_PROPERTY_PREFIX)) {
+            continue;
+          }
+
+          monitoringConnProperties.set(key.substring(WrapperProperties.MONITORING_PROPERTY_PREFIX.length), this.properties.get(key));
+          monitoringConnProperties.delete(key);
+        }
+
+        logger.debug(`Opening a monitoring connection to ${this.hostInfo.url}`);
+        this.monitoringClient = await this.pluginService.forceConnect(this.hostInfo, monitoringConnProperties);
+        logger.debug(`Successfully opened monitoring connection to ${this.hostInfo.url}`);
+        return Promise.resolve(new ConnectionStatus(true, this.getCurrentTimeNano() - startNanos));
+      } catch (error: any) {
+        this.instanceInvalidCounter.inc();
+        await this.endMonitoringClient();
+        return Promise.resolve(new ConnectionStatus(false, this.getCurrentTimeNano() - startNanos));
+      }
+    });
   }
 
   clearContexts(): void {

@@ -35,8 +35,12 @@ import { RdsUtils } from "../../utils/rds_utils";
 import { Messages } from "../../utils/messages";
 import { ClientWrapper } from "../../client_wrapper";
 import { getWriter } from "../../utils/utils";
+import { TelemetryCounter } from "../../utils/telemetry/telemetry_counter";
+import { TelemetryTraceLevel } from "../../utils/telemetry/telemetry_trace_level";
 
 export class FailoverPlugin extends AbstractConnectionPlugin {
+  private static readonly TELEMETRY_WRITER_FAILOVER = "failover to writer instance";
+  private static readonly TELEMETRY_READER_FAILOVER = "failover to replica";
   private static readonly METHOD_END = "end";
   private static readonly subscribedMethods: Set<string> = new Set([
     "initHostProvider",
@@ -51,6 +55,13 @@ export class FailoverPlugin extends AbstractConnectionPlugin {
   private readonly _readerFailoverHandler: ClusterAwareReaderFailoverHandler;
   private readonly _writerFailoverHandler: ClusterAwareWriterFailoverHandler;
   private readonly _rdsHelper: RdsUtils;
+  private readonly failoverWriterTriggeredCounter: TelemetryCounter;
+  private readonly failoverWriterSuccessCounter: TelemetryCounter;
+  private readonly failoverWriterFailedCounter: TelemetryCounter;
+  private readonly failoverReaderTriggeredCounter: TelemetryCounter;
+  private readonly failoverReaderSuccessCounter: TelemetryCounter;
+  private readonly failoverReaderFailedCounter: TelemetryCounter;
+  private telemetryFailoverAdditionalTopTraceSetting: boolean = false;
   private _rdsUrlType: RdsUrlType | null = null;
   private _isInTransaction: boolean = false;
   private _closedExplicitly: boolean = false;
@@ -106,6 +117,14 @@ export class FailoverPlugin extends AbstractConnectionPlugin {
         );
     this.initSettings();
     this._staleDnsHelper = new StaleDnsHelper(this.pluginService);
+
+    const telemetryFactory = this.pluginService.getTelemetryFactory();
+    this.failoverWriterTriggeredCounter = telemetryFactory.createCounter("writerFailover.triggered.count");
+    this.failoverWriterSuccessCounter = telemetryFactory.createCounter("writerFailover.completed.success.count");
+    this.failoverWriterFailedCounter = telemetryFactory.createCounter("writerFailover.completed.failed.count");
+    this.failoverReaderTriggeredCounter = telemetryFactory.createCounter("readerFailover.triggered.count");
+    this.failoverReaderSuccessCounter = telemetryFactory.createCounter("readerFailover.completed.success.count");
+    this.failoverReaderFailedCounter = telemetryFactory.createCounter("readerFailover.completed.failed.count");
   }
 
   override getSubscribedMethods(): Set<string> {
@@ -200,6 +219,7 @@ export class FailoverPlugin extends AbstractConnectionPlugin {
     this.failoverClusterTopologyRefreshRateMsSetting = WrapperProperties.FAILOVER_CLUSTER_TOPOLOGY_REFRESH_RATE_MS.get(this._properties);
     this.failoverWriterReconnectIntervalMsSetting = WrapperProperties.FAILOVER_WRITER_RECONNECT_INTERVAL_MS.get(this._properties);
     this.failoverReaderConnectTimeoutMsSetting = WrapperProperties.FAILOVER_READER_CONNECT_TIMEOUT_MS.get(this._properties);
+    this.telemetryFailoverAdditionalTopTraceSetting = WrapperProperties.TELEMETRY_FAILOVER_ADDITIONAL_TOP_TRACE.get(this._properties);
   }
 
   private async invalidInvocationOnClosedConnection() {
@@ -327,62 +347,97 @@ export class FailoverPlugin extends AbstractConnectionPlugin {
 
   async failoverReader(failedHostInfo: HostInfo) {
     logger.debug(Messages.get("Failover.startReaderFailover"));
-    let oldAliases = this.pluginService.getCurrentHostInfo()?.allAliases;
-    if (!oldAliases) {
-      oldAliases = new Set();
-    }
+
+    const telemetryFactory = this.pluginService.getTelemetryFactory();
+    const telemetryContext = telemetryFactory.openTelemetryContext(FailoverPlugin.TELEMETRY_READER_FAILOVER, TelemetryTraceLevel.NESTED);
+    this.failoverReaderTriggeredCounter.inc();
+
+    const oldAliases = this.pluginService.getCurrentHostInfo()?.allAliases ?? new Set();
 
     let failedHost = null;
     if (failedHostInfo && failedHostInfo.getRawAvailability() === HostAvailability.AVAILABLE) {
       failedHost = failedHostInfo;
     }
 
-    const result = await this._readerFailoverHandler.failover(this.pluginService.getHosts(), failedHost);
+    try {
+      await telemetryContext.start(async () => {
+        try {
+          const result = await this._readerFailoverHandler.failover(this.pluginService.getHosts(), failedHost);
 
-    if (result) {
-      const error = result.exception;
-      if (error) {
-        throw error;
+          if (result) {
+            const error = result.exception;
+            if (error) {
+              throw error;
+            }
+          }
+
+          if (!result || !result.isConnected || !result.newHost || !result.client) {
+            // "Unable to establish SQL connection to reader instance"
+            throw new FailoverFailedError(Messages.get("Failover.unableToConnectToReader"));
+          }
+
+          this.pluginService.getCurrentHostInfo()?.removeAlias(Array.from(oldAliases));
+          await this.pluginService.abortCurrentClient();
+          await this.pluginService.setCurrentClient(result.client, result.newHost);
+          await this.updateTopology(true);
+          this.failoverReaderSuccessCounter.inc();
+        } catch (error: any) {
+          this.failoverReaderFailedCounter.inc();
+          throw error;
+        }
+      });
+    } finally {
+      if (this.telemetryFailoverAdditionalTopTraceSetting) {
+        await telemetryFactory.postCopy(telemetryContext, TelemetryTraceLevel.FORCE_TOP_LEVEL);
       }
     }
-
-    if (!result || !result.isConnected || !result.newHost || !result.client) {
-      // "Unable to establish SQL connection to reader instance"
-      throw new FailoverFailedError(Messages.get("Failover.unableToConnectToReader"));
-    }
-
-    this.pluginService.getCurrentHostInfo()?.removeAlias(Array.from(oldAliases));
-    await this.pluginService.tryClosingTargetClient();
-    await this.pluginService.setCurrentClient(result.client, result.newHost);
-    await this.updateTopology(true);
   }
 
   async failoverWriter() {
     logger.debug(Messages.get("Failover.startWriterFailover"));
-    const result = await this._writerFailoverHandler.failover(this.pluginService.getHosts());
 
-    if (result) {
-      const error = result.exception;
-      if (error) {
-        throw error;
+    const telemetryFactory = this.pluginService.getTelemetryFactory();
+    const telemetryContext = telemetryFactory.openTelemetryContext(FailoverPlugin.TELEMETRY_WRITER_FAILOVER, TelemetryTraceLevel.NESTED);
+    this.failoverWriterTriggeredCounter.inc();
+
+    try {
+      await telemetryContext.start(async () => {
+        try {
+          const result = await this._writerFailoverHandler.failover(this.pluginService.getHosts());
+
+          if (result) {
+            const error = result.exception;
+            if (error) {
+              throw error;
+            }
+          }
+
+          if (!result || !result.isConnected || !result.client) {
+            // "Unable to establish SQL connection to writer host"
+            throw new FailoverFailedError(Messages.get("Failover.unableToConnectToWriter"));
+          }
+
+          // successfully re-connected to a writer host
+          const writerHostInfo = getWriter(result.topology);
+          if (!writerHostInfo) {
+            throw new AwsWrapperError(Messages.get("Failover.unableToDetermineWriter"));
+          }
+
+          await this.pluginService.abortCurrentClient();
+          await this.pluginService.setCurrentClient(result.client, writerHostInfo);
+          logger.debug(Messages.get("Failover.establishedConnection", this.pluginService.getCurrentHostInfo()?.host ?? ""));
+          await this.pluginService.refreshHostList();
+          this.failoverWriterSuccessCounter.inc();
+        } catch (error: any) {
+          this.failoverWriterFailedCounter.inc();
+          throw error;
+        }
+      });
+    } finally {
+      if (this.telemetryFailoverAdditionalTopTraceSetting) {
+        await telemetryFactory.postCopy(telemetryContext, TelemetryTraceLevel.FORCE_TOP_LEVEL);
       }
     }
-
-    if (!result || !result.isConnected || !result.client) {
-      // "Unable to establish SQL connection to writer host"
-      throw new FailoverFailedError(Messages.get("Failover.unableToConnectToWriter"));
-    }
-
-    // successfully re-connected to a writer host
-    const writerHostInfo = getWriter(result.topology);
-    if (!writerHostInfo) {
-      throw new AwsWrapperError();
-    }
-
-    await this.pluginService.tryClosingTargetClient();
-    await this.pluginService.setCurrentClient(result.client, writerHostInfo);
-    logger.debug(Messages.get("Failover.establishedConnection", this.pluginService.getCurrentHostInfo()?.host ?? ""));
-    await this.pluginService.refreshHostList();
   }
 
   async invalidateCurrentClient() {
@@ -403,7 +458,7 @@ export class FailoverPlugin extends AbstractConnectionPlugin {
     try {
       const isValid = await client.isValid();
       if (!isValid) {
-        await this.pluginService.tryClosingTargetClient();
+        await this.pluginService.abortCurrentClient();
       }
     } catch (error) {
       // swallow this error, current target client should be useless anyway.

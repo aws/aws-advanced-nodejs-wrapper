@@ -27,7 +27,7 @@ export class FederatedAuthPluginFactory implements ConnectionPluginFactory {
       const federatedAuthPluginImport = await import("./federated_auth_plugin");
       const adfsCredentialsProviderFactoryImport = await import("./adfs_credentials_provider_factory");
 
-      const adfsCredentialsProviderFactory = new adfsCredentialsProviderFactoryImport.AdfsCredentialsProviderFactory();
+      const adfsCredentialsProviderFactory = new adfsCredentialsProviderFactoryImport.AdfsCredentialsProviderFactory(pluginService);
       return new federatedAuthPluginImport.FederatedAuthPlugin(pluginService, adfsCredentialsProviderFactory);
     } catch (error: any) {
       logger.error(error.message);

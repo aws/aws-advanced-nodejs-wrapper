@@ -48,6 +48,7 @@
   "Failover.parameterValue": "%s = %s",
   "Failover.unableToConnectToWriter": "Unable to establish SQL connection to the writer instance.",
   "Failover.unableToConnectToReader": "Unable to establish SQL connection to the reader instance.",
+  "Failover.unableToDetermineWriter": "Unable to determine the current writer instance.",
   "Failover.detectedException": "Detected an exception while executing a command: %s",
   "Failover.failoverDisabled": "Cluster-aware failover is disabled.",
   "Failover.establishedConnection": "Connected to %s",
@@ -145,5 +146,9 @@
   "HostSelector.roundRobinMissingClusterInfo": "Could not find a RoundRobinClusterInfo object for the specified host '%s'",
   "RdsMultiAZMySQLDatabaseDialect.invalidQuery": "Error obtaining host list: %s. Provided database might not be a Multi-AZ RDS MySQL database cluster.",
   "RdsMultiAZPgDatabaseDialect.invalidQuery": "Error obtaining host list: %s. Provided database might not be a Multi-AZ RDS PostgreSQL database cluster.",
-  "RdsMultiAzDatabaseDialect.invalidTopology": "Error retrieving a valid topology using the current database dialect: %s"
+  "RdsMultiAzDatabaseDialect.invalidTopology": "Error retrieving a valid topology using the current database dialect: %s",
+  "DefaultTelemetryFactory.invalidBackend": "%s is not a valid %s backend. Available options for tracing are: OTLP, XRAY, NONE. Available options for metrics are: OTLP, NONE.",
+  "DefaultTelemetryFactory.importFailure": "A tracing backend could not be found.",
+  "DefaultTelemetryFactory.missingTracingBackend": "A tracing backend could not be found.",
+  "DefaultTelemetryFactory.missingMetricsBackend": "A metrics backend could not be found."
 }

@@ -25,6 +25,7 @@ import { AwsClient } from "../../common/lib/aws_client";
 import { HostChangeOptions } from "../../common/lib/host_change_options";
 import { DatabaseDialect } from "../../common/lib/database_dialect/database_dialect";
 import { ClientWrapper } from "../../common/lib/client_wrapper";
+import { NullTelemetryFactory } from "../../common/lib/utils/telemetry/null_telemetry_factory";
 
 const mockPluginService: PluginService = mock(PluginService);
 const mockHostListProviderService = mock<HostListProviderService>();
@@ -63,6 +64,7 @@ describe("test_stale_dns_helper", () => {
     when(mockPluginService.tryClosingTargetClient(anything())).thenResolve();
     when(mockPluginService.getDialect()).thenReturn(mockDialect);
     when(mockPluginService.getCurrentHostInfo()).thenReturn(mockHostInfo);
+    when(mockPluginService.getTelemetryFactory()).thenReturn(new NullTelemetryFactory());
   });
 
   afterEach(() => {

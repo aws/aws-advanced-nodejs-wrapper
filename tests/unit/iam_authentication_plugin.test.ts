@@ -25,6 +25,7 @@ import { WrapperProperties } from "../../common/lib/wrapper_property";
 import fetch from "node-fetch";
 import { anything, instance, mock, spy, when } from "ts-mockito";
 import { IamAuthUtils, TokenInfo } from "../../common/lib/utils/iam_auth_utils";
+import { NullTelemetryFactory } from "../../common/lib/utils/telemetry/null_telemetry_factory";
 
 const GENERATED_TOKEN: string = "generatedToken";
 const TEST_TOKEN: string = "testToken";
@@ -110,7 +111,10 @@ describe("testIamAuth", () => {
     props.set(WrapperProperties.PLUGINS.name, "iam");
 
     when(mockPluginService.getCurrentClient()).thenReturn(instance(mockClient));
-    when(spyIamAuthUtils.generateAuthenticationToken(anything(), anything(), anything(), anything(), anything())).thenResolve(GENERATED_TOKEN);
+    when(mockPluginService.getTelemetryFactory()).thenReturn(new NullTelemetryFactory());
+    when(spyIamAuthUtils.generateAuthenticationToken(anything(), anything(), anything(), anything(), anything(), anything())).thenResolve(
+      GENERATED_TOKEN
+    );
   });
 
   it("testPostgresConnectValidTokenInCache", async () => {

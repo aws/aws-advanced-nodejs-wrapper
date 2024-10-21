@@ -20,6 +20,7 @@ import { AwsClient } from "./aws_client";
 import { DatabaseDialect } from "./database_dialect/database_dialect";
 import { HostInfoBuilder } from "./host_info_builder";
 import { ConnectionUrlParser } from "./utils/connection_url_parser";
+import { TelemetryFactory } from "./utils/telemetry/telemetry_factory";
 
 export interface HostListProviderService {
   getHostListProvider(): HostListProvider | null;
@@ -47,4 +48,8 @@ export interface HostListProviderService {
   setInTransaction(inTransaction: boolean): void;
 
   isClientValid(targetClient: any): Promise<boolean>;
+
+  getTelemetryFactory(): TelemetryFactory;
+
+  getTargetName(): string;
 }

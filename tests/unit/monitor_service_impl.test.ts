@@ -14,13 +14,14 @@
   limitations under the License.
 */
 
-import { anything, capture, instance, mock, reset, verify } from "ts-mockito";
+import { anything, capture, instance, mock, reset, verify, when } from "ts-mockito";
 import { MonitorImpl } from "../../common/lib/plugins/efm/monitor";
 import { MonitorServiceImpl } from "../../common/lib/plugins/efm/monitor_service";
 import { PluginService } from "../../common/lib/plugin_service";
 import { HostInfo } from "../../common/lib/host_info";
 import { HostInfoBuilder } from "../../common/lib/host_info_builder";
 import { SimpleHostAvailabilityStrategy } from "../../common/lib/host_availability/simple_host_availability_strategy";
+import { NullTelemetryFactory } from "../../common/lib/utils/telemetry/null_telemetry_factory";
 
 class MonitorImplTest extends MonitorImpl {
   constructor(pluginService: PluginService, hostInfo: HostInfo, properties: Map<string, any>, monitorDisposalTimeMillis: number) {
@@ -51,6 +52,7 @@ describe("monitor service impl test", () => {
     reset(mockPluginService);
     reset(mockMonitorA);
 
+    when(mockPluginService.getTelemetryFactory()).thenReturn(new NullTelemetryFactory());
     monitorService = new MonitorServiceImpl(instance(mockPluginService));
     monitorService.monitorSupplier = () => new MonitorImplTest(instance(mockPluginService), instance(mockHostInfo), properties, 0);
   });

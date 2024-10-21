@@ -23,6 +23,7 @@ import { HostRole } from "./host_role";
 import { ClientWrapper } from "./client_wrapper";
 
 export abstract class AbstractConnectionPlugin implements ConnectionPlugin {
+  name: string = this.constructor.name;
   abstract getSubscribedMethods(): Set<string>;
 
   connect(

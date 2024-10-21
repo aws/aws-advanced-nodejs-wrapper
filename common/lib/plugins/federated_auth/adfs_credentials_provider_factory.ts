@@ -25,31 +25,49 @@ import tough from "tough-cookie";
 import { wrapper } from "axios-cookiejar-support";
 import { HttpsCookieAgent } from "http-cookie-agent/http";
 import { SamlUtils } from "../../utils/saml_utils";
+import { PluginService } from "../../plugin_service";
+import { TelemetryFactory } from "../../utils/telemetry/telemetry_factory";
+import { TelemetryTraceLevel } from "../../utils/telemetry/telemetry_trace_level";
 
 export class AdfsCredentialsProviderFactory extends SamlCredentialsProviderFactory {
   private static readonly INPUT_TAG_PATTERN = new RegExp("<input(.+?)/>", "gms");
   private static readonly FORM_ACTION_PATTERN = new RegExp('<form.*?action="([^"]+)"');
   private static readonly SAML_RESPONSE_PATTERN = new RegExp('SAMLResponse\\W+value="(?<saml>[^"]+)"');
+  private static readonly TELEMETRY_FETCH_SAML = "Fetch ADFS SAML Assertion";
+  private readonly pluginService: PluginService;
+  private readonly telemetryFactory: TelemetryFactory;
+
+  constructor(pluginService: PluginService) {
+    super();
+    this.pluginService = pluginService;
+    this.telemetryFactory = this.pluginService.getTelemetryFactory();
+  }
 
   async getSamlAssertion(props: Map<string, any>): Promise<string> {
-    try {
-      let uri = this.getSignInPageUrl(props);
-      const signInPageBody: string = await this.getSignInPageBody(uri, props);
-      const action = this.getFormActionHtmlBody(signInPageBody);
-      if (action && action.startsWith("/")) {
-        uri = this.getFormActionUrl(props, action);
-      }
-      const params = this.getParametersFromHtmlBody(signInPageBody, props);
-      const content = await this.getFormActionBody(uri, params, props);
+    const telemetryContext = this.telemetryFactory.openTelemetryContext(
+      AdfsCredentialsProviderFactory.TELEMETRY_FETCH_SAML,
+      TelemetryTraceLevel.NESTED
+    );
+    return await telemetryContext.start(async () => {
+      try {
+        let uri = this.getSignInPageUrl(props);
+        const signInPageBody: string = await this.getSignInPageBody(uri, props);
+        const action = this.getFormActionHtmlBody(signInPageBody);
+        if (action && action.startsWith("/")) {
+          uri = this.getFormActionUrl(props, action);
+        }
+        const params = this.getParametersFromHtmlBody(signInPageBody, props);
+        const content = await this.getFormActionBody(uri, params, props);
 
-      const match = content.match(AdfsCredentialsProviderFactory.SAML_RESPONSE_PATTERN);
-      if (!match) {
-        throw new AwsWrapperError(Messages.get("AdfsCredentialsProviderFactory.failedLogin", content));
+        const match = content.match(AdfsCredentialsProviderFactory.SAML_RESPONSE_PATTERN);
+        if (!match) {
+          throw new AwsWrapperError(Messages.get("AdfsCredentialsProviderFactory.failedLogin", content));
+        }
+        return match[1];
+      } catch (e) {
+        throw new AwsWrapperError(Messages.get("SamlCredentialsProviderFactory.getSamlAssertionFailed", (e as Error).message));
       }
-      return match[1];
-    } catch (e) {
-      throw new AwsWrapperError(Messages.get("SamlCredentialsProviderFactory.getSamlAssertionFailed", (e as Error).message));
-    }
+    });
   }
 
   getSignInPageUrl(props: Map<string, any>): string {

@@ -41,6 +41,7 @@ import { logger } from "../logutils";
 import { Messages } from "./utils/messages";
 import { getWriter } from "./utils/utils";
 import { DatabaseDialectCodes } from "./database_dialect/database_dialect_codes";
+import { TelemetryFactory } from "./utils/telemetry/telemetry_factory";
 
 export class PluginService implements ErrorHandler, HostListProviderService {
   private readonly _currentClient: AwsClient;
@@ -389,16 +390,14 @@ export class PluginService implements ErrorHandler, HostListProviderService {
     return await this.getDialect().isClientValid(targetClient);
   }
 
-  async tryClosingTargetClient(): Promise<void>;
-  async tryClosingTargetClient(targetClient: ClientWrapper): Promise<void>;
-  async tryClosingTargetClient(targetClient?: ClientWrapper): Promise<void>;
-  async tryClosingTargetClient(targetClient?: ClientWrapper | undefined): Promise<void> {
-    // Note: This last overload is only required because of the way typescript overloads work https://www.typescriptlang.org/docs/handbook/functions.html#overloads
-    if (targetClient) {
-      await this.getDialect().tryClosingTargetClient(targetClient);
-    } else if (this._currentClient.targetClient) {
+  async abortCurrentClient(): Promise<void> {
+    if (this._currentClient.targetClient) {
       await this.getDialect().tryClosingTargetClient(this._currentClient.targetClient);
     }
+  }
+
+  async tryClosingTargetClient(targetClient: ClientWrapper): Promise<void> {
+    await this.getDialect().tryClosingTargetClient(targetClient);
   }
 
   getSessionStateService() {
@@ -476,5 +475,13 @@ export class PluginService implements ErrorHandler, HostListProviderService {
 
   async rollback(targetClient: ClientWrapper) {
     return await this.getDialect().rollback(targetClient);
+  }
+
+  getTargetName(): string {
+    return this.pluginServiceManagerContainer.pluginManager!.getDefaultConnProvider().getTargetName();
+  }
+
+  getTelemetryFactory(): TelemetryFactory {
+    return this.pluginServiceManagerContainer.pluginManager!.getTelemetryFactory();
   }
 }
