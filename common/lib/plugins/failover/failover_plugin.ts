@@ -352,7 +352,7 @@ export class FailoverPlugin extends AbstractConnectionPlugin {
     }
 
     this.pluginService.getCurrentHostInfo()?.removeAlias(Array.from(oldAliases));
-    await this.pluginService.tryClosingTargetClient();
+    await this.pluginService.abortCurrentClient();
     await this.pluginService.setCurrentClient(result.client, result.newHost);
     await this.updateTopology(true);
   }
@@ -379,7 +379,7 @@ export class FailoverPlugin extends AbstractConnectionPlugin {
       throw new AwsWrapperError();
     }
 
-    await this.pluginService.tryClosingTargetClient();
+    await this.pluginService.abortCurrentClient();
     await this.pluginService.setCurrentClient(result.client, writerHostInfo);
     logger.debug(Messages.get("Failover.establishedConnection", this.pluginService.getCurrentHostInfo()?.host ?? ""));
     await this.pluginService.refreshHostList();
@@ -403,7 +403,7 @@ export class FailoverPlugin extends AbstractConnectionPlugin {
     try {
       const isValid = await client.isValid();
       if (!isValid) {
-        await this.pluginService.tryClosingTargetClient();
+        await this.pluginService.abortCurrentClient();
       }
     } catch (error) {
       // swallow this error, current target client should be useless anyway.
