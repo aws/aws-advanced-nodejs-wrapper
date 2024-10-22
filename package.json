@@ -63,7 +63,7 @@
     "aws-sdk": "^2.1691.0",
     "axios": "^1.7.7",
     "aws-xray-sdk": "^3.10.0",
-    "axios-cookiejar-support": "^5.0.2",
+    "axios-cookiejar-support": "^5.0.3",
     "benny": "^3.7.1",
     "dotenv": "^16.4.5",
     "entities": "^4.5.0",
