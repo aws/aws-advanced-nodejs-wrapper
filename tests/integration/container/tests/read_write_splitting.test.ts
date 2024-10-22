@@ -38,7 +38,7 @@ let initClientFunc: (props: any) => any;
 let client: any;
 let secondaryClient: any;
 let auroraTestUtility: AuroraTestUtility;
-let provider: InternalPooledConnectionProvider;
+let provider: any;
 
 async function initDefaultConfig(host: string, port: number, connectToProxy: boolean): Promise<any> {
   let config: any = {
@@ -86,6 +86,7 @@ describe("aurora read write splitting", () => {
     await ProxyHelper.enableAllConnectivity();
     client = null;
     secondaryClient = null;
+    provider = null;
     await TestEnvironment.verifyClusterStatus();
   }, 1320000);
 
@@ -94,6 +95,12 @@ describe("aurora read write splitting", () => {
       try {
         await client.end();
         await client.releaseResources();
+      } catch (error) {
+        // pass
+      }
+    }
+    if (provider !== null) {
+      try {
         await provider.releaseResources();
         ConnectionProviderManager.resetProvider();
       } catch (error) {
