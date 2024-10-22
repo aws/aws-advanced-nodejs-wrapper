@@ -198,7 +198,7 @@ export class AwsPGClient extends AwsClient {
       this.properties,
       "end",
       () => {
-        return this.pluginService.getConnectionProvider(hostInfo, this.properties).end(this.pluginService, this.targetClient?.client);
+        return this.pluginService.getConnectionProvider(hostInfo, this.properties).end(this.pluginService, this.targetClient);
       },
       null
     );

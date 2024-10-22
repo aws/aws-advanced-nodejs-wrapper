@@ -123,8 +123,8 @@ export class InternalPooledConnectionProvider implements PooledConnectionProvide
   }
 
   async end(pluginService: PluginService, clientWrapper: ClientWrapper | undefined): Promise<void> {
-    if (this.internalPool) {
-      return this.internalPool.end(clientWrapper?.client);
+    if (this.internalPool && clientWrapper) {
+      return this.internalPool.end(clientWrapper.client);
     }
   }
 

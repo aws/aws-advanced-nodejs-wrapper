@@ -220,7 +220,7 @@ export class AwsMySQLClient extends AwsClient {
         return ClientUtils.queryWithTimeout(
           this.pluginService
             .getConnectionProvider(hostInfo, this.properties)
-            .end(this.pluginService, this.targetClient?.client)
+            .end(this.pluginService, this.targetClient)
             .catch((error: any) => {
               // ignore
             }),
