@@ -59,7 +59,7 @@
     "@types/node-fetch": "^2.6.11",
     "@types/pg": "^8.11.8",
     "@types/tough-cookie": "^4.0.5",
-    "@typescript-eslint/eslint-plugin": "^7.15.0",
+    "@typescript-eslint/eslint-plugin": "^8.11.0",
     "aws-sdk": "^2.1691.0",
     "axios": "^1.7.7",
     "aws-xray-sdk": "^3.10.0",
