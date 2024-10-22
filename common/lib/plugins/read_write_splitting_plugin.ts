@@ -27,7 +27,6 @@ import { FailoverError } from "../utils/errors";
 import { HostRole } from "../host_role";
 import { SqlMethodUtils } from "../utils/sql_method_utils";
 import { ClientWrapper } from "../client_wrapper";
-import { ConnectionProviderManager } from "../connection_provider_manager";
 import { getWriter, logAndThrowError } from "../utils/utils";
 import { CanReleaseResources } from "../can_release_resources";
 import { InternalPooledConnectionProvider } from "../internal_pooled_connection_provider";
@@ -38,7 +37,6 @@ export class ReadWriteSplittingPlugin extends AbstractConnectionPlugin implement
 
   private _hostListProviderService: HostListProviderService | undefined;
   private pluginService: PluginService;
-  private readonly connProviderManager: ConnectionProviderManager;
   private readonly _properties: Map<string, any>;
   private _readerHostInfo?: HostInfo = undefined;
   private isReaderClientFromInternalPool: boolean = false;
@@ -60,8 +58,7 @@ export class ReadWriteSplittingPlugin extends AbstractConnectionPlugin implement
     properties: Map<string, any>,
     hostListProviderService?: HostListProviderService,
     writerClient?: ClientWrapper,
-    readerClient?: ClientWrapper,
-    connectionProviderManager?: ConnectionProviderManager
+    readerClient?: ClientWrapper
   ) {
     super();
     this.pluginService = pluginService;
@@ -70,7 +67,6 @@ export class ReadWriteSplittingPlugin extends AbstractConnectionPlugin implement
     this._hostListProviderService = hostListProviderService;
     this.writerTargetClient = writerClient;
     this.readerTargetClient = readerClient;
-    this.connProviderManager = connectionProviderManager ?? new ConnectionProviderManager(this.pluginService.getConnectionProvider());
   }
 
   override getSubscribedMethods(): Set<string> {
@@ -201,8 +197,7 @@ export class ReadWriteSplittingPlugin extends AbstractConnectionPlugin implement
     props.set(WrapperProperties.HOST.name, writerHost.host);
     try {
       const targetClient = await this.pluginService.connect(writerHost, props);
-      this.isWriterClientFromInternalPool =
-        this.connProviderManager.getConnectionProvider(writerHost, props) instanceof InternalPooledConnectionProvider;
+      this.isWriterClientFromInternalPool = this.pluginService.getConnectionProvider(writerHost, props) instanceof InternalPooledConnectionProvider;
       this.setWriterClient(targetClient, writerHost);
       await this.switchCurrentTargetClientTo(this.writerTargetClient, writerHost);
     } catch (any) {
@@ -295,8 +290,7 @@ export class ReadWriteSplittingPlugin extends AbstractConnectionPlugin implement
 
         try {
           targetClient = await this.pluginService.connect(host, props);
-          this.isReaderClientFromInternalPool =
-            this.connProviderManager.getConnectionProvider(host, props) instanceof InternalPooledConnectionProvider;
+          this.isReaderClientFromInternalPool = this.pluginService.getConnectionProvider(host, props) instanceof InternalPooledConnectionProvider;
           readerHost = host;
           break;
         } catch (any) {

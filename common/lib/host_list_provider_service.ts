@@ -50,6 +50,4 @@ export interface HostListProviderService {
   isClientValid(targetClient: any): Promise<boolean>;
 
   getTelemetryFactory(): TelemetryFactory;
-
-  getTargetName(): string;
 }

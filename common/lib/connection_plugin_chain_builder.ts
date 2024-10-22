@@ -19,7 +19,6 @@ import { ConnectionPlugin } from "./connection_plugin";
 import { WrapperProperties } from "./wrapper_property";
 import { AwsWrapperError } from "./utils/errors";
 import { Messages } from "./utils/messages";
-import { ConnectionProvider } from "./connection_provider";
 import { logger } from "../logutils";
 import { DefaultPlugin } from "./plugins/default_plugin";
 import { IamAuthenticationPluginFactory } from "./authentication/iam_authentication_plugin_factory";
@@ -34,6 +33,7 @@ import { OktaAuthPluginFactory } from "./plugins/federated_auth/okta_auth_plugin
 import { HostMonitoringPluginFactory } from "./plugins/efm/host_monitoring_plugin_factory";
 import { AuroraInitialConnectionStrategyFactory } from "./plugins/aurora_initial_connection_strategy_plugin_factory";
 import { AuroraConnectionTrackerPluginFactory } from "./plugins/connection_tracker/aurora_connection_tracker_plugin_factory";
+import { ConnectionProviderManager } from "./connection_provider_manager";
 
 /*
   Type alias used for plugin factory sorting. It holds a reference to a plugin
@@ -68,8 +68,7 @@ export class ConnectionPluginChainBuilder {
   static async getPlugins(
     pluginService: PluginService,
     props: Map<string, any>,
-    defaultConnProvider: ConnectionProvider,
-    effectiveConnProvider: ConnectionProvider | null
+    connectionProviderManager: ConnectionProviderManager
   ): Promise<ConnectionPlugin[]> {
     const plugins: ConnectionPlugin[] = [];
     let pluginCodes: string = props.get(WrapperProperties.PLUGINS.name);
@@ -118,7 +117,7 @@ export class ConnectionPluginChainBuilder {
       }
     }
 
-    plugins.push(new DefaultPlugin(pluginService, defaultConnProvider, effectiveConnProvider));
+    plugins.push(new DefaultPlugin(pluginService, connectionProviderManager));
 
     return plugins;
   }

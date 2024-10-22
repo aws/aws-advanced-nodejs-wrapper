@@ -26,6 +26,7 @@ import { DefaultPlugin } from "../../common/lib/plugins/default_plugin";
 import { ExecuteTimePlugin } from "../../common/lib/plugins/execute_time_plugin";
 import { ConnectTimePlugin } from "../../common/lib/plugins/connect_time_plugin";
 import { StaleDnsPlugin } from "../../common/lib/plugins/stale_dns/stale_dns_plugin";
+import { ConnectionProviderManager } from "../../common/lib/connection_provider_manager";
 import { NullTelemetryFactory } from "../../common/lib/utils/telemetry/null_telemetry_factory";
 
 const mockPluginService: PluginService = mock(PluginService);
@@ -45,8 +46,7 @@ describe("testConnectionPluginChainBuilder", () => {
     const result = await ConnectionPluginChainBuilder.getPlugins(
       mockPluginServiceInstance,
       props,
-      mockDefaultConnProvider,
-      mockEffectiveConnProvider
+      new ConnectionProviderManager(mockDefaultConnProvider, mockEffectiveConnProvider)
     );
 
     expect(result.length).toBe(4);
@@ -64,8 +64,7 @@ describe("testConnectionPluginChainBuilder", () => {
     const result = await ConnectionPluginChainBuilder.getPlugins(
       mockPluginServiceInstance,
       props,
-      mockDefaultConnProvider,
-      mockEffectiveConnProvider
+      new ConnectionProviderManager(mockDefaultConnProvider, mockEffectiveConnProvider)
     );
 
     expect(result.length).toBe(4);
@@ -82,8 +81,7 @@ describe("testConnectionPluginChainBuilder", () => {
     const result = await ConnectionPluginChainBuilder.getPlugins(
       mockPluginServiceInstance,
       props,
-      mockDefaultConnProvider,
-      mockEffectiveConnProvider
+      new ConnectionProviderManager(mockDefaultConnProvider, mockEffectiveConnProvider)
     );
 
     expect(result.length).toBe(5);

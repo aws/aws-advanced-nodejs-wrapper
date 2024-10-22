@@ -147,6 +147,13 @@ export class PluginService implements ErrorHandler, HostListProviderService {
     return this.getCurrentClient().connectionUrlParser;
   }
 
+  getConnectionProvider(hostInfo: HostInfo | null, props: Map<string, any>): ConnectionProvider {
+    if (!this.pluginServiceManagerContainer.pluginManager) {
+      throw new AwsWrapperError("Plugin manager should not be undefined");
+    }
+    return this.pluginServiceManagerContainer.pluginManager.getConnectionProvider(hostInfo, props);
+  }
+
   getDialect(): DatabaseDialect {
     return this.dialect;
   }
@@ -424,10 +431,6 @@ export class PluginService implements ErrorHandler, HostListProviderService {
     }
   }
 
-  getConnectionProvider(): ConnectionProvider {
-    return this.pluginServiceManagerContainer.pluginManager!.getDefaultConnProvider();
-  }
-
   async updateDialect(targetClient: ClientWrapper) {
     const originalDialect = this.dialect;
     this.dialect = await this.dbDialectProvider.getDialectForUpdate(targetClient, this.initialHost, this.props.get(WrapperProperties.HOST.name));
@@ -480,10 +483,6 @@ export class PluginService implements ErrorHandler, HostListProviderService {
 
   async rollback(targetClient: ClientWrapper) {
     return await this.getDialect().rollback(targetClient);
-  }
-
-  getTargetName(): string {
-    return this.pluginServiceManagerContainer.pluginManager!.getDefaultConnProvider().getTargetName();
   }
 
   getTelemetryFactory(): TelemetryFactory {
