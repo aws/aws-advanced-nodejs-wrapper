@@ -120,7 +120,6 @@ export class PluginService implements ErrorHandler, HostListProviderService {
 
       if (!this._currentHostInfo) {
         if (this.getHosts().length === 0) {
-          logger.info(new Error().stack);
           throw new AwsWrapperError(Messages.get("PluginService.hostListEmpty"));
         }
 
