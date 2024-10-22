@@ -121,7 +121,7 @@ export class DriverConnectionProvider implements ConnectionProvider {
   }
 
   async end(pluginService: PluginService, clientWrapper: ClientWrapper | undefined): Promise<void> {
-    if (clientWrapper == undefined) {
+    if (clientWrapper === undefined) {
       return;
     }
     return await pluginService.getDialect().end(clientWrapper);
