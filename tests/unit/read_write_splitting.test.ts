@@ -420,7 +420,7 @@ describe("reader write splitting test", () => {
     when(mockPluginService.connect(anything(), anything())).thenResolve(mockReaderWrapper);
     const config: AwsPoolConfig = new AwsPoolConfig({ idleTimeoutMillis: 7000, maxConnections: 10, maxIdleConnections: 10 });
     const provider: InternalPooledConnectionProvider = new InternalPooledConnectionProvider(config);
-    when(mockPluginService.getConnectionProvider()).thenReturn(provider);
+    when(mockPluginService.getConnectionProvider(anything(), anything())).thenReturn(provider);
 
     ConnectionProviderManager.setConnectionProvider(provider);
 
@@ -459,7 +459,7 @@ describe("reader write splitting test", () => {
       }
     };
     const provider: InternalPooledConnectionProvider = new InternalPooledConnectionProvider(config, myKeyFunc);
-    when(mockPluginService.getConnectionProvider()).thenReturn(provider);
+    when(mockPluginService.getConnectionProvider(anything(), anything())).thenReturn(provider);
 
     ConnectionProviderManager.setConnectionProvider(provider);
 

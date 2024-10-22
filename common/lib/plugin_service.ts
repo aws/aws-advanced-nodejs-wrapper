@@ -431,10 +431,6 @@ export class PluginService implements ErrorHandler, HostListProviderService {
     }
   }
 
-  getConnectionProvider(): ConnectionProvider {
-    return this.pluginServiceManagerContainer.pluginManager!.getDefaultConnProvider();
-  }
-
   async updateDialect(targetClient: ClientWrapper) {
     const originalDialect = this.dialect;
     this.dialect = await this.dbDialectProvider.getDialectForUpdate(targetClient, this.initialHost, this.props.get(WrapperProperties.HOST.name));
