@@ -211,6 +211,12 @@ export class AwsMySQLClient extends AwsClient {
   }
 
   async end() {
+    if (!this.isConnected || !this.targetClient?.client) {
+      // No connections has been initialized.
+      // This might happen if end is called in a finally block when an error occurred while initializing the first connection.
+      return;
+    }
+    
     const hostInfo: HostInfo | null = this.pluginService.getCurrentHostInfo();
     const result = await this.pluginManager.execute(
       this.pluginService.getCurrentHostInfo(),
