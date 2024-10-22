@@ -21,7 +21,7 @@ import { HostRole } from "../../common/lib/host_role";
 import { PluginService } from "../../common/lib/plugin_service";
 import { AwsWrapperError, FailoverSuccessError } from "../../common/lib/utils/errors";
 import { AwsMySQLClient } from "../../mysql/lib";
-import { anything, instance, mock, reset, verify, when } from "ts-mockito";
+import { anything, instance, mock, reset, spy, verify, when } from "ts-mockito";
 import { HostListProviderService } from "../../common/lib/host_list_provider_service";
 import { ReadWriteSplittingPlugin } from "../../common/lib/plugins/read_write_splitting_plugin";
 import { SimpleHostAvailabilityStrategy } from "../../common/lib/host_availability/simple_host_availability_strategy";
@@ -31,6 +31,10 @@ import { OldConnectionSuggestionAction } from "../../common/lib/old_connection_s
 import { HostListProvider } from "../../common/lib/host_list_provider/host_list_provider";
 import { WrapperProperties } from "../../common/lib/wrapper_property";
 import { ClientWrapper } from "../../common/lib/client_wrapper";
+import { InternalPooledConnectionProvider } from "../../common/lib/internal_pooled_connection_provider";
+import { AwsPoolConfig } from "../../common/lib/aws_pool_config";
+import { ConnectionProviderManager } from "../../common/lib/connection_provider_manager";
+import { InternalPoolMapping } from "../../common/lib/utils/internal_pool_mapping";
 
 const properties: Map<string, any> = new Map();
 const builder = new HostInfoBuilder({ hostAvailabilityStrategy: new SimpleHostAvailabilityStrategy() });
@@ -402,5 +406,78 @@ describe("reader write splitting test", () => {
 
     await expect(async () => await target.connect(writerHost, properties, true, mockConnectFunc)).rejects.toThrow(AwsWrapperError);
     verify(mockHostListProviderService.setInitialConnectionHostInfo(anything())).never();
+  });
+
+  it("test pooled reader connection after set read only", async () => {
+    const mockPluginServiceInstance = instance(mockPluginService);
+    when(mockPluginService.getHosts()).thenReturn(singleReaderTopology);
+    when(mockPluginService.getHostInfoByStrategy(anything(), anything())).thenReturn(readerHost1);
+    when(mockPluginService.getCurrentClient()).thenReturn(instance(mockWriterClient));
+    when(await mockWriterClient.isValid()).thenReturn(true);
+    when(mockPluginService.getCurrentHostInfo()).thenReturn(writerHost).thenReturn(writerHost).thenReturn(readerHost1);
+    when(mockPluginService.getDialect()).thenReturn(instance(mockDialect));
+    when(mockDialect.connect(anything())).thenReturn(Promise.resolve(mockReaderClient));
+    when(mockPluginService.connect(anything(), anything())).thenResolve(mockReaderWrapper);
+    const config: AwsPoolConfig = new AwsPoolConfig({ idleTimeoutMillis: 7000, maxConnections: 10, maxIdleConnections: 10 });
+    const provider: InternalPooledConnectionProvider = new InternalPooledConnectionProvider(config);
+    when(mockPluginService.getConnectionProvider()).thenReturn(provider);
+
+    ConnectionProviderManager.setConnectionProvider(provider);
+
+    const target: ReadWriteSplittingPlugin = spy(
+      new ReadWriteSplittingPlugin(mockPluginServiceInstance, properties, mockHostListProviderService, mockWriterWrapper, clientWrapper_undefined)
+    );
+
+    const spyTarget = instance(target);
+    await spyTarget.switchClientIfRequired(true);
+    await spyTarget.switchClientIfRequired(false);
+    verify(target.closeTargetClientIfIdle(mockReaderWrapper)).once();
+  });
+
+  it("test pooled writer connection after set read only", async () => {
+    const mockPluginServiceInstance = instance(mockPluginService);
+    when(mockPluginService.getHosts()).thenReturn(singleReaderTopology);
+    when(mockPluginService.getHostInfoByStrategy(HostRole.READER, "random")).thenReturn(readerHost1);
+    when(mockPluginService.getCurrentClient()).thenReturn(instance(mockWriterClient));
+    when(await mockWriterClient.isValid()).thenReturn(true);
+    when(mockPluginService.getCurrentHostInfo())
+      .thenReturn(writerHost)
+      .thenReturn(writerHost)
+      .thenReturn(readerHost1)
+      .thenReturn(readerHost1)
+      .thenReturn(writerHost);
+    when(mockPluginService.getDialect()).thenReturn(instance(mockDialect));
+    when(mockDialect.connect(anything())).thenReturn(Promise.resolve(mockWriterClient));
+    when(mockPluginService.connect(writerHost, anything())).thenResolve(mockWriterWrapper);
+    when(mockPluginService.connect(readerHost1, anything())).thenResolve(mockReaderWrapper);
+    when(mockPluginService.connect(readerHost2, anything())).thenResolve(mockReaderWrapper);
+
+    const config: AwsPoolConfig = new AwsPoolConfig({ idleTimeoutMillis: 7000, maxConnections: 10, maxIdleConnections: 10 });
+    const myKeyFunc: InternalPoolMapping = {
+      getKey: (hostInfo: HostInfo, props: Map<string, any>) => {
+        return hostInfo.url + "someKey";
+      }
+    };
+    const provider: InternalPooledConnectionProvider = new InternalPooledConnectionProvider(config, myKeyFunc);
+    when(mockPluginService.getConnectionProvider()).thenReturn(provider);
+
+    ConnectionProviderManager.setConnectionProvider(provider);
+
+    const target: ReadWriteSplittingPlugin = spy(
+      new ReadWriteSplittingPlugin(
+        mockPluginServiceInstance,
+        properties,
+        mockHostListProviderService,
+        clientWrapper_undefined,
+        clientWrapper_undefined
+      )
+    );
+
+    const spyTarget = instance(target);
+    await spyTarget.switchClientIfRequired(true);
+    await spyTarget.switchClientIfRequired(false);
+    await spyTarget.switchClientIfRequired(true);
+
+    verify(target.closeTargetClientIfIdle(mockWriterWrapper)).once();
   });
 });

@@ -88,7 +88,7 @@ export class DriverConnectionProvider implements ConnectionProvider {
         throw e;
       }
 
-      // Green node DNS doesn't exist. Try to replace it with corresponding node name and connect again.
+      // Green instance DNS doesn't exist. Try to replace it with corresponding node name and connect again.
       const originalHost: string = hostInfo.host;
       const fixedHost: string = this.rdsUtils.removeGreenInstancePrefix(hostInfo.host);
       resultProps.set(WrapperProperties.HOST.name, fixedHost);

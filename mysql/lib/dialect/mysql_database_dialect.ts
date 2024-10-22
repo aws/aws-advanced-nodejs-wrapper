@@ -24,6 +24,11 @@ import { TransactionIsolationLevel } from "../../../common/lib/utils/transaction
 import { ClientWrapper } from "../../../common/lib/client_wrapper";
 import { ClientUtils } from "../../../common/lib/utils/client_utils";
 import { FailoverRestriction } from "../../../common/lib/plugins/failover/failover_restriction";
+import { AwsPoolClient } from "../../../common/lib/aws_pool_client";
+import { AwsMysqlPoolClient } from "../mysql_pool_client";
+import { AwsPoolConfig } from "../../../common/lib/aws_pool_config";
+import { WrapperProperties } from "../../../common/lib/wrapper_property";
+import { PoolOptions } from "mysql2/promise";
 
 export class MySQLDatabaseDialect implements DatabaseDialect {
   protected dialectName: string = this.constructor.name;
@@ -66,6 +71,10 @@ export class MySQLDatabaseDialect implements DatabaseDialect {
       .catch(() => {
         return false;
       });
+  }
+
+  getAwsPoolClient(props: PoolOptions): AwsPoolClient {
+    return new AwsMysqlPoolClient(props);
   }
 
   getHostListProvider(props: Map<string, any>, originalUrl: string, hostListProviderService: HostListProviderService): HostListProvider {
@@ -177,6 +186,17 @@ export class MySQLDatabaseDialect implements DatabaseDialect {
 
   async rollback(targetClient: ClientWrapper): Promise<any> {
     return await targetClient.client.rollback();
+  }
+
+  preparePoolClientProperties(props: Map<string, any>, poolConfig: AwsPoolConfig | undefined): any {
+    const finalPoolConfig: PoolOptions = {};
+    const finalClientProps = WrapperProperties.removeWrapperProperties(props);
+
+    Object.assign(finalPoolConfig, finalClientProps);
+    finalPoolConfig.connectionLimit = poolConfig?.maxConnections;
+    finalPoolConfig.maxIdle = poolConfig?.maxIdleConnections;
+    finalPoolConfig.idleTimeout = poolConfig?.idleTimeoutMillis;
+    return finalPoolConfig;
   }
 
   end(clientWrapper: ClientWrapper): Promise<void> {

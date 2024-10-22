@@ -18,6 +18,8 @@ import { HostListProvider } from "../host_list_provider/host_list_provider";
 import { HostListProviderService } from "../host_list_provider_service";
 import { ClientWrapper } from "../client_wrapper";
 import { FailoverRestriction } from "../plugins/failover/failover_restriction";
+import { AwsPoolClient } from "../aws_pool_client";
+import { AwsPoolConfig } from "../aws_pool_config";
 
 export enum DatabaseType {
   MYSQL,
@@ -31,6 +33,7 @@ export interface DatabaseDialect {
   getServerVersionQuery(): string;
   getDialectUpdateCandidates(): string[];
   isDialect(targetClient: ClientWrapper): Promise<boolean>;
+  getAwsPoolClient(props: any): AwsPoolClient;
   getHostListProvider(props: Map<string, any>, originalUrl: string, hostListProviderService: HostListProviderService): HostListProvider;
   tryClosingTargetClient(targetClient: ClientWrapper): Promise<void>;
   rollback(targetClient: ClientWrapper): Promise<any>;
@@ -45,4 +48,5 @@ export interface DatabaseDialect {
   doesStatementSetCatalog(statement: string): string | undefined;
   connect(targetClient: any): Promise<any>;
   end(clientWrapper: ClientWrapper | undefined): Promise<void>;
+  preparePoolClientProperties(props: Map<string, any>, poolConfig: AwsPoolConfig | undefined): any;
 }
