@@ -93,7 +93,8 @@ public class TestEnvironmentProvider implements TestTemplateInvocationContextPro
             continue;
           }
 
-          for (int numOfInstances : Arrays.asList(1, 2, 3, 5)) {
+          final List<Integer> instancesToTest = numInstances != null ? Arrays.asList(numInstances) : Arrays.asList(1, 2, 3, 5);
+          for (int numOfInstances : instancesToTest) {
             if (instances == DatabaseInstances.SINGLE_INSTANCE && numOfInstances > 1) {
               continue;
             }

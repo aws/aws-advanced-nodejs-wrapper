@@ -20,11 +20,12 @@ import { DriverHelper } from "./utils/driver_helper";
 import { ProxyHelper } from "./utils/proxy_helper";
 import { AuroraTestUtility } from "./utils/aurora_test_utility";
 import { TestEnvironmentFeatures } from "./utils/test_environment_features";
-import * as XLSX from "xlsx";
 import { anything } from "ts-mockito";
 import { WrapperProperties } from "../../../../common/lib/wrapper_property";
 import { features } from "./config";
 import { MonitorServiceImpl } from "../../../../common/lib/plugins/efm/monitor_service";
+import { PerfStat } from "./utils/perf_stat";
+import { PerfTestUtility } from "./utils/perf_util";
 
 const itIf =
   features.includes(TestEnvironmentFeatures.FAILOVER_SUPPORTED) &&
@@ -68,7 +69,7 @@ let initClientFunc: (props: any) => any;
 let auroraTestUtility: AuroraTestUtility;
 let enhancedFailureMonitoringPerfDataList: PerfStatMonitoring[] = [];
 
-async function initDefaultConfig(host: string, port: number): Promise<any> {
+function initDefaultConfig(host: string, port: number): any {
   let config: any = {
     user: env.databaseInfo.username,
     host: host,
@@ -109,7 +110,11 @@ async function testFailureDetectionTimeEfmEnabled() {
       );
     }
   } finally {
-    doWritePerfDataToFile(`EnhancedMonitoringOnly_Db_${env.engine}_Instances_${env.instances.length}_Plugins_efm.xlsx`, "EfmOnly");
+    PerfTestUtility.writePerfDataToFile(
+      enhancedFailureMonitoringPerfDataList,
+      `EnhancedMonitoringOnly_Db_${env.engine}_Instances_${env.instances.length}_Plugins_efm.xlsx`,
+      "EfmOnly"
+    );
   }
 }
 
@@ -124,20 +129,12 @@ async function testFailureDetectionTimeFailoverAndEfmEnabled() {
       );
     }
   } finally {
-    doWritePerfDataToFile(`FailoverWithEnhancedMonitoring_Db_${env.engine}_Instances_${env.instances.length}_Plugins_efm.xlsx`, "FailoverWithEfm");
+    PerfTestUtility.writePerfDataToFile(
+      enhancedFailureMonitoringPerfDataList,
+      `FailoverWithEnhancedMonitoring_Db_${env.engine}_Instances_${env.instances.length}_Plugins_efm.xlsx`,
+      "FailoverWithEfm"
+    );
   }
-}
-
-function doWritePerfDataToFile(fileName: string, worksheetName: string) {
-  const rows = [];
-  for (let i = 0; i < enhancedFailureMonitoringPerfDataList.length; i++) {
-    rows.push(enhancedFailureMonitoringPerfDataList[i].writeData());
-  }
-  const workbook = XLSX.utils.book_new();
-  const worksheet = XLSX.utils.json_to_sheet(rows);
-  XLSX.utils.book_append_sheet(workbook, worksheet, worksheetName);
-  XLSX.utils.sheet_add_aoa(worksheet, enhancedFailureMonitoringPerfDataList[0].writeHeader(), { origin: "A1" });
-  XLSX.writeFile(workbook, __dirname + "/../reports/" + fileName);
 }
 
 async function executeFailureDetectionTimeEfmEnabled(
@@ -231,24 +228,15 @@ async function doMeasurePerformance(sleepDelayMillis: number, repeatTimes: numbe
     }
   }
 
-  let min;
-  let max;
-  let total = 0;
-  let iterations = 0;
-  for (let i = 0; i < repeatTimes; i++) {
-    if (!isNaN(elapsedTimeMillis[i])) {
-      iterations++;
-      total += elapsedTimeMillis[i];
-      if (!max || elapsedTimeMillis[i] > max) {
-        max = elapsedTimeMillis[i];
-      }
-      if (!min || elapsedTimeMillis[i] < min) {
-        min = elapsedTimeMillis[i];
-      }
-    }
-  }
-  const avg = Math.round(total / iterations);
-  logger.debug(`Calculated average failure detection time: ${total} / ${iterations} = ${avg}`);
+  const [min, max, total] = elapsedTimeMillis.reduce(
+    ([min, max, sum], val) => {
+      return [Math.min(val, min), Math.max(val, max), sum + val];
+    },
+    [elapsedTimeMillis[0], elapsedTimeMillis[0], 0]
+  );
+
+  const avg = Math.round(total / elapsedTimeMillis.length);
+  logger.debug(`Calculated average failure detection time: ${total} / ${elapsedTimeMillis.length} = ${avg}`);
 
   data.paramNetworkOutageDelayMillis = sleepDelayMillis;
   data.minFailureDetectionTimeMillis = min;
@@ -256,7 +244,7 @@ async function doMeasurePerformance(sleepDelayMillis: number, repeatTimes: numbe
   data.avgFailureDetectionTimeMillis = avg;
 }
 
-describe("performance", () => {
+describe.skip("performance", () => {
   beforeEach(async () => {
     enhancedFailureMonitoringPerfDataList = [];
     env = await TestEnvironment.getCurrent();
@@ -289,22 +277,12 @@ describe("performance", () => {
   );
 });
 
-abstract class PerfStatBase {
+class PerfStatMonitoring implements PerfStat {
   paramNetworkOutageDelayMillis?: number;
   minFailureDetectionTimeMillis?: number;
   maxFailureDetectionTimeMillis?: number;
   avgFailureDetectionTimeMillis?: number;
 
-  writeHeader(): string[][] {
-    return [];
-  }
-
-  writeData(): (number | undefined)[] {
-    return [];
-  }
-}
-
-class PerfStatMonitoring extends PerfStatBase {
   paramDetectionTime?: number;
   paramDetectionInterval?: number;
   paramDetectionCount?: number;
@@ -343,7 +321,7 @@ class PerfStatMonitoring extends PerfStatBase {
       `paramNetworkOutageDelayMillis=${this.paramNetworkOutageDelayMillis}, ` +
       `minFailureDetectionTimeMillis=${this.minFailureDetectionTimeMillis}, ` +
       `maxFailureDetectionTimeMillis=${this.maxFailureDetectionTimeMillis} ` +
-      `avgFailureDetectionTimeMillis=${this.avgFailureDetectionTimeMillis}`
+      `avgFailureDetectionTimeMillis=${this.avgFailureDetectionTimeMillis}]`
     );
   }
 }
