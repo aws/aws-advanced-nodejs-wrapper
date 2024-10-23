@@ -113,7 +113,7 @@ export class AuroraInitialConnectionStrategyPlugin extends AbstractConnectionPlu
 
   async getVerifiedWriterClient<T>(props: Map<string, any>, isInitialConnection: boolean, connectFunc: () => Promise<T>): Promise<any> {
     if (!this.hostListProviderService) {
-      throw new AwsWrapperError("Host list provider service not found."); // should not be reached
+      throw new AwsWrapperError(Messages.get("HostListProviderService.notFound")); // should not be reached
     }
     const retryDelayMs = WrapperProperties.OPEN_CONNECTION_RETRY_INTERVAL_MS.get(props);
 
@@ -177,7 +177,7 @@ export class AuroraInitialConnectionStrategyPlugin extends AbstractConnectionPlu
 
   async getVerifiedReaderClient<T>(props: Map<string, any>, isInitialConnection: boolean, connectFunc: () => Promise<T>): Promise<any> {
     if (!this.hostListProviderService) {
-      throw new AwsWrapperError("Host list provider service not found."); // should not be reached
+      throw new AwsWrapperError(Messages.get("HostListProviderService.notFound")); // should not be reached
     }
 
     const retryDelayMs = WrapperProperties.OPEN_CONNECTION_RETRY_INTERVAL_MS.get(props);

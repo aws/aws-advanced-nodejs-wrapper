@@ -1,6 +1,6 @@
 {
   "PluginManager.unknownPluginCode": "Unknown plugin code: '%s'",
-  "PluginManager.PipelineNone": "A pipeline was requested but the created pipeline evaluated to None.",
+  "PluginManager.pipelineNone": "A pipeline was requested but the created pipeline evaluated to undefined.",
   "PluginManager.unableToRetrievePlugin": "Unable to retrieve plugin instance.",
   "ConnectionProvider.unsupportedHostSelectorStrategy": "Unsupported host selection strategy '%s' specified for this connection provider '%s'. Please visit the documentation for all supported strategies.",
   "ConnectionProvider.unsupportedHostInfoSelectorStrategy": "Unsupported host selection strategy '%s' specified for this connection provider '%s'. Please visit the documentation for all supported strategies.",
@@ -12,6 +12,8 @@
   "DefaultConnectionPlugin.unknownRoleRequested": "A HostInfo with a role of HostRole.UNKNOWN was requested via getHostInfoByStrategy. The requested role must be either HostRole.WRITER or HostRole.READER",
   "DefaultConnectionPlugin.noHostsAvailable": "The default connection plugin received an empty host list from the plugin service.",
   "HostSelector.noHostsMatchingRole": "No hosts were found matching the requested '%s' role.",
+  "HostListProviderService.notFound": "HostListProviderService not found.",
+  "HostInfo.noHostParameter": "Host parameter must be set, HostInfo not found or not provided.",
   "HostInfo.weightLessThanZero": "A HostInfo object was created with a weight value less than 0.",
   "AwsSecretsManagerConnectionPlugin.failedToFetchDbCredentials": "Was not able to either fetch or read the database credentials from AWS Secrets Manager. Ensure the correct secretId and region properties have been provided.",
   "AwsSecretsManagerConnectionPlugin.missingRequiredConfigParameter": "Configuration parameter 'secretId' is required.",

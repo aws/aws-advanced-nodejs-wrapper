@@ -54,7 +54,7 @@ class PluginChain<T> {
 
   execute(pluginFunc: PluginFunc<T>): Promise<T> {
     if (this.chain === undefined) {
-      throw new AwsWrapperError(Messages.get("PluginManager.PipelineNone"));
+      throw new AwsWrapperError(Messages.get("PluginManager.pipelineNone"));
     }
     return this.chain(pluginFunc, this.targetFunc);
   }
@@ -113,7 +113,7 @@ export class PluginManager {
 
   async execute<T>(hostInfo: HostInfo | null, props: Map<string, any>, methodName: string, methodFunc: () => Promise<T>, options: any): Promise<T> {
     if (hostInfo == null) {
-      throw new AwsWrapperError("No host");
+      throw new AwsWrapperError(Messages.get("HostInfo.noHostParameter"));
     }
 
     const telemetryContext = this.telemetryFactory.openTelemetryContext(methodName, TelemetryTraceLevel.NESTED);
@@ -130,7 +130,7 @@ export class PluginManager {
 
   async connect(hostInfo: HostInfo | null, props: Map<string, any>, isInitialConnection: boolean): Promise<ClientWrapper> {
     if (hostInfo == null) {
-      throw new AwsWrapperError("HostInfo was not provided.");
+      throw new AwsWrapperError(Messages.get("HostInfo.noHostParameter"));
     }
 
     const telemetryContext = this.telemetryFactory.openTelemetryContext(PluginManager.CONNECT_METHOD, TelemetryTraceLevel.NESTED);
@@ -150,7 +150,7 @@ export class PluginManager {
 
   async forceConnect(hostInfo: HostInfo | null, props: Map<string, any>, isInitialConnection: boolean): Promise<ClientWrapper> {
     if (hostInfo == null) {
-      throw new AwsWrapperError("HostInfo was not provided.");
+      throw new AwsWrapperError(Messages.get("HostInfo.noHostParameter"));
     }
 
     const telemetryContext = this.telemetryFactory.openTelemetryContext(PluginManager.FORCE_CONNECT_METHOD, TelemetryTraceLevel.NESTED);

@@ -59,7 +59,7 @@ export class AwsPGClient extends AwsClient {
       const hostInfo = this.pluginService.getCurrentHostInfo();
 
       if (hostInfo == null) {
-        throw new AwsWrapperError("HostInfo was not provided.");
+        throw new AwsWrapperError(Messages.get("HostInfo.noHostParameter"));
       }
       const result: ClientWrapper = await this.pluginManager.connect(hostInfo, this.properties, true);
       await this.pluginService.setCurrentClient(result, result.hostInfo);
