@@ -129,7 +129,7 @@ describe("reader write splitting test", () => {
     expect(providerSpy.getHostCount()).toBe(1);
     expect(providerSpy.getKeySet()).toEqual(expectedKeys);
     expect(providerSpy.getHostUrlSet()).toEqual(expectedHosts);
-    await provider.releaseResources();
+    await ConnectionProviderManager.releaseResources();
     ConnectionProviderManager.resetProvider();
   });
 
@@ -173,7 +173,7 @@ describe("reader write splitting test", () => {
     expect(providerSpy.getHostCount()).toBe(1);
     expect(providerSpy.getKeySet()).toEqual(expectedKeys);
     expect(providerSpy.getHostUrlSet()).toEqual(expectedHosts);
-    await provider.releaseResources();
+    await ConnectionProviderManager.releaseResources();
     ConnectionProviderManager.resetProvider();
   });
 
@@ -183,7 +183,7 @@ describe("reader write splitting test", () => {
     providerSpy.setDatabasePools(target);
     const selectedHost = providerSpy.getHostInfoByStrategy(testHostsList, HostRole.READER, "random", props);
     expect(selectedHost.host === readerUrl1Connection || selectedHost.host === readerUrl2Connection).toBeTruthy();
-    await provider.releaseResources();
+    await ConnectionProviderManager.releaseResources();
     ConnectionProviderManager.resetProvider();
   });
 
@@ -210,7 +210,7 @@ describe("reader write splitting test", () => {
     } catch (error: any) {
       expect(error.message).toEqual("testError");
     }
-    await provider.releaseResources();
+    await ConnectionProviderManager.releaseResources();
     ConnectionProviderManager.resetProvider();
   });
 });
