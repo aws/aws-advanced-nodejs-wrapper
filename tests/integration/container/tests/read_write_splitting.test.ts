@@ -101,7 +101,7 @@ describe("aurora read write splitting", () => {
     }
     if (provider !== null) {
       try {
-        await provider.releaseResources();
+        await ConnectionProviderManager.releaseResources();
         ConnectionProviderManager.resetProvider();
       } catch (error) {
         // pass
@@ -589,7 +589,7 @@ describe("aurora read write splitting", () => {
       client = initClientFunc(config);
 
       provider = new InternalPooledConnectionProvider();
-      await provider.releaseResources(); // make sure there's no pool's left after prior test
+      await ConnectionProviderManager.releaseResources(); // make sure there's no pool's left after prior test
 
       ConnectionProviderManager.setConnectionProvider(provider);
 
