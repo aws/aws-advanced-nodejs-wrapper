@@ -14,8 +14,7 @@
   limitations under the License.
 */
 
-import { ClientWrapper } from "../../common/lib/client_wrapper";
-import { createPool, PoolOptions, Pool } from "mysql2/promise";
+import { createPool, PoolOptions } from "mysql2/promise";
 import { AwsPoolClient } from "../../common/lib/aws_pool_client";
 import { Messages } from "../../common/lib/utils/messages";
 import { AwsWrapperError } from "../../common/lib/utils/errors";
@@ -47,7 +46,7 @@ export class AwsMysqlPoolClient implements AwsPoolClient {
     return this.targetPool.pool._allConnections.length;
   }
 
-  async releaseResources() {
+  async releaseResources(): Promise<void> {
     await this.targetPool.end();
   }
 }

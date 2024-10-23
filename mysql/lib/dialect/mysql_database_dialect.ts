@@ -199,7 +199,7 @@ export class MySQLDatabaseDialect implements DatabaseDialect {
     return finalPoolConfig;
   }
 
-  end(clientWrapper: ClientWrapper): Promise<void> {
-    return clientWrapper.client.end();
+  async end(clientWrapper: ClientWrapper): Promise<void> {
+    return await clientWrapper.client.end();
   }
 }

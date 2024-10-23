@@ -110,8 +110,7 @@ describe("reader write splitting test", () => {
     when(mockDialect.getAwsPoolClient(anything())).thenReturn(mockAwsPoolClient);
     const config = {
       maxConnection: 10,
-      idleTimeoutMillis: 10000,
-      connectionTimeoutMillis: 10000
+      idleTimeoutMillis: 60000
     };
     when(mockDialect.preparePoolClientProperties(anything(), anything())).thenReturn(config);
     const poolConfig: AwsPoolConfig = new AwsPoolConfig(config);
@@ -149,8 +148,7 @@ describe("reader write splitting test", () => {
     when(mockDialect.getAwsPoolClient(anything())).thenReturn(mockAwsPoolClient);
     const config = {
       maxConnection: 10,
-      idleTimeoutMillis: 10000,
-      connectionTimeoutMillis: 10000
+      idleTimeoutMillis: 60000
     };
     const myKeyFunc: InternalPoolMapping = {
       getKey: (hostInfo: HostInfo, props: Map<string, any>) => {

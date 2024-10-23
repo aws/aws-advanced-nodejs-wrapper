@@ -176,12 +176,11 @@ export class PgDatabaseDialect implements DatabaseDialect {
     finalPoolConfig.max = poolConfig?.maxConnections;
     finalPoolConfig.min = poolConfig?.minConnections;
     finalPoolConfig.idleTimeoutMillis = poolConfig?.idleTimeoutMillis;
-    finalPoolConfig.connectionTimeoutMillis = poolConfig?.connectionTimeoutMillis;
     finalPoolConfig.allowExitOnIdle = poolConfig?.allowExitOnIdle;
     return finalPoolConfig;
   }
 
-  end(clientWrapper: ClientWrapper): Promise<void> {
-    return clientWrapper.client.end();
+  async end(clientWrapper: ClientWrapper): Promise<void> {
+    return await clientWrapper.client.end();
   }
 }

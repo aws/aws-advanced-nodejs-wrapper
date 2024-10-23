@@ -18,14 +18,12 @@ export class AwsPoolConfig {
   readonly maxConnections?: number | undefined;
   readonly minConnections?: number | undefined;
   readonly idleTimeoutMillis?: number | undefined;
-  readonly connectionTimeoutMillis?: number | undefined;
   readonly allowExitOnIdle?: boolean | undefined;
   readonly maxIdleConnections?: number | undefined;
 
   constructor(props?: any) {
     this.maxConnections = props.maxConnections ?? 10;
     this.idleTimeoutMillis = props.idleTimeoutMillis ?? 60000;
-    this.connectionTimeoutMillis = props.connectionTimeoutMillis ?? 60000;
     this.maxIdleConnections = props.maxIdleConnections ?? 10;
     this.allowExitOnIdle = props.allowExitOnIdle ?? false;
     this.minConnections = props.minConnections ?? 0;
