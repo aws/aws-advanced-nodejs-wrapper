@@ -76,9 +76,24 @@ describe("testConnectionPluginChainBuilder", () => {
 
   it("sort plugins with stick to prior", async () => {
     const props = new Map();
+
+    props.set(WrapperProperties.PLUGINS.name, "executeTime,connectTime,iam");
+
+    let result = await ConnectionPluginChainBuilder.getPlugins(
+      mockPluginServiceInstance,
+      props,
+      new ConnectionProviderManager(mockDefaultConnProvider, mockEffectiveConnProvider)
+    );
+
+    expect(result.length).toBe(4);
+    expect(result[0]).toBeInstanceOf(ExecuteTimePlugin);
+    expect(result[1]).toBeInstanceOf(ConnectTimePlugin);
+    expect(result[2]).toBeInstanceOf(IamAuthenticationPlugin);
+
+    // Test again to make sure the previous sort does not impact future plugin chains
     props.set(WrapperProperties.PLUGINS.name, "iam,executeTime,connectTime,failover");
 
-    const result = await ConnectionPluginChainBuilder.getPlugins(
+    result = await ConnectionPluginChainBuilder.getPlugins(
       mockPluginServiceInstance,
       props,
       new ConnectionProviderManager(mockDefaultConnProvider, mockEffectiveConnProvider)
