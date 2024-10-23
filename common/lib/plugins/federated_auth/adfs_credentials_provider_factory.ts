@@ -21,7 +21,7 @@ import { WrapperProperties } from "../../wrapper_property";
 import { SamlCredentialsProviderFactory } from "./saml_credentials_provider_factory";
 import axios from "axios";
 import { stringify } from "querystring";
-import tough from "tough-cookie";
+import { CookieJar } from "tough-cookie";
 import { wrapper } from "axios-cookiejar-support";
 import { HttpsCookieAgent } from "http-cookie-agent/http";
 import { SamlUtils } from "../../utils/saml_utils";
@@ -109,7 +109,7 @@ export class AdfsCredentialsProviderFactory extends SamlCredentialsProviderFacto
     logger.debug(Messages.get("AdfsCredentialsProviderFactory.signOnPagePostActionUrl", uri));
     SamlUtils.validateUrl(uri);
     wrapper(axios);
-    const jar = new tough.CookieJar();
+    const jar = new CookieJar();
     const httpsAgentOptions = { ...WrapperProperties.HTTPS_AGENT_OPTIONS.get(props), ...{ cookies: { jar } } };
     const httpsAgent = new HttpsCookieAgent(httpsAgentOptions);
 

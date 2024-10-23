@@ -24,10 +24,9 @@ import { TransactionIsolationLevel } from "../../../common/lib/utils/transaction
 import { ClientWrapper } from "../../../common/lib/client_wrapper";
 import { FailoverRestriction } from "../../../common/lib/plugins/failover/failover_restriction";
 import { AwsPoolClient } from "../../../common/lib/aws_pool_client";
-import { AwsMysqlPoolClient } from "../../../mysql/lib/mysql_pool_client";
 import { AwsPgPoolClient } from "../pg_pool_client";
 import { AwsPoolConfig } from "../../../common/lib/aws_pool_config";
-import { PoolClient, PoolConfig } from "pg";
+import { PoolConfig } from "pg";
 import { WrapperProperties } from "../../../common/lib/wrapper_property";
 
 export class PgDatabaseDialect implements DatabaseDialect {
