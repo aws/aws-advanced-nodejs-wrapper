@@ -317,4 +317,13 @@ export class PluginManager {
   getTelemetryFactory(): TelemetryFactory {
     return this.telemetryFactory;
   }
+
+  getPluginInstance<T>(iface: any): T {
+    for (const p of this._plugins) {
+      if (p instanceof iface) {
+        return p as T;
+      }
+    }
+    throw new AwsWrapperError(Messages.get("PluginManager.unableToRetrievePlugin"));
+  }
 }
