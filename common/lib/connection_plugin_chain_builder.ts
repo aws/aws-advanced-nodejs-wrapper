@@ -92,11 +92,11 @@ export class ConnectionPluginChainBuilder {
         const factoryInfo = ConnectionPluginChainBuilder.PLUGIN_FACTORIES.get(p);
         if (factoryInfo) {
           if (factoryInfo.weight === ConnectionPluginChainBuilder.WEIGHT_RELATIVE_TO_PRIOR_PLUGIN) {
-            factoryInfo.weight = ++lastWeight;
+            lastWeight++;
           } else {
             lastWeight = factoryInfo.weight;
           }
-          pluginFactoryInfoList.push(factoryInfo);
+          pluginFactoryInfoList.push({ factory: factoryInfo.factory, weight: lastWeight });
         }
       });
 
