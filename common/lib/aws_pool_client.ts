@@ -19,7 +19,7 @@ export interface AwsPoolClient {
 
   end(poolClient: any): Promise<any>;
 
-  releaseResources(): void;
+  releaseResources(): Promise<void>;
 
   getIdleCount(): number;
 

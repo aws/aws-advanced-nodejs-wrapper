@@ -14,7 +14,6 @@
   limitations under the License.
 */
 
-import { ClientWrapper } from "../../common/lib/client_wrapper";
 import { Pool, PoolClient, PoolConfig } from "pg";
 import { AwsPoolClient } from "../../common/lib/aws_pool_client";
 import { Messages } from "../../common/lib/utils/messages";
@@ -41,10 +40,7 @@ export class AwsPgPoolClient implements AwsPoolClient {
   }
 
   async end(poolClient: any) {
-    if (poolClient == undefined) {
-      return;
-    }
-    await poolClient.release(true);
+    await poolClient?.release(true);
   }
 
   getIdleCount(): number {
@@ -55,7 +51,7 @@ export class AwsPgPoolClient implements AwsPoolClient {
     return this.targetPool.totalCount;
   }
 
-  async releaseResources() {
+  async releaseResources(): Promise<void> {
     await this.targetPool.end();
   }
 }

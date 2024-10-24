@@ -133,7 +133,9 @@ export class InternalPooledConnectionProvider implements PooledConnectionProvide
   }
 
   public async releaseResources() {
-    this.internalPool?.releaseResources();
+    for (const [key, val] of this.databasePools.entries) {
+      val.item.releaseResources();
+    }
     this.databasePools.clear();
   }
 
@@ -151,7 +153,7 @@ export class InternalPooledConnectionProvider implements PooledConnectionProvide
 
   getHostUrlSet(): Set<string> {
     const hostUrls: Set<string> = new Set<string>();
-    for (const [key, val] of this.databasePools.entries) {
+    for (const [key, _val] of this.databasePools.entries) {
       hostUrls.add(key.getUrl());
     }
     return hostUrls;
@@ -185,9 +187,5 @@ export class InternalPooledConnectionProvider implements PooledConnectionProvide
 
   setDatabasePools(connectionPools: SlidingExpirationCache<PoolKey, any>): void {
     this.databasePools = connectionPools;
-  }
-
-  getTargetName(): string {
-    return this.constructor.name;
   }
 }
