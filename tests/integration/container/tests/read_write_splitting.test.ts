@@ -27,10 +27,13 @@ import { features, instanceCount } from "./config";
 import { InternalPooledConnectionProvider } from "../../../../common/lib/internal_pooled_connection_provider";
 import { AwsPoolConfig } from "../../../../common/lib/aws_pool_config";
 import { ConnectionProviderManager } from "../../../../common/lib/connection_provider_manager";
+import { InternalPoolMapping } from "../../../../common/lib/utils/internal_pool_mapping";
+import { HostInfo } from "../../../../common/lib/host_info";
 
 const itIf =
   !features.includes(TestEnvironmentFeatures.PERFORMANCE) && features.includes(TestEnvironmentFeatures.IAM) && instanceCount >= 2 ? it : it.skip;
-const itIfMinThreeInstance = instanceCount >= 3 ? itIf : it.skip;
+const itIfMinThreeInstance = instanceCount >= 3 ? it : it.skip;
+const itIfMinFiveInstance = instanceCount >= 5 ? it : it.skip;
 
 let env: TestEnvironment;
 let driver;
@@ -523,7 +526,13 @@ describe("aurora read write splitting", () => {
       client = initClientFunc(config);
       secondaryClient = initClientFunc(config);
 
-      const provider = new InternalPooledConnectionProvider(new AwsPoolConfig({ minConnections: 0, maxConnections: 10, maxIdleConnections: 10 }));
+      const provider = new InternalPooledConnectionProvider(
+        new AwsPoolConfig({
+          minConnections: 0,
+          maxConnections: 10,
+          maxIdleConnections: 10
+        })
+      );
 
       ConnectionProviderManager.setConnectionProvider(provider);
 
@@ -626,6 +635,103 @@ describe("aurora read write splitting", () => {
       const nextWriterId = await auroraTestUtility.queryInstanceId(client);
       expect(nextWriterId).not.toBe(initialWriterId);
       await DriverHelper.executeQuery(env.engine, client, "COMMIT");
+    },
+    1000000
+  );
+
+  itIfMinFiveInstance(
+    "test pooled connection least connections strategy",
+    async () => {
+      const numInstances = env.databaseInfo.instances.length;
+      const connectedReaderIds: Set<string> = new Set();
+      const connectionsSet: Set<any> = new Set();
+      try {
+        const provider = new InternalPooledConnectionProvider({ maxConnections: numInstances });
+        ConnectionProviderManager.setConnectionProvider(provider);
+        const config = await initDefaultConfig(env.databaseInfo.writerInstanceEndpoint, env.databaseInfo.instanceEndpointPort, false);
+        config["readerHostSelectorStrategy"] = "leastConnections";
+
+        // Assume one writer and [size - 1] readers
+        for (let i = 0; i < numInstances - 1; i++) {
+          const client = initClientFunc(config);
+          client.on("error", (error: any) => {
+            logger.debug(`event emitter threw error: ${error.message}`);
+            logger.debug(error.stack);
+          });
+
+          await client.connect();
+          await client.setReadOnly(true);
+          const readerId = await auroraTestUtility.queryInstanceId(client);
+          expect(connectedReaderIds).not.toContain(readerId);
+          connectedReaderIds.add(readerId);
+          connectionsSet.add(client);
+        }
+      } finally {
+        for (const connection of connectionsSet) {
+          connection.end();
+        }
+      }
+    },
+    1000000
+  );
+
+  itIfMinFiveInstance(
+    "test pooled connection least connections with pooled mapping",
+    async () => {
+      const config = await initDefaultConfig(env.databaseInfo.writerInstanceEndpoint, env.databaseInfo.instanceEndpointPort, false);
+      config["readerHostSelectorStrategy"] = "leastConnections";
+
+      const myKeyFunc: InternalPoolMapping = {
+        getKey: (hostInfo: HostInfo, props: Map<string, any>) => {
+          return hostInfo.url + props.get("arbitraryProp");
+        }
+      };
+
+      // We will be testing all instances excluding the writer and overloaded reader. Each instance
+      // should be tested numOverloadedReaderConnections times to increase the pool connection count
+      // until it equals the connection count of the overloaded reader.
+      const numOverloadedReaderConnections = 3;
+      const numInstances = env.databaseInfo.instances.length;
+      const numTestConnections = (numInstances - 2) * numOverloadedReaderConnections;
+      const provider = new InternalPooledConnectionProvider({ maxConnections: numTestConnections }, myKeyFunc);
+      ConnectionProviderManager.setConnectionProvider(provider);
+
+      let overloadedReaderId;
+      const connectionsSet: Set<any> = new Set();
+      try {
+        for (let i = 0; i < numOverloadedReaderConnections; i++) {
+          const readerConfig = await initDefaultConfig(env.databaseInfo.readerInstanceEndpoint, env.databaseInfo.instanceEndpointPort, false);
+          readerConfig["arbitraryProp"] = "value" + i.toString();
+          readerConfig["readerHostSelectorStrategy"] = "leastConnections";
+          const client = initClientFunc(readerConfig);
+          client.on("error", (error: any) => {
+            logger.debug(`event emitter threw error: ${error.message}`);
+            logger.debug(error.stack);
+          });
+          await client.connect();
+          connectionsSet.add(client);
+          if (i === 0) {
+            overloadedReaderId = await auroraTestUtility.queryInstanceId(client);
+          }
+        }
+
+        for (let i = 0; i < numTestConnections - 1; i++) {
+          const client = initClientFunc(config);
+          client.on("error", (error: any) => {
+            logger.debug(`event emitter threw error: ${error.message}`);
+            logger.debug(error.stack);
+          });
+          await client.connect();
+          await client.setReadOnly(true);
+          const readerId = await auroraTestUtility.queryInstanceId(client);
+          expect(readerId).not.toBe(overloadedReaderId);
+          connectionsSet.add(client);
+        }
+      } finally {
+        for (const connection of connectionsSet) {
+          connection.end();
+        }
+      }
     },
     1000000
   );

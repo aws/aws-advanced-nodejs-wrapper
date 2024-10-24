@@ -37,6 +37,7 @@ import { logger } from "../logutils";
 import { RoundRobinHostSelector } from "./round_robin_host_selector";
 import { AwsPoolClient } from "./aws_pool_client";
 import { AwsPoolConfig } from "./aws_pool_config";
+import { LeastConnectionsHostSelector } from "./least_connections_host_selector";
 import { PoolClientWrapper } from "./pool_client_wrapper";
 
 export class InternalPooledConnectionProvider implements PooledConnectionProvider, CanReleaseResources {
@@ -46,6 +47,7 @@ export class InternalPooledConnectionProvider implements PooledConnectionProvide
   ]);
   static readonly CACHE_CLEANUP_NANOS: bigint = BigInt(60_000_000_000); // 60 minutes
   static readonly POOL_EXPIRATION_NANOS: bigint = BigInt(30_000_000_000); // 30 minutes
+  private leastConnectionsHostSelector: LeastConnectionsHostSelector;
 
   private readonly rdsUtil: RdsUtils = new RdsUtils();
   private readonly _poolMapping?: InternalPoolMapping;
@@ -68,10 +70,11 @@ export class InternalPooledConnectionProvider implements PooledConnectionProvide
     this.poolExpirationCheckNanos = poolExpirationNanos ?? InternalPooledConnectionProvider.POOL_EXPIRATION_NANOS;
     this.databasePools.cleanupIntervalNs = poolCleanupNanos ?? InternalPooledConnectionProvider.CACHE_CLEANUP_NANOS;
     this._poolConfig = poolConfig ?? new AwsPoolConfig({});
+    this.leastConnectionsHostSelector = new LeastConnectionsHostSelector(this.databasePools);
   }
 
   acceptsStrategy(role: HostRole, strategy: string): boolean {
-    return InternalPooledConnectionProvider.acceptedStrategies.has(strategy);
+    return InternalPooledConnectionProvider.acceptedStrategies.has(strategy) || strategy === LeastConnectionsHostSelector.STRATEGY_NAME;
   }
 
   acceptsUrl(hostInfo: HostInfo, props: Map<string, any>): boolean {
@@ -122,13 +125,16 @@ export class InternalPooledConnectionProvider implements PooledConnectionProvide
   }
 
   public async releaseResources() {
-    for (const [key, val] of this.databasePools.entries) {
+    for (const [_key, val] of this.databasePools.entries) {
       val.item.releaseResources();
     }
     this.databasePools.clear();
   }
 
   getHostInfoByStrategy(hosts: HostInfo[], role: HostRole, strategy: string, props?: Map<string, any>): HostInfo {
+    if (LeastConnectionsHostSelector.STRATEGY_NAME === strategy) {
+      return this.leastConnectionsHostSelector.getHost(hosts, role, props);
+    }
     const acceptedStrategy = InternalPooledConnectionProvider.acceptedStrategies.get(strategy);
     if (!acceptedStrategy) {
       throw new AwsWrapperError(Messages.get("ConnectionProvider.unsupportedHostSelectorStrategy", strategy, "InternalPooledConnectionProvider"));
@@ -169,7 +175,9 @@ export class InternalPooledConnectionProvider implements PooledConnectionProvide
     logger.debug(`Internal Pooled Connection: [${JSON.stringify(l)}]`);
   }
 
+  // for testing only
   setDatabasePools(connectionPools: SlidingExpirationCache<PoolKey, any>): void {
     this.databasePools = connectionPools;
+    this.leastConnectionsHostSelector.setDatabasePools(connectionPools);
   }
 }

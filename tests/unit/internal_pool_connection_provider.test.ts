@@ -39,6 +39,8 @@ import { MySQL2DriverDialect } from "../../mysql/lib/dialect/mysql2_driver_diale
 const internalPoolWithOneConnection = mock(AwsMysqlPoolClient);
 const user1 = "user1";
 const user2 = "user2";
+const user3 = "user3";
+
 const db = "mydb";
 const props: Map<string, any> = new Map();
 const builder = new HostInfoBuilder({ hostAvailabilityStrategy: new SimpleHostAvailabilityStrategy() });
@@ -52,10 +54,13 @@ const readerHost1Connection = builder.withHost(readerUrl1Connection).withPort(54
 const readerHost2Connection = builder.withHost(readerUrl2Connection).withPort(5432).withRole(HostRole.READER).build();
 const writerHostNoConnection = builder.withHost(writerUrlNoConnections).withPort(5432).withRole(HostRole.WRITER).build();
 const testHostsList = [writerHostNoConnection, readerHost1Connection, readerHost2Connection];
-const target: SlidingExpirationCache<PoolKey, any> = new SlidingExpirationCache(BigInt(10000));
-const result1 = target.computeIfAbsent(new PoolKey(readerHost2Connection.url, user1), () => internalPoolWithOneConnection, BigInt(10000));
-const result2 = target.computeIfAbsent(new PoolKey(readerHost2Connection.url, user2), () => internalPoolWithOneConnection, BigInt(10000));
-const result3 = target.computeIfAbsent(new PoolKey(readerHost1Connection.url, user1), () => internalPoolWithOneConnection, BigInt(10000));
+const testLeastConnectionHostsList = [readerHost2Connection, readerHost1Connection, readerHost2Connection];
+
+const target: SlidingExpirationCache<PoolKey, any> = new SlidingExpirationCache(BigInt(10000000));
+const result1 = target.computeIfAbsent(new PoolKey(readerHost1Connection.url, user1), () => internalPoolWithOneConnection, BigInt(10000000));
+const result2 = target.computeIfAbsent(new PoolKey(readerHost1Connection.url, user2), () => internalPoolWithOneConnection, BigInt(10000000));
+const result3 = target.computeIfAbsent(new PoolKey(readerHost1Connection.url, user3), () => internalPoolWithOneConnection, BigInt(10000000));
+const result4 = target.computeIfAbsent(new PoolKey(readerHost2Connection.url, user1), () => internalPoolWithOneConnection, BigInt(10000000));
 
 const defaultHosts = [writerHost, readerHost1, readerHost2];
 const mockPluginService: PluginService = mock(PluginService);
@@ -183,6 +188,18 @@ describe("reader write splitting test", () => {
     providerSpy.setDatabasePools(target);
     const selectedHost = providerSpy.getHostInfoByStrategy(testHostsList, HostRole.READER, "random", props);
     expect(selectedHost.host === readerUrl1Connection || selectedHost.host === readerUrl2Connection).toBeTruthy();
+    await ConnectionProviderManager.releaseResources();
+    ConnectionProviderManager.resetProvider();
+  });
+
+  it("test least connection strategy", async () => {
+    const provider = spy(new InternalPooledConnectionProvider(mockPoolConfig));
+    const providerSpy = instance(provider);
+    providerSpy.setDatabasePools(target);
+
+    const selectedHost = providerSpy.getHostInfoByStrategy(testHostsList, HostRole.READER, "leastConnections", props);
+    // other reader has 2 connections
+    expect(selectedHost.host).toEqual(readerUrl2Connection);
     await ConnectionProviderManager.releaseResources();
     ConnectionProviderManager.resetProvider();
   });
