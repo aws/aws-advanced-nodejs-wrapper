@@ -193,7 +193,7 @@ export class AwsPGClient extends AwsClient {
 
   async end() {
     if (!this.isConnected || !this.targetClient?.client) {
-      // No connections has been initialized.
+      // No connections have been initialized.
       // This might happen if end is called in a finally block when an error occurred while initializing the first connection.
       return;
     }
