@@ -27,7 +27,11 @@ export class PoolKey {
     return this.url;
   }
 
+  getExtraKey(): string {
+    return this.extraKey;
+  }
+
   getPoolKeyString(): string {
-    return "PoolKey [url=" + this.url + ", extraKey=" + this.extraKey + "]";
+    return `PoolKey [url=${this.getUrl()}, extraKey=${this.getExtraKey()}]`;
   }
 }

@@ -50,6 +50,10 @@ export class AwsMysqlPoolClient implements AwsPoolClient {
     return this.targetPool.pool._allConnections.length;
   }
 
+  getActiveCount(): number {
+    return this.getTotalCount() - this.getIdleCount();
+  }
+
   async releaseResources(): Promise<void> {
     await this.targetPool.end();
   }

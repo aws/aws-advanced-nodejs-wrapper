@@ -31,6 +31,10 @@ export class AwsPgPoolClient implements AwsPoolClient {
         logger.debug(err);
       });
     });
+    // this.targetPool.on("error", (err, client) => {
+    //   console.error("Unexpected error on idle client", err);
+    //   process.exit(-1);
+    // });
   }
 
   async end(): Promise<any> {
@@ -55,6 +59,10 @@ export class AwsPgPoolClient implements AwsPoolClient {
 
   getTotalCount(): number {
     return this.targetPool.totalCount;
+  }
+
+  getActiveCount(): number {
+    return this.getTotalCount() - this.getIdleCount();
   }
 
   async releaseResources(): Promise<void> {
