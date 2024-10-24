@@ -45,7 +45,7 @@ type PluginFactoryInfo = {
   weight: number;
 };
 
-type FactoryClass = typeof IamAuthenticationPluginFactory | typeof FailoverPluginFactory;
+export type FactoryClass = typeof IamAuthenticationPluginFactory | typeof FailoverPluginFactory;
 
 export class ConnectionPluginChainBuilder {
   static readonly DEFAULT_PLUGINS = "failover,efm";
