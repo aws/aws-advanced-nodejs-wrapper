@@ -51,7 +51,10 @@ async function initDefaultConfig(host: string): Promise<any> {
     password: env.databaseInfo.password,
     port: env.databaseInfo.instanceEndpointPort,
     plugins: "iam",
-    ssl: sslCertificate
+    ssl: sslCertificate,
+    enableTelemetry: true,
+    telemetryTracesBackend: "OTLP",
+    telemetryMetricsBackend: "OTLP"
   };
   props = DriverHelper.addDriverSpecificConfiguration(props, env.engine);
   return props;

@@ -17,6 +17,7 @@
 import { TestEnvironmentRequest } from "./test_environment_request";
 import { TestDatabaseInfo } from "./test_database_info";
 import { TestProxyDatabaseInfo } from "./test_proxy_database_info";
+import { TestTelemetryInfo } from "./test_telemetry_info";
 
 export class TestEnvironmentInfo {
   private readonly _request: TestEnvironmentRequest;
@@ -28,6 +29,8 @@ export class TestEnvironmentInfo {
   private readonly _iamUserName: string;
   private readonly _databaseInfo: TestDatabaseInfo;
   private readonly _proxyDatabaseInfo: TestProxyDatabaseInfo;
+  private readonly _tracesTelemetryInfo: TestTelemetryInfo;
+  private readonly _metricsTelemetryInfo: TestTelemetryInfo;
 
   constructor(testInfo: { [s: string]: any }) {
     this._request = new TestEnvironmentRequest(testInfo["request"]);
@@ -40,6 +43,9 @@ export class TestEnvironmentInfo {
 
     this._databaseInfo = new TestDatabaseInfo(testInfo["databaseInfo"]);
     this._proxyDatabaseInfo = new TestProxyDatabaseInfo(testInfo["proxyDatabaseInfo"]);
+
+    this._tracesTelemetryInfo = new TestTelemetryInfo(testInfo["tracesTelemetryInfo"]);
+    this._metricsTelemetryInfo = new TestTelemetryInfo(testInfo["metricsTelemetryInfo"]);
   }
 
   get request(): TestEnvironmentRequest {
@@ -76,5 +82,13 @@ export class TestEnvironmentInfo {
 
   get proxyDatabaseInfo(): TestProxyDatabaseInfo {
     return this._proxyDatabaseInfo;
+  }
+
+  get tracesTelemetryInfo(): TestTelemetryInfo {
+    return this._tracesTelemetryInfo;
+  }
+
+  get metricsTelemetryInfo(): TestTelemetryInfo {
+    return this._metricsTelemetryInfo;
   }
 }

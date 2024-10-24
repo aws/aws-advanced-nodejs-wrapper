@@ -6,6 +6,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.concurrent.Future;
 import java.util.Set;
 import java.util.logging.Logger;
 import java.util.stream.Stream;
@@ -61,6 +62,8 @@ public class TestEnvironmentProvider implements TestTemplateInvocationContextPro
     final boolean excludeSecretsManager =
         Boolean.parseBoolean(System.getProperty("exclude-secrets-manager", "false"));
     final boolean testAutoscalingOnly = Boolean.parseBoolean(System.getProperty("test-autoscaling", "false"));
+    final boolean excludeTracesTelemetry = Boolean.parseBoolean(System.getProperty("test-no-traces-telemetry", "false"));
+    final boolean excludeMetricsTelemetry = Boolean.parseBoolean(System.getProperty("test-no-metrics-telemetry", "false"));
 
     for (DatabaseEngineDeployment deployment : DatabaseEngineDeployment.values()) {
       if (deployment == DatabaseEngineDeployment.DOCKER && excludeDocker) {
@@ -130,7 +133,11 @@ public class TestEnvironmentProvider implements TestTemplateInvocationContextPro
                       excludePerformance ? null : TestEnvironmentFeatures.PERFORMANCE,
                       excludeMysqlDriver ? TestEnvironmentFeatures.SKIP_MYSQL_DRIVER_TESTS : null,
                       excludePgDriver ? TestEnvironmentFeatures.SKIP_PG_DRIVER_TESTS : null,
-                      testAutoscalingOnly ? TestEnvironmentFeatures.RUN_AUTOSCALING_TESTS_ONLY : null)));
+                      testAutoscalingOnly ? TestEnvironmentFeatures.RUN_AUTOSCALING_TESTS_ONLY : null,
+                      excludeTracesTelemetry ? null : TestEnvironmentFeatures.TELEMETRY_TRACES_ENABLED,
+                      excludeMetricsTelemetry ? null : TestEnvironmentFeatures.TELEMETRY_METRICS_ENABLED,
+                      // AWS credentials are required for XRay telemetry
+                      excludeTracesTelemetry && excludeMetricsTelemetry ? null : TestEnvironmentFeatures.AWS_CREDENTIALS_ENABLED)));
           }
         }
       }

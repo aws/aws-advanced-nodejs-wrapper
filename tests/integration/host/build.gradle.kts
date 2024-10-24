@@ -37,6 +37,10 @@ dependencies {
     testImplementation("org.apache.poi:poi-ooxml:5.2.2")
     testImplementation("org.slf4j:slf4j-simple:2.0.3")
     testImplementation("com.fasterxml.jackson.core:jackson-databind:2.14.2")
+    testImplementation("com.amazonaws:aws-xray-recorder-sdk-core:2.14.0")
+    testImplementation("io.opentelemetry:opentelemetry-sdk:1.29.0")
+    testImplementation("io.opentelemetry:opentelemetry-sdk-metrics:1.29.0")
+    testImplementation("io.opentelemetry:opentelemetry-exporter-otlp:1.29.0")
 }
 
 tasks.test {

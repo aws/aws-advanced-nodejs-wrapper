@@ -73,7 +73,10 @@ describe("basic_connectivity", () => {
         database: env.databaseInfo.default_db_name,
         password: env.databaseInfo.password,
         port: env.databaseInfo.clusterEndpointPort,
-        plugins: "failover,efm"
+        plugins: "failover,efm",
+        enableTelemetry: true,
+        telemetryTracesBackend: "OTLP",
+        telemetryMetricsBackend: "OTLP"
       };
       props = DriverHelper.addDriverSpecificConfiguration(props, env.engine);
       client = initClientFunc(props);
@@ -96,7 +99,10 @@ describe("basic_connectivity", () => {
         database: env.databaseInfo.default_db_name,
         password: env.databaseInfo.password,
         port: env.databaseInfo.clusterEndpointPort,
-        plugins: "failover,efm"
+        plugins: "failover,efm",
+        enableTelemetry: true,
+        telemetryTracesBackend: "OTLP",
+        telemetryMetricsBackend: "OTLP"
       };
       props = DriverHelper.addDriverSpecificConfiguration(props, env.engine);
 
@@ -119,7 +125,10 @@ describe("basic_connectivity", () => {
         database: env.databaseInfo.default_db_name,
         password: env.databaseInfo.password,
         port: env.databaseInfo.clusterEndpointPort,
-        plugins: "failover,efm"
+        plugins: "failover,efm",
+        enableTelemetry: true,
+        telemetryTracesBackend: "OTLP",
+        telemetryMetricsBackend: "OTLP"
       };
       props = DriverHelper.addDriverSpecificConfiguration(props, env.engine);
 
@@ -142,7 +151,10 @@ describe("basic_connectivity", () => {
         database: env.databaseInfo.default_db_name,
         password: env.databaseInfo.password,
         port: env.databaseInfo.instanceEndpointPort,
-        plugins: ""
+        plugins: "",
+        enableTelemetry: true,
+        telemetryTracesBackend: "OTLP",
+        telemetryMetricsBackend: "OTLP"
       };
       props = DriverHelper.addDriverSpecificConfiguration(props, env.engine);
 
@@ -173,7 +185,10 @@ describe("basic_connectivity", () => {
         password: env.databaseInfo.password,
         port: env.proxyDatabaseInfo.instanceEndpointPort,
         plugins: "",
-        clusterInstanceHostPattern: "?." + env.proxyDatabaseInfo.instanceEndpointSuffix + ":" + env.proxyDatabaseInfo.instanceEndpointPort
+        clusterInstanceHostPattern: "?." + env.proxyDatabaseInfo.instanceEndpointSuffix + ":" + env.proxyDatabaseInfo.instanceEndpointPort,
+        enableTelemetry: true,
+        telemetryTracesBackend: "OTLP",
+        telemetryMetricsBackend: "OTLP"
       };
       props = DriverHelper.addDriverSpecificConfiguration(props, env.engine);
 

@@ -47,7 +47,10 @@ async function initDefaultConfig(host: string, port: number, connectToProxy: boo
     database: env.databaseInfo.default_db_name,
     password: env.databaseInfo.password,
     port: port,
-    plugins: "readWriteSplitting"
+    plugins: "readWriteSplitting",
+    enableTelemetry: true,
+    telemetryTracesBackend: "OTLP",
+    telemetryMetricsBackend: "OTLP"
   };
 
   if (connectToProxy) {
@@ -65,7 +68,10 @@ async function initConfigWithFailover(host: string, port: number, connectToProxy
     password: env.databaseInfo.password,
     port: port,
     plugins: "readWriteSplitting,failover",
-    failoverTimeoutMs: 400000
+    failoverTimeoutMs: 400000,
+    enableTelemetry: true,
+    telemetryTracesBackend: "OTLP",
+    telemetryMetricsBackend: "OTLP"
   };
 
   if (connectToProxy) {
