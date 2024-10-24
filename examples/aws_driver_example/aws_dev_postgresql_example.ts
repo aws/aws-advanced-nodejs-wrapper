@@ -45,7 +45,7 @@ ErrorSimulatorManager.raiseErrorOnNextConnect(errorToRaise);
 try {
   await client.connect();
 } catch {
-  // Handle errorToRaise.   
+  // Handle errorToRaise.
 }
 
 // Another connection. Goes normal with no error.
@@ -59,7 +59,7 @@ simulator.raiseErrorOnNextCall(errorToRaise, "query");
 try {
   const result = await client.query("select 1");
 } catch {
-  // Handle errorToRaise. 
+  // Handle errorToRaise.
 }
 
 // Query executes normally without error.
@@ -84,7 +84,7 @@ const mismatch = await client.query("select 2");
 try {
   const match = await client.query("select 1");
 } catch {
-  // Handle errorToRaise. 
+  // Handle errorToRaise.
 }
 
 // Close connection.

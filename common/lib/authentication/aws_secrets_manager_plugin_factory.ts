@@ -31,7 +31,7 @@ export class AwsSecretsManagerPluginFactory implements ConnectionPluginFactory {
         logger.error(error);
         throw new AwsWrapperError(Messages.get("ConnectionPluginChainBuilder.errorImportingPlugin", "AwsSecretsManagerPlugin"));
       }
-      throw error;      
+      throw error;
     }
   }
 }

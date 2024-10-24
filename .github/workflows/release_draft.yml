@@ -1,0 +1,55 @@
+name: "Release Draft"
+
+on:
+  push:
+    tags:
+      - "[0-9]+.[0-9]+.[0-9]+"
+
+permissions:
+  actions: write
+  contents: write
+  deployments: write
+  packages: write
+  pull-requests: write
+  repository-projects: write
+
+jobs:
+  ubuntu-latest-nodejs-wrapper-release-gh-draft:
+    name: "Build And Release Draft"
+    runs-on: ubuntu-latest
+    steps:
+      - name: "Clone Repository"
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 50
+      - name: "Set up Node.js"
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20.x"
+      - name: "Install dependencies"
+        run: npm install --no-save
+      - name: "Run eslint - linting"
+        run: npm run lint
+      - name: "Check formatting"
+        run: npm run check
+      - name: "Run unit tests"
+        run: npm test
+      - name: "Package Wrapper"
+        run: mkdir ./build | npm pack --pack-destination ./build
+      - name: "Set Version Env Variable"
+        run: echo "RELEASE_VERSION=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
+      - name: "Get Release Details"
+        run: |
+          export RELEASE_DETAILS="$(awk -vN=2 'n<N;/^## /{++n}' CHANGELOG.md)"
+          export RELEASE_DETAILS="$(sed '${/^# /d;}' <<< "$RELEASE_DETAILS")"
+          export RELEASE_DETAILS="$(sed '$d' <<< "$RELEASE_DETAILS")"
+          touch RELEASE_DETAILS.md
+          echo "$RELEASE_DETAILS" > RELEASE_DETAILS.md
+      - name: "Upload to Draft Release"
+        uses: ncipollo/release-action@v1
+        with:
+          draft: true
+          name: "AWS Advanced NodeJS Wrapper - v${{ env.RELEASE_VERSION }}"
+          bodyFile: RELEASE_DETAILS.md
+          artifacts: ./build/*
+          token: ${{ secrets.GITHUB_TOKEN }}
