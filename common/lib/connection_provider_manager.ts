@@ -61,25 +61,9 @@ export class ConnectionProviderManager {
   getHostInfoByStrategy(hosts: HostInfo[], role: HostRole, strategy: string, props: Map<string, any>) {
     let host;
     if (ConnectionProviderManager.connProvider?.acceptsStrategy(role, strategy)) {
-      try {
-        host = ConnectionProviderManager.connProvider.getHostInfoByStrategy(hosts, role, strategy, props);
-      } catch (error) {
-        if (error instanceof AwsWrapperError && error.message.includes("Unsupported host selection strategy")) {
-          // Ignore and try with the default provider.
-        } else {
-          throw error;
-        }
-      }
+      host = ConnectionProviderManager.connProvider.getHostInfoByStrategy(hosts, role, strategy, props);
     } else if (this.effectiveProvider?.acceptsStrategy(role, strategy)) {
-      try {
-        host = this.effectiveProvider.getHostInfoByStrategy(hosts, role, strategy, props);
-      } catch (error) {
-        if (error instanceof AwsWrapperError && error.message.includes("Unsupported host selection strategy")) {
-          // Ignore and try with the default provider.
-        } else {
-          throw error;
-        }
-      }
+      host = this.effectiveProvider.getHostInfoByStrategy(hosts, role, strategy, props);
     }
 
     if (!host) {

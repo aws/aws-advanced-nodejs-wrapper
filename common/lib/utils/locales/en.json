@@ -3,7 +3,6 @@
   "PluginManager.pipelineNone": "A pipeline was requested but the created pipeline evaluated to undefined.",
   "PluginManager.unableToRetrievePlugin": "Unable to retrieve plugin instance.",
   "ConnectionProvider.unsupportedHostSelectorStrategy": "Unsupported host selection strategy '%s' specified for this connection provider '%s'. Please visit the documentation for all supported strategies.",
-  "ConnectionProvider.unsupportedHostInfoSelectorStrategy": "Unsupported host selection strategy '%s' specified for this connection provider '%s'. Please visit the documentation for all supported strategies.",
   "ConnectionPluginChainBuilder.errorImportingPlugin": "The plugin could not be imported. Please ensure the required dependencies have been installed. Plugin: '%s'",
   "ClientUtils.queryTaskTimeout": "AwsWrapperError: Client query task timed out.",
   "DialectManager.unknownDialectCode": "Unknown dialect code: '%s'.",
