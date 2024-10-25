@@ -19,7 +19,7 @@ import { Messages } from "../../common/lib/utils/messages";
 
 export class MySQLErrorHandler implements ErrorHandler {
   private static readonly SQLSTATE_ACCESS_ERROR = "28000";
-  
+
   isLoginError(e: Error): boolean {
     if (Object.prototype.hasOwnProperty.call(e, "sqlState")) {
       // @ts-ignore

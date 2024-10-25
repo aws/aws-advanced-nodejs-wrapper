@@ -14,6 +14,7 @@ The plugin pipelines available in the driver are:
 - The host list changed notification pipeline.
 - The accepts strategy pipeline.
 - The get HostInfo by strategy pipeline.
+- The release resources pipeline.
 
 A plugin does not need to implement all pipelines. A plugin can implement one or more pipelines depending on its functionality.
 
@@ -92,6 +93,10 @@ will be called whenever changes in the current host list are detected.
 
 Plugins should subscribe to this pipeline and the get HostInfo by strategy pipeline if they implement a host selection strategy via the `getHostInfoByStrategy` method. In this case, plugins should override the `acceptsStrategy` and `getHostInfoByStrategy` methods to implement any desired logic. The `acceptsStrategy` method should return true for each selection strategy that the plugin supports.
 
-## Get HostInfo by Strategy pipeline
+## Get HostInfo by Strategy Pipeline
 
 Plugins should subscribe to this pipeline and the accepts strategy pipeline if they implement a host selection strategy. In this case, plugins should override both the `acceptsStrategy` method and the `getHostInfoByStrategy` method. The `getHostInfoByStrategy` method should implement the desired logic for selecting a host using any plugin-accepted strategies. Host selection via a "random" strategy is supported by default.
+
+## Release Resources Pipeline
+
+Plugins should implement the `CanReleaseResources` interface if they have resources to clean up when connections are closed. The method `releaseResources` will be called for every plugin that implements the interface when `Client.end()` is called.
