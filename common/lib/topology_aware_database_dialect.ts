@@ -22,7 +22,7 @@ import { ClientWrapper } from "./client_wrapper";
 export interface TopologyAwareDatabaseDialect {
   queryForTopology(client: ClientWrapper, hostListProvider: HostListProvider): Promise<HostInfo[]>;
 
-  identifyConnection(targetClient: ClientWrapper, props: Map<string, any>): Promise<string>;
+  identifyConnection(targetClient: ClientWrapper): Promise<string>;
 
-  getHostRole(client: ClientWrapper, props: Map<string, any>): Promise<HostRole>;
+  getHostRole(client: ClientWrapper): Promise<HostRole>;
 }

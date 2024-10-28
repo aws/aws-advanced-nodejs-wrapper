@@ -124,7 +124,7 @@ export class StaleDnsHelper {
       logger.debug(Messages.get("StaleDnsHelper.staleDnsDetected", this.writerHostInfo.host));
       this.staleDNSDetectedCounter.inc();
 
-      let targetClient;
+      let targetClient = null;
       try {
         const newProps = new Map<string, any>(props);
         newProps.set(WrapperProperties.HOST.name, this.writerHostInfo.host);

@@ -55,7 +55,7 @@ export class DriverConnectionProvider implements ConnectionProvider {
 
     const driverDialect: DriverDialect = pluginService.getDriverDialect();
     try {
-      const targetClient: any = await driverDialect.connect(props);
+      const targetClient: any = await driverDialect.connect(hostInfo, props);
       connectionHostInfo = new HostInfoBuilder({
         hostAvailabilityStrategy: hostInfo.hostAvailabilityStrategy
       })
@@ -92,12 +92,6 @@ export class DriverConnectionProvider implements ConnectionProvider {
       const originalHost: string = hostInfo.host;
       const fixedHost: string = this.rdsUtils.removeGreenInstancePrefix(hostInfo.host);
       resultProps.set(WrapperProperties.HOST.name, fixedHost);
-      connectionHostInfo = new HostInfoBuilder({
-        hostAvailabilityStrategy: hostInfo.hostAvailabilityStrategy
-      })
-        .copyFrom(hostInfo)
-        .withHost(fixedHost)
-        .build();
 
       logger.info(
         "Connecting to " +
@@ -108,21 +102,10 @@ export class DriverConnectionProvider implements ConnectionProvider {
           JSON.stringify(Object.fromEntries(maskProperties(resultProps)))
       );
 
-      resultTargetClient = driverDialect.connect(resultProps);
+      resultTargetClient = driverDialect.connect(hostInfo, resultProps);
     }
 
-    return {
-      client: resultTargetClient,
-      hostInfo: connectionHostInfo,
-      properties: resultProps
-    };
-  }
-
-  async end(pluginService: PluginService, clientWrapper: ClientWrapper | undefined): Promise<void> {
-    if (clientWrapper === undefined) {
-      return;
-    }
-    return await pluginService.getDriverDialect().end(clientWrapper);
+    return resultTargetClient;
   }
 
   getHostInfoByStrategy(hosts: HostInfo[], role: HostRole, strategy: string, props?: Map<string, any>): HostInfo {

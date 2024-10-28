@@ -17,9 +17,7 @@
 import { DatabaseDialect, DatabaseType } from "../../../common/lib/database_dialect/database_dialect";
 import { HostListProviderService } from "../../../common/lib/host_list_provider_service";
 import { HostListProvider } from "../../../common/lib/host_list_provider/host_list_provider";
-import {
-  ConnectionStringHostListProvider
-} from "../../../common/lib/host_list_provider/connection_string_host_list_provider";
+import { ConnectionStringHostListProvider } from "../../../common/lib/host_list_provider/connection_string_host_list_provider";
 import { AwsWrapperError } from "../../../common/lib/utils/errors";
 import { DatabaseDialectCodes } from "../../../common/lib/database_dialect/database_dialect_codes";
 import { TransactionIsolationLevel } from "../../../common/lib/utils/transaction_isolation_level";
@@ -43,7 +41,7 @@ export class PgDatabaseDialect implements DatabaseDialect {
   }
 
   async getHostAliasAndParseResults(targetClient: ClientWrapper): Promise<string> {
-    return targetClient.client
+    return targetClient
       .query(this.getHostAliasQuery())
       .then((rows: any) => {
         return rows.rows[0]["concat"];
@@ -58,7 +56,7 @@ export class PgDatabaseDialect implements DatabaseDialect {
   }
 
   async isDialect(targetClient: ClientWrapper): Promise<boolean> {
-    return await targetClient.client
+    return await targetClient
       .query("SELECT 1 FROM pg_proc LIMIT 1")
       .then((result: { rows: any }) => {
         return !!result.rows[0];
@@ -74,7 +72,7 @@ export class PgDatabaseDialect implements DatabaseDialect {
 
   async isClientValid(targetClient: ClientWrapper): Promise<boolean> {
     try {
-      return await targetClient.client
+      return await targetClient
         .query("SELECT 1")
         .then(() => {
           return true;

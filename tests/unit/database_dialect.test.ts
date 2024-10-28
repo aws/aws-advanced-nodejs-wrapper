@@ -34,6 +34,7 @@ import { RdsMultiAZPgDatabaseDialect } from "../../pg/lib/dialect/rds_multi_az_p
 import { DatabaseDialectManager } from "../../common/lib/database_dialect/database_dialect_manager";
 import { NodePostgresDriverDialect } from "../../pg/lib/dialect/node_postgres_driver_dialect";
 import { mock } from "ts-mockito";
+import { PgClientWrapper } from "../../common/lib/pg_client_wrapper";
 
 const LOCALHOST = "localhost";
 const RDS_DATABASE = "database-1.xyz.us-east-2.rds.amazonaws.com";
@@ -189,16 +190,12 @@ class MockTargetClient {
     this.expectedResultSet = expectedResultSet;
   }
 
-  query(sql: any) {
+  query(sql: string) {
     if (this.expectedInputs.includes(sql)) {
       return Promise.resolve(this.expectedResultSet);
     }
 
     return Promise.reject(new Error("Unsupported query"));
-  }
-
-  promise() {
-    return this;
   }
 }
 
@@ -272,11 +269,7 @@ describe("test database dialects", () => {
       hostAvailabilityStrategy: new SimpleHostAvailabilityStrategy()
     }).build();
 
-    const mockClientWrapper: ClientWrapper = {
-      client: mockTargetClient,
-      hostInfo: currentHostInfo,
-      properties: new Map<string, any>()
-    };
+    const mockClientWrapper: ClientWrapper = new PgClientWrapper(mockTargetClient, currentHostInfo, new Map<string, any>());
     const pluginService = new PluginService(
       pluginServiceManagerContainer,
       mockClient,

@@ -16,37 +16,24 @@
 
 import { DriverDialect } from "../../../common/lib/driver_dialect/driver_dialect";
 import { ClientWrapper } from "../../../common/lib/client_wrapper";
-import { ClientUtils } from "../../../common/lib/utils/client_utils";
 import { createConnection, PoolOptions } from "mysql2/promise";
 import { WrapperProperties } from "../../../common/lib/wrapper_property";
 import { AwsPoolConfig } from "../../../common/lib/aws_pool_config";
 import { AwsPoolClient } from "../../../common/lib/aws_pool_client";
 import { AwsMysqlPoolClient } from "../mysql_pool_client";
+import { MySQLClientWrapper } from "../../../common/lib/mysql_client_wrapper";
+import { HostInfo } from "../../../common/lib/host_info";
 
 export class MySQL2DriverDialect implements DriverDialect {
   protected dialectName: string = this.constructor.name;
+
   getDialectName(): string {
     return this.dialectName;
   }
 
-  async abort(targetClient: ClientWrapper) {
-    try {
-      await ClientUtils.queryWithTimeout(targetClient.client.destroy(), targetClient.properties);
-    } catch (error: any) {
-      // ignore
-    }
-  }
-
-  connect(props: Map<string, any>): Promise<any> {
-    return createConnection(WrapperProperties.removeWrapperProperties(props));
-  }
-
-  async rollback(targetClient: ClientWrapper): Promise<any> {
-    return await targetClient.client.rollback();
-  }
-
-  end(targetClient: ClientWrapper): Promise<void> {
-    return targetClient.client.end();
+  async connect(hostInfo: HostInfo, props: Map<string, any>): Promise<ClientWrapper> {
+    const targetClient = await createConnection(WrapperProperties.removeWrapperProperties(props));
+    return Promise.resolve(new MySQLClientWrapper(targetClient, hostInfo, props));
   }
 
   preparePoolClientProperties(props: Map<string, any>, poolConfig: AwsPoolConfig | undefined): any {

@@ -30,7 +30,6 @@ import { Messages } from "../../common/lib/utils/messages";
 import { ClientWrapper } from "../../common/lib/client_wrapper";
 import { ClientUtils } from "../../common/lib/utils/client_utils";
 import { RdsMultiAZMySQLDatabaseDialect } from "./dialect/rds_multi_az_mysql_database_dialect";
-import { HostInfo } from "../../common/lib/host_info";
 import { TelemetryTraceLevel } from "../../common/lib/utils/telemetry/telemetry_trace_level";
 import { MySQL2DriverDialect } from "./dialect/mysql2_driver_dialect";
 
@@ -214,27 +213,18 @@ export class AwsMySQLClient extends AwsClient {
   }
 
   async end() {
-    if (!this.isConnected || !this.targetClient?.client) {
+    if (!this.isConnected || !this.targetClient) {
       // No connections have been initialized.
       // This might happen if end is called in a finally block when an error occurred while initializing the first connection.
       return;
     }
 
-    const hostInfo: HostInfo | null = this.pluginService.getCurrentHostInfo();
     const result = await this.pluginManager.execute(
       this.pluginService.getCurrentHostInfo(),
       this.properties,
       "end",
       () => {
-        return ClientUtils.queryWithTimeout(
-          this.pluginService
-            .getConnectionProvider(hostInfo, this.properties)
-            .end(this.pluginService, this.targetClient)
-            .catch((error: any) => {
-              // ignore
-            }),
-          this.properties
-        );
+        return ClientUtils.queryWithTimeout(this.targetClient!.end(), this.properties);
       },
       null
     );
@@ -242,7 +232,7 @@ export class AwsMySQLClient extends AwsClient {
     return result;
   }
 
-  async rollback(): Promise<Query> {
+  async rollback(): Promise<any> {
     return this.pluginManager.execute(
       this.pluginService.getCurrentHostInfo(),
       this.properties,
@@ -250,7 +240,7 @@ export class AwsMySQLClient extends AwsClient {
       async () => {
         if (this.targetClient) {
           this.pluginService.updateInTransaction("rollback");
-          return await this.pluginService.getDriverDialect().rollback(this.targetClient);
+          return await this.targetClient.rollback();
         }
         return null;
       },

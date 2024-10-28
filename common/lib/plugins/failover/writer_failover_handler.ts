@@ -225,9 +225,7 @@ class ReconnectToWriterHandlerTask {
 
     try {
       while (latestTopology.length === 0 && Date.now() < this.endTime && !this.failoverCompleted) {
-        if (this.currentClient) {
-          await this.pluginService.abortTargetClient(this.currentClient);
-        }
+        await this.pluginService.abortTargetClient(this.currentClient);
 
         try {
           const props = new Map(this.initialConnectionProps);
@@ -275,7 +273,7 @@ class ReconnectToWriterHandlerTask {
     this.failoverCompleted = true;
 
     // Task B was returned.
-    if (selectedTask && selectedTask === ClusterAwareWriterFailoverHandler.WAIT_NEW_WRITER_TASK && this.currentClient) {
+    if (selectedTask && selectedTask === ClusterAwareWriterFailoverHandler.WAIT_NEW_WRITER_TASK) {
       await this.pluginService.abortTargetClient(this.currentClient);
     }
   }
@@ -428,7 +426,7 @@ class WaitForNewWriterHandlerTask {
       const props = new Map(this.initialConnectionProps);
       props.set(WrapperProperties.HOST.name, writerCandidate.host);
 
-      let targetClient;
+      let targetClient = null;
       try {
         targetClient = await this.pluginService.forceConnect(writerCandidate, props);
         this.pluginService.setAvailability(writerCandidate.allAliases, HostAvailability.AVAILABLE);
@@ -438,9 +436,7 @@ class WaitForNewWriterHandlerTask {
         return true;
       } catch (error) {
         this.pluginService.setAvailability(writerCandidate.allAliases, HostAvailability.NOT_AVAILABLE);
-        if (targetClient) {
-          await this.pluginService.abortTargetClient(targetClient);
-        }
+        await this.pluginService.abortTargetClient(targetClient);
         return false;
       }
     }
@@ -483,8 +479,6 @@ class WaitForNewWriterHandlerTask {
   }
 
   async callCloseClient(targetClient: ClientWrapper | null) {
-    if (targetClient) {
-      await this.pluginService.abortTargetClient(targetClient);
-    }
+    await this.pluginService.abortTargetClient(targetClient);
   }
 }

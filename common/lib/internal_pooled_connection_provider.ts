@@ -37,6 +37,7 @@ import { logger } from "../logutils";
 import { RoundRobinHostSelector } from "./round_robin_host_selector";
 import { AwsPoolClient } from "./aws_pool_client";
 import { AwsPoolConfig } from "./aws_pool_config";
+import { PoolClientWrapper } from "./pool_client_wrapper";
 
 export class InternalPooledConnectionProvider implements PooledConnectionProvider, CanReleaseResources {
   private static readonly acceptedStrategies: Map<string, HostSelector> = new Map([
@@ -108,28 +109,16 @@ export class InternalPooledConnectionProvider implements PooledConnectionProvide
     const preparedConfig = dialect.preparePoolClientProperties(props, this._poolConfig);
 
     this.internalPool = this.databasePools.computeIfAbsent(
-      new PoolKey(hostInfo.url, this.getPoolKey(hostInfo, props)),
+      new PoolKey(connectionHostInfo.url, this.getPoolKey(connectionHostInfo, props)),
       () => dialect.getAwsPoolClient(preparedConfig),
       this.poolExpirationCheckNanos
     );
 
-    const poolClient = await this.getPoolConnection();
-
-    return {
-      client: poolClient,
-      hostInfo: connectionHostInfo,
-      properties: props
-    };
+    return await this.getPoolConnection(hostInfo, props);
   }
 
-  async end(pluginService: PluginService, clientWrapper: ClientWrapper | undefined): Promise<void> {
-    if (this.internalPool && clientWrapper) {
-      return this.internalPool.end(clientWrapper.client);
-    }
-  }
-
-  async getPoolConnection() {
-    return this.internalPool!.connect();
+  async getPoolConnection(hostInfo: HostInfo, props: Map<string, string>) {
+    return new PoolClientWrapper(await this.internalPool!.connect(), hostInfo, props);
   }
 
   public async releaseResources() {
@@ -172,17 +161,12 @@ export class InternalPooledConnectionProvider implements PooledConnectionProvide
   }
 
   logConnections() {
-    for (const [key, val] of this.databasePools.entries) {
-      logger.debug(
-        "Internal Pooled Connection: \t\n[ " +
-          key.getPoolKeyString() +
-          "\n\t {\n\t\t\t" +
-          JSON.stringify(val.item.constructor.name) +
-          "\t(expirationTimeNs: " +
-          val.expirationTimeNs +
-          ")\n\t }\n]"
-      );
+    if (this.databasePools.size === 0) {
+      return;
     }
+
+    const l = Array.from(this.databasePools.entries).map(([v, k]) => [v.getPoolKeyString(), k.item.constructor.name]);
+    logger.debug(`Internal Pooled Connection: [${JSON.stringify(l)}]`);
   }
 
   setDatabasePools(connectionPools: SlidingExpirationCache<PoolKey, any>): void {

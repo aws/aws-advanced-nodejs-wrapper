@@ -17,13 +17,14 @@
 import { ClientWrapper } from "../client_wrapper";
 import { AwsPoolConfig } from "../aws_pool_config";
 import { AwsPoolClient } from "../aws_pool_client";
+import { HostInfo } from "../host_info";
 
 export interface DriverDialect {
   getDialectName(): string;
-  abort(targetClient: ClientWrapper): Promise<void>;
-  rollback(targetClient: ClientWrapper): Promise<any>;
-  connect(props: Map<string, any>): Promise<any>;
-  end(targetClient: ClientWrapper | undefined): Promise<void>;
+
+  connect(hostInfo: HostInfo, props: Map<string, any>): Promise<ClientWrapper>;
+
   preparePoolClientProperties(props: Map<string, any>, poolConfig: AwsPoolConfig | undefined): any;
+
   getAwsPoolClient(props: any): AwsPoolClient;
 }

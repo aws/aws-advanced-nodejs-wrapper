@@ -18,10 +18,10 @@ import { createPool, PoolOptions } from "mysql2/promise";
 import { AwsPoolClient } from "../../common/lib/aws_pool_client";
 import { Messages } from "../../common/lib/utils/messages";
 import { AwsWrapperError } from "../../common/lib/utils/errors";
-import { logger } from "../../common/logutils";
 
 export class AwsMysqlPoolClient implements AwsPoolClient {
   targetPool: any;
+
   constructor(props: PoolOptions) {
     this.targetPool = createPool(props);
   }
@@ -34,8 +34,12 @@ export class AwsMysqlPoolClient implements AwsPoolClient {
     }
   }
 
-  async end(poolClient: any) {
-    await poolClient?.release();
+  async end(): Promise<any> {
+    try {
+      return await this.targetPool.end();
+    } catch (error: any) {
+      // Ignore
+    }
   }
 
   getIdleCount(): number {

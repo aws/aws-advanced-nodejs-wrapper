@@ -356,7 +356,7 @@ export class PluginService implements ErrorHandler, HostListProviderService {
 
             if (oldClient && (isInTransaction || WrapperProperties.ROLLBACK_ON_SWITCH.get(this.props))) {
               try {
-                await this.getDriverDialect().rollback(oldClient);
+                await oldClient.rollback();
               } catch (error: any) {
                 // Ignore.
               }
@@ -400,13 +400,13 @@ export class PluginService implements ErrorHandler, HostListProviderService {
 
   async abortCurrentClient(): Promise<void> {
     if (this._currentClient.targetClient) {
-      await this.getDriverDialect().abort(this._currentClient.targetClient);
+      await this._currentClient.targetClient.abort();
     }
   }
 
-  async abortTargetClient(targetClient: ClientWrapper | undefined): Promise<void> {
+  async abortTargetClient(targetClient: ClientWrapper | undefined | null): Promise<void> {
     if (targetClient) {
-      await this.getDriverDialect().abort(targetClient);
+      await targetClient.abort();
     }
   }
 
@@ -481,10 +481,6 @@ export class PluginService implements ErrorHandler, HostListProviderService {
 
   getHostRole(client: any): Promise<HostRole> | undefined {
     return this._hostListProvider?.getHostRole(client, this.dialect);
-  }
-
-  async rollback(targetClient: ClientWrapper) {
-    return await this.getDriverDialect().rollback(targetClient);
   }
 
   getTelemetryFactory(): TelemetryFactory {

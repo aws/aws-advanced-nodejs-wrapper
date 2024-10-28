@@ -21,6 +21,8 @@ import { WrapperProperties } from "../../../common/lib/wrapper_property";
 import { AwsPoolConfig } from "../../../common/lib/aws_pool_config";
 import { AwsPoolClient } from "../../../common/lib/aws_pool_client";
 import { AwsPgPoolClient } from "../pg_pool_client";
+import { PgClientWrapper } from "../../../common/lib/pg_client_wrapper";
+import { HostInfo } from "../../../common/lib/host_info";
 
 export class NodePostgresDriverDialect implements DriverDialect {
   protected dialectName: string = this.constructor.name;
@@ -29,24 +31,10 @@ export class NodePostgresDriverDialect implements DriverDialect {
     return this.dialectName;
   }
 
-  async connect(props: Map<string, any>): Promise<any> {
+  async connect(hostInfo: HostInfo, props: Map<string, any>): Promise<ClientWrapper> {
     const targetClient = new Client(WrapperProperties.removeWrapperProperties(props));
     await targetClient.connect();
-    return targetClient;
-  }
-
-  async rollback(targetClient: ClientWrapper): Promise<any> {
-    return await targetClient.client.rollback();
-  }
-
-  end(targetClient: ClientWrapper): Promise<void> {
-    return targetClient.client.end();
-  }
-
-  async abort(targetClient: ClientWrapper) {
-    await targetClient.client.end().catch((error: any) => {
-      // ignore
-    });
+    return Promise.resolve(new PgClientWrapper(targetClient, hostInfo, props));
   }
 
   preparePoolClientProperties(props: Map<string, any>, poolConfig: AwsPoolConfig | undefined): any {
