@@ -61,9 +61,19 @@ export class ConnectionProviderManager {
   getHostInfoByStrategy(hosts: HostInfo[], role: HostRole, strategy: string, props: Map<string, any>) {
     let host;
     if (ConnectionProviderManager.connProvider?.acceptsStrategy(role, strategy)) {
-      host = ConnectionProviderManager.connProvider.getHostInfoByStrategy(hosts, role, strategy, props);
-    } else if (this.effectiveProvider?.acceptsStrategy(role, strategy)) {
-      host = this.effectiveProvider.getHostInfoByStrategy(hosts, role, strategy, props);
+      try {
+        host = ConnectionProviderManager.connProvider.getHostInfoByStrategy(hosts, role, strategy, props);
+      } catch {
+        // Ignore and try with other providers.
+      }
+    }
+
+    if (this.effectiveProvider?.acceptsStrategy(role, strategy)) {
+      try {
+        host = this.effectiveProvider.getHostInfoByStrategy(hosts, role, strategy, props);
+      } catch {
+        // Ignore and try with the default provider.
+      }
     }
 
     if (!host) {
