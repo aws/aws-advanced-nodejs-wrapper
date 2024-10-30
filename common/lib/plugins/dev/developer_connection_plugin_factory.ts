@@ -22,11 +22,15 @@ import { Messages } from "../../utils/messages";
 import { AwsWrapperError } from "../../utils/errors";
 import { logger } from "../../../logutils";
 
-export class DeveloperConnectionPluginFactory implements ConnectionPluginFactory {
+export class DeveloperConnectionPluginFactory extends ConnectionPluginFactory {
+  private static developerPlugin: any;
+
   async getInstance(pluginService: PluginService, properties: Map<string, any>): Promise<ConnectionPlugin> {
     try {
-      const developerPlugin = await import("./developer_connection_plugin");
-      return new developerPlugin.DeveloperConnectionPlugin(pluginService, properties, new RdsUtils());
+      if (!DeveloperConnectionPluginFactory.developerPlugin) {
+        DeveloperConnectionPluginFactory.developerPlugin = await import("./developer_connection_plugin");
+      }
+      return new DeveloperConnectionPluginFactory.developerPlugin.DeveloperConnectionPlugin(pluginService, properties, new RdsUtils());
     } catch (error: any) {
       logger.error(error);
       throw new AwsWrapperError(Messages.get("ConnectionPluginChainBuilder.errorImportingPlugin", "DeveloperConnectionPlugin"));

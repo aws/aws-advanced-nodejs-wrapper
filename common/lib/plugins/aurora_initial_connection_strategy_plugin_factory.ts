@@ -18,13 +18,16 @@ import { ConnectionPluginFactory } from "../plugin_factory";
 import { PluginService } from "../plugin_service";
 import { AwsWrapperError } from "../utils/errors";
 import { Messages } from "../utils/messages";
-import { ConnectionPlugin } from "../connection_plugin";
 
-export class AuroraInitialConnectionStrategyFactory implements ConnectionPluginFactory {
-  async getInstance(pluginService: PluginService, props: Map<string, any>): Promise<ConnectionPlugin> {
+export class AuroraInitialConnectionStrategyFactory extends ConnectionPluginFactory {
+  private static auroraInitialConnectionStrategyPlugin: any;
+
+  async getInstance(pluginService: PluginService, props: Map<string, any>) {
     try {
-      const auroraInitialConnectionStrategyPlugin = await import("./aurora_initial_connection_strategy_plugin");
-      return new auroraInitialConnectionStrategyPlugin.AuroraInitialConnectionStrategyPlugin(pluginService);
+      if (!AuroraInitialConnectionStrategyFactory.auroraInitialConnectionStrategyPlugin) {
+        AuroraInitialConnectionStrategyFactory.auroraInitialConnectionStrategyPlugin = await import("./aurora_initial_connection_strategy_plugin");
+      }
+      return new AuroraInitialConnectionStrategyFactory.auroraInitialConnectionStrategyPlugin.AuroraInitialConnectionStrategyPlugin(pluginService);
     } catch (error: any) {
       throw new AwsWrapperError(Messages.get("ConnectionPluginChainBuilder.errorImportingPlugin", "AuroraInitialConnectionStrategyPlugin"));
     }

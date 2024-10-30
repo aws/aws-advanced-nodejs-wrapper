@@ -21,14 +21,22 @@ import { logger } from "../../../logutils";
 import { AwsWrapperError } from "../../utils/errors";
 import { Messages } from "../../utils/messages";
 
-export class FederatedAuthPluginFactory implements ConnectionPluginFactory {
+export class FederatedAuthPluginFactory extends ConnectionPluginFactory {
+  private static federatedAuthPlugin: any;
+  private static adfsCredentialsProvider: any;
+
   async getInstance(pluginService: PluginService, properties: Map<string, any>): Promise<ConnectionPlugin> {
     try {
-      const federatedAuthPluginImport = await import("./federated_auth_plugin");
-      const adfsCredentialsProviderFactoryImport = await import("./adfs_credentials_provider_factory");
+      if (!FederatedAuthPluginFactory.federatedAuthPlugin) {
+        FederatedAuthPluginFactory.federatedAuthPlugin = await import("./federated_auth_plugin");
+      }
 
-      const adfsCredentialsProviderFactory = new adfsCredentialsProviderFactoryImport.AdfsCredentialsProviderFactory(pluginService);
-      return new federatedAuthPluginImport.FederatedAuthPlugin(pluginService, adfsCredentialsProviderFactory);
+      if (!FederatedAuthPluginFactory.adfsCredentialsProvider) {
+        FederatedAuthPluginFactory.adfsCredentialsProvider = await import("./adfs_credentials_provider_factory");
+      }
+
+      const adfsCredentialsProviderFactory = new FederatedAuthPluginFactory.adfsCredentialsProvider.AdfsCredentialsProviderFactory(pluginService);
+      return new FederatedAuthPluginFactory.federatedAuthPlugin.FederatedAuthPlugin(pluginService, adfsCredentialsProviderFactory);
     } catch (error: any) {
       logger.error(error.message);
       throw new AwsWrapperError(Messages.get("ConnectionPluginChainBuilder.errorImportingPlugin", "FederatedAuthPlugin"));

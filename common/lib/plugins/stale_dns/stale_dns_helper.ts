@@ -88,7 +88,6 @@ export class StaleDnsHelper {
       await this.pluginService.refreshHostList(currentTargetClient);
     }
 
-    logger.debug(this.pluginService.getHosts());
     if (!this.writerHostInfo) {
       const writerCandidate = getWriter(this.pluginService.getHosts());
       if (writerCandidate && this.rdsUtils.isRdsClusterDns(writerCandidate.host)) {

@@ -41,7 +41,7 @@ export class WrapperProperty<T> {
 
 export class WrapperProperties {
   static readonly MONITORING_PROPERTY_PREFIX: string = "monitoring_";
-  static readonly DEFAULT_PLUGINS = "auroraConnectionTracker,failover,hostMonitoring";
+  static readonly DEFAULT_PLUGINS = "auroraConnectionTracker,failover,efm";
   static readonly DEFAULT_TOKEN_EXPIRATION_SEC = 15 * 60;
 
   static readonly PLUGINS = new WrapperProperty<string>(

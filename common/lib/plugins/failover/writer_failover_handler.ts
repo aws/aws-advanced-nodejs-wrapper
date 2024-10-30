@@ -236,7 +236,7 @@ class ReconnectToWriterHandlerTask {
         } catch (error) {
           // Propagate exceptions that are not caused by network errors.
           if (error instanceof AwsWrapperError && !this.pluginService.isNetworkError(error)) {
-            logger.info("ClusterAwareWriterFailoverHandler.taskAEncounteredException", error.message);
+            logger.info(Messages.get("ClusterAwareWriterFailoverHandler.taskAEncounteredException", error.message));
             return new WriterFailoverResult(false, false, [], ClusterAwareWriterFailoverHandler.RECONNECT_WRITER_TASK, null, error);
           }
         }

@@ -21,11 +21,15 @@ import { AwsWrapperError } from "../utils/errors";
 import { Messages } from "../utils/messages";
 import { logger } from "../../logutils";
 
-export class ConnectTimePluginFactory implements ConnectionPluginFactory {
+export class ConnectTimePluginFactory extends ConnectionPluginFactory {
+  private static connectTimePlugin: any;
+
   async getInstance(pluginService: PluginService, properties: Map<string, any>): Promise<ConnectionPlugin> {
     try {
-      const connectTimePlugin = await import("./connect_time_plugin");
-      return new connectTimePlugin.ConnectTimePlugin();
+      if (!ConnectTimePluginFactory.connectTimePlugin) {
+        ConnectTimePluginFactory.connectTimePlugin = await import("./connect_time_plugin");
+      }
+      return new ConnectTimePluginFactory.connectTimePlugin.ConnectTimePlugin();
     } catch (error: any) {
       logger.error(error.message);
       throw new AwsWrapperError(Messages.get("ConnectionPluginChainBuilder.errorImportingPlugin", "ConnectTimePlugin"));

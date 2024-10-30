@@ -35,20 +35,18 @@ import { AuroraInitialConnectionStrategyFactory } from "./plugins/aurora_initial
 import { AuroraConnectionTrackerPluginFactory } from "./plugins/connection_tracker/aurora_connection_tracker_plugin_factory";
 import { ConnectionProviderManager } from "./connection_provider_manager";
 import { DeveloperConnectionPluginFactory } from "./plugins/dev/developer_connection_plugin_factory";
+import { ConnectionPluginFactory } from "./plugin_factory";
 
 /*
   Type alias used for plugin factory sorting. It holds a reference to a plugin
   factory and an assigned weight.
 */
 type PluginFactoryInfo = {
-  factory: FactoryClass;
+  factory: typeof ConnectionPluginFactory;
   weight: number;
 };
 
-export type FactoryClass = typeof IamAuthenticationPluginFactory | typeof FailoverPluginFactory;
-
 export class ConnectionPluginChainBuilder {
-  static readonly DEFAULT_PLUGINS = "failover,efm";
   static readonly WEIGHT_RELATIVE_TO_PRIOR_PLUGIN = -1;
 
   static readonly PLUGIN_FACTORIES = new Map<string, PluginFactoryInfo>([
@@ -75,10 +73,10 @@ export class ConnectionPluginChainBuilder {
     const plugins: ConnectionPlugin[] = [];
     let pluginCodes: string = props.get(WrapperProperties.PLUGINS.name);
     if (pluginCodes == null) {
-      pluginCodes = ConnectionPluginChainBuilder.DEFAULT_PLUGINS;
+      pluginCodes = WrapperProperties.DEFAULT_PLUGINS;
     }
 
-    const usingDefault = pluginCodes === ConnectionPluginChainBuilder.DEFAULT_PLUGINS;
+    const usingDefault = pluginCodes === WrapperProperties.DEFAULT_PLUGINS;
 
     pluginCodes = pluginCodes.trim();
 

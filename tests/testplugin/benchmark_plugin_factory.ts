@@ -21,7 +21,7 @@ import { AwsWrapperError } from "../../common/lib/utils/errors";
 import { Messages } from "../../common/lib/utils/messages";
 import { BenchmarkPlugin } from "./benchmark_plugin";
 
-export class BenchmarkPluginFactory implements ConnectionPluginFactory {
+export class BenchmarkPluginFactory extends ConnectionPluginFactory {
   async getInstance(pluginService: PluginService, properties: object): Promise<ConnectionPlugin> {
     try {
       return new BenchmarkPlugin();

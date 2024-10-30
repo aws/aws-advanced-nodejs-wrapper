@@ -28,7 +28,7 @@ export class AwsPgPoolClient implements AwsPoolClient {
     this.targetPool = new pkgPg.Pool(props);
     this.targetPool.on("connect", (_client: pkgPg.PoolClient) => {
       _client.on("error", (err: Error) => {
-        logger.debug(err);
+        logger.debug(err.message);
       });
     });
   }

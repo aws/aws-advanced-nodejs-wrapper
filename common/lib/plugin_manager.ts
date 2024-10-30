@@ -16,7 +16,7 @@
 
 import { ConnectionPlugin } from "./connection_plugin";
 import { HostInfo } from "./host_info";
-import { ConnectionPluginChainBuilder, FactoryClass } from "./connection_plugin_chain_builder";
+import { ConnectionPluginChainBuilder } from "./connection_plugin_chain_builder";
 import { AwsWrapperError } from "./utils/errors";
 import { Messages } from "./utils/messages";
 import { PluginServiceManagerContainer } from "./plugin_service_manager_container";
@@ -30,6 +30,7 @@ import { ConnectionProviderManager } from "./connection_provider_manager";
 import { TelemetryFactory } from "./utils/telemetry/telemetry_factory";
 import { TelemetryTraceLevel } from "./utils/telemetry/telemetry_trace_level";
 import { ConnectionProvider } from "./connection_provider";
+import { ConnectionPluginFactory } from "./plugin_factory";
 
 type PluginFunc<T> = (plugin: ConnectionPlugin, targetFunc: () => Promise<T>) => Promise<T>;
 
@@ -327,7 +328,7 @@ export class PluginManager {
     throw new AwsWrapperError(Messages.get("PluginManager.unableToRetrievePlugin"));
   }
 
-  static registerPlugin(pluginCode: string, pluginFactory: FactoryClass) {
+  static registerPlugin(pluginCode: string, pluginFactory: typeof ConnectionPluginFactory) {
     ConnectionPluginChainBuilder.PLUGIN_FACTORIES.set(pluginCode, {
       factory: pluginFactory,
       weight: ConnectionPluginChainBuilder.WEIGHT_RELATIVE_TO_PRIOR_PLUGIN

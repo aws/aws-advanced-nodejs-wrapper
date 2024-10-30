@@ -22,11 +22,15 @@ import { logger } from "../../../logutils";
 import { AwsWrapperError } from "../../utils/errors";
 import { Messages } from "../../utils/messages";
 
-export class FailoverPluginFactory implements ConnectionPluginFactory {
+export class FailoverPluginFactory extends ConnectionPluginFactory {
+  private static failoverPlugin: any;
+
   async getInstance(pluginService: PluginService, properties: Map<string, any>): Promise<ConnectionPlugin> {
     try {
-      const failoverPlugin = await import("./failover_plugin");
-      return new failoverPlugin.FailoverPlugin(pluginService, properties, new RdsUtils());
+      if (!FailoverPluginFactory.failoverPlugin) {
+        FailoverPluginFactory.failoverPlugin = await import("./failover_plugin");
+      }
+      return new FailoverPluginFactory.failoverPlugin.FailoverPlugin(pluginService, properties, new RdsUtils());
     } catch (error: any) {
       logger.error(error.message);
       throw new AwsWrapperError(Messages.get("ConnectionPluginChainBuilder.errorImportingPlugin", "FailoverPlugin"));
