@@ -17,7 +17,7 @@
 export interface AwsPoolClient {
   connect(): Promise<any>;
 
-  end(poolClient: any): Promise<any>;
+  end(): Promise<any>;
 
   releaseResources(): Promise<void>;
 

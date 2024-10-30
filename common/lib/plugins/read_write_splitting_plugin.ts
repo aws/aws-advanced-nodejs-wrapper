@@ -346,7 +346,7 @@ export class ReadWriteSplittingPlugin extends AbstractConnectionPlugin implement
         logger.debug(Messages.get("ReadWriteSplittingPlugin.switchedFromWriterToReader", this._readerHostInfo.url));
       } catch (error: any) {
         logger.debug(Messages.get("ReadWriteSplittingPlugin.errorSwitchingToCachedReader", this._readerHostInfo.url));
-        await this.pluginService.tryClosingTargetClient(this.readerTargetClient);
+        await this.pluginService.abortTargetClient(this.readerTargetClient);
         this.readerTargetClient = undefined;
         this._readerHostInfo = undefined;
         await this.initializeReaderClient(hosts);
@@ -368,7 +368,7 @@ export class ReadWriteSplittingPlugin extends AbstractConnectionPlugin implement
     const currentTargetClient = this.pluginService.getCurrentClient().targetClient;
     try {
       if (internalTargetClient != null && internalTargetClient !== currentTargetClient && (await this.isTargetClientUsable(internalTargetClient))) {
-        await this.pluginService.tryClosingTargetClient(internalTargetClient);
+        await this.pluginService.abortTargetClient(internalTargetClient);
 
         if (internalTargetClient === this.writerTargetClient) {
           this.writerTargetClient = undefined;

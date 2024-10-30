@@ -23,11 +23,6 @@ import { DatabaseDialectCodes } from "../../../common/lib/database_dialect/datab
 import { TransactionIsolationLevel } from "../../../common/lib/utils/transaction_isolation_level";
 import { ClientWrapper } from "../../../common/lib/client_wrapper";
 import { FailoverRestriction } from "../../../common/lib/plugins/failover/failover_restriction";
-import { AwsPoolClient } from "../../../common/lib/aws_pool_client";
-import { AwsPgPoolClient } from "../pg_pool_client";
-import { AwsPoolConfig } from "../../../common/lib/aws_pool_config";
-import { PoolConfig } from "pg";
-import { WrapperProperties } from "../../../common/lib/wrapper_property";
 
 export class PgDatabaseDialect implements DatabaseDialect {
   protected dialectName: string = this.constructor.name;
@@ -46,7 +41,7 @@ export class PgDatabaseDialect implements DatabaseDialect {
   }
 
   async getHostAliasAndParseResults(targetClient: ClientWrapper): Promise<string> {
-    return targetClient.client
+    return targetClient
       .query(this.getHostAliasQuery())
       .then((rows: any) => {
         return rows.rows[0]["concat"];
@@ -61,7 +56,7 @@ export class PgDatabaseDialect implements DatabaseDialect {
   }
 
   async isDialect(targetClient: ClientWrapper): Promise<boolean> {
-    return await targetClient.client
+    return await targetClient
       .query("SELECT 1 FROM pg_proc LIMIT 1")
       .then((result: { rows: any }) => {
         return !!result.rows[0];
@@ -71,23 +66,13 @@ export class PgDatabaseDialect implements DatabaseDialect {
       });
   }
 
-  getAwsPoolClient(props: PoolConfig): AwsPoolClient {
-    return new AwsPgPoolClient(props);
-  }
-
   getHostListProvider(props: Map<string, any>, originalUrl: string, hostListProviderService: HostListProviderService): HostListProvider {
     return new ConnectionStringHostListProvider(props, originalUrl, this.getDefaultPort(), hostListProviderService);
   }
 
-  async tryClosingTargetClient(targetClient: ClientWrapper) {
-    await targetClient.client.end().catch((error: any) => {
-      // ignore
-    });
-  }
-
   async isClientValid(targetClient: ClientWrapper): Promise<boolean> {
     try {
-      return await targetClient.client
+      return await targetClient
         .query("SELECT 1")
         .then(() => {
           return true;
@@ -98,10 +83,6 @@ export class PgDatabaseDialect implements DatabaseDialect {
     } catch (error: any) {
       return false;
     }
-  }
-
-  async connect(targetClient: any): Promise<any> {
-    return await targetClient.connect();
   }
 
   getDatabaseType(): DatabaseType {
@@ -162,25 +143,5 @@ export class PgDatabaseDialect implements DatabaseDialect {
     }
 
     return undefined;
-  }
-
-  async rollback(targetClient: ClientWrapper): Promise<any> {
-    return await targetClient.client.rollback();
-  }
-
-  preparePoolClientProperties(props: Map<string, any>, poolConfig: AwsPoolConfig | undefined): any {
-    const finalPoolConfig: PoolConfig = {};
-    const finalClientProps = WrapperProperties.removeWrapperProperties(props);
-
-    Object.assign(finalPoolConfig, finalClientProps);
-    finalPoolConfig.max = poolConfig?.maxConnections;
-    finalPoolConfig.min = poolConfig?.minConnections;
-    finalPoolConfig.idleTimeoutMillis = poolConfig?.idleTimeoutMillis;
-    finalPoolConfig.allowExitOnIdle = poolConfig?.allowExitOnIdle;
-    return finalPoolConfig;
-  }
-
-  async end(clientWrapper: ClientWrapper): Promise<void> {
-    return await clientWrapper.client.end();
   }
 }

@@ -32,6 +32,9 @@ import { ClientWrapper } from "../../common/lib/client_wrapper";
 import { RdsMultiAZMySQLDatabaseDialect } from "../../mysql/lib/dialect/rds_multi_az_mysql_database_dialect";
 import { RdsMultiAZPgDatabaseDialect } from "../../pg/lib/dialect/rds_multi_az_pg_database_dialect";
 import { DatabaseDialectManager } from "../../common/lib/database_dialect/database_dialect_manager";
+import { NodePostgresDriverDialect } from "../../pg/lib/dialect/node_postgres_driver_dialect";
+import { mock } from "ts-mockito";
+import { PgClientWrapper } from "../../common/lib/pg_client_wrapper";
 
 const LOCALHOST = "localhost";
 const RDS_DATABASE = "database-1.xyz.us-east-2.rds.amazonaws.com";
@@ -176,6 +179,7 @@ const expectedDialectMapping: Map<DatabaseDialectCodes, DialectInputOutput> = ne
 
 const pluginServiceManagerContainer = new PluginServiceManagerContainer();
 const mockClient = new AwsPGClient({});
+const mockDriverDialect = mock(NodePostgresDriverDialect);
 
 class MockTargetClient {
   readonly expectedInputs: string[];
@@ -186,20 +190,16 @@ class MockTargetClient {
     this.expectedResultSet = expectedResultSet;
   }
 
-  query(sql: any) {
+  query(sql: string) {
     if (this.expectedInputs.includes(sql)) {
       return Promise.resolve(this.expectedResultSet);
     }
 
     return Promise.reject(new Error("Unsupported query"));
   }
-
-  promise() {
-    return this;
-  }
 }
 
-describe("test dialects", () => {
+describe("test database dialects", () => {
   it.each([
     [LOCALHOST, DatabaseDialectCodes.MYSQL, DatabaseType.MYSQL],
     [RDS_DATABASE, DatabaseDialectCodes.RDS_MYSQL, DatabaseType.MYSQL],
@@ -269,12 +269,15 @@ describe("test dialects", () => {
       hostAvailabilityStrategy: new SimpleHostAvailabilityStrategy()
     }).build();
 
-    const mockClientWrapper: ClientWrapper = {
-      client: mockTargetClient,
-      hostInfo: currentHostInfo,
-      properties: new Map<string, any>()
-    };
-    const pluginService = new PluginService(pluginServiceManagerContainer, mockClient, databaseType, expectedDialect!.dialects, props);
+    const mockClientWrapper: ClientWrapper = new PgClientWrapper(mockTargetClient, currentHostInfo, new Map<string, any>());
+    const pluginService = new PluginService(
+      pluginServiceManagerContainer,
+      mockClient,
+      databaseType,
+      expectedDialect!.dialects,
+      props,
+      mockDriverDialect
+    );
     await pluginService.updateDialect(mockClientWrapper);
     expect(pluginService.getDialect()).toBe(expectedDialectClass);
   });

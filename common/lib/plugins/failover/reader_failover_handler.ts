@@ -131,7 +131,7 @@ export class ClusterAwareReaderFailoverHandler implements ReaderFailoverHandler 
         // Need to continue this loop and to make another try to connect to a reader.
 
         try {
-          await this.pluginService.tryClosingTargetClient(result.client);
+          await this.pluginService.abortTargetClient(result.client);
         } catch (error) {
           // ignore
         }
@@ -322,7 +322,7 @@ class ConnectionAttemptTask {
         this.taskHandler.setSelectedConnectionAttemptTask(this.failoverTaskId, this.taskId);
         return new ReaderFailoverResult(this.targetClient, this.newHost, true, undefined, this.taskId);
       }
-      await this.pluginService.tryClosingTargetClient(this.targetClient);
+      await this.pluginService.abortTargetClient(this.targetClient);
       return new ReaderFailoverResult(null, null, false, undefined, this.taskId);
     } catch (error) {
       this.pluginService.setAvailability(this.newHost.allAliases, HostAvailability.NOT_AVAILABLE);
@@ -342,7 +342,7 @@ class ConnectionAttemptTask {
 
   async performFinalCleanup() {
     if (this.taskHandler.getSelectedConnectionAttemptTask(this.failoverTaskId) !== this.taskId) {
-      await this.pluginService.tryClosingTargetClient(this.targetClient);
+      await this.pluginService.abortTargetClient(this.targetClient);
     }
   }
 }

@@ -21,7 +21,12 @@
     "@typescript-eslint/no-explicit-any": "off",
     "@typescript-eslint/no-unused-vars": "off",
     "@typescript-eslint/ban-ts-comment": "off",
-    "prettier/prettier": 2,
+    "prettier/prettier": [
+      "error",
+      {
+        "endOfLine": "auto"
+      }
+    ],
     "header/header": [
       1,
       "block",

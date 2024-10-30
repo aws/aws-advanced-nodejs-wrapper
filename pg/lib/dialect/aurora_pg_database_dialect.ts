@@ -42,7 +42,7 @@ export class AuroraPgDatabaseDialect extends PgDatabaseDialect implements Topolo
   }
 
   async queryForTopology(targetClient: ClientWrapper, hostListProvider: HostListProvider): Promise<HostInfo[]> {
-    const res = await targetClient.client.query(AuroraPgDatabaseDialect.TOPOLOGY_QUERY);
+    const res = await targetClient.query(AuroraPgDatabaseDialect.TOPOLOGY_QUERY);
     const hosts: HostInfo[] = [];
     const rows: any[] = res.rows;
     rows.forEach((row) => {
@@ -59,13 +59,13 @@ export class AuroraPgDatabaseDialect extends PgDatabaseDialect implements Topolo
     return hosts;
   }
 
-  async identifyConnection(targetClient: ClientWrapper, props: Map<string, any>): Promise<string> {
-    const res = await targetClient.client.query(AuroraPgDatabaseDialect.HOST_ID_QUERY);
+  async identifyConnection(targetClient: ClientWrapper): Promise<string> {
+    const res = await targetClient.query(AuroraPgDatabaseDialect.HOST_ID_QUERY);
     return Promise.resolve(res.rows[0]["host"] ?? "");
   }
 
-  async getHostRole(targetClient: ClientWrapper, props: Map<string, any>): Promise<HostRole> {
-    const res = await targetClient.client.query(AuroraPgDatabaseDialect.IS_READER_QUERY);
+  async getHostRole(targetClient: ClientWrapper): Promise<HostRole> {
+    const res = await targetClient.query(AuroraPgDatabaseDialect.IS_READER_QUERY);
     return Promise.resolve(res.rows[0]["is_reader"] === "true" ? HostRole.READER : HostRole.WRITER);
   }
 
@@ -74,7 +74,7 @@ export class AuroraPgDatabaseDialect extends PgDatabaseDialect implements Topolo
       return false;
     }
 
-    return await targetClient.client
+    return await targetClient
       .query(AuroraPgDatabaseDialect.EXTENSIONS_SQL)
       .then((result: any) => {
         return result.rows[0]["aurora_stat_utils"];

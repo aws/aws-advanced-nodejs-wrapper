@@ -31,7 +31,7 @@ import { logger } from "../logutils";
 import { maskProperties } from "./utils/utils";
 import { ClientWrapper } from "./client_wrapper";
 import { RoundRobinHostSelector } from "./round_robin_host_selector";
-import { DatabaseDialect } from "./database_dialect/database_dialect";
+import { DriverDialect } from "./driver_dialect/driver_dialect";
 
 export class DriverConnectionProvider implements ConnectionProvider {
   private static readonly acceptedStrategies: Map<string, HostSelector> = new Map([
@@ -53,9 +53,9 @@ export class DriverConnectionProvider implements ConnectionProvider {
     const resultProps = new Map(props);
     let connectionHostInfo: HostInfo;
 
+    const driverDialect: DriverDialect = pluginService.getDriverDialect();
     try {
-      const targetClient: any = await Promise.resolve(pluginService.createTargetClient(props));
-      await pluginService.getDialect().connect(targetClient);
+      const targetClient: any = await driverDialect.connect(hostInfo, props);
       connectionHostInfo = new HostInfoBuilder({
         hostAvailabilityStrategy: hostInfo.hostAvailabilityStrategy
       })
@@ -92,12 +92,6 @@ export class DriverConnectionProvider implements ConnectionProvider {
       const originalHost: string = hostInfo.host;
       const fixedHost: string = this.rdsUtils.removeGreenInstancePrefix(hostInfo.host);
       resultProps.set(WrapperProperties.HOST.name, fixedHost);
-      connectionHostInfo = new HostInfoBuilder({
-        hostAvailabilityStrategy: hostInfo.hostAvailabilityStrategy
-      })
-        .copyFrom(hostInfo)
-        .withHost(fixedHost)
-        .build();
 
       logger.info(
         "Connecting to " +
@@ -108,23 +102,10 @@ export class DriverConnectionProvider implements ConnectionProvider {
           JSON.stringify(Object.fromEntries(maskProperties(resultProps)))
       );
 
-      const newTargetClient = pluginService.createTargetClient(resultProps);
-      await pluginService.getDialect().connect(newTargetClient);
-      resultTargetClient = newTargetClient;
+      resultTargetClient = driverDialect.connect(hostInfo, resultProps);
     }
 
-    return {
-      client: resultTargetClient,
-      hostInfo: connectionHostInfo,
-      properties: resultProps
-    };
-  }
-
-  async end(pluginService: PluginService, clientWrapper: ClientWrapper | undefined): Promise<void> {
-    if (clientWrapper === undefined) {
-      return;
-    }
-    return await pluginService.getDialect().end(clientWrapper);
+    return resultTargetClient;
   }
 
   getHostInfoByStrategy(hosts: HostInfo[], role: HostRole, strategy: string, props?: Map<string, any>): HostInfo {

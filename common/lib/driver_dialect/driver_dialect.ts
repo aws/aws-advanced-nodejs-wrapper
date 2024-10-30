@@ -14,18 +14,17 @@
   limitations under the License.
 */
 
-import { HostInfo } from "./host_info";
+import { ClientWrapper } from "../client_wrapper";
+import { AwsPoolConfig } from "../aws_pool_config";
+import { AwsPoolClient } from "../aws_pool_client";
+import { HostInfo } from "../host_info";
 
-export interface ClientWrapper {
-  readonly client: any;
-  readonly hostInfo: HostInfo;
-  readonly properties: Map<string, any>;
+export interface DriverDialect {
+  getDialectName(): string;
 
-  query(sql: any): Promise<any>;
+  connect(hostInfo: HostInfo, props: Map<string, any>): Promise<ClientWrapper>;
 
-  end(): Promise<void>;
+  preparePoolClientProperties(props: Map<string, any>, poolConfig: AwsPoolConfig | undefined): any;
 
-  rollback(): Promise<void>;
-
-  abort(): Promise<void>;
+  getAwsPoolClient(props: any): AwsPoolClient;
 }

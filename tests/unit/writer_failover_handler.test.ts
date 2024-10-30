@@ -27,6 +27,7 @@ import { AwsPGClient } from "../../pg/lib";
 import { WriterFailoverResult } from "../../common/lib/plugins/failover/writer_failover_result";
 import { ClientWrapper } from "../../common/lib/client_wrapper";
 import { PgDatabaseDialect } from "../../pg/lib/dialect/pg_database_dialect";
+import { NodePostgresDriverDialect } from "../../pg/lib/dialect/node_postgres_driver_dialect";
 
 const builder = new HostInfoBuilder({ hostAvailabilityStrategy: new SimpleHostAvailabilityStrategy() });
 
@@ -58,6 +59,8 @@ const mockClientWrapperB: ClientWrapper = {
   properties: new Map<string, any>()
 };
 
+const mockDriverDialect = mock(NodePostgresDriverDialect);
+
 describe("writer failover handler", () => {
   beforeEach(() => {
     writer.addAlias("writer-host");
@@ -78,7 +81,6 @@ describe("writer failover handler", () => {
     when(mockPluginService.forceConnect(readerA, anything())).thenThrow(new AwsWrapperError());
     when(mockPluginService.forceConnect(readerB, anything())).thenThrow(new AwsWrapperError());
     when(mockPluginService.getHosts()).thenReturn(topology);
-    when(mockPluginService.createTargetClient(anything())).thenReturn(mockTargetClient);
     when(mockReaderFailover.getReaderConnection(anything())).thenThrow(new AwsWrapperError());
     const mockReaderFailoverInstance = instance(mockReaderFailover);
     const mockPluginServiceInstance = instance(mockPluginService);
@@ -99,7 +101,6 @@ describe("writer failover handler", () => {
     when(mockPluginService.forceConnect(readerA, anything())).thenResolve(mockClientWrapperB);
     when(mockPluginService.forceConnect(readerB, anything())).thenThrow(new AwsWrapperError());
     when(mockPluginService.getHosts()).thenReturn(topology).thenReturn(newTopology);
-    when(mockPluginService.createTargetClient(anything())).thenReturn(mockTargetClient);
     when(mockReaderFailover.getReaderConnection(anything())).thenCall(async () => {
       await new Promise((resolve, reject) => {
         timeoutId = setTimeout(resolve, 5000);
@@ -132,7 +133,6 @@ describe("writer failover handler", () => {
     when(mockPluginService.forceConnect(readerA, anything())).thenResolve(mockClientWrapperB);
     when(mockPluginService.forceConnect(readerB, anything())).thenThrow(new AwsWrapperError());
     when(mockPluginService.getHosts()).thenReturn(topology);
-    when(mockPluginService.createTargetClient(anything())).thenReturn(mockTargetClient);
     when(mockReaderFailover.getReaderConnection(anything())).thenResolve(new ReaderFailoverResult(mockClientWrapper, readerA, true));
     const mockReaderFailoverInstance = instance(mockReaderFailover);
     const mockPluginServiceInstance = instance(mockPluginService);
@@ -159,7 +159,6 @@ describe("writer failover handler", () => {
     when(mockPluginService.forceConnect(newWriterHost, anything())).thenResolve(mockClientWrapper);
     when(mockPluginService.forceConnect(readerA, anything())).thenResolve(mockClientWrapperB);
     when(mockPluginService.forceConnect(readerB, anything())).thenThrow(new AwsWrapperError());
-    when(mockPluginService.createTargetClient(anything())).thenReturn(mockTargetClient);
     when(mockPluginService.getCurrentClient()).thenReturn(mockClientInstance);
     when(mockPluginService.getHosts()).thenReturn(newTopology);
     when(mockReaderFailover.getReaderConnection(anything())).thenResolve(new ReaderFailoverResult(mockClientWrapper, readerA, true));
@@ -196,7 +195,6 @@ describe("writer failover handler", () => {
     });
 
     const newTopology = [newWriterHost, writer, readerA, readerB];
-    when(mockPluginService.createTargetClient(anything())).thenReturn(mockTargetClient);
     when(mockPluginService.getCurrentClient()).thenReturn(mockClientInstance);
     when(mockPluginService.getHosts()).thenReturn(newTopology);
     when(mockReaderFailover.getReaderConnection(anything())).thenResolve(new ReaderFailoverResult(mockClientWrapper, readerA, true));
@@ -233,7 +231,6 @@ describe("writer failover handler", () => {
       return;
     });
 
-    when(mockPluginService.createTargetClient(anything())).thenReturn(mockTargetClient);
     when(mockPluginService.getCurrentClient()).thenReturn(mockClientInstance);
     when(mockPluginService.getHosts()).thenReturn(newTopology);
     when(mockReaderFailover.getReaderConnection(anything())).thenResolve(new ReaderFailoverResult(mockClientWrapper, readerA, true));
@@ -261,7 +258,6 @@ describe("writer failover handler", () => {
     when(mockPluginService.forceConnect(newWriterHost, anything())).thenThrow(error);
     when(mockPluginService.isNetworkError(error)).thenReturn(true);
     when(mockPluginService.getHosts()).thenReturn(newTopology);
-    when(mockPluginService.createTargetClient(anything())).thenReturn(mockTargetClient);
     when(mockPluginService.getCurrentClient()).thenReturn(mockClientInstance);
     when(mockReaderFailover.getReaderConnection(anything())).thenResolve(new ReaderFailoverResult(mockClientWrapper, readerA, true));
     const mockReaderFailoverInstance = instance(mockReaderFailover);

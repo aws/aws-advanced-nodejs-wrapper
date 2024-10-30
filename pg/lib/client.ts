@@ -14,9 +14,8 @@
   limitations under the License.
 */
 
-import { Client, QueryResult } from "pg";
+import { QueryResult } from "pg";
 import { AwsClient } from "../../common/lib/aws_client";
-import { WrapperProperties } from "../../common/lib/wrapper_property";
 import { PgErrorHandler } from "./pg_error_handler";
 import { PgConnectionUrlParser } from "./pg_connection_url_parser";
 import { DatabaseDialect, DatabaseType } from "../../common/lib/database_dialect/database_dialect";
@@ -31,6 +30,7 @@ import { ClientWrapper } from "../../common/lib/client_wrapper";
 import { RdsMultiAZPgDatabaseDialect } from "./dialect/rds_multi_az_pg_database_dialect";
 import { HostInfo } from "../../common/lib/host_info";
 import { TelemetryTraceLevel } from "../../common/lib/utils/telemetry/telemetry_trace_level";
+import { NodePostgresDriverDialect } from "./dialect/node_postgres_driver_dialect";
 
 export class AwsPGClient extends AwsClient {
   private static readonly knownDialectsByCode: Map<string, DatabaseDialect> = new Map([
@@ -41,14 +41,14 @@ export class AwsPGClient extends AwsClient {
   ]);
 
   constructor(config: any) {
-    super(config, new PgErrorHandler(), DatabaseType.POSTGRES, AwsPGClient.knownDialectsByCode, new PgConnectionUrlParser());
-    this._createClientFunc = (config: Map<string, any>) => {
-      const targetClient: Client = new Client(WrapperProperties.removeWrapperProperties(config));
-      targetClient.on("error", (error: any) => {
-        this.emit("error", error);
-      });
-      return targetClient;
-    };
+    super(
+      config,
+      new PgErrorHandler(),
+      DatabaseType.POSTGRES,
+      AwsPGClient.knownDialectsByCode,
+      new PgConnectionUrlParser(),
+      new NodePostgresDriverDialect()
+    );
     this.resetState();
   }
 
@@ -62,6 +62,9 @@ export class AwsPGClient extends AwsClient {
         throw new AwsWrapperError(Messages.get("HostInfo.noHostParameter"));
       }
       const result: ClientWrapper = await this.pluginManager.connect(hostInfo, this.properties, true);
+      result.client.on("error", (error: any) => {
+        this.emit("error", error);
+      });
       await this.pluginService.setCurrentClient(result, result.hostInfo);
       await this.internalPostConnect();
     });
@@ -84,7 +87,7 @@ export class AwsPGClient extends AwsClient {
         "query",
         async () => {
           await this.pluginService.updateState(text);
-          return this.targetClient?.client.query(text);
+          return this.targetClient?.query(text);
         },
         text
       );
@@ -192,7 +195,7 @@ export class AwsPGClient extends AwsClient {
   }
 
   async end() {
-    if (!this.isConnected || !this.targetClient?.client) {
+    if (!this.isConnected || !this.targetClient) {
       // No connections have been initialized.
       // This might happen if end is called in a finally block when an error occurred while initializing the first connection.
       return;
@@ -203,7 +206,7 @@ export class AwsPGClient extends AwsClient {
       this.properties,
       "end",
       () => {
-        return this.pluginService.getConnectionProvider(hostInfo, this.properties).end(this.pluginService, this.targetClient);
+        return this.targetClient!.end();
       },
       null
     );
@@ -211,14 +214,17 @@ export class AwsPGClient extends AwsClient {
     return result;
   }
 
-  async rollback(): Promise<QueryResult> {
+  async rollback(): Promise<any> {
     return this.pluginManager.execute(
       this.pluginService.getCurrentHostInfo(),
       this.properties,
       "rollback",
       async () => {
-        this.pluginService.updateInTransaction("rollback");
-        return await this.targetClient?.client?.rollback();
+        if (this.targetClient) {
+          this.pluginService.updateInTransaction("rollback");
+          return await this.targetClient.rollback();
+        }
+        return null;
       },
       null
     );

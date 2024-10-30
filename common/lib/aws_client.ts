@@ -27,6 +27,7 @@ import { ClientWrapper } from "./client_wrapper";
 import { ConnectionProviderManager } from "./connection_provider_manager";
 import { DefaultTelemetryFactory } from "./utils/telemetry/default_telemetry_factory";
 import { TelemetryFactory } from "./utils/telemetry/telemetry_factory";
+import { DriverDialect } from "./driver_dialect/driver_dialect";
 
 export abstract class AwsClient extends EventEmitter {
   private _defaultPort: number = -1;
@@ -40,7 +41,6 @@ export abstract class AwsClient extends EventEmitter {
   protected _schema: string = "";
   protected _isolationLevel: number = 0;
   protected _errorHandler: ErrorHandler;
-  protected _createClientFunc?: (config: any) => any;
   protected _connectionUrlParser: ConnectionUrlParser;
   readonly properties: Map<string, any>;
   config: any;
@@ -51,7 +51,8 @@ export abstract class AwsClient extends EventEmitter {
     errorHandler: ErrorHandler,
     dbType: DatabaseType,
     knownDialectsByCode: Map<string, DatabaseDialect>,
-    parser: ConnectionUrlParser
+    parser: ConnectionUrlParser,
+    driverDialect: DriverDialect
   ) {
     super();
     this.config = config;
@@ -62,7 +63,7 @@ export abstract class AwsClient extends EventEmitter {
 
     this.telemetryFactory = new DefaultTelemetryFactory(this.properties);
     const container = new PluginServiceManagerContainer();
-    this.pluginService = new PluginService(container, this, dbType, knownDialectsByCode, this.properties);
+    this.pluginService = new PluginService(container, this, dbType, knownDialectsByCode, this.properties, driverDialect);
     this.pluginManager = new PluginManager(
       container,
       this.properties,
@@ -109,10 +110,6 @@ export abstract class AwsClient extends EventEmitter {
 
   get connectionUrlParser(): ConnectionUrlParser {
     return this._connectionUrlParser;
-  }
-
-  getCreateClientFunc<Type>(): ((config: any) => Type) | undefined {
-    return this._createClientFunc;
   }
 
   abstract updateSessionStateReadOnly(readOnly: boolean): Promise<any | void>;

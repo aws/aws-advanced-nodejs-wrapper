@@ -61,7 +61,7 @@ describe("test_stale_dns_helper", () => {
   beforeEach(() => {
     when(mockPluginService.getCurrentClient()).thenReturn(mockInitialConn);
     when(mockPluginService.connect(anything(), anything())).thenResolve();
-    when(mockPluginService.tryClosingTargetClient(anything())).thenResolve();
+    when(mockPluginService.abort(anything())).thenResolve();
     when(mockPluginService.getDialect()).thenReturn(mockDialect);
     when(mockPluginService.getCurrentHostInfo()).thenReturn(mockHostInfo);
     when(mockPluginService.getTelemetryFactory()).thenReturn(new NullTelemetryFactory());

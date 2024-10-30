@@ -33,10 +33,7 @@ export interface DatabaseDialect {
   getServerVersionQuery(): string;
   getDialectUpdateCandidates(): string[];
   isDialect(targetClient: ClientWrapper): Promise<boolean>;
-  getAwsPoolClient(props: any): AwsPoolClient;
   getHostListProvider(props: Map<string, any>, originalUrl: string, hostListProviderService: HostListProviderService): HostListProvider;
-  tryClosingTargetClient(targetClient: ClientWrapper): Promise<void>;
-  rollback(targetClient: ClientWrapper): Promise<any>;
   isClientValid(targetClient: ClientWrapper): Promise<boolean>;
   getDatabaseType(): DatabaseType;
   getDialectName(): string;
@@ -46,7 +43,4 @@ export interface DatabaseDialect {
   doesStatementSetAutoCommit(statement: string): boolean | undefined;
   doesStatementSetSchema(statement: string): string | undefined;
   doesStatementSetCatalog(statement: string): string | undefined;
-  connect(targetClient: any): Promise<any>;
-  end(clientWrapper: ClientWrapper | undefined): Promise<void>;
-  preparePoolClientProperties(props: Map<string, any>, poolConfig: AwsPoolConfig | undefined): any;
 }

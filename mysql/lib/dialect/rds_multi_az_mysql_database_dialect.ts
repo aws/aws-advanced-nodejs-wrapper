@@ -38,13 +38,13 @@ export class RdsMultiAZMySQLDatabaseDialect extends MySQLDatabaseDialect impleme
   private static readonly IS_READER_QUERY: string = "SELECT @@read_only";
 
   async isDialect(targetClient: ClientWrapper): Promise<boolean> {
-    const res = await targetClient.client.query(RdsMultiAZMySQLDatabaseDialect.TOPOLOGY_TABLE_EXIST_QUERY).catch(() => false);
+    const res = await targetClient.query(RdsMultiAZMySQLDatabaseDialect.TOPOLOGY_TABLE_EXIST_QUERY).catch(() => false);
 
     if (!res) {
       return false;
     }
 
-    return !!(await targetClient.client.query(RdsMultiAZMySQLDatabaseDialect.TOPOLOGY_QUERY).catch(() => false));
+    return !!(await targetClient.query(RdsMultiAZMySQLDatabaseDialect.TOPOLOGY_QUERY).catch(() => false));
   }
 
   getHostListProvider(props: Map<string, any>, originalUrl: string, hostListProviderService: HostListProviderService): HostListProvider {
@@ -59,10 +59,10 @@ export class RdsMultiAZMySQLDatabaseDialect extends MySQLDatabaseDialect impleme
         RdsMultiAZMySQLDatabaseDialect.FETCH_WRITER_HOST_QUERY_COLUMN_NAME
       );
       if (!writerHostId) {
-        writerHostId = await this.identifyConnection(targetClient, new Map<string, any>());
+        writerHostId = await this.identifyConnection(targetClient);
       }
 
-      const res = await targetClient.client.query(RdsMultiAZMySQLDatabaseDialect.TOPOLOGY_QUERY);
+      const res = await targetClient.query(RdsMultiAZMySQLDatabaseDialect.TOPOLOGY_QUERY);
       const rows: any[] = res[0];
       return this.processTopologyQueryResults(hostListProvider, writerHostId, rows);
     } catch (error: any) {
@@ -71,7 +71,7 @@ export class RdsMultiAZMySQLDatabaseDialect extends MySQLDatabaseDialect impleme
   }
 
   private async executeTopologyRelatedQuery(targetClient: ClientWrapper, query: string, resultColumnName?: string): Promise<string> {
-    const res = await targetClient.client.query(query);
+    const res = await targetClient.query(query);
     const rows: any[] = res[0];
     if (rows.length > 0) {
       return rows[0][resultColumnName ?? 0];
@@ -117,11 +117,11 @@ export class RdsMultiAZMySQLDatabaseDialect extends MySQLDatabaseDialect impleme
     return hosts;
   }
 
-  async getHostRole(client: ClientWrapper, props: Map<string, any>): Promise<HostRole> {
+  async getHostRole(client: ClientWrapper): Promise<HostRole> {
     return (await this.executeTopologyRelatedQuery(client, RdsMultiAZMySQLDatabaseDialect.IS_READER_QUERY)) ? HostRole.WRITER : HostRole.READER;
   }
 
-  async identifyConnection(client: ClientWrapper, props: Map<string, any>): Promise<string> {
+  async identifyConnection(client: ClientWrapper): Promise<string> {
     return await this.executeTopologyRelatedQuery(
       client,
       RdsMultiAZMySQLDatabaseDialect.HOST_ID_QUERY,

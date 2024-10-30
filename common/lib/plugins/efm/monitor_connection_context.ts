@@ -74,7 +74,7 @@ export class MonitorConnectionContext {
     }
 
     try {
-      await this.pluginService.tryClosingTargetClient(this.clientToAbort);
+      await this.pluginService.abortTargetClient(this.clientToAbort);
       this.telemetryAbortedConnectionCounter.inc();
     } catch (error: any) {
       // ignore

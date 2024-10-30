@@ -32,7 +32,7 @@ export class RdsPgDatabaseDialect extends PgDatabaseDialect {
       return false;
     }
 
-    return await targetClient.client
+    return await targetClient
       .query(RdsPgDatabaseDialect.EXTENSIONS_SQL)
       .then((result: any) => {
         const rdsTools = result.rows[0]["rds_tools"];

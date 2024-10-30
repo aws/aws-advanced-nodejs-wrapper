@@ -34,6 +34,7 @@ import { AwsMysqlPoolClient } from "../../mysql/lib/mysql_pool_client";
 import { PoolKey } from "../../common/lib/utils/pool_key";
 import { InternalPoolMapping } from "../../common/lib/utils/internal_pool_mapping";
 import { SlidingExpirationCache } from "../../common/lib/utils/sliding_expiration_cache";
+import { MySQL2DriverDialect } from "../../mysql/lib/dialect/mysql2_driver_dialect";
 
 const internalPoolWithOneConnection = mock(AwsMysqlPoolClient);
 const user1 = "user1";
@@ -67,6 +68,7 @@ const mockHostListProvider: HostListProvider = mock<HostListProvider>();
 const mockClosedReaderClient: AwsClient = mock(AwsMySQLClient);
 const mockClosedWriterClient: AwsClient = mock(AwsMySQLClient);
 const mockDialect: MySQLDatabaseDialect = mock(MySQLDatabaseDialect);
+const mockDriverDialect: MySQL2DriverDialect = mock(MySQL2DriverDialect);
 const mockPoolConnection = mock(AwsMysqlPoolClient);
 const mockAwsPoolClient = mock(AwsMysqlPoolClient);
 const mockRdsUtils = mock(RdsUtils);
@@ -78,6 +80,9 @@ describe("reader write splitting test", () => {
     when(mockPluginService.getHostListProvider()).thenReturn(instance(mockHostListProvider));
     when(mockPluginService.getHosts()).thenReturn(defaultHosts);
     when(mockPluginService.isInTransaction()).thenReturn(false);
+    when(mockPluginService.getDialect()).thenReturn(instance(mockDialect));
+    when(mockPluginService.getDriverDialect()).thenReturn(instance(mockDriverDialect));
+    when(mockDriverDialect.getAwsPoolClient(anything())).thenReturn(mockAwsPoolClient);
     props.clear();
   });
 
@@ -106,13 +111,11 @@ describe("reader write splitting test", () => {
     when(mockRdsUtils.isRdsDns(anything())).thenReturn(null);
     when(mockRdsUtils.isGreenInstance(anything())).thenReturn(null);
     when(mockRdsUtils.isRdsInstance("instance1")).thenReturn(true);
-    when(mockPluginService.getDialect()).thenReturn(mockDialect);
-    when(mockDialect.getAwsPoolClient(anything())).thenReturn(mockAwsPoolClient);
     const config = {
       maxConnection: 10,
       idleTimeoutMillis: 60000
     };
-    when(mockDialect.preparePoolClientProperties(anything(), anything())).thenReturn(config);
+    when(mockDriverDialect.preparePoolClientProperties(anything(), anything())).thenReturn(config);
     const poolConfig: AwsPoolConfig = new AwsPoolConfig(config);
 
     const provider = spy(new InternalPooledConnectionProvider(poolConfig));
@@ -145,7 +148,6 @@ describe("reader write splitting test", () => {
     when(mockRdsUtils.isGreenInstance(anything())).thenReturn(null);
     when(mockRdsUtils.isRdsInstance("instance1")).thenReturn(true);
     when(mockPluginService.getDialect()).thenReturn(mockDialect);
-    when(mockDialect.getAwsPoolClient(anything())).thenReturn(mockAwsPoolClient);
     const config = {
       maxConnection: 10,
       idleTimeoutMillis: 60000
@@ -155,7 +157,7 @@ describe("reader write splitting test", () => {
         return hostInfo.url + "someKey";
       }
     };
-    when(mockDialect.preparePoolClientProperties(anything(), anything())).thenReturn(config);
+    when(mockDriverDialect.preparePoolClientProperties(anything(), anything())).thenReturn(config);
     const poolConfig: AwsPoolConfig = new AwsPoolConfig(config);
 
     const provider = spy(new InternalPooledConnectionProvider(poolConfig, myKeyFunc));
@@ -195,19 +197,14 @@ describe("reader write splitting test", () => {
     when(mockRdsUtils.isRdsDns(anything())).thenReturn(null);
     when(mockRdsUtils.isGreenInstance(anything())).thenReturn(null);
     when(mockRdsUtils.isRdsInstance("instance1")).thenReturn(true);
-    when(mockDialect.preparePoolClientProperties(anything(), anything())).thenReturn(props);
-    when(mockDialect.getAwsPoolClient(anything())).thenThrow(new Error("testError"));
+    when(mockDriverDialect.preparePoolClientProperties(anything(), anything())).thenReturn(props);
+    when(mockDriverDialect.getAwsPoolClient(anything())).thenThrow(new Error("testError"));
 
     const provider = spy(new InternalPooledConnectionProvider(poolConfig));
     const providerSpy = instance(provider);
     when(await provider.getPoolConnection()).thenReturn(mockPoolConnection);
 
-    try {
-      await providerSpy.connect(hostInfo, mockPluginServiceInstance, props);
-      throw new Error("did not catch error");
-    } catch (error: any) {
-      expect(error.message).toEqual("testError");
-    }
+    await expect(providerSpy.connect(hostInfo, mockPluginServiceInstance, props)).rejects.toThrow("testError");
     await ConnectionProviderManager.releaseResources();
     ConnectionProviderManager.resetProvider();
   });

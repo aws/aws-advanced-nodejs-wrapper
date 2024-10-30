@@ -43,6 +43,7 @@ import { DatabaseDialectCodes } from "./database_dialect/database_dialect_codes"
 import { getWriter } from "./utils/utils";
 import { ConnectionProvider } from "./connection_provider";
 import { TelemetryFactory } from "./utils/telemetry/telemetry_factory";
+import { DriverDialect } from "./driver_dialect/driver_dialect";
 
 export class PluginService implements ErrorHandler, HostListProviderService {
   private readonly _currentClient: AwsClient;
@@ -55,6 +56,7 @@ export class PluginService implements ErrorHandler, HostListProviderService {
   private dbDialectProvider: DatabaseDialectProvider;
   private readonly initialHost: string;
   private dialect: DatabaseDialect;
+  private readonly driverDialect: DriverDialect;
   protected readonly sessionStateService: SessionStateService;
   protected static readonly hostAvailabilityExpiringCache: CacheMap<string, HostAvailability> = new CacheMap<string, HostAvailability>();
   readonly props: Map<string, any>;
@@ -64,12 +66,14 @@ export class PluginService implements ErrorHandler, HostListProviderService {
     client: AwsClient,
     dbType: DatabaseType,
     knownDialectsByCode: Map<DatabaseDialectCodes, DatabaseDialect>,
-    props: Map<string, any>
+    props: Map<string, any>,
+    driverDialect: DriverDialect
   ) {
     this._currentClient = client;
     this.pluginServiceManagerContainer = container;
     this.props = props;
     this.dbDialectProvider = new DatabaseDialectManager(knownDialectsByCode, dbType, this.props);
+    this.driverDialect = driverDialect;
     this.initialHost = props.get(WrapperProperties.HOST.name);
     this.sessionStateService = new SessionStateServiceImpl(this, this.props);
     container.pluginService = this;
@@ -156,6 +160,10 @@ export class PluginService implements ErrorHandler, HostListProviderService {
 
   getDialect(): DatabaseDialect {
     return this.dialect;
+  }
+
+  getDriverDialect(): DriverDialect {
+    return this.driverDialect;
   }
 
   getHostInfoBuilder(): HostInfoBuilder {
@@ -310,14 +318,6 @@ export class PluginService implements ErrorHandler, HostListProviderService {
     return provider.identifyConnection(targetClient, this.dialect);
   }
 
-  createTargetClient(props: Map<string, any>): any {
-    const createClientFunc = this.getCurrentClient().getCreateClientFunc();
-    if (createClientFunc) {
-      return createClientFunc(props);
-    }
-    throw new AwsWrapperError("AwsClient is missing create target client function."); // This should not be reached
-  }
-
   connect(hostInfo: HostInfo, props: Map<string, any>): Promise<ClientWrapper> {
     return this.pluginServiceManagerContainer.pluginManager!.connect(hostInfo, props, false);
   }
@@ -356,7 +356,7 @@ export class PluginService implements ErrorHandler, HostListProviderService {
 
             if (oldClient && (isInTransaction || WrapperProperties.ROLLBACK_ON_SWITCH.get(this.props))) {
               try {
-                await this.getDialect().rollback(oldClient);
+                await oldClient.rollback();
               } catch (error: any) {
                 // Ignore.
               }
@@ -379,7 +379,7 @@ export class PluginService implements ErrorHandler, HostListProviderService {
               }
 
               try {
-                await this.tryClosingTargetClient(oldClient);
+                await this.abortTargetClient(oldClient);
               } catch (error: any) {
                 // Ignore.
               }
@@ -400,12 +400,14 @@ export class PluginService implements ErrorHandler, HostListProviderService {
 
   async abortCurrentClient(): Promise<void> {
     if (this._currentClient.targetClient) {
-      await this.getDialect().tryClosingTargetClient(this._currentClient.targetClient);
+      await this._currentClient.targetClient.abort();
     }
   }
 
-  async tryClosingTargetClient(targetClient: ClientWrapper): Promise<void> {
-    await this.getDialect().tryClosingTargetClient(targetClient);
+  async abortTargetClient(targetClient: ClientWrapper | undefined | null): Promise<void> {
+    if (targetClient) {
+      await targetClient.abort();
+    }
   }
 
   getSessionStateService() {
@@ -479,10 +481,6 @@ export class PluginService implements ErrorHandler, HostListProviderService {
 
   getHostRole(client: any): Promise<HostRole> | undefined {
     return this._hostListProvider?.getHostRole(client, this.dialect);
-  }
-
-  async rollback(targetClient: ClientWrapper) {
-    return await this.getDialect().rollback(targetClient);
   }
 
   getTelemetryFactory(): TelemetryFactory {

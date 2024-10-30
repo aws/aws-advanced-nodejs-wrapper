@@ -35,6 +35,9 @@ import { InternalPooledConnectionProvider } from "../../common/lib/internal_pool
 import { AwsPoolConfig } from "../../common/lib/aws_pool_config";
 import { ConnectionProviderManager } from "../../common/lib/connection_provider_manager";
 import { InternalPoolMapping } from "../../common/lib/utils/internal_pool_mapping";
+import { NodePostgresDriverDialect } from "../../pg/lib/dialect/node_postgres_driver_dialect";
+import { DriverDialect } from "../../common/lib/driver_dialect/driver_dialect";
+import { MySQL2DriverDialect } from "../../mysql/lib/dialect/mysql2_driver_dialect";
 
 const properties: Map<string, any> = new Map();
 const builder = new HostInfoBuilder({ hostAvailabilityStrategy: new SimpleHostAvailabilityStrategy() });
@@ -57,6 +60,7 @@ const mockHostListProvider: HostListProvider = mock<HostListProvider>();
 const mockClosedReaderClient: AwsClient = mock(AwsMySQLClient);
 const mockClosedWriterClient: AwsClient = mock(AwsMySQLClient);
 const mockDialect: MySQLDatabaseDialect = mock(MySQLDatabaseDialect);
+const mockDriverDialect: DriverDialect = mock(MySQL2DriverDialect);
 const mockChanges: Set<HostChangeOptions> = mock(Set<HostChangeOptions>);
 
 const clientWrapper: ClientWrapper = {
@@ -83,6 +87,9 @@ describe("reader write splitting test", () => {
     when(mockPluginService.getHostListProvider()).thenReturn(instance(mockHostListProvider));
     when(mockPluginService.getHosts()).thenReturn(defaultHosts);
     when(mockPluginService.isInTransaction()).thenReturn(false);
+    when(mockPluginService.getDialect()).thenReturn(mockDialect);
+    when(mockPluginService.getDriverDialect()).thenReturn(mockDriverDialect);
+    when(mockDriverDialect.connect(anything())).thenReturn(Promise.resolve(mockReaderClient));
     properties.clear();
   });
 
@@ -105,8 +112,6 @@ describe("reader write splitting test", () => {
     when(mockPluginService.getCurrentClient()).thenReturn(instance(mockWriterClient));
     when(await mockWriterClient.isValid()).thenReturn(true);
     when(mockPluginService.getCurrentHostInfo()).thenReturn(writerHost);
-    when(mockPluginService.getDialect()).thenReturn(mockDialect);
-    when(mockDialect.connect(anything())).thenReturn(Promise.resolve(mockReaderClient));
     when(mockPluginService.connect(anything(), anything())).thenResolve(mockReaderWrapper);
 
     const target = new ReadWriteSplittingPlugin(
@@ -131,8 +136,6 @@ describe("reader write splitting test", () => {
     when(mockPluginService.getCurrentClient()).thenReturn(instance(mockReaderClient));
     when(await mockReaderClient.isValid()).thenReturn(true);
     when(mockPluginService.getCurrentHostInfo()).thenReturn(readerHost1);
-    when(mockPluginService.getDialect()).thenReturn(mockDialect);
-    when(mockDialect.connect(anything())).thenReturn(Promise.resolve(mockReaderClient));
     when(mockPluginService.connect(anything(), anything())).thenResolve(mockWriterWrapper);
 
     const target = new ReadWriteSplittingPlugin(
@@ -157,8 +160,6 @@ describe("reader write splitting test", () => {
     when(mockPluginService.getCurrentClient()).thenReturn(instance(mockReaderClient));
     when(await mockReaderClient.isValid()).thenReturn(true);
     when(mockPluginService.getCurrentHostInfo()).thenReturn(readerHost1);
-    when(mockPluginService.getDialect()).thenReturn(mockDialect);
-    when(mockDialect.connect(anything())).thenReturn(Promise.resolve(mockReaderClient));
     when(mockPluginService.connect(anything(), anything())).thenResolve(mockReaderWrapper);
 
     const target = new ReadWriteSplittingPlugin(
@@ -183,8 +184,6 @@ describe("reader write splitting test", () => {
     when(mockPluginService.getCurrentClient()).thenReturn(instance(mockWriterClient));
     when(await mockWriterClient.isValid()).thenReturn(true);
     when(mockPluginService.getCurrentHostInfo()).thenReturn(writerHost);
-    when(mockPluginService.getDialect()).thenReturn(mockDialect);
-    when(mockDialect.connect(anything())).thenReturn(Promise.resolve(mockReaderClient));
     when(mockPluginService.connect(anything(), anything())).thenResolve(mockReaderWrapper);
 
     const target = new ReadWriteSplittingPlugin(
@@ -211,8 +210,6 @@ describe("reader write splitting test", () => {
     when(mockWriterClient.targetClient).thenReturn(mockWriterWrapper);
     when(mockWriterClient.targetClient && (await mockPluginService.isClientValid(mockWriterClient.targetClient))).thenReturn(true);
     when(mockPluginService.getCurrentHostInfo()).thenReturn(writerHost);
-    when(mockPluginService.getDialect()).thenReturn(mockDialect);
-    when(mockDialect.connect(anything())).thenReturn(Promise.resolve(mockReaderClient));
     when(mockPluginService.connect(anything(), anything())).thenReturn(Promise.resolve(mockWriterWrapper));
 
     const target = new ReadWriteSplittingPlugin(
@@ -329,7 +326,6 @@ describe("reader write splitting test", () => {
     when(mockPluginService.getHosts()).thenReturn(singleReaderTopology);
     when(mockPluginService.getHostInfoByStrategy(anything(), anything())).thenReturn(writerHost);
     when(mockPluginService.getCurrentClient()).thenReturn(mockNewWriterClient);
-    when(mockPluginService.getDialect()).thenReturn(mockDialect);
     when(mockPluginService.getCurrentHostInfo()).thenReturn(writerHost);
     when(await mockPluginService.isClientValid(mockWriterWrapper)).thenReturn(true);
     const target = new ReadWriteSplittingPlugin(
@@ -344,7 +340,7 @@ describe("reader write splitting test", () => {
       await target.execute("query", mockExecuteFuncThrowsFailoverSuccessError, "test");
     }).rejects.toThrow(new FailoverSuccessError("test"));
 
-    verify(mockPluginService.tryClosingTargetClient(mockWriterWrapper)).once();
+    verify(mockPluginService.abortTargetClient(mockWriterWrapper)).once();
   });
 
   it("test notify connection changed", async () => {
@@ -415,8 +411,7 @@ describe("reader write splitting test", () => {
     when(mockPluginService.getCurrentClient()).thenReturn(instance(mockWriterClient));
     when(await mockWriterClient.isValid()).thenReturn(true);
     when(mockPluginService.getCurrentHostInfo()).thenReturn(writerHost).thenReturn(writerHost).thenReturn(readerHost1);
-    when(mockPluginService.getDialect()).thenReturn(instance(mockDialect));
-    when(mockDialect.connect(anything())).thenReturn(Promise.resolve(mockReaderClient));
+    when(mockDriverDialect.connect(anything())).thenReturn(Promise.resolve(mockReaderClient));
     when(mockPluginService.connect(anything(), anything())).thenResolve(mockReaderWrapper);
     const config: AwsPoolConfig = new AwsPoolConfig({ idleTimeoutMillis: 7000, maxConnections: 10, maxIdleConnections: 10 });
     const provider: InternalPooledConnectionProvider = new InternalPooledConnectionProvider(config);
@@ -446,8 +441,7 @@ describe("reader write splitting test", () => {
       .thenReturn(readerHost1)
       .thenReturn(readerHost1)
       .thenReturn(writerHost);
-    when(mockPluginService.getDialect()).thenReturn(instance(mockDialect));
-    when(mockDialect.connect(anything())).thenReturn(Promise.resolve(mockWriterClient));
+    when(mockDriverDialect.connect(anything())).thenReturn(Promise.resolve(mockWriterClient));
     when(mockPluginService.connect(writerHost, anything())).thenResolve(mockWriterWrapper);
     when(mockPluginService.connect(readerHost1, anything())).thenResolve(mockReaderWrapper);
     when(mockPluginService.connect(readerHost2, anything())).thenResolve(mockReaderWrapper);

@@ -18,6 +18,7 @@ import { Pool, PoolClient, PoolConfig } from "pg";
 import { AwsPoolClient } from "../../common/lib/aws_pool_client";
 import { Messages } from "../../common/lib/utils/messages";
 import { AwsWrapperError } from "../../common/lib/utils/errors";
+import { logger } from "../../common/logutils";
 
 export class AwsPgPoolClient implements AwsPoolClient {
   targetPool: Pool;
@@ -26,9 +27,17 @@ export class AwsPgPoolClient implements AwsPoolClient {
     this.targetPool = new Pool(props);
     this.targetPool.on("connect", (_client: PoolClient) => {
       _client.on("error", (err: Error) => {
-        console.log(err);
+        logger.debug(err);
       });
     });
+  }
+
+  async end(): Promise<any> {
+    try {
+      return await this.targetPool.end();
+    } catch (error: any) {
+      // Ignore
+    }
   }
 
   async connect(): Promise<any> {
@@ -37,10 +46,6 @@ export class AwsPgPoolClient implements AwsPoolClient {
     } catch (error: any) {
       throw new AwsWrapperError(Messages.get("InternalPooledConnectionProvider.pooledConnectionFailed", error.message));
     }
-  }
-
-  async end(poolClient: any) {
-    await poolClient?.release(true);
   }
 
   getIdleCount(): number {
