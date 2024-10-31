@@ -77,7 +77,7 @@ export class RdsHostListProvider implements DynamicHostListProvider {
     this.initialHost = this.initialHostList[0];
     this.hostListProviderService.setInitialConnectionHostInfo(this.initialHost);
     this.refreshRateNano = WrapperProperties.CLUSTER_TOPOLOGY_REFRESH_RATE_MS.get(this.properties) * 1000000;
-    this.rdsUrlType = this.rdsHelper.identifyRdsType(this.originalUrl);
+    this.rdsUrlType = this.rdsHelper.identifyRdsType(this.initialHost.host);
   }
 
   init(): void {
@@ -104,12 +104,12 @@ export class RdsHostListProvider implements DynamicHostListProvider {
       // identification
       this.clusterId = this.initialHost.url;
     } else if (this.rdsUrlType.isRds) {
-      const clusterSuggestedResult: ClusterSuggestedResult | null = this.getSuggestedClusterId(this.initialHost.url);
+      const clusterSuggestedResult: ClusterSuggestedResult | null = this.getSuggestedClusterId(this.initialHost.host);
       if (clusterSuggestedResult && clusterSuggestedResult.clusterId) {
         this.clusterId = clusterSuggestedResult.clusterId;
         this.isPrimaryClusterId = clusterSuggestedResult.isPrimaryClusterId;
       } else {
-        const clusterRdsHostUrl: string | null = this.rdsHelper.getRdsClusterHostUrl(this.initialHost.url);
+        const clusterRdsHostUrl: string | null = this.rdsHelper.getRdsClusterHostUrl(this.initialHost.host);
         if (clusterRdsHostUrl) {
           this.clusterId = this.clusterInstanceTemplate.isPortSpecified()
             ? `${clusterRdsHostUrl}:${this.clusterInstanceTemplate.port}`
@@ -143,7 +143,7 @@ export class RdsHostListProvider implements DynamicHostListProvider {
     }
 
     if (client.targetClient) {
-      return dialect.getHostRole(client.targetClient, this.properties);
+      return dialect.getHostRole(client.targetClient);
     } else {
       throw new AwsWrapperError(Messages.get("AwsClient targetClient not defined."));
     }
@@ -153,7 +153,7 @@ export class RdsHostListProvider implements DynamicHostListProvider {
     if (!this.isTopologyAwareDatabaseDialect(dialect)) {
       throw new TypeError(Messages.get("RdsHostListProvider.incorrectDialect"));
     }
-    const instanceName = await dialect.identifyConnection(targetClient, this.properties);
+    const instanceName = await dialect.identifyConnection(targetClient);
 
     return this.refresh(targetClient).then((topology) => {
       const matches = topology.filter((host) => host.hostId === instanceName);
@@ -215,17 +215,17 @@ export class RdsHostListProvider implements DynamicHostListProvider {
     }
   }
 
-  private getSuggestedClusterId(url: string): ClusterSuggestedResult | null {
+  private getSuggestedClusterId(host: string): ClusterSuggestedResult | null {
     for (const [key, hosts] of RdsHostListProvider.topologyCache.getEntries()) {
       const isPrimaryCluster: boolean = RdsHostListProvider.primaryClusterIdCache.get(key, false, this.suggestedClusterIdRefreshRateNano) ?? false;
-      if (key === url) {
-        return new ClusterSuggestedResult(url, isPrimaryCluster);
+      if (key === host) {
+        return new ClusterSuggestedResult(host, isPrimaryCluster);
       }
 
       if (hosts) {
-        for (const host of hosts) {
-          if (host.url === url) {
-            logger.debug(Messages.get("RdsHostListProvider.suggestedClusterId", key, url));
+        for (const hostInfo of hosts) {
+          if (hostInfo.host === host) {
+            logger.debug(Messages.get("RdsHostListProvider.suggestedClusterId", key, host));
             return new ClusterSuggestedResult(key, isPrimaryCluster);
           }
         }
