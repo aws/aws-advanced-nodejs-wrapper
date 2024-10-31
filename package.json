@@ -8,11 +8,11 @@
     "mysql"
   ],
   "scripts": {
-    "bench": "npx tsx tests/benchmarks.ts",
-    "bench2": " npx tsx --tsconfig ./tsconfig.json tests/benchmarks.ts",
     "check": "prettier . --check --config .prettierrc",
     "bench-plugin-manager": "npx tsx tests/plugin_manager_benchmarks.ts",
     "bench-plugins": "npx tsx tests/plugin_benchmarks.ts",
+    "bench-plugin-manager-otel": "npx tsx tests/plugin_manager_telemetry_benchmarks.ts",
+    "bench-plugins-otel": "npx tsx tests/plugin_telemetry_benchmarks.ts",
     "format": "prettier . --write --config .prettierrc",
     "integration": "jest --config=jest.integration.config.json --runInBand --verbose",
     "debug-integration": "node --inspect-brk=0.0.0.0:5005 ./node_modules/jest/bin/jest.js --config=jest.integration.config.json --runInBand",

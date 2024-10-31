@@ -26,6 +26,19 @@ import { HostInfoBuilder } from "../common/lib/host_info_builder";
 import { SimpleHostAvailabilityStrategy } from "../common/lib/host_availability/simple_host_availability_strategy";
 import { AwsPGClient } from "../pg/lib";
 import { NullTelemetryFactory } from "../common/lib/utils/telemetry/null_telemetry_factory";
+import { OpenTelemetryFactory } from "../common/lib/utils/telemetry/open_telemetry_factory";
+import { OTLPTraceExporter } from "@opentelemetry/exporter-trace-otlp-grpc";
+import { Resource } from "@opentelemetry/resources";
+import { ATTR_SERVICE_NAME } from "@opentelemetry/semantic-conventions";
+import { PeriodicExportingMetricReader } from "@opentelemetry/sdk-metrics";
+import { OTLPMetricExporter } from "@opentelemetry/exporter-metrics-otlp-grpc";
+import { AsyncHooksContextManager } from "@opentelemetry/context-async-hooks";
+import { context } from "@opentelemetry/api";
+import { NodeSDK } from "@opentelemetry/sdk-node";
+import { AWSXRayPropagator } from "@opentelemetry/propagator-aws-xray";
+import { HttpInstrumentation } from "@opentelemetry/instrumentation-http";
+import { AwsInstrumentation } from "@opentelemetry/instrumentation-aws-sdk";
+import { AWSXRayIdGenerator } from "@opentelemetry/id-generator-aws-xray";
 import { ConnectionProviderManager } from "../common/lib/connection_provider_manager";
 import { PgClientWrapper } from "../common/lib/pg_client_wrapper";
 
@@ -37,7 +50,7 @@ const hostInfo = new HostInfoBuilder({ hostAvailabilityStrategy: new SimpleHostA
 
 const mockClientWrapper = new PgClientWrapper(instance(mockClient), hostInfo, new Map<string, any>());
 
-const telemetryFactory = new NullTelemetryFactory();
+const telemetryFactory = new OpenTelemetryFactory();
 
 when(mockClient.query(anything())).thenReturn();
 when(mockPluginService.getCurrentHostInfo()).thenReturn(hostInfo);
@@ -58,6 +71,15 @@ WrapperProperties.PLUGINS.set(props, "");
 WrapperProperties.HOST.set(propsExecute, connectionString);
 WrapperProperties.HOST.set(propsReadWrite, connectionString);
 WrapperProperties.HOST.set(props, connectionString);
+WrapperProperties.ENABLE_TELEMETRY.set(propsExecute, true);
+WrapperProperties.ENABLE_TELEMETRY.set(propsExecute, true);
+WrapperProperties.ENABLE_TELEMETRY.set(propsExecute, true);
+WrapperProperties.TELEMETRY_METRICS_BACKEND.set(propsExecute, "OTLP");
+WrapperProperties.TELEMETRY_METRICS_BACKEND.set(propsReadWrite, "OTLP");
+WrapperProperties.TELEMETRY_METRICS_BACKEND.set(props, "OTLP");
+WrapperProperties.TELEMETRY_TRACES_BACKEND.set(propsExecute, "OTLP");
+WrapperProperties.TELEMETRY_TRACES_BACKEND.set(propsReadWrite, "OTLP");
+WrapperProperties.TELEMETRY_TRACES_BACKEND.set(props, "OTLP");
 
 const pluginManagerExecute = new PluginManager(
   pluginServiceManagerContainer,
@@ -77,6 +99,48 @@ const pluginManager = new PluginManager(
   new ConnectionProviderManager(instance(mockConnectionProvider), null),
   new NullTelemetryFactory()
 );
+
+const traceExporter = new OTLPTraceExporter({ url: "http://localhost:4317" });
+const resource = Resource.default().merge(
+  new Resource({
+    [ATTR_SERVICE_NAME]: "aws-advanced-nodejs-wrapper"
+  })
+);
+
+const metricReader = new PeriodicExportingMetricReader({
+  exporter: new OTLPMetricExporter(),
+  exportIntervalMillis: 1000
+});
+
+const contextManager = new AsyncHooksContextManager();
+contextManager.enable();
+context.setGlobalContextManager(contextManager);
+
+const sdk = new NodeSDK({
+  textMapPropagator: new AWSXRayPropagator(),
+  instrumentations: [
+    new HttpInstrumentation(),
+    new AwsInstrumentation({
+      suppressInternalInstrumentation: true
+    })
+  ],
+  resource: resource,
+  traceExporter: traceExporter,
+  metricReader: metricReader,
+  idGenerator: new AWSXRayIdGenerator()
+});
+
+// This enables the API to record telemetry.
+sdk.start();
+
+// Shut down the SDK on process exit.
+process.on("SIGTERM", () => {
+  sdk
+    .shutdown()
+    .then(() => console.log("Tracing and Metrics terminated"))
+    .catch((error) => console.log("Error terminating tracing and metrics", error))
+    .finally(() => process.exit(0));
+});
 
 suite(
   "Plugin benchmarks",
@@ -109,9 +173,8 @@ suite(
   }),
 
   add("executeStatementBaseline", async () => {
-    const wrapper = new TestConnectionWrapper(props, pluginManager, instance(mockPluginService));
-    await pluginManager.init();
-    await wrapper.executeQuery(propsExecute, "select 1", mockClientWrapper);
+    const wrapper = new TestConnectionWrapper(propsExecute, pluginManagerExecute, instance(mockPluginService));
+    await pluginManagerExecute.init();
     await wrapper.end();
   }),
 
