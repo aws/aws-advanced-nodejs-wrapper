@@ -7,14 +7,6 @@ on:
   pull_request:
     branches:
       - "*"
-    paths-ignore:
-      - "**/*.md"
-      - "**/*.jpg"
-      - "**/README.txt"
-      - "**/LICENSE.txt"
-      - "docs/**"
-      - "ISSUE_TEMPLATE/**"
-      - "**/remove-old-artifacts.yml"
 
 jobs:
   run-checks-and-unit-tests:
