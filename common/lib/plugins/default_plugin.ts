@@ -14,8 +14,7 @@
   limitations under the License.
 */
 
-import { uniqueId } from "lodash";
-import { logger } from "../../logutils";
+import { logger, uniqueId } from "../../logutils";
 import { Messages } from "../utils/messages";
 import { HostListProviderService } from "../host_list_provider_service";
 import { HostInfo } from "../host_info";

@@ -15,12 +15,11 @@
 */
 
 import { Monitor } from "./monitor";
-import { logger } from "../../../logutils";
+import { logger, uniqueId } from "../../../logutils";
 import { Messages } from "../../utils/messages";
 import { ClientWrapper } from "../../client_wrapper";
 import { sleep } from "../../utils/utils";
 import { AwsWrapperError } from "../../utils/errors";
-import { uniqueId } from "lodash";
 import { PluginService } from "../../plugin_service";
 import { TelemetryCounter } from "../../utils/telemetry/telemetry_counter";
 
