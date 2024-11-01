@@ -28,6 +28,9 @@ import { ConnectTimePlugin } from "../../common/lib/plugins/connect_time_plugin"
 import { StaleDnsPlugin } from "../../common/lib/plugins/stale_dns/stale_dns_plugin";
 import { ConnectionProviderManager } from "../../common/lib/connection_provider_manager";
 import { NullTelemetryFactory } from "../../common/lib/utils/telemetry/null_telemetry_factory";
+import { AbstractConnectionPlugin } from "../../common/lib/abstract_connection_plugin";
+import { ConnectionPluginFactory } from "../../common/lib/plugin_factory";
+import { PluginManager } from "../../common/lib/plugin_manager";
 
 const mockPluginService: PluginService = mock(PluginService);
 const mockPluginServiceInstance: PluginService = instance(mockPluginService);
@@ -106,4 +109,42 @@ describe("testConnectionPluginChainBuilder", () => {
     expect(result[3]).toBeInstanceOf(ConnectTimePlugin);
     expect(result[4]).toBeInstanceOf(DefaultPlugin);
   });
+
+  it("register plugin", async () => {
+    PluginManager.registerPlugin("test", TestPluginFactory);
+
+    const props = new Map();
+    props.set(WrapperProperties.PLUGINS.name, "test");
+
+    const result = await ConnectionPluginChainBuilder.getPlugins(
+      mockPluginServiceInstance,
+      props,
+      new ConnectionProviderManager(mockDefaultConnProvider, mockEffectiveConnProvider)
+    );
+
+    expect(result.length).toBe(2);
+    expect(result[0]).toBeInstanceOf(TestPlugin);
+    expect(result[1]).toBeInstanceOf(DefaultPlugin);
+  });
 });
+
+class TestPluginFactory implements ConnectionPluginFactory {
+  async getInstance(pluginService: PluginService, properties: Map<string, any>): Promise<TestPlugin> {
+    return new TestPlugin(pluginService, properties);
+  }
+}
+
+class TestPlugin extends AbstractConnectionPlugin {
+  pluginService: PluginService;
+  properties: Map<string, any>;
+
+  constructor(pluginService: PluginService, properties: Map<string, any>) {
+    super();
+    this.pluginService = pluginService;
+    this.properties = properties;
+  }
+
+  override getSubscribedMethods(): Set<string> {
+    return new Set<string>(["*"]);
+  }
+}

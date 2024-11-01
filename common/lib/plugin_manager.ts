@@ -16,7 +16,7 @@
 
 import { ConnectionPlugin } from "./connection_plugin";
 import { HostInfo } from "./host_info";
-import { ConnectionPluginChainBuilder } from "./connection_plugin_chain_builder";
+import { ConnectionPluginChainBuilder, FactoryClass } from "./connection_plugin_chain_builder";
 import { AwsWrapperError } from "./utils/errors";
 import { Messages } from "./utils/messages";
 import { PluginServiceManagerContainer } from "./plugin_service_manager_container";
@@ -325,5 +325,12 @@ export class PluginManager {
       }
     }
     throw new AwsWrapperError(Messages.get("PluginManager.unableToRetrievePlugin"));
+  }
+
+  static registerPlugin(pluginCode: string, pluginFactory: FactoryClass) {
+    ConnectionPluginChainBuilder.PLUGIN_FACTORIES.set(pluginCode, {
+      factory: pluginFactory,
+      weight: ConnectionPluginChainBuilder.WEIGHT_RELATIVE_TO_PRIOR_PLUGIN
+    });
   }
 }
