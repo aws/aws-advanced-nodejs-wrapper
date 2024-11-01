@@ -1,4 +1,5 @@
 ## Plugin Service
+
 ![](../images/plugin_service.png)
 
 The plugin service retrieves and updates the current connection and its relevant host information.
@@ -18,9 +19,9 @@ The `ConnectionStringHostListProvider` is the default provider, it parses the ho
 The provider supports having multiple hosts in the host parameter:
 
 | Host parameter                  | Support            |
-|---------------------------------|--------------------|
-| `hostname1,hostname2`           | :x:  |
-| `hostname1,hostname2:8090`      | :x:  |
+| ------------------------------- | ------------------ |
+| `hostname1,hostname2`           | :x:                |
+| `hostname1,hostname2:8090`      | :x:                |
 | `hostname1:8090,hostname2`      | :white_check_mark: |
 | `hostname1:8090,hostname2:8090` | :white_check_mark: |
 
