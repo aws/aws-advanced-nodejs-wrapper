@@ -219,16 +219,19 @@ public class AuroraTestUtility {
     // Create Instances
     for (int i = 1; i <= numOfInstances; i++) {
       final String instanceName = dbIdentifier + "-" + i;
-      rdsClient.createDBInstance(
-          CreateDbInstanceRequest.builder()
-              .dbClusterIdentifier(dbIdentifier)
-              .dbInstanceIdentifier(instanceName)
-              .dbInstanceClass(dbInstanceClass)
-              .engine(dbEngine)
-              .engineVersion(dbEngineVersion)
-              .publiclyAccessible(true)
-              .tags(testRunnerTag)
-              .build());
+      CreateDbInstanceRequest.Builder requestBuilder = CreateDbInstanceRequest.builder()
+          .dbClusterIdentifier(dbIdentifier)
+          .dbInstanceIdentifier(instanceName)
+          .engine(dbEngine)
+          .engineVersion(dbEngineVersion)
+          .publiclyAccessible(true)
+          .tags(testRunnerTag);
+
+      if (!dbEngineVersion.contains("limitless")) {
+        requestBuilder = requestBuilder.dbInstanceClass(dbInstanceClass);
+      }
+
+      rdsClient.createDBInstance(requestBuilder.build());
     }
 
     // Wait for all instances to be up
@@ -291,9 +294,11 @@ public class AuroraTestUtility {
 
     clusterBuilder =
         clusterBuilder.allocatedStorage(allocatedStorage)
-            .dbClusterInstanceClass(dbInstanceClass)
             .storageType(storageType)
             .iops(iops);
+    if (!dbEngineVersion.contains("limitless")) {
+      clusterBuilder = clusterBuilder.dbClusterInstanceClass(dbInstanceClass);
+    }
 
     rdsClient.createDBCluster(clusterBuilder.build());
 
@@ -344,23 +349,26 @@ public class AuroraTestUtility {
     final Tag testRunnerTag = Tag.builder().key("env").value("test-runner").build();
     final TestEnvironmentInfo info = TestEnvironment.getCurrent().getInfo();
 
-    rdsClient.createDBInstance(
-        CreateDbInstanceRequest.builder()
-            .dbClusterIdentifier(info.getAuroraClusterName())
-            .dbInstanceIdentifier(instanceId)
-            .dbInstanceClass(dbInstanceClass)
-            .engine(info.getDatabaseEngine())
-            .engineVersion(info.getDatabaseEngineVersion())
-            .publiclyAccessible(true)
-            .tags(testRunnerTag)
-            .build());
+    CreateDbInstanceRequest.Builder requestBuilder = CreateDbInstanceRequest.builder()
+        .dbClusterIdentifier(info.getAuroraClusterName())
+        .dbInstanceIdentifier(instanceId)
+        .engine(info.getDatabaseEngine())
+        .engineVersion(info.getDatabaseEngineVersion())
+        .publiclyAccessible(true)
+        .tags(testRunnerTag);
+
+    if (!dbEngineVersion.contains("limitless")) {
+      requestBuilder = requestBuilder.dbInstanceClass(dbInstanceClass);
+    }
+
+    rdsClient.createDBInstance(requestBuilder.build());
 
     // Wait for the instance to become available
     final RdsWaiter waiter = rdsClient.waiter();
     WaiterResponse<DescribeDbInstancesResponse> waiterResponse =
         waiter.waitUntilDBInstanceAvailable(
-            (requestBuilder) ->
-                requestBuilder.filters(
+            (builder) ->
+                builder.filters(
                     Filter.builder().name("db-instance-id").values(instanceId).build()),
             (configurationBuilder) -> configurationBuilder.waitTimeout(Duration.ofMinutes(15)));
 
