@@ -63,22 +63,16 @@ export class ConnectionProviderManager {
     if (ConnectionProviderManager.connProvider?.acceptsStrategy(role, strategy)) {
       try {
         host = ConnectionProviderManager.connProvider.getHostInfoByStrategy(hosts, role, strategy, props);
-      } catch (error) {
-        if (error instanceof AwsWrapperError && error.message.includes("Unsupported host selection strategy")) {
-          // Ignore and try with the default provider.
-        } else {
-          throw error;
-        }
+      } catch {
+        // Ignore and try with other providers.
       }
-    } else if (this.effectiveProvider?.acceptsStrategy(role, strategy)) {
+    }
+
+    if (this.effectiveProvider?.acceptsStrategy(role, strategy)) {
       try {
         host = this.effectiveProvider.getHostInfoByStrategy(hosts, role, strategy, props);
-      } catch (error) {
-        if (error instanceof AwsWrapperError && error.message.includes("Unsupported host selection strategy")) {
-          // Ignore and try with the default provider.
-        } else {
-          throw error;
-        }
+      } catch {
+        // Ignore and try with the default provider.
       }
     }
 
