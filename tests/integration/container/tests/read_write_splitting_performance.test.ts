@@ -182,6 +182,7 @@ function calculateWriterOverhead(connectionSwitch: string, data1: Result, data2:
 function initReadWritePluginConfig(host: string, port: number) {
   const config = PerfTestUtility.initDefaultConfig(env, host, port);
   config["plugins"] = "readWriteSplitting,connectTime,executeTime";
+  config["clusterTopologyRefreshRateMs"] = 300000;
   return config;
 }
 
