@@ -53,6 +53,25 @@ Technical documentation regarding the functionality of the AWS Advanced NodeJS W
 
 To find all the documentation and concrete examples on how to use the AWS Advanced NodeJS Wrapper, please refer to the [AWS Advanced NodeJS Wrapper Documentation](./docs/Documentation.md) page.
 
+### Known Limitations
+
+#### Amazon RDS Blue/Green Deployments
+
+The AWS Advanced NodeJS Wrapper is not compatible with [AWS Blue/Green Deployments](https://docs.aws.amazon.com/whitepapers/latest/overview-deployment-options/bluegreen-deployments.html) and does not officially support them. While general basic connectivity to both Blue and Green clusters is always in place, some failover cases are not fully supported.
+
+The current limitations are:
+
+- After a Blue/Green switchover, the wrapper may not be able to properly detect the new topology and handle failover, as there are discrepancies between the metadata and the available endpoints.
+- The specific version requirements for Aurora MySQL versus Aurora PostgreSQL may vary, as the internal systems used by the wrapper can differ[^1].
+
+The development team is aware of these limitations and is working to improve the wrapper's awareness and handling of Blue/Green switchovers. In the meantime, users can consider utilizing the `enableGreenHostReplacement` configuration parameter, which allows the driver to override incorrect topology metadata and try to connect to available new Blue endpoints.
+
+[^1]: Aurora MySQL requires v3.07 or later.
+
+#### Amazon Aurora Global Databases
+
+This wrapper currently does not support failover with Amazon Aurora Global Databases. While it is possible to connect to global databases, failing over to a secondary cluster will result in errors and there may be additional unforeseen errors when working with global databases. Support for Amazon Aurora Global Databases is in the backlog, but we cannot comment on a timeline right now.
+
 ## Getting Help and Opening Issues
 
 If you encounter a bug with the AWS Advanced NodeJS Wrapper, we would like to hear about it.
