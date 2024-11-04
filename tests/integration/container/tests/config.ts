@@ -29,6 +29,13 @@ const infoJson = process.env.TEST_ENV_INFO_JSON;
 if (infoJson === undefined) {
   throw new Error("env var required");
 }
+
 const testInfo = JSON.parse(infoJson);
-export const features = testInfo.request.features;
-export const instanceCount = testInfo.request.numOfInstances;
+const request = testInfo.request;
+export const features = request.features;
+export const instanceCount = request.numOfInstances;
+
+const reportSetting: string = `${request.deployment}-${request.engine}_instance-${request.instanceCount}`;
+process.env["JEST_HTML_REPORTER_OUTPUT_PATH"] = `./tests/integration/container/reports/${reportSetting}.html`;
+process.env["JEST_HTML_REPORTER_INCLUDE_FAILURE_MSG"] = "true";
+process.env["JEST_HTML_REPORTER_INCLUDE_CONSOLE_LOG"] = "true";

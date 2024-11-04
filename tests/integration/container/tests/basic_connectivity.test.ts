@@ -30,9 +30,6 @@ let client: any;
 let auroraTestUtility: AuroraTestUtility;
 
 async function executeInstanceQuery(client: any, engine: DatabaseEngine, deployment: DatabaseEngineDeployment, props: any): Promise<void> {
-  client.on("error", (error: any) => {
-    logger.debug(error.message);
-  });
   await client.connect();
 
   const res = await DriverHelper.executeInstanceQuery(engine, deployment, client);
@@ -159,9 +156,6 @@ describe("basic_connectivity", () => {
       props = DriverHelper.addDriverSpecificConfiguration(props, env.engine);
 
       client = initClientFunc(props);
-      client.on("error", (error: any) => {
-        logger.debug(error.message);
-      });
       await client.connect();
 
       const res = await DriverHelper.executeInstanceQuery(env.engine, env.deployment, client);
@@ -193,9 +187,6 @@ describe("basic_connectivity", () => {
       props = DriverHelper.addDriverSpecificConfiguration(props, env.engine);
 
       client = initClientFunc(props);
-      client.on("error", (error: any) => {
-        logger.debug(error.message);
-      });
 
       await client.connect();
 

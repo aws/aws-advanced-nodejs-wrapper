@@ -24,9 +24,6 @@ import { TelemetryContext } from "./telemetry_context";
 import { NullTelemetryFactory } from "./null_telemetry_factory";
 import { Messages } from "../messages";
 
-import pkgLodash from "lodash";
-const { toLower } = pkgLodash;
-
 export class DefaultTelemetryFactory implements TelemetryFactory {
   private readonly enableTelemetry: boolean;
   private readonly telemetryTracesBackend: string;

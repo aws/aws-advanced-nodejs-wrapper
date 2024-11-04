@@ -89,14 +89,6 @@ export class PluginService implements ErrorHandler, HostListProviderService {
     this._isInTransaction = inTransaction;
   }
 
-  isLoginError(e: Error): boolean {
-    return this.getCurrentClient().errorHandler.isLoginError(e);
-  }
-
-  isNetworkError(e: Error): boolean {
-    return this.getCurrentClient().errorHandler.isNetworkError(e);
-  }
-
   getHostListProvider(): HostListProvider | null {
     return this._hostListProvider ? this._hostListProvider : null;
   }
@@ -478,5 +470,35 @@ export class PluginService implements ErrorHandler, HostListProviderService {
 
   getTelemetryFactory(): TelemetryFactory {
     return this.pluginServiceManagerContainer.pluginManager!.getTelemetryFactory();
+  }
+
+  /* Error Handler interface implementation */
+
+  isLoginError(e: Error): boolean {
+    return this.getCurrentClient().errorHandler.isLoginError(e);
+  }
+
+  isNetworkError(e: Error): boolean {
+    return this.getCurrentClient().errorHandler.isNetworkError(e);
+  }
+
+  hasLoginError(): boolean {
+    return this.getCurrentClient().errorHandler.hasLoginError();
+  }
+
+  hasNetworkError(): boolean {
+    return this.getCurrentClient().errorHandler.hasNetworkError();
+  }
+
+  getUnexpectedError(): Error | null {
+    return this.getCurrentClient().errorHandler.getUnexpectedError();
+  }
+
+  attachErrorListener(clientWrapper: ClientWrapper | undefined): void {
+    this.getCurrentClient().errorHandler.attachErrorListener(clientWrapper);
+  }
+
+  attachNoOpErrorListener(clientWrapper: ClientWrapper | undefined): void {
+    this.getCurrentClient().errorHandler.attachNoOpErrorListener(clientWrapper);
   }
 }

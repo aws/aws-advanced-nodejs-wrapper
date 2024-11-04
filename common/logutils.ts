@@ -14,7 +14,7 @@
   limitations under the License.
 */
 
-import { createLogger, transports, format } from "winston";
+import { createLogger, format, transports } from "winston";
 import dotenv from "dotenv";
 
 const { combine, timestamp, printf, colorize } = format;
@@ -22,6 +22,19 @@ const { combine, timestamp, printf, colorize } = format;
 dotenv.config();
 
 const logLevel = process.env.LOG_LEVEL;
+
+enum levels {
+  error,
+  warn,
+  help,
+  data,
+  info,
+  debug,
+  prompt,
+  verbose,
+  input,
+  silly
+}
 
 export function uniqueId(prefix: string): string {
   return `${prefix}${Math.random().toString(16).slice(2)}`;
@@ -49,43 +62,39 @@ class AwsWrapperLogger {
   }
 
   error(message: string) {
-    if (AwsWrapperLogger.logger.level === "error") {
+    if (levels[AwsWrapperLogger.logger.level] >= levels.error) {
       AwsWrapperLogger.logger.error(message);
     }
   }
 
   warn(message: string) {
-    if (AwsWrapperLogger.logger.level === "warn") {
+    if (levels[AwsWrapperLogger.logger.level] >= levels.warn) {
       AwsWrapperLogger.logger.warn(message);
     }
   }
 
   info(message: string) {
-    if (AwsWrapperLogger.logger.level === "info") {
+    if (levels[AwsWrapperLogger.logger.level] >= levels.info) {
       AwsWrapperLogger.logger.info(message);
     }
   }
 
   verbose(message: string) {
-    if (AwsWrapperLogger.logger.level === "verbose") {
+    if (levels[AwsWrapperLogger.logger.level] >= levels.verbose) {
       AwsWrapperLogger.logger.verbose(message);
     }
   }
 
   debug(message: string) {
-    if (AwsWrapperLogger.logger.level === "debug") {
+    if (levels[AwsWrapperLogger.logger.level] >= levels.debug) {
       AwsWrapperLogger.logger.debug(message);
     }
   }
 
   silly(message: string) {
-    if (AwsWrapperLogger.logger.level === "silly") {
+    if (levels[AwsWrapperLogger.logger.level] >= levels.silly) {
       AwsWrapperLogger.logger.silly(message);
     }
-  }
-
-  warning(message: string) {
-    AwsWrapperLogger.logger.warning(message);
   }
 }
 

@@ -99,9 +99,6 @@ describe("aurora failover", () => {
     async () => {
       const config = await initDefaultConfig(env.databaseInfo.writerInstanceEndpoint, env.databaseInfo.instanceEndpointPort, false);
       client = initClientFunc(config);
-      client.on("error", (error: any) => {
-        logger.debug(error.message);
-      });
 
       await client.connect();
 
@@ -128,10 +125,6 @@ describe("aurora failover", () => {
     async () => {
       const config = await initDefaultConfig(env.databaseInfo.writerInstanceEndpoint, env.databaseInfo.instanceEndpointPort, false);
       client = initClientFunc(config);
-
-      client.on("error", (error: any) => {
-        logger.debug(error.message);
-      });
 
       await client.connect();
       const initialWriterId = await auroraTestUtility.queryInstanceId(client);
@@ -170,7 +163,7 @@ describe("aurora failover", () => {
 
       await DriverHelper.executeQuery(env.engine, client, "DROP TABLE IF EXISTS test3_3");
     },
-    1320000
+    2000000
   );
 
   itIf(
@@ -178,10 +171,6 @@ describe("aurora failover", () => {
     async () => {
       const config = await initDefaultConfig(env.databaseInfo.writerInstanceEndpoint, env.databaseInfo.instanceEndpointPort, false);
       client = initClientFunc(config);
-
-      client.on("error", (error: any) => {
-        logger.debug(error.message);
-      });
 
       await client.connect();
       const initialWriterId = await auroraTestUtility.queryInstanceId(client);
@@ -211,9 +200,6 @@ describe("aurora failover", () => {
       // Connect to writer instance
       const writerConfig = await initDefaultConfig(env.proxyDatabaseInfo.writerInstanceEndpoint, env.proxyDatabaseInfo.instanceEndpointPort, true);
       client = initClientFunc(writerConfig);
-      client.on("error", (err: any) => {
-        logger.debug(err);
-      });
       await client.connect();
       const initialWriterId = await auroraTestUtility.queryInstanceId(client);
       expect(await auroraTestUtility.isDbInstanceWriter(initialWriterId)).toStrictEqual(true);
@@ -231,10 +217,6 @@ describe("aurora failover", () => {
       const readerConfig = await initDefaultConfig(readerInstanceHost, env.proxyDatabaseInfo.instanceEndpointPort, true);
 
       secondaryClient = initClientFunc(readerConfig);
-      secondaryClient.on("error", (err: any) => {
-        logger.debug(err);
-      });
-
       await secondaryClient.connect();
 
       // Crash the reader instance

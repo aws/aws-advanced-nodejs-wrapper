@@ -206,39 +206,49 @@ export class AwsMySQLClient extends AwsClient {
   }
 
   async end() {
-    if (!this.isConnected || !this.targetClient) {
-      // No connections have been initialized.
-      // This might happen if end is called in a finally block when an error occurred while initializing the first connection.
-      return;
-    }
+    this.errorHandler.attachNoOpErrorListener(this.targetClient);
+    try {
+      if (!this.isConnected || !this.targetClient) {
+        // No connections have been initialized.
+        // This might happen if end is called in a finally block when an error occurred while initializing the first connection.
+        return;
+      }
 
-    const result = await this.pluginManager.execute(
-      this.pluginService.getCurrentHostInfo(),
-      this.properties,
-      "end",
-      () => {
-        return ClientUtils.queryWithTimeout(this.targetClient!.end(), this.properties);
-      },
-      null
-    );
-    await this.releaseResources();
-    return result;
+      const result = await this.pluginManager.execute(
+        this.pluginService.getCurrentHostInfo(),
+        this.properties,
+        "end",
+        () => {
+          return ClientUtils.queryWithTimeout(this.targetClient!.end(), this.properties);
+        },
+        null
+      );
+      await this.releaseResources();
+      return result;
+    } finally {
+      this.errorHandler.attachErrorListener(this.targetClient);
+    }
   }
 
   async rollback(): Promise<any> {
-    return this.pluginManager.execute(
-      this.pluginService.getCurrentHostInfo(),
-      this.properties,
-      "rollback",
-      async () => {
-        if (this.targetClient) {
-          this.pluginService.updateInTransaction("rollback");
-          return await this.targetClient.rollback();
-        }
-        return null;
-      },
-      null
-    );
+    this.errorHandler.attachNoOpErrorListener(this.targetClient);
+    try {
+      return this.pluginManager.execute(
+        this.pluginService.getCurrentHostInfo(),
+        this.properties,
+        "rollback",
+        async () => {
+          if (this.targetClient) {
+            this.pluginService.updateInTransaction("rollback");
+            return await this.targetClient.rollback();
+          }
+          return null;
+        },
+        null
+      );
+    } finally {
+      this.errorHandler.attachErrorListener(this.targetClient);
+    }
   }
 
   resetState() {

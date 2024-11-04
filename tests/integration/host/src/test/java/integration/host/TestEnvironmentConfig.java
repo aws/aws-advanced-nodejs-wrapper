@@ -635,16 +635,17 @@ public class TestEnvironmentConfig implements AutoCloseable {
 
   private static void createTestContainer(TestEnvironmentConfig env) {
     final ContainerHelper containerHelper = new ContainerHelper();
+    final TestEnvironmentRequest request = env.info.getRequest();
 
     env.testContainer = containerHelper.createTestContainer(
         "aws/rds-test-container",
-        getContainerBaseImageName(env.info.getRequest()));
-
+        getContainerBaseImageName(request));
     env.testContainer
         .withNetworkAliases(TEST_CONTAINER_NAME)
         .withNetwork(env.network)
         .withEnv("TEST_ENV_INFO_JSON", getEnvironmentInfoAsString(env))
         .withEnv("TEST_ENV_DESCRIPTION", env.info.getRequest().getDisplayName());
+
     if (env.info
         .getRequest()
         .getFeatures()

@@ -104,10 +104,6 @@ describe("rwperformance", () => {
       for (const instance of env.databaseInfo.instances) {
         if (instance.host && instance.port) {
           const client = DriverHelper.getClient(driver)(initReadWritePluginConfig(instance.host, instance.port));
-          client.on("error", (err: any) => {
-            logger.debug(err.message);
-          });
-
           await PerfTestUtility.connectWithRetry(client);
           await client.setReadOnly(true);
           await client.setReadOnly(false);
@@ -202,10 +198,6 @@ async function measurePerformance(config: any): Promise<Result> {
     const client = DriverHelper.getClient(driver)(config);
     try {
       await PerfTestUtility.connectWithRetry(client);
-      client.on("error", (err: any) => {
-        logger.debug(err.message);
-      });
-
       ConnectTimePlugin.resetConnectTime();
       ExecuteTimePlugin.resetExecuteTime();
       // Calculate time required to switch to a new reader connection.
