@@ -21,9 +21,9 @@ During execution, plugins may utilize the plugin service to help its execution b
 
 
 > [!NOTE]
-> - Each client has its own instances of:  
-    >   - plugin manager
-    >   - plugin service
+> - Each client has its own instances of:
+>   - plugin manager
+>   - plugin service
 >   - loaded plugin classes
 > - Multiple clients opened to the same database server will have separate sets of instances mentioned above.
 > - All plugins share the same instance of plugin service and the same instance of host list provider.
