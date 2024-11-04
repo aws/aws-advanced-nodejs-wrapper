@@ -453,7 +453,7 @@ describe("reader write splitting test", () => {
       maxIdleConnections: 10
     });
     const myKeyFunc: InternalPoolMapping = {
-      getKey: (hostInfo: HostInfo, props: Map<string, any>) => {
+      getPoolKey: (hostInfo: HostInfo, props: Map<string, any>) => {
         return hostInfo.url + "someKey";
       }
     };

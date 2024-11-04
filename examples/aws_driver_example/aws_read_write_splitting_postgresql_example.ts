@@ -42,7 +42,7 @@ const client = new AwsPGClient({
   await queryWithFailoverHandling(client,
       "INSERT INTO bank_test VALUES (0, 'Jane Doe', 200), (1, 'John Smith', 200), (2, 'Sally Smith', 200), (3, 'Joe Smith', 200)");
 } catch (error: any) {
-  // Additional error handling can be added here. See transaction step for an example. 
+  // Additional error handling can be added here. See transaction step for an example.
   throw error;
 } */
 
