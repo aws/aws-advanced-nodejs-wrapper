@@ -15,6 +15,9 @@
 */
 
 import {
+  CreateDBInstanceCommand,
+  CreateDBInstanceCommandOutput,
+  DeleteDBInstanceCommand,
   DescribeDBClustersCommand,
   DescribeDBInstancesCommand,
   FailoverDBClusterCommand,
@@ -28,6 +31,10 @@ import { AwsClient } from "../../../../../common/lib/aws_client";
 import { DriverHelper } from "./driver_helper";
 import { sleep } from "../../../../../common/lib/utils/utils";
 import { logger } from "../../../../../common/logutils";
+import { TestInstanceInfo } from "./test_instance_info";
+import { TestEnvironmentInfo } from "./test_environment_info";
+
+const instanceClass: string = "db.r5.large";
 
 export class AuroraTestUtility {
   private client: RDSClient;
@@ -233,5 +240,76 @@ export class AuroraTestUtility {
 
   isNullOrUndefined(value: any): boolean {
     return value === undefined || value === null;
+  }
+
+  async createInstance(instanceId: string): Promise<TestInstanceInfo> {
+    const info: TestEnvironmentInfo = (await TestEnvironment.getCurrent()).info;
+    const command = new CreateDBInstanceCommand({
+      DBInstanceIdentifier: instanceId,
+      DBClusterIdentifier: info.auroraClusterName,
+      DBInstanceClass: instanceClass,
+      PubliclyAccessible: true,
+      Engine: info.databaseEngine,
+      EngineVersion: info.databaseEngineVersion
+    });
+    const response: CreateDBInstanceCommandOutput = await this.client.send(command);
+    if (!response.DBInstance) {
+      throw new Error(`The CreateDBInstanceCommand request for newly created instance ${instanceId} did not return an instance.`);
+    }
+    await this.waitUntilInstanceHasRightState(
+      instanceId,
+      "available",
+      "storage-optimization",
+      "incompatible-credentials",
+      "incompatible-parameters",
+      "unavailable"
+    );
+    const instance: DBInstance | null = await this.getDbInstance(instanceId);
+    const host = instance?.Endpoint?.Address
+      ? instance.Endpoint.Address
+      : instanceId.concat(info.databaseInfo.writerInstanceEndpoint.slice(info.databaseInfo.writerInstanceEndpoint.indexOf(".")));
+    const port = instance?.Endpoint?.Port ? instance.Endpoint.Port : info.databaseInfo.instanceEndpointPort;
+    return new TestInstanceInfo({ instanceId: instanceId, host: host, port: port });
+  }
+
+  async deleteInstance(instanceId: string) {
+    // assure that instance exists, if it does not return
+    if (!instanceId || !(await this.instanceExists(instanceId))) {
+      return;
+    }
+
+    // set up stop time
+    const current = new Date();
+    const stopTime = current.setMinutes(current.getMinutes() + 15 * 60);
+
+    // create and send command to delete
+    const command = new DeleteDBInstanceCommand({
+      DBInstanceIdentifier: instanceId,
+      SkipFinalSnapshot: true
+    });
+    await this.client.send(command);
+
+    // wait for it to delete
+    while ((await this.instanceExists(instanceId)) && new Date().getTime() < stopTime) {
+      await sleep(3000);
+    }
+  }
+
+  async instanceExists(instanceId: string): Promise<boolean> {
+    try {
+      const instance = await this.getDbInstance(instanceId);
+      return !!instance;
+    } catch (error) {
+      return false;
+    }
+  }
+
+  async getNumberOfInstances(): Promise<number> {
+    const command = new DescribeDBInstancesCommand();
+    const instances: DBInstance[] | undefined = (await this.client.send(command)).DBInstances;
+    if (!instances) {
+      return 0;
+    }
+    return instances.length;
   }
 }
