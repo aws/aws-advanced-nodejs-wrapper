@@ -26,7 +26,6 @@ import { OldConnectionSuggestionAction } from "./old_connection_suggestion_actio
 import { HostRole } from "./host_role";
 import { ClientWrapper } from "./client_wrapper";
 import { CanReleaseResources } from "./can_release_resources";
-import { ConnectionProviderManager } from "./connection_provider_manager";
 import { TelemetryFactory } from "./utils/telemetry/telemetry_factory";
 import { TelemetryTraceLevel } from "./utils/telemetry/telemetry_trace_level";
 import { ConnectionProvider } from "./connection_provider";
@@ -71,19 +70,16 @@ export class PluginManager {
   private static readonly GET_HOST_INFO_BY_STRATEGY_METHOD: string = "getHostInfoByStrategy";
   private readonly props: Map<string, any>;
   private _plugins: ConnectionPlugin[] = [];
-  private readonly connectionProviderManager: ConnectionProviderManager;
   private pluginServiceManagerContainer: PluginServiceManagerContainer;
   protected telemetryFactory: TelemetryFactory;
 
   constructor(
     pluginServiceManagerContainer: PluginServiceManagerContainer,
     props: Map<string, any>,
-    connectionProviderManager: ConnectionProviderManager,
     telemetryFactory: TelemetryFactory
   ) {
     this.pluginServiceManagerContainer = pluginServiceManagerContainer;
     this.pluginServiceManagerContainer.pluginManager = this;
-    this.connectionProviderManager = connectionProviderManager;
     this.props = props;
     this.telemetryFactory = telemetryFactory;
   }
@@ -97,8 +93,7 @@ export class PluginManager {
       } else {
         this._plugins = await ConnectionPluginChainBuilder.getPlugins(
           this.pluginServiceManagerContainer.pluginService,
-          this.props,
-          this.connectionProviderManager
+          this.props
         );
       }
     }
@@ -274,7 +269,7 @@ export class PluginManager {
     return false;
   }
 
-  getHostInfoByStrategy(role: HostRole, strategy: string): HostInfo {
+  getHostInfoByStrategy(role: HostRole, strategy: string): HostInfo | undefined {
     for (const plugin of this._plugins) {
       const pluginSubscribedMethods = plugin.getSubscribedMethods();
       const isSubscribed =
@@ -291,8 +286,6 @@ export class PluginManager {
         }
       }
     }
-
-    throw new AwsWrapperError("The driver does not support the requested host selection strategy: " + strategy);
   }
 
   async releaseResources() {
@@ -304,10 +297,6 @@ export class PluginManager {
         await plugin.releaseResources();
       }
     }
-  }
-
-  getConnectionProvider(hostInfo: HostInfo | null, props: Map<string, any>): ConnectionProvider {
-    return this.connectionProviderManager.getConnectionProvider(hostInfo, props);
   }
 
   private implementsCanReleaseResources(plugin: any): plugin is CanReleaseResources {

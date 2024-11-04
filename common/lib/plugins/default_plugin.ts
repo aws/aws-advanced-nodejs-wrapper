@@ -22,11 +22,8 @@ import { HostInfo } from "../host_info";
 import { AbstractConnectionPlugin } from "../abstract_connection_plugin";
 import { HostChangeOptions } from "../host_change_options";
 import { OldConnectionSuggestionAction } from "../old_connection_suggestion_action";
-import { HostRole } from "../host_role";
 import { PluginService } from "../plugin_service";
-import { ConnectionProviderManager } from "../connection_provider_manager";
 import { ConnectionProvider } from "../connection_provider";
-import { AwsWrapperError } from "../utils/errors";
 import { HostAvailability } from "../host_availability/host_availability";
 import { ClientWrapper } from "../client_wrapper";
 import { TelemetryTraceLevel } from "../utils/telemetry/telemetry_trace_level";
@@ -34,16 +31,14 @@ import { TelemetryTraceLevel } from "../utils/telemetry/telemetry_trace_level";
 export class DefaultPlugin extends AbstractConnectionPlugin {
   id: string = uniqueId("_defaultPlugin");
   private readonly pluginService: PluginService;
-  private readonly connectionProviderManager: ConnectionProviderManager;
 
-  constructor(pluginService: PluginService, connectionProviderManager: ConnectionProviderManager) {
+  constructor(pluginService: PluginService) {
     super();
     this.pluginService = pluginService;
-    this.connectionProviderManager = connectionProviderManager;
   }
 
   override getSubscribedMethods(): Set<string> {
-    return new Set<string>(["*"]);
+    return new Set<string>(["*"]);  // TODO verify Subscribed Methods
   }
 
   override async forceConnect<Type>(
@@ -52,7 +47,7 @@ export class DefaultPlugin extends AbstractConnectionPlugin {
     isInitialConnection: boolean,
     forceConnectFunc: () => Promise<ClientWrapper>
   ): Promise<ClientWrapper> {
-    return await this.connectInternal(hostInfo, props, this.connectionProviderManager.getConnectionProvider(hostInfo, props));
+    return await this.connectInternal(hostInfo, props, this.pluginService.getConnectionProvider(hostInfo, props));
   }
 
   override initHostProvider(
@@ -70,7 +65,7 @@ export class DefaultPlugin extends AbstractConnectionPlugin {
     isInitialConnection: boolean,
     connectFunc: () => Promise<ClientWrapper>
   ): Promise<ClientWrapper> {
-    return await this.connectInternal(hostInfo, props, this.connectionProviderManager.getConnectionProvider(hostInfo, props));
+    return await this.connectInternal(hostInfo, props, this.pluginService.getConnectionProvider(hostInfo, props));
   }
 
   private async connectInternal(hostInfo: HostInfo, props: Map<string, any>, connProvider: ConnectionProvider): Promise<ClientWrapper> {
@@ -104,26 +99,5 @@ export class DefaultPlugin extends AbstractConnectionPlugin {
 
   override notifyHostListChanged(changes: Map<string, Set<HostChangeOptions>>): Promise<void> {
     return Promise.resolve();
-  }
-
-  override acceptsStrategy(role: HostRole, strategy: string): boolean {
-    if (role === HostRole.UNKNOWN) {
-      // Users must request either a writer or a reader role.
-      return false;
-    }
-    return this.connectionProviderManager.acceptsStrategy(role, strategy);
-  }
-
-  override getHostInfoByStrategy(role: HostRole, strategy: string): HostInfo {
-    if (role === HostRole.UNKNOWN) {
-      throw new AwsWrapperError(Messages.get("DefaultConnectionPlugin.unknownRoleRequested"));
-    }
-
-    const hosts = this.pluginService.getHosts();
-    if (hosts.length < 1) {
-      throw new AwsWrapperError(Messages.get("DefaultConnectionPlugin.noHostsAvailable"));
-    }
-
-    return this.connectionProviderManager.getHostInfoByStrategy(hosts, role, strategy, this.pluginService.props);
   }
 }

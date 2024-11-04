@@ -15,7 +15,6 @@
 */
 
 import { anything, instance, mock, when } from "ts-mockito";
-import { ConnectionProvider } from "../common/lib/connection_provider";
 import { PluginService } from "../common/lib/plugin_service";
 import { PluginServiceManagerContainer } from "../common/lib/plugin_service_manager_container";
 import { WrapperProperties } from "../common/lib/wrapper_property";
@@ -26,10 +25,8 @@ import { HostInfoBuilder } from "../common/lib/host_info_builder";
 import { SimpleHostAvailabilityStrategy } from "../common/lib/host_availability/simple_host_availability_strategy";
 import { AwsPGClient } from "../pg/lib";
 import { NullTelemetryFactory } from "../common/lib/utils/telemetry/null_telemetry_factory";
-import { ConnectionProviderManager } from "../common/lib/connection_provider_manager";
 import { PgClientWrapper } from "../common/lib/pg_client_wrapper";
 
-const mockConnectionProvider = mock<ConnectionProvider>();
 const mockPluginService = mock(PluginService);
 const mockClient = mock(AwsPGClient);
 
@@ -62,19 +59,16 @@ WrapperProperties.HOST.set(props, connectionString);
 const pluginManagerExecute = new PluginManager(
   pluginServiceManagerContainer,
   propsExecute,
-  new ConnectionProviderManager(instance(mockConnectionProvider), null),
   telemetryFactory
 );
 const pluginManagerReadWrite = new PluginManager(
   pluginServiceManagerContainer,
   propsReadWrite,
-  new ConnectionProviderManager(instance(mockConnectionProvider), null),
   telemetryFactory
 );
 const pluginManager = new PluginManager(
   pluginServiceManagerContainer,
   props,
-  new ConnectionProviderManager(instance(mockConnectionProvider), null),
   new NullTelemetryFactory()
 );
 

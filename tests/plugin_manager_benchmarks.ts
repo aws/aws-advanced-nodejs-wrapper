@@ -28,7 +28,6 @@ import { WrapperProperties } from "../common/lib/wrapper_property";
 import { DefaultPlugin } from "../common/lib/plugins/default_plugin";
 import { BenchmarkPluginFactory } from "./testplugin/benchmark_plugin_factory";
 import { NullTelemetryFactory } from "../common/lib/utils/telemetry/null_telemetry_factory";
-import { ConnectionProviderManager } from "../common/lib/connection_provider_manager";
 import { PgDatabaseDialect } from "../pg/lib/dialect/pg_database_dialect";
 import { NodePostgresDriverDialect } from "../pg/lib/dialect/node_postgres_driver_dialect";
 
@@ -51,13 +50,11 @@ WrapperProperties.PLUGINS.set(propsWithNoPlugins, "");
 const pluginManagerWithNoPlugins = new PluginManager(
   pluginServiceManagerContainer,
   propsWithNoPlugins,
-  new ConnectionProviderManager(instance(mockConnectionProvider), null),
   telemetryFactory
 );
 const pluginManagerWithPlugins = new PluginManager(
   pluginServiceManagerContainer,
   propsWithPlugins,
-  new ConnectionProviderManager(instance(mockConnectionProvider), null),
   telemetryFactory
 );
 
@@ -66,7 +63,7 @@ async function createPlugins(pluginService: PluginService, connectionProvider: C
   for (let i = 0; i < 10; i++) {
     plugins.push(await new BenchmarkPluginFactory().getInstance(pluginService, props));
   }
-  plugins.push(new DefaultPlugin(pluginService, new ConnectionProviderManager(instance(mockConnectionProvider), null)));
+  plugins.push(new DefaultPlugin(pluginService));
   return plugins;
 }
 
@@ -83,7 +80,6 @@ suite(
     const manager = new PluginManager(
       pluginServiceManagerContainer,
       propsWithPlugins,
-      new ConnectionProviderManager(instance(mockConnectionProvider), null),
       new NullTelemetryFactory()
     );
     await manager.init(await createPlugins(instance(mockPluginService), instance(mockConnectionProvider), propsWithPlugins));
@@ -93,7 +89,6 @@ suite(
     const manager = new PluginManager(
       pluginServiceManagerContainer,
       propsWithNoPlugins,
-      new ConnectionProviderManager(instance(mockConnectionProvider), null),
       new NullTelemetryFactory()
     );
     await manager.init();
