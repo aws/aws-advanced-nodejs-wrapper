@@ -10,6 +10,7 @@ To reduce the overhead of creating new connections each time `setReadOnly` is ca
 
 The Read/Write Splitting Performance Test measures the overhead of this additional connection creation and caching workflow.
 In this test, the wrapper first establishes the initial connection to a writer instance A using the cluster writer endpoint, then:
+
 1. switches to a new reader B by calling `AwsClient#setReadOnly(true)`, represented by `Switch to reader` in the table below.
 2. switches back to the initial writer A by calling `AwsClient#setReadOnly(false)`, represented by `Switch to reader (using cached connection)` in the table below.
 3. switches back to reader B by calling `AwsClient#setReadOnly(true)`, represented by `Switch to reader (using cached connection)` in the table below.
@@ -17,10 +18,9 @@ In this test, the wrapper first establishes the initial connection to a writer i
 The numbers in the table below are in nanoseconds, and do not account for network latency from operations that require network connections, such as executing queries or establishing new connections.
 
 | ConnectionSwitch                           | MinOverheadTime (ns) | MaxOverheadTime (ns) | AvgOverheadTime (ns) |
-|--------------------------------------------|----------------------|----------------------|----------------------|
+| ------------------------------------------ | -------------------- | -------------------- | -------------------- |
 | Switch to reader                           | 69597293             | 83459751             | 77004721             |
 | Switch to writer (using cached connection) | 141619751            | 167699666            | 151332779            |
 | Switch to reader (using cached connection) | 138624375            | 159564291            | 150139892            |
-
 
 When using the Read/Write Splitting plugin, users should expect at least a 15 milliseconds delay when not using internal connection pools.
