@@ -47,16 +47,8 @@ const propsWithPlugins = new Map<string, any>();
 
 WrapperProperties.PLUGINS.set(propsWithNoPlugins, "");
 
-const pluginManagerWithNoPlugins = new PluginManager(
-  pluginServiceManagerContainer,
-  propsWithNoPlugins,
-  telemetryFactory
-);
-const pluginManagerWithPlugins = new PluginManager(
-  pluginServiceManagerContainer,
-  propsWithPlugins,
-  telemetryFactory
-);
+const pluginManagerWithNoPlugins = new PluginManager(pluginServiceManagerContainer, propsWithNoPlugins, telemetryFactory);
+const pluginManagerWithPlugins = new PluginManager(pluginServiceManagerContainer, propsWithPlugins, telemetryFactory);
 
 async function createPlugins(pluginService: PluginService, connectionProvider: ConnectionProvider, props: Map<string, any>) {
   const plugins = new Array<ConnectionPlugin>();
@@ -77,20 +69,12 @@ suite(
   }),
 
   add("initPluginManagerWithPlugins", async () => {
-    const manager = new PluginManager(
-      pluginServiceManagerContainer,
-      propsWithPlugins,
-      new NullTelemetryFactory()
-    );
+    const manager = new PluginManager(pluginServiceManagerContainer, propsWithPlugins, new NullTelemetryFactory());
     await manager.init(await createPlugins(instance(mockPluginService), instance(mockConnectionProvider), propsWithPlugins));
   }),
 
   add("initPluginManagerWithNoPlugins", async () => {
-    const manager = new PluginManager(
-      pluginServiceManagerContainer,
-      propsWithNoPlugins,
-      new NullTelemetryFactory()
-    );
+    const manager = new PluginManager(pluginServiceManagerContainer, propsWithNoPlugins, new NullTelemetryFactory());
     await manager.init();
   }),
 

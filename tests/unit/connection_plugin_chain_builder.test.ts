@@ -41,10 +41,7 @@ describe("testConnectionPluginChainBuilder", () => {
     const props = new Map();
     props.set(WrapperProperties.PLUGINS.name, plugins);
 
-    const result = await ConnectionPluginChainBuilder.getPlugins(
-      mockPluginServiceInstance,
-      props
-    );
+    const result = await ConnectionPluginChainBuilder.getPlugins(mockPluginServiceInstance, props);
 
     expect(result.length).toBe(4);
     expect(result[0]).toBeInstanceOf(StaleDnsPlugin);
@@ -58,10 +55,7 @@ describe("testConnectionPluginChainBuilder", () => {
     props.set(WrapperProperties.PLUGINS.name, "iam,staleDns,failover");
     props.set(WrapperProperties.AUTO_SORT_PLUGIN_ORDER.name, false);
 
-    const result = await ConnectionPluginChainBuilder.getPlugins(
-      mockPluginServiceInstance,
-      props
-    );
+    const result = await ConnectionPluginChainBuilder.getPlugins(mockPluginServiceInstance, props);
 
     expect(result.length).toBe(4);
     expect(result[0]).toBeInstanceOf(IamAuthenticationPlugin);
@@ -75,10 +69,7 @@ describe("testConnectionPluginChainBuilder", () => {
 
     props.set(WrapperProperties.PLUGINS.name, "executeTime,connectTime,iam");
 
-    let result = await ConnectionPluginChainBuilder.getPlugins(
-      mockPluginServiceInstance,
-      props
-    );
+    let result = await ConnectionPluginChainBuilder.getPlugins(mockPluginServiceInstance, props);
 
     expect(result.length).toBe(4);
     expect(result[0]).toBeInstanceOf(ExecuteTimePlugin);
@@ -88,10 +79,7 @@ describe("testConnectionPluginChainBuilder", () => {
     // Test again to make sure the previous sort does not impact future plugin chains
     props.set(WrapperProperties.PLUGINS.name, "iam,executeTime,connectTime,failover");
 
-    result = await ConnectionPluginChainBuilder.getPlugins(
-      mockPluginServiceInstance,
-      props
-    );
+    result = await ConnectionPluginChainBuilder.getPlugins(mockPluginServiceInstance, props);
 
     expect(result.length).toBe(5);
     expect(result[0]).toBeInstanceOf(FailoverPlugin);
@@ -107,10 +95,7 @@ describe("testConnectionPluginChainBuilder", () => {
     const props = new Map();
     props.set(WrapperProperties.PLUGINS.name, "test");
 
-    const result = await ConnectionPluginChainBuilder.getPlugins(
-      mockPluginServiceInstance,
-      props
-    );
+    const result = await ConnectionPluginChainBuilder.getPlugins(mockPluginServiceInstance, props);
 
     expect(result.length).toBe(2);
     expect(result[0]).toBeInstanceOf(TestPlugin);

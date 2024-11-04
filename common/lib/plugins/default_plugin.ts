@@ -38,7 +38,7 @@ export class DefaultPlugin extends AbstractConnectionPlugin {
   }
 
   override getSubscribedMethods(): Set<string> {
-    return new Set<string>(["*"]);  // TODO verify Subscribed Methods
+    return new Set<string>(["*"]); // TODO verify Subscribed Methods
   }
 
   override async forceConnect<Type>(

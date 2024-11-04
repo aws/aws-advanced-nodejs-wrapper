@@ -73,11 +73,7 @@ export class PluginManager {
   private pluginServiceManagerContainer: PluginServiceManagerContainer;
   protected telemetryFactory: TelemetryFactory;
 
-  constructor(
-    pluginServiceManagerContainer: PluginServiceManagerContainer,
-    props: Map<string, any>,
-    telemetryFactory: TelemetryFactory
-  ) {
+  constructor(pluginServiceManagerContainer: PluginServiceManagerContainer, props: Map<string, any>, telemetryFactory: TelemetryFactory) {
     this.pluginServiceManagerContainer = pluginServiceManagerContainer;
     this.pluginServiceManagerContainer.pluginManager = this;
     this.props = props;
@@ -91,10 +87,7 @@ export class PluginManager {
       if (plugins) {
         this._plugins = plugins;
       } else {
-        this._plugins = await ConnectionPluginChainBuilder.getPlugins(
-          this.pluginServiceManagerContainer.pluginService,
-          this.props
-        );
+        this._plugins = await ConnectionPluginChainBuilder.getPlugins(this.pluginServiceManagerContainer.pluginService, this.props);
       }
     }
   }

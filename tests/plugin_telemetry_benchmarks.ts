@@ -78,21 +78,9 @@ WrapperProperties.TELEMETRY_TRACES_BACKEND.set(propsExecute, "OTLP");
 WrapperProperties.TELEMETRY_TRACES_BACKEND.set(propsReadWrite, "OTLP");
 WrapperProperties.TELEMETRY_TRACES_BACKEND.set(props, "OTLP");
 
-const pluginManagerExecute = new PluginManager(
-  pluginServiceManagerContainer,
-  propsExecute,
-  telemetryFactory
-);
-const pluginManagerReadWrite = new PluginManager(
-  pluginServiceManagerContainer,
-  propsReadWrite,
-  telemetryFactory
-);
-const pluginManager = new PluginManager(
-  pluginServiceManagerContainer,
-  props,
-  new NullTelemetryFactory()
-);
+const pluginManagerExecute = new PluginManager(pluginServiceManagerContainer, propsExecute, telemetryFactory);
+const pluginManagerReadWrite = new PluginManager(pluginServiceManagerContainer, propsReadWrite, telemetryFactory);
+const pluginManager = new PluginManager(pluginServiceManagerContainer, props, new NullTelemetryFactory());
 
 const traceExporter = new OTLPTraceExporter({ url: "http://localhost:4317" });
 const resource = Resource.default().merge(

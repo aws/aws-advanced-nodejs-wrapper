@@ -66,10 +66,7 @@ export class ConnectionPluginChainBuilder {
     ["executeTime", { factory: ExecuteTimePluginFactory, weight: ConnectionPluginChainBuilder.WEIGHT_RELATIVE_TO_PRIOR_PLUGIN }]
   ]);
 
-  static async getPlugins(
-    pluginService: PluginService,
-    props: Map<string, any>
-  ): Promise<ConnectionPlugin[]> {
+  static async getPlugins(pluginService: PluginService, props: Map<string, any>): Promise<ConnectionPlugin[]> {
     const plugins: ConnectionPlugin[] = [];
     let pluginCodes: string = props.get(WrapperProperties.PLUGINS.name);
     if (pluginCodes == null) {

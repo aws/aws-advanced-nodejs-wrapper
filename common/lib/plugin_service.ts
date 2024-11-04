@@ -118,14 +118,13 @@ export class PluginService implements ErrorHandler, HostListProviderService {
   }
 
   getHostInfoByStrategy(role: HostRole, strategy: string): HostInfo | undefined {
-
     if (role === HostRole.UNKNOWN) {
-      logger.debug("unknown role requested"); // TODO provide message using Messages.get was: DefaultConnectionPlugin.unknownRoleRequested - 
+      logger.debug("unknown role requested"); // TODO provide message using Messages.get was: DefaultConnectionPlugin.unknownRoleRequested -
       return;
     }
 
     const pluginManager = this.pluginServiceManagerContainer.pluginManager;
-    let host =  pluginManager?.getHostInfoByStrategy(role, strategy);
+    const host = pluginManager?.getHostInfoByStrategy(role, strategy);
     if (host) {
       return host;
     }
@@ -136,7 +135,6 @@ export class PluginService implements ErrorHandler, HostListProviderService {
     }
 
     return this.connectionProviderManager.getHostInfoByStrategy(this.getHosts(), role, strategy, this.props);
-    
   }
 
   getCurrentHostInfo(): HostInfo | null {
@@ -193,8 +191,10 @@ export class PluginService implements ErrorHandler, HostListProviderService {
   }
 
   acceptsStrategy(role: HostRole, strategy: string): boolean {
-    return (this.pluginServiceManagerContainer.pluginManager?.acceptsStrategy(role, strategy) ?? false) ||
-          this.connectionProviderManager.acceptsStrategy(role, strategy);
+    return (
+      (this.pluginServiceManagerContainer.pluginManager?.acceptsStrategy(role, strategy) ?? false) ||
+      this.connectionProviderManager.acceptsStrategy(role, strategy)
+    );
   }
 
   async forceRefreshHostList(): Promise<void>;

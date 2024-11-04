@@ -56,21 +56,9 @@ WrapperProperties.HOST.set(propsExecute, connectionString);
 WrapperProperties.HOST.set(propsReadWrite, connectionString);
 WrapperProperties.HOST.set(props, connectionString);
 
-const pluginManagerExecute = new PluginManager(
-  pluginServiceManagerContainer,
-  propsExecute,
-  telemetryFactory
-);
-const pluginManagerReadWrite = new PluginManager(
-  pluginServiceManagerContainer,
-  propsReadWrite,
-  telemetryFactory
-);
-const pluginManager = new PluginManager(
-  pluginServiceManagerContainer,
-  props,
-  new NullTelemetryFactory()
-);
+const pluginManagerExecute = new PluginManager(pluginServiceManagerContainer, propsExecute, telemetryFactory);
+const pluginManagerReadWrite = new PluginManager(pluginServiceManagerContainer, propsReadWrite, telemetryFactory);
+const pluginManager = new PluginManager(pluginServiceManagerContainer, props, new NullTelemetryFactory());
 
 suite(
   "Plugin benchmarks",

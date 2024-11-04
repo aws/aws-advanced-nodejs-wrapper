@@ -52,11 +52,7 @@ describe("notificationPipelineTest", () => {
   let plugin: TestPlugin;
 
   beforeEach(() => {
-    pluginManager = new PluginManager(
-      container,
-      props,
-      new NullTelemetryFactory()
-    );
+    pluginManager = new PluginManager(container, props, new NullTelemetryFactory());
     plugin = new TestPlugin(instance(mockPluginService));
     pluginManager["_plugins"] = [plugin];
   });
