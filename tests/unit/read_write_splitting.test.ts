@@ -39,6 +39,7 @@ import { DriverDialect } from "../../common/lib/driver_dialect/driver_dialect";
 import { MySQL2DriverDialect } from "../../mysql/lib/dialect/mysql2_driver_dialect";
 import { PgClientWrapper } from "../../common/lib/pg_client_wrapper";
 import { MySQLClientWrapper } from "../../common/lib/mysql_client_wrapper";
+import { PoolClientWrapper } from "../../common/lib/pool_client_wrapper";
 
 const properties: Map<string, any> = new Map();
 const builder = new HostInfoBuilder({ hostAvailabilityStrategy: new SimpleHostAvailabilityStrategy() });
@@ -66,6 +67,7 @@ const mockChanges: Set<HostChangeOptions> = mock(Set<HostChangeOptions>);
 
 const mockReaderWrapper: ClientWrapper = mock(PgClientWrapper);
 const mockWriterWrapper: ClientWrapper = mock(MySQLClientWrapper);
+const poolClientWrapper: ClientWrapper = new PoolClientWrapper(undefined, writerHost, new Map<string, string>());
 
 const clientWrapper_undefined: any = undefined;
 
@@ -406,8 +408,8 @@ describe("reader write splitting test", () => {
     when(mockPluginService.getCurrentClient()).thenReturn(instance(mockWriterClient));
     when(await mockWriterClient.isValid()).thenReturn(true);
     when(mockPluginService.getCurrentHostInfo()).thenReturn(writerHost).thenReturn(writerHost).thenReturn(readerHost1);
-    when(mockDriverDialect.connect(anything(), anything())).thenReturn(Promise.resolve(mockReaderWrapper));
-    when(mockPluginService.connect(anything(), anything())).thenResolve(mockReaderWrapper);
+    when(mockDriverDialect.connect(anything(), anything())).thenReturn(Promise.resolve(poolClientWrapper));
+    when(mockPluginService.connect(anything(), anything())).thenResolve(poolClientWrapper);
     const config: AwsPoolConfig = new AwsPoolConfig({
       idleTimeoutMillis: 7000,
       maxConnections: 10,
@@ -424,7 +426,7 @@ describe("reader write splitting test", () => {
     const spyTarget = instance(target);
     await spyTarget.switchClientIfRequired(true);
     await spyTarget.switchClientIfRequired(false);
-    verify(target.closeTargetClientIfIdle(mockReaderWrapper)).once();
+    verify(target.closeTargetClientIfIdle(poolClientWrapper)).once();
   });
 
   it("test pooled writer connection after set read only", async () => {
@@ -439,10 +441,10 @@ describe("reader write splitting test", () => {
       .thenReturn(readerHost1)
       .thenReturn(readerHost1)
       .thenReturn(writerHost);
-    when(mockDriverDialect.connect(anything(), anything())).thenReturn(Promise.resolve(mockWriterWrapper));
-    when(mockPluginService.connect(writerHost, anything())).thenResolve(mockWriterWrapper);
-    when(mockPluginService.connect(readerHost1, anything())).thenResolve(mockReaderWrapper);
-    when(mockPluginService.connect(readerHost2, anything())).thenResolve(mockReaderWrapper);
+    when(mockDriverDialect.connect(anything(), anything())).thenReturn(Promise.resolve(poolClientWrapper));
+    when(mockPluginService.connect(writerHost, anything())).thenResolve(poolClientWrapper);
+    when(mockPluginService.connect(readerHost1, anything())).thenResolve(poolClientWrapper);
+    when(mockPluginService.connect(readerHost2, anything())).thenResolve(poolClientWrapper);
 
     const config: AwsPoolConfig = new AwsPoolConfig({
       idleTimeoutMillis: 7000,
@@ -473,6 +475,6 @@ describe("reader write splitting test", () => {
     await spyTarget.switchClientIfRequired(false);
     await spyTarget.switchClientIfRequired(true);
 
-    verify(target.closeTargetClientIfIdle(mockWriterWrapper)).once();
+    verify(target.closeTargetClientIfIdle(poolClientWrapper)).twice();
   });
 });
