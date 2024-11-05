@@ -14,13 +14,6 @@
     "declaration": true,
     "outDir": "dist"
   },
-  "exclude": [
-    "tests",
-    "examples"
-  ],
-  "include": [
-    "common",
-    "mysql",
-    "pg"
-  ]
+  "exclude": ["tests", "examples"],
+  "include": ["common", "mysql", "pg"]
 }

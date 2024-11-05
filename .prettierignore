@@ -1,3 +1,7 @@
 gradle
 dist
 coverage
+build
+.babelrc
+.github
+
