@@ -19,15 +19,14 @@ export class AwsPoolConfig {
   readonly idleTimeoutMillis?: number | undefined;
 
   /**
-   * Only supported for MySQL
+   * Only applicable for MySQL.
    */
   readonly waitForConnections?: boolean | undefined;
   readonly queueLimit?: number | undefined;
   readonly maxIdleConnections?: number | undefined;
 
-
   /**
-   * Only supported for Postgres
+   * Only applicable for Postgres.
    */
   readonly minConnections?: number | undefined;
   readonly allowExitOnIdle?: boolean | undefined;
