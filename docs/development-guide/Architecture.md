@@ -1,6 +1,6 @@
 # Architecture
 
-<div style="center"><img src="../images/plugin_manager.png" alt="diagram on how plugin manager is integrated with the user application"/></div>  
+<div style="center"><img src="../images/plugin_manager.png" alt="diagram on how plugin manager is integrated with the user application"/></div>
 
 The AWS Advanced NodeJS Wrapper contains 5 main components:
 
@@ -19,8 +19,8 @@ During execution, plugins may utilize the plugin service to help its execution b
 - the current connection
 - the hosts information or topology of the database
 
-
 > [!NOTE]
+>
 > - Each client has its own instances of:
 >   - plugin manager
 >   - plugin service
