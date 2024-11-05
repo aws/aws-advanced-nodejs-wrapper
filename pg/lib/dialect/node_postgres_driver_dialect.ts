@@ -16,7 +16,9 @@
 
 import { DriverDialect } from "../../../common/lib/driver_dialect/driver_dialect";
 import { ClientWrapper } from "../../../common/lib/client_wrapper";
-import { Client, PoolConfig } from "pg";
+
+import pkgPg from "pg";
+
 import { WrapperProperties } from "../../../common/lib/wrapper_property";
 import { AwsPoolConfig } from "../../../common/lib/aws_pool_config";
 import { AwsPoolClient } from "../../../common/lib/aws_pool_client";
@@ -32,13 +34,13 @@ export class NodePostgresDriverDialect implements DriverDialect {
   }
 
   async connect(hostInfo: HostInfo, props: Map<string, any>): Promise<ClientWrapper> {
-    const targetClient = new Client(WrapperProperties.removeWrapperProperties(props));
+    const targetClient = new pkgPg.Client(WrapperProperties.removeWrapperProperties(props));
     await targetClient.connect();
     return Promise.resolve(new PgClientWrapper(targetClient, hostInfo, props));
   }
 
   preparePoolClientProperties(props: Map<string, any>, poolConfig: AwsPoolConfig | undefined): any {
-    const finalPoolConfig: PoolConfig = {};
+    const finalPoolConfig: pkgPg.PoolConfig = {};
     const finalClientProps = WrapperProperties.removeWrapperProperties(props);
 
     Object.assign(finalPoolConfig, finalClientProps);
@@ -50,7 +52,7 @@ export class NodePostgresDriverDialect implements DriverDialect {
     return finalPoolConfig;
   }
 
-  getAwsPoolClient(props: PoolConfig): AwsPoolClient {
+  getAwsPoolClient(props: pkgPg.PoolConfig): AwsPoolClient {
     return new AwsPgPoolClient(props);
   }
 }

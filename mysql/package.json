@@ -1,0 +1,5 @@
+{
+  "name": "@aws-advanced-nodejs-wrapper/mysql",
+  "main": "dist/mysql/lib/index.js",
+  "types": "dist/mysql/lib/index.d.ts"
+}

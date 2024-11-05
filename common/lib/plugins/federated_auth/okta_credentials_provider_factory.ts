@@ -21,7 +21,7 @@ import axios from "axios";
 import { logger } from "../../../logutils";
 import { Messages } from "../../utils/messages";
 import { AwsWrapperError } from "../../utils/errors";
-import https from "https";
+import { Agent } from "https";
 import { PluginService } from "../../plugin_service";
 import { TelemetryFactory } from "../../utils/telemetry/telemetry_factory";
 import { TelemetryTraceLevel } from "../../utils/telemetry/telemetry_trace_level";
@@ -53,7 +53,7 @@ export class OktaCredentialsProviderFactory extends SamlCredentialsProviderFacto
     const idpUser = WrapperProperties.IDP_USERNAME.get(props);
     const idpPassword = WrapperProperties.IDP_PASSWORD.get(props);
 
-    const httpsAgent = new https.Agent(WrapperProperties.HTTPS_AGENT_OPTIONS.get(props));
+    const httpsAgent = new Agent(WrapperProperties.HTTPS_AGENT_OPTIONS.get(props));
 
     const sessionTokenEndpoint = `${idpHost}/api/v1/authn`;
 
@@ -98,7 +98,7 @@ export class OktaCredentialsProviderFactory extends SamlCredentialsProviderFacto
 
       logger.debug(Messages.get("OktaCredentialsProviderFactory.samlAssertionUrl", uri));
 
-      const httpsAgent = new https.Agent(WrapperProperties.HTTPS_AGENT_OPTIONS.get(props));
+      const httpsAgent = new Agent(WrapperProperties.HTTPS_AGENT_OPTIONS.get(props));
       const getConfig = {
         method: "get",
         url: uri,

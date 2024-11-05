@@ -1,0 +1,5 @@
+{
+  "name": "@aws-advanced-nodejs-wrapper/common",
+  "main": "dist/common/lib/index.js",
+  "types": "dist/common/lib/index.d.ts"
+}

@@ -14,7 +14,7 @@
   limitations under the License.
 */
 
-import { QueryOptions } from "mysql2/typings/mysql/lib/protocol/sequences/Query";
+import { QueryOptions } from "mysql2";
 import { AwsClient } from "../../common/lib/aws_client";
 import { Query } from "mysql2/promise";
 import { MySQLErrorHandler } from "./mysql_error_handler";

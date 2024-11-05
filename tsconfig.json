@@ -1,14 +1,26 @@
 {
   "compilerOptions": {
-    "module": "ESNext",
-    "moduleResolution": "node",
-    "target": "ESNext",
-    "strict": true,
-    "declaration": true,
-    "sourceMap": true,
+    "target": "ES2022",
+    "module": "ES2022",
+    "moduleResolution": "Node",
+    "allowSyntheticDefaultImports": true,
+    "isolatedModules": true,
+    "alwaysStrict": true,
+    "esModuleInterop": true,
     "declarationMap": true,
-    "outDir": "./dist",
-    "esModuleInterop": true
+    "allowUnreachableCode": true,
+    "inlineSources": true,
+    "inlineSourceMap": true,
+    "declaration": true,
+    "outDir": "dist"
   },
-  "include": ["lib/**/*", "tests/**/*"]
+  "exclude": [
+    "tests",
+    "examples"
+  ],
+  "include": [
+    "common",
+    "mysql",
+    "pg"
+  ]
 }

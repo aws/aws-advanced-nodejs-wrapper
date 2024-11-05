@@ -303,9 +303,9 @@ export class PluginService implements ErrorHandler, HostListProviderService {
     }
   }
 
-  identifyConnection(targetClient: ClientWrapper): Promise<HostInfo | void | null> {
+  identifyConnection(targetClient: ClientWrapper): Promise<HostInfo | null> {
     const provider: HostListProvider | null = this.getHostListProvider();
-    if (provider === null) {
+    if (!provider) {
       return Promise.reject();
     }
     return provider.identifyConnection(targetClient, this.dialect);

@@ -14,18 +14,19 @@
   limitations under the License.
 */
 
-import { Pool, PoolClient, PoolConfig } from "pg";
+import pkgPg from "pg";
+
 import { AwsPoolClient } from "../../common/lib/aws_pool_client";
 import { Messages } from "../../common/lib/utils/messages";
 import { AwsWrapperError } from "../../common/lib/utils/errors";
 import { logger } from "../../common/logutils";
 
 export class AwsPgPoolClient implements AwsPoolClient {
-  targetPool: Pool;
+  targetPool: pkgPg.Pool;
 
-  constructor(props: PoolConfig) {
-    this.targetPool = new Pool(props);
-    this.targetPool.on("connect", (_client: PoolClient) => {
+  constructor(props: pkgPg.PoolConfig) {
+    this.targetPool = new pkgPg.Pool(props);
+    this.targetPool.on("connect", (_client: pkgPg.PoolClient) => {
       _client.on("error", (err: Error) => {
         logger.debug(err);
       });

@@ -1,0 +1,5 @@
+{
+  "name": "@aws-advanced-nodejs-wrapper/pg",
+  "main": "dist/pg/lib/index.js",
+  "types": "dist/pg/lib/index.d.ts"
+}

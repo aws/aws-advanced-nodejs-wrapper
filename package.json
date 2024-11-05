@@ -2,6 +2,7 @@
   "name": "aws-advanced-nodejs-wrapper",
   "version": "0.0.1",
   "private": true,
+  "type": "module",
   "workspaces": [
     "common",
     "pg",
@@ -17,7 +18,10 @@
     "integration": "jest --config=jest.integration.config.json --runInBand --verbose",
     "debug-integration": "node --inspect-brk=0.0.0.0:5005 ./node_modules/jest/bin/jest.js --config=jest.integration.config.json --runInBand",
     "lint": "eslint --fix --ext .ts .",
-    "test": "jest --config=jest.unit.config.json"
+    "test": "jest --config=jest.unit.config.json",
+    "fix-imports": "babel --extensions \".js\" dist -d dist",
+    "build": "tsc",
+    "prepublish": "npm run build && npm run fix-imports && npm pack --pack-destination ./build"
   },
   "lint-staged": {
     "*.ts": [
@@ -26,9 +30,7 @@
     ]
   },
   "files": [
-    "common/*",
-    "mysql/*",
-    "pg/*"
+    "dist"
   ],
   "devDependencies": {
     "@aws-sdk/client-rds": "^3.682.0",
@@ -55,7 +57,7 @@
     "@types/jest": "^29.5.13",
     "@types/node": "^20.14.10",
     "@types/node-fetch": "^2.6.11",
-    "@types/pg": "^8.11.8",
+    "@types/pg": "^8.11.10",
     "@types/tough-cookie": "^4.0.5",
     "@typescript-eslint/eslint-plugin": "^7.15.0",
     "aws-sdk": "^2.1691.0",
@@ -63,7 +65,6 @@
     "axios": "^1.7.7",
     "axios-cookiejar-support": "^5.0.3",
     "benny": "^3.7.1",
-    "dotenv": "^16.4.5",
     "entities": "^4.5.0",
     "eslint": "^8.57.1",
     "eslint-config-prettier": "^9.1.0",
@@ -71,12 +72,11 @@
     "eslint-plugin-prettier": "^5.2.1",
     "generate-license-file": "^3.5.1",
     "http-cookie-agent": "^6.0.5",
-    "i18n": "^0.15.1",
     "jest-html-reporter": "^3.10.2",
     "lint-staged": "^15.2.10",
     "mysql2": "^3.11.0",
     "node-fetch": "^2.7.0",
-    "pg": "^8.12.0",
+    "pg": "^8.13.1",
     "prettier": "^3.3.3",
     "querystring": "^0.2.1",
     "toxiproxy-node-client": "^3.0.0",
@@ -85,8 +85,18 @@
     "ts-node": "^10.9.2",
     "tsx": "^4.19.1",
     "typescript": "^5.6.2",
+    "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz",
+    "@babel/cli": "^7.25.9",
+    "@babel/core": "^7.26.0",
+    "@babel/node": "^7.26.0",
+    "babel-plugin-transform-rewrite-imports": "^1.5.3"
+  },
+  "dependencies": {
+    "@types/i18n": "^0.13.12",
+    "i18n": "^0.15.1",
+    "lodash": "^4.17.21",
     "winston": "3.15.0",
-    "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz"
+    "dotenv": "^16.4.5"
   },
   "overrides": {
     "braces": "^3.0.3",
