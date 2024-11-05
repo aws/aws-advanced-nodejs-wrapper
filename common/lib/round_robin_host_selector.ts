@@ -21,7 +21,6 @@ import { WrapperProperties, WrapperProperty } from "./wrapper_property";
 import { AwsWrapperError } from "./utils/errors";
 import { CacheMap } from "./utils/cache_map";
 import { HostAvailability } from "./host_availability/host_availability";
-import { isInteger } from "lodash";
 import { Messages } from "./utils/messages";
 
 export class RoundRobinHostSelector implements HostSelector {
@@ -153,7 +152,7 @@ export class RoundRobinHostSelector implements HostSelector {
     let defaultWeight = RoundRobinHostSelector.DEFAULT_WEIGHT;
     if (props) {
       defaultWeight = WrapperProperties.ROUND_ROBIN_DEFAULT_WEIGHT.get(props);
-      if (!isInteger(defaultWeight) || defaultWeight < RoundRobinHostSelector.DEFAULT_WEIGHT) {
+      if (!Number.isInteger(defaultWeight) || defaultWeight < RoundRobinHostSelector.DEFAULT_WEIGHT) {
         throw new AwsWrapperError(Messages.get("HostSelector.roundRobinInvalidDefaultWeight"));
       }
       roundRobinClusterInfo.lastClusterDefaultWeightPropertyValue = defaultWeight;
@@ -181,7 +180,7 @@ export class RoundRobinHostSelector implements HostSelector {
           }
 
           const weight = Number(hostWeight);
-          if (isNaN(weight) || !isInteger(weight) || weight < RoundRobinHostSelector.DEFAULT_WEIGHT) {
+          if (isNaN(weight) || !Number.isInteger(weight) || weight < RoundRobinHostSelector.DEFAULT_WEIGHT) {
             throw new AwsWrapperError(Messages.get("HostSelector.roundRobinInvalidHostWeightPairs"));
           }
           roundRobinClusterInfo.clusterWeightsMap.set(hostName, weight);
