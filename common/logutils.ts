@@ -23,6 +23,10 @@ dotenv.config();
 
 const logLevel = process.env.LOG_LEVEL;
 
+export function uniqueId(prefix: string): string {
+  return `${prefix}${Math.random().toString(16).slice(2)}`;
+}
+
 export const logger = createLogger({
   format: combine(
     colorize(),

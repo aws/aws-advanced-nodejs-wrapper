@@ -21,11 +21,10 @@ import { getTimeoutTask, maskProperties, shuffleList, sleep } from "../../utils/
 import { HostRole } from "../../host_role";
 import { HostAvailability } from "../../host_availability/host_availability";
 import { AwsWrapperError, InternalQueryTimeoutError } from "../../utils/errors";
-import { logger } from "../../../logutils";
+import { logger, uniqueId } from "../../../logutils";
 import { Messages } from "../../utils/messages";
 import { WrapperProperties } from "../../wrapper_property";
 import { ReaderTaskSelectorHandler } from "./reader_task_selector";
-import { uniqueId } from "lodash";
 import { FailoverRestriction } from "./failover_restriction";
 
 export interface ReaderFailoverHandler {
