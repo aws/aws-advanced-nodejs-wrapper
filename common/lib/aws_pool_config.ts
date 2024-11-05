@@ -16,16 +16,29 @@
 
 export class AwsPoolConfig {
   readonly maxConnections?: number | undefined;
-  readonly minConnections?: number | undefined;
   readonly idleTimeoutMillis?: number | undefined;
-  readonly allowExitOnIdle?: boolean | undefined;
+
+  /**
+   * Only supported for MySQL
+   */
+  readonly waitForConnections?: boolean | undefined;
+  readonly queueLimit?: number | undefined;
   readonly maxIdleConnections?: number | undefined;
+
+
+  /**
+   * Only supported for Postgres
+   */
+  readonly minConnections?: number | undefined;
+  readonly allowExitOnIdle?: boolean | undefined;
 
   constructor(props?: any) {
     this.maxConnections = props.maxConnections ?? 10;
     this.idleTimeoutMillis = props.idleTimeoutMillis ?? 60000;
-    this.maxIdleConnections = props.maxIdleConnections ?? 10;
-    this.allowExitOnIdle = props.allowExitOnIdle ?? false;
+    this.maxIdleConnections = props.maxIdleConnections ?? this.maxConnections;
+    this.waitForConnections = props.waitForConnections ?? true;
+    this.queueLimit = props.queueLimit ?? 0;
     this.minConnections = props.minConnections ?? 0;
+    this.allowExitOnIdle = props.allowExitOnIdle ?? false;
   }
 }

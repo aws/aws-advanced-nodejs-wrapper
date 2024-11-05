@@ -43,9 +43,10 @@ export class NodePostgresDriverDialect implements DriverDialect {
 
     Object.assign(finalPoolConfig, finalClientProps);
     finalPoolConfig.max = poolConfig?.maxConnections;
-    finalPoolConfig.min = poolConfig?.minConnections;
     finalPoolConfig.idleTimeoutMillis = poolConfig?.idleTimeoutMillis;
     finalPoolConfig.allowExitOnIdle = poolConfig?.allowExitOnIdle;
+    finalPoolConfig.min = poolConfig?.minConnections;
+
     return finalPoolConfig;
   }
 
