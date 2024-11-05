@@ -18,15 +18,12 @@ import { WrapperProperties } from "../../common/lib/wrapper_property";
 import { instance, mock, when } from "ts-mockito";
 import { ConnectionPluginChainBuilder } from "../../common/lib/connection_plugin_chain_builder";
 import { PluginService } from "../../common/lib/plugin_service";
-import { ConnectionProvider } from "../../common/lib/connection_provider";
-import { DriverConnectionProvider } from "../../common/lib/driver_connection_provider";
 import { FailoverPlugin } from "../../common/lib/plugins/failover/failover_plugin";
 import { IamAuthenticationPlugin } from "../../common/lib/authentication/iam_authentication_plugin";
 import { DefaultPlugin } from "../../common/lib/plugins/default_plugin";
 import { ExecuteTimePlugin } from "../../common/lib/plugins/execute_time_plugin";
 import { ConnectTimePlugin } from "../../common/lib/plugins/connect_time_plugin";
 import { StaleDnsPlugin } from "../../common/lib/plugins/stale_dns/stale_dns_plugin";
-import { ConnectionProviderManager } from "../../common/lib/connection_provider_manager";
 import { NullTelemetryFactory } from "../../common/lib/utils/telemetry/null_telemetry_factory";
 import { AbstractConnectionPlugin } from "../../common/lib/abstract_connection_plugin";
 import { ConnectionPluginFactory } from "../../common/lib/plugin_factory";
@@ -34,8 +31,6 @@ import { PluginManager } from "../../common/lib/plugin_manager";
 
 const mockPluginService: PluginService = mock(PluginService);
 const mockPluginServiceInstance: PluginService = instance(mockPluginService);
-const mockDefaultConnProvider: ConnectionProvider = mock(DriverConnectionProvider);
-const mockEffectiveConnProvider: ConnectionProvider = mock(DriverConnectionProvider);
 
 describe("testConnectionPluginChainBuilder", () => {
   beforeAll(() => {
@@ -46,11 +41,7 @@ describe("testConnectionPluginChainBuilder", () => {
     const props = new Map();
     props.set(WrapperProperties.PLUGINS.name, plugins);
 
-    const result = await ConnectionPluginChainBuilder.getPlugins(
-      mockPluginServiceInstance,
-      props,
-      new ConnectionProviderManager(mockDefaultConnProvider, mockEffectiveConnProvider)
-    );
+    const result = await ConnectionPluginChainBuilder.getPlugins(mockPluginServiceInstance, props);
 
     expect(result.length).toBe(4);
     expect(result[0]).toBeInstanceOf(StaleDnsPlugin);
@@ -64,11 +55,7 @@ describe("testConnectionPluginChainBuilder", () => {
     props.set(WrapperProperties.PLUGINS.name, "iam,staleDns,failover");
     props.set(WrapperProperties.AUTO_SORT_PLUGIN_ORDER.name, false);
 
-    const result = await ConnectionPluginChainBuilder.getPlugins(
-      mockPluginServiceInstance,
-      props,
-      new ConnectionProviderManager(mockDefaultConnProvider, mockEffectiveConnProvider)
-    );
+    const result = await ConnectionPluginChainBuilder.getPlugins(mockPluginServiceInstance, props);
 
     expect(result.length).toBe(4);
     expect(result[0]).toBeInstanceOf(IamAuthenticationPlugin);
@@ -82,11 +69,7 @@ describe("testConnectionPluginChainBuilder", () => {
 
     props.set(WrapperProperties.PLUGINS.name, "executeTime,connectTime,iam");
 
-    let result = await ConnectionPluginChainBuilder.getPlugins(
-      mockPluginServiceInstance,
-      props,
-      new ConnectionProviderManager(mockDefaultConnProvider, mockEffectiveConnProvider)
-    );
+    let result = await ConnectionPluginChainBuilder.getPlugins(mockPluginServiceInstance, props);
 
     expect(result.length).toBe(4);
     expect(result[0]).toBeInstanceOf(ExecuteTimePlugin);
@@ -96,11 +79,7 @@ describe("testConnectionPluginChainBuilder", () => {
     // Test again to make sure the previous sort does not impact future plugin chains
     props.set(WrapperProperties.PLUGINS.name, "iam,executeTime,connectTime,failover");
 
-    result = await ConnectionPluginChainBuilder.getPlugins(
-      mockPluginServiceInstance,
-      props,
-      new ConnectionProviderManager(mockDefaultConnProvider, mockEffectiveConnProvider)
-    );
+    result = await ConnectionPluginChainBuilder.getPlugins(mockPluginServiceInstance, props);
 
     expect(result.length).toBe(5);
     expect(result[0]).toBeInstanceOf(FailoverPlugin);
@@ -116,11 +95,7 @@ describe("testConnectionPluginChainBuilder", () => {
     const props = new Map();
     props.set(WrapperProperties.PLUGINS.name, "test");
 
-    const result = await ConnectionPluginChainBuilder.getPlugins(
-      mockPluginServiceInstance,
-      props,
-      new ConnectionProviderManager(mockDefaultConnProvider, mockEffectiveConnProvider)
-    );
+    const result = await ConnectionPluginChainBuilder.getPlugins(mockPluginServiceInstance, props);
 
     expect(result.length).toBe(2);
     expect(result[0]).toBeInstanceOf(TestPlugin);

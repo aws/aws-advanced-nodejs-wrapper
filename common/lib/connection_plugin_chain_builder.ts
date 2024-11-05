@@ -33,7 +33,6 @@ import { OktaAuthPluginFactory } from "./plugins/federated_auth/okta_auth_plugin
 import { HostMonitoringPluginFactory } from "./plugins/efm/host_monitoring_plugin_factory";
 import { AuroraInitialConnectionStrategyFactory } from "./plugins/aurora_initial_connection_strategy_plugin_factory";
 import { AuroraConnectionTrackerPluginFactory } from "./plugins/connection_tracker/aurora_connection_tracker_plugin_factory";
-import { ConnectionProviderManager } from "./connection_provider_manager";
 import { DeveloperConnectionPluginFactory } from "./plugins/dev/developer_connection_plugin_factory";
 
 /*
@@ -67,11 +66,7 @@ export class ConnectionPluginChainBuilder {
     ["executeTime", { factory: ExecuteTimePluginFactory, weight: ConnectionPluginChainBuilder.WEIGHT_RELATIVE_TO_PRIOR_PLUGIN }]
   ]);
 
-  static async getPlugins(
-    pluginService: PluginService,
-    props: Map<string, any>,
-    connectionProviderManager: ConnectionProviderManager
-  ): Promise<ConnectionPlugin[]> {
+  static async getPlugins(pluginService: PluginService, props: Map<string, any>): Promise<ConnectionPlugin[]> {
     const plugins: ConnectionPlugin[] = [];
     let pluginCodes: string = props.get(WrapperProperties.PLUGINS.name);
     if (pluginCodes == null) {
@@ -119,7 +114,7 @@ export class ConnectionPluginChainBuilder {
       }
     }
 
-    plugins.push(new DefaultPlugin(pluginService, connectionProviderManager));
+    plugins.push(new DefaultPlugin(pluginService));
 
     return plugins;
   }

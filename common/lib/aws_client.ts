@@ -63,13 +63,16 @@ export abstract class AwsClient extends EventEmitter {
 
     this.telemetryFactory = new DefaultTelemetryFactory(this.properties);
     const container = new PluginServiceManagerContainer();
-    this.pluginService = new PluginService(container, this, dbType, knownDialectsByCode, this.properties, driverDialect);
-    this.pluginManager = new PluginManager(
+    this.pluginService = new PluginService(
       container,
+      this,
+      dbType,
+      knownDialectsByCode,
       this.properties,
-      new ConnectionProviderManager(new DriverConnectionProvider(), null),
-      this.telemetryFactory
+      driverDialect,
+      new ConnectionProviderManager(new DriverConnectionProvider(), null)
     );
+    this.pluginManager = new PluginManager(container, this.properties, this.telemetryFactory);
   }
 
   private async setup() {

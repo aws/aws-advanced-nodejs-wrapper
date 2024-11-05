@@ -68,7 +68,7 @@ export class ConnectionProviderManager {
       }
     }
 
-    if (this.effectiveProvider?.acceptsStrategy(role, strategy)) {
+    if (!host && this.effectiveProvider?.acceptsStrategy(role, strategy)) {
       try {
         host = this.effectiveProvider.getHostInfoByStrategy(hosts, role, strategy, props);
       } catch {

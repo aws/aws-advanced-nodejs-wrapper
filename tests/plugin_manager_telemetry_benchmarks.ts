@@ -1,12 +1,12 @@
 /*
   Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
-
+ 
   Licensed under the Apache License, Version 2.0 (the "License").
   You may not use this file except in compliance with the License.
   You may obtain a copy of the License at
-
+ 
   http://www.apache.org/licenses/LICENSE-2.0
-
+ 
   Unless required by applicable law or agreed to in writing, software
   distributed under the License is distributed on an "AS IS" BASIS,
   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -41,7 +41,6 @@ import { AWSXRayPropagator } from "@opentelemetry/propagator-aws-xray";
 import { HttpInstrumentation } from "@opentelemetry/instrumentation-http";
 import { AwsInstrumentation } from "@opentelemetry/instrumentation-aws-sdk";
 import { AWSXRayIdGenerator } from "@opentelemetry/id-generator-aws-xray";
-import { ConnectionProviderManager } from "../common/lib/connection_provider_manager";
 import { PgDatabaseDialect } from "../pg/lib/dialect/pg_database_dialect";
 import { NodePostgresDriverDialect } from "../pg/lib/dialect/node_postgres_driver_dialect";
 
@@ -67,25 +66,15 @@ WrapperProperties.ENABLE_TELEMETRY.set(propsWithPlugins, true);
 WrapperProperties.TELEMETRY_METRICS_BACKEND.set(propsWithPlugins, "OTLP");
 WrapperProperties.TELEMETRY_TRACES_BACKEND.set(propsWithPlugins, "OTLP");
 
-const pluginManagerWithNoPlugins = new PluginManager(
-  pluginServiceManagerContainer,
-  propsWithNoPlugins,
-  new ConnectionProviderManager(instance(mockConnectionProvider), null),
-  telemetryFactory
-);
-const pluginManagerWithPlugins = new PluginManager(
-  pluginServiceManagerContainer,
-  propsWithPlugins,
-  new ConnectionProviderManager(instance(mockConnectionProvider), null),
-  telemetryFactory
-);
+const pluginManagerWithNoPlugins = new PluginManager(pluginServiceManagerContainer, propsWithNoPlugins, telemetryFactory);
+const pluginManagerWithPlugins = new PluginManager(pluginServiceManagerContainer, propsWithPlugins, telemetryFactory);
 
 async function createPlugins(pluginService: PluginService, connectionProvider: ConnectionProvider, props: Map<string, any>) {
   const plugins = new Array<ConnectionPlugin>();
   for (let i = 0; i < 10; i++) {
     plugins.push(await new BenchmarkPluginFactory().getInstance(pluginService, props));
   }
-  plugins.push(new DefaultPlugin(pluginService, new ConnectionProviderManager(instance(mockConnectionProvider), null)));
+  plugins.push(new DefaultPlugin(pluginService));
   return plugins;
 }
 
@@ -141,22 +130,12 @@ suite(
   }),
 
   add("initPluginManagerWithPlugins", async () => {
-    const manager = new PluginManager(
-      pluginServiceManagerContainer,
-      propsWithPlugins,
-      new ConnectionProviderManager(instance(mockConnectionProvider), null),
-      new NullTelemetryFactory()
-    );
+    const manager = new PluginManager(pluginServiceManagerContainer, propsWithPlugins, new NullTelemetryFactory());
     await manager.init(await createPlugins(instance(mockPluginService), instance(mockConnectionProvider), propsWithPlugins));
   }),
 
   add("initPluginManagerWithNoPlugins", async () => {
-    const manager = new PluginManager(
-      pluginServiceManagerContainer,
-      propsWithNoPlugins,
-      new ConnectionProviderManager(instance(mockConnectionProvider), null),
-      new NullTelemetryFactory()
-    );
+    const manager = new PluginManager(pluginServiceManagerContainer, propsWithNoPlugins, new NullTelemetryFactory());
     await manager.init();
   }),
 

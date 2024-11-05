@@ -15,7 +15,6 @@
 */
 
 import { anything, instance, mock, when } from "ts-mockito";
-import { ConnectionProvider } from "../common/lib/connection_provider";
 import { PluginService } from "../common/lib/plugin_service";
 import { PluginServiceManagerContainer } from "../common/lib/plugin_service_manager_container";
 import { WrapperProperties } from "../common/lib/wrapper_property";
@@ -39,10 +38,8 @@ import { AWSXRayPropagator } from "@opentelemetry/propagator-aws-xray";
 import { HttpInstrumentation } from "@opentelemetry/instrumentation-http";
 import { AwsInstrumentation } from "@opentelemetry/instrumentation-aws-sdk";
 import { AWSXRayIdGenerator } from "@opentelemetry/id-generator-aws-xray";
-import { ConnectionProviderManager } from "../common/lib/connection_provider_manager";
 import { PgClientWrapper } from "../common/lib/pg_client_wrapper";
 
-const mockConnectionProvider = mock<ConnectionProvider>();
 const mockPluginService = mock(PluginService);
 const mockClient = mock(AwsPGClient);
 
@@ -81,24 +78,9 @@ WrapperProperties.TELEMETRY_TRACES_BACKEND.set(propsExecute, "OTLP");
 WrapperProperties.TELEMETRY_TRACES_BACKEND.set(propsReadWrite, "OTLP");
 WrapperProperties.TELEMETRY_TRACES_BACKEND.set(props, "OTLP");
 
-const pluginManagerExecute = new PluginManager(
-  pluginServiceManagerContainer,
-  propsExecute,
-  new ConnectionProviderManager(instance(mockConnectionProvider), null),
-  telemetryFactory
-);
-const pluginManagerReadWrite = new PluginManager(
-  pluginServiceManagerContainer,
-  propsReadWrite,
-  new ConnectionProviderManager(instance(mockConnectionProvider), null),
-  telemetryFactory
-);
-const pluginManager = new PluginManager(
-  pluginServiceManagerContainer,
-  props,
-  new ConnectionProviderManager(instance(mockConnectionProvider), null),
-  new NullTelemetryFactory()
-);
+const pluginManagerExecute = new PluginManager(pluginServiceManagerContainer, propsExecute, telemetryFactory);
+const pluginManagerReadWrite = new PluginManager(pluginServiceManagerContainer, propsReadWrite, telemetryFactory);
+const pluginManager = new PluginManager(pluginServiceManagerContainer, props, new NullTelemetryFactory());
 
 const traceExporter = new OTLPTraceExporter({ url: "http://localhost:4317" });
 const resource = Resource.default().merge(

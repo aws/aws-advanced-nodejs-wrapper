@@ -44,6 +44,7 @@ import { getWriter } from "./utils/utils";
 import { ConnectionProvider } from "./connection_provider";
 import { TelemetryFactory } from "./utils/telemetry/telemetry_factory";
 import { DriverDialect } from "./driver_dialect/driver_dialect";
+import { ConnectionProviderManager } from "./connection_provider_manager";
 
 export class PluginService implements ErrorHandler, HostListProviderService {
   private readonly _currentClient: AwsClient;
@@ -52,6 +53,7 @@ export class PluginService implements ErrorHandler, HostListProviderService {
   private _initialConnectionHostInfo?: HostInfo;
   private _isInTransaction: boolean = false;
   private pluginServiceManagerContainer: PluginServiceManagerContainer;
+  private readonly connectionProviderManager: ConnectionProviderManager;
   protected hosts: HostInfo[] = [];
   private dbDialectProvider: DatabaseDialectProvider;
   private readonly initialHost: string;
@@ -67,7 +69,8 @@ export class PluginService implements ErrorHandler, HostListProviderService {
     dbType: DatabaseType,
     knownDialectsByCode: Map<DatabaseDialectCodes, DatabaseDialect>,
     props: Map<string, any>,
-    driverDialect: DriverDialect
+    driverDialect: DriverDialect,
+    connectionProviderManager: ConnectionProviderManager
   ) {
     this._currentClient = client;
     this.pluginServiceManagerContainer = container;
@@ -76,6 +79,7 @@ export class PluginService implements ErrorHandler, HostListProviderService {
     this.driverDialect = driverDialect;
     this.initialHost = props.get(WrapperProperties.HOST.name);
     this.sessionStateService = new SessionStateServiceImpl(this, this.props);
+    this.connectionProviderManager = connectionProviderManager;
     container.pluginService = this;
 
     this.dialect = this.dbDialectProvider.getDialect(this.props);
@@ -114,8 +118,23 @@ export class PluginService implements ErrorHandler, HostListProviderService {
   }
 
   getHostInfoByStrategy(role: HostRole, strategy: string): HostInfo | undefined {
+    if (role === HostRole.UNKNOWN) {
+      logger.debug("unknown role requested"); // TODO provide message using Messages.get was: DefaultConnectionPlugin.unknownRoleRequested -
+      return;
+    }
+
     const pluginManager = this.pluginServiceManagerContainer.pluginManager;
-    return pluginManager?.getHostInfoByStrategy(role, strategy);
+    const host = pluginManager?.getHostInfoByStrategy(role, strategy);
+    if (host) {
+      return host;
+    }
+
+    if (this.getHosts().length === 0) {
+      logger.debug("no Hosts Available"); // TODO provide message using Messages.get was: DefaultConnectionPlugin.noHostsAvailable
+      return;
+    }
+
+    return this.connectionProviderManager.getHostInfoByStrategy(this.getHosts(), role, strategy, this.props);
   }
 
   getCurrentHostInfo(): HostInfo | null {
@@ -152,10 +171,7 @@ export class PluginService implements ErrorHandler, HostListProviderService {
   }
 
   getConnectionProvider(hostInfo: HostInfo | null, props: Map<string, any>): ConnectionProvider {
-    if (!this.pluginServiceManagerContainer.pluginManager) {
-      throw new AwsWrapperError("Plugin manager should not be undefined");
-    }
-    return this.pluginServiceManagerContainer.pluginManager.getConnectionProvider(hostInfo, props);
+    return this.connectionProviderManager.getConnectionProvider(hostInfo, props);
   }
 
   getDialect(): DatabaseDialect {
@@ -175,7 +191,10 @@ export class PluginService implements ErrorHandler, HostListProviderService {
   }
 
   acceptsStrategy(role: HostRole, strategy: string): boolean {
-    return this.pluginServiceManagerContainer.pluginManager?.acceptsStrategy(role, strategy) ?? false;
+    return (
+      (this.pluginServiceManagerContainer.pluginManager?.acceptsStrategy(role, strategy) ?? false) ||
+      this.connectionProviderManager.acceptsStrategy(role, strategy)
+    );
   }
 
   async forceRefreshHostList(): Promise<void>;
