@@ -42,8 +42,10 @@ export class MySQL2DriverDialect implements DriverDialect {
 
     Object.assign(finalPoolConfig, finalClientProps);
     finalPoolConfig.connectionLimit = poolConfig?.maxConnections;
-    finalPoolConfig.maxIdle = poolConfig?.maxIdleConnections;
     finalPoolConfig.idleTimeout = poolConfig?.idleTimeoutMillis;
+    finalPoolConfig.maxIdle = poolConfig?.maxIdleConnections;
+    finalPoolConfig.waitForConnections = poolConfig?.waitForConnections;
+    finalPoolConfig.queueLimit = poolConfig?.queueLimit;
     return finalPoolConfig;
   }
 
