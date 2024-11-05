@@ -151,13 +151,6 @@ export class PluginService implements ErrorHandler, HostListProviderService {
     return this.getCurrentClient().connectionUrlParser;
   }
 
-  getConnectionProvider(hostInfo: HostInfo | null, props: Map<string, any>): ConnectionProvider {
-    if (!this.pluginServiceManagerContainer.pluginManager) {
-      throw new AwsWrapperError("Plugin manager should not be undefined");
-    }
-    return this.pluginServiceManagerContainer.pluginManager.getConnectionProvider(hostInfo, props);
-  }
-
   getDialect(): DatabaseDialect {
     return this.dialect;
   }

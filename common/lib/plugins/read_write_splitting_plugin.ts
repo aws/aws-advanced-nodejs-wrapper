@@ -30,6 +30,7 @@ import { ClientWrapper } from "../client_wrapper";
 import { getWriter, logAndThrowError } from "../utils/utils";
 import { CanReleaseResources } from "../can_release_resources";
 import { InternalPooledConnectionProvider } from "../internal_pooled_connection_provider";
+import { PoolClientWrapper } from "../pool_client_wrapper";
 
 export class ReadWriteSplittingPlugin extends AbstractConnectionPlugin implements CanReleaseResources {
   private static readonly subscribedMethods: Set<string> = new Set(["initHostProvider", "connect", "notifyConnectionChanged", "query"]);
@@ -197,7 +198,7 @@ export class ReadWriteSplittingPlugin extends AbstractConnectionPlugin implement
     props.set(WrapperProperties.HOST.name, writerHost.host);
     try {
       const targetClient = await this.pluginService.connect(writerHost, props);
-      this.isWriterClientFromInternalPool = this.pluginService.getConnectionProvider(writerHost, props) instanceof InternalPooledConnectionProvider;
+      this.isWriterClientFromInternalPool = targetClient instanceof PoolClientWrapper;
       this.setWriterClient(targetClient, writerHost);
       await this.switchCurrentTargetClientTo(this.writerTargetClient, writerHost);
     } catch (any) {
@@ -290,7 +291,7 @@ export class ReadWriteSplittingPlugin extends AbstractConnectionPlugin implement
 
         try {
           targetClient = await this.pluginService.connect(host, props);
-          this.isReaderClientFromInternalPool = this.pluginService.getConnectionProvider(host, props) instanceof InternalPooledConnectionProvider;
+          this.isReaderClientFromInternalPool = targetClient instanceof PoolClientWrapper;
           readerHost = host;
           break;
         } catch (any) {
