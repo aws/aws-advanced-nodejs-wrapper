@@ -27,6 +27,7 @@ import { RdsUrlType } from "../../common/lib/utils/rds_url_type";
 import { AwsClient } from "../../common/lib/aws_client";
 import { ClientWrapper } from "../../common/lib/client_wrapper";
 import { HostInfo } from "../../common/lib/host_info";
+import { MySQLClientWrapper } from "../../common/lib/mysql_client_wrapper";
 import { jest } from "@jest/globals";
 
 const props = new Map<string, any>();
@@ -42,11 +43,7 @@ const mockClient = mock(AwsClient);
 const mockHostInfo = mock(HostInfo);
 
 const mockClientInstance = instance(mockClient);
-const mockClientWrapper: ClientWrapper = {
-  client: undefined,
-  hostInfo: mockHostInfo,
-  properties: props
-};
+const mockClientWrapper: ClientWrapper = new MySQLClientWrapper(undefined, mockHostInfo, props);
 
 mockClientInstance.targetClient = mockClientWrapper;
 

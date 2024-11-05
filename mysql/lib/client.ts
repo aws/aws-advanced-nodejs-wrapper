@@ -42,14 +42,7 @@ export class AwsMySQLClient extends AwsClient {
   ]);
 
   constructor(config: any) {
-    super(
-      config,
-      new MySQLErrorHandler(),
-      DatabaseType.MYSQL,
-      AwsMySQLClient.knownDialectsByCode,
-      new MySQLConnectionUrlParser(),
-      new MySQL2DriverDialect()
-    );
+    super(config, DatabaseType.MYSQL, AwsMySQLClient.knownDialectsByCode, new MySQLConnectionUrlParser(), new MySQL2DriverDialect());
     this.resetState();
   }
 

@@ -24,6 +24,7 @@ import { anything, instance, mock, reset, verify, when } from "ts-mockito";
 import { ClientWrapper } from "../../common/lib/client_wrapper";
 import { PgDatabaseDialect } from "../../pg/lib/dialect/pg_database_dialect";
 import { NodePostgresDriverDialect } from "../../pg/lib/dialect/node_postgres_driver_dialect";
+import { PgClientWrapper } from "../../common/lib/pg_client_wrapper";
 
 const host1 = new HostInfo("writer", 1234, HostRole.WRITER);
 const host2 = new HostInfo("reader1", 1234, HostRole.READER);
@@ -35,12 +36,7 @@ const defaultHosts = [host1, host2, host3, host4, host5, host6];
 const properties = new Map();
 const mockDatabaseDialect = mock(PgDatabaseDialect);
 const mockDriverDialect = mock(NodePostgresDriverDialect);
-const clientWrapper: ClientWrapper = {
-  client: undefined,
-  hostInfo: mock(HostInfo),
-  properties: new Map<string, any>()
-};
-const mockClientWrapper: ClientWrapper = mock(clientWrapper);
+const mockClientWrapper: ClientWrapper = mock(PgClientWrapper);
 const mockTargetClient = { client: 123 };
 
 const mockPluginService = mock(PluginService);

@@ -41,14 +41,7 @@ export class AwsPGClient extends AwsClient {
   ]);
 
   constructor(config: any) {
-    super(
-      config,
-      new PgErrorHandler(),
-      DatabaseType.POSTGRES,
-      AwsPGClient.knownDialectsByCode,
-      new PgConnectionUrlParser(),
-      new NodePostgresDriverDialect()
-    );
+    super(config, DatabaseType.POSTGRES, AwsPGClient.knownDialectsByCode, new PgConnectionUrlParser(), new NodePostgresDriverDialect());
     this.resetState();
   }
 

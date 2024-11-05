@@ -20,6 +20,7 @@ import { ClientWrapper } from "../client_wrapper";
 import { FailoverRestriction } from "../plugins/failover/failover_restriction";
 import { AwsPoolClient } from "../aws_pool_client";
 import { AwsPoolConfig } from "../aws_pool_config";
+import { ErrorHandler } from "../error_handler";
 
 export enum DatabaseType {
   MYSQL,
@@ -32,6 +33,7 @@ export interface DatabaseDialect {
   getHostAliasAndParseResults(targetClient: ClientWrapper): Promise<string>;
   getServerVersionQuery(): string;
   getDialectUpdateCandidates(): string[];
+  getErrorHandler(): ErrorHandler;
   isDialect(targetClient: ClientWrapper): Promise<boolean>;
   getHostListProvider(props: Map<string, any>, originalUrl: string, hostListProviderService: HostListProviderService): HostListProvider;
   isClientValid(targetClient: ClientWrapper): Promise<boolean>;

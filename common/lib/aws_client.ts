@@ -43,7 +43,6 @@ export abstract class AwsClient extends EventEmitter {
   protected _catalog: string = "";
   protected _schema: string = "";
   protected _isolationLevel: number = 0;
-  protected _errorHandler: ErrorHandler;
   protected _connectionUrlParser: ConnectionUrlParser;
   readonly properties: Map<string, any>;
   config: any;
@@ -51,7 +50,6 @@ export abstract class AwsClient extends EventEmitter {
 
   protected constructor(
     config: any,
-    errorHandler: ErrorHandler,
     dbType: DatabaseType,
     knownDialectsByCode: Map<string, DatabaseDialect>,
     parser: ConnectionUrlParser,
@@ -59,7 +57,6 @@ export abstract class AwsClient extends EventEmitter {
   ) {
     super();
     this.config = config;
-    this._errorHandler = errorHandler;
     this._connectionUrlParser = parser;
 
     this.properties = new Map<string, any>(Object.entries(config));
@@ -108,7 +105,7 @@ export abstract class AwsClient extends EventEmitter {
   }
 
   get errorHandler(): ErrorHandler {
-    return this._errorHandler;
+    return this.pluginService.getDialect().getErrorHandler();
   }
 
   get connectionUrlParser(): ConnectionUrlParser {

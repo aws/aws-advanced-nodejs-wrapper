@@ -38,6 +38,7 @@ import { Messages } from "../../common/lib/utils/messages";
 import { HostChangeOptions } from "../../common/lib/host_change_options";
 import { ClientWrapper } from "../../common/lib/client_wrapper";
 import { NullTelemetryFactory } from "../../common/lib/utils/telemetry/null_telemetry_factory";
+import { MySQLClientWrapper } from "../../common/lib/mysql_client_wrapper";
 
 const builder = new HostInfoBuilder({ hostAvailabilityStrategy: new SimpleHostAvailabilityStrategy() });
 
@@ -53,11 +54,7 @@ const mockWriterFailoverHandler: ClusterAwareWriterFailoverHandler = mock(Cluste
 const mockReaderResult: ReaderFailoverResult = mock(ReaderFailoverResult);
 const mockWriterResult: WriterFailoverResult = mock(WriterFailoverResult);
 
-const mockClientWrapper: ClientWrapper = {
-  client: undefined,
-  hostInfo: mockHostInfo,
-  properties: new Map<string, any>()
-};
+const mockClientWrapper = new MySQLClientWrapper(undefined, mockHostInfo, new Map<string, any>());
 
 const properties: Map<string, any> = new Map();
 

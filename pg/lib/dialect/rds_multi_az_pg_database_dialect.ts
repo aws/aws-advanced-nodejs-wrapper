@@ -25,8 +25,14 @@ import { AwsWrapperError } from "../../../common/lib/utils/errors";
 import { TopologyAwareDatabaseDialect } from "../../../common/lib/topology_aware_database_dialect";
 import { RdsHostListProvider } from "../../../common/lib/host_list_provider/rds_host_list_provider";
 import { PgDatabaseDialect } from "./pg_database_dialect";
+import { ErrorHandler } from "../../../common/lib/error_handler";
+import { MultiAzPgErrorHandler } from "../multi_az_pg_error_handler";
+import { error, info, query } from "winston";
 
 export class RdsMultiAZPgDatabaseDialect extends PgDatabaseDialect implements TopologyAwareDatabaseDialect {
+  constructor() {
+    super();
+  }
   private static readonly VERSION = process.env.npm_package_version;
   private static readonly TOPOLOGY_QUERY: string = `SELECT id, endpoint, port FROM rds_tools.show_topology('aws_advanced_nodejs_wrapper-"${RdsMultiAZPgDatabaseDialect.VERSION}"')`;
   private static readonly WRITER_HOST_FUNC_EXIST_QUERY: string =
@@ -120,6 +126,10 @@ export class RdsMultiAZPgDatabaseDialect extends PgDatabaseDialect implements To
 
   async getHostRole(client: ClientWrapper): Promise<HostRole> {
     return (await this.executeTopologyRelatedQuery(client, RdsMultiAZPgDatabaseDialect.IS_READER_QUERY)) ? HostRole.WRITER : HostRole.READER;
+  }
+
+  getErrorHandler(): ErrorHandler {
+    return new MultiAzPgErrorHandler();
   }
 
   async identifyConnection(client: ClientWrapper): Promise<string> {

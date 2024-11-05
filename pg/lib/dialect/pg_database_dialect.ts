@@ -23,6 +23,8 @@ import { DatabaseDialectCodes } from "../../../common/lib/database_dialect/datab
 import { TransactionIsolationLevel } from "../../../common/lib/utils/transaction_isolation_level";
 import { ClientWrapper } from "../../../common/lib/client_wrapper";
 import { FailoverRestriction } from "../../../common/lib/plugins/failover/failover_restriction";
+import { ErrorHandler } from "../../../common/lib/error_handler";
+import { PgErrorHandler } from "../pg_error_handler";
 
 export class PgDatabaseDialect implements DatabaseDialect {
   protected dialectName: string = this.constructor.name;
@@ -68,6 +70,10 @@ export class PgDatabaseDialect implements DatabaseDialect {
 
   getHostListProvider(props: Map<string, any>, originalUrl: string, hostListProviderService: HostListProviderService): HostListProvider {
     return new ConnectionStringHostListProvider(props, originalUrl, this.getDefaultPort(), hostListProviderService);
+  }
+
+  getErrorHandler(): ErrorHandler {
+    return new PgErrorHandler();
   }
 
   async isClientValid(targetClient: ClientWrapper): Promise<boolean> {

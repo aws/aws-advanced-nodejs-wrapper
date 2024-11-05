@@ -35,11 +35,8 @@ import { PoolKey } from "../../common/lib/utils/pool_key";
 import { InternalPoolMapping } from "../../common/lib/utils/internal_pool_mapping";
 import { SlidingExpirationCache } from "../../common/lib/utils/sliding_expiration_cache";
 import { MySQL2DriverDialect } from "../../mysql/lib/dialect/mysql2_driver_dialect";
+import { PoolClientWrapper } from "../../common/lib/pool_client_wrapper";
 
-const internalPoolWithOneConnection = mock(AwsMysqlPoolClient);
-const user1 = "user1";
-const user2 = "user2";
-const db = "mydb";
 const props: Map<string, any> = new Map();
 const builder = new HostInfoBuilder({ hostAvailabilityStrategy: new SimpleHostAvailabilityStrategy() });
 const writerHost = builder.withHost("writer-host").withRole(HostRole.WRITER).build();
@@ -53,9 +50,6 @@ const readerHost2Connection = builder.withHost(readerUrl2Connection).withPort(54
 const writerHostNoConnection = builder.withHost(writerUrlNoConnections).withPort(5432).withRole(HostRole.WRITER).build();
 const testHostsList = [writerHostNoConnection, readerHost1Connection, readerHost2Connection];
 const target: SlidingExpirationCache<PoolKey, any> = new SlidingExpirationCache(BigInt(10000));
-const result1 = target.computeIfAbsent(new PoolKey(readerHost2Connection.url, user1), () => internalPoolWithOneConnection, BigInt(10000));
-const result2 = target.computeIfAbsent(new PoolKey(readerHost2Connection.url, user2), () => internalPoolWithOneConnection, BigInt(10000));
-const result3 = target.computeIfAbsent(new PoolKey(readerHost1Connection.url, user1), () => internalPoolWithOneConnection, BigInt(10000));
 
 const defaultHosts = [writerHost, readerHost1, readerHost2];
 const mockPluginService: PluginService = mock(PluginService);
@@ -69,7 +63,7 @@ const mockClosedReaderClient: AwsClient = mock(AwsMySQLClient);
 const mockClosedWriterClient: AwsClient = mock(AwsMySQLClient);
 const mockDialect: MySQLDatabaseDialect = mock(MySQLDatabaseDialect);
 const mockDriverDialect: MySQL2DriverDialect = mock(MySQL2DriverDialect);
-const mockPoolConnection = mock(AwsMysqlPoolClient);
+const mockPoolClientWrapper = mock(PoolClientWrapper);
 const mockAwsPoolClient = mock(AwsMysqlPoolClient);
 const mockRdsUtils = mock(RdsUtils);
 const mockPoolConfig = mock(AwsPoolConfig);
@@ -108,7 +102,6 @@ describe("reader write splitting test", () => {
     props.set(WrapperProperties.USER.name, "mySqlUser");
     props.set(WrapperProperties.PASSWORD.name, "mySqlPassword");
 
-    when(mockRdsUtils.isRdsDns(anything())).thenReturn(null);
     when(mockRdsUtils.isGreenInstance(anything())).thenReturn(null);
     when(mockRdsUtils.isRdsInstance("instance1")).thenReturn(true);
     const config = {
@@ -120,7 +113,7 @@ describe("reader write splitting test", () => {
 
     const provider = spy(new InternalPooledConnectionProvider(poolConfig));
     const providerSpy = instance(provider);
-    when(await provider.getPoolConnection()).thenReturn(mockPoolConnection);
+    when(await provider.getPoolConnection(anything(), anything())).thenReturn(mockPoolClientWrapper);
 
     await providerSpy.connect(hostInfo, mockPluginServiceInstance, props);
     const expectedKeys: Set<PoolKey> = new Set<PoolKey>();
@@ -144,7 +137,6 @@ describe("reader write splitting test", () => {
     props.set(WrapperProperties.USER.name, "mysqlUser");
     props.set(WrapperProperties.PASSWORD.name, "mysqlPassword");
 
-    when(mockRdsUtils.isRdsDns(anything())).thenReturn(null);
     when(mockRdsUtils.isGreenInstance(anything())).thenReturn(null);
     when(mockRdsUtils.isRdsInstance("instance1")).thenReturn(true);
     when(mockPluginService.getDialect()).thenReturn(mockDialect);
@@ -162,7 +154,7 @@ describe("reader write splitting test", () => {
 
     const provider = spy(new InternalPooledConnectionProvider(poolConfig, myKeyFunc));
     const providerSpy = instance(provider);
-    when(await provider.getPoolConnection()).thenReturn(mockPoolConnection);
+    when(await provider.getPoolConnection(anything(), anything())).thenReturn(mockPoolClientWrapper);
 
     await providerSpy.connect(hostInfo, mockPluginServiceInstance, props);
     const expectedKeys: Set<PoolKey> = new Set<PoolKey>();
@@ -194,7 +186,6 @@ describe("reader write splitting test", () => {
 
     when(mockPluginService.getCurrentHostInfo()).thenReturn(hostInfo);
     when(mockPluginService.getDialect()).thenReturn(mockDialectInstance);
-    when(mockRdsUtils.isRdsDns(anything())).thenReturn(null);
     when(mockRdsUtils.isGreenInstance(anything())).thenReturn(null);
     when(mockRdsUtils.isRdsInstance("instance1")).thenReturn(true);
     when(mockDriverDialect.preparePoolClientProperties(anything(), anything())).thenReturn(props);
@@ -202,7 +193,7 @@ describe("reader write splitting test", () => {
 
     const provider = spy(new InternalPooledConnectionProvider(poolConfig));
     const providerSpy = instance(provider);
-    when(await provider.getPoolConnection()).thenReturn(mockPoolConnection);
+    when(await provider.getPoolConnection(anything(), anything())).thenReturn(mockPoolClientWrapper);
 
     await expect(providerSpy.connect(hostInfo, mockPluginServiceInstance, props)).rejects.toThrow("testError");
     await ConnectionProviderManager.releaseResources();

@@ -16,8 +16,8 @@
 
 import { AbstractPgErrorHandler } from "./abstract_pg_error_handler";
 
-export class PgErrorHandler extends AbstractPgErrorHandler {
-  private static readonly SQLSTATE_ACCESS_ERROR_CODES = ["28000", "28P01"];
+export class MultiAzPgErrorHandler extends AbstractPgErrorHandler {
+  private static readonly SQLSTATE_ACCESS_ERROR_CODES = ["28P01"];
   private static readonly ACCESS_ERROR_MESSAGES = ["Access denied", "PAM authentication failed"];
   private static readonly NETWORK_MESSAGES = [
     "Connection terminated unexpectedly",
@@ -27,14 +27,14 @@ export class PgErrorHandler extends AbstractPgErrorHandler {
   ];
 
   getAccessErrorCodes(): string[] {
-    return PgErrorHandler.SQLSTATE_ACCESS_ERROR_CODES;
+    return MultiAzPgErrorHandler.SQLSTATE_ACCESS_ERROR_CODES;
   }
 
   getAccessErrorMessages(): string[] {
-    return PgErrorHandler.ACCESS_ERROR_MESSAGES;
+    return MultiAzPgErrorHandler.ACCESS_ERROR_MESSAGES;
   }
 
   getNetworkErrors(): string[] {
-    return PgErrorHandler.NETWORK_MESSAGES;
+    return MultiAzPgErrorHandler.NETWORK_MESSAGES;
   }
 }

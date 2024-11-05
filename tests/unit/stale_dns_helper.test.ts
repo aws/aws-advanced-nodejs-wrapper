@@ -26,6 +26,7 @@ import { HostChangeOptions } from "../../common/lib/host_change_options";
 import { DatabaseDialect } from "../../common/lib/database_dialect/database_dialect";
 import { ClientWrapper } from "../../common/lib/client_wrapper";
 import { NullTelemetryFactory } from "../../common/lib/utils/telemetry/null_telemetry_factory";
+import { MySQLClientWrapper } from "../../common/lib/mysql_client_wrapper";
 import { jest } from "@jest/globals";
 
 const mockPluginService: PluginService = mock(PluginService);
@@ -45,14 +46,7 @@ const instanceHostList = [writerInstance, readerA, readerB];
 const mockInitialConn = mock(AwsClient);
 const mockHostInfo = mock(HostInfo);
 const mockDialect = mock<DatabaseDialect>();
-
-const clientWrapper: ClientWrapper = {
-  client: undefined,
-  hostInfo: mockHostInfo,
-  properties: new Map<string, any>()
-};
-
-const mockInitialClientWrapper: ClientWrapper = mock(clientWrapper);
+const mockInitialClientWrapper: ClientWrapper = mock(MySQLClientWrapper);
 
 const mockConnectFunc = jest.fn().mockImplementation(() => {
   return mockInitialClientWrapper;
@@ -62,7 +56,7 @@ describe("test_stale_dns_helper", () => {
   beforeEach(() => {
     when(mockPluginService.getCurrentClient()).thenReturn(mockInitialConn);
     when(mockPluginService.connect(anything(), anything())).thenResolve();
-    when(mockPluginService.abort(anything())).thenResolve();
+    when(mockPluginService.abortTargetClient(anything())).thenResolve();
     when(mockPluginService.getDialect()).thenReturn(mockDialect);
     when(mockPluginService.getCurrentHostInfo()).thenReturn(mockHostInfo);
     when(mockPluginService.getTelemetryFactory()).thenReturn(new NullTelemetryFactory());
