@@ -57,6 +57,10 @@ export class AwsPgPoolClient implements AwsPoolClient {
     return this.targetPool.totalCount;
   }
 
+  getActiveCount(): number {
+    return this.getTotalCount() - this.getIdleCount();
+  }
+
   async releaseResources(): Promise<void> {
     await this.targetPool.end();
   }

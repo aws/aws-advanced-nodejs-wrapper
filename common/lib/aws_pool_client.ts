@@ -24,4 +24,6 @@ export interface AwsPoolClient {
   getIdleCount(): number;
 
   getTotalCount(): number;
+
+  getActiveCount(): number;
 }

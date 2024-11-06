@@ -33,40 +33,41 @@ import { Messages } from "./utils/messages";
 import { HostSelector } from "./host_selector";
 import { RandomHostSelector } from "./random_host_selector";
 import { InternalPoolMapping } from "./utils/internal_pool_mapping";
-import { logger } from "../logutils";
 import { RoundRobinHostSelector } from "./round_robin_host_selector";
 import { AwsPoolClient } from "./aws_pool_client";
 import { AwsPoolConfig } from "./aws_pool_config";
+import { LeastConnectionsHostSelector } from "./least_connections_host_selector";
 import { PoolClientWrapper } from "./pool_client_wrapper";
+import { logger } from "../logutils";
 
 export class InternalPooledConnectionProvider implements PooledConnectionProvider, CanReleaseResources {
-  private static readonly acceptedStrategies: Map<string, HostSelector> = new Map([
-    [RandomHostSelector.STRATEGY_NAME, new RandomHostSelector()],
-    [RoundRobinHostSelector.STRATEGY_NAME, new RoundRobinHostSelector()]
-  ]);
   static readonly CACHE_CLEANUP_NANOS: bigint = BigInt(60_000_000_000); // 60 minutes
   static readonly POOL_EXPIRATION_NANOS: bigint = BigInt(30_000_000_000); // 30 minutes
+  protected static databasePools: SlidingExpirationCache<string, any> = new SlidingExpirationCache(
+    InternalPooledConnectionProvider.CACHE_CLEANUP_NANOS,
+    (pool: any) => pool.getActiveCount() === 0,
+    (pool: any) => pool.end()
+  );
 
+  private static readonly acceptedStrategies: Map<string, HostSelector> = new Map([
+    [RandomHostSelector.STRATEGY_NAME, new RandomHostSelector()],
+    [RoundRobinHostSelector.STRATEGY_NAME, new RoundRobinHostSelector()],
+    [LeastConnectionsHostSelector.STRATEGY_NAME, new LeastConnectionsHostSelector(InternalPooledConnectionProvider.databasePools)]
+  ]);
   private readonly rdsUtil: RdsUtils = new RdsUtils();
   private readonly _poolMapping?: InternalPoolMapping;
   private readonly _poolConfig?: AwsPoolConfig;
   targetClient?: ClientWrapper;
   internalPool: AwsPoolClient | undefined;
 
-  protected databasePools: SlidingExpirationCache<PoolKey, any> = new SlidingExpirationCache(
-    InternalPooledConnectionProvider.CACHE_CLEANUP_NANOS,
-    (pool: any) => pool.getIdleCount() === pool.getTotalCount(),
-    (pool: any) => pool.end()
-  );
-
-  poolExpirationCheckNanos: bigint = InternalPooledConnectionProvider.POOL_EXPIRATION_NANOS; // 30 minutes
+  private static poolExpirationCheckNanos: bigint = InternalPooledConnectionProvider.POOL_EXPIRATION_NANOS; // 30 minutes
 
   constructor(poolConfig?: AwsPoolConfig);
   constructor(poolConfig?: AwsPoolConfig, mapping?: InternalPoolMapping);
   constructor(poolConfig?: AwsPoolConfig, mapping?: InternalPoolMapping, poolExpirationNanos?: bigint, poolCleanupNanos?: bigint) {
     this._poolMapping = mapping;
-    this.poolExpirationCheckNanos = poolExpirationNanos ?? InternalPooledConnectionProvider.POOL_EXPIRATION_NANOS;
-    this.databasePools.cleanupIntervalNs = poolCleanupNanos ?? InternalPooledConnectionProvider.CACHE_CLEANUP_NANOS;
+    InternalPooledConnectionProvider.poolExpirationCheckNanos = poolExpirationNanos ?? InternalPooledConnectionProvider.POOL_EXPIRATION_NANOS;
+    InternalPooledConnectionProvider.databasePools.cleanupIntervalNs = poolCleanupNanos ?? InternalPooledConnectionProvider.CACHE_CLEANUP_NANOS;
     this._poolConfig = poolConfig ?? new AwsPoolConfig({});
   }
 
@@ -107,25 +108,30 @@ export class InternalPooledConnectionProvider implements PooledConnectionProvide
 
     const dialect = pluginService.getDriverDialect();
     const preparedConfig = dialect.preparePoolClientProperties(props, this._poolConfig);
-
-    this.internalPool = this.databasePools.computeIfAbsent(
-      new PoolKey(connectionHostInfo.url, this.getPoolKey(connectionHostInfo, props)),
+    this.internalPool = InternalPooledConnectionProvider.databasePools.computeIfAbsent(
+      new PoolKey(connectionHostInfo.url, this.getPoolKey(connectionHostInfo, props)).getPoolKeyString(),
       () => dialect.getAwsPoolClient(preparedConfig),
-      this.poolExpirationCheckNanos
+      InternalPooledConnectionProvider.poolExpirationCheckNanos
     );
 
-    return await this.getPoolConnection(hostInfo, props);
+    return await this.getPoolConnection(connectionHostInfo, props);
   }
 
   async getPoolConnection(hostInfo: HostInfo, props: Map<string, string>) {
     return new PoolClientWrapper(await this.internalPool!.connect(), hostInfo, props);
   }
 
-  public async releaseResources() {
-    for (const [key, val] of this.databasePools.entries) {
-      val.item.releaseResources();
+  async releaseResources() {
+    for (const [_key, value] of InternalPooledConnectionProvider.databasePools.entries) {
+      if (value.item) {
+        await value.item.releaseResources();
+      }
     }
-    this.databasePools.clear();
+    InternalPooledConnectionProvider.clearDatabasePools();
+  }
+
+  static clearDatabasePools() {
+    InternalPooledConnectionProvider.databasePools.clear();
   }
 
   getHostInfoByStrategy(hosts: HostInfo[], role: HostRole, strategy: string, props?: Map<string, any>): HostInfo {
@@ -140,20 +146,12 @@ export class InternalPooledConnectionProvider implements PooledConnectionProvide
     return promisify(lookup)(host, {});
   }
 
-  getHostUrlSet(): Set<string> {
-    const hostUrls: Set<string> = new Set<string>();
-    for (const [key, _val] of this.databasePools.entries) {
-      hostUrls.add(key.getUrl());
-    }
-    return hostUrls;
-  }
-
   getHostCount() {
-    return this.databasePools.size;
+    return InternalPooledConnectionProvider.databasePools.size;
   }
 
-  getKeySet(): Set<PoolKey> {
-    return new Set<PoolKey>(this.databasePools.keys);
+  getKeySet(): Set<string> {
+    return new Set<string>(InternalPooledConnectionProvider.databasePools.keys);
   }
 
   getPoolKey(hostInfo: HostInfo, props: Map<string, any>) {
@@ -161,15 +159,17 @@ export class InternalPooledConnectionProvider implements PooledConnectionProvide
   }
 
   logConnections() {
-    if (this.databasePools.size === 0) {
+    if (InternalPooledConnectionProvider.databasePools.size === 0) {
       return;
     }
 
-    const l = Array.from(this.databasePools.entries).map(([v, k]) => [v.getPoolKeyString(), k.item.constructor.name]);
-    logger.debug(`Internal Pooled Connection: [${JSON.stringify(l)}]`);
+    const connections = Array.from(InternalPooledConnectionProvider.databasePools.entries).map(([v, k]) => [v, k.item.constructor.name]);
+    logger.debug(`Internal Pooled Connections: [\r\n${connections.join("\r\n")}\r\n]`);
   }
 
-  setDatabasePools(connectionPools: SlidingExpirationCache<PoolKey, any>): void {
-    this.databasePools = connectionPools;
+  // for testing only
+  setDatabasePools(connectionPools: SlidingExpirationCache<string, any>): void {
+    InternalPooledConnectionProvider.databasePools = connectionPools;
+    LeastConnectionsHostSelector.setDatabasePools(connectionPools);
   }
 }
