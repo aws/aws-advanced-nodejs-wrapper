@@ -21,11 +21,15 @@ import { AwsWrapperError } from "../utils/errors";
 import { Messages } from "../utils/messages";
 import { logger } from "../../logutils";
 
-export class IamAuthenticationPluginFactory implements ConnectionPluginFactory {
-  async getInstance(pluginService: PluginService, properties: Map<string, any>): Promise<ConnectionPlugin> {
+export class IamAuthenticationPluginFactory extends ConnectionPluginFactory {
+  private static iamAuthenticationPlugin: any;
+
+  async getInstance(pluginService: PluginService, properties: object): Promise<ConnectionPlugin> {
     try {
-      const iamAuthenticationPlugin = await import("./iam_authentication_plugin");
-      return new iamAuthenticationPlugin.IamAuthenticationPlugin(pluginService);
+      if (!IamAuthenticationPluginFactory.iamAuthenticationPlugin) {
+        IamAuthenticationPluginFactory.iamAuthenticationPlugin = await import("./iam_authentication_plugin");
+      }
+      return new IamAuthenticationPluginFactory.iamAuthenticationPlugin.IamAuthenticationPlugin(pluginService);
     } catch (error: any) {
       logger.error(error);
       throw new AwsWrapperError(Messages.get("ConnectionPluginChainBuilder.errorImportingPlugin", "IamAuthenticationPlugin"));

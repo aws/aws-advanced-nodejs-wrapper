@@ -82,7 +82,7 @@ The Plugin Manager manages the creation of the plugin chain.
 To register a new custom plugin, call `PluginManager.registerPlugin` as follows:
 
 ```ts
-PluginManager.registerPlugin("foo", nameOfPluginFactory);
+PluginManager.registerPlugin("foo", typeof nameOfPluginFactory);
 ```
 
 ## What is Not Allowed in Plugins
@@ -111,6 +111,7 @@ export class BadPlugin extends AbstractConnectionPlugin {
   hostListProvider: HostListProvider;
 
   constructor(pluginService: PluginService, connectionProviderManager: ConnectionProviderManager, properties: Map<string, any>) {
+    super();
     this.pluginService = pluginService;
     this.connectionProviderManager = connectionProviderManager;
     this.properties = properties;

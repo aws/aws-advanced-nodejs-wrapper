@@ -22,11 +22,15 @@ import { logger } from "../../../logutils";
 import { AwsWrapperError } from "../../utils/errors";
 import { Messages } from "../../utils/messages";
 
-export class HostMonitoringPluginFactory implements ConnectionPluginFactory {
+export class HostMonitoringPluginFactory extends ConnectionPluginFactory {
+  private static hostMonitoringPlugin: any;
+
   async getInstance(pluginService: PluginService, properties: Map<string, any>): Promise<ConnectionPlugin> {
     try {
-      const hostMonitoringPlugin = await import("./host_monitoring_connection_plugin");
-      return new hostMonitoringPlugin.HostMonitoringConnectionPlugin(pluginService, properties, new RdsUtils());
+      if (!HostMonitoringPluginFactory.hostMonitoringPlugin) {
+        HostMonitoringPluginFactory.hostMonitoringPlugin = await import("./host_monitoring_connection_plugin");
+      }
+      return new HostMonitoringPluginFactory.hostMonitoringPlugin.HostMonitoringConnectionPlugin(pluginService, properties, new RdsUtils());
     } catch (error: any) {
       logger.error(error.message);
       throw new AwsWrapperError(Messages.get("ConnectionPluginChainBuilder.errorImportingPlugin", "HostMonitoringPlugin"));

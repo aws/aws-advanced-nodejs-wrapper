@@ -21,11 +21,15 @@ import { AwsWrapperError } from "../../utils/errors";
 import { Messages } from "../../utils/messages";
 import { logger } from "../../../logutils";
 
-export class StaleDnsPluginFactory implements ConnectionPluginFactory {
+export class StaleDnsPluginFactory extends ConnectionPluginFactory {
+  private static staleDnsPlugin: any;
+
   async getInstance(pluginService: PluginService, properties: Map<string, any>): Promise<ConnectionPlugin> {
     try {
-      const staleDnsPlugin = await import("./stale_dns_plugin");
-      return new staleDnsPlugin.StaleDnsPlugin(pluginService, properties);
+      if (!StaleDnsPluginFactory.staleDnsPlugin) {
+        StaleDnsPluginFactory.staleDnsPlugin = await import("./stale_dns_plugin");
+      }
+      return new StaleDnsPluginFactory.staleDnsPlugin.StaleDnsPlugin(pluginService, properties);
     } catch (error: any) {
       logger.error(error.message);
       throw new AwsWrapperError(Messages.get("ConnectionPluginChainBuilder.errorImportingPlugin", "StaleDnsPlugin"));

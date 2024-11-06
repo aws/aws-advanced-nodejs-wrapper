@@ -21,11 +21,15 @@ import { logger } from "../../logutils";
 import { AwsWrapperError } from "../utils/errors";
 import { Messages } from "../utils/messages";
 
-export class ReadWriteSplittingPluginFactory implements ConnectionPluginFactory {
+export class ReadWriteSplittingPluginFactory extends ConnectionPluginFactory {
+  private static readWriteSplittingPlugin: any;
+
   async getInstance(pluginService: PluginService, properties: Map<string, any>): Promise<ConnectionPlugin> {
     try {
-      const readWriteSplittingPlugin = await import("./read_write_splitting_plugin");
-      return new readWriteSplittingPlugin.ReadWriteSplittingPlugin(pluginService, properties);
+      if (!ReadWriteSplittingPluginFactory.readWriteSplittingPlugin) {
+        ReadWriteSplittingPluginFactory.readWriteSplittingPlugin = await import("./read_write_splitting_plugin");
+      }
+      return new ReadWriteSplittingPluginFactory.readWriteSplittingPlugin.ReadWriteSplittingPlugin(pluginService, properties);
     } catch (error: any) {
       logger.error(error.message);
       throw new AwsWrapperError(Messages.get("ConnectionPluginChainBuilder.errorImportingPlugin", "readWriteSplittingPlugin"));

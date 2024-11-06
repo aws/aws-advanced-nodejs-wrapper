@@ -21,11 +21,15 @@ import { logger } from "../../../logutils";
 import { AwsWrapperError } from "../../utils/errors";
 import { Messages } from "../../utils/messages";
 
-export class AuroraConnectionTrackerPluginFactory implements ConnectionPluginFactory {
+export class AuroraConnectionTrackerPluginFactory extends ConnectionPluginFactory {
+  private static auroraConnectionTrackerPlugin: any;
+
   async getInstance(pluginService: PluginService, props: Map<string, any>): Promise<ConnectionPlugin> {
     try {
-      const auroraConnectionTrackerPlugin = await import("./aurora_connection_tracker_plugin");
-      return new auroraConnectionTrackerPlugin.AuroraConnectionTrackerPlugin(pluginService);
+      if (!AuroraConnectionTrackerPluginFactory.auroraConnectionTrackerPlugin) {
+        AuroraConnectionTrackerPluginFactory.auroraConnectionTrackerPlugin = await import("./aurora_connection_tracker_plugin");
+      }
+      return new AuroraConnectionTrackerPluginFactory.auroraConnectionTrackerPlugin.AuroraConnectionTrackerPlugin(pluginService);
     } catch (error: any) {
       logger.error(error.message);
       throw new AwsWrapperError(Messages.get("ConnectionPluginChainBuilder.errorImportingPlugin", "AuroraConnectionTrackerPlugin"));

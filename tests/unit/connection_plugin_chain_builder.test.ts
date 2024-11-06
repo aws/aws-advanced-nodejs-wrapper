@@ -128,7 +128,7 @@ describe("testConnectionPluginChainBuilder", () => {
   });
 });
 
-class TestPluginFactory implements ConnectionPluginFactory {
+class TestPluginFactory extends ConnectionPluginFactory {
   async getInstance(pluginService: PluginService, properties: Map<string, any>): Promise<TestPlugin> {
     return new TestPlugin(pluginService, properties);
   }

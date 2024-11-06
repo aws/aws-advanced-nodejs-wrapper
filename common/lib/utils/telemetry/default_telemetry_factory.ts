@@ -39,8 +39,12 @@ export class DefaultTelemetryFactory implements TelemetryFactory {
 
   constructor(properties: Map<string, any>) {
     this.enableTelemetry = WrapperProperties.ENABLE_TELEMETRY.get(properties);
-    const telemetryTracesBackend = toLower(WrapperProperties.TELEMETRY_TRACES_BACKEND.get(properties));
-    const telemetryMetricsBackend = toLower(WrapperProperties.TELEMETRY_METRICS_BACKEND.get(properties));
+    const telemetryTracesBackend = WrapperProperties.TELEMETRY_TRACES_BACKEND.get(properties)
+      ? WrapperProperties.TELEMETRY_TRACES_BACKEND.get(properties).toLowerCase()
+      : "";
+    const telemetryMetricsBackend = WrapperProperties.TELEMETRY_METRICS_BACKEND.get(properties)
+      ? WrapperProperties.TELEMETRY_METRICS_BACKEND.get(properties).toLowerCase()
+      : "";
     this.telemetryTracesBackend = telemetryTracesBackend && this.enableTelemetry ? telemetryTracesBackend : "none";
     this.telemetryMetricsBackend = telemetryMetricsBackend && this.enableTelemetry ? telemetryMetricsBackend : "none";
     this.telemetrySubmitTopLevel = WrapperProperties.TELEMETRY_SUBMIT_TOPLEVEL.get(properties);

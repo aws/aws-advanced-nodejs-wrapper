@@ -27,14 +27,66 @@ export function uniqueId(prefix: string): string {
   return `${prefix}${Math.random().toString(16).slice(2)}`;
 }
 
-export const logger = createLogger({
-  format: combine(
-    colorize(),
-    timestamp(),
-    printf((info) => {
-      return `${info.timestamp} [${info.level}]: ${info.message}`;
-    })
-  ),
-  transports: [new transports.Console()],
-  level: logLevel ? logLevel : "warn"
-});
+class AwsWrapperLogger {
+  private static readonly logger = createLogger({
+    format: combine(
+      colorize(),
+      timestamp(),
+      printf((info) => {
+        return `${info.timestamp} [${info.level}]: ${info.message}`;
+      })
+    ),
+    transports: [new transports.Console()],
+    level: logLevel ? logLevel : "warn"
+  });
+
+  get level() {
+    return AwsWrapperLogger.logger.level;
+  }
+
+  log(logLevel: string, message: string) {
+    AwsWrapperLogger.logger.log(logLevel, message);
+  }
+
+  error(message: string) {
+    if (AwsWrapperLogger.logger.level === "error") {
+      AwsWrapperLogger.logger.error(message);
+    }
+  }
+
+  warn(message: string) {
+    if (AwsWrapperLogger.logger.level === "warn") {
+      AwsWrapperLogger.logger.warn(message);
+    }
+  }
+
+  info(message: string) {
+    if (AwsWrapperLogger.logger.level === "info") {
+      AwsWrapperLogger.logger.info(message);
+    }
+  }
+
+  verbose(message: string) {
+    if (AwsWrapperLogger.logger.level === "verbose") {
+      AwsWrapperLogger.logger.verbose(message);
+    }
+  }
+
+  debug(message: string) {
+    if (AwsWrapperLogger.logger.level === "debug") {
+      AwsWrapperLogger.logger.debug(message);
+    }
+  }
+
+  silly(message: string) {
+    if (AwsWrapperLogger.logger.level === "silly") {
+      AwsWrapperLogger.logger.silly(message);
+    }
+  }
+
+  warning(message: string) {
+    AwsWrapperLogger.logger.warning(message);
+  }
+}
+
+export const logger = new AwsWrapperLogger();

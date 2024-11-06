@@ -23,6 +23,7 @@ import { OldConnectionSuggestionAction } from "../../common/lib/old_connection_s
 import { HostRole } from "../../common/lib/host_role";
 import { HostInfoBuilder } from "../../common/lib/host_info_builder";
 import { SimpleHostAvailabilityStrategy } from "../../common/lib/host_availability/simple_host_availability_strategy";
+import { Messages } from "../../common/lib/utils/messages";
 
 export class BenchmarkPlugin implements ConnectionPlugin {
   name: string = this.constructor.name;
@@ -33,19 +34,19 @@ export class BenchmarkPlugin implements ConnectionPlugin {
   }
 
   async execute<T>(methodName: string, methodFunc: () => Promise<T>, methodArgs: any): Promise<T> {
-    logger.debug(`execute method = ${methodName}`);
+    logger.debug(Messages.get("PluginManager.unknownPluginCode"));
     this.resources.push("execute");
     return methodFunc();
   }
 
   async connect<T>(hostInfo: HostInfo, props: Map<string, any>, isInitialConnection: boolean, connectFunc: () => Promise<T>): Promise<T> {
-    logger.debug(`connect = ${hostInfo.host}`);
+    logger.debug(Messages.get("PluginManager.unknownPluginCode"));
     this.resources.push("connect");
     return connectFunc();
   }
 
   async forceConnect<T>(hostInfo: HostInfo, props: Map<string, any>, isInitialConnection: boolean, forceConnectFunc: () => Promise<T>): Promise<T> {
-    logger.debug(`forceConnect = ${hostInfo.host}`);
+    logger.debug(Messages.get("PluginManager.unknownPluginCode"));
     this.resources.push("forceConnect");
     return forceConnectFunc();
   }
@@ -56,17 +57,17 @@ export class BenchmarkPlugin implements ConnectionPlugin {
     hostListProviderService: HostListProviderService,
     initHostProviderFunc: () => void
   ): void {
-    logger.debug(`initHostProvider = ${hostInfo.host}`);
+    logger.debug(Messages.get("PluginManager.unknownPluginCode"));
     this.resources.push("initHostProvider");
   }
 
   notifyConnectionChanged(changes: Set<HostChangeOptions>): Promise<OldConnectionSuggestionAction> {
-    logger.debug(`notifyConnectionChanged = ${JSON.stringify(Array.from(changes))}`);
+    logger.debug(Messages.get("PluginManager.unknownPluginCode"));
     return Promise.resolve(OldConnectionSuggestionAction.NO_OPINION);
   }
 
   notifyHostListChanged(changes: Map<string, Set<HostChangeOptions>>): Promise<void> {
-    logger.debug(`notifyHostListChanged = ${JSON.stringify(Array.from(changes))}`);
+    logger.debug(Messages.get("PluginManager.unknownPluginCode"));
     this.resources.push("notifyHostListChanged");
     return Promise.resolve();
   }
@@ -76,7 +77,7 @@ export class BenchmarkPlugin implements ConnectionPlugin {
   }
 
   getHostInfoByStrategy(role: HostRole, strategy: string): HostInfo | undefined {
-    logger.debug(`getHostInfoByStrategy = ${strategy}`);
+    logger.debug(Messages.get("PluginManager.unknownPluginCode"));
     this.resources.push("getHostInfoByStrategy");
     return new HostInfoBuilder({ hostAvailabilityStrategy: new SimpleHostAvailabilityStrategy() })
       .withHost("host")
@@ -86,8 +87,6 @@ export class BenchmarkPlugin implements ConnectionPlugin {
   }
 
   releaseResources(): void {
-    while (this.resources.length > 0) {
-      this.resources.pop();
-    }
+    this.resources.length = 0;
   }
 }

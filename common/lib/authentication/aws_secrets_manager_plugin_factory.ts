@@ -21,11 +21,15 @@ import { AwsWrapperError } from "../utils/errors";
 import { Messages } from "../utils/messages";
 import { logger } from "../../logutils";
 
-export class AwsSecretsManagerPluginFactory implements ConnectionPluginFactory {
+export class AwsSecretsManagerPluginFactory extends ConnectionPluginFactory {
+  private static awsSecretsManagerPlugin: any;
+
   async getInstance(pluginService: PluginService, properties: Map<string, any>): Promise<ConnectionPlugin> {
     try {
-      const awsSecretsManagerPlugin = await import("./aws_secrets_manager_plugin");
-      return new awsSecretsManagerPlugin.AwsSecretsManagerPlugin(pluginService, new Map(properties));
+      if (!AwsSecretsManagerPluginFactory.awsSecretsManagerPlugin) {
+        AwsSecretsManagerPluginFactory.awsSecretsManagerPlugin = await import("./aws_secrets_manager_plugin");
+      }
+      return new AwsSecretsManagerPluginFactory.awsSecretsManagerPlugin.AwsSecretsManagerPlugin(pluginService, new Map(properties));
     } catch (error: any) {
       if (error.code === "MODULE_NOT_FOUND") {
         logger.error(error);
