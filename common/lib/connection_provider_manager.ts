@@ -17,7 +17,6 @@
 import { ConnectionProvider } from "./connection_provider";
 import { HostRole } from "./host_role";
 import { HostInfo } from "./host_info";
-import { AwsWrapperError } from "./utils/errors";
 import { CanReleaseResources } from "./can_release_resources";
 
 export class ConnectionProviderManager {
