@@ -244,7 +244,7 @@ async function doMeasurePerformance(sleepDelayMillis: number, repeatTimes: numbe
   data.avgFailureDetectionTimeMillis = avg;
 }
 
-describe.skip("performance", () => {
+describe("performance", () => {
   beforeEach(async () => {
     enhancedFailureMonitoringPerfDataList = [];
     env = await TestEnvironment.getCurrent();
