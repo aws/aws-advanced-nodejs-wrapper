@@ -142,7 +142,7 @@ describe("pooled connection autoscaling", () => {
         const instanceId: string = "auto-scaling-instance";
         newInstance = await auroraTestUtility.createInstance(instanceId);
         if (!newInstance?.instanceId || !newInstance?.host || !newInstance?.port) {
-          throw new Error("Instance not returned.");
+          fail("Instance not returned.");
         }
 
         // Connect to instance.
@@ -168,7 +168,7 @@ describe("pooled connection autoscaling", () => {
           await sleep(5000);
         }
         if (await auroraTestUtility.instanceExists(instanceId)) {
-          throw new Error(`The instance ${instanceId} was not deleted.`);
+          fail(`The instance ${instanceId} was not deleted.`);
         }
 
         // Should have removed the pool with the deleted instance.
@@ -226,7 +226,7 @@ describe("pooled connection autoscaling", () => {
         const instanceId: string = "auto-scaling-instance";
         newInstance = await auroraTestUtility.createInstance(instanceId);
         if (!newInstance?.instanceId || !newInstance?.host || !newInstance?.port) {
-          throw new Error("Instance not returned.");
+          fail("Instance not returned.");
         }
 
         // Connect to instance.

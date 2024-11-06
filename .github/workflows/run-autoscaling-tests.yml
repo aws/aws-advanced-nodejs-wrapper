@@ -2,14 +2,13 @@ name: Run Autoscaling Tests
 
 on:
   workflow_dispatch:
-  push:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  all-integration-tests:
+  autoscaling-tests:
     name: Run Autoscaling Tests
     runs-on: ubuntu-latest
     steps:
