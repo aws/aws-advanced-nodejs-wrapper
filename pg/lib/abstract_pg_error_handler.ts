@@ -28,20 +28,20 @@ export abstract class AbstractPgErrorHandler implements ErrorHandler {
       // @ts-ignore
       return this.getAccessErrorCodes().includes(e["code"]);
     }
-    this.getAccessErrorMessages().forEach((message) => {
-      if (e.message.includes(message)) {
+    for (const accessErrorMessage of this.getAccessErrorMessages()) {
+      if (e.message.includes(accessErrorMessage)) {
         return true;
       }
-    });
+    }
     return false;
   }
 
   isNetworkError(e: Error): boolean {
-    this.getNetworkErrors().forEach((message) => {
-      if (e.message.includes(message)) {
+    for (const networkError of this.getNetworkErrors()) {
+      if (e.message.includes(networkError)) {
         return true;
       }
-    });
+    }
     return false;
   }
 }
