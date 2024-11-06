@@ -23,6 +23,7 @@ import { RdsUtils } from "../../common/lib/utils/rds_utils";
 import { ErrorSimulatorMethodCallback } from "../../common/lib/plugins/dev/error_simulator_method_callback";
 import { ErrorSimulatorManager } from "../../common/lib/plugins/dev/error_simulator_manager";
 import { ErrorSimulatorConnectCallback } from "../../common/lib/plugins/dev/error_simulator_connect_callback";
+import { jest } from "@jest/globals";
 
 // Implementations for testing purposes only.
 class ErrorSimulatorConnectCallbackImpl implements ErrorSimulatorConnectCallback {

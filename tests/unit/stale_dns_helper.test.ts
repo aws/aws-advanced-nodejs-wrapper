@@ -26,6 +26,7 @@ import { HostChangeOptions } from "../../common/lib/host_change_options";
 import { DatabaseDialect } from "../../common/lib/database_dialect/database_dialect";
 import { ClientWrapper } from "../../common/lib/client_wrapper";
 import { NullTelemetryFactory } from "../../common/lib/utils/telemetry/null_telemetry_factory";
+import { jest } from "@jest/globals";
 
 const mockPluginService: PluginService = mock(PluginService);
 const mockHostListProviderService = mock<HostListProviderService>();

@@ -22,7 +22,7 @@ import { Messages } from "../utils/messages";
 import { logger } from "../../logutils";
 
 export class IamAuthenticationPluginFactory implements ConnectionPluginFactory {
-  async getInstance(pluginService: PluginService, properties: object): Promise<ConnectionPlugin> {
+  async getInstance(pluginService: PluginService, properties: Map<string, any>): Promise<ConnectionPlugin> {
     try {
       const iamAuthenticationPlugin = await import("./iam_authentication_plugin");
       return new iamAuthenticationPlugin.IamAuthenticationPlugin(pluginService);

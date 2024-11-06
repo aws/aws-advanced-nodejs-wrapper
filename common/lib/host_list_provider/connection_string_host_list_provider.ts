@@ -85,7 +85,7 @@ export class ConnectionStringHostListProvider implements StaticHostListProvider 
     throw new AwsWrapperError("ConnectionStringHostListProvider does not support getHostRole.");
   }
 
-  async identifyConnection(client: ClientWrapper): Promise<HostInfo | void | null> {
+  async identifyConnection(client: ClientWrapper): Promise<HostInfo | null> {
     if (!client.client) {
       return null;
     }

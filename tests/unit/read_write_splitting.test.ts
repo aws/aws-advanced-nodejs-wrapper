@@ -40,6 +40,7 @@ import { MySQL2DriverDialect } from "../../mysql/lib/dialect/mysql2_driver_diale
 import { PgClientWrapper } from "../../common/lib/pg_client_wrapper";
 import { MySQLClientWrapper } from "../../common/lib/mysql_client_wrapper";
 import { PoolClientWrapper } from "../../common/lib/pool_client_wrapper";
+import { jest } from "@jest/globals";
 
 const properties: Map<string, any> = new Map();
 const builder = new HostInfoBuilder({ hostAvailabilityStrategy: new SimpleHostAvailabilityStrategy() });

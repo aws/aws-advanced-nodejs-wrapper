@@ -16,11 +16,15 @@
 
 import path from "path";
 import { I18n } from "i18n";
+import { fileURLToPath } from "url";
 
 export class Messages {
+  static __filename = fileURLToPath(import.meta.url);
+  static __dirname = path.dirname(Messages.__filename);
+
   static i18n = new I18n({
     locales: ["en"],
-    directory: path.join(__dirname, "locales")
+    directory: path.join(Messages.__dirname, "locales")
   });
 
   static get(key: string, ...val: string[]) {

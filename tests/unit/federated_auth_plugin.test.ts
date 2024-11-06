@@ -22,9 +22,13 @@ import { WrapperProperties } from "../../common/lib/wrapper_property";
 import { anything, instance, mock, spy, when } from "ts-mockito";
 import { CredentialsProviderFactory } from "../../common/lib/plugins/federated_auth/credentials_provider_factory";
 import { DatabaseDialect } from "../../common/lib/database_dialect/database_dialect";
-import { Credentials } from "aws-sdk";
+
+import pkgAwsSdk from "aws-sdk";
+const { Credentials } = pkgAwsSdk;
+
 import { HostRole } from "../../common/lib/host_role";
 import { NullTelemetryFactory } from "../../common/lib/utils/telemetry/null_telemetry_factory";
+import { jest } from "@jest/globals";
 
 const testToken = "testToken";
 const defaultPort = 5432;

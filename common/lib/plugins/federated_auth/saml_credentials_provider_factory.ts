@@ -17,7 +17,10 @@
 import { CredentialsProviderFactory } from "./credentials_provider_factory";
 import { AssumeRoleWithSAMLCommand, STSClient } from "@aws-sdk/client-sts";
 import { WrapperProperties } from "../../wrapper_property";
-import { Credentials } from "aws-sdk";
+
+import pkgAwsSdk from "aws-sdk";
+const { Credentials } = pkgAwsSdk;
+
 import { AwsWrapperError } from "../../utils/errors";
 import { AwsCredentialIdentityProvider, AwsCredentialIdentity } from "@smithy/types/dist-types/identity/awsCredentialIdentity";
 import { decode } from "entities";

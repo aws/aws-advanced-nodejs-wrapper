@@ -14,13 +14,14 @@
   limitations under the License.
 */
 
-import { instance, mock, spy, when } from "ts-mockito";
+import { anything, instance, mock, spy, when } from "ts-mockito";
 import { WrapperProperties } from "../../common/lib/wrapper_property";
 import { readFileSync } from "fs";
 import { OktaCredentialsProviderFactory } from "../../common/lib/plugins/federated_auth/okta_credentials_provider_factory";
-import axios from "axios";
+import { Axios, AxiosResponse } from "axios";
 import { PluginService } from "../../common/lib/plugin_service";
 import { NullTelemetryFactory } from "../../common/lib/utils/telemetry/null_telemetry_factory";
+import { jest } from "@jest/globals";
 
 const username = "someFederatedUsername@example.com";
 const password = "ec2amazab3cdef";
@@ -32,11 +33,26 @@ const samlAssertionHtml = readFileSync("tests/unit/resources/okta/saml-assertion
 const expectedSamlAssertion = readFileSync("tests/unit/resources/okta/expected-assertion.txt", "utf8");
 const expectedSessionToken = readFileSync("tests/unit/resources/okta/expected-session-token.txt", "utf8");
 
-const postResponse = { data: sessionTokenJson };
-const getResponse = { data: samlAssertionHtml };
+const postResponse: AxiosResponse = {
+  data: sessionTokenJson,
+  status: undefined,
+  statusText: undefined,
+  request: undefined,
+  config: undefined,
+  headers: undefined
+};
+const getResponse: AxiosResponse = {
+  data: samlAssertionHtml,
+  status: undefined,
+  statusText: undefined,
+  request: undefined,
+  config: undefined,
+  headers: undefined
+};
 
-const mockedAxios = axios as jest.Mocked<typeof axios>;
-jest.mock("axios");
+// const mockedAxios = Axios as jest.Mocked<typeof Axios>;
+// jest.mock("axios");
+const mockedAxios = mock(Axios);
 
 const mockPluginService = mock(PluginService);
 
@@ -60,16 +76,16 @@ describe("oktaCredentialsProviderTest", () => {
   });
 
   it("testGetSessionToken", async () => {
-    mockedAxios.request.mockResolvedValueOnce(postResponse);
-    const spyCredentialsFactory = spy(new OktaCredentialsProviderFactory(instance(mockPluginService)));
+    when(mockedAxios.request(anything())).thenResolve(postResponse);
+    const spyCredentialsFactory = spy(new OktaCredentialsProviderFactory(instance(mockPluginService), instance(mockedAxios)));
     const sessionToken = await instance(spyCredentialsFactory).getSessionToken(props);
 
     expect(sessionToken).toBe(expectedSessionToken);
   });
 
   it("testGetSamlAssertion", async () => {
-    mockedAxios.request.mockResolvedValueOnce(postResponse).mockResolvedValueOnce(getResponse);
-    const spyCredentialsFactory = spy(new OktaCredentialsProviderFactory(instance(mockPluginService)));
+    when(mockedAxios.request(anything())).thenResolve(postResponse).thenResolve(getResponse);
+    const spyCredentialsFactory = spy(new OktaCredentialsProviderFactory(instance(mockPluginService), instance(mockedAxios)));
     const samlAssertion = await instance(spyCredentialsFactory).getSamlAssertion(props);
 
     expect(samlAssertion).toBe(expectedSamlAssertion);
@@ -78,8 +94,8 @@ describe("oktaCredentialsProviderTest", () => {
   it("testGetSamlAssertionUrlScheme", async () => {
     WrapperProperties.IDP_ENDPOINT.set(props, `https://${endpoint}`);
 
-    mockedAxios.request.mockResolvedValueOnce(postResponse).mockResolvedValueOnce(getResponse);
-    const spyCredentialsFactory = spy(new OktaCredentialsProviderFactory(instance(mockPluginService)));
+    when(mockedAxios.request(anything())).thenResolve(postResponse).thenResolve(getResponse);
+    const spyCredentialsFactory = spy(new OktaCredentialsProviderFactory(instance(mockPluginService), instance(mockedAxios)));
     const samlAssertion = await instance(spyCredentialsFactory).getSamlAssertion(props);
 
     expect(samlAssertion).toBe(expectedSamlAssertion);

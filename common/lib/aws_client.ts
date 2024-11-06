@@ -21,7 +21,10 @@ import { DatabaseDialect, DatabaseType } from "./database_dialect/database_diale
 import { ConnectionUrlParser } from "./utils/connection_url_parser";
 import { HostListProvider } from "./host_list_provider/host_list_provider";
 import { PluginManager } from "./plugin_manager";
-import { EventEmitter } from "stream";
+
+import pkgStream from "stream";
+const { EventEmitter } = pkgStream;
+
 import { DriverConnectionProvider } from "./driver_connection_provider";
 import { ClientWrapper } from "./client_wrapper";
 import { ConnectionProviderManager } from "./connection_provider_manager";

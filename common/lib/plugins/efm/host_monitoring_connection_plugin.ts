@@ -38,7 +38,7 @@ export class HostMonitoringConnectionPlugin extends AbstractConnectionPlugin imp
   private readonly properties: Map<string, any>;
   private pluginService: PluginService;
   private rdsUtils: RdsUtils;
-  private monitoringHostInfo: HostInfo | void | null = null;
+  private monitoringHostInfo: HostInfo | null = null;
   private monitorService: MonitorService;
 
   constructor(pluginService: PluginService, properties: Map<string, any>, rdsUtils: RdsUtils = new RdsUtils(), monitorService?: MonitorServiceImpl) {

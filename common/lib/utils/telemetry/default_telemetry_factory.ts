@@ -22,8 +22,10 @@ import { TelemetryGauge } from "./telemetry_gauge";
 import { TelemetryTraceLevel } from "./telemetry_trace_level";
 import { TelemetryContext } from "./telemetry_context";
 import { NullTelemetryFactory } from "./null_telemetry_factory";
-import { toLower } from "lodash";
 import { Messages } from "../messages";
+
+import pkgLodash from "lodash";
+const { toLower } = pkgLodash;
 
 export class DefaultTelemetryFactory implements TelemetryFactory {
   private readonly enableTelemetry: boolean;

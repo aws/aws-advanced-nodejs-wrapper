@@ -23,6 +23,9 @@ import { CacheMap } from "./utils/cache_map";
 import { HostAvailability } from "./host_availability/host_availability";
 import { Messages } from "./utils/messages";
 
+import pkgLodash from "lodash";
+const { isInteger } = pkgLodash;
+
 export class RoundRobinHostSelector implements HostSelector {
   static DEFAULT_ROUND_ROBIN_CACHE_EXPIRE_NANO = 10 * 60_000_000_000; // 10 minutes
   static DEFAULT_WEIGHT = 1;

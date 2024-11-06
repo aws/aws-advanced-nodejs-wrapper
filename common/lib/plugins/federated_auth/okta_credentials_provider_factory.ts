@@ -17,11 +17,11 @@
 import { SamlCredentialsProviderFactory } from "./saml_credentials_provider_factory";
 import { WrapperProperties } from "../../wrapper_property";
 import { SamlUtils } from "../../utils/saml_utils";
-import axios from "axios";
+import { Axios } from "axios";
 import { logger } from "../../../logutils";
 import { Messages } from "../../utils/messages";
 import { AwsWrapperError } from "../../utils/errors";
-import https from "https";
+import { Agent } from "https";
 import { PluginService } from "../../plugin_service";
 import { TelemetryFactory } from "../../utils/telemetry/telemetry_factory";
 import { TelemetryTraceLevel } from "../../utils/telemetry/telemetry_trace_level";
@@ -33,11 +33,13 @@ export class OktaCredentialsProviderFactory extends SamlCredentialsProviderFacto
   private static readonly TELEMETRY_FETCH_SAML = "Fetch OKTA SAML Assertion";
   private readonly pluginService: PluginService;
   private readonly telemetryFactory: TelemetryFactory;
+  private readonly axios: Axios;
 
-  constructor(pluginService: PluginService) {
+  constructor(pluginService: PluginService, axios?: Axios) {
     super();
     this.pluginService = pluginService;
     this.telemetryFactory = this.pluginService.getTelemetryFactory();
+    this.axios = axios ?? new Axios();
   }
 
   getSamlUrl(props: Map<string, any>) {
@@ -53,7 +55,7 @@ export class OktaCredentialsProviderFactory extends SamlCredentialsProviderFacto
     const idpUser = WrapperProperties.IDP_USERNAME.get(props);
     const idpPassword = WrapperProperties.IDP_PASSWORD.get(props);
 
-    const httpsAgent = new https.Agent(WrapperProperties.HTTPS_AGENT_OPTIONS.get(props));
+    const httpsAgent = new Agent(WrapperProperties.HTTPS_AGENT_OPTIONS.get(props));
 
     const sessionTokenEndpoint = `${idpHost}/api/v1/authn`;
 
@@ -75,7 +77,7 @@ export class OktaCredentialsProviderFactory extends SamlCredentialsProviderFacto
 
     let resp;
     try {
-      resp = await axios.request(postConfig);
+      resp = await this.axios.request(postConfig);
     } catch (e: any) {
       throw new AwsWrapperError(Messages.get("OktaCredentialsProviderFactory.sessionTokenRequestFailed"));
     }
@@ -98,7 +100,7 @@ export class OktaCredentialsProviderFactory extends SamlCredentialsProviderFacto
 
       logger.debug(Messages.get("OktaCredentialsProviderFactory.samlAssertionUrl", uri));
 
-      const httpsAgent = new https.Agent(WrapperProperties.HTTPS_AGENT_OPTIONS.get(props));
+      const httpsAgent = new Agent(WrapperProperties.HTTPS_AGENT_OPTIONS.get(props));
       const getConfig = {
         method: "get",
         url: uri,
@@ -110,7 +112,7 @@ export class OktaCredentialsProviderFactory extends SamlCredentialsProviderFacto
 
       let resp;
       try {
-        resp = await axios.request(getConfig);
+        resp = await this.axios.request(getConfig);
       } catch (e: any) {
         if (Math.floor(e.response.status / 100) !== 2) {
           throw new AwsWrapperError(
