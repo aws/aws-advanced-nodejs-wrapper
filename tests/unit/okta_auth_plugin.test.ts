@@ -21,9 +21,13 @@ import { IamAuthUtils, TokenInfo } from "../../common/lib/utils/iam_auth_utils";
 import { HostInfo } from "../../common/lib/host_info";
 import { WrapperProperties } from "../../common/lib/wrapper_property";
 import { DatabaseDialect } from "../../common/lib/database_dialect/database_dialect";
-import { Credentials } from "aws-sdk";
+
+import pkgAwsSdk from "aws-sdk";
+const { Credentials } = pkgAwsSdk;
+
 import { OktaAuthPlugin } from "../../common/lib/plugins/federated_auth/okta_auth_plugin";
 import { NullTelemetryFactory } from "../../common/lib/utils/telemetry/null_telemetry_factory";
+import { jest } from "@jest/globals";
 
 const defaultPort = 1234;
 const hostInfo = new HostInfo("pg.testdb.us-east-2.rds.amazonaws.com", defaultPort);

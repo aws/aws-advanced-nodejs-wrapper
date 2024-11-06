@@ -5,13 +5,16 @@
     "^.+\\.ts$": [
       "ts-jest",
       {
-        "diagnostics": false
+        "diagnostics": false,
+        "useESM": true
       }
     ]
   },
+  "transformIgnorePatterns": ["node_modules"],
   "moduleNameMapper": {
     "^uuid$": "uuid"
   },
   "testEnvironment": "node",
+  "extensionsToTreatAsEsm": [".ts"],
   "reporters": ["default"]
 }

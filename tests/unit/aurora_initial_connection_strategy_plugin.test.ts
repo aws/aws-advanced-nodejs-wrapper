@@ -27,6 +27,7 @@ import { HostRole } from "../../common/lib/host_role";
 import { HostInfo } from "../../common/lib/host_info";
 import { ClientWrapper } from "../../common/lib/client_wrapper";
 import { AwsWrapperError } from "../../common/lib/utils/errors";
+import { jest } from "@jest/globals";
 
 const mockPluginService = mock(PluginService);
 const mockHostListProviderService = mock<HostListProviderService>();

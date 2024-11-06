@@ -17,7 +17,7 @@
 import { SamlCredentialsProviderFactory } from "./saml_credentials_provider_factory";
 import { WrapperProperties } from "../../wrapper_property";
 import { SamlUtils } from "../../utils/saml_utils";
-import axios from "axios";
+import { Axios } from "axios";
 import { logger } from "../../../logutils";
 import { Messages } from "../../utils/messages";
 import { AwsWrapperError } from "../../utils/errors";
@@ -33,11 +33,13 @@ export class OktaCredentialsProviderFactory extends SamlCredentialsProviderFacto
   private static readonly TELEMETRY_FETCH_SAML = "Fetch OKTA SAML Assertion";
   private readonly pluginService: PluginService;
   private readonly telemetryFactory: TelemetryFactory;
+  private readonly axios: Axios;
 
-  constructor(pluginService: PluginService) {
+  constructor(pluginService: PluginService, axios?: Axios) {
     super();
     this.pluginService = pluginService;
     this.telemetryFactory = this.pluginService.getTelemetryFactory();
+    this.axios = axios ?? new Axios();
   }
 
   getSamlUrl(props: Map<string, any>) {
@@ -75,7 +77,7 @@ export class OktaCredentialsProviderFactory extends SamlCredentialsProviderFacto
 
     let resp;
     try {
-      resp = await axios.request(postConfig);
+      resp = await this.axios.request(postConfig);
     } catch (e: any) {
       throw new AwsWrapperError(Messages.get("OktaCredentialsProviderFactory.sessionTokenRequestFailed"));
     }
@@ -110,7 +112,7 @@ export class OktaCredentialsProviderFactory extends SamlCredentialsProviderFacto
 
       let resp;
       try {
-        resp = await axios.request(getConfig);
+        resp = await this.axios.request(getConfig);
       } catch (e: any) {
         if (Math.floor(e.response.status / 100) !== 2) {
           throw new AwsWrapperError(

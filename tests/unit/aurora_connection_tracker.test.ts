@@ -27,6 +27,7 @@ import { RdsUrlType } from "../../common/lib/utils/rds_url_type";
 import { AwsClient } from "../../common/lib/aws_client";
 import { ClientWrapper } from "../../common/lib/client_wrapper";
 import { HostInfo } from "../../common/lib/host_info";
+import { jest } from "@jest/globals";
 
 const props = new Map<string, any>();
 const SQL_ARGS = ["sql"];
