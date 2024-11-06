@@ -32,6 +32,7 @@ import { ClientWrapper } from "../../common/lib/client_wrapper";
 import { HostAvailability } from "../../common/lib/host_availability/host_availability";
 import { Messages } from "../../common/lib/utils/messages";
 import { AwsPGClient } from "../../pg/lib";
+import { MySQLClientWrapper } from "../../common/lib/mysql_client_wrapper";
 
 const FAILURE_DETECTION_TIME = 10;
 const FAILURE_DETECTION_INTERVAL = 100;
@@ -57,12 +58,7 @@ function incrementQueryCounter() {
   return Promise.resolve();
 }
 
-const clientWrapper: ClientWrapper = {
-  client: undefined,
-  hostInfo: mock(HostInfo),
-  properties: new Map<string, any>()
-};
-const mockClientWrapper: ClientWrapper = mock(clientWrapper);
+const mockClientWrapper = new MySQLClientWrapper(undefined, mock(HostInfo), new Map<string, any>());
 
 function initDefaultMockReturns() {
   when(mockDialect.getHostAliasQuery()).thenReturn("any");

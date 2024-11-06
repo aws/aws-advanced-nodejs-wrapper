@@ -24,6 +24,9 @@ import { TransactionIsolationLevel } from "../../../common/lib/utils/transaction
 import { ClientWrapper } from "../../../common/lib/client_wrapper";
 import { ClientUtils } from "../../../common/lib/utils/client_utils";
 import { FailoverRestriction } from "../../../common/lib/plugins/failover/failover_restriction";
+import { ErrorHandler } from "../../../common/lib/error_handler";
+import { MySQLErrorHandler } from "../mysql_error_handler";
+import { error } from "winston";
 
 export class MySQLDatabaseDialect implements DatabaseDialect {
   protected dialectName: string = this.constructor.name;
@@ -69,6 +72,10 @@ export class MySQLDatabaseDialect implements DatabaseDialect {
 
   getHostListProvider(props: Map<string, any>, originalUrl: string, hostListProviderService: HostListProviderService): HostListProvider {
     return new ConnectionStringHostListProvider(props, originalUrl, this.getDefaultPort(), hostListProviderService);
+  }
+
+  getErrorHandler(): ErrorHandler {
+    return new MySQLErrorHandler();
   }
 
   async isClientValid(targetClient: ClientWrapper): Promise<boolean> {

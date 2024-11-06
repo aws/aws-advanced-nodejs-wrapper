@@ -23,6 +23,7 @@ import { MonitorConnectionContext } from "../../common/lib/plugins/efm/monitor_c
 import { sleep } from "../../common/lib/utils/utils";
 import { ClientWrapper } from "../../common/lib/client_wrapper";
 import { NullTelemetryFactory } from "../../common/lib/utils/telemetry/null_telemetry_factory";
+import { MySQLClientWrapper } from "../../common/lib/mysql_client_wrapper";
 
 class MonitorImplTest extends MonitorImpl {
   constructor(pluginService: PluginService, hostInfo: HostInfo, properties: Map<string, any>, monitorDisposalTimeMillis: number) {
@@ -37,12 +38,7 @@ class MonitorImplTest extends MonitorImpl {
 const mockPluginService = mock(PluginService);
 const mockHostInfo = mock(HostInfo);
 const mockClient = mock(AwsClient);
-const clientWrapper: ClientWrapper = {
-  client: undefined,
-  hostInfo: mock(HostInfo),
-  properties: new Map<string, any>()
-};
-const mockClientWrapper: ClientWrapper = mock(clientWrapper);
+const mockClientWrapper: ClientWrapper = new MySQLClientWrapper(undefined, mock(HostInfo), new Map<string, any>());
 
 const SHORT_INTERVAL_MILLIS = 30;
 

@@ -27,6 +27,7 @@ import { HostRole } from "../../common/lib/host_role";
 import { HostInfo } from "../../common/lib/host_info";
 import { ClientWrapper } from "../../common/lib/client_wrapper";
 import { AwsWrapperError } from "../../common/lib/utils/errors";
+import { MySQLClientWrapper } from "../../common/lib/mysql_client_wrapper";
 import { jest } from "@jest/globals";
 
 const mockPluginService = mock(PluginService);
@@ -54,17 +55,8 @@ describe("Aurora initial connection strategy plugin", () => {
     plugin.initHostProvider(hostInfo, props, instance(mockHostListProviderService), mockFunc);
     WrapperProperties.OPEN_CONNECTION_RETRY_TIMEOUT_MS.set(props, 1000);
 
-    writerClient = {
-      client: undefined,
-      hostInfo: writerHostInfo,
-      properties: new Map<string, any>()
-    };
-
-    readerClient = {
-      client: undefined,
-      hostInfo: readerHostInfo,
-      properties: new Map<string, any>()
-    };
+    writerClient = new MySQLClientWrapper(undefined, writerHostInfo, new Map<string, any>());
+    readerClient = new MySQLClientWrapper(undefined, readerHostInfo, new Map<string, any>());
   });
 
   afterEach(() => {
