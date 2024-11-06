@@ -77,7 +77,7 @@ const defaultHosts = [writerHost, readerHost1, readerHost2];
 const mockPluginService: PluginService = mock(PluginService);
 const mockReaderClient: AwsClient = mock(AwsMySQLClient);
 const mockWriterClient: AwsClient = mock(AwsMySQLClient);
-const mockPGClient: AwsClient = mock(AwsMySQLClient);
+const mockAwsMySQLClient: AwsClient = mock(AwsMySQLClient);
 const mockHostInfo: HostInfo = mock(HostInfo);
 const mockHostListProviderService: HostListProviderService = mock<HostListProviderService>();
 const mockHostListProvider: HostListProvider = mock<HostListProvider>();
@@ -104,7 +104,7 @@ describe("internal pool connection provider test", () => {
 
   afterEach(() => {
     reset(mockReaderClient);
-    reset(mockPGClient);
+    reset(mockAwsMySQLClient);
     reset(mockHostInfo);
     reset(mockPluginService);
     reset(mockHostListProviderService);
