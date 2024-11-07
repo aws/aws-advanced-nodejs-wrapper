@@ -47,6 +47,7 @@ Whenever `setReadOnly(true)` is first called on a `AwsClient` object, the read/w
 The wrapper driver creates and maintain its internal connection pools using the AWS Pool Client. The steps are as follows:
 
 1.  Create an instance of `InternalPooledConnectionProvider`. You can optionally pass in the set of pooled connection properties, otherwise the default properties will be used. Note that to follow desired behavior and ensure that the read/write plugin can internally establish connections to new instances, the connection properties below will be set by default and will override any values you set in the config parameter:
+
 - url (including the host, port, and database)
 - username
 - password
@@ -54,7 +55,7 @@ The wrapper driver creates and maintain its internal connection pools using the 
 The following internal pool connection parameters can be set. Note that some properties are driver-dependant, and if that property is set in a driver that cannot use it, the property will be ignored.
 
 | MySQL Parameter      |  Value  | Required | Description                                                                                                                                                                                                                                                            | Default Value            |
-|----------------------|:-------:|:--------:|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|--------------------------|
+| -------------------- | :-----: | :------: | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------ |
 | `maxConnections`     | Number  |    No    | The maximum number of connections to create.                                                                                                                                                                                                                           | `10`                     |
 | `idleTimeoutMillis`  | Number  |    No    | The idle connections timeout, in milliseconds                                                                                                                                                                                                                          | `60000`                  |
 | `maxIdleConnections` | Number  |    No    | The maximum number of idle connections. This property must be equal to or less than `maxConnections` or the `maxConnections` value will be used by default                                                                                                             | same as `maxConnections` |
@@ -65,7 +66,7 @@ The following internal pool connection parameters can be set. Note that some pro
 > In MySQL, if the number of connections in a pool exceeds maxConnections, the program will hang at the next connection attempt by default. You can set the `waitForConnections` parameter to `false`, which will cause the program to call back with an error.
 
 | Postgres Parameter  |  Value  | Required | Description                                                                                                                        | Default Value |
-|---------------------|:-------:|:--------:|------------------------------------------------------------------------------------------------------------------------------------|---------------|
+| ------------------- | :-----: | :------: | ---------------------------------------------------------------------------------------------------------------------------------- | ------------- |
 | `maxConnections`    | Number  |    No    | The maximum number of connections to create                                                                                        | `10`          |
 | `minConnections`    | Number  |    No    | The minumum number of connections to create                                                                                        | `0`           |
 | `idleTimeoutMillis` | Number  |    No    | The idle connections timeout, in milliseconds                                                                                      | `60000`       |
@@ -92,6 +93,7 @@ const poolConfig = new AwsPoolConfig({ maxConnections: 10, idleTimeoutMillis: 10
 const provider = new InternalPooledConnectionProvider(poolConfig, myPoolKeyFunc);
 ConnectionProviderManager.setConnectionProvider(provider);
 ```
+
 > [!WARNING]
 > If you do not include the username in your InternalPoolMapping function, connection pools may be shared between different users. As a result, an initial connection established with a privileged user may be returned to a connection request with a lower-privilege user without re-verifying credentials. This behavior is inherent to the nature of connection pools in general and not a bug with the driver. `await ConnectionProviderManager.releaseResources()` can be called to close all pools and remove all cached pool connections.
 
