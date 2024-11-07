@@ -64,7 +64,7 @@ const newClient = new AwsMySQLClient({
   plugins: "readWriteSplitting"
 });
 
-// Even though we use the wrong password, the original connection 'conn' will be returned by the
+// Even though we use the wrong password, the original connection will be returned by the
 // pool and we can still use it.
 try {
   await newClient.connect();

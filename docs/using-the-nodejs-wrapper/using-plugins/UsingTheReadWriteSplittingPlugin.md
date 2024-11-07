@@ -70,6 +70,7 @@ The following internal pool connection parameters can be set. Note that some pro
 
 > [!Note]
 > In Postgres, if the number of connections in a pool exceeds maxConnections, the program will hang at the next connection attempt. This is expected behaviour.
+> In MySQL, setting the `waitForConnections` parameter to `false` will cause the program to throw an error when attempting to connect after maxConnections is reache. Otherwise, the program will hang at the next connection attempt by default.
 
 You can optionally pass in an `InternalPoolMapping` function as a second parameter to the `InternalPooledConnectionProvider`. This allows you to decide when new connection pools should be created by defining what is included in the pool map key. A new pool will be created each time a new connection is requested with a unique key. By default, a new pool will be created for each unique instance-user combination. If you would like to define a different key system, you should pass in a `InternalPoolMapping` function defining this logic. A simple example is show below. Please see [Internal Connection Pooling Postgres Example](../../../examples/aws_driver_example/aws_internal_connection_pooling_postgres_example.ts) and [Internal Connection Pooling MySQL Example](../../../examples/aws_driver_example/aws_internal_connection_pooling_mysql_example.ts) for the full examples.
 
@@ -85,7 +86,7 @@ const myPoolKeyFunc: InternalPoolMapping = {
     return hostInfo.url + user + props.get("somePropertyValue");
   }
 };
-const poolConfig = new AwsPoolConfig({ maxConnections: 10, maxIdleConnections: 10 });
+const poolConfig = new AwsPoolConfig({ maxConnections: 10, idleTimeoutMillis: 10000 });
 const provider = new InternalPooledConnectionProvider(poolConfig, myPoolKeyFunc);
 ConnectionProviderManager.setConnectionProvider(provider);
 ```
