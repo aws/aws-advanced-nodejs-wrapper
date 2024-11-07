@@ -23,7 +23,6 @@ const postgresHost = "db-identifier.XYZ.us-east-2.rds.amazonaws.com";
 const username = "john_smith";
 const correctPassword = "correct_password";
 const wrongPassword = "wrong_password";
-
 const database = "database";
 const port = 5432;
 
