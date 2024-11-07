@@ -10,7 +10,7 @@ The figure above provides a simplified overview of how the AWS Advanced NodeJS W
 
 In this example, the application requests a connection using the Aurora DB cluster endpoint and is returned with a logical connection that is physically connected to the primary DB instance in the DB cluster, DB instance C. By design, details about which specific DB instance the physical connection is connected to have been abstracted away.
 
-Over the course of the application's lifetime, it executes various statements against the logical connection. If DB instance C is stable and active, these statements succeed and the application continues as normal. If DB instance C experiences a failure, Aurora will initiate failover to promote a new primary DB instance. At the same time, the NodeJS Wrapper will intercept the related communication exception and kick off its own internal failover process.
+Over the course of the application's lifetime, it executes various statements against the logical connection. If DB instance C is stable and active, these statements succeed and the application continues as normal. If DB instance C experiences a failure, Aurora will initiate failover to promote a new primary DB instance. At the same time, the NodeJS Wrapper will intercept the related communication error and kick off its own internal failover process.
 
 If the primary DB instance has failed, the NodeJS Wrapper attempts to use its internal topology cache to temporarily connect to an active Aurora Replica. This Aurora Replica will be periodically queried for the DB cluster topology until the new primary DB instance is identified (DB instance A or B in this case). If the wrapper is unable to connect to an active Aurora Replica or the cluster is still being reconfigured, the wrapper will retry the connection until it is successful.
 
@@ -48,7 +48,7 @@ When connecting to Aurora clusters, the [`clusterInstanceHostPattern`](#failover
 
 ### FailoverFailedError
 
-When the AWS NodeJS Wrapper throws a `FailoverFailedError`, the original connection has failed, and the AWS NodeJS Wrapper tried to failover to a new instance, but was unable to. There are various reasons this may happen: no nodes were available, a network failure occurred, and so on. In this scenario, please wait until the server is up or other problems are solved. (Exception will be thrown.)
+When the AWS NodeJS Wrapper throws a `FailoverFailedError`, the original connection has failed, and the AWS NodeJS Wrapper tried to failover to a new instance, but was unable to. There are various reasons this may happen: no nodes were available, a network failure occurred, and so on. In this scenario, please wait until the server is up or other problems are solved. (Error will be thrown.)
 
 ### FailoverSuccessError
 
@@ -70,13 +70,14 @@ When the AWS Advanced NodeJS Wrapper throws a `TransactionResolutionUnknownError
 
 #### Sample Code
 
-[PostgreSQL Failover Sample Code](./../../examples/PgFailoverSample.java)
+[PostgreSQL Failover Sample Code](../../../examples/aws_driver_example/aws_failover_postgresql_example.ts)
+[MySQL Failover Sample Code](../../../examples/aws_driver_example/aws_failover_mysql_example.ts)
 
 > [!WARNING]
 >
 > #### Warnings About Proper Usage of the AWS Advanced NodeJS Wrapper
 >
-> 1.  Some users may wrap invocations against a Client object in a try-catch block or add a `.catch()` block to the invocation, and dispose of the Client object if an Error occurs. In this case, the application will lose the fast-failover functionality offered by the NodeJS Wrapper. When failover occurs, the NodeJS Wrapper internally establishes a ready-to-use connection inside the original Client object before throwing an exception to the user. If this Client object is disposed of, the newly established connection will be thrown away. The correct practice is to check the error type of the exception and reuse the Client object if the error code indicates successful failover. The [PostgreSQL Failover Sample Code](./../../examples/PgFailoverSample.java) demonstrates this practice. See the section about [Failover Errors](#failover-errors) for more details.
+> 1.  Some users may wrap invocations against a Client object in a try-catch block or add a `.catch()` block to the invocation, and dispose of the Client object if an Error occurs. In this case, the application will lose the fast-failover functionality offered by the NodeJS Wrapper. When failover occurs, the NodeJS Wrapper internally establishes a ready-to-use connection inside the original Client object before throwing an Error to the user. If this Client object is disposed of, the newly established connection will be thrown away. The correct practice is to check the error type of the Error and reuse the Client object if the error code indicates successful failover. The [PostgreSQL Failover Sample Code](./../../examples/PgFailoverSample.java) demonstrates this practice. See the section about [Failover Errors](#failover-errors) for more details.
 
     <br><br>
 
