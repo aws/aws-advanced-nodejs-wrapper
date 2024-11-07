@@ -115,9 +115,7 @@ describe("pooled connection autoscaling", () => {
       const numInstances: number = instances.length;
 
       // Set provider.
-      const provider = new InternalPooledConnectionProvider(
-        new AwsPoolConfig({ minConnections: 0, maxConnections: numInstances, maxIdleConnections: 10 })
-      );
+      provider = new InternalPooledConnectionProvider(new AwsPoolConfig({ maxConnections: numInstances }));
       ConnectionProviderManager.setConnectionProvider(provider);
 
       // Initialize clients.
@@ -176,8 +174,7 @@ describe("pooled connection autoscaling", () => {
         const readerId = await auroraTestUtility.queryInstanceId(newInstanceClient);
         expect(newInstance.instanceId).not.toBe(readerId);
         expect(await provider.containsHost(newInstance.host)).toBe(false);
-        provider.logConnections();
-        expect(instances.length).toBe(provider.getHostCount());
+        expect(provider.getHostCount()).toBe(instances.length);
       } finally {
         for (const connection of connectionsSet) {
           try {
@@ -199,9 +196,7 @@ describe("pooled connection autoscaling", () => {
       const numInstances: number = instances.length;
 
       // Set provider.
-      const provider = new InternalPooledConnectionProvider(
-        new AwsPoolConfig({ minConnections: 0, maxConnections: numInstances, maxIdleConnections: 10 })
-      );
+      provider = new InternalPooledConnectionProvider(new AwsPoolConfig({ maxConnections: numInstances }));
       ConnectionProviderManager.setConnectionProvider(provider);
 
       // Initialize clients.

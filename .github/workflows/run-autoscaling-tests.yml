@@ -56,6 +56,7 @@ jobs:
           NUM_INSTANCES: 5
           AURORA_MYSQL_DB_ENGINE_VERSION: "default"
           AURORA_PG_ENGINE_VERSION: "default"
+          FILTER: "autoscaling"
       - name: "Get Github Action IP"
         if: always()
         id: ip
