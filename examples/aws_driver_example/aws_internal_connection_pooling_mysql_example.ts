@@ -62,7 +62,7 @@ const provider = new InternalPooledConnectionProvider(poolConfig, myKeyFunc);
 ConnectionProviderManager.setConnectionProvider(provider);
 
 // Setup Step: Open connection and create tables - uncomment this section to create table and test values.
-try {
+/* try {
   await client.connect();
   await setInitialSessionSettings(client);
   await queryWithFailoverHandling(client, "CREATE TABLE bank_test (id int primary key, name varchar(40), account_balance int)");
@@ -73,7 +73,7 @@ try {
 } catch (error: any) {
   // Additional error handling can be added here. See transaction step for an example.
   throw error;
-}
+} */
 
 // Transaction Step: Open connection and perform transaction.
 try {
