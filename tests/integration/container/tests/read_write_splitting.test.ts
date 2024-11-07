@@ -110,7 +110,6 @@ describe("aurora read write splitting", () => {
     if (provider !== null) {
       try {
         await ConnectionProviderManager.releaseResources();
-        logger.debug("Successfully released all pooled connections");
         ConnectionProviderManager.resetProvider();
       } catch (error) {
         // pass
@@ -695,7 +694,7 @@ describe("aurora read write splitting", () => {
       config["readerHostSelectorStrategy"] = "leastConnections";
 
       const myKeyFunc: InternalPoolMapping = {
-        getKey: (hostInfo: HostInfo, props: Map<string, any>) => {
+        getPoolKey: (hostInfo: HostInfo, props: Map<string, any>) => {
           return hostInfo.url + props.get("arbitraryProp");
         }
       };
