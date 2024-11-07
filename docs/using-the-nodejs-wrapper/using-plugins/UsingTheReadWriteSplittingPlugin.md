@@ -103,7 +103,7 @@ ConnectionProviderManager.setConnectionProvider(provider);
 
 4. Continue as normal: create connections and use them as needed.
 
-5. When you are finished using all connections, call `ConnectionProviderManager.releaseResources()`.
+5. When you are finished using all connections, call `await ConnectionProviderManager.releaseResources()`.
 
 > [!IMPORTANT]
 > You must call `await ConnectionProviderManager.releaseResources()` to close the internal connection pools when you are finished using all connections. Unless `await ConnectionProviderManager.releaseResources()` is called, the wrapper driver will keep the pools open so that they can be shared between connections.
