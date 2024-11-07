@@ -155,7 +155,7 @@ export class InternalPooledConnectionProvider implements PooledConnectionProvide
   }
 
   getPoolKey(hostInfo: HostInfo, props: Map<string, any>) {
-    return this._poolMapping?.getKey(hostInfo, props) ?? WrapperProperties.USER.get(props);
+    return this._poolMapping?.getPoolKey(hostInfo, props) ?? WrapperProperties.USER.get(props);
   }
 
   logConnections() {

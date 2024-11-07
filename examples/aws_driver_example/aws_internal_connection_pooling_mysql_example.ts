@@ -14,33 +14,62 @@
   limitations under the License.
 */
 
-import { AwsPGClient } from "../../pg/lib";
+import { AwsMySQLClient } from "../../mysql/lib";
 import { FailoverFailedError, FailoverSuccessError, TransactionResolutionUnknownError } from "../../common/lib/utils/errors";
+import { InternalPoolMapping } from "../../common/lib/utils/internal_pool_mapping";
+import { HostInfo } from "../../common/lib/host_info";
+import { WrapperProperties } from "../../common/lib/wrapper_property";
+import { InternalPooledConnectionProvider } from "../../common/lib/internal_pooled_connection_provider";
+import { ConnectionProviderManager } from "../../common/lib/connection_provider_manager";
+import { AwsPoolConfig } from "../../common/lib/aws_pool_config";
 
-const postgresHost = "db-identifier.XYZ.us-east-2.rds.amazonaws.com";
+const mysqlHost = "db-identifier.XYZ.us-east-2.rds.amazonaws.com";
 const username = "john_smith";
 const password = "employees";
 const database = "database";
 const port = 5432;
 
-const client = new AwsPGClient({
+const client = new AwsMySQLClient({
   // Configure connection parameters. Enable readWriteSplitting, failover, and efm plugins.
-  host: postgresHost,
+  host: mysqlHost,
   port: port,
   user: username,
   password: password,
   database: database,
-  plugins: "readWriteSplitting, failover, efm"
+  plugins: "readWriteSplitting,failover,efm",
+
+  // Optional: PoolKey property value used in internal connection pools
+  dbUser: "john_smith"
 });
+
+/**
+ * Optional method: only use if configured to use internal connection pools.
+ * The configuration in these methods are only examples - you can configure as you need in your own code.
+ */
+const myKeyFunc: InternalPoolMapping = {
+  getPoolKey: (hostInfo: HostInfo, props: Map<string, any>) => {
+    const user = props.get(WrapperProperties.USER.name);
+    return hostInfo.url + user + "/" + props.get("dbUser");
+  }
+};
+
+/**
+ * Configure read-write splitting to use internal connection pools (the pool config and mapping
+ * parameters are optional, see UsingTheReadWriteSplittingPlugin.md for more info).
+ */
+const poolConfig = new AwsPoolConfig({ maxConnections: 10, maxIdleConnections: 10, idleTimeoutMillis: 10000 });
+const provider = new InternalPooledConnectionProvider(poolConfig, myKeyFunc);
+ConnectionProviderManager.setConnectionProvider(provider);
 
 // Setup Step: Open connection and create tables - uncomment this section to create table and test values.
 /* try {
   await client.connect();
   await setInitialSessionSettings(client);
-  await queryWithFailoverHandling(client,
-      "CREATE TABLE bank_test (id int primary key, name varchar(40), account_balance int)");
-  await queryWithFailoverHandling(client,
-      "INSERT INTO bank_test VALUES (0, 'Jane Doe', 200), (1, 'John Smith', 200), (2, 'Sally Smith', 200), (3, 'Joe Smith', 200)");
+  await queryWithFailoverHandling(client, "CREATE TABLE bank_test (id int primary key, name varchar(40), account_balance int)");
+  await queryWithFailoverHandling(
+    client,
+    "INSERT INTO bank_test VALUES (0, 'Jane Doe', 200), (1, 'John Smith', 200), (2, 'Sally Smith', 200), (3, 'Joe Smith', 200)"
+  );
 } catch (error: any) {
   // Additional error handling can be added here. See transaction step for an example.
   throw error;
@@ -77,16 +106,19 @@ try {
   }
 } finally {
   await client.end();
+
+  // If configured to use internal connection pools, close them here.
+  await ConnectionProviderManager.releaseResources();
 }
 
-async function setInitialSessionSettings(client: AwsPGClient) {
+async function setInitialSessionSettings(client: AwsMySQLClient) {
   // User can edit settings.
-  await client.query("SET TIME ZONE UTC");
+  await client.query({ sql: "SET time_zone = 'UTC'" });
 }
 
-async function queryWithFailoverHandling(client: AwsPGClient, query: string) {
+async function queryWithFailoverHandling(client: AwsMySQLClient, query: string) {
   try {
-    const result = await client.query(query);
+    const result = await client.query({ sql: query });
     return result;
   } catch (error) {
     if (error instanceof FailoverFailedError) {
@@ -97,7 +129,7 @@ async function queryWithFailoverHandling(client: AwsPGClient, query: string) {
       // Reconfigure the connection
       await setInitialSessionSettings(client);
       // Re-run query
-      return await client.query(query);
+      return await client.query({ sql: query });
     } else if (error instanceof TransactionResolutionUnknownError) {
       // Transaction resolution unknown. Please re-configure session state if required and try
       // restarting transaction.

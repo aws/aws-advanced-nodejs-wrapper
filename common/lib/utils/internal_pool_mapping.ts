@@ -17,5 +17,5 @@
 import { HostInfo } from "../host_info";
 
 export interface InternalPoolMapping {
-  getKey(hostInfo: HostInfo, originalProps: Map<string, any>): string;
+  getPoolKey(hostInfo: HostInfo, originalProps: Map<string, any>): string;
 }
