@@ -39,7 +39,7 @@ const client = new AwsMySQLClient({
   plugins: "readWriteSplitting,failover,efm",
 
   // Optional: PoolKey property value used in internal connection pools
-  iamRegion: "us-east-1"
+  dbUser: "john_smith"
 });
 
 /**
@@ -49,7 +49,7 @@ const client = new AwsMySQLClient({
 const myKeyFunc: InternalPoolMapping = {
   getPoolKey: (hostInfo: HostInfo, props: Map<string, any>) => {
     const user = props.get(WrapperProperties.USER.name);
-    return hostInfo.url + user + props.get("iamRegion");
+    return hostInfo.url + user + "/" + props.get("dbUser");
   }
 };
 
