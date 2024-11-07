@@ -39,7 +39,7 @@ const client = new AwsPGClient({
   plugins: "readWriteSplitting, failover, efm",
 
   // Optional: PoolKey property value used in internal connection pools
-  dialect: "uniquePostgresDialect"
+  region: "us-east-1"
 });
 
 /**
@@ -53,7 +53,7 @@ function getPoolConfig() {
 const myPoolKeyFunc: InternalPoolMapping = {
   getPoolKey: (hostInfo: HostInfo, props: Map<string, any>) => {
     const user = props.get(WrapperProperties.USER.name);
-    return hostInfo.url + user + "/" + props.get("dialect");
+    return hostInfo.url + user + "/" + props.get("region");
   }
 };
 
