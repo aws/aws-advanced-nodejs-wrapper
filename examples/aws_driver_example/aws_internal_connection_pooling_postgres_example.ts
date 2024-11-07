@@ -46,10 +46,6 @@ const client = new AwsPGClient({
  * Optional methods: only required if configured to use internal connection pools.
  * The configuration in these methods are only examples - you can configure as you needed in your own code.
  */
-function getPoolConfig() {
-  return new AwsPoolConfig({ maxConnections: 10, maxIdleConnections: 10, idleTimeoutMillis: 10000, allowExitOnIdle: true });
-}
-
 const myPoolKeyFunc: InternalPoolMapping = {
   getPoolKey: (hostInfo: HostInfo, props: Map<string, any>) => {
     const user = props.get(WrapperProperties.USER.name);
@@ -61,7 +57,8 @@ const myPoolKeyFunc: InternalPoolMapping = {
  * Configure read-write splitting to use internal connection pools (the getPoolKey
  * parameter is optional, see UsingTheReadWriteSplittingPlugin.md for more info).
  */
-const provider = new InternalPooledConnectionProvider(getPoolConfig(), myPoolKeyFunc);
+const poolConfig = new AwsPoolConfig({ maxConnections: 10, maxIdleConnections: 10, idleTimeoutMillis: 10000, allowExitOnIdle: true });
+const provider = new InternalPooledConnectionProvider(poolConfig, myPoolKeyFunc);
 ConnectionProviderManager.setConnectionProvider(provider);
 
 // Setup Step: Open connection and create tables - uncomment this section to create table and test values.

@@ -43,10 +43,6 @@ const client = new AwsMySQLClient({
 
 // Optional method: only use if configured to use internal connection pools.
 // The configuration in these methods are only examples - you can configure as you need in your own code.
-function getPoolConfig() {
-  return { maxConnections: 10, maxIdleConnections: 10, idleTimeoutMillis: 10000 };
-}
-
 const myKeyFunc: InternalPoolMapping = {
   getPoolKey: (hostInfo: HostInfo, props: Map<string, any>) => {
     const user = props.get(WrapperProperties.USER.name);
