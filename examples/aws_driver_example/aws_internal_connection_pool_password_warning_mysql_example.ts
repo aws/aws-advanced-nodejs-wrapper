@@ -51,7 +51,7 @@ try {
   console.log(result);
 } finally {
   // Finished with connection. The connection is not actually closed here, instead it will be
-  // returned to the pool but will remain open
+  // returned to the pool but will remain open.
   await client.end();
 }
 
@@ -89,7 +89,7 @@ const newClient2 = new AwsMySQLClient({
 // because there are no cached pool connections.
 try {
   await newClient2.connect();
-  // Will not reach - exception will be thrown
+  // Will not reach - exception will be thrown.
 } finally {
   logger.debug("example complete");
 }

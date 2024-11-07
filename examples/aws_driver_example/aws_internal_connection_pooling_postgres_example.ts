@@ -30,16 +30,16 @@ const database = "database";
 const port = 5432;
 
 const client = new AwsPGClient({
-  // Configure connection parameters. Enable readWriteSplitting, failover, and efm2 plugins.
+  // Configure connection parameters. Enable readWriteSplitting, failover, and efm plugins.
   host: postgresHost,
   port: port,
   user: username,
   password: password,
   database: database,
-  plugins: "readWriteSplitting, failover, efm",
+  plugins: "readWriteSplitting,failover,efm",
 
-  // Optional: PoolKey property value used in internal connection pools
-  region: "us-east-1"
+  // Optional: PoolKey property value used in internal connection pools.
+  iamRegion: "us-east-1"
 });
 
 /**
@@ -49,7 +49,7 @@ const client = new AwsPGClient({
 const myPoolKeyFunc: InternalPoolMapping = {
   getPoolKey: (hostInfo: HostInfo, props: Map<string, any>) => {
     const user = props.get(WrapperProperties.USER.name);
-    return hostInfo.url + user + "/" + props.get("region");
+    return hostInfo.url + user + "/" + props.get("iamRegion");
   }
 };
 
@@ -61,7 +61,9 @@ const poolConfig = new AwsPoolConfig({ maxConnections: 10, maxIdleConnections: 1
 const provider = new InternalPooledConnectionProvider(poolConfig, myPoolKeyFunc);
 ConnectionProviderManager.setConnectionProvider(provider);
 
-// Setup Step: Open connection and create tables - uncomment this section to create table and test values.
+/**
+ * Setup Step: Open connection and create tables - uncomment this section to create table and test values.
+ */
 try {
   await client.connect();
   await setInitialSessionSettings(client);
@@ -126,7 +128,7 @@ async function queryWithFailoverHandling(client: AwsPGClient, query: string) {
       throw error;
     } else if (error instanceof FailoverSuccessError) {
       // Query execution failed and Node.js wrapper successfully failed over to a new elected writer instance.
-      // Reconfigure the connection
+      // Reconfigure the connection.
       await setInitialSessionSettings(client);
       // Re-run query
       return await client.query(query);

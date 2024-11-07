@@ -30,23 +30,26 @@ const database = "database";
 const port = 5432;
 
 const client = new AwsMySQLClient({
-  // Configure connection parameters. Enable readWriteSplitting, failover, and efm2 plugins.
+  // Configure connection parameters. Enable readWriteSplitting, failover, and efm plugins.
+  host: mysqlHost,
   port: port,
   user: username,
   password: password,
   database: database,
-  plugins: "readWriteSplitting, failover, efm",
+  plugins: "readWriteSplitting,failover,efm",
 
   // Optional: PoolKey property value used in internal connection pools
-  region: "us-east-1"
+  iamRegion: "us-east-1"
 });
 
-// Optional method: only use if configured to use internal connection pools.
-// The configuration in these methods are only examples - you can configure as you need in your own code.
+/**
+ * Optional method: only use if configured to use internal connection pools.
+ * The configuration in these methods are only examples - you can configure as you need in your own code.
+ */
 const myKeyFunc: InternalPoolMapping = {
   getPoolKey: (hostInfo: HostInfo, props: Map<string, any>) => {
     const user = props.get(WrapperProperties.USER.name);
-    return hostInfo.url + user + props.get("region");
+    return hostInfo.url + user + props.get("iamRegion");
   }
 };
 

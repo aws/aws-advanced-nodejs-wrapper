@@ -24,7 +24,7 @@ const database = "database";
 const port = 5432;
 
 const client = new AwsPGClient({
-  // Configure connection parameters. Enable readWriteSplitting, failover, and efm2 plugins.
+  // Configure connection parameters. Enable readWriteSplitting, failover, and efm plugins.
   host: postgresHost,
   port: port,
   user: username,

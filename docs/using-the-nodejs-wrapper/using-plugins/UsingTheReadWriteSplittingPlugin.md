@@ -8,7 +8,7 @@ The Read/Write Splitting Plugin is not loaded by default. To load the plugin, in
 
 ```typescript
 params = {
-  plugins: "readWriteSplitting,failover,hostMonitoring"
+  plugins: "readWriteSplitting,failover,efm"
   // Add other connection properties below...
 };
 
@@ -37,17 +37,16 @@ The Read/Write Splitting Plugin is not currently supported for non-Aurora cluste
 ## Internal Connection Pooling
 
 > [!WARNING]
-> If internal connection pools are enabled, database passwords may not be verified with every connection request. The initial connection request for each database instance in the cluster will verify the password, but subsequent requests may return a cached pool connection without re-verifying the password. This behavior is inherent to the nature of connection pools in general and not a bug with the wrapper. `await ConnectionProviderManager.releaseResources()` can be called to close all pools and remove all cached pool connections. See [Internal Connection Pool Password Warning Example for Postgres](../../../examples/aws_driver_example/aws_internal_connection_pool_password_warning_postgres_example.ts) and [Internal Connection Pool Password Warning Example for MySQL](../../../examples/aws_driver_example/aws_internal_connection_pool_password_warning_mysql_example.ts)
+> If internal connection pools are enabled, database passwords may not be verified with every connection request. The initial connection request for each database instance in the cluster will verify the password, but subsequent requests may return a cached pool connection without re-verifying the password. This behavior is inherent to the nature of connection pools in general and not a bug with the wrapper. `await ConnectionProviderManager.releaseResources()` can be called to close all pools and remove all cached pool connections. See [Internal Connection Pool Password Warning Example for Postgres](../../../examples/aws_driver_example/aws_interal_connection_pool_password_warning_postgres_example.ts) and [Internal Connection Pool Password Warning Example for MySQL](../../../examples/aws_driver_example/aws_internal_connection_pool_password_warning_mysql_example.ts)
 
-Whenever `setReadOnly(true)` is first called on a `Client` object, the read/write plugin will internally open a new physical connection to a reader. After this first call, the physical reader connection will be cached for the given `Client`. Future calls to `setReadOnly `on the same `Client` object will not require opening a new physical connection. However, calling `setReadOnly(true)` for the first time on a new `Client` object will require the plugin to establish another new physical connection to a reader. If your application frequently calls `setReadOnly`, you can enable internal connection pooling to improve performance. When enabled, the wrapper driver will maintain an internal connection pool for each instance in the cluster. This allows the read/write plugin to reuse connections that were established by `setReadOnly` calls on previous `Client` objects.
+Whenever `setReadOnly(true)` is first called on a `AwsClient` object, the read/write plugin will internally open a new physical connection to a reader. After this first call, the physical reader connection will be cached for the given `AwsClient`. Future calls to `setReadOnly` on the same `AwsClient` object will not require opening a new physical connection. However, calling `setReadOnly(true)` for the first time on a new `AwsClient` object will require the plugin to establish another new physical connection to a reader. If your application frequently calls `setReadOnly`, you can enable internal connection pooling to improve performance. When enabled, the wrapper driver will maintain an internal connection pool for each instance in the cluster. This allows the read/write splitting plugin to reuse connections that were established by `setReadOnly` calls on previous `AwsClient` objects.
 
 > [!NOTE]
 > Initial connections to a cluster URL will not be pooled. The driver does not pool cluster URLs because it can be problematic to pool a URL that resolves to different instances over time. The main benefit of internal connection pools is when setReadOnly is called. When setReadOnly is called (regardless of the initial connection URL), an internal pool will be created for the writer/reader that the plugin switches to and connections for that instance can be reused in the future.
 
 The wrapper driver creates and maintain its internal connection pools using the AWS Pool Client. The steps are as follows:
 
-1.  Create an instance of `InternalPooledConnectionProvider`. You can optionally pass in the set of pooled connection properties, otherwise the default properties will be used. Note that the connection properties below will be set by default and will override any values you set in the config parameter. This is done to follow desired behavior and ensure that the read/write plugin can internally establish connections to new instances.
-
+1.  Create an instance of `InternalPooledConnectionProvider`. You can optionally pass in the set of pooled connection properties, otherwise the default properties will be used. Note that to follow desired behavior and ensure that the read/write plugin can internally establish connections to new instances, the connection properties below will be set by default and will override any values you set in the config parameter:
 - url (including the host, port, and database)
 - username
 - password
@@ -69,12 +68,10 @@ The following internal pool connection parameters can be set. Note that some pro
 | `idleTimeoutMillis` | Number  |    No    | The idle connections timeout, in milliseconds                                                                                      | `60000`       |
 | `allowExitOnIdle`   | Boolean |    No    | Setting `allowExitOnIdle: true` in the config will allow the pooled connection to exit as soon as all clients in the pool are idle | `false`       |
 
-Note: In Postgres, if the number of connections in a pool exceeds maxConnections, the program will hang at the next connection attempt. This is expected behaviour.
+> [!Note]
+> In Postgres, if the number of connections in a pool exceeds maxConnections, the program will hang at the next connection attempt. This is expected behaviour.
 
 You can optionally pass in an `InternalPoolMapping` function as a second parameter to the `InternalPooledConnectionProvider`. This allows you to decide when new connection pools should be created by defining what is included in the pool map key. A new pool will be created each time a new connection is requested with a unique key. By default, a new pool will be created for each unique instance-user combination. If you would like to define a different key system, you should pass in a `InternalPoolMapping` function defining this logic. A simple example is show below. Please see [Internal Connection Pooling Postgres Example](../../../examples/aws_driver_example/aws_internal_connection_pooling_postgres_example.ts) and [Internal Connection Pooling MySQL Example](../../../examples/aws_driver_example/aws_internal_connection_pooling_mysql_example.ts) for the full examples.
-
-> [!WARNING]
-> If you do not include the username in your InternalPoolMapping function, connection pools may be shared between different users. As a result, an initial connection established with a privileged user may be returned to a connection request with a lower-privilege user without re-verifying credentials. This behavior is inherent to the nature of connection pools in general and not a bug with the driver. `await ConnectionProviderManager.releaseResources()` can be called to close all pools and remove all cached pool connections.
 
 ```typescript
 props.set("somePropertyValue", "1"); // used in getPoolKey
@@ -92,14 +89,16 @@ const poolConfig = new AwsPoolConfig({ maxConnections: 10, maxIdleConnections: 1
 const provider = new InternalPooledConnectionProvider(poolConfig, myPoolKeyFunc);
 ConnectionProviderManager.setConnectionProvider(provider);
 ```
+> [!WARNING]
+> If you do not include the username in your InternalPoolMapping function, connection pools may be shared between different users. As a result, an initial connection established with a privileged user may be returned to a connection request with a lower-privilege user without re-verifying credentials. This behavior is inherent to the nature of connection pools in general and not a bug with the driver. `await ConnectionProviderManager.releaseResources()` can be called to close all pools and remove all cached pool connections.
 
-2. Call `ConnectionProviderManager.setConnectionProvider()`, passing in the `InternalPoolConnectionProvider` you created in step 1.
+2. Call `ConnectionProviderManager.setConnectionProvider()`, passing in the `InternalPoolConnectionProvider` you created in Step 1.
 
 3. By default, the read/write plugin randomly selects a reader instance the first time that `setReadOnly(true)` is called. If you would like the plugin to select a reader based on a different selection strategy, please see the [Reader Selection](#reader-selection) section for more information.
 
 4. Continue as normal: create connections and use them as needed.
 
-5. When you are finished using all connections, call `ConnectionProviderManager.releaseResources`.
+5. When you are finished using all connections, call `ConnectionProviderManager.releaseResources()`.
 
 > [!IMPORTANT]
 > You must call `await ConnectionProviderManager.releaseResources()` to close the internal connection pools when you are finished using all connections. Unless `await ConnectionProviderManager.releaseResources()` is called, the wrapper driver will keep the pools open so that they can be shared between connections.
@@ -116,7 +115,7 @@ props.set(WrapperProperties.READER_HOST_SELECTOR_STRATEGY.name, "leastConnection
 
 By default, the Read/Write Splitting Plugin randomly selects a reader instance the first time `setReadOnly(true)` is called. To balance connections to reader instances more evenly, different connection strategies can be used. The following table describes the currently available connection strategies and any relevant configuration parameters for each strategy.
 
-To indicate which connection strategy to use, the `readerHostSelectorStrategy` parameter can be set to one of the [reader host selection strategies](../../using-the-nodejs-wrapper/ReaderSelectionStrategies.md). The following is an example of enabling the `random` strategy:
+To indicate which connection strategy to use, the `readerHostSelectorStrategy` parameter can be set to one of the [reader host selection strategies](../ReaderSelectionStrategies.md). The following is an example of enabling the `random` strategy:
 
 ```typescript
 params = {
