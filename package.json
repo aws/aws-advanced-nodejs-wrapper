@@ -20,8 +20,9 @@
     "lint": "eslint --fix --ext .ts .",
     "test": "cross-env NODE_OPTIONS=\"$NODE_OPTIONS --experimental-vm-modules\" npx jest --config=jest.unit.config.json",
     "fix-imports": "babel --extensions \".js\" dist -d dist",
+    "copy-log-files": "copyfiles common/lib/utils/locales/en.json dist/",
     "build": "tsc",
-    "prepublish": "npm run build && npm run fix-imports && npm pack --pack-destination ./build"
+    "prepublish": "npm run build && npm run copy-log-files && npm run fix-imports && npm pack --pack-destination ./build"
   },
   "lint-staged": {
     "*.ts": [
@@ -69,6 +70,7 @@
     "axios-cookiejar-support": "^5.0.3",
     "babel-plugin-transform-rewrite-imports": "^1.5.3",
     "benny": "^3.7.1",
+    "copyfiles": "^2.4.1",
     "cross-env": "^7.0.3",
     "entities": "^4.5.0",
     "eslint": "^8.57.1",
