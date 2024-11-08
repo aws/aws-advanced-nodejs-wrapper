@@ -42,6 +42,7 @@ let newInstance: TestInstanceInfo;
 let newInstanceClient: any;
 let auroraTestUtility: AuroraTestUtility;
 let provider: InternalPooledConnectionProvider | null;
+const instanceId: string = "auto-scaling-instance";
 
 async function initDefaultConfig(host: string, port: number): Promise<any> {
   let config: any = {
@@ -54,7 +55,10 @@ async function initDefaultConfig(host: string, port: number): Promise<any> {
     enableTelemetry: true,
     telemetryTracesBackend: "OTLP",
     telemetryMetricsBackend: "OTLP",
-    readerHostSelectorStrategy: "leastConnections"
+    readerHostSelectorStrategy: "leastConnections",
+    clusterTopologyRefreshRateMs: 5000,
+    internal_query_timeout: 75000,
+    keepAliveMaxTimeout: 30000
   };
 
   config = DriverHelper.addDriverSpecificConfiguration(config, env.engine);
@@ -73,7 +77,10 @@ async function initConfigWithFailover(host: string, port: number): Promise<any> 
     enableTelemetry: true,
     telemetryTracesBackend: "OTLP",
     telemetryMetricsBackend: "OTLP",
-    readerHostSelectorStrategy: "leastConnections"
+    readerHostSelectorStrategy: "leastConnections",
+    clusterTopologyRefreshRateMs: 5000,
+    internal_query_timeout: 75000,
+    keepAliveMaxTimeout: 30000
   };
 
   config = DriverHelper.addDriverSpecificConfiguration(config, env.engine);
@@ -91,6 +98,7 @@ describe("pooled connection autoscaling", () => {
 
     connectionsSet = new Set();
     provider = null;
+    await auroraTestUtility.deleteInstance(instanceId);
     await TestEnvironment.verifyClusterStatus();
   }, 1320000);
 
@@ -115,7 +123,12 @@ describe("pooled connection autoscaling", () => {
       const numInstances: number = instances.length;
 
       // Set provider.
-      provider = new InternalPooledConnectionProvider(new AwsPoolConfig({ maxConnections: numInstances }));
+      provider = new InternalPooledConnectionProvider(
+        new AwsPoolConfig({ maxConnections: numInstances }),
+        undefined,
+        BigInt(3_000_000_000),
+        BigInt(10_000_000_000)
+      );
       ConnectionProviderManager.setConnectionProvider(provider);
 
       // Initialize clients.
@@ -137,7 +150,6 @@ describe("pooled connection autoscaling", () => {
         }
 
         // Create new instance.
-        const instanceId: string = "auto-scaling-instance";
         newInstance = await auroraTestUtility.createInstance(instanceId);
         if (!newInstance?.instanceId || !newInstance?.host || !newInstance?.port) {
           fail("Instance not returned.");
@@ -165,12 +177,10 @@ describe("pooled connection autoscaling", () => {
         while ((await auroraTestUtility.getNumberOfInstances()) !== totalInstances && waitTilTime > Date.now()) {
           await sleep(5000);
         }
-        if (await auroraTestUtility.instanceExists(instanceId)) {
-          fail(`The instance ${instanceId} was not deleted.`);
-        }
 
         // Should have removed the pool with the deleted instance.
         await newInstanceClient.setReadOnly(true);
+
         const readerId = await auroraTestUtility.queryInstanceId(newInstanceClient);
         expect(newInstance.instanceId).not.toBe(readerId);
         expect(await provider.containsHost(newInstance.host)).toBe(false);
@@ -196,7 +206,7 @@ describe("pooled connection autoscaling", () => {
       const numInstances: number = instances.length;
 
       // Set provider.
-      provider = new InternalPooledConnectionProvider(new AwsPoolConfig({ maxConnections: numInstances }));
+      provider = new InternalPooledConnectionProvider(new AwsPoolConfig({ maxConnections: numInstances * 5 }));
       ConnectionProviderManager.setConnectionProvider(provider);
 
       // Initialize clients.
@@ -212,13 +222,21 @@ describe("pooled connection autoscaling", () => {
               logger.debug(error.stack);
             });
 
+            const newClient = initClientFunc(config);
+            newClient.on("error", (error: any): void => {
+              logger.debug(`event emitter threw error: ${error.message}`);
+              logger.debug(error.stack);
+            });
+
+            await newClient.connect();
+            connectionsSet.add(newClient);
+
             await client.connect();
             connectionsSet.add(client);
           }
         }
 
         // Create new instance.
-        const instanceId: string = "auto-scaling-instance";
         newInstance = await auroraTestUtility.createInstance(instanceId);
         if (!newInstance?.instanceId || !newInstance?.host || !newInstance?.port) {
           fail("Instance not returned.");
@@ -226,7 +244,7 @@ describe("pooled connection autoscaling", () => {
 
         // Connect to instance.
         try {
-          const config = await initConfigWithFailover(newInstance.host, newInstance.port);
+          const config = await initDefaultConfig(env.databaseInfo.writerInstanceEndpoint, env.databaseInfo.instanceEndpointPort);
           newInstanceClient = initClientFunc(config);
           await newInstanceClient.connect();
           connectionsSet.add(newInstanceClient);

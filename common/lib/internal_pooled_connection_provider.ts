@@ -62,8 +62,6 @@ export class InternalPooledConnectionProvider implements PooledConnectionProvide
 
   private static poolExpirationCheckNanos: bigint = InternalPooledConnectionProvider.POOL_EXPIRATION_NANOS; // 30 minutes
 
-  constructor(poolConfig?: AwsPoolConfig);
-  constructor(poolConfig?: AwsPoolConfig, mapping?: InternalPoolMapping);
   constructor(poolConfig?: AwsPoolConfig, mapping?: InternalPoolMapping, poolExpirationNanos?: bigint, poolCleanupNanos?: bigint) {
     this._poolMapping = mapping;
     InternalPooledConnectionProvider.poolExpirationCheckNanos = poolExpirationNanos ?? InternalPooledConnectionProvider.POOL_EXPIRATION_NANOS;

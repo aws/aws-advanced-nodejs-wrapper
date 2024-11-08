@@ -291,7 +291,11 @@ export class AuroraTestUtility {
 
     // wait for it to delete
     while ((await this.instanceExists(instanceId)) && new Date().getTime() < stopTime) {
-      await sleep(3000);
+      await sleep(5000);
+    }
+
+    if (await this.instanceExists(instanceId)) {
+      throw new Error(`The instance ${instanceId} was not deleted within the allotted time.`);
     }
   }
 
