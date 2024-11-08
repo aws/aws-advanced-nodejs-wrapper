@@ -124,11 +124,6 @@ describe("aurora read write splitting", () => {
       const config = await initDefaultConfig(env.databaseInfo.writerInstanceEndpoint, env.databaseInfo.instanceEndpointPort, false);
       client = initClientFunc(config);
 
-      client.on("error", (error: any) => {
-        logger.debug(`event emitter threw error: ${error.message}`);
-        logger.debug(error.stack);
-      });
-
       await client.connect();
       const initialWriterId = await auroraTestUtility.queryInstanceId(client);
       expect(await auroraTestUtility.isDbInstanceWriter(initialWriterId)).toStrictEqual(true);
@@ -162,11 +157,6 @@ describe("aurora read write splitting", () => {
     async () => {
       const config = await initDefaultConfig(env.databaseInfo.writerInstanceEndpoint, env.databaseInfo.instanceEndpointPort, false);
       client = initClientFunc(config);
-
-      client.on("error", (error: any) => {
-        logger.debug(`event emitter threw error: ${error.message}`);
-        logger.debug(error.stack);
-      });
 
       await client.connect();
       const initialWriterId = await auroraTestUtility.queryInstanceId(client);
@@ -204,11 +194,6 @@ describe("aurora read write splitting", () => {
     async () => {
       const config = await initDefaultConfig(env.databaseInfo.writerInstanceEndpoint, env.databaseInfo.instanceEndpointPort, false);
       client = initClientFunc(config);
-
-      client.on("error", (error: any) => {
-        logger.debug(`event emitter threw error: ${error.message}`);
-        logger.debug(error.stack);
-      });
 
       await client.connect();
       const initialWriterId = await auroraTestUtility.queryInstanceId(client);
@@ -249,11 +234,6 @@ describe("aurora read write splitting", () => {
       const config = await initDefaultConfig(env.proxyDatabaseInfo.writerInstanceEndpoint, env.proxyDatabaseInfo.instanceEndpointPort, true);
       client = initClientFunc(config);
 
-      client.on("error", (error: any) => {
-        logger.debug(`event emitter threw error: ${error.message}`);
-        logger.debug(error.stack);
-      });
-
       await client.connect();
       const initialWriterId = await auroraTestUtility.queryInstanceId(client);
       expect(await auroraTestUtility.isDbInstanceWriter(initialWriterId)).toStrictEqual(true);
@@ -277,11 +257,6 @@ describe("aurora read write splitting", () => {
       const config = await initDefaultConfig(env.proxyDatabaseInfo.writerInstanceEndpoint, env.proxyDatabaseInfo.instanceEndpointPort, true);
 
       client = initClientFunc(config);
-
-      client.on("error", (error: any) => {
-        logger.debug(`event emitter threw error: ${error.message}`);
-        logger.debug(error.stack);
-      });
 
       await client.connect();
       const initialWriterId = await auroraTestUtility.queryInstanceId(client);
@@ -320,10 +295,6 @@ describe("aurora read write splitting", () => {
         true
       );
       client = initClientFunc(writerConfig);
-      client.on("error", (error: any) => {
-        logger.debug(`event emitter threw error: ${error.message}`);
-        logger.debug(error.stack);
-      });
       await client.connect();
 
       const initialWriterId = await auroraTestUtility.queryInstanceId(client);
@@ -380,10 +351,6 @@ describe("aurora read write splitting", () => {
       );
       writerConfig["failoverMode"] = "reader-or-writer";
       client = initClientFunc(writerConfig);
-      client.on("error", (error: any) => {
-        logger.debug(`event emitter threw error: ${error.message}`);
-        logger.debug(error.stack);
-      });
 
       await client.connect();
       const initialWriterId = await auroraTestUtility.queryInstanceId(client);
@@ -444,10 +411,6 @@ describe("aurora read write splitting", () => {
         true
       );
       client = initClientFunc(writerConfig);
-      client.on("error", (error: any) => {
-        logger.debug(`event emitter threw error: ${error.message}`);
-        logger.debug(error.stack);
-      });
       await client.connect();
       const initialWriterId = await auroraTestUtility.queryInstanceId(client);
       expect(await auroraTestUtility.isDbInstanceWriter(initialWriterId)).toStrictEqual(true);
@@ -493,10 +456,6 @@ describe("aurora read write splitting", () => {
       ConnectionProviderManager.setConnectionProvider(provider);
 
       client = initClientFunc(config);
-      client.on("error", (error: any) => {
-        logger.debug(`event emitter threw error: ${error.message}`);
-        logger.debug(error.stack);
-      });
 
       await client.connect();
       const initialWriterId = await auroraTestUtility.queryInstanceId(client);
@@ -511,11 +470,6 @@ describe("aurora read write splitting", () => {
       expect(newWriterId).not.toBe(initialWriterId);
 
       secondaryClient = initClientFunc(config);
-      secondaryClient.on("error", (error: any) => {
-        logger.debug(`event emitter threw error: ${error.message}`);
-        logger.debug(error.stack);
-      });
-
       await secondaryClient.connect();
       provider.logConnections();
       const oldWriterId = await auroraTestUtility.queryInstanceId(secondaryClient);
@@ -547,16 +501,6 @@ describe("aurora read write splitting", () => {
       );
 
       ConnectionProviderManager.setConnectionProvider(provider);
-
-      client.on("error", (error: any) => {
-        logger.debug(`event emitter threw error: ${error.message}`);
-        logger.debug(error.stack);
-      });
-
-      secondaryClient.on("error", (error: any) => {
-        logger.debug(`event emitter threw error: ${error.message}`);
-        logger.debug(error.stack);
-      });
       await client.connect();
       await client.end();
 
@@ -574,43 +518,35 @@ describe("aurora read write splitting", () => {
     1000000
   );
 
-  itIf(
-    "test pooled connection failover failed",
-    async () => {
-      const config = await initConfigWithFailover(env.proxyDatabaseInfo.writerInstanceEndpoint, env.proxyDatabaseInfo.instanceEndpointPort, true);
-      config["failoverTimeoutMs"] = 1000;
+  itIf("test pooled connection failover failed", async () => {
+    const config = await initConfigWithFailover(env.proxyDatabaseInfo.writerInstanceEndpoint, env.proxyDatabaseInfo.instanceEndpointPort, true);
+    config["failoverTimeoutMs"] = 1000;
 
-      client = initClientFunc(config);
+    client = initClientFunc(config);
 
-      client.on("error", (error: any) => {
-        logger.debug(`event emitter threw error: ${error.message}`);
-        logger.debug(error.stack);
-      });
+    provider = new InternalPooledConnectionProvider({
+      minConnections: 0,
+      maxConnections: 10,
+      maxIdleConnections: 10
+    });
+    ConnectionProviderManager.setConnectionProvider(provider);
 
-      provider = new InternalPooledConnectionProvider({
-        minConnections: 0,
-        maxConnections: 10,
-        maxIdleConnections: 10
-      });
-      ConnectionProviderManager.setConnectionProvider(provider);
+    await client.connect();
+    const initialWriterId = await auroraTestUtility.queryInstanceId(client);
 
-      await client.connect();
-      const initialWriterId = await auroraTestUtility.queryInstanceId(client);
+    // Kill all instances
+    await ProxyHelper.disableAllConnectivity(env.engine);
+    await expect(async () => {
+      await auroraTestUtility.queryInstanceId(client);
+    }).rejects.toThrow(FailoverFailedError);
+    await ProxyHelper.enableAllConnectivity();
+    await client.connect();
+    await TestEnvironment.verifyClusterStatus();
 
-      // Kill all instances
-      await ProxyHelper.disableAllConnectivity(env.engine);
-      await expect(async () => {
-        await auroraTestUtility.queryInstanceId(client);
-      }).rejects.toThrow(FailoverFailedError);
-      await ProxyHelper.enableAllConnectivity();
-      await client.connect();
-      await TestEnvironment.verifyClusterStatus();
-
-      const newWriterId = await auroraTestUtility.queryInstanceId(client);
-      expect(newWriterId).toBe(initialWriterId);
-    },
-    1000000
-  );
+    const newWriterId = await auroraTestUtility.queryInstanceId(client);
+    expect(newWriterId).toBe(initialWriterId);
+    await client.end();
+  }, 1000000);
 
   itIf(
     "test pooled connection failover in transaction",
@@ -620,11 +556,6 @@ describe("aurora read write splitting", () => {
 
       provider = new InternalPooledConnectionProvider();
       ConnectionProviderManager.setConnectionProvider(provider);
-
-      client.on("error", (error: any) => {
-        logger.debug(`event emitter threw error: ${error.message}`);
-        logger.debug(error.stack);
-      });
 
       await client.connect();
 
@@ -666,10 +597,6 @@ describe("aurora read write splitting", () => {
         // Assume one writer and [size - 1] readers
         for (let i = 0; i < numInstances - 1; i++) {
           const client = initClientFunc(config);
-          client.on("error", (error: any) => {
-            logger.debug(`event emitter threw error: ${error.message}`);
-            logger.debug(error.stack);
-          });
 
           await client.connect();
           await client.setReadOnly(true);
@@ -716,10 +643,6 @@ describe("aurora read write splitting", () => {
           readerConfig["arbitraryProp"] = "value" + i.toString();
           readerConfig["readerHostSelectorStrategy"] = "leastConnections";
           const client = initClientFunc(readerConfig);
-          client.on("error", (error: any) => {
-            logger.debug(`event emitter threw error: ${error.message}`);
-            logger.debug(error.stack);
-          });
           await client.connect();
           connectionsSet.add(client);
           if (i === 0) {
@@ -729,10 +652,6 @@ describe("aurora read write splitting", () => {
 
         for (let i = 0; i < numTestConnections - 1; i++) {
           const client = initClientFunc(config);
-          client.on("error", (error: any) => {
-            logger.debug(`event emitter threw error: ${error.message}`);
-            logger.debug(error.stack);
-          });
           await client.connect();
           await client.setReadOnly(true);
           const readerId = await auroraTestUtility.queryInstanceId(client);

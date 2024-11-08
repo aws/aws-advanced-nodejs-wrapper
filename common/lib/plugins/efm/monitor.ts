@@ -91,7 +91,7 @@ export class MonitorImpl implements Monitor {
 
   startMonitoring(context: MonitorConnectionContext): void {
     if (this.stopped) {
-      logger.warning(Messages.get("MonitorImpl.monitorIsStopped", this.hostInfo.host));
+      logger.warn(Messages.get("MonitorImpl.monitorIsStopped", this.hostInfo.host));
     }
 
     const currentTimeNanos: number = this.getCurrentTimeNano();
@@ -105,7 +105,7 @@ export class MonitorImpl implements Monitor {
 
   stopMonitoring(context: MonitorConnectionContext): void {
     if (context == null) {
-      logger.warning(Messages.get("MonitorImpl.contextNullWarning"));
+      logger.warn(Messages.get("MonitorImpl.contextNullWarning"));
       return;
     }
 

@@ -195,10 +195,6 @@ async function doMeasurePerformance(sleepDelayMillis: number, repeatTimes: numbe
     const client = initClientFunc(config);
     try {
       await connectWithRetry(client);
-      client.on("error", (err: any) => {
-        logger.debug(err.message);
-      });
-
       const instanceHost = await auroraTestUtility.queryInstanceId(client);
       setTimeout(async () => {
         await ProxyHelper.disableConnectivity(env.engine, instanceHost);

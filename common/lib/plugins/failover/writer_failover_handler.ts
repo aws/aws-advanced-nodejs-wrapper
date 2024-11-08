@@ -104,6 +104,7 @@ export class ClusterAwareWriterFailoverHandler implements WriterFailoverHandler 
     const taskA = reconnectToWriterHandlerTask.call();
     const taskB = waitForNewWriterHandlerTask.call();
 
+    let failed = false;
     let selectedTask = "";
     const singleTask: boolean = this.pluginService.getDialect().getFailoverRestrictions().includes(FailoverRestriction.DISABLE_TASK_A);
     const failoverTaskPromise = singleTask ? taskB : Promise.any([taskA, taskB]);
@@ -136,17 +137,19 @@ export class ClusterAwareWriterFailoverHandler implements WriterFailoverHandler 
           this.logTaskSuccess(result);
           return result;
         }
+        failed = true;
         throw new AwsWrapperError("Connection attempt task timed out.");
       })
       .catch((error: any) => {
         logger.info(Messages.get("ClusterAwareWriterFailoverHandler.failedToConnectToWriterInstance"));
+        failed = true;
         if (JSON.stringify(error).includes("Connection attempt task timed out.")) {
           return new WriterFailoverResult(false, false, [], "None", null);
         }
         throw error;
       })
       .finally(async () => {
-        await reconnectToWriterHandlerTask.cancel(selectedTask);
+        await reconnectToWriterHandlerTask.cancel(failed, selectedTask);
         await waitForNewWriterHandlerTask.cancel(selectedTask);
         clearTimeout(timeoutId);
       });
@@ -182,6 +185,7 @@ class ReconnectToWriterHandlerTask {
   currentClient: ClientWrapper | null = null;
   endTime: number;
   failoverCompleted: boolean = false;
+  failoverCompletedDueToError: boolean = false;
   timeoutId: any = -1;
 
   constructor(
@@ -261,16 +265,17 @@ class ReconnectToWriterHandlerTask {
       logger.error(error.message);
       return new WriterFailoverResult(false, false, [], ClusterAwareWriterFailoverHandler.RECONNECT_WRITER_TASK, null);
     } finally {
-      if (this.currentClient && !success) {
+      if (this.currentClient && (this.failoverCompletedDueToError || !success)) {
         await this.pluginService.abortTargetClient(this.currentClient);
       }
       logger.info(Messages.get("ClusterAwareWriterFailoverHandler.taskAFinished"));
     }
   }
 
-  async cancel(selectedTask?: string) {
+  async cancel(failed: boolean, selectedTask?: string) {
     clearTimeout(this.timeoutId);
     this.failoverCompleted = true;
+    this.failoverCompletedDueToError = failed;
 
     // Task B was returned.
     if (selectedTask && selectedTask === ClusterAwareWriterFailoverHandler.WAIT_NEW_WRITER_TASK) {

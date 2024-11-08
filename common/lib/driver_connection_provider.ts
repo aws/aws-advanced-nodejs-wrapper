@@ -23,7 +23,6 @@ import { AwsWrapperError } from "./utils/errors";
 import { WrapperProperties } from "./wrapper_property";
 import { Messages } from "./utils/messages";
 import { RdsUtils } from "./utils/rds_utils";
-import { HostInfoBuilder } from "./host_info_builder";
 import { promisify } from "util";
 import { lookup } from "dns";
 import { PluginService } from "./plugin_service";
@@ -51,17 +50,13 @@ export class DriverConnectionProvider implements ConnectionProvider {
   async connect(hostInfo: HostInfo, pluginService: PluginService, props: Map<string, any>): Promise<ClientWrapper> {
     let resultTargetClient;
     const resultProps = new Map(props);
-    let connectionHostInfo: HostInfo;
-
+    resultProps.set(WrapperProperties.HOST.name, hostInfo.host);
+    if (hostInfo.isPortSpecified()) {
+      resultProps.set(WrapperProperties.PORT.name, hostInfo.port);
+    }
     const driverDialect: DriverDialect = pluginService.getDriverDialect();
     try {
-      const targetClient: any = await driverDialect.connect(hostInfo, props);
-      connectionHostInfo = new HostInfoBuilder({
-        hostAvailabilityStrategy: hostInfo.hostAvailabilityStrategy
-      })
-        .copyFrom(hostInfo)
-        .build();
-      resultTargetClient = targetClient;
+      resultTargetClient = await driverDialect.connect(hostInfo, resultProps);
     } catch (e: any) {
       if (!WrapperProperties.ENABLE_GREEN_HOST_REPLACEMENT.get(props)) {
         throw e;

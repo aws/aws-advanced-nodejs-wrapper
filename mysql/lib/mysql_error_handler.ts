@@ -16,9 +16,22 @@
 
 import { ErrorHandler } from "../../common/lib/error_handler";
 import { Messages } from "../../common/lib/utils/messages";
+import { logger } from "../../common/logutils";
+import { ClientWrapper } from "../../common/lib/client_wrapper";
 
 export class MySQLErrorHandler implements ErrorHandler {
   private static readonly SQLSTATE_ACCESS_ERROR = "28000";
+  private unexpectedError: Error | null = null;
+
+  protected noOpListener(error: any) {
+    // Ignore the received error.
+    logger.silly(Messages.get("ErrorHandler.NoOpListener", "MySQLErrorHandler", error.message));
+  }
+
+  protected trackingListener(error: any) {
+    this.unexpectedError = error;
+    logger.silly(Messages.get("ErrorHandler.TrackerListener", "MySQLErrorHandler", error.message));
+  }
 
   isLoginError(e: Error): boolean {
     if (Object.prototype.hasOwnProperty.call(e, "sqlState")) {
@@ -37,5 +50,34 @@ export class MySQLErrorHandler implements ErrorHandler {
       // Pooled connection network errors
       e.message.includes("connect ETIMEDOUT")
     );
+  }
+
+  hasLoginError(): boolean {
+    return this.unexpectedError !== null && this.isLoginError(this.unexpectedError);
+  }
+
+  hasNetworkError(): boolean {
+    return this.unexpectedError !== null && this.isNetworkError(this.unexpectedError);
+  }
+
+  getUnexpectedError(): Error | null {
+    return this.unexpectedError;
+  }
+
+  attachErrorListener(clientWrapper: ClientWrapper | undefined): void {
+    if (!clientWrapper || !clientWrapper.client) {
+      return;
+    }
+    this.unexpectedError = null;
+    clientWrapper.client.removeListener("error", this.noOpListener);
+    clientWrapper.client.on("error", this.trackingListener);
+  }
+
+  attachNoOpErrorListener(clientWrapper: ClientWrapper | undefined): void {
+    if (!clientWrapper || !clientWrapper.client) {
+      return;
+    }
+    clientWrapper.client.removeListener("error", this.trackingListener);
+    clientWrapper.client.on("error", this.noOpListener);
   }
 }

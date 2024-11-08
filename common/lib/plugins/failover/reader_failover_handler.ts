@@ -34,6 +34,7 @@ export interface ReaderFailoverHandler {
 }
 
 export class ClusterAwareReaderFailoverHandler implements ReaderFailoverHandler {
+  private static readonly FAILOVER_FAILED = -3;
   static readonly FAILED_READER_FAILOVER_RESULT = new ReaderFailoverResult(null, null, false);
   static readonly DEFAULT_FAILOVER_TIMEOUT = 60000; // 60 sec
   static readonly DEFAULT_READER_CONNECT_TIMEOUT = 30000; // 30 sec
@@ -164,6 +165,8 @@ export class ClusterAwareReaderFailoverHandler implements ReaderFailoverHandler 
         if (error instanceof AggregateError && error.message.includes("All promises were rejected")) {
           // ignore and try the next batch
         } else {
+          // Failover has failed.
+          this.taskHandler.setSelectedConnectionAttemptTask(failoverTaskId, ClusterAwareReaderFailoverHandler.FAILOVER_FAILED);
           throw error;
         }
       }
@@ -171,6 +174,8 @@ export class ClusterAwareReaderFailoverHandler implements ReaderFailoverHandler 
       await sleep(1000);
     }
 
+    // Failover has failed.
+    this.taskHandler.setSelectedConnectionAttemptTask(failoverTaskId, ClusterAwareReaderFailoverHandler.FAILOVER_FAILED);
     return new ReaderFailoverResult(null, null, false);
   }
 
@@ -193,6 +198,8 @@ export class ClusterAwareReaderFailoverHandler implements ReaderFailoverHandler 
           // ignore so the next task batch can be attempted
           return ClusterAwareReaderFailoverHandler.FAILED_READER_FAILOVER_RESULT;
         }
+        // Reader failover has failed.
+        this.taskHandler.setSelectedConnectionAttemptTask(failoverTaskId, ClusterAwareReaderFailoverHandler.FAILOVER_FAILED);
         throw error;
       })
       .finally(() => {

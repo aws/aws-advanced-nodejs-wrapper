@@ -18,6 +18,10 @@ jobs:
   run-integration-tests:
     name: Run Integration Tests with Default
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        dbEngine: ["mysql", "postgres"]
 
     steps:
       - name: Clone repository
@@ -57,7 +61,7 @@ jobs:
 
       - name: Run Integration Tests
         run: |
-          ./gradlew --no-parallel --no-daemon test-aurora --info
+          ./gradlew --no-parallel --no-daemon test-aurora-${{ matrix.dbEngine }} --info
         env:
           RDS_CLUSTER_DOMAIN: ${{ secrets.DB_CONN_SUFFIX }}
           RDS_DB_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
@@ -86,6 +90,6 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: integration-report-default
+          name: integration-report-default-${{ matrix.dbEngine }}
           path: ./tests/integration/container/reports
           retention-days: 5

@@ -5,16 +5,17 @@
     "^.+\\.ts$": [
       "ts-jest",
       {
-        "diagnostics": false
+        "diagnostics": false,
+        "useESM": true
       }
     ]
   },
+  "transformIgnorePatterns": ["node_modules"],
   "moduleNameMapper": {
     "^uuid$": "uuid"
   },
-  "globalSetup": "<rootDir>/tests/integration/container/tests/setup.ts",
-  "globalTeardown": "<rootDir>/tests/integration/container/tests/teardown.ts",
   "setupFilesAfterEnv": ["<rootDir>/tests/integration/container/tests/config.ts"],
   "testEnvironment": "node",
+  "extensionsToTreatAsEsm": [".ts"],
   "reporters": ["default", "./node_modules/jest-html-reporter"]
 }

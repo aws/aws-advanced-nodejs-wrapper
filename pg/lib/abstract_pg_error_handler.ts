@@ -15,21 +15,36 @@
 */
 
 import { ErrorHandler } from "../../common/lib/error_handler";
+import { ClientWrapper } from "../../common/lib/client_wrapper";
+import { logger } from "../../common/logutils";
+import { Messages } from "../../common/lib/utils/messages";
 
 export abstract class AbstractPgErrorHandler implements ErrorHandler {
+  protected unexpectedError: Error | null = null;
+
   abstract getNetworkErrors(): string[];
 
   abstract getAccessErrorCodes(): string[];
 
   abstract getAccessErrorMessages(): string[];
 
+  protected noOpListener(error: any) {
+    // Ignore the received error.
+    logger.silly(Messages.get("ErrorHandler.NoOpListener", "PgErrorHandler", error.message));
+  }
+
+  protected trackingListener(error: any) {
+    this.unexpectedError = error;
+    logger.silly(Messages.get("ErrorHandler.TrackerListener", "PgErrorHandler", error.message));
+  }
+
   isLoginError(e: Error): boolean {
     if (Object.prototype.hasOwnProperty.call(e, "code")) {
       // @ts-ignore
       return this.getAccessErrorCodes().includes(e["code"]);
     }
-    for (const accessErrorMessage of this.getAccessErrorMessages()) {
-      if (e.message.includes(accessErrorMessage)) {
+    for (const accessError of this.getAccessErrorMessages()) {
+      if (e.message.includes(accessError)) {
         return true;
       }
     }
@@ -43,5 +58,34 @@ export abstract class AbstractPgErrorHandler implements ErrorHandler {
       }
     }
     return false;
+  }
+
+  hasLoginError(): boolean {
+    return this.unexpectedError !== null && this.isLoginError(this.unexpectedError);
+  }
+
+  hasNetworkError(): boolean {
+    return this.unexpectedError !== null && this.isNetworkError(this.unexpectedError);
+  }
+
+  getUnexpectedError(): Error | null {
+    return this.unexpectedError;
+  }
+
+  attachErrorListener(clientWrapper: ClientWrapper | undefined): void {
+    if (!clientWrapper || !clientWrapper.client) {
+      return;
+    }
+    this.unexpectedError = null;
+    clientWrapper.client.removeListener("error", this.noOpListener);
+    clientWrapper.client.on("error", this.trackingListener);
+  }
+
+  attachNoOpErrorListener(clientWrapper: ClientWrapper | undefined): void {
+    if (!clientWrapper || !clientWrapper.client) {
+      return;
+    }
+    clientWrapper.client.removeListener("error", this.noOpListener);
+    clientWrapper.client.on("error", this.noOpListener);
   }
 }

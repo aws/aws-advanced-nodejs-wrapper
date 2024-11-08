@@ -153,5 +153,7 @@
   "DefaultTelemetryFactory.importFailure": "A tracing backend could not be found.",
   "DefaultTelemetryFactory.missingTracingBackend": "A tracing backend could not be found.",
   "DefaultTelemetryFactory.missingMetricsBackend": "A metrics backend could not be found.",
-  "InternalPooledConnectionProvider.pooledConnectionFailed": "Internal pooled connection failed with message: '%s'"
+  "InternalPooledConnectionProvider.pooledConnectionFailed": "Internal pooled connection failed with message: '%s'",
+  "ErrorHandler.NoOpListener": "[%s] NoOp error event listener caught error: '%s'",
+  "ErrorHandler.TrackerListener": "[%s] Tracker error event listener caught error: '%s'"
 }

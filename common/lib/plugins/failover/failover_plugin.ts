@@ -151,7 +151,7 @@ export class FailoverPlugin extends AbstractConnectionPlugin {
       this.failoverMode = this._rdsUrlType === RdsUrlType.RDS_READER_CLUSTER ? FailoverMode.READER_OR_WRITER : FailoverMode.STRICT_WRITER;
     }
 
-    logger.debug(Messages.get("Failover.parameterValue", "failoverMode", this.failoverMode.toString()));
+    logger.debug(Messages.get("Failover.parameterValue", "failoverMode", FailoverMode[this.failoverMode]));
   }
 
   override notifyConnectionChanged(changes: Set<HostChangeOptions>): Promise<OldConnectionSuggestionAction> {
@@ -294,6 +294,12 @@ export class FailoverPlugin extends AbstractConnectionPlugin {
 
   override async execute<T>(methodName: string, methodFunc: () => Promise<T>): Promise<T> {
     try {
+      // Verify there aren't any unexpected error emitted while the connection was idle.
+      if (this.pluginService.hasNetworkError()) {
+        // Throw the unexpected error directly to be handled.
+        throw this.pluginService.getUnexpectedError();
+      }
+
       if (!this.enableFailoverSetting || this.canDirectExecute(methodName)) {
         return await methodFunc();
       }

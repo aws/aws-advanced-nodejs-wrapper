@@ -16,7 +16,6 @@
 
 import { QueryResult } from "pg";
 import { AwsClient } from "../../common/lib/aws_client";
-import { PgErrorHandler } from "./pg_error_handler";
 import { PgConnectionUrlParser } from "./pg_connection_url_parser";
 import { DatabaseDialect, DatabaseType } from "../../common/lib/database_dialect/database_dialect";
 import { DatabaseDialectCodes } from "../../common/lib/database_dialect/database_dialect_codes";
@@ -50,14 +49,11 @@ export class AwsPGClient extends AwsClient {
     const context = this.telemetryFactory.openTelemetryContext("AwsClient.connect", TelemetryTraceLevel.TOP_LEVEL);
     return await context.start(async () => {
       const hostInfo = this.pluginService.getCurrentHostInfo();
-
       if (hostInfo == null) {
         throw new AwsWrapperError(Messages.get("HostInfo.noHostParameter"));
       }
       const result: ClientWrapper = await this.pluginManager.connect(hostInfo, this.properties, true);
-      result.client.on("error", (error: any) => {
-        this.emit("error", error);
-      });
+      this.errorHandler.attachErrorListener(result);
       await this.pluginService.setCurrentClient(result, result.hostInfo);
       await this.internalPostConnect();
     });
@@ -72,19 +68,24 @@ export class AwsPGClient extends AwsClient {
   }
 
   async query(text: string): Promise<QueryResult> {
-    const context = this.telemetryFactory.openTelemetryContext("awsClient.query", TelemetryTraceLevel.TOP_LEVEL);
-    return await context.start(async () => {
-      return await this.pluginManager.execute(
-        this.pluginService.getCurrentHostInfo(),
-        this.properties,
-        "query",
-        async () => {
-          await this.pluginService.updateState(text);
-          return this.targetClient?.query(text);
-        },
-        text
-      );
-    });
+    this.errorHandler.attachNoOpErrorListener(this.targetClient);
+    try {
+      const context = this.telemetryFactory.openTelemetryContext("awsClient.query", TelemetryTraceLevel.TOP_LEVEL);
+      return await context.start(async () => {
+        return await this.pluginManager.execute(
+          this.pluginService.getCurrentHostInfo(),
+          this.properties,
+          "query",
+          async () => {
+            await this.pluginService.updateState(text);
+            return this.targetClient?.query(text);
+          },
+          text
+        );
+      });
+    } finally {
+      this.errorHandler.attachErrorListener(this.targetClient);
+    }
   }
 
   async updateSessionStateReadOnly(readOnly: boolean): Promise<QueryResult | void> {
@@ -96,15 +97,20 @@ export class AwsPGClient extends AwsClient {
   }
 
   private async readOnlyQuery(text: string): Promise<QueryResult> {
-    return this.pluginManager.execute(
-      this.pluginService.getCurrentHostInfo(),
-      this.properties,
-      "query",
-      async () => {
-        return this.targetClient?.client.query(text);
-      },
-      text
-    );
+    this.errorHandler.attachNoOpErrorListener(this.targetClient);
+    try {
+      return this.pluginManager.execute(
+        this.pluginService.getCurrentHostInfo(),
+        this.properties,
+        "query",
+        async () => {
+          return this.targetClient?.client.query(text);
+        },
+        text
+      );
+    } finally {
+      this.errorHandler.attachErrorListener(this.targetClient);
+    }
   }
 
   async setReadOnly(readOnly: boolean): Promise<QueryResult | void> {
@@ -188,39 +194,49 @@ export class AwsPGClient extends AwsClient {
   }
 
   async end() {
-    if (!this.isConnected || !this.targetClient) {
-      // No connections have been initialized.
-      // This might happen if end is called in a finally block when an error occurred while initializing the first connection.
-      return;
+    this.errorHandler.attachNoOpErrorListener(this.targetClient);
+    try {
+      if (!this.isConnected || !this.targetClient) {
+        // No connections have been initialized.
+        // This might happen if end is called in a finally block when an error occurred while initializing the first connection.
+        return;
+      }
+      const hostInfo: HostInfo | null = this.pluginService.getCurrentHostInfo();
+      const result = await this.pluginManager.execute(
+        hostInfo,
+        this.properties,
+        "end",
+        () => {
+          return this.targetClient!.end();
+        },
+        null
+      );
+      await this.releaseResources();
+      return result;
+    } finally {
+      this.errorHandler.attachErrorListener(this.targetClient);
     }
-    const hostInfo: HostInfo | null = this.pluginService.getCurrentHostInfo();
-    const result = await this.pluginManager.execute(
-      hostInfo,
-      this.properties,
-      "end",
-      () => {
-        return this.targetClient!.end();
-      },
-      null
-    );
-    await this.releaseResources();
-    return result;
   }
 
   async rollback(): Promise<any> {
-    return this.pluginManager.execute(
-      this.pluginService.getCurrentHostInfo(),
-      this.properties,
-      "rollback",
-      async () => {
-        if (this.targetClient) {
-          this.pluginService.updateInTransaction("rollback");
-          return await this.targetClient.rollback();
-        }
-        return null;
-      },
-      null
-    );
+    this.errorHandler.attachNoOpErrorListener(this.targetClient);
+    try {
+      return this.pluginManager.execute(
+        this.pluginService.getCurrentHostInfo(),
+        this.properties,
+        "rollback",
+        async () => {
+          if (this.targetClient) {
+            this.pluginService.updateInTransaction("rollback");
+            return await this.targetClient.rollback();
+          }
+          return null;
+        },
+        null
+      );
+    } finally {
+      this.errorHandler.attachErrorListener(this.targetClient);
+    }
   }
 
   resetState() {
