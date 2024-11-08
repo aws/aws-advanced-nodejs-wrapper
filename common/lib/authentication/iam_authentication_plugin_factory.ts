@@ -31,8 +31,7 @@ export class IamAuthenticationPluginFactory extends ConnectionPluginFactory {
       }
       return new IamAuthenticationPluginFactory.iamAuthenticationPlugin.IamAuthenticationPlugin(pluginService);
     } catch (error: any) {
-      logger.error(error);
-      throw new AwsWrapperError(Messages.get("ConnectionPluginChainBuilder.errorImportingPlugin", "IamAuthenticationPlugin"));
+      throw new AwsWrapperError(Messages.get("ConnectionPluginChainBuilder.errorImportingPlugin", error.message, "IamAuthenticationPlugin"));
     }
   }
 }

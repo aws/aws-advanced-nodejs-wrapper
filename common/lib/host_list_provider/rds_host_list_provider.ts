@@ -104,7 +104,7 @@ export class RdsHostListProvider implements DynamicHostListProvider {
       // identification
       this.clusterId = this.initialHost.url;
     } else if (this.rdsUrlType.isRds) {
-      const clusterSuggestedResult: ClusterSuggestedResult | null = this.getSuggestedClusterId(this.initialHost.host);
+      const clusterSuggestedResult: ClusterSuggestedResult | null = this.getSuggestedClusterId(this.initialHost.hostAndPort);
       if (clusterSuggestedResult && clusterSuggestedResult.clusterId) {
         this.clusterId = clusterSuggestedResult.clusterId;
         this.isPrimaryClusterId = clusterSuggestedResult.isPrimaryClusterId;
@@ -215,17 +215,17 @@ export class RdsHostListProvider implements DynamicHostListProvider {
     }
   }
 
-  private getSuggestedClusterId(host: string): ClusterSuggestedResult | null {
+  private getSuggestedClusterId(hostAndPort: string): ClusterSuggestedResult | null {
     for (const [key, hosts] of RdsHostListProvider.topologyCache.getEntries()) {
       const isPrimaryCluster: boolean = RdsHostListProvider.primaryClusterIdCache.get(key, false, this.suggestedClusterIdRefreshRateNano) ?? false;
-      if (key === host) {
-        return new ClusterSuggestedResult(host, isPrimaryCluster);
+      if (key === hostAndPort) {
+        return new ClusterSuggestedResult(hostAndPort, isPrimaryCluster);
       }
 
       if (hosts) {
         for (const hostInfo of hosts) {
-          if (hostInfo.host === host) {
-            logger.debug(Messages.get("RdsHostListProvider.suggestedClusterId", key, host));
+          if (hostInfo.hostAndPort === hostAndPort) {
+            logger.debug(Messages.get("RdsHostListProvider.suggestedClusterId", key, hostAndPort));
             return new ClusterSuggestedResult(key, isPrimaryCluster);
           }
         }
@@ -296,11 +296,11 @@ export class RdsHostListProvider implements DynamicHostListProvider {
     const writerCount: number = writers.length;
     if (writerCount === 0) {
       hosts = [];
-    } else if (writers[0]) {
+    } else if (writerCount === 1) {
       hosts.push(writers[0]);
     } else {
       const sortedWriters: HostInfo[] = writers.sort((a, b) => {
-        return a.lastUpdateTime - b.lastUpdateTime;
+        return b.lastUpdateTime - a.lastUpdateTime; // reverse order
       });
 
       hosts.push(sortedWriters[0]);
@@ -382,6 +382,11 @@ export class RdsHostListProvider implements DynamicHostListProvider {
 
   getHostProviderType(): string {
     return this.constructor.name;
+  }
+
+  getClusterId(): string {
+    this.init();
+    return this.clusterId;
   }
 }
 

@@ -61,26 +61,32 @@ export class RdsUtils {
   // https://docs.aws.amazon.com/AWSJavaSDK/latest/javadoc/com/amazonaws/services/s3/model/Region.html
 
   private static readonly AURORA_DNS_PATTERN =
-    /^(?<instance>.+)\.(?<dns>proxy-|cluster-|cluster-ro-|cluster-custom-)?(?<domain>[a-zA-Z0-9]+\.(?<region>[a-zA-Z0-9-]+)\.rds\.amazonaws\.com)$/i;
+    /^(?<instance>.+)\.(?<dns>proxy-|cluster-|cluster-ro-|cluster-custom-|shardgrp-)?(?<domain>[a-zA-Z0-9]+\.(?<region>[a-zA-Z0-9-]+)\.rds\.amazonaws\.com)$/i;
   private static readonly AURORA_INSTANCE_PATTERN = /^(?<instance>.+)\.(?<domain>[a-zA-Z0-9]+\.(?<region>[a-zA-Z0-9-]+)\.rds\.amazonaws\.com)$/i;
   private static readonly AURORA_CLUSTER_PATTERN =
     /^(?<instance>.+)\.(?<dns>cluster-|cluster-ro-)+(?<domain>[a-zA-Z0-9]+\.(?<region>[a-zA-Z0-9-]+)\.rds\.amazonaws\.com)$/i;
   private static readonly AURORA_CUSTOM_CLUSTER_PATTERN =
     /^(?<instance>.+)\.(?<dns>cluster-custom-)+(?<domain>[a-zA-Z0-9]+\.(?<region>[a-zA-Z0-9-]+)\.rds\.amazonaws\.com)$/i;
+  private static readonly AURORA_LIMITLESS_CLUSTER_PATTERN =
+    /^(?<instance>.+)\.(?<dns>shardgrp-)+(?<domain>[a-zA-Z0-9]+\.(?<region>[a-zA-Z0-9-]+)\.rds\.(amazonaws\.com(\.cn)?|sc2s\.sgov\.gov|c2s\.ic\.gov))$/i;
   private static readonly AURORA_PROXY_DNS_PATTERN =
     /^(?<instance>.+)\.(?<dns>proxy-)+(?<domain>[a-zA-Z0-9]+\.(?<region>[a-zA-Z0-9-]+)\.rds\.amazonaws\.com)$/i;
   private static readonly AURORA_CHINA_DNS_PATTERN =
-    /^(?<instance>.+)\.(?<dns>proxy-|cluster-|cluster-ro-|cluster-custom-)?(?<domain>[a-zA-Z0-9]+\.rds\.(?<region>[a-zA-Z0-9-]+)\.amazonaws\.com\.cn)$/i;
+    /^(?<instance>.+)\.(?<dns>proxy-|cluster-|cluster-ro-|cluster-custom-|shardgrp-)?(?<domain>[a-zA-Z0-9]+\.rds\.(?<region>[a-zA-Z0-9-]+)\.amazonaws\.com\.cn)$/i;
   private static readonly AURORA_OLD_CHINA_DNS_PATTERN =
-    /^(?<instance>.+)\.(?<dns>proxy-|cluster-|cluster-ro-|cluster-custom-)?(?<domain>[a-zA-Z0-9]+\.(?<region>[a-zA-Z0-9-]+)\.rds\.amazonaws\.com\.cn)$/i;
+    /^(?<instance>.+)\.(?<dns>proxy-|cluster-|cluster-ro-|cluster-custom-|shardgrp-)?(?<domain>[a-zA-Z0-9]+\.(?<region>[a-zA-Z0-9-]+)\.rds\.amazonaws\.com\.cn)$/i;
   private static readonly AURORA_CHINA_INSTANCE_PATTERN =
     /^(?<instance>.+)\.(?<domain>[a-zA-Z0-9]+\.rds\.(?<region>[a-zA-Z0-9-]+)\.amazonaws\.com\.cn)$/i;
   private static readonly AURORA_OLD_CHINA_INSTANCE_PATTERN =
     /^(?<instance>.+)\.(?<domain>[a-zA-Z0-9]+\.(?<region>[a-zA-Z0-9-]+)\.rds\.amazonaws\.com\.cn)$/i;
   private static readonly AURORA_CHINA_CLUSTER_PATTERN =
     /^(?<instance>.+)\.(?<dns>cluster-|cluster-ro-)+(?<domain>[a-zA-Z0-9]+\.rds\.(?<region>[a-zA-Z0-9-]+)\.amazonaws\.com\.cn)$/i;
+  private static readonly AURORA_CHINA_LIMITLESS_CLUSTER_PATTERN =
+    /^(?<instance>.+)\.(?<dns>shardgrp-)?(?<domain>[a-zA-Z0-9]+\.rds\.(?<region>[a-zA-Z0-9-]+)\.amazonaws\.com\.cn)$/i;
   private static readonly AURORA_OLD_CHINA_CLUSTER_PATTERN =
     /^(?<instance>.+)\.(?<dns>cluster-|cluster-ro-)+(?<domain>[a-zA-Z0-9]+\.(?<region>[a-zA-Z0-9-]+)\.rds\.amazonaws\.com\.cn)$/i;
+  private static readonly AURORA_OLD_CHINA_LIMITLESS_CLUSTER_PATTERN =
+    /^(?<instance>.+)\.(?<dns>shardgrp-)?(?<domain>[a-zA-Z0-9]+\.(?<region>[a-zA-Z0-9-]+)\.rds\.amazonaws\.com\.cn)$/i;
   private static readonly AURORA_CHINA_CUSTOM_CLUSTER_PATTERN =
     /^(?<instance>.+)\.(?<dns>cluster-custom-)+(?<domain>[a-zA-Z0-9]+\.rds\.(?<region>[a-zA-Z0-9-]+)\.amazonaws\.com\.cn)$/i;
   private static readonly AURORA_OLD_CHINA_CUSTOM_CLUSTER_PATTERN =
@@ -121,7 +127,7 @@ export class RdsUtils {
     return equalsIgnoreCase(dnsGroup, "cluster-custom-");
   }
 
-  public isRdsDns(host: string) {
+  public isRdsDns(host: string): boolean {
     const matcher = this.cacheMatcher(
       host,
       RdsUtils.AURORA_DNS_PATTERN,
@@ -147,7 +153,7 @@ export class RdsUtils {
     return dnsGroup && dnsGroup.startsWith("proxy-");
   }
 
-  public getRdsInstanceId(host: string) {
+  public getRdsInstanceId(host: string): string | null {
     if (!host) {
       return null;
     }
@@ -218,6 +224,14 @@ export class RdsUtils {
     return equalsIgnoreCase(dnsGroup, "cluster-ro-");
   }
 
+  public isLimitlessDbShardGroupDns(host: string): boolean {
+    const dnsGroup = this.getDnsGroup(host);
+    if (!dnsGroup) {
+      return false;
+    }
+    return dnsGroup.toLowerCase() === "shardgrp-";
+  }
+
   public getRdsClusterHostUrl(host: string): string | null {
     if (!host) {
       return null;
@@ -226,6 +240,10 @@ export class RdsUtils {
     const matcher = host.match(RdsUtils.AURORA_CLUSTER_PATTERN);
     if (matcher) {
       return host.replace(RdsUtils.AURORA_CLUSTER_PATTERN, "$<instance>.cluster-$<domain>");
+    }
+    const limitlessMatcher = host.match(RdsUtils.AURORA_LIMITLESS_CLUSTER_PATTERN);
+    if (limitlessMatcher) {
+      return host.replace(RdsUtils.AURORA_LIMITLESS_CLUSTER_PATTERN, "$<instance>.cluster-$<domain>");
     }
     const chinaMatcher = host.match(RdsUtils.AURORA_CHINA_CLUSTER_PATTERN);
     if (chinaMatcher) {
@@ -267,6 +285,8 @@ export class RdsUtils {
       return RdsUrlType.RDS_READER_CLUSTER;
     } else if (this.isRdsCustomClusterDns(host)) {
       return RdsUrlType.RDS_CUSTOM_CLUSTER;
+    } else if (this.isLimitlessDbShardGroupDns(host)) {
+      return RdsUrlType.RDS_AURORA_LIMITLESS_DB_SHARD_GROUP;
     } else if (this.isRdsProxyDns(host)) {
       return RdsUrlType.RDS_PROXY;
     } else if (this.isRdsDns(host)) {

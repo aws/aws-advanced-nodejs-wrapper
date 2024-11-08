@@ -518,35 +518,39 @@ describe("aurora read write splitting", () => {
     1000000
   );
 
-  itIf("test pooled connection failover failed", async () => {
-    const config = await initConfigWithFailover(env.proxyDatabaseInfo.writerInstanceEndpoint, env.proxyDatabaseInfo.instanceEndpointPort, true);
-    config["failoverTimeoutMs"] = 1000;
+  itIf(
+    "test pooled connection failover failed",
+    async () => {
+      const config = await initConfigWithFailover(env.proxyDatabaseInfo.writerInstanceEndpoint, env.proxyDatabaseInfo.instanceEndpointPort, true);
+      config["failoverTimeoutMs"] = 1000;
 
-    client = initClientFunc(config);
+      client = initClientFunc(config);
 
-    provider = new InternalPooledConnectionProvider({
-      minConnections: 0,
-      maxConnections: 10,
-      maxIdleConnections: 10
-    });
-    ConnectionProviderManager.setConnectionProvider(provider);
+      provider = new InternalPooledConnectionProvider({
+        minConnections: 0,
+        maxConnections: 10,
+        maxIdleConnections: 10
+      });
+      ConnectionProviderManager.setConnectionProvider(provider);
 
-    await client.connect();
-    const initialWriterId = await auroraTestUtility.queryInstanceId(client);
+      await client.connect();
+      const initialWriterId = await auroraTestUtility.queryInstanceId(client);
 
-    // Kill all instances
-    await ProxyHelper.disableAllConnectivity(env.engine);
-    await expect(async () => {
-      await auroraTestUtility.queryInstanceId(client);
-    }).rejects.toThrow(FailoverFailedError);
-    await ProxyHelper.enableAllConnectivity();
-    await client.connect();
-    await TestEnvironment.verifyClusterStatus();
+      // Kill all instances
+      await ProxyHelper.disableAllConnectivity(env.engine);
+      await expect(async () => {
+        await auroraTestUtility.queryInstanceId(client);
+      }).rejects.toThrow(FailoverFailedError);
+      await ProxyHelper.enableAllConnectivity();
+      await client.connect();
+      await TestEnvironment.verifyClusterStatus();
 
-    const newWriterId = await auroraTestUtility.queryInstanceId(client);
-    expect(newWriterId).toBe(initialWriterId);
-    await client.end();
-  }, 1000000);
+      const newWriterId = await auroraTestUtility.queryInstanceId(client);
+      expect(newWriterId).toBe(initialWriterId);
+      await client.end();
+    },
+    1000000
+  );
 
   itIf(
     "test pooled connection failover in transaction",

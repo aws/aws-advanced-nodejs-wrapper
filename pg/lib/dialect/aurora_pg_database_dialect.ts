@@ -23,8 +23,9 @@ import { HostInfo } from "../../../common/lib/host_info";
 import { HostRole } from "../../../common/lib/host_role";
 import { ClientWrapper } from "../../../common/lib/client_wrapper";
 import { DatabaseDialectCodes } from "../../../common/lib/database_dialect/database_dialect_codes";
+import { LimitlessDatabaseDialect } from "../../../common/lib/database_dialect/limitless_database_dialect";
 
-export class AuroraPgDatabaseDialect extends PgDatabaseDialect implements TopologyAwareDatabaseDialect {
+export class AuroraPgDatabaseDialect extends PgDatabaseDialect implements TopologyAwareDatabaseDialect, LimitlessDatabaseDialect {
   private static readonly TOPOLOGY_QUERY: string =
     "SELECT server_id, CASE WHEN SESSION_ID = 'MASTER_SESSION_ID' THEN TRUE ELSE FALSE END AS is_writer, " +
     "CPU, COALESCE(REPLICA_LAG_IN_MSEC, 0) AS lag, LAST_UPDATE_TIMESTAMP " +
@@ -90,5 +91,9 @@ export class AuroraPgDatabaseDialect extends PgDatabaseDialect implements Topolo
 
   getDialectUpdateCandidates(): string[] {
     return [DatabaseDialectCodes.RDS_MULTI_AZ_PG];
+  }
+
+  getLimitlessRoutersQuery(): string {
+    return "select router_endpoint, load from aurora_limitless_router_endpoints()";
   }
 }

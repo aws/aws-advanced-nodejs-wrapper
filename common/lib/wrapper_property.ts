@@ -62,7 +62,7 @@ export class WrapperProperties {
   static readonly PORT = new WrapperProperty<number>("port", "Database port", -1);
   static readonly HOST = new WrapperProperty<string>("host", "Database host", null);
 
-  static readonly DIALECT = new WrapperProperty<string>("dialect", "A unique identifier for the supported database dialect.", "");
+  static readonly DIALECT = new WrapperProperty<string>("dialect", "A unique identifier for the supported database dialect.", null);
 
   static readonly INTERNAL_QUERY_TIMEOUT = new WrapperProperty<number>(
     "internal_query_timeout",
@@ -177,7 +177,7 @@ export class WrapperProperties {
     "A unique identifier for the cluster. " +
       "Connections with the same cluster id share a cluster topology cache. " +
       "If unspecified, a cluster id is automatically created for AWS RDS clusters.",
-    ""
+    null
   );
 
   static readonly CLUSTER_INSTANCE_HOST_PATTERN = new WrapperProperty<string>(
@@ -282,6 +282,44 @@ export class WrapperProperties {
     "telemetryFailoverAdditionalTopTrace",
     "Post an additional top-level trace for failover process.",
     false
+  );
+
+  static readonly WAIT_F0R_ROUTER_INFO = new WrapperProperty<boolean>(
+    "limitlessWaitForTransactionRouterInfo",
+    "If the cache of transaction router info is empty and a new connection is made, this property toggles whether " +
+      "the plugin will wait and synchronously fetch transaction router info before selecting a transaction " +
+      "router to connect to, or to fall back to using the provided DB Shard Group endpoint URL.",
+    true
+  );
+
+  static readonly GET_ROUTER_RETRY_INTERVAL_MILLIS = new WrapperProperty<number>(
+    "limitlessGetTransactionRouterInfoRetryIntervalMs",
+    "Interval in millis between retries fetching Limitless Transaction Router information.",
+    300
+  );
+
+  static readonly GET_ROUTER_MAX_RETRIES = new WrapperProperty<number>(
+    "limitlessGetTransactionRouterInfoMaxRetries",
+    "Max number of connection retries fetching Limitless Transaction Router information.",
+    5
+  );
+
+  static readonly INTERVAL_MILLIS = new WrapperProperty<number>(
+    "limitlessTransactionRouterMonitorIntervalMs",
+    "Interval in millis between polling for Limitless Transaction Routers to the database.",
+    15000
+  );
+
+  static readonly MAX_RETRIES = new WrapperProperty<number>(
+    "limitlessConnectMaxRetries",
+    "Max number of connection retries the Limitless Connection Plugin will attempt.",
+    5
+  );
+
+  static readonly LIMITLESS_MONITOR_DISPOSAL_TIME_MS = new WrapperProperty<number>(
+    "limitlessTransactionRouterMonitorDisposalTimeMs",
+    "Interval in milliseconds for an Limitless router monitor to be considered inactive and to be disposed.",
+    600_000 // 10 min
   );
 
   static removeWrapperProperties(props: Map<string, any>): any {

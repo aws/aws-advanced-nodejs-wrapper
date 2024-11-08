@@ -24,6 +24,7 @@ import { RdsUtils } from "../utils/rds_utils";
 import { logger } from "../../logutils";
 import { CacheMap } from "../utils/cache_map";
 import { ClientWrapper } from "../client_wrapper";
+import { RdsUrlType } from "../utils/rds_url_type";
 
 export class DatabaseDialectManager implements DatabaseDialectProvider {
   /**
@@ -116,6 +117,14 @@ export class DatabaseDialectManager implements DatabaseDialectProvider {
 
     if (this.dbType === DatabaseType.POSTGRES) {
       const type = this.rdsHelper.identifyRdsType(host);
+      if (type === RdsUrlType.RDS_AURORA_LIMITLESS_DB_SHARD_GROUP) {
+        this.canUpdate = false;
+        this.dialectCode = DatabaseDialectCodes.AURORA_PG;
+        this.dialect = <DatabaseDialect>this.knownDialectsByCode.get(DatabaseDialectCodes.AURORA_PG);
+        this.logCurrentDialect();
+        return this.dialect;
+      }
+
       if (type.isRdsCluster) {
         this.canUpdate = true;
         this.dialectCode = DatabaseDialectCodes.AURORA_PG;
@@ -178,6 +187,6 @@ export class DatabaseDialectManager implements DatabaseDialectProvider {
   }
 
   logCurrentDialect() {
-    logger.info(`Current dialect: ${this.dialectCode}, ${this.dialect.getDialectName()}, canUpdate: ${this.canUpdate}`);
+    logger.debug(`Current dialect: ${this.dialectCode}, ${this.dialect.getDialectName()}, canUpdate: ${this.canUpdate}`);
   }
 }

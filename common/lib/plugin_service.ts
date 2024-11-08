@@ -105,9 +105,9 @@ export class PluginService implements ErrorHandler, HostListProviderService {
     this._initialConnectionHostInfo = initialConnectionHostInfo;
   }
 
-  getHostInfoByStrategy(role: HostRole, strategy: string): HostInfo | undefined {
+  getHostInfoByStrategy(role: HostRole, strategy: string, hosts?: HostInfo[]): HostInfo | undefined {
     const pluginManager = this.pluginServiceManagerContainer.pluginManager;
-    return pluginManager?.getHostInfoByStrategy(role, strategy);
+    return pluginManager?.getHostInfoByStrategy(role, strategy, hosts);
   }
 
   getCurrentHostInfo(): HostInfo | null {

@@ -37,8 +37,7 @@ export class OktaAuthPluginFactory extends ConnectionPluginFactory {
       const oktaCredentialsProviderFactory = new OktaAuthPluginFactory.oktaCredentialsProviderFactory.OktaCredentialsProviderFactory(pluginService);
       return new OktaAuthPluginFactory.oktaAuthPlugin.OktaAuthPlugin(pluginService, oktaCredentialsProviderFactory);
     } catch (error: any) {
-      logger.error(error);
-      throw new AwsWrapperError(Messages.get("ConnectionPluginChainBuilder.errorImportingPlugin", "OktaAuthPlugin"));
+      throw new AwsWrapperError(Messages.get("ConnectionPluginChainBuilder.errorImportingPlugin", error.message, "OktaAuthPlugin"));
     }
   }
 }

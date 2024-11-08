@@ -114,4 +114,8 @@ export class ConnectionStringHostListProvider implements StaticHostListProvider 
   getHostProviderType(): string {
     return this.constructor.name;
   }
+
+  getClusterId(): string {
+    throw new AwsWrapperError("ConnectionStringHostListProvider does not support getClusterId.");
+  }
 }

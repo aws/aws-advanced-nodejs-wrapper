@@ -31,8 +31,7 @@ export class ReadWriteSplittingPluginFactory extends ConnectionPluginFactory {
       }
       return new ReadWriteSplittingPluginFactory.readWriteSplittingPlugin.ReadWriteSplittingPlugin(pluginService, properties);
     } catch (error: any) {
-      logger.error(error.message);
-      throw new AwsWrapperError(Messages.get("ConnectionPluginChainBuilder.errorImportingPlugin", "readWriteSplittingPlugin"));
+      throw new AwsWrapperError(Messages.get("ConnectionPluginChainBuilder.errorImportingPlugin", error.message, "readWriteSplittingPlugin"));
     }
   }
 }

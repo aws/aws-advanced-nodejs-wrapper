@@ -31,8 +31,7 @@ export class ExecuteTimePluginFactory extends ConnectionPluginFactory {
       }
       return new ExecuteTimePluginFactory.executeTimePlugin.ExecuteTimePlugin();
     } catch (error: any) {
-      logger.error(error.message);
-      throw new AwsWrapperError(Messages.get("ConnectionPluginChainBuilder.errorImportingPlugin", "ExecuteTimePlugin"));
+      throw new AwsWrapperError(Messages.get("ConnectionPluginChainBuilder.errorImportingPlugin", error.message, "ExecuteTimePlugin"));
     }
   }
 }

@@ -29,7 +29,9 @@ export class AuroraInitialConnectionStrategyFactory extends ConnectionPluginFact
       }
       return new AuroraInitialConnectionStrategyFactory.auroraInitialConnectionStrategyPlugin.AuroraInitialConnectionStrategyPlugin(pluginService);
     } catch (error: any) {
-      throw new AwsWrapperError(Messages.get("ConnectionPluginChainBuilder.errorImportingPlugin", "AuroraInitialConnectionStrategyPlugin"));
+      throw new AwsWrapperError(
+        Messages.get("ConnectionPluginChainBuilder.errorImportingPlugin", error.message, "AuroraInitialConnectionStrategyPlugin")
+      );
     }
   }
 }

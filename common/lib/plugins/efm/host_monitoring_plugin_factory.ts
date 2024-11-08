@@ -32,8 +32,7 @@ export class HostMonitoringPluginFactory extends ConnectionPluginFactory {
       }
       return new HostMonitoringPluginFactory.hostMonitoringPlugin.HostMonitoringConnectionPlugin(pluginService, properties, new RdsUtils());
     } catch (error: any) {
-      logger.error(error.message);
-      throw new AwsWrapperError(Messages.get("ConnectionPluginChainBuilder.errorImportingPlugin", "HostMonitoringPlugin"));
+      throw new AwsWrapperError(Messages.get("ConnectionPluginChainBuilder.errorImportingPlugin", error.message, "HostMonitoringPlugin"));
     }
   }
 }

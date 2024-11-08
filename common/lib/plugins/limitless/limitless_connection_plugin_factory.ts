@@ -21,17 +21,17 @@ import { logger } from "../../../logutils";
 import { AwsWrapperError } from "../../utils/errors";
 import { Messages } from "../../utils/messages";
 
-export class AuroraConnectionTrackerPluginFactory extends ConnectionPluginFactory {
-  private static auroraConnectionTrackerPlugin: any;
+export class LimitlessConnectionPluginFactory implements ConnectionPluginFactory {
+  private static limitlessPlugin: any;
 
-  async getInstance(pluginService: PluginService, props: Map<string, any>): Promise<ConnectionPlugin> {
+  async getInstance(pluginService: PluginService, properties: Map<string, any>): Promise<ConnectionPlugin> {
     try {
-      if (!AuroraConnectionTrackerPluginFactory.auroraConnectionTrackerPlugin) {
-        AuroraConnectionTrackerPluginFactory.auroraConnectionTrackerPlugin = await import("./aurora_connection_tracker_plugin");
+      if (!LimitlessConnectionPluginFactory.limitlessPlugin) {
+        LimitlessConnectionPluginFactory.limitlessPlugin = await import("./limitless_connection_plugin");
       }
-      return new AuroraConnectionTrackerPluginFactory.auroraConnectionTrackerPlugin.AuroraConnectionTrackerPlugin(pluginService);
+      return new LimitlessConnectionPluginFactory.limitlessPlugin.LimitlessConnectionPlugin(pluginService, properties);
     } catch (error: any) {
-      throw new AwsWrapperError(Messages.get("ConnectionPluginChainBuilder.errorImportingPlugin", error.message, "AuroraConnectionTrackerPlugin"));
+      throw new AwsWrapperError(Messages.get("ConnectionPluginChainBuilder.errorImportingPlugin", error.message, "LimitlessConnectionPlugin"));
     }
   }
 }
