@@ -30,6 +30,8 @@ import { ConnectionProviderManager } from "../../../../common/lib/connection_pro
 import { InternalPoolMapping } from "../../../../common/lib/utils/internal_pool_mapping";
 import { HostInfo } from "../../../../common/lib/host_info";
 
+jest.useFakeTimers();
+
 const itIf =
   !features.includes(TestEnvironmentFeatures.PERFORMANCE) && features.includes(TestEnvironmentFeatures.IAM) && instanceCount >= 2 ? it : it.skip;
 const itIfMinThreeInstance = instanceCount >= 3 ? itIf : it.skip;

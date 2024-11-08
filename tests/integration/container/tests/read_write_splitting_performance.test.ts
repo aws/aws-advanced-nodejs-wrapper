@@ -27,6 +27,8 @@ import { TestDriver } from "./utils/test_driver";
 import { ConnectionProviderManager } from "../../../../common/lib/connection_provider_manager";
 import { InternalPooledConnectionProvider } from "../../../../common/lib/internal_pooled_connection_provider";
 
+jest.useFakeTimers();
+
 const itIf =
   features.includes(TestEnvironmentFeatures.FAILOVER_SUPPORTED) &&
   features.includes(TestEnvironmentFeatures.PERFORMANCE) &&

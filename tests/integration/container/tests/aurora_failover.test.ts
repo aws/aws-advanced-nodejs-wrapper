@@ -26,6 +26,8 @@ import { logger } from "../../../../common/logutils";
 import { features, instanceCount } from "./config";
 import { TestEnvironmentFeatures } from "./utils/test_environment_features";
 
+jest.useFakeTimers();
+
 const itIf =
   features.includes(TestEnvironmentFeatures.FAILOVER_SUPPORTED) && !features.includes(TestEnvironmentFeatures.PERFORMANCE) && instanceCount >= 2
     ? it

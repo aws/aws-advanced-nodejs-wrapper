@@ -27,6 +27,8 @@ import { logger } from "../../../../common/logutils";
 import { TestEnvironmentFeatures } from "./utils/test_environment_features";
 import { features } from "./config";
 
+jest.useFakeTimers();
+
 const itIf = !features.includes(TestEnvironmentFeatures.PERFORMANCE) && features.includes(TestEnvironmentFeatures.IAM) ? it : it.skip;
 
 let env: TestEnvironment;

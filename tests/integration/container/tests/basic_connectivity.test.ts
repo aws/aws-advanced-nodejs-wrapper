@@ -24,6 +24,8 @@ import { TestEnvironmentFeatures } from "./utils/test_environment_features";
 import { features } from "./config";
 import { DatabaseEngineDeployment } from "./utils/database_engine_deployment";
 
+jest.useFakeTimers();
+
 const itIf = !features.includes(TestEnvironmentFeatures.PERFORMANCE) ? it : it.skip;
 
 let client: any;
