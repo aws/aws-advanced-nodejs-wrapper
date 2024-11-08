@@ -146,6 +146,15 @@ export class InternalPooledConnectionProvider implements PooledConnectionProvide
     return promisify(lookup)(host, {});
   }
 
+  async containsHost(host: string): Promise<boolean> {
+    try {
+      const resolvedAddress = await this.lookupResult(host);
+      return !!resolvedAddress;
+    } catch (err) {
+      return false;
+    }
+  }
+
   getHostCount() {
     return InternalPooledConnectionProvider.databasePools.size;
   }

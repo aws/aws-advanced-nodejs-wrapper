@@ -171,6 +171,17 @@ tasks.register<Test>("test-multi-az-mysql") {
     }
 }
 
+tasks.register<Test>("test-autoscaling") {
+    group = "verification"
+    filter.includeTestsMatching("integration.host.TestRunner.runTests")
+    doFirst {
+        systemProperty("exclude-docker", "true")
+        systemProperty("exclude-performance", "true")
+        systemProperty("exclude-multi-az", "true")
+        systemProperty("test-autoscaling", "true")
+    }
+}
+
 // Debug
 
 tasks.register<Test>("debug-all-environments") {
@@ -268,5 +279,16 @@ tasks.register<Test>("debug-multi-az-postgres") {
         systemProperty("exclude-mysql-driver", "true")
         systemProperty("exclude-mysql-engine", "true")
         systemProperty("exclude-aurora", "true")
+    }
+}
+
+tasks.register<Test>("debug-autoscaling") {
+    group = "verification"
+    filter.includeTestsMatching("integration.host.TestRunner.debugTests")
+    doFirst {
+        systemProperty("exclude-docker", "true")
+        systemProperty("exclude-performance", "true")
+        systemProperty("exclude-multi-az", "true")
+        systemProperty("test-autoscaling", "true")
     }
 }

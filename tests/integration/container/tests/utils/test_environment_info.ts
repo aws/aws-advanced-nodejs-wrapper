@@ -31,6 +31,8 @@ export class TestEnvironmentInfo {
   private readonly _proxyDatabaseInfo: TestProxyDatabaseInfo;
   private readonly _tracesTelemetryInfo: TestTelemetryInfo;
   private readonly _metricsTelemetryInfo: TestTelemetryInfo;
+  private readonly _databaseEngine: string;
+  private readonly _databaseEngineVersion: string;
 
   constructor(testInfo: { [s: string]: any }) {
     this._request = new TestEnvironmentRequest(testInfo["request"]);
@@ -46,6 +48,9 @@ export class TestEnvironmentInfo {
 
     this._tracesTelemetryInfo = new TestTelemetryInfo(testInfo["tracesTelemetryInfo"]);
     this._metricsTelemetryInfo = new TestTelemetryInfo(testInfo["metricsTelemetryInfo"]);
+
+    this._databaseEngine = String(testInfo["databaseEngine"]) ? String(testInfo["databaseEngine"]) : "";
+    this._databaseEngineVersion = String(testInfo["databaseEngineVersion"]) ? String(testInfo["databaseEngineVersion"]) : "";
   }
 
   get request(): TestEnvironmentRequest {
@@ -70,6 +75,13 @@ export class TestEnvironmentInfo {
 
   get auroraClusterName(): string {
     return this._auroraClusterName;
+  }
+
+  get databaseEngineVersion(): string {
+    return this._databaseEngineVersion;
+  }
+  get databaseEngine(): string {
+    return this._databaseEngine;
   }
 
   get iamUserName(): string {
