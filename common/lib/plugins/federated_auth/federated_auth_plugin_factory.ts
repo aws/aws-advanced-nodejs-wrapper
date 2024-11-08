@@ -38,8 +38,7 @@ export class FederatedAuthPluginFactory extends ConnectionPluginFactory {
       const adfsCredentialsProviderFactory = new FederatedAuthPluginFactory.adfsCredentialsProvider.AdfsCredentialsProviderFactory(pluginService);
       return new FederatedAuthPluginFactory.federatedAuthPlugin.FederatedAuthPlugin(pluginService, adfsCredentialsProviderFactory);
     } catch (error: any) {
-      logger.error(error.message);
-      throw new AwsWrapperError(Messages.get("ConnectionPluginChainBuilder.errorImportingPlugin", "FederatedAuthPlugin"));
+      throw new AwsWrapperError(Messages.get("ConnectionPluginChainBuilder.errorImportingPlugin", error.message, "FederatedAuthPlugin"));
     }
   }
 }

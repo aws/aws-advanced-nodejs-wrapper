@@ -31,8 +31,7 @@ export class ConnectTimePluginFactory extends ConnectionPluginFactory {
       }
       return new ConnectTimePluginFactory.connectTimePlugin.ConnectTimePlugin();
     } catch (error: any) {
-      logger.error(error.message);
-      throw new AwsWrapperError(Messages.get("ConnectionPluginChainBuilder.errorImportingPlugin", "ConnectTimePlugin"));
+      throw new AwsWrapperError(Messages.get("ConnectionPluginChainBuilder.errorImportingPlugin", error.message, "ConnectTimePlugin"));
     }
   }
 }

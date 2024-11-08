@@ -32,8 +32,7 @@ export class AwsSecretsManagerPluginFactory extends ConnectionPluginFactory {
       return new AwsSecretsManagerPluginFactory.awsSecretsManagerPlugin.AwsSecretsManagerPlugin(pluginService, new Map(properties));
     } catch (error: any) {
       if (error.code === "MODULE_NOT_FOUND") {
-        logger.error(error);
-        throw new AwsWrapperError(Messages.get("ConnectionPluginChainBuilder.errorImportingPlugin", "AwsSecretsManagerPlugin"));
+        throw new AwsWrapperError(Messages.get("ConnectionPluginChainBuilder.errorImportingPlugin", error.message, "AwsSecretsManagerPlugin"));
       }
       throw error;
     }

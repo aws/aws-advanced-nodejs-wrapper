@@ -31,8 +31,7 @@ export class LimitlessConnectionPluginFactory implements ConnectionPluginFactory
       }
       return new LimitlessConnectionPluginFactory.limitlessPlugin.LimitlessConnectionPlugin(pluginService, properties);
     } catch (error: any) {
-      logger.error(error.message);
-      throw new AwsWrapperError(Messages.get("ConnectionPluginChainBuilder.errorImportingPlugin", "LimitlessConnectionPlugin"));
+      throw new AwsWrapperError(Messages.get("ConnectionPluginChainBuilder.errorImportingPlugin", error.message, "LimitlessConnectionPlugin"));
     }
   }
 }

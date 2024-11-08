@@ -32,8 +32,7 @@ export class FailoverPluginFactory extends ConnectionPluginFactory {
       }
       return new FailoverPluginFactory.failoverPlugin.FailoverPlugin(pluginService, properties, new RdsUtils());
     } catch (error: any) {
-      logger.error(error.message);
-      throw new AwsWrapperError(Messages.get("ConnectionPluginChainBuilder.errorImportingPlugin", "FailoverPlugin"));
+      throw new AwsWrapperError(Messages.get("ConnectionPluginChainBuilder.errorImportingPlugin", error.message, "FailoverPlugin"));
     }
   }
 }

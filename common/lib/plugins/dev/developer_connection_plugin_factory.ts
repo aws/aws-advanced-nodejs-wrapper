@@ -32,8 +32,7 @@ export class DeveloperConnectionPluginFactory extends ConnectionPluginFactory {
       }
       return new DeveloperConnectionPluginFactory.developerPlugin.DeveloperConnectionPlugin(pluginService, properties, new RdsUtils());
     } catch (error: any) {
-      logger.error(error);
-      throw new AwsWrapperError(Messages.get("ConnectionPluginChainBuilder.errorImportingPlugin", "DeveloperConnectionPlugin"));
+      throw new AwsWrapperError(Messages.get("ConnectionPluginChainBuilder.errorImportingPlugin", error.message, "DeveloperConnectionPlugin"));
     }
   }
 }

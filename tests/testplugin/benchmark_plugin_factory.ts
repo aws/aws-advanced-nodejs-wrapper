@@ -26,7 +26,7 @@ export class BenchmarkPluginFactory extends ConnectionPluginFactory {
     try {
       return new BenchmarkPlugin();
     } catch (error: any) {
-      throw new AwsWrapperError(Messages.get("ConnectionPluginChainBuilder.errorImportingPlugin", "BenchmarkPlugin"));
+      throw new AwsWrapperError(Messages.get("ConnectionPluginChainBuilder.errorImportingPlugin", error.message, "BenchmarkPlugin"));
     }
   }
 }
