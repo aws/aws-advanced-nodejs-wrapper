@@ -62,10 +62,13 @@ export class RdsHostListProvider implements DynamicHostListProvider {
     this.originalUrl = originalUrl;
     this.properties = properties;
 
+    logger.info("RdsHostListProvider props: " + JSON.stringify(Object.fromEntries(properties.entries()), null, 2));
+
     let port = WrapperProperties.PORT.get(properties);
-    if (port != null) {
+    if (port == null) {
       port = hostListProviderService.getDialect().getDefaultPort();
     }
+    logger.info("RdsHostListProvider port: " + port);
 
     this.initialHostList = this.connectionUrlParser.getHostsFromConnectionUrl(this.originalUrl, false, port, () =>
       this.hostListProviderService.getHostInfoBuilder()
@@ -76,6 +79,8 @@ export class RdsHostListProvider implements DynamicHostListProvider {
 
     this.initialHost = this.initialHostList[0];
     this.hostListProviderService.setInitialConnectionHostInfo(this.initialHost);
+    logger.info("RdsHostListProvider initialConnectionHostInfo: " + JSON.stringify(this.initialHost, null, 2));
+
     this.refreshRateNano = WrapperProperties.CLUSTER_TOPOLOGY_REFRESH_RATE_MS.get(this.properties) * 1000000;
     this.rdsUrlType = this.rdsHelper.identifyRdsType(this.initialHost.host);
   }

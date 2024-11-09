@@ -49,11 +49,16 @@ export class DriverConnectionProvider implements ConnectionProvider {
 
   async connect(hostInfo: HostInfo, pluginService: PluginService, props: Map<string, any>): Promise<ClientWrapper> {
     let resultTargetClient;
+
+    logger.info("driverConnectionProvider (before) props: " + JSON.stringify(Object.fromEntries(props.entries()), null, 2));
+
     const resultProps = new Map(props);
     resultProps.set(WrapperProperties.HOST.name, hostInfo.host);
     if (hostInfo.isPortSpecified()) {
       resultProps.set(WrapperProperties.PORT.name, hostInfo.port);
     }
+    logger.info("driverConnectionProvider (after) props: " + JSON.stringify(Object.fromEntries(resultProps.entries()), null, 2));
+
     const driverDialect: DriverDialect = pluginService.getDriverDialect();
     try {
       resultTargetClient = await driverDialect.connect(hostInfo, resultProps);

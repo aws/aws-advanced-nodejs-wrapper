@@ -97,6 +97,9 @@ describe("aurora read write splitting", () => {
     secondaryClient = null;
     provider = null;
     await TestEnvironment.verifyClusterStatus();
+    await TestEnvironment.verifyAllInstancesHasRightState("available");
+    await TestEnvironment.verifyAllInstancesUp();
+    logger.info("beforeEach env.proxyDatabaseInfo.instanceEndpointPort: " + env.proxyDatabaseInfo.instanceEndpointPort);
   }, 1320000);
 
   afterEach(async () => {
@@ -231,7 +234,11 @@ describe("aurora read write splitting", () => {
   itIf(
     "test set read only all instances down",
     async () => {
+      logger.info("env.proxyDatabaseInfo.instanceEndpointPort: " + env.proxyDatabaseInfo.instanceEndpointPort);
+      logger.info("env.proxyDatabaseInfo.clusterEndpointPort: " + env.proxyDatabaseInfo.clusterEndpointPort);
+
       const config = await initDefaultConfig(env.proxyDatabaseInfo.writerInstanceEndpoint, env.proxyDatabaseInfo.instanceEndpointPort, true);
+      logger.info("connection config: " + JSON.stringify(config, null, 2));
       client = initClientFunc(config);
 
       await client.connect();
@@ -254,7 +261,11 @@ describe("aurora read write splitting", () => {
   itIfMinThreeInstance(
     "test set read only all readers down",
     async () => {
+      logger.info("env.proxyDatabaseInfo.instanceEndpointPort: " + env.proxyDatabaseInfo.instanceEndpointPort);
+      logger.info("env.proxyDatabaseInfo.clusterEndpointPort: " + env.proxyDatabaseInfo.clusterEndpointPort);
+
       const config = await initDefaultConfig(env.proxyDatabaseInfo.writerInstanceEndpoint, env.proxyDatabaseInfo.instanceEndpointPort, true);
+      logger.info("connection config: " + JSON.stringify(config, null, 2));
 
       client = initClientFunc(config);
 
