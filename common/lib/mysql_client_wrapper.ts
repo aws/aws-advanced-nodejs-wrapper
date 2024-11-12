@@ -17,6 +17,7 @@
 import { ClientWrapper } from "./client_wrapper";
 import { HostInfo } from "./host_info";
 import { ClientUtils } from "./utils/client_utils";
+import { uniqueId } from "../logutils";
 
 /*
 This is an internal wrapper class for the target community driver client created by the MySQL2DriverDialect.
@@ -25,6 +26,7 @@ export class MySQLClientWrapper implements ClientWrapper {
   readonly client: any;
   readonly hostInfo: HostInfo;
   readonly properties: Map<string, string>;
+  readonly id: string;
 
   /**
    * Creates a wrapper for the target community driver client.
@@ -37,6 +39,7 @@ export class MySQLClientWrapper implements ClientWrapper {
     this.client = targetClient;
     this.hostInfo = hostInfo;
     this.properties = properties;
+    this.id = uniqueId("MySQLClient_");
   }
 
   query(sql: any): Promise<any> {

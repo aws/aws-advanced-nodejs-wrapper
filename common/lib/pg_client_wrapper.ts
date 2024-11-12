@@ -16,6 +16,7 @@
 
 import { ClientWrapper } from "./client_wrapper";
 import { HostInfo } from "./host_info";
+import { uniqueId } from "../logutils";
 
 /*
 This an internal wrapper class for a target community driver client created by the NodePostgresPgDriverDialect.
@@ -24,6 +25,7 @@ export class PgClientWrapper implements ClientWrapper {
   readonly client: any;
   readonly hostInfo: HostInfo;
   readonly properties: Map<string, string>;
+  readonly id: string;
 
   /**
    * Creates a wrapper for the target community driver client.
@@ -36,6 +38,7 @@ export class PgClientWrapper implements ClientWrapper {
     this.client = targetClient;
     this.hostInfo = hostInfo;
     this.properties = properties;
+    this.id = uniqueId("PgClient_");
   }
 
   query(sql: any): Promise<any> {

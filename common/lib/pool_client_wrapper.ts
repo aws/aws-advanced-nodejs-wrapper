@@ -16,16 +16,19 @@
 
 import { ClientWrapper } from "./client_wrapper";
 import { HostInfo } from "./host_info";
+import { uniqueId } from "../logutils";
 
 export class PoolClientWrapper implements ClientWrapper {
   readonly client: any;
   readonly hostInfo: HostInfo;
   readonly properties: Map<string, string>;
+  readonly id: string;
 
   constructor(targetClient: any, hostInfo: HostInfo, properties: Map<string, any>) {
     this.client = targetClient;
     this.hostInfo = hostInfo;
     this.properties = properties;
+    this.id = uniqueId("PoolClient_");
   }
 
   abort(): Promise<void> {
