@@ -33,6 +33,7 @@ const itIf =
   instanceCount >= 2
     ? it
     : it.skip;
+const itIfMinFiveInstance = instanceCount >= 5 ? itIf : it.skip;
 
 let env: TestEnvironment;
 let driver;
@@ -57,7 +58,6 @@ async function initDefaultConfig(host: string, port: number): Promise<any> {
     telemetryMetricsBackend: "OTLP",
     readerHostSelectorStrategy: "leastConnections",
     clusterTopologyRefreshRateMs: 5000,
-    internal_query_timeout: 75000,
     keepAliveMaxTimeout: 30000
   };
 
@@ -79,7 +79,6 @@ async function initConfigWithFailover(host: string, port: number): Promise<any> 
     telemetryMetricsBackend: "OTLP",
     readerHostSelectorStrategy: "leastConnections",
     clusterTopologyRefreshRateMs: 5000,
-    internal_query_timeout: 75000,
     keepAliveMaxTimeout: 30000
   };
 
@@ -114,7 +113,7 @@ describe("pooled connection autoscaling", () => {
     logger.info(`Test finished: ${expect.getState().currentTestName}`);
   }, 1320000);
 
-  itIf(
+  itIfMinFiveInstance(
     "set read only on old connection",
     async () => {
       // Test setup.
@@ -123,12 +122,7 @@ describe("pooled connection autoscaling", () => {
       const numInstances: number = instances.length;
 
       // Set provider.
-      provider = new InternalPooledConnectionProvider(
-        new AwsPoolConfig({ maxConnections: numInstances }),
-        undefined,
-        BigInt(3_000_000_000),
-        BigInt(10_000_000_000)
-      );
+      provider = new InternalPooledConnectionProvider(new AwsPoolConfig({ maxConnections: numInstances }));
       ConnectionProviderManager.setConnectionProvider(provider);
 
       // Initialize clients.
@@ -198,7 +192,7 @@ describe("pooled connection autoscaling", () => {
     1320000
   );
 
-  itIf(
+  itIfMinFiveInstance(
     "failover from deleted reader",
     async () => {
       // Test setup.
