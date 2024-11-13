@@ -81,7 +81,7 @@ export class OktaAuthPlugin extends AbstractConnectionPlugin {
       logger.debug(Messages.get("AuthenticationToken.useCachedToken", tokenInfo.token));
       WrapperProperties.PASSWORD.set(props, tokenInfo.token);
     } else {
-      await this.updateAuthenticationToken(hostInfo, props, region, cacheKey);
+      await this.updateAuthenticationToken(hostInfo, props, region, cacheKey, host);
     }
     WrapperProperties.USER.set(props, WrapperProperties.DB_USER.get(props));
     this.pluginService.updateConfigWithProperties(props);
@@ -94,7 +94,7 @@ export class OktaAuthPlugin extends AbstractConnectionPlugin {
         throw e;
       }
       try {
-        await this.updateAuthenticationToken(hostInfo, props, region, cacheKey);
+        await this.updateAuthenticationToken(hostInfo, props, region, cacheKey, host);
         return await connectFunc();
       } catch (e: any) {
         throw new AwsWrapperError(Messages.get("SamlAuthPlugin.unhandledException", e.message));
@@ -102,13 +102,13 @@ export class OktaAuthPlugin extends AbstractConnectionPlugin {
     }
   }
 
-  public async updateAuthenticationToken(hostInfo: HostInfo, props: Map<string, any>, region: string, cacheKey: string): Promise<void> {
+  public async updateAuthenticationToken(hostInfo: HostInfo, props: Map<string, any>, region: string, cacheKey: string, iamHost): Promise<void> {
     const tokenExpirationSec = WrapperProperties.IAM_TOKEN_EXPIRATION.get(props);
     const tokenExpiry = Date.now() + tokenExpirationSec * 1000;
     const port = IamAuthUtils.getIamPort(props, hostInfo, this.pluginService.getDialect().getDefaultPort());
     this.fetchTokenCounter.inc();
     const token = await IamAuthUtils.generateAuthenticationToken(
-      hostInfo.host,
+      iamHost,
       port,
       region,
       WrapperProperties.DB_USER.get(props),

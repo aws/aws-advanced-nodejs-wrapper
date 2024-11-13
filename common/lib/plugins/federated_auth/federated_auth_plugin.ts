@@ -81,7 +81,7 @@ export class FederatedAuthPlugin extends AbstractConnectionPlugin {
       logger.debug(Messages.get("AuthenticationToken.useCachedToken", tokenInfo.token));
       WrapperProperties.PASSWORD.set(props, tokenInfo.token);
     } else {
-      await this.updateAuthenticationToken(hostInfo, props, region, cacheKey);
+      await this.updateAuthenticationToken(hostInfo, props, region, cacheKey, host);
     }
     WrapperProperties.USER.set(props, WrapperProperties.DB_USER.get(props));
     this.pluginService.updateConfigWithProperties(props);
@@ -93,7 +93,7 @@ export class FederatedAuthPlugin extends AbstractConnectionPlugin {
         throw e;
       }
       try {
-        await this.updateAuthenticationToken(hostInfo, props, region, cacheKey);
+        await this.updateAuthenticationToken(hostInfo, props, region, cacheKey, host);
         return await connectFunc();
       } catch (e: any) {
         throw new AwsWrapperError(Messages.get("SamlAuthPlugin.unhandledException", e.message));
@@ -101,12 +101,12 @@ export class FederatedAuthPlugin extends AbstractConnectionPlugin {
     }
   }
 
-  public async updateAuthenticationToken(hostInfo: HostInfo, props: Map<string, any>, region: string, cacheKey: string) {
+  public async updateAuthenticationToken(hostInfo: HostInfo, props: Map<string, any>, region: string, cacheKey: string, iamHost: string) {
     const tokenExpirationSec = WrapperProperties.IAM_TOKEN_EXPIRATION.get(props);
     const tokenExpiry: number = Date.now() + tokenExpirationSec * 1000;
     const port = IamAuthUtils.getIamPort(props, hostInfo, this.pluginService.getDialect().getDefaultPort());
     const token = await IamAuthUtils.generateAuthenticationToken(
-      hostInfo.host,
+      iamHost,
       port,
       region,
       WrapperProperties.DB_USER.get(props),

@@ -30,7 +30,9 @@ import { NullTelemetryFactory } from "../../common/lib/utils/telemetry/null_tele
 import { jest } from "@jest/globals";
 
 const defaultPort = 1234;
-const hostInfo = new HostInfo("pg.testdb.us-east-2.rds.amazonaws.com", defaultPort);
+const host = "pg.testdb.us-east-2.rds.amazonaws.com";
+const iamHost = "pg-123.testdb.us-east-2.rds.amazonaws.com";
+const hostInfo = new HostInfo(host, defaultPort);
 const dbUser = "iamUser";
 const region = "us-east-2";
 const testToken = "someTestToken";
@@ -146,5 +148,17 @@ describe("oktaAuthTest", () => {
     expect(testToken).toBe(WrapperProperties.PASSWORD.get(props));
     expect(expectedUser).toBe(WrapperProperties.IDP_USERNAME.get(props));
     expect(expectedPassword).toBe(WrapperProperties.IDP_PASSWORD.get(props));
+  });
+
+  it("testUsingIamHost", async () => {
+    WrapperProperties.IAM_HOST.set(props, iamHost);
+    const spyPluginInstance = instance(spyPlugin);
+    when(spyIamUtils.generateAuthenticationToken(anything(), anything(), anything(), anything(), anything(), anything())).thenResolve(testToken);
+
+    await spyPluginInstance.connect(hostInfo, props, true, mockConnectFunc);
+
+    verify(spyIamUtils.generateAuthenticationToken(iamHost, defaultPort, region, dbUser, mockCredentials, instance(mockPluginService))).called();
+    expect(dbUser).toBe(WrapperProperties.USER.get(props));
+    expect(testToken).toBe(WrapperProperties.PASSWORD.get(props));
   });
 });
