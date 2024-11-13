@@ -114,7 +114,9 @@ export class InternalPooledConnectionProvider implements PooledConnectionProvide
       InternalPooledConnectionProvider.poolExpirationCheckNanos
     );
 
-    return await this.getPoolConnection(connectionHostInfo, props);
+    const poolClient = await this.getPoolConnection(connectionHostInfo, props);
+    pluginService.attachErrorListener(poolClient);
+    return poolClient;
   }
 
   async getPoolConnection(hostInfo: HostInfo, props: Map<string, string>) {

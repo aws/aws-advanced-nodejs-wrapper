@@ -41,7 +41,6 @@ import { logger } from "../logutils";
 import { Messages } from "./utils/messages";
 import { DatabaseDialectCodes } from "./database_dialect/database_dialect_codes";
 import { getWriter } from "./utils/utils";
-import { ConnectionProvider } from "./connection_provider";
 import { TelemetryFactory } from "./utils/telemetry/telemetry_factory";
 import { DriverDialect } from "./driver_dialect/driver_dialect";
 
@@ -475,30 +474,30 @@ export class PluginService implements ErrorHandler, HostListProviderService {
   /* Error Handler interface implementation */
 
   isLoginError(e: Error): boolean {
-    return this.pluginServiceManagerContainer.pluginManager.errorHandler.isLoginError(e);
+    return this.getDialect().getErrorHandler().isLoginError(e);
   }
 
   isNetworkError(e: Error): boolean {
-    return this.pluginServiceManagerContainer.pluginManager.errorHandler.isNetworkError(e);
+    return this.getDialect().getErrorHandler().isNetworkError(e);
   }
 
   hasLoginError(): boolean {
-    return this.pluginServiceManagerContainer.pluginManager.errorHandler.hasLoginError();
+    return this.getDialect().getErrorHandler().hasLoginError();
   }
 
   hasNetworkError(): boolean {
-    return this.pluginServiceManagerContainer.pluginManager.errorHandler.hasNetworkError();
+    return this.getDialect().getErrorHandler().hasNetworkError();
   }
 
   getUnexpectedError(): Error | null {
-    return this.pluginServiceManagerContainer.pluginManager.errorHandler.getUnexpectedError();
+    return this.getDialect().getErrorHandler().getUnexpectedError();
   }
 
   attachErrorListener(clientWrapper: ClientWrapper | undefined): void {
-    this.pluginServiceManagerContainer.pluginManager.errorHandler.attachErrorListener(clientWrapper);
+    this.getDialect().getErrorHandler().attachErrorListener(clientWrapper);
   }
 
   attachNoOpErrorListener(clientWrapper: ClientWrapper | undefined): void {
-    this.pluginServiceManagerContainer.pluginManager.errorHandler.attachNoOpErrorListener(clientWrapper);
+    this.getDialect().getErrorHandler().attachNoOpErrorListener(clientWrapper);
   }
 }
