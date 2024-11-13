@@ -20,6 +20,7 @@ export interface ClientWrapper {
   readonly client: any;
   readonly hostInfo: HostInfo;
   readonly properties: Map<string, any>;
+  readonly id: string;
 
   query(sql: any): Promise<any>;
 

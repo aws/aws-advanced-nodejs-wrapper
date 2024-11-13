@@ -109,16 +109,21 @@ export class OpenedConnectionTracker {
   }
 
   logOpenedConnections(): void {
-    if (logger.level === "debug") {
-      let str = "";
-      for (const [key, queue] of OpenedConnectionTracker.openedConnections) {
-        if (queue.length !== 0) {
-          str += JSON.stringify(queue.map((x) => x.deref()!.hostInfo));
-          str += "\n\n\t";
+    let str = "";
+    const hostList = [];
+
+    for (const queue of OpenedConnectionTracker.openedConnections.values()) {
+      if (queue.length !== 0) {
+        for (const connRef of queue) {
+          const conn = connRef.deref();
+          if (conn) {
+            hostList.push(`${conn.id} - ${conn.hostInfo.toString()}`);
+          }
         }
+        str = hostList.join("\n\t");
       }
-      logger.debug(`Opened Connections Tracked: \n\t${str}`);
     }
+    logger.debug(`Opened Connections Tracked: \n\t${str}`);
   }
 
   private logConnectionQueue(host: string, queue: Array<WeakRef<ClientWrapper>>): void {

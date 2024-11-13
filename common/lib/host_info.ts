@@ -152,6 +152,6 @@ export class HostInfo {
   }
 
   toString(): string {
-    return `HostInfo[host=${this.host}, port=${this.port}, ${this.role}, ${this.availability}, weight=${this.weight}, ${this.lastUpdateTime}]`;
+    return `HostInfo[host=${this.host}, port=${this.port}, ${this.role}, ${HostAvailability[this.availability]}, weight=${this.weight}, ${this.lastUpdateTime}]`;
   }
 }
