@@ -19,7 +19,11 @@ import { AwsPGClient } from "../../pg/lib";
 const postgresHost = "db-identifier.XYZ.us-east-2.rds.amazonaws.com";
 const database = "employees";
 const port = 5432;
-const secretId = "id";
+const secretId = "SecretName";
+const secretRegion = "us-east-1";
+/* secretId can be set as secret ARN instead. The ARN includes the secretRegion */
+// const secretId = "arn:aws:secretsmanager:us-east-1:AccountId:secret:SecretName-6RandomCharacters";
+
 
 const client = new AwsPGClient({
   // Enable the AWS Secrets Manager Connection Plugin and configure connection parameters.
@@ -27,6 +31,7 @@ const client = new AwsPGClient({
   database: database,
   port: port,
   secretId: secretId,
+  secretRegion: secretRegion,
   plugins: "secretsManager"
 });
 
