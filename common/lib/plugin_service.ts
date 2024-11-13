@@ -475,30 +475,30 @@ export class PluginService implements ErrorHandler, HostListProviderService {
   /* Error Handler interface implementation */
 
   isLoginError(e: Error): boolean {
-    return this.getCurrentClient().errorHandler.isLoginError(e);
+    return this.pluginServiceManagerContainer.pluginManager.errorHandler.isLoginError(e);
   }
 
   isNetworkError(e: Error): boolean {
-    return this.getCurrentClient().errorHandler.isNetworkError(e);
+    return this.pluginServiceManagerContainer.pluginManager.errorHandler.isNetworkError(e);
   }
 
   hasLoginError(): boolean {
-    return this.getCurrentClient().errorHandler.hasLoginError();
+    return this.pluginServiceManagerContainer.pluginManager.errorHandler.hasLoginError();
   }
 
   hasNetworkError(): boolean {
-    return this.getCurrentClient().errorHandler.hasNetworkError();
+    return this.pluginServiceManagerContainer.pluginManager.errorHandler.hasNetworkError();
   }
 
   getUnexpectedError(): Error | null {
-    return this.getCurrentClient().errorHandler.getUnexpectedError();
+    return this.pluginServiceManagerContainer.pluginManager.errorHandler.getUnexpectedError();
   }
 
   attachErrorListener(clientWrapper: ClientWrapper | undefined): void {
-    this.getCurrentClient().errorHandler.attachErrorListener(clientWrapper);
+    this.pluginServiceManagerContainer.pluginManager.errorHandler.attachErrorListener(clientWrapper);
   }
 
   attachNoOpErrorListener(clientWrapper: ClientWrapper | undefined): void {
-    this.getCurrentClient().errorHandler.attachNoOpErrorListener(clientWrapper);
+    this.pluginServiceManagerContainer.pluginManager.errorHandler.attachNoOpErrorListener(clientWrapper);
   }
 }

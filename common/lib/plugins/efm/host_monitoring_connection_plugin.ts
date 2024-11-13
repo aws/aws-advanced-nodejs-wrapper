@@ -26,7 +26,7 @@ import { MonitorConnectionContext } from "./monitor_connection_context";
 import { logger, uniqueId } from "../../../logutils";
 import { Messages } from "../../utils/messages";
 import { MonitorService, MonitorServiceImpl } from "./monitor_service";
-import { AwsWrapperError } from "../../utils/errors";
+import { AwsWrapperError, UnavailableHostError } from "../../utils/errors";
 import { HostListProvider } from "../../host_list_provider/host_list_provider";
 import { HostAvailability } from "../../host_availability/host_availability";
 import { CanReleaseResources } from "../../can_release_resources";
@@ -139,7 +139,7 @@ export class HostMonitoringConnectionPlugin extends AbstractConnectionPlugin imp
               await this.pluginService.abortTargetClient(targetClient);
             }
             // eslint-disable-next-line no-unsafe-finally
-            throw new AwsWrapperError(Messages.get("HostMonitoringConnectionPlugin.unavailableHost", monitoringHostInfo.host));
+            throw new UnavailableHostError(Messages.get("HostMonitoringConnectionPlugin.unavailableHost", monitoringHostInfo.host));
           }
         }
       }

@@ -16,7 +16,6 @@
 
 import { PluginServiceManagerContainer } from "./plugin_service_manager_container";
 import { PluginService } from "./plugin_service";
-import { ErrorHandler } from "./error_handler";
 import { DatabaseDialect, DatabaseType } from "./database_dialect/database_dialect";
 import { ConnectionUrlParser } from "./utils/connection_url_parser";
 import { HostListProvider } from "./host_list_provider/host_list_provider";
@@ -68,7 +67,8 @@ export abstract class AwsClient extends EventEmitter {
       container,
       this.properties,
       new ConnectionProviderManager(new DriverConnectionProvider(), null),
-      this.telemetryFactory
+      this.telemetryFactory,
+      this.pluginService.getDialect().getErrorHandler()
     );
   }
 
@@ -102,10 +102,6 @@ export abstract class AwsClient extends EventEmitter {
 
   get defaultPort(): number {
     return this._defaultPort;
-  }
-
-  get errorHandler(): ErrorHandler {
-    return this.pluginService.getDialect().getErrorHandler();
   }
 
   get connectionUrlParser(): ConnectionUrlParser {

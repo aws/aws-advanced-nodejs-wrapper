@@ -17,7 +17,6 @@
 import { QueryOptions } from "mysql2";
 import { AwsClient } from "../../common/lib/aws_client";
 import { Query } from "mysql2/promise";
-import { MySQLErrorHandler } from "./mysql_error_handler";
 import { MySQLConnectionUrlParser } from "./mysql_connection_url_parser";
 import { DatabaseDialect, DatabaseType } from "../../common/lib/database_dialect/database_dialect";
 import { DatabaseDialectCodes } from "../../common/lib/database_dialect/database_dialect_codes";
@@ -206,49 +205,39 @@ export class AwsMySQLClient extends AwsClient {
   }
 
   async end() {
-    this.errorHandler.attachNoOpErrorListener(this.targetClient);
-    try {
-      if (!this.isConnected || !this.targetClient) {
-        // No connections have been initialized.
-        // This might happen if end is called in a finally block when an error occurred while initializing the first connection.
-        return;
-      }
-
-      const result = await this.pluginManager.execute(
-        this.pluginService.getCurrentHostInfo(),
-        this.properties,
-        "end",
-        () => {
-          return ClientUtils.queryWithTimeout(this.targetClient!.end(), this.properties);
-        },
-        null
-      );
-      await this.releaseResources();
-      return result;
-    } finally {
-      this.errorHandler.attachErrorListener(this.targetClient);
+    if (!this.isConnected || !this.targetClient) {
+      // No connections have been initialized.
+      // This might happen if end is called in a finally block when an error occurred while initializing the first connection.
+      return;
     }
+
+    const result = await this.pluginManager.execute(
+      this.pluginService.getCurrentHostInfo(),
+      this.properties,
+      "end",
+      () => {
+        return ClientUtils.queryWithTimeout(this.targetClient!.end(), this.properties);
+      },
+      null
+    );
+    await this.releaseResources();
+    return result;
   }
 
   async rollback(): Promise<any> {
-    this.errorHandler.attachNoOpErrorListener(this.targetClient);
-    try {
-      return this.pluginManager.execute(
-        this.pluginService.getCurrentHostInfo(),
-        this.properties,
-        "rollback",
-        async () => {
-          if (this.targetClient) {
-            this.pluginService.updateInTransaction("rollback");
-            return await this.targetClient.rollback();
-          }
-          return null;
-        },
-        null
-      );
-    } finally {
-      this.errorHandler.attachErrorListener(this.targetClient);
-    }
+    return this.pluginManager.execute(
+      this.pluginService.getCurrentHostInfo(),
+      this.properties,
+      "rollback",
+      async () => {
+        if (this.targetClient) {
+          this.pluginService.updateInTransaction("rollback");
+          return await this.targetClient.rollback();
+        }
+        return null;
+      },
+      null
+    );
   }
 
   resetState() {

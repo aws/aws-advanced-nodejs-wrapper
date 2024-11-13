@@ -31,6 +31,7 @@ import { TelemetryFactory } from "./utils/telemetry/telemetry_factory";
 import { TelemetryTraceLevel } from "./utils/telemetry/telemetry_trace_level";
 import { ConnectionProvider } from "./connection_provider";
 import { ConnectionPluginFactory } from "./plugin_factory";
+import { ErrorHandler } from "./error_handler";
 
 type PluginFunc<T> = (plugin: ConnectionPlugin, targetFunc: () => Promise<T>) => Promise<T>;
 
@@ -75,18 +76,21 @@ export class PluginManager {
   private readonly connectionProviderManager: ConnectionProviderManager;
   private pluginServiceManagerContainer: PluginServiceManagerContainer;
   protected telemetryFactory: TelemetryFactory;
+  errorHandler: ErrorHandler;
 
   constructor(
     pluginServiceManagerContainer: PluginServiceManagerContainer,
     props: Map<string, any>,
     connectionProviderManager: ConnectionProviderManager,
-    telemetryFactory: TelemetryFactory
+    telemetryFactory: TelemetryFactory,
+    errorHandler: ErrorHandler
   ) {
     this.pluginServiceManagerContainer = pluginServiceManagerContainer;
     this.pluginServiceManagerContainer.pluginManager = this;
     this.connectionProviderManager = connectionProviderManager;
     this.props = props;
     this.telemetryFactory = telemetryFactory;
+    this.errorHandler = errorHandler;
   }
 
   async init(): Promise<void>;
@@ -118,15 +122,21 @@ export class PluginManager {
     }
 
     const telemetryContext = this.telemetryFactory.openTelemetryContext(methodName, TelemetryTraceLevel.NESTED);
-    return await telemetryContext.start(() => {
-      return this.executeWithSubscribedPlugins(
-        hostInfo,
-        props,
-        methodName,
-        (plugin, nextPluginFunc) => this.runMethodFuncWithTelemetry(() => plugin.execute(methodName, nextPluginFunc, options), plugin.name),
-        methodFunc
-      );
-    });
+    const currentClient: ClientWrapper = this.pluginServiceManagerContainer.pluginService.getCurrentClient().targetClient;
+    this.errorHandler.attachNoOpErrorListener(currentClient);
+    try {
+      return await telemetryContext.start(() => {
+        return this.executeWithSubscribedPlugins(
+          hostInfo,
+          props,
+          methodName,
+          (plugin, nextPluginFunc) => this.runMethodFuncWithTelemetry(() => plugin.execute(methodName, nextPluginFunc, options), plugin.name),
+          methodFunc
+        );
+      });
+    } finally {
+      this.errorHandler.attachErrorListener(currentClient);
+    }
   }
 
   async connect(hostInfo: HostInfo | null, props: Map<string, any>, isInitialConnection: boolean): Promise<ClientWrapper> {
@@ -135,7 +145,7 @@ export class PluginManager {
     }
 
     const telemetryContext = this.telemetryFactory.openTelemetryContext(PluginManager.CONNECT_METHOD, TelemetryTraceLevel.NESTED);
-    return await telemetryContext.start(() => {
+    const clientWrapper: ClientWrapper = await telemetryContext.start(() => {
       return this.executeWithSubscribedPlugins<ClientWrapper>(
         hostInfo,
         props,
@@ -147,6 +157,8 @@ export class PluginManager {
         }
       );
     });
+    this.errorHandler.attachErrorListener(clientWrapper);
+    return clientWrapper;
   }
 
   async forceConnect(hostInfo: HostInfo | null, props: Map<string, any>, isInitialConnection: boolean): Promise<ClientWrapper> {
@@ -155,7 +167,7 @@ export class PluginManager {
     }
 
     const telemetryContext = this.telemetryFactory.openTelemetryContext(PluginManager.FORCE_CONNECT_METHOD, TelemetryTraceLevel.NESTED);
-    return await telemetryContext.start(() => {
+    const clientWrapper: ClientWrapper = await telemetryContext.start(() => {
       return this.executeWithSubscribedPlugins<ClientWrapper>(
         hostInfo,
         props,
@@ -167,6 +179,8 @@ export class PluginManager {
         }
       );
     });
+    this.errorHandler.attachErrorListener(clientWrapper);
+    return clientWrapper;
   }
 
   executeWithSubscribedPlugins<T>(

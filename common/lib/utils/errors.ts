@@ -41,3 +41,5 @@ export class TransactionResolutionUnknownError extends FailoverError {}
 export class LoginError extends AwsWrapperError {}
 
 export class InternalQueryTimeoutError extends AwsWrapperError {}
+
+export class UnavailableHostError extends AwsWrapperError {}

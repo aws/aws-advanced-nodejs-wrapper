@@ -23,7 +23,8 @@ export class PgErrorHandler extends AbstractPgErrorHandler {
     "Connection terminated unexpectedly",
     "Client has encountered a connection error and is not queryable",
     "Query read timeout",
-    "Connection terminated due to connection timeout"
+    "Connection terminated due to connection timeout",
+    "read ECONNRESET"
   ];
 
   getAccessErrorCodes(): string[] {

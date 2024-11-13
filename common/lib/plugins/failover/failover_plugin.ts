@@ -24,7 +24,13 @@ import { ClusterAwareReaderFailoverHandler } from "./reader_failover_handler";
 import { SubscribedMethodHelper } from "../../utils/subscribed_method_helper";
 import { HostChangeOptions } from "../../host_change_options";
 import { ClusterAwareWriterFailoverHandler } from "./writer_failover_handler";
-import { AwsWrapperError, FailoverFailedError, FailoverSuccessError, TransactionResolutionUnknownError } from "../../utils/errors";
+import {
+  AwsWrapperError,
+  FailoverFailedError,
+  FailoverSuccessError,
+  TransactionResolutionUnknownError,
+  UnavailableHostError
+} from "../../utils/errors";
 import { FailoverMode, failoverModeFromValue } from "./failover_mode";
 import { HostRole } from "../../host_role";
 import { HostAvailability } from "../../host_availability/host_availability";
@@ -545,6 +551,10 @@ export class FailoverPlugin extends AbstractConnectionPlugin {
     if (!this.isFailoverEnabled()) {
       logger.debug(Messages.get("Failover.failoverDisabled"));
       return false;
+    }
+
+    if (error instanceof UnavailableHostError) {
+      return true;
     }
 
     if (error instanceof Error) {
