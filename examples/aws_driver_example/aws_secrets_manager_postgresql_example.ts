@@ -24,7 +24,6 @@ const secretRegion = "us-east-1";
 /* secretId can be set as secret ARN instead. The ARN includes the secretRegion */
 // const secretId = "arn:aws:secretsmanager:us-east-1:AccountId:secret:SecretName-6RandomCharacters";
 
-
 const client = new AwsPGClient({
   // Enable the AWS Secrets Manager Connection Plugin and configure connection parameters.
   host: postgresHost,
