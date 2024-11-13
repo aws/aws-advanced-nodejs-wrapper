@@ -53,7 +53,7 @@ export class AwsSecretsManagerPlugin extends AbstractConnectionPlugin {
     const config: SecretsManagerClientConfig = {};
 
     if (!secretId) {
-      throw new AwsWrapperError(Messages.get("AwsSecretsManagerConnectionPlugin.missingRequiredConfigParameter"));
+      throw new AwsWrapperError(Messages.get("AwsSecretsManagerConnectionPlugin.missingRequiredConfigParameter"), WrapperProperties.SECRET_ID.name);
     }
 
     if (!region) {
