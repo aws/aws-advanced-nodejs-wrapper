@@ -244,6 +244,7 @@ export class AwsMySQLClient extends AwsClient {
     this._isReadOnly = false;
     this._isAutoCommit = true;
     this._catalog = "";
+    this._schema = "";
     this._isolationLevel = TransactionIsolationLevel.TRANSACTION_REPEATABLE_READ;
   }
 }
