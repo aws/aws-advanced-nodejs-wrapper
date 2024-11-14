@@ -117,8 +117,8 @@ export class DriverHelper {
       props["monitoring_query_timeout"] = 400;
     } else if (engine === DatabaseEngine.MYSQL && performance) {
       props["connectTimeout"] = 400;
-      props["monitoring_internal_query_timeout"] = 400;
-      props["internal_query_timeout"] = 120000;
+      props["monitoring_internalQueryTimeout"] = 400;
+      props["internalQueryTimeout"] = 120000;
     }
     return props;
   }
