@@ -35,7 +35,6 @@ const mockClient: AwsClient = mock(AwsPGClient);
 const mockDialect: AuroraPgDatabaseDialect = mock(AuroraPgDatabaseDialect);
 const mockPluginService: PluginService = mock(PluginService);
 const connectionUrlParser: ConnectionUrlParser = new PgConnectionUrlParser();
-const updateTime: number = Date.now();
 
 const hosts: HostInfo[] = [
   createHost({
@@ -66,13 +65,6 @@ function createHost(config: any): HostInfo {
 }
 
 function getRdsHostListProvider(originalHost: string): RdsHostListProvider {
-  const host: HostInfo[] = [
-    createHost({
-      hostAvailabilityStrategy: new SimpleHostAvailabilityStrategy(),
-      host: originalHost
-    })
-  ];
-
   const provider = new RdsHostListProvider(new Map<string, any>(), originalHost, instance(mockPluginService));
   provider.init();
   return provider;

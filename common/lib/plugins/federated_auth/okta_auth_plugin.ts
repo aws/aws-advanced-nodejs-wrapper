@@ -115,7 +115,7 @@ export class OktaAuthPlugin extends AbstractConnectionPlugin {
       await this.credentialsProviderFactory.getAwsCredentialsProvider(hostInfo.host, region, props),
       this.pluginService
     );
-    logger.debug(Messages.get("AuthenticationToken.useCachedToken", token));
+    logger.debug(Messages.get("AuthenticationToken.generatedNewToken", token));
     WrapperProperties.PASSWORD.set(props, token);
     this.pluginService.updateConfigWithProperties(props);
     OktaAuthPlugin.tokenCache.set(cacheKey, new TokenInfo(token, tokenExpiry));

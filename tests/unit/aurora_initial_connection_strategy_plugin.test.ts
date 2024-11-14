@@ -29,12 +29,19 @@ import { ClientWrapper } from "../../common/lib/client_wrapper";
 import { AwsWrapperError } from "../../common/lib/utils/errors";
 import { MySQLClientWrapper } from "../../common/lib/mysql_client_wrapper";
 import { jest } from "@jest/globals";
+import { PgClientWrapper } from "../../common/lib/pg_client_wrapper";
 
 const mockPluginService = mock(PluginService);
 const mockHostListProviderService = mock<HostListProviderService>();
 const mockRdsUtils = mock(RdsUtils);
 const mockReaderHostInfo = mock(HostInfo);
-const mockFunc = jest.fn();
+const mockFunc = jest.fn(() => {
+  return Promise.resolve(instance(mock(PgClientWrapper)));
+});
+
+const mockFuncUndefined = jest.fn(() => {
+  return Promise.resolve(undefined);
+});
 
 const hostInfoBuilder = new HostInfoBuilder({ hostAvailabilityStrategy: new SimpleHostAvailabilityStrategy() });
 const hostInfo = hostInfoBuilder.withHost("host").build();
@@ -94,7 +101,7 @@ describe("Aurora initial connection strategy plugin", () => {
   it("test writer - not found", async () => {
     when(mockRdsUtils.identifyRdsType(anything())).thenReturn(RdsUrlType.RDS_WRITER_CLUSTER);
     when(mockPluginService.getHosts()).thenReturn([hostInfoBuilder.withRole(HostRole.READER).build()]);
-    expect(await plugin.connect(hostInfo, props, true, mockFunc)).toBe(undefined);
+    expect(await plugin.connect(hostInfo, props, true, mockFuncUndefined)).toBe(undefined);
   });
 
   it("test writer - resolves to reader", async () => {
@@ -119,7 +126,7 @@ describe("Aurora initial connection strategy plugin", () => {
     when(mockRdsUtils.identifyRdsType(anything())).thenReturn(RdsUrlType.RDS_READER_CLUSTER);
     when(mockPluginService.getHosts()).thenReturn([hostInfoBuilder.withRole(HostRole.WRITER).build()]);
     when(mockPluginService.acceptsStrategy(anything(), anything())).thenReturn(true);
-    expect(await plugin.connect(hostInfo, props, true, mockFunc)).toBe(undefined);
+    expect(await plugin.connect(hostInfo, props, true, mockFuncUndefined)).toBe(undefined);
   });
 
   it("test reader - resolves to reader", async () => {
@@ -140,7 +147,7 @@ describe("Aurora initial connection strategy plugin", () => {
     when(mockPluginService.connect(anything(), anything())).thenResolve(writerClient);
     when(mockPluginService.acceptsStrategy(anything(), anything())).thenReturn(true);
 
-    expect(await plugin.connect(hostInfo, props, true, mockFunc)).toBe(undefined);
+    expect(await plugin.connect(hostInfo, props, true, mockFuncUndefined)).toBe(undefined);
   });
 
   it("test reader - return writer", async () => {
