@@ -41,7 +41,6 @@ import { logger } from "../logutils";
 import { Messages } from "./utils/messages";
 import { DatabaseDialectCodes } from "./database_dialect/database_dialect_codes";
 import { getWriter } from "./utils/utils";
-import { ConnectionProvider } from "./connection_provider";
 import { TelemetryFactory } from "./utils/telemetry/telemetry_factory";
 import { DriverDialect } from "./driver_dialect/driver_dialect";
 
@@ -475,30 +474,30 @@ export class PluginService implements ErrorHandler, HostListProviderService {
   /* Error Handler interface implementation */
 
   isLoginError(e: Error): boolean {
-    return this.getCurrentClient().errorHandler.isLoginError(e);
+    return this.getDialect().getErrorHandler().isLoginError(e);
   }
 
   isNetworkError(e: Error): boolean {
-    return this.getCurrentClient().errorHandler.isNetworkError(e);
+    return this.getDialect().getErrorHandler().isNetworkError(e);
   }
 
   hasLoginError(): boolean {
-    return this.getCurrentClient().errorHandler.hasLoginError();
+    return this.getDialect().getErrorHandler().hasLoginError();
   }
 
   hasNetworkError(): boolean {
-    return this.getCurrentClient().errorHandler.hasNetworkError();
+    return this.getDialect().getErrorHandler().hasNetworkError();
   }
 
   getUnexpectedError(): Error | null {
-    return this.getCurrentClient().errorHandler.getUnexpectedError();
+    return this.getDialect().getErrorHandler().getUnexpectedError();
   }
 
   attachErrorListener(clientWrapper: ClientWrapper | undefined): void {
-    this.getCurrentClient().errorHandler.attachErrorListener(clientWrapper);
+    this.getDialect().getErrorHandler().attachErrorListener(clientWrapper);
   }
 
   attachNoOpErrorListener(clientWrapper: ClientWrapper | undefined): void {
-    this.getCurrentClient().errorHandler.attachNoOpErrorListener(clientWrapper);
+    this.getDialect().getErrorHandler().attachNoOpErrorListener(clientWrapper);
   }
 }

@@ -99,7 +99,7 @@ export class DriverConnectionProvider implements ConnectionProvider {
 
       resultTargetClient = driverDialect.connect(hostInfo, resultProps);
     }
-
+    pluginService.attachErrorListener(resultTargetClient);
     return resultTargetClient;
   }
 

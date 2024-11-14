@@ -23,7 +23,9 @@ export class MultiAzPgErrorHandler extends AbstractPgErrorHandler {
     "Connection terminated unexpectedly",
     "Client has encountered a connection error and is not queryable",
     "Query read timeout",
-    "Connection terminated due to connection timeout"
+    "Connection terminated due to connection timeout",
+    "read ECONNRESET",
+    "connect ECONNREFUSED"
   ];
 
   getAccessErrorCodes(): string[] {
