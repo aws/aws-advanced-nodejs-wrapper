@@ -70,7 +70,7 @@ When the AWS Advanced NodeJS Wrapper throws a `TransactionResolutionUnknownError
 
 #### Sample Code
 
-[PostgreSQL Failover Sample Code](../../../examples/aws_driver_example/aws_failover_postgresql_example.ts)
+[PostgreSQL Failover Sample Code](../../../examples/aws_driver_example/aws_failover_postgresql_example.ts)<br>
 [MySQL Failover Sample Code](../../../examples/aws_driver_example/aws_failover_mysql_example.ts)
 
 > [!WARNING]
