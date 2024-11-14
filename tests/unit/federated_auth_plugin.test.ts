@@ -19,7 +19,7 @@ import { FederatedAuthPlugin } from "../../common/lib/plugins/federated_auth/fed
 import { PluginService } from "../../common/lib/plugin_service";
 import { IamAuthUtils, TokenInfo } from "../../common/lib/utils/iam_auth_utils";
 import { WrapperProperties } from "../../common/lib/wrapper_property";
-import { anything, instance, mock, spy, when } from "ts-mockito";
+import { anything, instance, mock, spy, verify, when } from "ts-mockito";
 import { CredentialsProviderFactory } from "../../common/lib/plugins/federated_auth/credentials_provider_factory";
 import { DatabaseDialect } from "../../common/lib/database_dialect/database_dialect";
 
@@ -37,7 +37,9 @@ const dbUser = "iamUser";
 const expirationFiveMinutes = 5 * 60 * 1000;
 const tokenCache = new Map<string, TokenInfo>();
 
-const hostInfo = new HostInfo("pg.testdb.us-east-2.rds.amazonaws.com", defaultPort, HostRole.WRITER);
+const host = "pg.testdb.us-east-2.rds.amazonaws.com";
+const iamHost = "pg-123.testdb.us-east-2.rds.amazonaws.com";
+const hostInfo = new HostInfo(host, defaultPort, HostRole.WRITER);
 const testTokenInfo = new TokenInfo(testToken, Date.now() + expirationFiveMinutes);
 
 const mockDialect = mock<DatabaseDialect>();
@@ -146,5 +148,17 @@ describe("federatedAuthTest", () => {
     expect(testToken).toBe(WrapperProperties.PASSWORD.get(props));
     expect(expectedUser).toBe(WrapperProperties.IDP_USERNAME.get(props));
     expect(expectedPassword).toBe(WrapperProperties.IDP_PASSWORD.get(props));
+  });
+
+  it("testUsingIamHost", async () => {
+    WrapperProperties.IAM_HOST.set(props, iamHost);
+    const spyPluginInstance = instance(spyPlugin);
+
+    when(spyIamUtils.generateAuthenticationToken(anything(), anything(), anything(), anything(), anything(), anything())).thenResolve(testToken);
+
+    await spyPluginInstance.connect(hostInfo, props, true, mockConnectFunc);
+    expect(dbUser).toBe(WrapperProperties.USER.get(props));
+    expect(testToken).toBe(WrapperProperties.PASSWORD.get(props));
+    verify(spyIamUtils.generateAuthenticationToken(iamHost, anything(), anything(), anything(), anything(), anything())).once();
   });
 });

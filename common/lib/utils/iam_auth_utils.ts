@@ -78,7 +78,7 @@ export class IamAuthUtils {
         hostname: hostname,
         port: port,
         region: region,
-        credentials,
+        credentials: credentials,
         username: user
       });
 
