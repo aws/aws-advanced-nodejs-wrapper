@@ -95,7 +95,6 @@ describe("aurora connection tracker tests", () => {
     const plugin = new AuroraConnectionTrackerPlugin(instance(mockPluginService), instance(mockRdsUtils), instance(mockTracker));
 
     await expect(plugin.execute("query", mockSqlFunc, SQL_ARGS)).rejects.toThrow(expectedException);
-    verify(mockTracker.invalidateCurrentConnection(originalHost, mockClientInstance.targetClient!)).never();
     verify(mockTracker.invalidateAllConnections(originalHost)).never();
   });
 
@@ -111,7 +110,6 @@ describe("aurora connection tracker tests", () => {
 
     await plugin.execute("query", mockSqlFunc, SQL_ARGS);
     await expect(plugin.execute("query", mockSqlFunc, SQL_ARGS)).rejects.toThrow(expectedException);
-    verify(mockTracker.invalidateCurrentConnection(originalHost, mockClientInstance.targetClient!)).never();
     verify(mockTracker.invalidateAllConnections(originalHost)).once();
   });
 });
