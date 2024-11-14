@@ -1,6 +1,6 @@
 # Documentation
 
-- [Getting Started](./GettingStarted)
+- [Getting Started](./GettingStarted.md)
 - [Using the AWS Advanced NodeJS Wrapper](./using-the-nodejs-wrapper/UsingTheNodejsWrapper.md)
   - [Plugins](./using-the-nodejs-wrapper/UsingTheNodejsWrapper.md#plugins)
     - [Failover Plugin](./using-the-nodejs-wrapper/using-plugins/UsingTheFailoverPlugin.md)

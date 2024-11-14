@@ -40,8 +40,8 @@ When connecting to Aurora clusters, the [`clusterInstanceHostPattern`](#failover
 
 ## Failover Errors
 
-| Exceptions                        | Is the connection valid? | Can the connection be reused? | Has the session state changed? | Does the session need to be reconfigured? | Does the last statement need to be re-executed? | Does the transaction need to be restarted? |
-| --------------------------------- | ------------------------ | ----------------------------- | ------------------------------ | ----------------------------------------- | ----------------------------------------------- | ------------------------------------------ |
+| Errors                            | Is the connection valid? | Can the connection be reused? | Has the session state changed? | Does the session need to be reconfigured? | Does the last statement need to be re-executed? | Does the transaction need to be restarted? |
+|-----------------------------------| ------------------------ | ----------------------------- | ------------------------------ | ----------------------------------------- | ----------------------------------------------- | ------------------------------------------ |
 | FailoverFailedError               | No                       | No                            | N/A                            | N/A                                       | Yes                                             | Yes                                        |
 | FailoverSuccessError              | Yes                      | Yes                           | Yes                            | Yes                                       | Yes                                             | N/A                                        |
 | TransactionResolutionUnknownError | Yes                      | Yes                           | Yes                            | Yes                                       | Yes                                             | Yes                                        |

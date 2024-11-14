@@ -1,6 +1,6 @@
 ## Read/Write Splitting Plugin
 
-The Read/Write Splitting Plugin adds functionality to switch between writer and reader instances via calls to the `Client#setReadOnly` method. Upon calling `setReadOnly(true)`, the plugin will establish a connection to a reader instance and direct subsequent queries to this instance. Future `setReadOnly` calls will switch the underlying connection between the established writer and reader according to the `setReadOnly` value.
+The Read/Write Splitting Plugin adds functionality to switch between writer and reader instances via calls to the `Client#setReadOnly` method. Upon calling `await setReadOnly(true)`, the plugin will establish a connection to a reader instance and direct subsequent queries to this instance. Future `setReadOnly` calls will switch the underlying connection between the established writer and reader according to the `setReadOnly` value.
 
 ### Loading the Read/Write Splitting Plugin
 
@@ -39,7 +39,7 @@ The Read/Write Splitting Plugin is not currently supported for non-Aurora cluste
 > [!WARNING]
 > If internal connection pools are enabled, database passwords may not be verified with every connection request. The initial connection request for each database instance in the cluster will verify the password, but subsequent requests may return a cached pool connection without re-verifying the password. This behavior is inherent to the nature of connection pools in general and not a bug with the wrapper. `await ConnectionProviderManager.releaseResources()` can be called to close all pools and remove all cached pool connections. See [Internal Connection Pool Password Warning Example for Postgres](../../../examples/aws_driver_example/aws_interal_connection_pool_password_warning_postgres_example.ts) and [Internal Connection Pool Password Warning Example for MySQL](../../../examples/aws_driver_example/aws_internal_connection_pool_password_warning_mysql_example.ts)
 
-Whenever `setReadOnly(true)` is first called on a `AwsClient` object, the read/write plugin will internally open a new physical connection to a reader. After this first call, the physical reader connection will be cached for the given `AwsClient`. Future calls to `setReadOnly` on the same `AwsClient` object will not require opening a new physical connection. However, calling `setReadOnly(true)` for the first time on a new `AwsClient` object will require the plugin to establish another new physical connection to a reader. If your application frequently calls `setReadOnly`, you can enable internal connection pooling to improve performance. When enabled, the wrapper driver will maintain an internal connection pool for each instance in the cluster. This allows the read/write splitting plugin to reuse connections that were established by `setReadOnly` calls on previous `AwsClient` objects.
+Whenever `await setReadOnly(true)` is first called on a `AwsClient` object, the read/write plugin will internally open a new physical connection to a reader. After this first call, the physical reader connection will be cached for the given `AwsClient`. Future calls to `setReadOnly` on the same `AwsClient` object will not require opening a new physical connection. However, calling `await setReadOnly(true)` for the first time on a new `AwsClient` object will require the plugin to establish another new physical connection to a reader. If your application frequently calls `setReadOnly`, you can enable internal connection pooling to improve performance. When enabled, the wrapper driver will maintain an internal connection pool for each instance in the cluster. This allows the read/write splitting plugin to reuse connections that were established by `setReadOnly` calls on previous `AwsClient` objects.
 
 > [!NOTE]
 > Initial connections to a cluster URL will not be pooled. The driver does not pool cluster URLs because it can be problematic to pool a URL that resolves to different instances over time. The main benefit of internal connection pools is when setReadOnly is called. When setReadOnly is called (regardless of the initial connection URL), an internal pool will be created for the writer/reader that the plugin switches to and connections for that instance can be reused in the future.
@@ -99,7 +99,7 @@ ConnectionProviderManager.setConnectionProvider(provider);
 
 2. Call `ConnectionProviderManager.setConnectionProvider()`, passing in the `InternalPoolConnectionProvider` you created in Step 1.
 
-3. By default, the read/write plugin randomly selects a reader instance the first time that `setReadOnly(true)` is called. If you would like the plugin to select a reader based on a different selection strategy, please see the [Reader Selection](#reader-selection) section for more information.
+3. By default, the read/write plugin randomly selects a reader instance the first time that `await setReadOnly(true)` is called. If you would like the plugin to select a reader based on a different selection strategy, please see the [Reader Selection](#reader-selection) section for more information.
 
 4. Continue as normal: create connections and use them as needed.
 
@@ -118,7 +118,7 @@ props.set(WrapperProperties.READER_HOST_SELECTOR_STRATEGY.name, "leastConnection
 
 ### Connection Strategies
 
-By default, the Read/Write Splitting Plugin randomly selects a reader instance the first time `setReadOnly(true)` is called. To balance connections to reader instances more evenly, different connection strategies can be used. The following table describes the currently available connection strategies and any relevant configuration parameters for each strategy.
+By default, the Read/Write Splitting Plugin randomly selects a reader instance the first time `await setReadOnly(true)` is called. To balance connections to reader instances more evenly, different connection strategies can be used. The following table describes the currently available connection strategies and any relevant configuration parameters for each strategy.
 
 To indicate which connection strategy to use, the `readerHostSelectorStrategy` parameter can be set to one of the [reader host selection strategies](../ReaderSelectionStrategies.md). The following is an example of enabling the `random` strategy:
 
