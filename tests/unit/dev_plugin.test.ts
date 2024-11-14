@@ -47,8 +47,8 @@ const mockRdsUtils = mock(RdsUtils);
 const properties: Map<string, any> = new Map();
 let plugin: DeveloperConnectionPlugin;
 
-const mockConnectFunc = jest.fn().mockImplementation(() => {
-  return;
+const mockConnectFunc = jest.fn(() => {
+  return Promise.resolve();
 });
 const mockFunction = () => {
   return Promise.resolve();

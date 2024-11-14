@@ -27,7 +27,6 @@ import { AwsPGClient } from "../../pg/lib";
 import { WriterFailoverResult } from "../../common/lib/plugins/failover/writer_failover_result";
 import { ClientWrapper } from "../../common/lib/client_wrapper";
 import { PgDatabaseDialect } from "../../pg/lib/dialect/pg_database_dialect";
-import { NodePostgresDriverDialect } from "../../pg/lib/dialect/node_postgres_driver_dialect";
 import { MySQLClientWrapper } from "../../common/lib/mysql_client_wrapper";
 
 const builder = new HostInfoBuilder({ hostAvailabilityStrategy: new SimpleHostAvailabilityStrategy() });

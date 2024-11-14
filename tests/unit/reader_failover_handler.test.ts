@@ -37,7 +37,6 @@ const properties = new Map();
 const mockDatabaseDialect = mock(PgDatabaseDialect);
 const mockDriverDialect = mock(NodePostgresDriverDialect);
 const mockClientWrapper: ClientWrapper = mock(PgClientWrapper);
-const mockTargetClient = { client: 123 };
 
 const mockPluginService = mock(PluginService);
 
