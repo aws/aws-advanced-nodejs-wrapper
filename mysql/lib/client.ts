@@ -164,11 +164,11 @@ export class AwsMySQLClient extends AwsClient {
   }
 
   async setSchema(schema: string): Promise<Query | void> {
-    throw new UnsupportedMethodError(Messages.get("Client.methodNotSupported"));
+    throw new UnsupportedMethodError(Messages.get("Client.methodNotSupported", "setSchema"));
   }
 
   getSchema(): string {
-    return this._schema;
+    throw new UnsupportedMethodError(Messages.get("Client.methodNotSupported", "getSchema"));
   }
 
   async setTransactionIsolation(level: TransactionIsolationLevel): Promise<Query | void> {
@@ -244,7 +244,6 @@ export class AwsMySQLClient extends AwsClient {
     this._isReadOnly = false;
     this._isAutoCommit = true;
     this._catalog = "";
-    this._schema = "";
     this._isolationLevel = TransactionIsolationLevel.TRANSACTION_REPEATABLE_READ;
   }
 }

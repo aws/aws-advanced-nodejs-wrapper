@@ -120,11 +120,11 @@ export class AwsPGClient extends AwsClient {
   }
 
   async setAutoCommit(autoCommit: boolean): Promise<QueryResult | void> {
-    throw new UnsupportedMethodError(Messages.get("Client.methodNotSupported"));
+    throw new UnsupportedMethodError(Messages.get("Client.methodNotSupported", "setAutoCommit"));
   }
 
   getAutoCommit(): boolean {
-    return this._isAutoCommit;
+    throw new UnsupportedMethodError(Messages.get("Client.methodNotSupported", "getAutoCommit"));
   }
 
   async setTransactionIsolation(level: number): Promise<QueryResult | void> {
@@ -159,11 +159,11 @@ export class AwsPGClient extends AwsClient {
   }
 
   async setCatalog(catalog: string): Promise<void> {
-    throw new UnsupportedMethodError(Messages.get("Client.methodNotSupported"));
+    throw new UnsupportedMethodError(Messages.get("Client.methodNotSupported", "setCatalog"));
   }
 
   getCatalog(): string {
-    return this._catalog;
+    throw new UnsupportedMethodError(Messages.get("Client.methodNotSupported", "getCatalog"));
   }
 
   async setSchema(schema: string): Promise<QueryResult | void> {

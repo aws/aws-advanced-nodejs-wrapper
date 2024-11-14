@@ -65,7 +65,7 @@
   "StaleDnsHelper.staleDnsDetected": "Stale DNS data detected. Opening a connection to '%s'.",
   "StaleDnsHelper.reset": "Reset stored writer host.",
   "StaleDnsPlugin.requireDynamicProvider": "Dynamic host list provider is required.",
-  "Client.methodNotSupported": "Method not supported.",
+  "Client.methodNotSupported": "Method '%s' not supported.",
   "Client.invalidTransactionIsolationLevel": "An invalid transaction isolation level was provided: '%s'.",
   "AuroraStaleDnsHelper.clusterEndpointDns": "Cluster endpoint resolves to '%s'.",
   "AuroraStaleDnsHelper.writerHostSpec": "Writer host: '%s'.",
