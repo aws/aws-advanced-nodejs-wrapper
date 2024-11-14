@@ -47,7 +47,6 @@ export class MySQLClientWrapper implements ClientWrapper {
   }
 
   end(): Promise<void> {
-    logger.info(`ending client: ${this.id}`);
     return this.client?.end();
   }
 
