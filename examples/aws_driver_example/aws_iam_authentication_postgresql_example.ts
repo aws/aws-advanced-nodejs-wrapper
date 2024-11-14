@@ -25,11 +25,11 @@ const port = 5432;
 const client = new AwsPGClient({
   // Enable AWS IAM database authentication and configure connection parameters
   host: postgresHost,
-  port,
+  port: port,
   user: username,
   plugins: "iam",
   iamRegion: "us-east-2",
-  database,
+  database: database,
   ssl: {
     ca: readFileSync("path/to/ssl/certificate.pem").toString()
   }

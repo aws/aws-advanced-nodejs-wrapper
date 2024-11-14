@@ -17,7 +17,6 @@
 import { AwsMySQLClient } from "../../mysql/lib";
 import { ConnectionProviderManager } from "../../common/lib/connection_provider_manager";
 import { InternalPooledConnectionProvider } from "../../common/lib/internal_pooled_connection_provider";
-import { AwsPoolConfig } from "../../common/lib/aws_pool_config";
 import { logger } from "../../common/logutils";
 
 const mysqlHost = "db-identifier.XYZ.us-east-2.rds.amazonaws.com";
@@ -25,7 +24,7 @@ const username = "john_smith";
 const correctPassword = "correct_password";
 const wrongPassword = "wrong_password";
 const database = "database";
-const port = 5432;
+const port = 3306;
 
 const client = new AwsMySQLClient({
   host: mysqlHost,
