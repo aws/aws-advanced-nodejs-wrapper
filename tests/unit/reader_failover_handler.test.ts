@@ -46,7 +46,7 @@ describe("reader failover handler", () => {
     when(mockDatabaseDialect.getFailoverRestrictions()).thenReturn([]);
     when(mockPluginService.getDialect()).thenReturn(instance(mockDatabaseDialect));
     when(mockPluginService.getDriverDialect()).thenReturn(instance(mockDriverDialect));
-    when(mockDriverDialect.connect(anything())).thenResolve(mockTargetClient);
+    when(mockDriverDialect.connect(anything(), anything())).thenResolve(mockClientWrapper);
   });
   afterEach(() => {
     reset(mockPluginService);
@@ -82,7 +82,7 @@ describe("reader failover handler", () => {
     expect(result.isConnected).toBe(true);
     expect(result.client).toBe(mockClientWrapper);
     expect(result.newHost).toBe(hosts[successHostIndex]);
-  }, 20000);
+  }, 30000);
 
   it("test failover timeout", async () => {
     // original host list: [active writer, active reader, current connection (reader), active

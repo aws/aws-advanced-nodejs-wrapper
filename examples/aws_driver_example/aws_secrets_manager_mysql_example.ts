@@ -18,13 +18,17 @@ import { AwsMySQLClient } from "../../mysql/lib";
 
 const mysqlHost = "db-identifier.XYZ.us-east-2.rds.amazonaws.com";
 const port = 3306;
-const secretId = "id";
+const secretId = "SecretName";
+const secretRegion = "us-east-1";
+/* secretId can be set as secret ARN instead. The ARN includes the secretRegion */
+// const secretId = "arn:aws:secretsmanager:us-east-1:AccountId:secret:SecretName-6RandomCharacters";
 
 const client = new AwsMySQLClient({
   // Enable the AWS Secrets Manager Connection Plugin and configure connection parameters.
   host: mysqlHost,
   port: port,
   secretId: secretId,
+  secretRegion: secretRegion,
   plugins: "secretsManager"
 });
 
