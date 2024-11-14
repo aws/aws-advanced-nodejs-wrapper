@@ -46,7 +46,7 @@ describe("reader failover handler", () => {
     when(mockDatabaseDialect.getFailoverRestrictions()).thenReturn([]);
     when(mockPluginService.getDialect()).thenReturn(instance(mockDatabaseDialect));
     when(mockPluginService.getDriverDialect()).thenReturn(instance(mockDriverDialect));
-    when(mockDriverDialect.connect(anything())).thenResolve(mockTargetClient);
+    when(mockDriverDialect.connect(anything(), anything())).thenResolve(mockClientWrapper);
   });
   afterEach(() => {
     reset(mockPluginService);
