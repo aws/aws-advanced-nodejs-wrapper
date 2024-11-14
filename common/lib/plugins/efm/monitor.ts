@@ -253,7 +253,7 @@ export class MonitorImpl implements Monitor {
 
         logger.debug(`Opening a monitoring connection to ${this.hostInfo.url}`);
         this.monitoringClient = await this.pluginService.forceConnect(this.hostInfo, monitoringConnProperties);
-        logger.debug(`Successfully opened monitoring connection to ${this.hostInfo.url}`);
+        logger.debug(`Successfully opened monitoring connection to ${this.monitoringClient.id} - ${this.hostInfo.url}`);
         return Promise.resolve(new ConnectionStatus(true, this.getCurrentTimeNano() - startNanos));
       } catch (error: any) {
         this.instanceInvalidCounter.inc();

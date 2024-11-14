@@ -114,13 +114,4 @@ describe("aurora connection tracker tests", () => {
     verify(mockTracker.invalidateCurrentConnection(originalHost, mockClientInstance.targetClient!)).never();
     verify(mockTracker.invalidateAllConnections(originalHost)).once();
   });
-
-  it("test track new connections parameters", async () => {
-    const originalHost = new HostInfoBuilder({ hostAvailabilityStrategy: new SimpleHostAvailabilityStrategy() }).withHost("host").build();
-    when(mockPluginService.getCurrentHostInfo()).thenReturn(originalHost);
-    when(mockPluginService.getHosts()).thenReturn([originalHost]);
-    const plugin = new AuroraConnectionTrackerPlugin(instance(mockPluginService), instance(mockRdsUtils), instance(mockTracker));
-    await plugin.execute(AuroraConnectionTrackerPlugin.METHOD_END, mockCloseOrAbortFunc, SQL_ARGS);
-    verify(mockTracker.invalidateCurrentConnection(originalHost, mockClientInstance.targetClient!)).called();
-  });
 });

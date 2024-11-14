@@ -17,7 +17,7 @@
 import { ClientWrapper } from "./client_wrapper";
 import { HostInfo } from "./host_info";
 import { ClientUtils } from "./utils/client_utils";
-import { uniqueId } from "../logutils";
+import { logger, uniqueId } from "../logutils";
 
 /*
 This is an internal wrapper class for the target community driver client created by the MySQL2DriverDialect.
@@ -47,6 +47,7 @@ export class MySQLClientWrapper implements ClientWrapper {
   }
 
   end(): Promise<void> {
+    logger.info(`ending client: ${this.id}`);
     return this.client?.end();
   }
 
