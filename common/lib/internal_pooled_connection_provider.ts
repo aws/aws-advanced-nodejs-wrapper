@@ -41,8 +41,8 @@ import { PoolClientWrapper } from "./pool_client_wrapper";
 import { logger } from "../logutils";
 
 export class InternalPooledConnectionProvider implements PooledConnectionProvider, CanReleaseResources {
-  static readonly CACHE_CLEANUP_NANOS: bigint = BigInt(60_000_000_000); // 10 minutes
-  static readonly POOL_EXPIRATION_NANOS: bigint = BigInt(1_800_000_000_000); // 30 minutes
+  static readonly CACHE_CLEANUP_NANOS: bigint = BigInt(10 * 60_000_000_000); // 10 minutes
+  static readonly POOL_EXPIRATION_NANOS: bigint = BigInt(30 * 60_000_000_000); // 30 minutes
   protected static databasePools: SlidingExpirationCache<string, any> = new SlidingExpirationCache(
     InternalPooledConnectionProvider.CACHE_CLEANUP_NANOS,
     (pool: any) => pool.getActiveCount() === 0,
