@@ -97,6 +97,8 @@ describe("aurora read write splitting", () => {
     secondaryClient = null;
     provider = null;
     await TestEnvironment.verifyClusterStatus();
+    await TestEnvironment.verifyAllInstancesHasRightState("available");
+    await TestEnvironment.verifyAllInstancesUp();
   }, 1320000);
 
   afterEach(async () => {

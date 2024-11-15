@@ -74,8 +74,14 @@ export class AuroraTestUtility {
       instanceInfo = await this.getDbInstance(instanceId);
       if (instanceInfo !== null) {
         status = instanceInfo["DBInstanceStatus"];
+        logger.info(`Instance ${instanceId} status: ${status.toLowerCase()}`);
       }
     }
+
+    if (!allowedStatuses.includes(status.toLowerCase())) {
+      throw new Error(`Instance ${instanceId} status is still ${status.toLowerCase()}`);
+    }
+    logger.info(`Instance ${instanceId} status: ${status.toLowerCase()}`);
   }
 
   async waitUntilClusterHasDesiredStatus(clusterId: string, desiredStatus: string = "available") {

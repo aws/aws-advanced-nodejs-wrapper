@@ -179,7 +179,7 @@ describe("basic_connectivity", () => {
         password: env.databaseInfo.password,
         port: env.proxyDatabaseInfo.instanceEndpointPort,
         plugins: "",
-        clusterInstanceHostPattern: "?." + env.proxyDatabaseInfo.instanceEndpointSuffix + ":" + env.proxyDatabaseInfo.instanceEndpointPort,
+        clusterInstanceHostPattern: "?." + env.proxyDatabaseInfo.instanceEndpointSuffix,
         enableTelemetry: true,
         telemetryTracesBackend: "OTLP",
         telemetryMetricsBackend: "OTLP"
