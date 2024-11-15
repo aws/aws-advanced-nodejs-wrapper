@@ -51,8 +51,8 @@ The Host Monitoring Connection Plugin may create new monitoring connections to c
 params = {
   plugins: "efm",
   connectTimeout: 1000,
-  internal_query_timeout: 120000,
-  monitoring_internal_query_timeout: 1000
+  mysqlQueryTimeout: 120000,
+  monitoring_mysqlQueryTimeout: 1000
 };
 
 const client = new AwsMySQLClient(params);
