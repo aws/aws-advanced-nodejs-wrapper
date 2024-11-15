@@ -15,7 +15,6 @@
     - [Aurora Initial Connection Strategy Plugin](./using-the-nodejs-wrapper/using-plugins/UsingTheAuroraInitialConnectionStrategyPlugin.md)
     - [AWS Secrets Manager Plugin](./using-the-nodejs-wrapper/using-plugins/UsingTheAwsSecretsManagerPlugin.md)
     - [Aurora Connection Tracker Plugin](./using-the-nodejs-wrapper/using-plugins/UsingTheAuroraConnectionTrackerPlugin.md)
-    - [Read-Write Splitting Plugin](./using-the-nodejs-wrapper/using-plugins/UsingTheReadWriteSplittingPlugin.md)
   - [Host Availability Strategy](./using-the-nodejs-wrapper/HostAvailabilityStrategy.md)
   - [Reader Selection Strategies](./using-the-nodejs-wrapper/ReaderSelectionStrategies.md)
   - [Development Guide](../docs/development-guide/DevelopmentGuide.md)
