@@ -23,7 +23,6 @@ import { AwsPoolClient } from "../../../common/lib/aws_pool_client";
 import { AwsMysqlPoolClient } from "../mysql_pool_client";
 import { MySQLClientWrapper } from "../../../common/lib/mysql_client_wrapper";
 import { HostInfo } from "../../../common/lib/host_info";
-import { logger } from "../../../common/logutils";
 
 export class MySQL2DriverDialect implements DriverDialect {
   protected dialectName: string = this.constructor.name;
@@ -33,16 +32,8 @@ export class MySQL2DriverDialect implements DriverDialect {
   }
 
   async connect(hostInfo: HostInfo, props: Map<string, any>): Promise<ClientWrapper> {
-    try {
-      logger.info("props: " + JSON.stringify(Object.fromEntries(props.entries()), null, 2));
-      const config = WrapperProperties.removeWrapperProperties(props);
-      logger.info("config: " + JSON.stringify(config, null, 2));
-      const targetClient = await createConnection(config);
-      return new MySQLClientWrapper(targetClient, hostInfo, props);
-    } catch (e) {
-      logger.error(e);
-      throw e;
-    }
+    const targetClient = await createConnection(WrapperProperties.removeWrapperProperties(props));
+    return Promise.resolve(new MySQLClientWrapper(targetClient, hostInfo, props));
   }
 
   preparePoolClientProperties(props: Map<string, any>, poolConfig: AwsPoolConfig | undefined): any {

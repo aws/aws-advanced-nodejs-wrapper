@@ -96,7 +96,6 @@ export class TestEnvironment {
     const endTime = Date.now() + 3 * 60 * 1000; // 3min
     const instanceIds: (string | undefined)[] | undefined = info?.databaseInfo.instances.map((instance) => instance.instanceId);
     const instanceIdSet = new Set(instanceIds);
-    let startTime = Date.now();
 
     while (instanceIdSet.size > 0 && Date.now() < endTime) {
       for (const instanceId of instanceIds) {
@@ -107,8 +106,6 @@ export class TestEnvironment {
         switch (info?.request.engine) {
           case DatabaseEngine.PG:
             try {
-              startTime = Date.now();
-              logger.info("Connecting...");
               client = new pkgPg.Client({
                 host: info?.databaseInfo.instances.find((instance) => instance.instanceId === instanceId).host,
                 port: info?.databaseInfo.instanceEndpointPort ?? 5432,
@@ -119,17 +116,12 @@ export class TestEnvironment {
                 connectionTimeoutMillis: 3000
               });
               await client.connect();
-              logger.info(`Connecting in ${Date.now() - startTime} ms`);
 
-              startTime = Date.now();
-              logger.info("Executing query...");
               await client.query("select 1");
-              logger.info(`Execute query in ${Date.now() - startTime} ms`);
               logger.info("Instance " + instanceId + " is up.");
               instanceIdSet.delete(instanceId);
             } catch (e: any) {
               // do nothing; let's continue checking
-              logger.info(`Error checking pg node ${instanceId} in ${Date.now() - startTime} ms: ${e.message}`);
             } finally {
               if (client) {
                 await client.end();
@@ -138,26 +130,20 @@ export class TestEnvironment {
             break;
           case DatabaseEngine.MYSQL:
             try {
-              startTime = Date.now();
-              logger.info("Connecting...");
               client = await createConnection({
                 host: info?.databaseInfo.instances.find((instance) => instance.instanceId === instanceId).host,
                 port: info?.databaseInfo.instanceEndpointPort ?? 3306,
                 user: info?.databaseInfo.username,
                 password: info?.databaseInfo.password,
+                database: info?.databaseInfo.default_db_name,
                 connectTimeout: 3000
               } as ConnectionOptions);
-              logger.info(`Connecting in ${Date.now() - startTime} ms`);
 
-              startTime = Date.now();
-              logger.info("Executing query...");
               await client.query({ sql: "select 1", timeout: 3000 });
-              logger.info(`Execute query in ${Date.now() - startTime} ms`);
               logger.info("Instance " + instanceId + " is up.");
               instanceIdSet.delete(instanceId);
             } catch (e: any) {
               // do nothing; let's continue checking
-              logger.info(`Error checking mysql node ${instanceId} in ${Date.now() - startTime} ms: ${e.message}`);
             } finally {
               if (client) {
                 await client.end();
@@ -238,7 +224,6 @@ export class TestEnvironment {
     }
 
     const testInfo = JSON.parse(infoJson);
-    logger.info("infoJson: " + infoJson);
     const env = new TestEnvironment(testInfo);
     if (env.features.includes(TestEnvironmentFeatures.NETWORK_OUTAGES_ENABLED)) {
       await TestEnvironment.initProxies(env);

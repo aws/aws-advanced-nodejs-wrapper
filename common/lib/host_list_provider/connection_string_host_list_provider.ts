@@ -25,7 +25,6 @@ import { Messages } from "../utils/messages";
 import { WrapperProperties } from "../wrapper_property";
 import { StaticHostListProvider } from "./host_list_provider";
 import { ClientWrapper } from "../client_wrapper";
-import { logger } from "../../logutils";
 
 export class ConnectionStringHostListProvider implements StaticHostListProvider {
   hostList: HostInfo[] = [];
@@ -53,9 +52,6 @@ export class ConnectionStringHostListProvider implements StaticHostListProvider 
       return;
     }
 
-    logger.info("ConnectionStringHostListProvider initialHost: " + this.initialHost);
-    logger.info("ConnectionStringHostListProvider initialPort: " + this.initialPort);
-
     this.hostList.push(
       ...this.connectionUrlParser.getHostsFromConnectionUrl(this.initialHost, this.isSingleWriterConnectionString, this.initialPort, () =>
         this.hostListProviderService.getHostInfoBuilder()
@@ -67,9 +63,6 @@ export class ConnectionStringHostListProvider implements StaticHostListProvider 
     }
 
     this.hostListProviderService.setInitialConnectionHostInfo(this.hostList[0]);
-
-    logger.info("ConnectionStringHostListProvider initialConnectionHostInfo: " + JSON.stringify(this.hostList[0], null, 2));
-
     this.isInitialized = true;
   }
 
