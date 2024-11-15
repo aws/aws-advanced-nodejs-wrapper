@@ -65,7 +65,7 @@ export class WrapperProperties {
   static readonly DIALECT = new WrapperProperty<string>("dialect", "A unique identifier for the supported database dialect.", null);
 
   static readonly INTERNAL_QUERY_TIMEOUT = new WrapperProperty<number>(
-    "internalQueryTimeout",
+    "mysqlQueryTimeout",
     "Timeout in milliseconds for the wrapper to execute internal queries, such as the query for cluster topology",
     20000
   );
