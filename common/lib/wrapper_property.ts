@@ -66,7 +66,7 @@ export class WrapperProperties {
 
   static readonly INTERNAL_QUERY_TIMEOUT = new WrapperProperty<number>(
     "mysqlQueryTimeout",
-    "Timeout in milliseconds for the wrapper to execute internal queries, such as the query for cluster topology",
+    "Timeout in milliseconds for the wrapper to execute queries against MySQL database engines",
     20000
   );
 
