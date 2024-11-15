@@ -39,6 +39,8 @@ export class AwsMySQLClient extends AwsClient {
     [DatabaseDialectCodes.AURORA_MYSQL, new AuroraMySQLDatabaseDialect()],
     [DatabaseDialectCodes.RDS_MULTI_AZ_MYSQL, new RdsMultiAZMySQLDatabaseDialect()]
   ]);
+  private isAutoCommit: boolean = true;
+  private catalog = "";
 
   constructor(config: any) {
     super(config, DatabaseType.MYSQL, AwsMySQLClient.knownDialectsByCode, new MySQLConnectionUrlParser(), new MySQL2DriverDialect());
@@ -135,7 +137,7 @@ export class AwsMySQLClient extends AwsClient {
     this.pluginService.getSessionStateService().setupPristineAutoCommit();
     this.pluginService.getSessionStateService().setAutoCommit(autoCommit);
 
-    this._isAutoCommit = autoCommit;
+    this.isAutoCommit = autoCommit;
     let setting = "1";
     if (!autoCommit) {
       setting = "0";
@@ -144,7 +146,7 @@ export class AwsMySQLClient extends AwsClient {
   }
 
   getAutoCommit(): boolean {
-    return this._isAutoCommit;
+    return this.isAutoCommit;
   }
 
   async setCatalog(catalog: string): Promise<Query | void> {
@@ -155,20 +157,20 @@ export class AwsMySQLClient extends AwsClient {
     this.pluginService.getSessionStateService().setupPristineCatalog();
     this.pluginService.getSessionStateService().setCatalog(catalog);
 
-    this._catalog = catalog;
+    this.catalog = catalog;
     await this.query({ sql: `USE ${catalog}` });
   }
 
   getCatalog(): string {
-    return this._catalog;
+    return this.catalog;
   }
 
   async setSchema(schema: string): Promise<Query | void> {
-    throw new UnsupportedMethodError(Messages.get("Client.methodNotSupported"));
+    throw new UnsupportedMethodError(Messages.get("Client.methodNotSupported", "setSchema"));
   }
 
   getSchema(): string {
-    return this._schema;
+    throw new UnsupportedMethodError(Messages.get("Client.methodNotSupported", "getSchema"));
   }
 
   async setTransactionIsolation(level: TransactionIsolationLevel): Promise<Query | void> {
@@ -242,9 +244,8 @@ export class AwsMySQLClient extends AwsClient {
 
   resetState() {
     this._isReadOnly = false;
-    this._isAutoCommit = true;
-    this._catalog = "";
-    this._schema = "";
+    this.isAutoCommit = true;
+    this.catalog = "";
     this._isolationLevel = TransactionIsolationLevel.TRANSACTION_REPEATABLE_READ;
   }
 }
