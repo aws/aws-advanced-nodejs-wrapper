@@ -29,7 +29,6 @@ import { SqlMethodUtils } from "../utils/sql_method_utils";
 import { ClientWrapper } from "../client_wrapper";
 import { getWriter, logAndThrowError } from "../utils/utils";
 import { CanReleaseResources } from "../can_release_resources";
-import { InternalPooledConnectionProvider } from "../internal_pooled_connection_provider";
 import { PoolClientWrapper } from "../pool_client_wrapper";
 
 export class ReadWriteSplittingPlugin extends AbstractConnectionPlugin implements CanReleaseResources {
@@ -209,7 +208,7 @@ export class ReadWriteSplittingPlugin extends AbstractConnectionPlugin implement
   async switchClientIfRequired(readOnly: boolean) {
     const currentClient = this.pluginService.getCurrentClient();
     if (!(await currentClient.isValid())) {
-      logAndThrowError(Messages.get("ReadWriteSplittingPlugin.setReadOnlyOnClosedClient"));
+      logAndThrowError(Messages.get("ReadWriteSplittingPlugin.setReadOnlyOnClosedClient", currentClient.targetClient?.id ?? "undefined client"));
     }
     try {
       await this.pluginService.refreshHostList();
@@ -257,7 +256,7 @@ export class ReadWriteSplittingPlugin extends AbstractConnectionPlugin implement
     if (newClientHost && newTargetClient) {
       try {
         await this.pluginService.setCurrentClient(newTargetClient, newClientHost);
-        logger.debug(Messages.get("ReadWriteSplittingPlugin.settingCurrentClient", newClientHost.url));
+        logger.debug(Messages.get("ReadWriteSplittingPlugin.settingCurrentClient", newTargetClient.id, newClientHost.url));
       } catch (error) {
         // pass
       }

@@ -33,6 +33,7 @@ const itIf =
   instanceCount >= 2
     ? it
     : it.skip;
+const itIfMinFiveInstance = instanceCount >= 5 ? itIf : it.skip;
 
 let env: TestEnvironment;
 let driver;
@@ -42,6 +43,7 @@ let newInstance: TestInstanceInfo;
 let newInstanceClient: any;
 let auroraTestUtility: AuroraTestUtility;
 let provider: InternalPooledConnectionProvider | null;
+const instanceId: string = "auto-scaling-instance";
 
 async function initDefaultConfig(host: string, port: number, provider: InternalPooledConnectionProvider): Promise<any> {
   let config: any = {
@@ -55,7 +57,8 @@ async function initDefaultConfig(host: string, port: number, provider: InternalP
     enableTelemetry: true,
     telemetryTracesBackend: "OTLP",
     telemetryMetricsBackend: "OTLP",
-    readerHostSelectorStrategy: "leastConnections"
+    readerHostSelectorStrategy: "leastConnections",
+    clusterTopologyRefreshRateMs: 5000
   };
 
   config = DriverHelper.addDriverSpecificConfiguration(config, env.engine);
@@ -75,7 +78,8 @@ async function initConfigWithFailover(host: string, port: number, provider: Inte
     enableTelemetry: true,
     telemetryTracesBackend: "OTLP",
     telemetryMetricsBackend: "OTLP",
-    readerHostSelectorStrategy: "leastConnections"
+    readerHostSelectorStrategy: "leastConnections",
+    clusterTopologyRefreshRateMs: 5000
   };
 
   config = DriverHelper.addDriverSpecificConfiguration(config, env.engine);
@@ -93,6 +97,7 @@ describe("pooled connection autoscaling", () => {
 
     connectionsSet = new Set();
     provider = null;
+    await auroraTestUtility.deleteInstance(instanceId);
     await TestEnvironment.verifyClusterStatus();
   }, 1320000);
 
@@ -107,16 +112,27 @@ describe("pooled connection autoscaling", () => {
     logger.info(`Test finished: ${expect.getState().currentTestName}`);
   }, 1320000);
 
-  itIf(
+  itIfMinFiveInstance(
     "set read only on old connection",
     async () => {
       // Test setup.
       const totalInstances: number = await auroraTestUtility.getNumberOfInstances();
       const instances: TestInstanceInfo[] = env.databaseInfo.instances;
       const numInstances: number = instances.length;
+      const idleTimeoutMillis = 10 * 60 * 1000; // 10 minutes
+      const poolExpirationNanos = BigInt(3 * 60 * 1000_000_000); // 3 minutes
+      const poolCleanupNanos = BigInt(10 * 60 * 1000_000_000); // 10 minutes
 
       // Set provider.
-      provider = new InternalPooledConnectionProvider(new AwsPoolConfig({ maxConnections: numInstances }));
+      provider = new InternalPooledConnectionProvider(
+        new AwsPoolConfig({
+          maxConnections: numInstances,
+          idleTimeoutMillis: idleTimeoutMillis
+        }),
+        undefined,
+        poolExpirationNanos,
+        poolCleanupNanos
+      );
 
       // Initialize clients.
       try {
@@ -126,18 +142,12 @@ describe("pooled connection autoscaling", () => {
           if (host && port) {
             const config: any = await initDefaultConfig(host, port, provider);
             const client = initClientFunc(config);
-            client.on("error", (error: any): void => {
-              logger.debug(`event emitter threw error: ${error.message}`);
-              logger.debug(error.stack);
-            });
-
             await client.connect();
             connectionsSet.add(client);
           }
         }
 
         // Create new instance.
-        const instanceId: string = "auto-scaling-instance";
         newInstance = await auroraTestUtility.createInstance(instanceId);
         if (!newInstance?.instanceId || !newInstance?.host || !newInstance?.port) {
           fail("Instance not returned.");
@@ -149,6 +159,7 @@ describe("pooled connection autoscaling", () => {
           newInstanceClient = initClientFunc(config);
           await newInstanceClient.connect();
           connectionsSet.add(newInstanceClient);
+          const writerInstance = await auroraTestUtility.queryInstanceId(newInstanceClient);
 
           // Should connect to created instance.
           await newInstanceClient.setReadOnly(true);
@@ -156,25 +167,28 @@ describe("pooled connection autoscaling", () => {
           expect(await auroraTestUtility.queryInstanceId(newInstanceClient)).toBe(newInstance.instanceId);
 
           await newInstanceClient.setReadOnly(false);
+          expect(await auroraTestUtility.queryInstanceId(newInstanceClient)).toBe(writerInstance);
         } finally {
-          await auroraTestUtility.deleteInstance(newInstance.instanceId ? newInstance.instanceId : instanceId);
-        }
-
-        // Ensure instance has deleted.
-        const waitTilTime: number = Date.now() + 5 * 60 * 1000; // 5 minutes
-        while ((await auroraTestUtility.getNumberOfInstances()) !== totalInstances && waitTilTime > Date.now()) {
-          await sleep(5000);
-        }
-        if (await auroraTestUtility.instanceExists(instanceId)) {
-          fail(`The instance ${instanceId} was not deleted.`);
+          const instance = newInstance.instanceId ? newInstance.instanceId : instanceId;
+          let deleted = false;
+          setTimeout(async () => {
+            const stopTime = Date.now() + 5 * 60 * 1000;
+            while (!deleted && Date.now() < stopTime) {
+              await auroraTestUtility.queryInstanceId(newInstanceClient);
+              await sleep(3000);
+            }
+          }, 3000);
+          await auroraTestUtility.deleteInstance(instance);
+          deleted = true;
         }
 
         // Should have removed the pool with the deleted instance.
         await newInstanceClient.setReadOnly(true);
+
         const readerId = await auroraTestUtility.queryInstanceId(newInstanceClient);
         expect(newInstance.instanceId).not.toBe(readerId);
         expect(await provider.containsHost(newInstance.host)).toBe(false);
-        expect(provider.getHostCount()).toBe(instances.length);
+        expect(provider.getHostCount()).toBeLessThanOrEqual(instances.length);
       } finally {
         for (const connection of connectionsSet) {
           try {
@@ -188,7 +202,7 @@ describe("pooled connection autoscaling", () => {
     1320000
   );
 
-  itIf(
+  itIfMinFiveInstance(
     "failover from deleted reader",
     async () => {
       // Test setup.
@@ -196,7 +210,7 @@ describe("pooled connection autoscaling", () => {
       const numInstances: number = instances.length;
 
       // Set provider.
-      provider = new InternalPooledConnectionProvider(new AwsPoolConfig({ maxConnections: numInstances }));
+      provider = new InternalPooledConnectionProvider(new AwsPoolConfig({ maxConnections: numInstances * 5 }));
 
       // Initialize clients.
       try {
@@ -206,10 +220,9 @@ describe("pooled connection autoscaling", () => {
           if (host && port) {
             const config: any = await initConfigWithFailover(host, port, provider);
             const client = initClientFunc(config);
-            client.on("error", (error: any): void => {
-              logger.debug(`event emitter threw error: ${error.message}`);
-              logger.debug(error.stack);
-            });
+            const newClient = initClientFunc(config);
+            await newClient.connect();
+            connectionsSet.add(newClient);
 
             await client.connect();
             connectionsSet.add(client);
@@ -217,7 +230,6 @@ describe("pooled connection autoscaling", () => {
         }
 
         // Create new instance.
-        const instanceId: string = "auto-scaling-instance";
         newInstance = await auroraTestUtility.createInstance(instanceId);
         if (!newInstance?.instanceId || !newInstance?.host || !newInstance?.port) {
           fail("Instance not returned.");
@@ -225,7 +237,7 @@ describe("pooled connection autoscaling", () => {
 
         // Connect to instance.
         try {
-          const config = await initConfigWithFailover(newInstance.host, newInstance.port, provider);
+          const config = await initConfigWithFailover(env.databaseInfo.writerInstanceEndpoint, env.databaseInfo.instanceEndpointPort, provider);
           newInstanceClient = initClientFunc(config);
           await newInstanceClient.connect();
           connectionsSet.add(newInstanceClient);

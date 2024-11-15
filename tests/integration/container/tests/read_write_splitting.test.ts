@@ -31,7 +31,12 @@ import { InternalPoolMapping } from "../../../../common/lib/utils/internal_pool_
 import { HostInfo } from "../../../../common/lib/host_info";
 
 const itIf =
-  !features.includes(TestEnvironmentFeatures.PERFORMANCE) && features.includes(TestEnvironmentFeatures.IAM) && instanceCount >= 2 ? it : it.skip;
+  !features.includes(TestEnvironmentFeatures.PERFORMANCE) &&
+  features.includes(TestEnvironmentFeatures.IAM) &&
+  !features.includes(TestEnvironmentFeatures.RUN_AUTOSCALING_TESTS_ONLY) &&
+  instanceCount >= 2
+    ? it
+    : it.skip;
 const itIfMinThreeInstance = instanceCount >= 3 ? itIf : it.skip;
 const itIfMinFiveInstance = instanceCount >= 5 ? itIf : it.skip;
 
