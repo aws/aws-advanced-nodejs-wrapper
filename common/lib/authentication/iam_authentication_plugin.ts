@@ -25,8 +25,6 @@ import { AbstractConnectionPlugin } from "../abstract_connection_plugin";
 import { WrapperProperties } from "../wrapper_property";
 import { IamAuthUtils, TokenInfo } from "../utils/iam_auth_utils";
 import { ClientWrapper } from "../client_wrapper";
-import { AwsCredentialIdentityProvider } from "@smithy/types/dist-types/identity/awsCredentialIdentity";
-import { TelemetryTraceLevel } from "../utils/telemetry/telemetry_trace_level";
 
 export class IamAuthenticationPlugin extends AbstractConnectionPlugin {
   private static readonly SUBSCRIBED_METHODS = new Set<string>(["connect", "forceConnect"]);

@@ -48,8 +48,8 @@ const mockHostInfo = mock(HostInfo);
 const mockDialect = mock<DatabaseDialect>();
 const mockInitialClientWrapper: ClientWrapper = mock(MySQLClientWrapper);
 
-const mockConnectFunc = jest.fn().mockImplementation(() => {
-  return mockInitialClientWrapper;
+const mockConnectFunc = jest.fn(() => {
+  return Promise.resolve(mockInitialClientWrapper);
 });
 
 describe("test_stale_dns_helper", () => {

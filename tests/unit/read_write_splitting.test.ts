@@ -72,11 +72,11 @@ const poolClientWrapper: ClientWrapper = new PoolClientWrapper(undefined, writer
 
 const clientWrapper_undefined: any = undefined;
 
-const mockConnectFunc = jest.fn().mockImplementation(() => {
-  return mockReaderClient;
+const mockConnectFunc = jest.fn(() => {
+  return Promise.resolve(mockReaderWrapper);
 });
 
-const mockExecuteFuncThrowsFailoverSuccessError = jest.fn().mockImplementation(() => {
+const mockExecuteFuncThrowsFailoverSuccessError = jest.fn(() => {
   throw new FailoverSuccessError("test");
 });
 
