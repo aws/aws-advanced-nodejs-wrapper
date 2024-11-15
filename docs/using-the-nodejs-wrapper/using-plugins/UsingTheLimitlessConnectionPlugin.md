@@ -63,4 +63,4 @@ To mitigate this, consider setting connection properties that can reduce the num
 
 ## Sample Code
 
-[Limitless Postgresql Example](../../../examples/AWSDriverExample/src/main/java/software/amazon/LimitlessPostgresqlExample.java)
+[Limitless Postgresql Example](../../../examples/aws_driver_example/aws_limitless_postgresql_example.ts)

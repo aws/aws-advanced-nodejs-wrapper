@@ -146,7 +146,8 @@ For more information on how to run the integration tests, please visit [Integrat
 
 #### Sample Code
 
-[Connection Test Sample Code](./../../examples/aws_driver_example/aws_simple_connection_postgresql_example.ts)
+[Postgres Connection Test Sample Code](./../../examples/aws_driver_example/aws_simple_connection_postgresql_example.ts)<br>
+[MySQL Connection Test Sample Code](./../../examples/aws_driver_example/aws_simple_connection_mysql_example.ts)
 
 ## Architecture
 

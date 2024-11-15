@@ -37,7 +37,7 @@ Visit [this page](./docs/using-the-nodejs-wrapper/SupportForRDSMultiAzDBCluster.
 
 The AWS Advanced NodeJS Wrapper also works with RDS provided databases that are not Aurora.
 
-Please visit [this page](./docs/using-the-nodejs-wrapper/UsingTheNodeJSWrapper.md#using-the-aws-advanced-nodejs-wrapper-with-plain-rds-databases) for more information.
+Please visit [this page](./docs/using-the-nodejs-wrapper/UsingTheNodejsWrapper.md#using-the-aws-advanced-nodejs-wrapper-with-plain-rds-databases) for more information.
 
 ## Getting Started
 

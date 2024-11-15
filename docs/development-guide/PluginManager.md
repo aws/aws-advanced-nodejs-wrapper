@@ -7,7 +7,7 @@ The plugin manager has the following main functionalities:
 
 ## Load and Initialize Plugins
 
-The plugin manager initializes all plugins with codes given to the [`plugins`](../UsingTheNodejsWrapper.md#connection-plugin-manager-parameters) connection parameter.
+The plugin manager initializes all plugins with codes given to the [`plugins`](../using-the-nodejs-wrapper/UsingTheNodejsWrapper.md#connection-plugin-manager-parameters) connection parameter.
 
 ## Initiate Pipelines
 
