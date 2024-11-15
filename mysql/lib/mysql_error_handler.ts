@@ -47,7 +47,6 @@ export class MySQLErrorHandler implements ErrorHandler {
       e.message.includes("Query inactivity timeout") ||
       e.message.includes("Can't add new command when connection is in closed state") ||
       e.message.includes(Messages.get("ClientUtils.queryTaskTimeout")) ||
-      e.message.includes("connect ECONNREFUSED") ||
       // Pooled connection network errors
       e.message.includes("connect ETIMEDOUT") ||
       e.message.includes("connect ECONNREFUSED")
