@@ -133,6 +133,6 @@ export class IamAuthenticationPlugin extends AbstractConnectionPlugin {
   }
 
   static clearCache(): void {
-    this.tokenCache.clear();
+    IamAuthenticationPlugin.tokenCache.clear();
   }
 }

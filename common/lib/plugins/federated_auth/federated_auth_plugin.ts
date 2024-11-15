@@ -120,6 +120,6 @@ export class FederatedAuthPlugin extends AbstractConnectionPlugin {
   }
 
   public static clearCache(): void {
-    this.tokenCache.clear();
+    FederatedAuthPlugin.tokenCache.clear();
   }
 }
