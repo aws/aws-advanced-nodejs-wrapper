@@ -38,9 +38,6 @@ export abstract class AwsClient extends EventEmitter {
   protected pluginService: PluginService;
   protected isConnected: boolean = false;
   protected _isReadOnly: boolean = false;
-  protected _isAutoCommit: boolean = true;
-  protected _catalog: string = "";
-  protected _schema: string = "";
   protected _isolationLevel: number = 0;
   protected _connectionUrlParser: ConnectionUrlParser;
   readonly properties: Map<string, any>;

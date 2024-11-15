@@ -38,6 +38,7 @@ export class AwsPGClient extends AwsClient {
     [DatabaseDialectCodes.AURORA_PG, new AuroraPgDatabaseDialect()],
     [DatabaseDialectCodes.RDS_MULTI_AZ_PG, new RdsMultiAZPgDatabaseDialect()]
   ]);
+  private schema: string = "";
 
   constructor(config: any) {
     super(config, DatabaseType.POSTGRES, AwsPGClient.knownDialectsByCode, new PgConnectionUrlParser(), new NodePostgresDriverDialect());
@@ -120,11 +121,11 @@ export class AwsPGClient extends AwsClient {
   }
 
   async setAutoCommit(autoCommit: boolean): Promise<QueryResult | void> {
-    throw new UnsupportedMethodError(Messages.get("Client.methodNotSupported"));
+    throw new UnsupportedMethodError(Messages.get("Client.methodNotSupported", "setAutoCommit"));
   }
 
   getAutoCommit(): boolean {
-    return this._isAutoCommit;
+    throw new UnsupportedMethodError(Messages.get("Client.methodNotSupported", "getAutoCommit"));
   }
 
   async setTransactionIsolation(level: number): Promise<QueryResult | void> {
@@ -159,11 +160,11 @@ export class AwsPGClient extends AwsClient {
   }
 
   async setCatalog(catalog: string): Promise<void> {
-    throw new UnsupportedMethodError(Messages.get("Client.methodNotSupported"));
+    throw new UnsupportedMethodError(Messages.get("Client.methodNotSupported", "setCatalog"));
   }
 
   getCatalog(): string {
-    return this._catalog;
+    throw new UnsupportedMethodError(Messages.get("Client.methodNotSupported", "getCatalog"));
   }
 
   async setSchema(schema: string): Promise<QueryResult | void> {
@@ -174,12 +175,12 @@ export class AwsPGClient extends AwsClient {
     this.pluginService.getSessionStateService().setupPristineSchema();
     this.pluginService.getSessionStateService().setSchema(schema);
 
-    this._schema = schema;
+    this.schema = schema;
     return await this.query(`SET search_path TO ${schema};`);
   }
 
   getSchema(): string {
-    return this._schema;
+    return this.schema;
   }
 
   async end() {
@@ -220,9 +221,7 @@ export class AwsPGClient extends AwsClient {
 
   resetState() {
     this._isReadOnly = false;
-    this._isAutoCommit = true;
-    this._catalog = "";
-    this._schema = "";
+    this.schema = "";
     this._isolationLevel = TransactionIsolationLevel.TRANSACTION_READ_COMMITTED;
   }
 }

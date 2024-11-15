@@ -18,7 +18,9 @@ import { ExecuteTimePlugin } from "../../common/lib/plugins/execute_time_plugin"
 import { sleep } from "../../common/lib/utils/utils";
 import { jest } from "@jest/globals";
 
-const mockCallable = jest.fn();
+const mockCallable = jest.fn(() => {
+  return Promise.resolve();
+});
 const timeToSleepMs = 1000;
 const acceptableTimeMs = 995;
 const acceptableTimeNs = acceptableTimeMs * 1000000;

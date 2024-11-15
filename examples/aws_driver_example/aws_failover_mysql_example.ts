@@ -21,7 +21,7 @@ const mysqlHost = "db-identifier.XYZ.us-east-2.rds.amazonaws.com";
 const username = "john_smith";
 const password = "employees";
 const database = "database";
-const port = 5432;
+const port = 3306;
 
 const client = new AwsMySQLClient({
   // Configure connection parameters, failover plugin enabled by default.

@@ -40,7 +40,7 @@ When connecting to Aurora clusters, the [`clusterInstanceHostPattern`](#failover
 
 ## Failover Errors
 
-| Exceptions                        | Is the connection valid? | Can the connection be reused? | Has the session state changed? | Does the session need to be reconfigured? | Does the last statement need to be re-executed? | Does the transaction need to be restarted? |
+| Errors                            | Is the connection valid? | Can the connection be reused? | Has the session state changed? | Does the session need to be reconfigured? | Does the last statement need to be re-executed? | Does the transaction need to be restarted? |
 | --------------------------------- | ------------------------ | ----------------------------- | ------------------------------ | ----------------------------------------- | ----------------------------------------------- | ------------------------------------------ |
 | FailoverFailedError               | No                       | No                            | N/A                            | N/A                                       | Yes                                             | Yes                                        |
 | FailoverSuccessError              | Yes                      | Yes                           | Yes                            | Yes                                       | Yes                                             | N/A                                        |
@@ -70,7 +70,7 @@ When the AWS Advanced NodeJS Wrapper throws a `TransactionResolutionUnknownError
 
 #### Sample Code
 
-[PostgreSQL Failover Sample Code](../../../examples/aws_driver_example/aws_failover_postgresql_example.ts)
+[PostgreSQL Failover Sample Code](../../../examples/aws_driver_example/aws_failover_postgresql_example.ts)<br>
 [MySQL Failover Sample Code](../../../examples/aws_driver_example/aws_failover_mysql_example.ts)
 
 > [!WARNING]
@@ -78,8 +78,6 @@ When the AWS Advanced NodeJS Wrapper throws a `TransactionResolutionUnknownError
 > #### Warnings About Proper Usage of the AWS Advanced NodeJS Wrapper
 >
 > 1.  Some users may wrap invocations against a Client object in a try-catch block or add a `.catch()` block to the invocation, and dispose of the Client object if an Error occurs. In this case, the application will lose the fast-failover functionality offered by the NodeJS Wrapper. When failover occurs, the NodeJS Wrapper internally establishes a ready-to-use connection inside the original Client object before throwing an Error to the user. If this Client object is disposed of, the newly established connection will be thrown away. The correct practice is to check the error type of the Error and reuse the Client object if the error code indicates successful failover. The [PostgreSQL Failover Sample Code](./../../../examples/aws_driver_example/aws_failover_postgresql_example.ts) and [MySQL Failover Sample Code](./../../../examples/aws_driver_example/aws_failover_mysql_example.ts) demonstrates this practice. See the section about [Failover Errors](#failover-errors) for more details.
-
-    <br><br>
 
 > 2.  We highly recommended that you use the cluster and read-only cluster endpoints instead of the direct instance endpoints of your Aurora cluster, unless you are confident in your application's use of instance endpoints. Although the NodeJS Wrapper will correctly failover to the new writer instance when using instance endpoints, use of these endpoints is discouraged because individual instances can spontaneously change reader/writer status when failover occurs. The NodeJS Wrapper will always connect directly to the instance specified if an instance endpoint is provided, so a write-safe connection cannot be assumed if the application uses instance endpoints.
 
