@@ -127,6 +127,5 @@ export class OpenedConnectionTracker {
         queue.filter((connWeakRef: WeakRef<ClientWrapper>) => connWeakRef.deref())
       );
     }
-    this.logOpenedConnections();
   }
 }
