@@ -34,10 +34,12 @@ export class IamAuthUtils {
 
   public static getIamPort(props: Map<string, any>, hostInfo: HostInfo, defaultPort: number): number {
     const port = WrapperProperties.IAM_DEFAULT_PORT.get(props);
-    if (port > 0) {
-      return port;
-    } else {
-      logger.debug(Messages.get("Authentication.invalidPort", isNaN(port) ? "-1" : String(port)));
+    if (port) {
+      if (isNaN(port) || port <= 0) {
+        logger.debug(Messages.get("Authentication.invalidPort", isNaN(port) ? "-1" : String(port)));
+      } else {
+        return port;
+      }
     }
 
     if (hostInfo.isPortSpecified()) {
