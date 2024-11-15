@@ -105,6 +105,7 @@
   "Authentication.connectException": "Error occurred while opening a connection: %s",
   "Authentication.unhandledException": "Unhandled exception: %s",
   "Authentication.invalidPort": "Port number: %d is not valid. Port number should be greater than zero. Falling back to default port.",
+  "AuthenticationToken.tokenExpirationLessThanZero": "Authentication token expiration time less than O",
   "AuthenticationToken.useCachedToken": "Use cached authentication token = '%s'",
   "AuthenticationToken.generatedNewToken": "Generated new authentication token = '%s'",
   "OktaCredentialsProviderFactory.samlAssertionUrl": "Okta SAML assertion URL: '%s'",

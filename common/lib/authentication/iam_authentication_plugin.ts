@@ -78,7 +78,9 @@ export class IamAuthenticationPlugin extends AbstractConnectionPlugin {
     const region: string = IamAuthUtils.getRdsRegion(host, this.rdsUtil, props);
     const port = IamAuthUtils.getIamPort(props, hostInfo, this.pluginService.getCurrentClient().defaultPort);
     const tokenExpirationSec = WrapperProperties.IAM_TOKEN_EXPIRATION.get(props);
-
+    if (tokenExpirationSec < 0) {
+      throw new AwsWrapperError(Messages.get("AuthenticationToken.tokenExpirationLessThanZero"));
+    }
     const cacheKey: string = IamAuthUtils.getCacheKey(port, user, host, region);
 
     const tokenInfo = IamAuthenticationPlugin.tokenCache.get(cacheKey);
@@ -88,6 +90,7 @@ export class IamAuthenticationPlugin extends AbstractConnectionPlugin {
       logger.debug(Messages.get("AuthenticationToken.useCachedToken", tokenInfo.token));
       WrapperProperties.PASSWORD.set(props, tokenInfo.token);
     } else {
+
       const tokenExpiry: number = Date.now() + tokenExpirationSec * 1000;
       const token = await IamAuthUtils.generateAuthenticationToken(
         host,
