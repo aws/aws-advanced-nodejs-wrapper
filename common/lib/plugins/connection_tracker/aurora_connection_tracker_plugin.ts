@@ -28,10 +28,7 @@ import { HostRole } from "../../host_role";
 import { OpenedConnectionTracker } from "./opened_connection_tracker";
 
 export class AuroraConnectionTrackerPlugin extends AbstractConnectionPlugin implements CanReleaseResources {
-  static readonly METHOD_END: string = "end";
-  private static readonly subscribedMethods = new Set<string>(
-    ["connect", "forceConnect", "notifyHostListChanged"].concat(SubscribedMethodHelper.NETWORK_BOUND_METHODS)
-  );
+  private static readonly subscribedMethods = new Set<string>(["notifyHostListChanged"].concat(SubscribedMethodHelper.NETWORK_BOUND_METHODS));
 
   private readonly pluginService: PluginService;
   private readonly rdsUtils: RdsUtils;
@@ -85,14 +82,11 @@ export class AuroraConnectionTrackerPlugin extends AbstractConnectionPlugin impl
   }
 
   override async execute<T>(methodName: string, methodFunc: () => Promise<T>, methodArgs: any[]): Promise<T> {
-    const currentHostInfo = this.pluginService.getCurrentHostInfo();
     this.rememberWriter();
 
     try {
       const result = await methodFunc();
-      if (methodName === AuroraConnectionTrackerPlugin.METHOD_END) {
-        this.tracker.invalidateCurrentConnection(currentHostInfo, this.pluginService.getCurrentClient().targetClient!);
-      } else if (this.needUpdateCurrentWriter) {
+      if (this.needUpdateCurrentWriter) {
         await this.checkWriterChanged();
       }
       return result;
@@ -131,7 +125,7 @@ export class AuroraConnectionTrackerPlugin extends AbstractConnectionPlugin impl
   }
 
   async notifyHostListChanged(changes: Map<string, Set<HostChangeOptions>>): Promise<void> {
-    for (const [key, value] of changes.entries()) {
+    for (const [key, _] of changes.entries()) {
       const hostChanges = changes.get(key);
       if (hostChanges) {
         if (hostChanges.has(HostChangeOptions.PROMOTED_TO_READER)) {

@@ -218,7 +218,9 @@ export class AwsMySQLClient extends AwsClient {
       this.properties,
       "end",
       () => {
-        return ClientUtils.queryWithTimeout(this.targetClient!.end(), this.properties);
+        const res = ClientUtils.queryWithTimeout(this.targetClient!.end(), this.properties);
+        this.targetClient = null;
+        return res;
       },
       null
     );

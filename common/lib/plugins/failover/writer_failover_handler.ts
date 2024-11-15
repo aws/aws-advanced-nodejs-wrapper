@@ -169,6 +169,7 @@ export class ClusterAwareWriterFailoverHandler implements WriterFailoverHandler 
         result.isNewHost
           ? "ClusterAwareWriterFailoverHandler.successfullyConnectedToNewWriterInstance"
           : "ClusterAwareWriterFailoverHandler.successfullyReconnectedToWriterInstance",
+        result.client.id,
         newWriterHost
       )
     );

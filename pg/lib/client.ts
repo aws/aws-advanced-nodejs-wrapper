@@ -195,7 +195,9 @@ export class AwsPGClient extends AwsClient {
       this.properties,
       "end",
       () => {
-        return this.targetClient!.end();
+        const res = this.targetClient!.end();
+        this.targetClient = null;
+        return res;
       },
       null
     );

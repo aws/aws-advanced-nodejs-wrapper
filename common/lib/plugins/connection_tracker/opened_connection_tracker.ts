@@ -73,20 +73,6 @@ export class OpenedConnectionTracker {
     }
   }
 
-  invalidateCurrentConnection(hostInfo: HostInfo | null, client: ClientWrapper): void {
-    const host = OpenedConnectionTracker.rdsUtils.isRdsInstance(hostInfo!.host)
-      ? hostInfo!.asAlias
-      : [...hostInfo!.aliases].filter((x) => OpenedConnectionTracker.rdsUtils.removePort(x)).at(0);
-
-    if (!host) {
-      return;
-    }
-
-    const connectionQueue = OpenedConnectionTracker.openedConnections.get(host);
-    this.logConnectionQueue(host, connectionQueue!);
-    connectionQueue!.filter((x) => x.deref() !== client);
-  }
-
   private trackConnection(instanceEndpoint: string, client: ClientWrapper): void {
     const connectionQueue = MapUtils.computeIfAbsent(
       OpenedConnectionTracker.openedConnections,
@@ -136,7 +122,10 @@ export class OpenedConnectionTracker {
 
   pruneNullConnections(): void {
     for (const [key, queue] of OpenedConnectionTracker.openedConnections) {
-      queue.filter((connWeakRef: WeakRef<ClientWrapper>) => connWeakRef);
+      OpenedConnectionTracker.openedConnections.set(
+        key,
+        queue.filter((connWeakRef: WeakRef<ClientWrapper>) => connWeakRef.deref())
+      );
     }
   }
 }

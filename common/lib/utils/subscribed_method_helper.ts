@@ -15,6 +15,6 @@
 */
 
 export class SubscribedMethodHelper {
-  static readonly NETWORK_BOUND_METHODS: string[] = ["connect", "query", "rollback"];
-  static readonly METHODS_REQUIRING_UPDATED_TOPOLOGY: string[] = ["connect", "query"];
+  static readonly NETWORK_BOUND_METHODS: string[] = ["connect", "forceConnect", "query", "rollback"];
+  static readonly METHODS_REQUIRING_UPDATED_TOPOLOGY: string[] = ["connect", "forceConnect", "query"];
 }
