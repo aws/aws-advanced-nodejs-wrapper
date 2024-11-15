@@ -34,9 +34,15 @@ const props = new Map<string, any>();
 const SQL_ARGS = ["sql"];
 
 const mockPluginService = mock(PluginService);
-const mockSqlFunc = jest.fn();
-const mockConnectFunc = jest.fn();
-const mockCloseOrAbortFunc = jest.fn();
+const mockSqlFunc = jest.fn(() => {
+  return Promise.resolve("0");
+});
+const mockConnectFunc = jest.fn(() => {
+  return Promise.resolve(mockClientWrapper);
+});
+const mockCloseOrAbortFunc = jest.fn(() => {
+  return Promise.resolve();
+});
 const mockTracker = mock(OpenedConnectionTracker);
 const mockRdsUtils = mock(RdsUtils);
 const mockClient = mock(AwsClient);

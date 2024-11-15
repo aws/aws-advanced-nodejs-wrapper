@@ -30,7 +30,7 @@ import { ConnectionProviderManager } from "../../common/lib/connection_provider_
 import { NullTelemetryFactory } from "../../common/lib/utils/telemetry/null_telemetry_factory";
 import { AbstractConnectionPlugin } from "../../common/lib/abstract_connection_plugin";
 import { ConnectionPluginFactory } from "../../common/lib/plugin_factory";
-import { PluginManager } from "../../common/lib/plugin_manager";
+import { PluginManager } from "../../common/lib";
 
 const mockPluginService: PluginService = mock(PluginService);
 const mockPluginServiceInstance: PluginService = instance(mockPluginService);

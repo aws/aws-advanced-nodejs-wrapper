@@ -28,7 +28,6 @@ Enhanced Failure Monitoring will be enabled by default if the [`plugins`](../Usi
 Each connection has its own set of parameters. The `failureDetectionTime` is how long the monitor waits after a SQL query is started to send a probe to a database instance. The `failureDetectionInterval` is how often the monitor sends a probe to a database instance. The `failureDetectionCount` is how many times a monitor probe can go unacknowledged before the database instance is deemed unhealthy.
 
 To determine the health of a database instance:
-To determine the health of a database instance:
 
 1. The monitor will first wait for a time equivalent to the `failureDetectionTime`.
 2. Then, every `failureDetectionInterval`, the monitor will send a probe to the database instance.

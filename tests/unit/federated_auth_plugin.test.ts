@@ -29,6 +29,7 @@ const { Credentials } = pkgAwsSdk;
 import { HostRole } from "../../common/lib/host_role";
 import { NullTelemetryFactory } from "../../common/lib/utils/telemetry/null_telemetry_factory";
 import { jest } from "@jest/globals";
+import { PgClientWrapper } from "../../common/lib/pg_client_wrapper";
 
 const testToken = "testToken";
 const defaultPort = 5432;
@@ -48,8 +49,8 @@ const mockPluginService = mock(PluginService);
 const mockCredentialsProviderFactory = mock<CredentialsProviderFactory>();
 const spyIamUtils = spy(IamAuthUtils);
 const mockCredentials = mock(Credentials);
-const mockConnectFunc = jest.fn().mockImplementation(() => {
-  return;
+const mockConnectFunc = jest.fn(() => {
+  return Promise.resolve(mock(PgClientWrapper));
 });
 
 describe("federatedAuthTest", () => {

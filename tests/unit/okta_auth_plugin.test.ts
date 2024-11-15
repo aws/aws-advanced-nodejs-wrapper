@@ -28,6 +28,7 @@ const { Credentials } = pkgAwsSdk;
 import { OktaAuthPlugin } from "../../common/lib/plugins/federated_auth/okta_auth_plugin";
 import { NullTelemetryFactory } from "../../common/lib/utils/telemetry/null_telemetry_factory";
 import { jest } from "@jest/globals";
+import { PgClientWrapper } from "../../common/lib/pg_client_wrapper";
 
 const defaultPort = 1234;
 const host = "pg.testdb.us-east-2.rds.amazonaws.com";
@@ -44,8 +45,8 @@ const mockDialectInstance = instance(mockDialect);
 const mockCredentials = mock(Credentials);
 const spyIamUtils = spy(IamAuthUtils);
 const mockCredentialsProviderFactory = mock<CredentialsProviderFactory>();
-const mockConnectFunc = jest.fn().mockImplementation(() => {
-  return;
+const mockConnectFunc = jest.fn(() => {
+  return Promise.resolve(mock(PgClientWrapper));
 });
 
 describe("oktaAuthTest", () => {
