@@ -19,6 +19,7 @@ import { HostListProviderService } from "../host_list_provider_service";
 import { ClientWrapper } from "../client_wrapper";
 import { FailoverRestriction } from "../plugins/failover/failover_restriction";
 import { ErrorHandler } from "../error_handler";
+import { SessionState } from "../session_state";
 
 export enum DatabaseType {
   MYSQL,
@@ -26,10 +27,21 @@ export enum DatabaseType {
 }
 
 export interface DatabaseDialect {
+  readonly defaultAutoCommit?: boolean;
+  readonly defaultReadOnly?: boolean;
+  readonly defaultTransactionIsolation?: number;
+  readonly defaultCatalog?: string;
+  readonly defaultSchema?: string;
+
   getDefaultPort(): number;
   getHostAliasQuery(): string;
   getHostAliasAndParseResults(targetClient: ClientWrapper): Promise<string>;
   getServerVersionQuery(): string;
+  getSetReadOnlyQuery(readOnly: boolean): string;
+  getSetAutoCommitQuery(autoCommit: boolean): string;
+  getSetTransactionIsolationQuery(level: number): string;
+  getSetCatalogQuery(catalog: string): string;
+  getSetSchemaQuery(schema: string): string;
   getDialectUpdateCandidates(): string[];
   getErrorHandler(): ErrorHandler;
   isDialect(targetClient: ClientWrapper): Promise<boolean>;
@@ -43,4 +55,5 @@ export interface DatabaseDialect {
   doesStatementSetAutoCommit(statement: string): boolean | undefined;
   doesStatementSetSchema(statement: string): string | undefined;
   doesStatementSetCatalog(statement: string): string | undefined;
+  setDefaultSessionState(sessionState: SessionState): void;
 }

@@ -18,6 +18,8 @@ import { ClientWrapper } from "./client_wrapper";
 import { HostInfo } from "./host_info";
 import { ClientUtils } from "./utils/client_utils";
 import { uniqueId } from "../logutils";
+import { SessionState } from "./session_state";
+import { TransactionIsolationLevel } from "./utils/transaction_isolation_level";
 import { DriverDialect } from "./driver_dialect/driver_dialect";
 
 /*
@@ -29,6 +31,7 @@ export class MySQLClientWrapper implements ClientWrapper {
   readonly hostInfo: HostInfo;
   readonly properties: Map<string, string>;
   readonly id: string;
+  readonly sessionState: SessionState = new SessionState();
 
   /**
    * Creates a wrapper for the target community driver client.
@@ -44,6 +47,8 @@ export class MySQLClientWrapper implements ClientWrapper {
     this.properties = properties;
     this.driverDialect = driverDialect;
     this.id = uniqueId("MySQLClient_");
+
+    this.setSessionStateDefault();
   }
 
   query(sql: any): Promise<any> {
@@ -69,5 +74,12 @@ export class MySQLClientWrapper implements ClientWrapper {
     } catch (error: any) {
       // ignore
     }
+  }
+
+  setSessionStateDefault() {
+    this.sessionState.readOnly.value = false;
+    this.sessionState.autoCommit.value = true;
+    this.sessionState.catalog.value = "";
+    this.sessionState.transactionIsolation.value = TransactionIsolationLevel.TRANSACTION_REPEATABLE_READ;
   }
 }

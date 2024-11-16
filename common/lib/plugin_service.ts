@@ -44,6 +44,7 @@ import { getWriter } from "./utils/utils";
 import { TelemetryFactory } from "./utils/telemetry/telemetry_factory";
 import { DriverDialect } from "./driver_dialect/driver_dialect";
 import { ConfigurationProfile } from "./profile/configuration_profile";
+import { SessionState } from "./session_state";
 
 export class PluginService implements ErrorHandler, HostListProviderService {
   private readonly _currentClient: AwsClient;
@@ -75,10 +76,10 @@ export class PluginService implements ErrorHandler, HostListProviderService {
     this.dbDialectProvider = new DatabaseDialectManager(knownDialectsByCode, dbType, this.props);
     this.driverDialect = driverDialect;
     this.initialHost = props.get(WrapperProperties.HOST.name);
-    this.sessionStateService = new SessionStateServiceImpl(this, this.props);
     container.pluginService = this;
 
     this.dialect = WrapperProperties.CUSTOM_DATABASE_DIALECT.get(this.props) ?? this.dbDialectProvider.getDialect(this.props);
+    this.sessionStateService = new SessionStateServiceImpl(this, this.props);
   }
 
   isInTransaction(): boolean {
@@ -333,7 +334,6 @@ export class PluginService implements ErrorHandler, HostListProviderService {
           this.sessionStateService.begin();
 
           try {
-            this.getCurrentClient().resetState();
             this.getCurrentClient().targetClient = newClient;
             this._currentHostInfo = hostInfo;
             await this.sessionStateService.applyCurrentSessionState(this.getCurrentClient());
@@ -386,6 +386,8 @@ export class PluginService implements ErrorHandler, HostListProviderService {
   async abortCurrentClient(): Promise<void> {
     if (this._currentClient.targetClient) {
       await this._currentClient.targetClient.abort();
+      // this.setInTransaction(false);
+      // this.getSessionStateService().reset();
     }
   }
 
@@ -432,35 +434,35 @@ export class PluginService implements ErrorHandler, HostListProviderService {
   private async updateReadOnly(statements: string[]) {
     const updateReadOnly = SqlMethodUtils.doesSetReadOnly(statements, this.getDialect());
     if (updateReadOnly !== undefined) {
-      await this.getCurrentClient().setReadOnly(updateReadOnly);
+      this.getSessionStateService().setReadOnly(updateReadOnly);
     }
   }
 
   private async updateAutoCommit(statements: string[]) {
     const updateAutoCommit = SqlMethodUtils.doesSetAutoCommit(statements, this.getDialect());
     if (updateAutoCommit !== undefined) {
-      await this.getCurrentClient().setAutoCommit(updateAutoCommit);
+      this.getSessionStateService().setAutoCommit(updateAutoCommit);
     }
   }
 
   private async updateCatalog(statements: string[]) {
     const updateCatalog = SqlMethodUtils.doesSetCatalog(statements, this.getDialect());
     if (updateCatalog !== undefined) {
-      await this.getCurrentClient().setCatalog(updateCatalog);
+      this.getSessionStateService().setCatalog(updateCatalog);
     }
   }
 
   private async updateSchema(statements: string[]) {
     const updateSchema = SqlMethodUtils.doesSetSchema(statements, this.getDialect());
     if (updateSchema !== undefined) {
-      await this.getCurrentClient().setSchema(updateSchema);
+      this.getSessionStateService().setSchema(updateSchema);
     }
   }
 
   private async updateTransactionIsolation(statements: string[]) {
     const updateTransactionIsolation = SqlMethodUtils.doesSetTransactionIsolation(statements, this.getDialect());
     if (updateTransactionIsolation !== undefined) {
-      await this.getCurrentClient().setTransactionIsolation(updateTransactionIsolation);
+      this.getSessionStateService().setTransactionIsolation(updateTransactionIsolation);
     }
   }
 

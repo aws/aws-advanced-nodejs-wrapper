@@ -28,6 +28,7 @@ export interface SessionStateService {
   setReadOnly(readOnly: boolean): void;
   setupPristineReadOnly(): boolean | undefined;
   setupPristineReadOnly(readOnly: boolean): boolean | undefined;
+  updateReadOnly(readOnly: boolean): void;
 
   // catalog
   getCatalog(): string | undefined;
