@@ -57,6 +57,10 @@ export class PgDatabaseDialect implements DatabaseDialect {
     return "SELECT 'version', VERSION()";
   }
 
+  getSetReadOnlyQuery(readOnly: boolean): string {
+    return `SET SESSION CHARACTERISTICS AS TRANSACTION READ ${readOnly ? "ONLY" : "WRITE"}`;
+  }
+
   async isDialect(targetClient: ClientWrapper): Promise<boolean> {
     return await targetClient
       .query("SELECT 1 FROM pg_proc LIMIT 1")

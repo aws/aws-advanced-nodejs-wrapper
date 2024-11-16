@@ -24,7 +24,6 @@ import { PgDatabaseDialect } from "./dialect/pg_database_dialect";
 import { AuroraPgDatabaseDialect } from "./dialect/aurora_pg_database_dialect";
 import { AwsWrapperError, UnsupportedMethodError } from "../../common/lib/utils/errors";
 import { Messages } from "../../common/lib/utils/messages";
-import { TransactionIsolationLevel } from "../../common/lib/utils/transaction_isolation_level";
 import { ClientWrapper } from "../../common/lib/client_wrapper";
 import { RdsMultiAZPgDatabaseDialect } from "./dialect/rds_multi_az_pg_database_dialect";
 import { HostInfo } from "../../common/lib/host_info";
@@ -38,11 +37,9 @@ export class AwsPGClient extends AwsClient {
     [DatabaseDialectCodes.AURORA_PG, new AuroraPgDatabaseDialect()],
     [DatabaseDialectCodes.RDS_MULTI_AZ_PG, new RdsMultiAZPgDatabaseDialect()]
   ]);
-  private schema: string = "";
 
   constructor(config: any) {
     super(config, DatabaseType.POSTGRES, AwsPGClient.knownDialectsByCode, new PgConnectionUrlParser(), new NodePostgresDriverDialect());
-    this.resetState();
   }
 
   async connect(): Promise<void> {
@@ -75,10 +72,6 @@ export class AwsPGClient extends AwsClient {
     });
   }
 
-  async updateSessionStateReadOnly(readOnly: boolean): Promise<QueryResult | void> {
-    return await this.targetClient.query(`SET SESSION CHARACTERISTICS AS TRANSACTION READ ${readOnly ? "ONLY" : "WRITE"}`);
-  }
-
   private async readOnlyQuery(text: string): Promise<QueryResult> {
     return this.pluginManager.execute(
       this.pluginService.getCurrentHostInfo(),
@@ -98,14 +91,12 @@ export class AwsPGClient extends AwsClient {
     } else {
       result = await this.readOnlyQuery("SET SESSION CHARACTERISTICS AS TRANSACTION READ WRITE");
     }
-    this._isReadOnly = readOnly;
-    this.pluginService.getSessionStateService().setupPristineReadOnly();
-    this.pluginService.getSessionStateService().setReadOnly(readOnly);
+    this.pluginService.getSessionStateService().updateReadOnly(readOnly);
     return result;
   }
 
   isReadOnly(): boolean {
-    return this._isReadOnly;
+    return this.targetClient.sessionState.readOnly.value;
   }
 
   async setAutoCommit(autoCommit: boolean): Promise<QueryResult | void> {
@@ -124,7 +115,7 @@ export class AwsPGClient extends AwsClient {
     this.pluginService.getSessionStateService().setupPristineTransactionIsolation();
     this.pluginService.getSessionStateService().setTransactionIsolation(level);
 
-    this._isolationLevel = level;
+    this.targetClient.sessionState.transactionIsolation.value = level;
     switch (level) {
       case 0:
         await this.query("SET SESSION CHARACTERISTICS AS TRANSACTION ISOLATION LEVEL READ COMMITTED");
@@ -144,7 +135,7 @@ export class AwsPGClient extends AwsClient {
   }
 
   getTransactionIsolation(): number {
-    return this._isolationLevel;
+    return this.targetClient.sessionState.transactionIsolation.value;
   }
 
   async setCatalog(catalog: string): Promise<void> {
@@ -163,12 +154,12 @@ export class AwsPGClient extends AwsClient {
     this.pluginService.getSessionStateService().setupPristineSchema();
     this.pluginService.getSessionStateService().setSchema(schema);
 
-    this.schema = schema;
+    this.targetClient.sessionState.schema.value = schema;
     return await this.query(`SET search_path TO ${schema};`);
   }
 
   getSchema(): string {
-    return this.schema;
+    return this.targetClient.sessionState.schema.value;
   }
 
   async end() {
@@ -207,11 +198,5 @@ export class AwsPGClient extends AwsClient {
       },
       null
     );
-  }
-
-  resetState() {
-    this._isReadOnly = false;
-    this.schema = "";
-    this._isolationLevel = TransactionIsolationLevel.TRANSACTION_READ_COMMITTED;
   }
 }

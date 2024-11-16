@@ -39,12 +39,9 @@ export class AwsMySQLClient extends AwsClient {
     [DatabaseDialectCodes.AURORA_MYSQL, new AuroraMySQLDatabaseDialect()],
     [DatabaseDialectCodes.RDS_MULTI_AZ_MYSQL, new RdsMultiAZMySQLDatabaseDialect()]
   ]);
-  private isAutoCommit: boolean = true;
-  private catalog = "";
 
   constructor(config: any) {
     super(config, DatabaseType.MYSQL, AwsMySQLClient.knownDialectsByCode, new MySQLConnectionUrlParser(), new MySQL2DriverDialect());
-    this.resetState();
   }
 
   async connect(): Promise<void> {
@@ -96,25 +93,14 @@ export class AwsMySQLClient extends AwsClient {
     );
   }
 
-  async updateSessionStateReadOnly(readOnly: boolean): Promise<Query | void> {
-    const result = await this.targetClient.queryWithTimeout(`SET SESSION TRANSACTION READ ${readOnly ? "ONLY" : "WRITE"}`);
-
-    this._isReadOnly = readOnly;
-    this.pluginService.getSessionStateService().setupPristineReadOnly();
-    this.pluginService.getSessionStateService().setReadOnly(readOnly);
-    return result;
-  }
-
   async setReadOnly(readOnly: boolean): Promise<Query | void> {
     const result = await this.readOnlyQuery({ sql: `SET SESSION TRANSACTION READ ${readOnly ? "ONLY" : "WRITE"}` });
-    this._isReadOnly = readOnly;
-    this.pluginService.getSessionStateService().setupPristineReadOnly();
-    this.pluginService.getSessionStateService().setReadOnly(readOnly);
+    this.pluginService.getSessionStateService().updateReadOnly(readOnly);
     return result;
   }
 
   isReadOnly(): boolean {
-    return this._isReadOnly;
+    return this.targetClient.sessionState.readOnly.value;
   }
 
   async setAutoCommit(autoCommit: boolean): Promise<Query | void> {
@@ -125,7 +111,7 @@ export class AwsMySQLClient extends AwsClient {
     this.pluginService.getSessionStateService().setupPristineAutoCommit();
     this.pluginService.getSessionStateService().setAutoCommit(autoCommit);
 
-    this.isAutoCommit = autoCommit;
+    this.targetClient.sessionState.autoCommit.value = autoCommit;
     let setting = "1";
     if (!autoCommit) {
       setting = "0";
@@ -134,7 +120,7 @@ export class AwsMySQLClient extends AwsClient {
   }
 
   getAutoCommit(): boolean {
-    return this.isAutoCommit;
+    return this.targetClient.sessionState.autoCommit.value;
   }
 
   async setCatalog(catalog: string): Promise<Query | void> {
@@ -145,12 +131,12 @@ export class AwsMySQLClient extends AwsClient {
     this.pluginService.getSessionStateService().setupPristineCatalog();
     this.pluginService.getSessionStateService().setCatalog(catalog);
 
-    this.catalog = catalog;
+    this.targetClient.sessionState.catalog.value = catalog;
     await this.query({ sql: `USE ${catalog}` });
   }
 
   getCatalog(): string {
-    return this.catalog;
+    return this.targetClient.sessionState.catalog.value;
   }
 
   async setSchema(schema: string): Promise<Query | void> {
@@ -169,7 +155,7 @@ export class AwsMySQLClient extends AwsClient {
     this.pluginService.getSessionStateService().setupPristineTransactionIsolation();
     this.pluginService.getSessionStateService().setTransactionIsolation(level);
 
-    this._isolationLevel = level;
+    this.targetClient.sessionState.transactionIsolation.value = level;
     switch (level) {
       case 0:
         await this.query({ sql: "SET SESSION TRANSACTION ISOLATION LEVEL READ UNCOMMITTED" });
@@ -187,11 +173,11 @@ export class AwsMySQLClient extends AwsClient {
         throw new AwsWrapperError(Messages.get("Client.invalidTransactionIsolationLevel", String(level)));
     }
 
-    this._isolationLevel = level;
+    this.targetClient.sessionState.transactionIsolation.value = level;
   }
 
   getTransactionIsolation(): number {
-    return this._isolationLevel;
+    return this.targetClient.sessionState.transactionIsolation.value;
   }
 
   async end() {
@@ -230,12 +216,5 @@ export class AwsMySQLClient extends AwsClient {
       },
       null
     );
-  }
-
-  resetState() {
-    this._isReadOnly = false;
-    this.isAutoCommit = true;
-    this.catalog = "";
-    this._isolationLevel = TransactionIsolationLevel.TRANSACTION_REPEATABLE_READ;
   }
 }
