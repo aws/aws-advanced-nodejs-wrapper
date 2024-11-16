@@ -18,17 +18,22 @@ import { DatabaseDialect, DatabaseType } from "../../../common/lib/database_dial
 import { HostListProviderService } from "../../../common/lib/host_list_provider_service";
 import { HostListProvider } from "../../../common/lib/host_list_provider/host_list_provider";
 import { ConnectionStringHostListProvider } from "../../../common/lib/host_list_provider/connection_string_host_list_provider";
-import { AwsWrapperError } from "../../../common/lib/utils/errors";
+import { AwsWrapperError, UnsupportedMethodError } from "../../../common/lib/utils/errors";
 import { DatabaseDialectCodes } from "../../../common/lib/database_dialect/database_dialect_codes";
 import { TransactionIsolationLevel } from "../../../common/lib/utils/transaction_isolation_level";
 import { ClientWrapper } from "../../../common/lib/client_wrapper";
 import { FailoverRestriction } from "../../../common/lib/plugins/failover/failover_restriction";
 import { ErrorHandler } from "../../../common/lib/error_handler";
 import { PgErrorHandler } from "../pg_error_handler";
+import { SessionState } from "../../../common/lib/session_state";
+import { Messages } from "../../../common/lib/utils/messages";
 
 export class PgDatabaseDialect implements DatabaseDialect {
   protected dialectName: string = this.constructor.name;
   protected defaultPort: number = 5432;
+  readonly defaultSchema: string = "";
+  readonly defaultReadOnly: boolean = false;
+  readonly defaultTransactionIsolation: number = TransactionIsolationLevel.TRANSACTION_READ_COMMITTED;
 
   getDefaultPort(): number {
     return this.defaultPort;
@@ -55,6 +60,43 @@ export class PgDatabaseDialect implements DatabaseDialect {
 
   getServerVersionQuery(): string {
     return "SELECT 'version', VERSION()";
+  }
+
+  getSetReadOnlyQuery(readOnly: boolean): string {
+    return `SET SESSION CHARACTERISTICS AS TRANSACTION READ ${readOnly ? "ONLY" : "WRITE"}`;
+  }
+
+  getSetAutoCommitQuery(autoCommit: boolean): string {
+    throw new UnsupportedMethodError(Messages.get("Client.methodNotSupported", "setAutoCommit"));
+  }
+
+  getSetTransactionIsolationQuery(level: number): string {
+    let transactionIsolationLevel: string;
+    switch (level) {
+      case 0:
+        transactionIsolationLevel = "READ UNCOMMITTED";
+        break;
+      case 1:
+        transactionIsolationLevel = "READ COMMITTED";
+        break;
+      case 2:
+        transactionIsolationLevel = "REPEATABLE READ";
+        break;
+      case 3:
+        transactionIsolationLevel = "SERIALIZABLE";
+        break;
+      default:
+        throw new AwsWrapperError(Messages.get("Client.invalidTransactionIsolationLevel", String(level)));
+    }
+    return `SET SESSION CHARACTERISTICS AS TRANSACTION ISOLATION LEVEL ${transactionIsolationLevel}`;
+  }
+
+  getSetCatalogQuery(catalog: string): string {
+    throw new UnsupportedMethodError(Messages.get("Client.methodNotSupported", "setCatalog"));
+  }
+
+  getSetSchemaQuery(schema: string): string {
+    return `SET search_path TO ${schema}`;
   }
 
   async isDialect(targetClient: ClientWrapper): Promise<boolean> {
@@ -149,5 +191,11 @@ export class PgDatabaseDialect implements DatabaseDialect {
     }
 
     return undefined;
+  }
+
+  setDefaultSessionState(sessionState: SessionState) {
+    sessionState.readOnly.value = false;
+    sessionState.schema.value = "";
+    sessionState.transactionIsolation.value = TransactionIsolationLevel.TRANSACTION_READ_COMMITTED;
   }
 }
