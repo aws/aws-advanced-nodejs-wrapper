@@ -26,7 +26,6 @@ import { TestEnvironmentFeatures } from "./utils/test_environment_features";
 import { features, instanceCount } from "./config";
 import { InternalPooledConnectionProvider } from "../../../../common/lib/internal_pooled_connection_provider";
 import { AwsPoolConfig } from "../../../../common/lib/aws_pool_config";
-import { ConnectionProviderManager } from "../../../../common/lib/connection_provider_manager";
 import { InternalPoolMapping } from "../../../../common/lib/utils/internal_pool_mapping";
 import { HostInfo } from "../../../../common/lib/host_info";
 import { PluginManager } from "../../../../common/lib";
