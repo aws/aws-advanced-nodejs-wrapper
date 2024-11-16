@@ -10,9 +10,8 @@ The AWS Advanced NodeJS Wrapper is a wrapper that requires an underlying driver,
 | --------- | -------------------- | ---------------------------------------------------------------------------------- | --------------------------------------------- |
 | `dialect` | No (see notes below) | The [dialect code](#list-of-available-dialect-codes) of the desired database type. | `DialectCodes.AURORA_MYSQL` or `aurora-mysql` |
 
-> **NOTES:**
->
-> The `wrapperDialect` parameter is not required. When it is not provided by the user, the AWS Advanced NodeJS Wrapper will attempt to determine which of the existing dialects to use based on other connection details. However, if the dialect is known by the user, it is preferable to set the `wrapperDialect` parameter because it will take time to resolve the dialect.
+> [!NOTE]
+> The `dialect` parameter is not required. When it is not provided by the user, the AWS Advanced NodeJS Wrapper will attempt to determine which of the existing dialects to use based on other connection details. However, if the dialect is known by the user, it is preferable to set the `dialect` parameter because it will take time to resolve the dialect.
 
 ### List of Available Dialect Codes
 
