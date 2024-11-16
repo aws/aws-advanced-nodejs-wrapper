@@ -724,7 +724,7 @@ public class TestEnvironmentConfig implements AutoCloseable {
   }
 
   private static String getContainerBaseImageName(TestEnvironmentRequest request) {
-    return "node:21";
+    return "node:22";
   }
 
   private static void configureIamAccess(TestEnvironmentConfig env) {
