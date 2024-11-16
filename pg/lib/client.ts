@@ -59,14 +59,6 @@ export class AwsPGClient extends AwsClient {
     });
   }
 
-  executeQuery(props: Map<string, any>, sql: string, targetClient?: ClientWrapper): Promise<QueryResult> {
-    if (targetClient) {
-      return targetClient?.client.query(sql);
-    } else {
-      return this.targetClient?.client.query(sql);
-    }
-  }
-
   async query(text: string): Promise<QueryResult> {
     const context = this.telemetryFactory.openTelemetryContext("awsClient.query", TelemetryTraceLevel.TOP_LEVEL);
     return await context.start(async () => {
@@ -84,11 +76,7 @@ export class AwsPGClient extends AwsClient {
   }
 
   async updateSessionStateReadOnly(readOnly: boolean): Promise<QueryResult | void> {
-    if (readOnly) {
-      return await this.executeQuery(this.properties, "SET SESSION CHARACTERISTICS AS TRANSACTION READ ONLY");
-    } else {
-      return await this.executeQuery(this.properties, "SET SESSION CHARACTERISTICS AS TRANSACTION READ WRITE");
-    }
+    return await this.targetClient.query(`SET SESSION CHARACTERISTICS AS TRANSACTION READ ${readOnly ? "ONLY" : "WRITE"}`);
   }
 
   private async readOnlyQuery(text: string): Promise<QueryResult> {
