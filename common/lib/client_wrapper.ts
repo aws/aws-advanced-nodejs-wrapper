@@ -29,4 +29,6 @@ export interface ClientWrapper {
   rollback(): Promise<void>;
 
   abort(): Promise<void>;
+
+  queryWithTimeout(sql: string): Promise<any>;
 }
