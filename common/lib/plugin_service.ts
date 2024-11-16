@@ -332,7 +332,6 @@ export class PluginService implements ErrorHandler, HostListProviderService {
           this.sessionStateService.begin();
 
           try {
-            this.getCurrentClient().resetState();
             this.getCurrentClient().targetClient = newClient;
             this._currentHostInfo = hostInfo;
             await this.sessionStateService.applyCurrentSessionState(this.getCurrentClient());

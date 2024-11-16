@@ -74,7 +74,8 @@ export class SessionStateServiceImpl implements SessionStateService {
       this.sessionState.readOnly.resetPristineValue();
       this.setupPristineReadOnly();
       try {
-        await newClient.updateSessionStateReadOnly(this.sessionState.readOnly.value);
+        await newClient.targetClient.query(this.pluginService.getDialect().getSetReadOnlyQuery(this.sessionState.readOnly.value));
+        this.updateReadOnly(this.sessionState.readOnly.value);
       } catch (error: any) {
         if (error instanceof UnsupportedMethodError) {
           // ignore
@@ -150,7 +151,8 @@ export class SessionStateServiceImpl implements SessionStateService {
 
     if (this.copySessionState?.readOnly.canRestorePristine() && this.copySessionState?.readOnly.pristineValue !== undefined) {
       try {
-        await client.updateSessionStateReadOnly(this.copySessionState?.readOnly.pristineValue);
+        await client.targetClient.query(this.pluginService.getDialect().getSetReadOnlyQuery(this.sessionState.readOnly.value));
+        this.updateReadOnly(this.sessionState.readOnly.value);
       } catch (error: any) {
         if (error instanceof UnsupportedMethodError) {
           // ignore
@@ -284,6 +286,12 @@ export class SessionStateServiceImpl implements SessionStateService {
     } else {
       this.sessionState.readOnly.pristineValue = this.pluginService.getCurrentClient().isReadOnly();
     }
+  }
+
+  updateReadOnly(readOnly: boolean): void {
+    this.pluginService.getCurrentClient().targetClient.sessionState.readOnly.value = readOnly;
+    this.pluginService.getSessionStateService().setupPristineReadOnly();
+    this.pluginService.getSessionStateService().setReadOnly(readOnly);
   }
 
   getSchema(): string | undefined {

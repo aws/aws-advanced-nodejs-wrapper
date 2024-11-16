@@ -32,6 +32,7 @@ export interface DatabaseDialect {
   getHostAliasQuery(): string;
   getHostAliasAndParseResults(targetClient: ClientWrapper): Promise<string>;
   getServerVersionQuery(): string;
+  getSetReadOnlyQuery(readOnly: boolean): string
   getDialectUpdateCandidates(): string[];
   getErrorHandler(): ErrorHandler;
   isDialect(targetClient: ClientWrapper): Promise<boolean>;

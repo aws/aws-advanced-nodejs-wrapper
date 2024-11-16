@@ -21,6 +21,11 @@ import { AwsPGClient } from "../../pg/lib";
 import { SessionStateService } from "../../common/lib/session_state_service";
 import { AwsClient } from "../../common/lib/aws_client";
 import { AwsMySQLClient } from "../../mysql/lib";
+import { PgClientWrapper } from "../../common/lib/pg_client_wrapper";
+import { MySQLClientWrapper } from "../../common/lib/mysql_client_wrapper";
+import { HostInfoBuilder } from "../../common/lib/host_info_builder";
+import { SimpleHostAvailabilityStrategy } from "../../common/lib/host_availability/simple_host_availability_strategy";
+import { MySQLDatabaseDialect } from "../../mysql/lib/dialect/mysql_database_dialect";
 
 const mockPluginService = mock(PluginService);
 let awsPGClient: AwsClient;
@@ -28,6 +33,9 @@ let mockAwsPGClient: AwsClient;
 let awsMySQLClient: AwsClient;
 let mockAwsMySQLClient: AwsClient;
 let sessionStateService: SessionStateService;
+const mockPgClientWrapper: PgClientWrapper = mock(PgClientWrapper);
+const mockMySQLClientWrapper: MySQLClientWrapper = mock(MySQLClientWrapper);
+const hostInfo = new HostInfoBuilder({ hostAvailabilityStrategy: new SimpleHostAvailabilityStrategy() }).withHost("host").build();
 
 describe("testSessionStateServiceImpl", () => {
   beforeEach(() => {
@@ -36,6 +44,10 @@ describe("testSessionStateServiceImpl", () => {
     awsMySQLClient = new AwsMySQLClient({});
     mockAwsMySQLClient = spy(awsMySQLClient);
     sessionStateService = new SessionStateServiceImpl(instance(mockPluginService), new Map());
+    when(mockMySQLClientWrapper.query(anything())).thenResolve();
+    when(mockPgClientWrapper.query(anything())).thenResolve();
+    when(mockPluginService.getDialect()).thenReturn(new MySQLDatabaseDialect());
+    when(mockPluginService.getSessionStateService()).thenReturn(sessionStateService);
   });
 
   afterEach(() => {
@@ -55,12 +67,17 @@ describe("testSessionStateServiceImpl", () => {
   ])("test reset client readOnly", async (pristineValue: boolean, value: boolean, shouldReset: boolean, driver: number) => {
     const mockAwsClient = driver === 0 ? mockAwsPGClient : mockAwsMySQLClient;
     const awsClient = driver === 0 ? awsPGClient : awsMySQLClient;
+    if (driver === 0) {
+      awsClient.targetClient = new PgClientWrapper(undefined, hostInfo, new Map());
+    } else {
+      awsClient.targetClient = new MySQLClientWrapper(undefined, hostInfo, new Map());
+    }
     when(mockPluginService.getCurrentClient()).thenReturn(awsClient);
     when(mockAwsClient.isReadOnly()).thenReturn(pristineValue);
     expect(sessionStateService.getReadOnly()).toBe(undefined);
-    when(mockAwsClient.updateSessionStateReadOnly(anything())).thenResolve();
     sessionStateService.setupPristineReadOnly();
     sessionStateService.setReadOnly(value);
+    const sessionStateSpy = spy(sessionStateService);
     expect(sessionStateService.getReadOnly()).toBe(value);
 
     sessionStateService.begin();
@@ -68,9 +85,9 @@ describe("testSessionStateServiceImpl", () => {
     sessionStateService.complete();
 
     if (shouldReset) {
-      verify(mockAwsClient.updateSessionStateReadOnly(pristineValue)).once();
+      verify(sessionStateSpy.updateReadOnly(anything())).once();
     } else {
-      verify(mockAwsClient.updateSessionStateReadOnly(anything())).never();
+      verify(sessionStateSpy.updateReadOnly(anything())).never();
     }
   });
 

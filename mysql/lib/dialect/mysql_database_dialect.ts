@@ -26,7 +26,6 @@ import { ClientUtils } from "../../../common/lib/utils/client_utils";
 import { FailoverRestriction } from "../../../common/lib/plugins/failover/failover_restriction";
 import { ErrorHandler } from "../../../common/lib/error_handler";
 import { MySQLErrorHandler } from "../mysql_error_handler";
-import { error } from "winston";
 
 export class MySQLDatabaseDialect implements DatabaseDialect {
   protected dialectName: string = this.constructor.name;
@@ -57,6 +56,10 @@ export class MySQLDatabaseDialect implements DatabaseDialect {
 
   getServerVersionQuery(): string {
     return "SHOW VARIABLES LIKE 'version_comment'";
+  }
+
+  getSetReadOnlyQuery(readOnly: boolean): string {
+    return `SET SESSION TRANSACTION READ ${readOnly ? "ONLY" : "WRITE"}`;
   }
 
   async isDialect(targetClient: ClientWrapper): Promise<boolean> {
