@@ -97,7 +97,7 @@ export class AwsMySQLClient extends AwsClient {
   }
 
   async updateSessionStateReadOnly(readOnly: boolean): Promise<Query | void> {
-    const result = await this.targetClient.queryWithTimeout(this.properties, `SET SESSION TRANSACTION READ ${readOnly ? "ONLY" : "WRITE"}`);
+    const result = await this.targetClient.queryWithTimeout(`SET SESSION TRANSACTION READ ${readOnly ? "ONLY" : "WRITE"}`);
 
     this._isReadOnly = readOnly;
     this.pluginService.getSessionStateService().setupPristineReadOnly();

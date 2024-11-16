@@ -46,8 +46,8 @@ export class PgClientWrapper implements ClientWrapper {
     return this.client?.query(sql);
   }
 
-  queryWithTimeout(props: Map<string, any>, sql: string): Promise<QueryResult> {
-    return this.client?.queryWithTimeout(this.client.query(sql), props);
+  queryWithTimeout(sql: string): Promise<QueryResult> {
+    return this.client?.queryWithTimeout(this.client.query(sql), this.properties);
   }
 
   end(): Promise<void> {

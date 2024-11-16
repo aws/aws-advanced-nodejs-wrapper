@@ -30,5 +30,5 @@ export interface ClientWrapper {
 
   abort(): Promise<void>;
 
-  queryWithTimeout(props: Map<string, any>, sql: string): Promise<any>;
+  queryWithTimeout(sql: string): Promise<any>;
 }
