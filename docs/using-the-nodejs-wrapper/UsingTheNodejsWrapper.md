@@ -54,7 +54,12 @@ These parameters are applicable to any instance of the AWS Advanced NodeJS Wrapp
 
 ## Host Pattern
 
-When connecting to Aurora clusters, the [`clusterInstanceHostPattern`](#failover-parameters) parameter is required if the host does not provide enough information about the database cluster domain name. If the Aurora cluster endpoint is used directly, the AWS Advanced NodeJS Wrapper will recognize the standard Aurora domain name and can re-build a proper Aurora instance name when needed. In cases where the host is an IP address, a custom domain name, or localhost, the wrapper won't know how to build a proper domain name for a database instance endpoint. For example, if a custom domain was being used and the cluster instance endpoints followed a pattern of `instanceIdentifier1.customHost`, `instanceIdentifier2.customHost`, etc., the wrapper would need to know how to construct the instance endpoints using the specified custom domain. Since there isn't enough information from the custom domain alone to create the instance endpoints, you should set the `clusterInstanceHostPattern` to `?.customHost`, making the client configuration `{ host: "customHost", port: 1234, database: "test", clusterInstanceHostPattern: "?.customHost" }`. Refer to [this diagram](../images/failover_behavior.png) about AWS Advanced NodeJS Wrapper behavior for different connection URLs and more details and examples.
+When connecting to Aurora clusters, the [`clusterInstanceHostPattern`](#aws-advanced-nodejs-wrapper-parameters) parameter is required if the host does not provide enough information about the database cluster domain name.
+If the Aurora cluster endpoint is used directly, the AWS Advanced NodeJS Wrapper will recognize the standard Aurora domain name and can re-build a proper Aurora instance name when needed.
+In cases where the host is an IP address, a custom domain name, or localhost, the wrapper won't know how to build a proper domain name for a database instance endpoint.
+For example, if a custom domain was being used and the cluster instance endpoints followed a pattern of `instanceIdentifier1.customHost`, `instanceIdentifier2.customHost`, etc., the wrapper would need to know how to construct the instance endpoints using the specified custom domain.
+Since there isn't enough information from the custom domain alone to create the instance endpoints, you should set the `clusterInstanceHostPattern` to `?.customHost`, making the client configuration `{ host: "customHost", port: 1234, database: "test", clusterInstanceHostPattern: "?.customHost" }`.
+Refer to [this diagram](../images/failover_behavior.png) about AWS Advanced NodeJS Wrapper behavior for different connection URLs and more details and examples.
 
 ## Plugins
 

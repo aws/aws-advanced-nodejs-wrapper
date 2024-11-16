@@ -35,7 +35,7 @@ The AWS Advanced NodeJS Wrapper uses the following tests to verify its correctne
 
 | Tests                                         | Description                                                                                                           |
 | --------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
-| Unit tests                                    | Tests for AWS Advanced NodeJS Wrapper correctness.                                                                             |
+| Unit tests                                    | Tests for AWS Advanced NodeJS Wrapper correctness.                                                                    |
 | Failover integration tests                    | Wrapper-specific tests for different reader and writer failover workflows using the Failover Connection Plugin.       |
 | Enhanced failure monitoring integration tests | Wrapper-specific tests for the enhanced failure monitoring functionality using the Host Monitoring Connection Plugin. |
 | Read Write Splitting integration tests        | Wrapper-specific tests for the read write splitting functionality using the Read Write Splitting Plugin.              |

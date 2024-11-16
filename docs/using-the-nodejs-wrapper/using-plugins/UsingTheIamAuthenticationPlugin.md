@@ -58,6 +58,8 @@ const config = {
 };
 ```
 
+You can learn more about `clusterInstanceHostPattern` [here](../UsingTheNodejsWrapper.md#host-pattern).
+
 ## Sample code
 
 [IAM Authentication Plugin example for PostgreSQL](../../../examples/aws_driver_example/aws_iam_authentication_postgresql_example.ts)<br>
