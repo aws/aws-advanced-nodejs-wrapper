@@ -36,6 +36,9 @@ import { Resource } from "@opentelemetry/resources";
 import { ATTR_SERVICE_NAME } from "@opentelemetry/semantic-conventions";
 import { PeriodicExportingMetricReader } from "@opentelemetry/sdk-metrics";
 import { OTLPMetricExporter } from "@opentelemetry/exporter-metrics-otlp-grpc";
+import { logger } from "../../../../../common/logutils";
+import pkgPg from "pg";
+import { ConnectionOptions, createConnection } from "mysql2/promise";
 
 export class TestEnvironment {
   private static env?: TestEnvironment;
@@ -88,6 +91,89 @@ export class TestEnvironment {
     }
   }
 
+  static async verifyAllInstancesUp() {
+    const info = TestEnvironment.env?.info;
+    const endTime = Date.now() + 3 * 60 * 1000; // 3min
+    const instanceIds: (string | undefined)[] | undefined = info?.databaseInfo.instances.map((instance) => instance.instanceId);
+    const instanceIdSet = new Set(instanceIds);
+
+    while (instanceIdSet.size > 0 && Date.now() < endTime) {
+      for (const instanceId of instanceIds) {
+        if (!instanceId) {
+          continue;
+        }
+        let client: any;
+        switch (info?.request.engine) {
+          case DatabaseEngine.PG:
+            try {
+              client = new pkgPg.Client({
+                host: info?.databaseInfo.instances.find((instance) => instance.instanceId === instanceId).host,
+                port: info?.databaseInfo.instanceEndpointPort ?? 5432,
+                user: info?.databaseInfo.username,
+                password: info?.databaseInfo.password,
+                database: info?.databaseInfo.default_db_name,
+                query_timeout: 3000,
+                connectionTimeoutMillis: 3000
+              });
+              await client.connect();
+
+              await client.query("select 1");
+              logger.info("Instance " + instanceId + " is up.");
+              instanceIdSet.delete(instanceId);
+            } catch (e: any) {
+              // do nothing; let's continue checking
+            } finally {
+              if (client) {
+                await client.end();
+              }
+            }
+            break;
+          case DatabaseEngine.MYSQL:
+            try {
+              client = await createConnection({
+                host: info?.databaseInfo.instances.find((instance) => instance.instanceId === instanceId).host,
+                port: info?.databaseInfo.instanceEndpointPort ?? 3306,
+                user: info?.databaseInfo.username,
+                password: info?.databaseInfo.password,
+                database: info?.databaseInfo.default_db_name,
+                connectTimeout: 3000
+              } as ConnectionOptions);
+
+              await client.query({ sql: "select 1", timeout: 3000 });
+              logger.info("Instance " + instanceId + " is up.");
+              instanceIdSet.delete(instanceId);
+            } catch (e: any) {
+              // do nothing; let's continue checking
+            } finally {
+              if (client) {
+                await client.end();
+              }
+            }
+            break;
+          default:
+            throw new Error(`Unsupported engine ${info?.request.engine}`);
+        }
+      }
+    }
+
+    if (instanceIdSet.size > 0) {
+      throw new Error("Some instances are not available: " + Array.from(instanceIdSet).join(", "));
+    }
+    logger.info("All instances are up.");
+  }
+
+  static async verifyAllInstancesHasRightState(...allowedStatuses: string[]) {
+    const info = TestEnvironment.env?.info;
+    const auroraUtility = new AuroraTestUtility(info?.region);
+    if (!info?.auroraClusterName) {
+      fail(`Invalid cluster`);
+    }
+    const instanceIds: (string | undefined)[] | undefined = info?.databaseInfo.instances.map((instance) => instance.instanceId);
+    for (const instance of instanceIds) {
+      await auroraUtility.waitUntilInstanceHasRightState(instance, ...allowedStatuses);
+    }
+  }
+
   static async rebootAllClusterInstances() {
     const info = TestEnvironment.env?.info;
     const auroraUtility = new AuroraTestUtility(info?.region);
@@ -97,12 +183,12 @@ export class TestEnvironment {
     await auroraUtility.waitUntilClusterHasDesiredStatus(info.auroraClusterName!);
 
     const instanceIds: (string | undefined)[] | undefined = info?.databaseInfo.instances.map((instance) => instance.instanceId);
-    for (const instance in instanceIds) {
+    for (const instance of instanceIds) {
       await auroraUtility.rebootInstance(instance);
     }
     await auroraUtility.waitUntilClusterHasDesiredStatus(info.auroraClusterName!);
-    for (const instance in instanceIds) {
-      await auroraUtility.waitUntilInstanceHasRightState(instance);
+    for (const instance of instanceIds) {
+      await auroraUtility.waitUntilInstanceHasRightState(instance, "available");
     }
   }
 
@@ -115,7 +201,7 @@ export class TestEnvironment {
     await auroraUtility.waitUntilClusterHasDesiredStatus(info.auroraClusterName!);
 
     const instanceIds: (string | undefined)[] | undefined = info?.databaseInfo.instances.map((instance) => instance.instanceId);
-    for (const instance in instanceIds) {
+    for (const instance of instanceIds) {
       await auroraUtility.waitUntilInstanceHasRightState(
         instance,
         "available",
@@ -126,8 +212,8 @@ export class TestEnvironment {
       );
       await auroraUtility.rebootInstance(instance);
     }
-    for (const instance in instanceIds) {
-      await auroraUtility.waitUntilInstanceHasRightState(instance);
+    for (const instance of instanceIds) {
+      await auroraUtility.waitUntilInstanceHasRightState(instance, "available");
     }
   }
 

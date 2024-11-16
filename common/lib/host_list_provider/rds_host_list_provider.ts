@@ -63,7 +63,7 @@ export class RdsHostListProvider implements DynamicHostListProvider {
     this.properties = properties;
 
     let port = WrapperProperties.PORT.get(properties);
-    if (port != null) {
+    if (port == null) {
       port = hostListProviderService.getDialect().getDefaultPort();
     }
 
