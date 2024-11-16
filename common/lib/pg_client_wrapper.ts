@@ -17,7 +17,7 @@
 import { ClientWrapper } from "./client_wrapper";
 import { HostInfo } from "./host_info";
 import { uniqueId } from "../logutils";
-import { QueryResult } from "pg";
+import { ClientUtils } from "./utils/client_utils";
 
 /*
 This an internal wrapper class for a target community driver client created by the NodePostgresPgDriverDialect.
@@ -46,7 +46,7 @@ export class PgClientWrapper implements ClientWrapper {
     return this.client?.query(sql);
   }
 
-  queryWithTimeout(sql: string): Promise<QueryResult> {
+  queryWithTimeout(sql: string): Promise<any> {
     return this.client?.queryWithTimeout(this.client.query(sql), this.properties);
   }
 
