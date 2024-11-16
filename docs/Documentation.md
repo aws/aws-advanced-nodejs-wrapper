@@ -4,6 +4,7 @@
 - [Using the AWS Advanced NodeJS Wrapper](./using-the-nodejs-wrapper/UsingTheNodejsWrapper.md)
   - [Logging](/docs/using-the-nodejs-wrapper/UsingTheNodejsWrapper.md#logging)
   - [Telemetry](../docs/using-the-nodejs-wrapper/Telemetry.md)
+  - [Database Dialects](../docs/using-the-nodejs-wrapper/DatabaseDialects.md)
   - [Plugins](./using-the-nodejs-wrapper/UsingTheNodejsWrapper.md#plugins)
     - [Failover Plugin](./using-the-nodejs-wrapper/using-plugins/UsingTheFailoverPlugin.md)
       - [Failover Configuration Guide](./using-the-nodejs-wrapper/FailoverConfigurationGuide.md)
