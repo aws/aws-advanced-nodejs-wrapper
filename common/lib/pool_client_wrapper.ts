@@ -17,6 +17,7 @@
 import { ClientWrapper } from "./client_wrapper";
 import { HostInfo } from "./host_info";
 import { uniqueId } from "../logutils";
+import { ClientUtils } from "./utils/client_utils";
 
 export class PoolClientWrapper implements ClientWrapper {
   readonly client: any;
@@ -37,6 +38,10 @@ export class PoolClientWrapper implements ClientWrapper {
 
   query(sql: any): Promise<any> {
     return this.client?.query(sql);
+  }
+
+  async queryWithTimeout(sql: string): Promise<any> {
+    return await ClientUtils.queryWithTimeout(this.client.query(sql), this.properties);
   }
 
   async end(): Promise<void> {
