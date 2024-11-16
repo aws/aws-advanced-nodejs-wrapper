@@ -103,6 +103,9 @@ export class FederatedAuthPlugin extends AbstractConnectionPlugin {
 
   public async updateAuthenticationToken(hostInfo: HostInfo, props: Map<string, any>, region: string, cacheKey: string, iamHost: string) {
     const tokenExpirationSec = WrapperProperties.IAM_TOKEN_EXPIRATION.get(props);
+    if (tokenExpirationSec < 0) {
+      throw new AwsWrapperError(Messages.get("AuthenticationToken.tokenExpirationLessThanZero"));
+    }
     const tokenExpiry: number = Date.now() + tokenExpirationSec * 1000;
     const port = IamAuthUtils.getIamPort(props, hostInfo, this.pluginService.getDialect().getDefaultPort());
     const token = await IamAuthUtils.generateAuthenticationToken(
