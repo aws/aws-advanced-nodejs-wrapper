@@ -46,6 +46,10 @@ export class MySQLClientWrapper implements ClientWrapper {
     return this.client?.query(sql);
   }
 
+  async queryWithTimeout(props: Map<string, any>, sql: string): Promise<any> {
+    return await ClientUtils.queryWithTimeout(this.client.query({ sql: sql }), props);
+  }
+
   end(): Promise<void> {
     return this.client?.end();
   }

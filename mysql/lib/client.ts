@@ -61,18 +61,6 @@ export class AwsMySQLClient extends AwsClient {
     });
   }
 
-  async executeQuery(props: Map<string, any>, sql: string, targetClient?: ClientWrapper): Promise<Query> {
-    if (!this.isConnected) {
-      await this.connect(); // client.connect is not required for MySQL clients
-      this.isConnected = true;
-    }
-    if (targetClient) {
-      return await ClientUtils.queryWithTimeout(targetClient?.client.query({ sql: sql }), props);
-    } else {
-      return await ClientUtils.queryWithTimeout(this.targetClient?.client.query({ sql: sql }), props);
-    }
-  }
-
   async query(options: QueryOptions, callback?: any): Promise<Query> {
     if (!this.isConnected) {
       await this.connect(); // client.connect is not required for MySQL clients
@@ -109,7 +97,7 @@ export class AwsMySQLClient extends AwsClient {
   }
 
   async updateSessionStateReadOnly(readOnly: boolean): Promise<Query | void> {
-    const result = await this.executeQuery(this.properties, `SET SESSION TRANSACTION READ ${readOnly ? "ONLY" : "WRITE"}`, this.targetClient);
+    const result = await this.targetClient.queryWithTimeout(this.properties, `SET SESSION TRANSACTION READ ${readOnly ? "ONLY" : "WRITE"}`);
 
     this._isReadOnly = readOnly;
     this.pluginService.getSessionStateService().setupPristineReadOnly();
