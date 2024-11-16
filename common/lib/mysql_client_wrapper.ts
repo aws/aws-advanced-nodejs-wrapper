@@ -18,6 +18,7 @@ import { ClientWrapper } from "./client_wrapper";
 import { HostInfo } from "./host_info";
 import { ClientUtils } from "./utils/client_utils";
 import { uniqueId } from "../logutils";
+import { Query } from "mysql2/promise";
 
 /*
 This is an internal wrapper class for the target community driver client created by the MySQL2DriverDialect.
@@ -44,6 +45,10 @@ export class MySQLClientWrapper implements ClientWrapper {
 
   query(sql: any): Promise<any> {
     return this.client?.query(sql);
+  }
+
+  async queryWithTimeout(props: Map<string, any>, sql: string): Promise<Query> {
+    return await ClientUtils.queryWithTimeout(this.client.query({ sql: sql }), props);
   }
 
   end(): Promise<void> {
