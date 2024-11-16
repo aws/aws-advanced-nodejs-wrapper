@@ -33,7 +33,8 @@ Dialect codes specify what kind of database any connections will be made to.
 
 If you are interested in using the AWS Advanced NodeJS Wrapper but your desired database type is not currently supported, it is possible to create a custom dialect.
 
-To create a custom dialect, implement the [`Dialect`](../../common/lib/database_dialect/database_dialect.ts) interface. For databases clusters that are aware of their topology, the [`TopologyAwareDatabaseDialect`](../../common/lib/topology_aware_database_dialect.ts) interface should also be implemented. For database clusters that use an [Aurora Limitless Database](../../docs/using-the-nodejs-wrapper/using-plugins/UsingTheLimitlessConnectionPlugin.md#what-is-amazon-aurora-limitless-database) then [LimitlessDatabaseDialect](../../common/lib/database_dialect/limitless_database_dialect.ts) should be implemented.
+To create a custom dialect, implement the [`Dialect`](../../common/lib/database_dialect/database_dialect.ts) interface. For databases clusters that are aware of their topology, the [`TopologyAwareDatabaseDialect`](../../common/lib/topology_aware_database_dialect.ts) interface should also be implemented. For database clusters that use an [Aurora Limitless Database](../../docs/using-the-nodejs-wrapper/using-plugins/UsingTheLimitlessConnectionPlugin.md#what-is-amazon-aurora-limitless-database) then [`LimitlessDatabaseDialect`](../../common/lib/database_dialect/limitless_database_dialect.ts) should be implemented.
+
 See the following classes for examples:
 - [PgDatabaseDialect](../../pg/lib/dialect/pg_database_dialect.ts)
   - This is a generic dialect that should work with any PostgreSQL database.
@@ -46,6 +47,7 @@ See the following classes for examples:
   - This dialect is an extension of MySQLDatabaseDialect, but also implements the `TopologyAwareDatabaseDialect` interface.
 
 Once the custom dialect class has been created, tell the AWS Advanced NodeJS Wrapper to use it with the `setCustomDialect` method in the `DialectManager` class. It is not necessary to set the `dialect` parameter. See below for an example:
+
 ```typescript
 myDialect: DatabaseDialect = new CustomDialect();
 DialectManager.setCustomDialect(myDialect);
