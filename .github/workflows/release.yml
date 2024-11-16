@@ -1,0 +1,29 @@
+name: Release AWS Advanced NodeJS Wrapper
+on:
+  release:
+    types: published
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: "Clone Repository"
+        uses: actions/checkout@v4
+      - name: "Set up Node.js"
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20.x"
+      - name: "Install dependencies"
+        run: npm install --no-save
+      - name: "Run eslint - linting"
+        run: npm run lint
+      - name: "Check formatting"
+        run: npm run check
+      - name: "Run unit tests"
+        run: npm test
+      - run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
