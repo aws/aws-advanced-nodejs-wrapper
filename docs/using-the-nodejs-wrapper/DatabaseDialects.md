@@ -41,7 +41,6 @@ See the following classes for examples:
   - This is a generic dialect that should work with any PostgreSQL database.
 - [AuroraPgDatabaseDialect](../../pg/lib/dialect/aurora_pg_database_dialect.ts)
   - This dialect is an extension of PgDatabaseDialect, but also implements the `TopologyAwareDatabaseDialect` and `LimitlessDatabaseDialect` interface.
-
 - [MySQLDatabaseDialect](../../mysql/lib/dialect/mysql_database_dialect.ts)
   - This is a generic dialect that should work with any MySQL database.
 - [AuroraMySQLDatabaseDialect](../../mysql/lib/dialect/aurora_mysql_database_dialect.ts)
