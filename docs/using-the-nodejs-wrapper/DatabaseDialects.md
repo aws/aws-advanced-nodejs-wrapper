@@ -36,9 +36,11 @@ If you are interested in using the AWS Advanced NodeJS Wrapper but your desired 
 To create a custom dialect, implement the [`Dialect`](../../common/lib/database_dialect/database_dialect.ts) interface. For databases clusters that are aware of their topology, the [`TopologyAwareDatabaseDialect`](../../common/lib/topology_aware_database_dialect.ts) interface should also be implemented. For database clusters that use an [Aurora Limitless Database](../../docs/using-the-nodejs-wrapper/using-plugins/UsingTheLimitlessConnectionPlugin.md#what-is-amazon-aurora-limitless-database) then [`LimitlessDatabaseDialect`](../../common/lib/database_dialect/limitless_database_dialect.ts) should be implemented.
 
 See the following classes for examples:
+
 - [PgDatabaseDialect](../../pg/lib/dialect/pg_database_dialect.ts)
   - This is a generic dialect that should work with any PostgreSQL database.
 - [AuroraPgDatabaseDialect](../../pg/lib/dialect/aurora_pg_database_dialect.ts)
+
   - This dialect is an extension of PgDatabaseDialect, but also implements the `TopologyAwareDatabaseDialect` and `LimitlessDatabaseDialect` interface.
 
 - [MySQLDatabaseDialect](../../mysql/lib/dialect/mysql_database_dialect.ts)
