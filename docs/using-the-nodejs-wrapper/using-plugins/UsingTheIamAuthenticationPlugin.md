@@ -6,10 +6,7 @@ AWS Identity and Access Management (IAM) grants users access control across all 
 
 ## AWS IAM Database Authentication
 
-The AWS Advanced NodeJS Wrapper supports Amazon AWS Identity and Access Management (IAM) authentication. When using AWS IAM database authentication, the host URL must be a valid Amazon endpoint, and not a custom domain or an IP address.
-<br>ie. `db-identifier.cluster-XYZ.us-east-2.rds.amazonaws.com`
-
-IAM database authentication use is limited to certain database engines. For more information on limitations and recommendations, please [review the IAM documentation](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/UsingWithRDS.IAMDBAuth.html).
+The AWS Advanced NodeJS Wrapper supports Amazon AWS Identity and Access Management (IAM) authentication. IAM database authentication use is limited to certain database engines. For more information on limitations and recommendations, please [review the IAM documentation](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/UsingWithRDS.IAMDBAuth.html).
 
 ## Prerequisites
 
@@ -38,6 +35,28 @@ IAM database authentication use is limited to certain database engines. For more
 | `iamHost`            | `String` | Only required when using custom endpoints | This property will override the default hostname that is used to generate the IAM token.                                                                                                                                                   | The host value from the connection configuration | `database.cluster-hash.us-east-1.rds.amazonaws.com` |
 | `iamRegion`          | `String` |                    No                     | This property will override the default region that is used to generate the IAM token. If the property is not set, the wrapper will attempt to parse the region from the host provided in the configuration parameters.                    | `null`                                           | `us-east-2`                                         |
 | `iamTokenExpiration` | `Number` |                    No                     | This property determines how long an IAM token is kept in the driver cache before a new one is generated. The default expiration time is set to be 15 minutes. Note that IAM database authentication tokens have a lifetime of 15 minutes. | `900`                                            | `600`                                               |
+
+## Using the IAM Authentication Plugin with Custom Endpoints
+
+When using AWS IAM database authentication with a custom domain or an IP address, in addition to the `clusterInstanceHostPattern` variable, the `iamHost` must be specified and must point to a valid Amazon endpoint, i.e. `db-identifier.cluster-XYZ.us-east-2.rds.amazonaws.com`.
+
+For instance, if you are connecting to an instance with the IP address of `12.345.678.90` and an instance endpoint of `db-identifier.XYZ.us-east-2.rds.amazonaws.com` and you are connecting using the IP endpoint, your connection configuration should look like the following:
+
+```ts
+const config = {
+  host: "12.345.678.90",
+  port: port,
+  user: username,
+  plugins: "iam",
+  database: database,
+  iamRegion: "us-east-1",
+  iamHost: "db-identifier.XYZ.us-east-2.rds.amazonaws.com",
+  clusterInstanceHostPattern: "?.XYZ.us-east-2.rds.amazonaws.com",
+  ssl: {
+    ca: readFileSync("path/to/ssl/certificate.pem").toString()
+  }
+};
+```
 
 ## Sample code
 

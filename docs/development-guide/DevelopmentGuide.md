@@ -31,11 +31,11 @@ npm install
 
 ## Testing Overview
 
-The AWS NodeJS Wrapper uses the following tests to verify its correctness and performance:
+The AWS Advanced NodeJS Wrapper uses the following tests to verify its correctness and performance:
 
 | Tests                                         | Description                                                                                                           |
 | --------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
-| Unit tests                                    | Tests for AWS NodeJS Wrapper correctness.                                                                             |
+| Unit tests                                    | Tests for AWS Advanced NodeJS Wrapper correctness.                                                                             |
 | Failover integration tests                    | Wrapper-specific tests for different reader and writer failover workflows using the Failover Connection Plugin.       |
 | Enhanced failure monitoring integration tests | Wrapper-specific tests for the enhanced failure monitoring functionality using the Host Monitoring Connection Plugin. |
 | Read Write Splitting integration tests        | Wrapper-specific tests for the read write splitting functionality using the Read Write Splitting Plugin.              |
@@ -44,14 +44,14 @@ The AWS NodeJS Wrapper uses the following tests to verify its correctness and pe
 
 ### Performance Tests
 
-The AWS NodeJS Wrapper has 2 types of performance tests:
+The AWS Advanced NodeJS Wrapper has 2 types of performance tests:
 
 1. manually-triggered performance tests measuring the failover and enhanced failure monitoring plugins' performance under different configurations.
-2. benchmarks measuring the AWS NodeJS Wrapper's overhead when executing simple methods using the [benny benchmarking framework](https://www.npmjs.com/package/benny).
+2. benchmarks measuring the AWS Advanced NodeJS Wrapper's overhead when executing simple methods using the [benny benchmarking framework](https://www.npmjs.com/package/benny).
 
-#### AWS NodeJS Wrapper Benchmarks
+#### AWS Advanced NodeJS Wrapper Benchmarks
 
-There are specific benchmarks measuring the AWS NodeJS Wrapper's [pipelines](Pipelines.md). The goal of these benchmarks is to measure the overhead of using the AWS NodeJS Wrapper with multiple plugins enabled. These benchmarks do not make actual connections to the databases, and they test connections with different numbers of simple test plugins and with the default plugin combination which consists of the [aurora connection tracker](../using-the-nodejs-wrapper/using-plugins/UsingTheAuroraConnectionTrackerPlugin.md), [failover](../using-the-nodejs-wrapper/using-plugins/UsingTheFailoverPlugin.md), and [host monitoring](../using-the-nodejs-wrapper/using-plugins/UsingTheHostMonitoringPlugin.md). The images below represent the benchmarks for the `connect`, `execute` and `releaseResources` pipelines.
+There are specific benchmarks measuring the AWS Advanced NodeJS Wrapper's [pipelines](Pipelines.md). The goal of these benchmarks is to measure the overhead of using the AWS Advanced NodeJS Wrapper with multiple plugins enabled. These benchmarks do not make actual connections to the databases, and they test connections with different numbers of simple test plugins and with the default plugin combination which consists of the [aurora connection tracker](../using-the-nodejs-wrapper/using-plugins/UsingTheAuroraConnectionTrackerPlugin.md), [failover](../using-the-nodejs-wrapper/using-plugins/UsingTheFailoverPlugin.md), and [host monitoring](../using-the-nodejs-wrapper/using-plugins/UsingTheHostMonitoringPlugin.md). The images below represent the benchmarks for the `connect`, `execute` and `releaseResources` pipelines.
 
 ##### [Connect Pipeline](Pipelines.md#connect-pipeline)
 
@@ -69,17 +69,17 @@ See [here](PluginPipelinePerformanceResults.md#benchmarks) for a more detailed p
 
 #### Failover-specific Performance Tests
 
-The diagrams in this section show the AWS NodeJS Wrapper's failure detection performance with or without the Failover Connection Plugin under different settings.
+The diagrams in this section show the AWS Advanced NodeJS Wrapper's failure detection performance with or without the Failover Connection Plugin under different settings.
 The performance tests share the following workflow:
 
-1. The AWS NodeJS Wrapper executes an SQL query with a long execution time.
+1. The AWS Advanced NodeJS Wrapper executes an SQL query with a long execution time.
 2. After a network outage delay in milliseconds, the test triggers a network outage.
    Varying values for the network outage delay are tested, represented on the X axis of the diagrams below.
 3. Measures elapsed time between when the network outage and
-   - when the AWS NodeJS Wrapper detects the network failure if the Host Monitoring Plugin is used, or
-   - when the AWS NodeJS Wrapper finishes the failover process if the Failover Plugin is used.
+   - when the AWS Advanced NodeJS Wrapper detects the network failure if the Host Monitoring Plugin is used, or
+   - when the AWS Advanced NodeJS Wrapper finishes the failover process if the Failover Plugin is used.
 
-The following diagrams show how the AWS NodeJS Wrapper performs under a more common failure detection setting versus a more aggressive setting.
+The following diagrams show how the AWS Advanced NodeJS Wrapper performs under a more common failure detection setting versus a more aggressive setting.
 
 Common Failure Detection Setting
 
@@ -122,7 +122,7 @@ See [here](PluginPipelinePerformanceResults.md#enhanced-failure-monitoring-perfo
 
 #### Read-Write Splitting and Internal Connection Pooling Performance Tests
 
-The diagram in this section shows the AWS NodeJS Wrapper's performance when using the read-write splitting plugin, with or without connection pooling enabled. This test sets up a large number of connections in parallel; the initial connection is to the writer but will be changed to a random reader instance. The test executes a long query many times to simulate heavy queries.
+The diagram in this section shows the AWS Advanced NodeJS Wrapper's performance when using the read-write splitting plugin, with or without connection pooling enabled. This test sets up a large number of connections in parallel; the initial connection is to the writer but will be changed to a random reader instance. The test executes a long query many times to simulate heavy queries.
 
 The average overhead time is measured as the average time difference between running the entire test with the read-write plugin and running the entire test without any plugins. The baseline overhead time is 0 because there are no plugins in this scenario and thus there is no plugin overhead.
 
@@ -133,7 +133,7 @@ See [here]() for a more detailed performance breakdown.
 
 ### Running the Tests
 
-After building the AWS NodeJS Wrapper you can now run the unit tests.
+After building the AWS Advanced NodeJS Wrapper you can now run the unit tests.
 This will also validate your environment is set up correctly.
 
 ```bash
