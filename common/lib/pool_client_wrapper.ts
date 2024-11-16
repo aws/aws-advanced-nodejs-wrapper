@@ -40,8 +40,8 @@ export class PoolClientWrapper implements ClientWrapper {
     return this.client?.query(sql);
   }
 
-  async queryWithTimeout(props: Map<string, any>, sql: string): Promise<any> {
-    return await ClientUtils.queryWithTimeout(this.client.query(sql), props);
+  async queryWithTimeout(sql: string): Promise<any> {
+    return await ClientUtils.queryWithTimeout(this.client.query(sql), this.properties);
   }
 
   async end(): Promise<void> {
