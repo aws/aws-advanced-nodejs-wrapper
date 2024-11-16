@@ -73,7 +73,7 @@ For cases where keeping updated information on existing and available replicas i
 such as during the failover procedure, it is important to have a host list provider that can re-fetch information once in a while,
 like the [RDS host list provider](../../common/lib/host_list_provider/rds_host_list_provider.ts).
 The RDS host list provider should be automatically used by the wrapper when the application is connecting to Aurora databases.
-However, you can ensure that the provider is used by specifying a topology-aware dialect, for more information, see [Database Dialects](../using-the-nodejs-driver/DatabaseDialects.md).
+However, you can ensure that the provider is used by specifying a topology-aware dialect, for more information, see [Database Dialects](../../docs/using-the-nodejs-wrapper/DatabaseDialects.md).
 
 ## Connection Changed Notification Pipeline
 
