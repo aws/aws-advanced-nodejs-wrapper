@@ -90,7 +90,6 @@ export class IamAuthenticationPlugin extends AbstractConnectionPlugin {
       logger.debug(Messages.get("AuthenticationToken.useCachedToken", tokenInfo.token));
       WrapperProperties.PASSWORD.set(props, tokenInfo.token);
     } else {
-
       const tokenExpiry: number = Date.now() + tokenExpirationSec * 1000;
       const token = await IamAuthUtils.generateAuthenticationToken(
         host,
