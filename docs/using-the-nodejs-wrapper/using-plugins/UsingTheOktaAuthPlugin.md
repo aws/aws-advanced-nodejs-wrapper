@@ -2,6 +2,14 @@
 
 The Okta Authentication Plugin adds support for authentication via Federated Identity and then database access via IAM.
 
+## Prerequisites
+
+- This plugin requires the following packages to be installed:
+  - [@aws-sdk/rds-signer](https://www.npmjs.com/package/@aws-sdk/rds-signer)
+  - [aws-sdk](https://www.npmjs.com/package/aws-sdk)
+  - [axios](https://www.npmjs.com/package/axios)
+  - [entities](https://www.npmjs.com/package/entities)
+
 ## What is Federated Identity
 
 Federated Identity allows users to use the same set of credentials to access multiple services or resources across different organizations. This works by having Identity Providers (IdP) that manage and authenticate user credentials, and Service Providers (SP) that are services or resources that can be internal, external, and/or belonging to various organizations. Multiple SPs can establish trust relationships with a single IdP.
