@@ -1,6 +1,6 @@
 # Amazon Web Services (AWS) Advanced NodeJS Wrapper
 
-[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE) [![NPM Version](https://badge.fury.io/js/aws-advanced-nodejs-wrapper.svg)](https://badge.fury.io/js/aws-advanced-nodejs-wrapper)
 
 The wrapper is complementary to an existing NodeJS driver and aims to extend the functionality of the driver to enable applications to take full advantage of the features of clustered databases such as Amazon Aurora. In other words, the AWS Advanced NodeJS Wrapper does not connect directly to any database, but enables support of AWS and Aurora functionalities on top of an underlying NodeJS driver of the user's choice.
 
