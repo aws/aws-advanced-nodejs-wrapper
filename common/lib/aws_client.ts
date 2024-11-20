@@ -30,6 +30,7 @@ import { ConnectionProviderManager } from "./connection_provider_manager";
 import { DefaultTelemetryFactory } from "./utils/telemetry/default_telemetry_factory";
 import { TelemetryFactory } from "./utils/telemetry/telemetry_factory";
 import { DriverDialect } from "./driver_dialect/driver_dialect";
+import { WrapperProperties } from "./wrapper_property";
 
 export abstract class AwsClient extends EventEmitter {
   private _defaultPort: number = -1;
@@ -63,7 +64,7 @@ export abstract class AwsClient extends EventEmitter {
     this.pluginManager = new PluginManager(
       container,
       this.properties,
-      new ConnectionProviderManager(new DriverConnectionProvider(), null),
+      new ConnectionProviderManager(new DriverConnectionProvider(), null, WrapperProperties.CONNECTION_PROVIDER.get(this.properties)),
       this.telemetryFactory
     );
   }

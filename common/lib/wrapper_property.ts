@@ -14,6 +14,8 @@
   limitations under the License.
 */
 
+import { ConnectionProvider } from "./connection_provider";
+
 export class WrapperProperty<T> {
   name: string;
   description: string;
@@ -63,6 +65,11 @@ export class WrapperProperties {
   static readonly HOST = new WrapperProperty<string>("host", "Database host", null);
 
   static readonly DIALECT = new WrapperProperty<string>("dialect", "A unique identifier for the supported database dialect.", null);
+  static readonly CONNECTION_PROVIDER = new WrapperProperty<ConnectionProvider>(
+    "connectionProvider",
+    "The connection provider used to create connections.",
+    null
+  );
 
   static readonly INTERNAL_QUERY_TIMEOUT = new WrapperProperty<number>(
     "mysqlQueryTimeout",

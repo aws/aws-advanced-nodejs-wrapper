@@ -91,13 +91,13 @@ const myPoolKeyFunc: InternalPoolMapping = {
 };
 const poolConfig = new AwsPoolConfig({ maxConnections: 10, idleTimeoutMillis: 10000 });
 const provider = new InternalPooledConnectionProvider(poolConfig, myPoolKeyFunc);
-ConnectionProviderManager.setConnectionProvider(provider);
+props.set("connectionProvider", provider);
 ```
 
 > [!WARNING]
 > If you do not include the username in your InternalPoolMapping function, connection pools may be shared between different users. As a result, an initial connection established with a privileged user may be returned to a connection request with a lower-privilege user without re-verifying credentials. This behavior is inherent to the nature of connection pools in general and not a bug with the driver. `await ConnectionProviderManager.releaseResources()` can be called to close all pools and remove all cached pool connections.
 
-2. Call `ConnectionProviderManager.setConnectionProvider()`, passing in the `InternalPoolConnectionProvider` you created in Step 1.
+2. Set the `connectionProvider` connection property, passing in the `InternalPoolConnectionProvider` you created in Step 1.
 
 3. By default, the read/write plugin randomly selects a reader instance the first time that `await setReadOnly(true)` is called. If you would like the plugin to select a reader based on a different selection strategy, please see the [Reader Selection](#reader-selection) section for more information.
 

@@ -120,7 +120,6 @@ describe("internal pool connection provider test", () => {
     reset(mockHostListProvider);
 
     InternalPooledConnectionProvider.clearDatabasePools();
-    ConnectionProviderManager.resetProvider();
   });
 
   it("test connect with default mapping", async () => {

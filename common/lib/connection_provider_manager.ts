@@ -17,20 +17,16 @@
 import { ConnectionProvider } from "./connection_provider";
 import { HostRole } from "./host_role";
 import { HostInfo } from "./host_info";
-import { CanReleaseResources } from "./can_release_resources";
 
 export class ConnectionProviderManager {
-  private static connProvider: ConnectionProvider | null = null;
+  private readonly connProvider: ConnectionProvider | null = null;
   private readonly defaultProvider: ConnectionProvider;
   private readonly effectiveProvider: ConnectionProvider | null;
 
-  constructor(defaultProvider: ConnectionProvider, effectiveProvider: ConnectionProvider | null) {
+  constructor(defaultProvider: ConnectionProvider, effectiveProvider: ConnectionProvider | null, connProvider?: ConnectionProvider) {
     this.defaultProvider = defaultProvider;
     this.effectiveProvider = effectiveProvider;
-  }
-
-  static setConnectionProvider(connProvider: ConnectionProvider) {
-    ConnectionProviderManager.connProvider = connProvider;
+    this.connProvider = connProvider;
   }
 
   getConnectionProvider(hostInfo: HostInfo | null, props: Map<string, any>): ConnectionProvider {
@@ -38,8 +34,8 @@ export class ConnectionProviderManager {
       return this.defaultProvider;
     }
 
-    if (ConnectionProviderManager.connProvider?.acceptsUrl(hostInfo, props)) {
-      return ConnectionProviderManager.connProvider;
+    if (this.connProvider?.acceptsUrl(hostInfo, props)) {
+      return this.connProvider;
     }
 
     if (this.effectiveProvider && this.effectiveProvider.acceptsUrl(hostInfo, props)) {
@@ -51,7 +47,7 @@ export class ConnectionProviderManager {
 
   acceptsStrategy(role: HostRole, strategy: string) {
     return (
-      ConnectionProviderManager.connProvider?.acceptsStrategy(role, strategy) ||
+      this.connProvider?.acceptsStrategy(role, strategy) ||
       this.effectiveProvider?.acceptsStrategy(role, strategy) ||
       this.defaultProvider.acceptsStrategy(role, strategy)
     );
@@ -59,9 +55,9 @@ export class ConnectionProviderManager {
 
   getHostInfoByStrategy(hosts: HostInfo[], role: HostRole, strategy: string, props: Map<string, any>) {
     let host;
-    if (ConnectionProviderManager.connProvider?.acceptsStrategy(role, strategy)) {
+    if (this.connProvider?.acceptsStrategy(role, strategy)) {
       try {
-        host = ConnectionProviderManager.connProvider.getHostInfoByStrategy(hosts, role, strategy, props);
+        host = this.connProvider.getHostInfoByStrategy(hosts, role, strategy, props);
       } catch {
         // Ignore and try with other providers.
       }
@@ -80,21 +76,5 @@ export class ConnectionProviderManager {
     }
 
     return host;
-  }
-
-  static async releaseResources(): Promise<any> {
-    if (ConnectionProviderManager.connProvider !== null) {
-      if (this.implementsCanReleaseResources(ConnectionProviderManager.connProvider)) {
-        await ConnectionProviderManager.connProvider.releaseResources();
-      }
-    }
-  }
-
-  private static implementsCanReleaseResources(connectionProvider: any): connectionProvider is CanReleaseResources {
-    return connectionProvider.releaseResources !== undefined;
-  }
-
-  static resetProvider() {
-    this.connProvider = null;
   }
 }

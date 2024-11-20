@@ -418,7 +418,7 @@ describe("reader write splitting test", () => {
     });
     const provider: InternalPooledConnectionProvider = new InternalPooledConnectionProvider(config);
 
-    ConnectionProviderManager.setConnectionProvider(provider);
+    properties["connectionProvider"] = provider;
 
     const target: ReadWriteSplittingPlugin = spy(
       new ReadWriteSplittingPlugin(mockPluginServiceInstance, properties, mockHostListProviderService, mockWriterWrapper, clientWrapper_undefined)
@@ -459,7 +459,7 @@ describe("reader write splitting test", () => {
     };
     const provider: InternalPooledConnectionProvider = new InternalPooledConnectionProvider(config, myKeyFunc);
 
-    ConnectionProviderManager.setConnectionProvider(provider);
+    properties["connectionProvider"] = provider;
 
     const target: ReadWriteSplittingPlugin = spy(
       new ReadWriteSplittingPlugin(

@@ -78,8 +78,9 @@ describe("rwperformance", () => {
       setReadOnlyPerfDataList = [];
 
       // Internal connection pool results.
-      ConnectionProviderManager.setConnectionProvider(new InternalPooledConnectionProvider());
       const rwPluginWithPoolConfig = initReadWritePluginConfig(env.databaseInfo.writerInstanceEndpoint, env.databaseInfo.clusterEndpointPort);
+      let provider = new InternalPooledConnectionProvider();
+      rwPluginWithPoolConfig["connectionProvider"] = provider;
       const rwPluginWithPoolData = await measurePerformance(rwPluginWithPoolConfig);
 
       readerData = calculateReaderOverhead("Switch to reader", rwPluginWithPoolData, noPluginData);
@@ -92,18 +93,17 @@ describe("rwperformance", () => {
         "ICP"
       );
 
-      await ConnectionProviderManager.releaseResources();
-      ConnectionProviderManager.resetProvider();
+      await provider.releaseResources();
 
       setReadOnlyPerfDataList = [];
 
-      // Internal connection pool results with warm up.
-      ConnectionProviderManager.setConnectionProvider(new InternalPooledConnectionProvider());
-
       // Create an internal connection pool for each instance.
+      provider = new InternalPooledConnectionProvider();
       for (const instance of env.databaseInfo.instances) {
         if (instance.host && instance.port) {
-          const client = DriverHelper.getClient(driver)(initReadWritePluginConfig(instance.host, instance.port));
+          const instanceConfig = initReadWritePluginConfig(instance.host, instance.port);
+          instanceConfig["connectionProvider"] = provider;
+          const client = DriverHelper.getClient(driver)(instanceConfig);
           await PerfTestUtility.connectWithRetry(client);
           await client.setReadOnly(true);
           await client.setReadOnly(false);
@@ -123,8 +123,7 @@ describe("rwperformance", () => {
         "ICPWithWarmUp"
       );
 
-      await ConnectionProviderManager.releaseResources();
-      ConnectionProviderManager.resetProvider();
+      await provider.releaseResources();
     },
     13200000
   );

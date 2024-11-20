@@ -22,7 +22,7 @@ For information on how to subscribe to these pipelines, please see the documenta
 
 ## Connect Pipeline
 
-The connect pipeline performs any additional setup or post connection steps required to establish a connection. By default, the connect pipeline will establish connections using the `DriverConnectionProvider` class. If you would like to use a non-default `ConnectionProvider` to create connections, you can do so by calling `ConnectionProviderManager.setConnectionProvider(new CustomConnectionProvider())`.
+The connect pipeline performs any additional setup or post connection steps required to establish a connection. By default, the connect pipeline will establish connections using the `DriverConnectionProvider` class. If you would like to use a non-default `ConnectionProvider` to create connections, you can do so by setting the connection property `connectionProvider: new CustomConnectionProvider()`.
 
 The wrapper provides a custom connection provider called `InternalPooledConnectionProvider`. This provider creates pooled clients and are intended to be used with the Read/Write Splitting plugin. To learn more about this provider, see the internal connection pool section in [UsingTheReadWriteSplittingPlugin.md](https://github.com/aws/aws-advanced-nodejs-wrapper/blob/main/docs/using-the-nodejs-wrapper/using-plugins/UsingTheReadWriteSplittingPlugin.md).
 
@@ -32,7 +32,7 @@ An example would be the IAM connection plugin. The IAM connection plugin generat
 
 ## Force Connect Pipeline
 
-The force connect pipeline is similar to the connect pipeline except that it will use the default `DriverConnectionProvider` class to establish connections regardless of whether a non-default `ConnectionProvider` has been requested via `ConnectionProviderManager.setConnectionProvider(new CustomConnectionProvider())`. For most plugins, the connect and force connect implementation will be equivalent.
+The force connect pipeline is similar to the connect pipeline except that it will use the default `DriverConnectionProvider` class to establish connections regardless of whether a non-default `ConnectionProvider` has been requested via the `connectionProvider` connection property. For most plugins, the connect and force connect implementation will be equivalent.
 
 ## Execute Pipeline
 

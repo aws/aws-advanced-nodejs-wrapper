@@ -29,19 +29,6 @@ const password = "employees";
 const database = "database";
 const port = 5432;
 
-const client = new AwsPGClient({
-  // Configure connection parameters. Enable readWriteSplitting, failover, and efm plugins.
-  host: postgresHost,
-  port: port,
-  user: username,
-  password: password,
-  database: database,
-  plugins: "readWriteSplitting,failover,efm",
-
-  // Optional: PoolKey property value used in internal connection pools.
-  dbUser: "john_smith"
-});
-
 /**
  * Optional methods: only required if configured to use internal connection pools.
  * The configuration in these methods are only examples - you can configure as you needed in your own code.
@@ -59,7 +46,20 @@ const myPoolKeyFunc: InternalPoolMapping = {
  */
 const poolConfig = new AwsPoolConfig({ maxConnections: 10, maxIdleConnections: 10, idleTimeoutMillis: 10000, allowExitOnIdle: true });
 const provider = new InternalPooledConnectionProvider(poolConfig, myPoolKeyFunc);
-ConnectionProviderManager.setConnectionProvider(provider);
+
+const client = new AwsPGClient({
+  // Configure connection parameters. Enable readWriteSplitting, failover, and efm plugins.
+  host: postgresHost,
+  port: port,
+  user: username,
+  password: password,
+  database: database,
+  plugins: "readWriteSplitting,failover,efm",
+
+  // Optional: PoolKey property value and connection provider used in internal connection pools.
+  connectionProvider: provider,
+  dbUser: "john_smith"
+});
 
 // Setup Step: Open connection and create tables - uncomment this section to create table and test values.
 /* try {
