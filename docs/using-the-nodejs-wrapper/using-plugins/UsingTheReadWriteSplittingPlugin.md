@@ -37,7 +37,7 @@ The Read/Write Splitting Plugin is not currently supported for non-Aurora cluste
 ## Internal Connection Pooling
 
 > [!WARNING]
-> If internal connection pools are enabled, database passwords may not be verified with every connection request. The initial connection request for each database instance in the cluster will verify the password, but subsequent requests may return a cached pool connection without re-verifying the password. This behavior is inherent to the nature of connection pools in general and not a bug with the wrapper. `await ConnectionProviderManager.releaseResources()` can be called to close all pools and remove all cached pool connections. See [Internal Connection Pool Password Warning Example for Postgres](../../../examples/aws_driver_example/aws_interal_connection_pool_password_warning_postgres_example.ts) and [Internal Connection Pool Password Warning Example for MySQL](../../../examples/aws_driver_example/aws_internal_connection_pool_password_warning_mysql_example.ts)
+> If internal connection pools are enabled, database passwords may not be verified with every connection request. The initial connection request for each database instance in the cluster will verify the password, but subsequent requests may return a cached pool connection without re-verifying the password. This behavior is inherent to the nature of connection pools in general and not a bug with the wrapper. `await <name-of-ConnectionProvider>.releaseResources()` can be called to close all pools and remove all cached pool connections. See [Internal Connection Pool Password Warning Example for Postgres](../../../examples/aws_driver_example/aws_interal_connection_pool_password_warning_postgres_example.ts) and [Internal Connection Pool Password Warning Example for MySQL](../../../examples/aws_driver_example/aws_internal_connection_pool_password_warning_mysql_example.ts)
 
 Whenever `await setReadOnly(true)` is first called on a `AwsClient` object, the read/write plugin will internally open a new physical connection to a reader. After this first call, the physical reader connection will be cached for the given `AwsClient`. Future calls to `setReadOnly` on the same `AwsClient` object will not require opening a new physical connection. However, calling `await setReadOnly(true)` for the first time on a new `AwsClient` object will require the plugin to establish another new physical connection to a reader. If your application frequently calls `setReadOnly`, you can enable internal connection pooling to improve performance. When enabled, the wrapper driver will maintain an internal connection pool for each instance in the cluster. This allows the read/write splitting plugin to reuse connections that were established by `setReadOnly` calls on previous `AwsClient` objects.
 
@@ -95,7 +95,7 @@ props.set("connectionProvider", provider);
 ```
 
 > [!WARNING]
-> If you do not include the username in your InternalPoolMapping function, connection pools may be shared between different users. As a result, an initial connection established with a privileged user may be returned to a connection request with a lower-privilege user without re-verifying credentials. This behavior is inherent to the nature of connection pools in general and not a bug with the driver. `await ConnectionProviderManager.releaseResources()` can be called to close all pools and remove all cached pool connections.
+> If you do not include the username in your InternalPoolMapping function, connection pools may be shared between different users. As a result, an initial connection established with a privileged user may be returned to a connection request with a lower-privilege user without re-verifying credentials. This behavior is inherent to the nature of connection pools in general and not a bug with the driver. `await provider.releaseResources()` can be called to close all pools and remove all cached pool connections.
 
 2. Set the `connectionProvider` connection property, passing in the `InternalPoolConnectionProvider` you created in Step 1.
 
@@ -103,10 +103,10 @@ props.set("connectionProvider", provider);
 
 4. Continue as normal: create connections and use them as needed.
 
-5. When you are finished using all connections, call `await ConnectionProviderManager.releaseResources()`.
+5. When you are finished using all connections, call `await provider.releaseResources()`.
 
 > [!IMPORTANT]
-> You must call `await ConnectionProviderManager.releaseResources()` to close the internal connection pools when you are finished using all connections. Unless `await ConnectionProviderManager.releaseResources()` is called, the wrapper driver will keep the pools open so that they can be shared between connections.
+> You must call `await provider.releaseResources()` to close the internal connection pools when you are finished using all connections. Unless `await ConnectionProviderManager.releaseResources()` is called, the wrapper driver will keep the pools open so that they can be shared between connections.
 
 ### Reader Selection
 

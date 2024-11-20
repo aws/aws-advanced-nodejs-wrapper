@@ -72,7 +72,7 @@ try {
   await newClient.end();
 }
 // Closes all pools and removes all cached pool connections.
-await ConnectionProviderManager.releaseResources();
+await provider.releaseResources();
 
 const newClient2 = new AwsMySQLClient({
   host: mysqlHost,

@@ -23,10 +23,10 @@ export class ConnectionProviderManager {
   private readonly defaultProvider: ConnectionProvider;
   private readonly effectiveProvider: ConnectionProvider | null;
 
-  constructor(defaultProvider: ConnectionProvider, effectiveProvider: ConnectionProvider | null, connProvider?: ConnectionProvider) {
+  constructor(defaultProvider: ConnectionProvider, effectiveProvider: ConnectionProvider | null, connProvider?: ConnectionProvider | null) {
     this.defaultProvider = defaultProvider;
     this.effectiveProvider = effectiveProvider;
-    this.connProvider = connProvider;
+    this.connProvider = connProvider ? connProvider : null;
   }
 
   getConnectionProvider(hostInfo: HostInfo | null, props: Map<string, any>): ConnectionProvider {

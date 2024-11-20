@@ -108,7 +108,7 @@ try {
   await client.end();
 
   // If configured to use internal connection pools, close them here.
-  await ConnectionProviderManager.releaseResources();
+  await provider.releaseResources();
 }
 
 async function setInitialSessionSettings(client: AwsPGClient) {
