@@ -14,15 +14,15 @@
   limitations under the License.
 */
 
-import { TestEnvironment } from "./utils/test_environment";
-import { ProxyHelper } from "./utils/proxy_helper";
-import { DriverHelper } from "./utils/driver_helper";
-import { AuroraTestUtility } from "./utils/aurora_test_utility";
-import { logger } from "../../../../common/logutils";
-import { DatabaseEngine } from "./utils/database_engine";
-import { TestEnvironmentFeatures } from "./utils/test_environment_features";
-import { features } from "./config";
-import { DatabaseEngineDeployment } from "./utils/database_engine_deployment";
+import { TestEnvironment } from "../integration/container/tests/utils/test_environment";
+import { ProxyHelper } from "../integration/container/tests/utils/proxy_helper";
+import { DriverHelper } from "../integration/container/tests/utils/driver_helper";
+import { AuroraTestUtility } from "../integration/container/tests/utils/aurora_test_utility";
+import { logger } from "../../common/logutils";
+import { DatabaseEngine } from "../integration/container/tests/utils/database_engine";
+import { TestEnvironmentFeatures } from "../integration/container/tests/utils/test_environment_features";
+import { features } from "../integration/container/tests/config";
+import { DatabaseEngineDeployment } from "../integration/container/tests/utils/database_engine_deployment";
 
 const itIf = !features.includes(TestEnvironmentFeatures.PERFORMANCE) ? it : it.skip;
 

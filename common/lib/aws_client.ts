@@ -30,6 +30,7 @@ import { ConnectionProviderManager } from "./connection_provider_manager";
 import { DefaultTelemetryFactory } from "./utils/telemetry/default_telemetry_factory";
 import { TelemetryFactory } from "./utils/telemetry/telemetry_factory";
 import { DriverDialect } from "./driver_dialect/driver_dialect";
+import { SessionStateService } from "./session_state_service";
 
 export abstract class AwsClient extends EventEmitter {
   private _defaultPort: number = -1;
@@ -39,6 +40,7 @@ export abstract class AwsClient extends EventEmitter {
   protected isConnected: boolean = false;
   protected _connectionUrlParser: ConnectionUrlParser;
   readonly properties: Map<string, any>;
+  readonly sessionStateService: SessionStateService;
   config: any;
   targetClient?: ClientWrapper;
 
@@ -64,6 +66,7 @@ export abstract class AwsClient extends EventEmitter {
       new ConnectionProviderManager(new DriverConnectionProvider(), null),
       this.telemetryFactory
     );
+    this.sessionStateService = this.pluginService.getSessionStateService();
   }
 
   private async setup() {
