@@ -22,9 +22,7 @@ import { WrapperProperties } from "../../common/lib/wrapper_property";
 import { anything, instance, mock, spy, verify, when } from "ts-mockito";
 import { CredentialsProviderFactory } from "../../common/lib/plugins/federated_auth/credentials_provider_factory";
 import { DatabaseDialect } from "../../common/lib/database_dialect/database_dialect";
-
-import pkgAwsSdk from "aws-sdk";
-const { Credentials } = pkgAwsSdk;
+import { AwsCredentials } from "../../common/lib/plugins/federated_auth/saml_credentials_provider_factory";
 
 import { HostRole } from "../../common/lib/host_role";
 import { NullTelemetryFactory } from "../../common/lib/utils/telemetry/null_telemetry_factory";
@@ -48,7 +46,7 @@ const mockDialectInstance = instance(mockDialect);
 const mockPluginService = mock(PluginService);
 const mockCredentialsProviderFactory = mock<CredentialsProviderFactory>();
 const spyIamUtils = spy(IamAuthUtils);
-const mockCredentials = mock(Credentials);
+const mockCredentials = mock(AwsCredentials);
 const mockConnectFunc = jest.fn(() => {
   return Promise.resolve(mock(PgClientWrapper));
 });
