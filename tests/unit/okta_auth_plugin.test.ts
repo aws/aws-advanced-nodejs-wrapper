@@ -22,8 +22,7 @@ import { HostInfo } from "../../common/lib/host_info";
 import { WrapperProperties } from "../../common/lib/wrapper_property";
 import { DatabaseDialect } from "../../common/lib/database_dialect/database_dialect";
 
-import pkgAwsSdk from "aws-sdk";
-const { Credentials } = pkgAwsSdk;
+import { AwsCredentials } from "../../common/lib/plugins/federated_auth/saml_credentials_provider_factory";
 
 import { OktaAuthPlugin } from "../../common/lib/plugins/federated_auth/okta_auth_plugin";
 import { NullTelemetryFactory } from "../../common/lib/utils/telemetry/null_telemetry_factory";
@@ -42,7 +41,7 @@ const testTokenInfo = new TokenInfo(testToken, Date.now() + 300000);
 const mockPluginService = mock(PluginService);
 const mockDialect = mock<DatabaseDialect>();
 const mockDialectInstance = instance(mockDialect);
-const mockCredentials = mock(Credentials);
+const mockCredentials = mock(AwsCredentials);
 const spyIamUtils = spy(IamAuthUtils);
 const mockCredentialsProviderFactory = mock<CredentialsProviderFactory>();
 const mockConnectFunc = jest.fn(() => {
