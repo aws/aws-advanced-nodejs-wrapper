@@ -64,7 +64,7 @@ export abstract class AwsClient extends EventEmitter {
     this.pluginManager = new PluginManager(
       container,
       this.properties,
-      new ConnectionProviderManager(new DriverConnectionProvider(), null, WrapperProperties.CONNECTION_PROVIDER.get(this.properties)),
+      new ConnectionProviderManager(new DriverConnectionProvider(), WrapperProperties.CONNECTION_PROVIDER.get(this.properties)),
       this.telemetryFactory
     );
   }

@@ -19,23 +19,17 @@ import { HostRole } from "./host_role";
 import { HostInfo } from "./host_info";
 
 export class ConnectionProviderManager {
-  private readonly connProvider: ConnectionProvider | null = null;
   private readonly defaultProvider: ConnectionProvider;
   private readonly effectiveProvider: ConnectionProvider | null;
 
-  constructor(defaultProvider: ConnectionProvider, effectiveProvider: ConnectionProvider | null, connProvider?: ConnectionProvider | null) {
+  constructor(defaultProvider: ConnectionProvider, effectiveProvider: ConnectionProvider | null) {
     this.defaultProvider = defaultProvider;
     this.effectiveProvider = effectiveProvider;
-    this.connProvider = connProvider ? connProvider : null;
   }
 
   getConnectionProvider(hostInfo: HostInfo | null, props: Map<string, any>): ConnectionProvider {
     if (hostInfo === null) {
       return this.defaultProvider;
-    }
-
-    if (this.connProvider?.acceptsUrl(hostInfo, props)) {
-      return this.connProvider;
     }
 
     if (this.effectiveProvider && this.effectiveProvider.acceptsUrl(hostInfo, props)) {
@@ -46,22 +40,11 @@ export class ConnectionProviderManager {
   }
 
   acceptsStrategy(role: HostRole, strategy: string) {
-    return (
-      this.connProvider?.acceptsStrategy(role, strategy) ||
-      this.effectiveProvider?.acceptsStrategy(role, strategy) ||
-      this.defaultProvider.acceptsStrategy(role, strategy)
-    );
+    return this.effectiveProvider?.acceptsStrategy(role, strategy) || this.defaultProvider.acceptsStrategy(role, strategy);
   }
 
   getHostInfoByStrategy(hosts: HostInfo[], role: HostRole, strategy: string, props: Map<string, any>) {
     let host;
-    if (this.connProvider?.acceptsStrategy(role, strategy)) {
-      try {
-        host = this.connProvider.getHostInfoByStrategy(hosts, role, strategy, props);
-      } catch {
-        // Ignore and try with other providers.
-      }
-    }
 
     if (this.effectiveProvider?.acceptsStrategy(role, strategy)) {
       try {
