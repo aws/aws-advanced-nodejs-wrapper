@@ -41,8 +41,8 @@ export class PgClientWrapper implements ClientWrapper {
     this.client = targetClient;
     this.hostInfo = hostInfo;
     this.properties = properties;
+    this.sessionState = new SessionState();
     this.id = uniqueId("PgClient_");
-    this.setSessionStateDefault();
   }
 
   query(sql: any): Promise<any> {

@@ -14,18 +14,18 @@
   limitations under the License.
 */
 
-import { logger } from "../../../../common/logutils";
-import { TestEnvironment } from "./utils/test_environment";
-import { DriverHelper } from "./utils/driver_helper";
-import { TestEnvironmentFeatures } from "./utils/test_environment_features";
-import { features, instanceCount } from "./config";
-import { PerfStat } from "./utils/perf_stat";
-import { PerfTestUtility } from "./utils/perf_util";
-import { ConnectTimePlugin } from "../../../../common/lib/plugins/connect_time_plugin";
-import { ExecuteTimePlugin } from "../../../../common/lib/plugins/execute_time_plugin";
-import { TestDriver } from "./utils/test_driver";
-import { ConnectionProviderManager } from "../../../../common/lib/connection_provider_manager";
-import { InternalPooledConnectionProvider } from "../../../../common/lib/internal_pooled_connection_provider";
+import { logger } from "../../common/logutils";
+import { TestEnvironment } from "../integration/container/tests/utils/test_environment";
+import { DriverHelper } from "../integration/container/tests/utils/driver_helper";
+import { TestEnvironmentFeatures } from "../integration/container/tests/utils/test_environment_features";
+import { features, instanceCount } from "../integration/container/tests/config";
+import { PerfStat } from "../integration/container/tests/utils/perf_stat";
+import { PerfTestUtility } from "../integration/container/tests/utils/perf_util";
+import { ConnectTimePlugin } from "../../common/lib/plugins/connect_time_plugin";
+import { ExecuteTimePlugin } from "../../common/lib/plugins/execute_time_plugin";
+import { TestDriver } from "../integration/container/tests/utils/test_driver";
+import { ConnectionProviderManager } from "../../common/lib/connection_provider_manager";
+import { InternalPooledConnectionProvider } from "../../common/lib/internal_pooled_connection_provider";
 
 const itIf =
   features.includes(TestEnvironmentFeatures.FAILOVER_SUPPORTED) &&

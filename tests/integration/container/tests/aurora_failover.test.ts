@@ -14,17 +14,17 @@
   limitations under the License.
 */
 
-import { TestEnvironment } from "./utils/test_environment";
-import { DriverHelper } from "./utils/driver_helper";
-import { AuroraTestUtility } from "./utils/aurora_test_utility";
-import { FailoverSuccessError, TransactionResolutionUnknownError } from "../../../../common/lib/utils/errors";
-import { DatabaseEngine } from "./utils/database_engine";
+import { TestEnvironment } from "../integration/container/tests/utils/test_environment";
+import { DriverHelper } from "../integration/container/tests/utils/driver_helper";
+import { AuroraTestUtility } from "../integration/container/tests/utils/aurora_test_utility";
+import { FailoverSuccessError, TransactionResolutionUnknownError } from "../../common/lib/utils/errors";
+import { DatabaseEngine } from "../integration/container/tests/utils/database_engine";
 import { QueryResult } from "pg";
-import { ProxyHelper } from "./utils/proxy_helper";
-import { RdsUtils } from "../../../../common/lib/utils/rds_utils";
-import { logger } from "../../../../common/logutils";
-import { features, instanceCount } from "./config";
-import { TestEnvironmentFeatures } from "./utils/test_environment_features";
+import { ProxyHelper } from "../integration/container/tests/utils/proxy_helper";
+import { RdsUtils } from "../../common/lib/utils/rds_utils";
+import { logger } from "../../common/logutils";
+import { features, instanceCount } from "../integration/container/tests/config";
+import { TestEnvironmentFeatures } from "../integration/container/tests/utils/test_environment_features";
 
 const itIf =
   features.includes(TestEnvironmentFeatures.FAILOVER_SUPPORTED) && !features.includes(TestEnvironmentFeatures.PERFORMANCE) && instanceCount >= 2
