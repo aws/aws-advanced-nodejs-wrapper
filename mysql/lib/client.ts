@@ -79,7 +79,7 @@ export class AwsMySQLClient extends AwsClient {
     });
   }
 
-  private async readOnlyQuery(options: QueryOptions, callback?: any): Promise<Query> {
+  private async queryWithoutUpdate(options: QueryOptions, callback?: any): Promise<Query> {
     const host = this.pluginService.getCurrentHostInfo();
 
     return this.pluginManager.execute(
@@ -94,7 +94,9 @@ export class AwsMySQLClient extends AwsClient {
   }
 
   async setReadOnly(readOnly: boolean): Promise<Query | void> {
-    const result = await this.readOnlyQuery({ sql: `SET SESSION TRANSACTION READ ${readOnly ? "ONLY" : "WRITE"}` });
+    this.pluginService.getSessionStateService().setupPristineReadOnly();
+    const result = await this.queryWithoutUpdate({ sql: `SET SESSION TRANSACTION READ ${readOnly ? "ONLY" : "WRITE"}` });
+    this.targetClient.sessionState.readOnly.value = readOnly;
     this.pluginService.getSessionStateService().updateReadOnly(readOnly);
     return result;
   }
@@ -104,19 +106,16 @@ export class AwsMySQLClient extends AwsClient {
   }
 
   async setAutoCommit(autoCommit: boolean): Promise<Query | void> {
-    if (autoCommit === this.getAutoCommit()) {
-      return;
-    }
-
     this.pluginService.getSessionStateService().setupPristineAutoCommit();
-    this.pluginService.getSessionStateService().setAutoCommit(autoCommit);
 
-    this.targetClient.sessionState.autoCommit.value = autoCommit;
     let setting = "1";
     if (!autoCommit) {
       setting = "0";
     }
-    return await this.query({ sql: `SET AUTOCOMMIT=${setting}` });
+    const result = await this.queryWithoutUpdate({ sql: `SET AUTOCOMMIT=${setting}` });
+    this.targetClient.sessionState.autoCommit.value = autoCommit;
+    this.pluginService.getSessionStateService().setAutoCommit(autoCommit);
+    return result;
   }
 
   getAutoCommit(): boolean {
@@ -124,15 +123,10 @@ export class AwsMySQLClient extends AwsClient {
   }
 
   async setCatalog(catalog: string): Promise<Query | void> {
-    if (catalog === this.getCatalog()) {
-      return;
-    }
-
     this.pluginService.getSessionStateService().setupPristineCatalog();
-    this.pluginService.getSessionStateService().setCatalog(catalog);
-
+    await this.queryWithoutUpdate({ sql: `USE ${catalog}` });
     this.targetClient.sessionState.catalog.value = catalog;
-    await this.query({ sql: `USE ${catalog}` });
+    this.pluginService.getSessionStateService().setCatalog(catalog);
   }
 
   getCatalog(): string {
@@ -148,32 +142,27 @@ export class AwsMySQLClient extends AwsClient {
   }
 
   async setTransactionIsolation(level: TransactionIsolationLevel): Promise<Query | void> {
-    if (level === this.getTransactionIsolation()) {
-      return;
-    }
-
     this.pluginService.getSessionStateService().setupPristineTransactionIsolation();
-    this.pluginService.getSessionStateService().setTransactionIsolation(level);
 
-    this.targetClient.sessionState.transactionIsolation.value = level;
     switch (level) {
       case 0:
-        await this.query({ sql: "SET SESSION TRANSACTION ISOLATION LEVEL READ UNCOMMITTED" });
+        await this.queryWithoutUpdate({ sql: "SET SESSION TRANSACTION ISOLATION LEVEL READ UNCOMMITTED" });
         break;
       case 1:
-        await this.query({ sql: "SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED" });
+        await this.queryWithoutUpdate({ sql: "SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED" });
         break;
       case 2:
-        await this.query({ sql: "SET SESSION TRANSACTION ISOLATION LEVEL REPEATABLE READ" });
+        await this.queryWithoutUpdate({ sql: "SET SESSION TRANSACTION ISOLATION LEVEL REPEATABLE READ" });
         break;
       case 3:
-        await this.query({ sql: "SET SESSION TRANSACTION ISOLATION LEVEL SERIALIZABLE" });
+        await this.queryWithoutUpdate({ sql: "SET SESSION TRANSACTION ISOLATION LEVEL SERIALIZABLE" });
         break;
       default:
         throw new AwsWrapperError(Messages.get("Client.invalidTransactionIsolationLevel", String(level)));
     }
 
     this.targetClient.sessionState.transactionIsolation.value = level;
+    this.pluginService.getSessionStateService().setTransactionIsolation(level);
   }
 
   getTransactionIsolation(): number {

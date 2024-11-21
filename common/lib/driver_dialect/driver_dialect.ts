@@ -18,6 +18,8 @@ import { ClientWrapper } from "../client_wrapper";
 import { AwsPoolConfig } from "../aws_pool_config";
 import { AwsPoolClient } from "../aws_pool_client";
 import { HostInfo } from "../host_info";
+import { PluginService } from "../plugin_service";
+import { SessionState } from "../session_state";
 
 export interface DriverDialect {
   getDialectName(): string;

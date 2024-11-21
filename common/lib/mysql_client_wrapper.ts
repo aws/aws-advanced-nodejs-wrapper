@@ -43,6 +43,7 @@ export class MySQLClientWrapper implements ClientWrapper {
     this.hostInfo = hostInfo;
     this.properties = properties;
     this.id = uniqueId("MySQLClient_");
+
     this.setSessionStateDefault();
   }
 
