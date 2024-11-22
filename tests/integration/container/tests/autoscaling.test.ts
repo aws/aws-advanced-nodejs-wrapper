@@ -43,7 +43,7 @@ let newInstanceClient: any;
 let auroraTestUtility: AuroraTestUtility;
 let provider: InternalPooledConnectionProvider | null;
 
-async function initDefaultConfig(host: string, port: number): Promise<any> {
+async function initDefaultConfig(host: string, port: number, provider: InternalPooledConnectionProvider): Promise<any> {
   let config: any = {
     user: env.databaseInfo.username,
     host: host,
@@ -51,6 +51,7 @@ async function initDefaultConfig(host: string, port: number): Promise<any> {
     password: env.databaseInfo.password,
     port: port,
     plugins: "readWriteSplitting",
+    connectionProvider: provider,
     enableTelemetry: true,
     telemetryTracesBackend: "OTLP",
     telemetryMetricsBackend: "OTLP",
@@ -61,7 +62,7 @@ async function initDefaultConfig(host: string, port: number): Promise<any> {
   return config;
 }
 
-async function initConfigWithFailover(host: string, port: number): Promise<any> {
+async function initConfigWithFailover(host: string, port: number, provider: InternalPooledConnectionProvider): Promise<any> {
   let config: any = {
     user: env.databaseInfo.username,
     host: host,
@@ -69,6 +70,7 @@ async function initConfigWithFailover(host: string, port: number): Promise<any> 
     password: env.databaseInfo.password,
     port: port,
     plugins: "readWriteSplitting,failover",
+    connectionProvider: provider,
     failoverTimeoutMs: 400000,
     enableTelemetry: true,
     telemetryTracesBackend: "OTLP",
@@ -97,8 +99,7 @@ describe("pooled connection autoscaling", () => {
   afterEach(async () => {
     if (provider !== null) {
       try {
-        await ConnectionProviderManager.releaseResources();
-        ConnectionProviderManager.resetProvider();
+        await provider.releaseResources();
       } catch (error) {
         // pass
       }
@@ -116,7 +117,6 @@ describe("pooled connection autoscaling", () => {
 
       // Set provider.
       provider = new InternalPooledConnectionProvider(new AwsPoolConfig({ maxConnections: numInstances }));
-      ConnectionProviderManager.setConnectionProvider(provider);
 
       // Initialize clients.
       try {
@@ -124,7 +124,7 @@ describe("pooled connection autoscaling", () => {
           const host = instances[i].host;
           const port = instances[i].port;
           if (host && port) {
-            const config: any = await initDefaultConfig(host, port);
+            const config: any = await initDefaultConfig(host, port, provider);
             const client = initClientFunc(config);
             client.on("error", (error: any): void => {
               logger.debug(`event emitter threw error: ${error.message}`);
@@ -145,7 +145,7 @@ describe("pooled connection autoscaling", () => {
 
         // Connect to instance.
         try {
-          const config = await initDefaultConfig(env.databaseInfo.writerInstanceEndpoint, env.databaseInfo.instanceEndpointPort);
+          const config = await initDefaultConfig(env.databaseInfo.writerInstanceEndpoint, env.databaseInfo.instanceEndpointPort, provider);
           newInstanceClient = initClientFunc(config);
           await newInstanceClient.connect();
           connectionsSet.add(newInstanceClient);
@@ -197,7 +197,6 @@ describe("pooled connection autoscaling", () => {
 
       // Set provider.
       provider = new InternalPooledConnectionProvider(new AwsPoolConfig({ maxConnections: numInstances }));
-      ConnectionProviderManager.setConnectionProvider(provider);
 
       // Initialize clients.
       try {
@@ -205,7 +204,7 @@ describe("pooled connection autoscaling", () => {
           const host = instances[i].host;
           const port = instances[i].port;
           if (host && port) {
-            const config: any = await initConfigWithFailover(host, port);
+            const config: any = await initConfigWithFailover(host, port, provider);
             const client = initClientFunc(config);
             client.on("error", (error: any): void => {
               logger.debug(`event emitter threw error: ${error.message}`);
@@ -226,7 +225,7 @@ describe("pooled connection autoscaling", () => {
 
         // Connect to instance.
         try {
-          const config = await initConfigWithFailover(newInstance.host, newInstance.port);
+          const config = await initConfigWithFailover(newInstance.host, newInstance.port, provider);
           newInstanceClient = initClientFunc(config);
           await newInstanceClient.connect();
           connectionsSet.add(newInstanceClient);

@@ -111,8 +111,7 @@ describe("aurora read write splitting", () => {
     }
     if (provider !== null) {
       try {
-        await ConnectionProviderManager.releaseResources();
-        ConnectionProviderManager.resetProvider();
+        await provider.releaseResources();
       } catch (error) {
         // pass
       }
@@ -455,10 +454,9 @@ describe("aurora read write splitting", () => {
     async () => {
       const config = await initConfigWithFailover(env.databaseInfo.writerInstanceEndpoint, env.databaseInfo.instanceEndpointPort, false);
       provider = new InternalPooledConnectionProvider();
-      ConnectionProviderManager.setConnectionProvider(provider);
+      config["connectionProvider"] = provider;
 
       client = initClientFunc(config);
-
       await client.connect();
       const initialWriterId = await auroraTestUtility.queryInstanceId(client);
       provider.logConnections();
@@ -491,8 +489,6 @@ describe("aurora read write splitting", () => {
     "test set read only reuse cached connection",
     async () => {
       const config = await initDefaultConfig(env.databaseInfo.writerInstanceEndpoint, env.databaseInfo.instanceEndpointPort, false);
-      client = initClientFunc(config);
-      secondaryClient = initClientFunc(config);
 
       provider = new InternalPooledConnectionProvider(
         new AwsPoolConfig({
@@ -501,8 +497,11 @@ describe("aurora read write splitting", () => {
           maxIdleConnections: 10
         })
       );
+      config["connectionProvider"] = provider;
 
-      ConnectionProviderManager.setConnectionProvider(provider);
+      client = initClientFunc(config);
+      secondaryClient = initClientFunc(config);
+
       await client.connect();
       await client.end();
 
@@ -511,8 +510,7 @@ describe("aurora read write splitting", () => {
       provider.logConnections();
       try {
         await secondaryClient.end();
-        await ConnectionProviderManager.releaseResources();
-        ConnectionProviderManager.resetProvider();
+        await provider.releaseResources();
       } catch (error) {
         // pass
       }
@@ -526,15 +524,14 @@ describe("aurora read write splitting", () => {
       const config = await initConfigWithFailover(env.proxyDatabaseInfo.writerInstanceEndpoint, env.proxyDatabaseInfo.instanceEndpointPort, true);
       config["failoverTimeoutMs"] = 1000;
 
-      client = initClientFunc(config);
-
       provider = new InternalPooledConnectionProvider({
         minConnections: 0,
         maxConnections: 10,
         maxIdleConnections: 10
       });
-      ConnectionProviderManager.setConnectionProvider(provider);
+      config["connectionProvider"] = provider;
 
+      client = initClientFunc(config);
       await client.connect();
       const initialWriterId = await auroraTestUtility.queryInstanceId(client);
 
@@ -558,11 +555,11 @@ describe("aurora read write splitting", () => {
     "test pooled connection failover in transaction",
     async () => {
       const config = await initConfigWithFailover(env.databaseInfo.writerInstanceEndpoint, env.databaseInfo.instanceEndpointPort, false);
-      client = initClientFunc(config);
 
       provider = new InternalPooledConnectionProvider();
-      ConnectionProviderManager.setConnectionProvider(provider);
+      config["connectionProvider"] = provider;
 
+      client = initClientFunc(config);
       await client.connect();
 
       const initialWriterId = await auroraTestUtility.queryInstanceId(client);
@@ -596,9 +593,9 @@ describe("aurora read write splitting", () => {
       const connectionsSet: Set<any> = new Set();
       try {
         provider = new InternalPooledConnectionProvider({ maxConnections: numInstances });
-        ConnectionProviderManager.setConnectionProvider(provider);
         const config = await initDefaultConfig(env.databaseInfo.writerInstanceEndpoint, env.databaseInfo.instanceEndpointPort, false);
         config["readerHostSelectorStrategy"] = "leastConnections";
+        config["connectionProvider"] = provider;
 
         // Assume one writer and [size - 1] readers
         for (let i = 0; i < numInstances - 1; i++) {
@@ -639,7 +636,7 @@ describe("aurora read write splitting", () => {
       const numInstances = env.databaseInfo.instances.length;
       const numTestConnections = (numInstances - 2) * numOverloadedReaderConnections;
       provider = new InternalPooledConnectionProvider({ maxConnections: numTestConnections }, myKeyFunc);
-      ConnectionProviderManager.setConnectionProvider(provider);
+      config["connectionProvider"] = provider;
 
       let overloadedReaderId;
       const connectionsSet: Set<any> = new Set();

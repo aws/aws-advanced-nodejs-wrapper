@@ -26,21 +26,21 @@ const wrongPassword = "wrong_password";
 const database = "database";
 const port = 5432;
 
+/**
+ * Configure read-write splitting to use internal connection pools (the pool config and mapping
+ * parameters are optional, see UsingTheReadWriteSplittingPlugin.md for more info).
+ */
+const provider = new InternalPooledConnectionProvider();
+
 const client = new AwsPGClient({
   host: postgresHost,
   port: port,
   user: username,
   password: correctPassword,
   database: database,
-  plugins: "readWriteSplitting"
+  plugins: "readWriteSplitting",
+  connectionProvider: provider
 });
-
-/**
- * Configure read-write splitting to use internal connection pools (the pool config and mapping
- * parameters are optional, see UsingTheReadWriteSplittingPlugin.md for more info).
- */
-const provider = new InternalPooledConnectionProvider();
-ConnectionProviderManager.setConnectionProvider(provider);
 
 // Create an internal connection pool with the correct password
 try {
@@ -72,7 +72,7 @@ try {
   await newClient.end();
 }
 // Closes all pools and removes all cached pool connections.
-await ConnectionProviderManager.releaseResources();
+await provider.releaseResources();
 
 const newClient2 = new AwsPGClient({
   host: postgresHost,
