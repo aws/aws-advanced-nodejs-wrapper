@@ -70,6 +70,7 @@ export class PluginManager {
   private static readonly NOTIFY_CONNECTION_CHANGED_METHOD: string = "notifyConnectionChanged";
   private static readonly ACCEPTS_STRATEGY_METHOD: string = "acceptsStrategy";
   private static readonly GET_HOST_INFO_BY_STRATEGY_METHOD: string = "getHostInfoByStrategy";
+  private static PLUGINS: Set<ConnectionPlugin> = new Set();
   private readonly props: Map<string, any>;
   private _plugins: ConnectionPlugin[] = [];
   private readonly connectionProviderManager: ConnectionProviderManager;
@@ -102,6 +103,9 @@ export class PluginManager {
           this.connectionProviderManager
         );
       }
+    }
+    for (const plugin of this._plugins) {
+      PluginManager.PLUGINS.add(plugin);
     }
   }
 
@@ -302,22 +306,23 @@ export class PluginManager {
     throw new AwsWrapperError("The driver does not support the requested host selection strategy: " + strategy);
   }
 
-  async releaseResources() {
+  static async releaseResources() {
     // This step allows all connection plugins a chance to clean up any dangling resources or
     // perform any last tasks before shutting down.
 
-    for (const plugin of this._plugins) {
-      if (this.implementsCanReleaseResources(plugin)) {
+    for (const plugin of PluginManager.PLUGINS) {
+      if (PluginManager.implementsCanReleaseResources(plugin)) {
         await plugin.releaseResources();
       }
     }
+    PluginManager.PLUGINS = new Set();
   }
 
   getConnectionProvider(hostInfo: HostInfo | null, props: Map<string, any>): ConnectionProvider {
     return this.connectionProviderManager.getConnectionProvider(hostInfo, props);
   }
 
-  private implementsCanReleaseResources(plugin: any): plugin is CanReleaseResources {
+  private static implementsCanReleaseResources(plugin: any): plugin is CanReleaseResources {
     return plugin.releaseResources !== undefined;
   }
 
