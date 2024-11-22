@@ -142,10 +142,6 @@ export abstract class AwsClient extends EventEmitter {
     return await this.pluginService.isClientValid(this.targetClient);
   }
 
-  async releaseResources(): Promise<any> {
-    await this.pluginManager.releaseResources();
-  }
-
   getPluginInstance<T>(iface: any): T {
     return this.pluginManager.getPluginInstance(iface);
   }
