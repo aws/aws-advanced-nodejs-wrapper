@@ -329,6 +329,20 @@ export class WrapperProperties {
     600_000 // 10 min
   );
 
+  static readonly CUSTOM_DATABASE_DIALECT = new WrapperProperty<any>(
+    "customDatabaseDialect",
+    "A reference to a custom database dialect object.",
+    null
+  );
+
+  static readonly CUSTOM_AWS_CREDENTIAL_PROVIDER_HANDLER = new WrapperProperty<any>(
+    "customAwsCredentialProviderHandler",
+    "A reference to a custom AwsCredentialsProviderHandler object.",
+    null
+  );
+
+  static readonly AWS_PROFILE = new WrapperProperty<string>("awsProfile", "Name of the AWS Profile to use for IAM/SecretsManager auth.", null);
+
   static removeWrapperProperties(props: Map<string, any>): any {
     const persistingProperties = [
       WrapperProperties.USER.name,
