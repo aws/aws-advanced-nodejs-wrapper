@@ -36,6 +36,8 @@ The AWS Advanced NodeJS Wrapper supports Amazon AWS Identity and Access Manageme
 | `iamRegion`          | `String` |                    No                     | This property will override the default region that is used to generate the IAM token. If the property is not set, the wrapper will attempt to parse the region from the host provided in the configuration parameters.                    | `null`                                           | `us-east-2`                                         |
 | `iamTokenExpiration` | `Number` |                    No                     | This property determines how long an IAM token is kept in the driver cache before a new one is generated. The default expiration time is set to be 15 minutes. Note that IAM database authentication tokens have a lifetime of 15 minutes. | `900`                                            | `600`                                               |
 
+This plugin requires a valid set of AWS credentials to retrieve the database credentials from AWS Secrets Manager. The AWS credentials must be located in [one of these locations](https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/Package/-aws-sdk-credential-providers/#fromNodeProviderChain) supported by the AWS SDK's default credentials provider. See also at [AWS Credentials Configuration](../custom-configuration/AwsCredentialsConfiguration.md)
+
 ## Using the IAM Authentication Plugin with Custom Endpoints
 
 When using AWS IAM database authentication with a custom domain or an IP address, in addition to the `clusterInstanceHostPattern` variable, the `iamHost` must be specified and must point to a valid Amazon endpoint, i.e. `db-identifier.cluster-XYZ.us-east-2.rds.amazonaws.com`.
