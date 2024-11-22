@@ -14,18 +14,18 @@
   limitations under the License.
 */
 
-import { logger } from "../../../../common/logutils";
-import { TestEnvironment } from "./utils/test_environment";
-import { DriverHelper } from "./utils/driver_helper";
-import { ProxyHelper } from "./utils/proxy_helper";
-import { AuroraTestUtility } from "./utils/aurora_test_utility";
-import { TestEnvironmentFeatures } from "./utils/test_environment_features";
+import { logger } from "../../common/logutils";
+import { TestEnvironment } from "../integration/container/tests/utils/test_environment";
+import { DriverHelper } from "../integration/container/tests/utils/driver_helper";
+import { ProxyHelper } from "../integration/container/tests/utils/proxy_helper";
+import { AuroraTestUtility } from "../integration/container/tests/utils/aurora_test_utility";
+import { TestEnvironmentFeatures } from "../integration/container/tests/utils/test_environment_features";
 import { anything } from "ts-mockito";
-import { WrapperProperties } from "../../../../common/lib/wrapper_property";
-import { features } from "./config";
-import { MonitorServiceImpl } from "../../../../common/lib/plugins/efm/monitor_service";
-import { PerfStat } from "./utils/perf_stat";
-import { PerfTestUtility } from "./utils/perf_util";
+import { WrapperProperties } from "../../common/lib/wrapper_property";
+import { features } from "../integration/container/tests/config";
+import { MonitorServiceImpl } from "../../common/lib/plugins/efm/monitor_service";
+import { PerfStat } from "../integration/container/tests/utils/perf_stat";
+import { PerfTestUtility } from "../integration/container/tests/utils/perf_util";
 
 const itIf =
   features.includes(TestEnvironmentFeatures.FAILOVER_SUPPORTED) &&

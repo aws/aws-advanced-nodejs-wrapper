@@ -30,6 +30,7 @@ import { ConnectionProviderManager } from "./connection_provider_manager";
 import { DefaultTelemetryFactory } from "./utils/telemetry/default_telemetry_factory";
 import { TelemetryFactory } from "./utils/telemetry/telemetry_factory";
 import { DriverDialect } from "./driver_dialect/driver_dialect";
+import { SessionStateService } from "./session_state_service";
 
 export abstract class AwsClient extends EventEmitter {
   private _defaultPort: number = -1;
@@ -37,10 +38,9 @@ export abstract class AwsClient extends EventEmitter {
   protected pluginManager: PluginManager;
   protected pluginService: PluginService;
   protected isConnected: boolean = false;
-  protected _isReadOnly: boolean = false;
-  protected _isolationLevel: number = 0;
   protected _connectionUrlParser: ConnectionUrlParser;
   readonly properties: Map<string, any>;
+  readonly sessionStateService: SessionStateService;
   config: any;
   targetClient?: ClientWrapper;
 
@@ -66,6 +66,7 @@ export abstract class AwsClient extends EventEmitter {
       new ConnectionProviderManager(new DriverConnectionProvider(), null),
       this.telemetryFactory
     );
+    this.sessionStateService = this.pluginService.getSessionStateService();
   }
 
   private async setup() {
@@ -104,8 +105,6 @@ export abstract class AwsClient extends EventEmitter {
     return this._connectionUrlParser;
   }
 
-  abstract updateSessionStateReadOnly(readOnly: boolean): Promise<any | void>;
-
   abstract setReadOnly(readOnly: boolean): Promise<any | void>;
 
   abstract isReadOnly(): boolean;
@@ -131,8 +130,6 @@ export abstract class AwsClient extends EventEmitter {
   abstract connect(): Promise<any>;
 
   abstract rollback(): Promise<any>;
-
-  abstract resetState(): void;
 
   async isValid(): Promise<boolean> {
     if (!this.targetClient) {
