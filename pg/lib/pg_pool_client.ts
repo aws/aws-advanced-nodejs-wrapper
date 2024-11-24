@@ -19,16 +19,21 @@ import pkgPg from "pg";
 import { AwsPoolClient } from "../../common/lib/aws_pool_client";
 import { Messages } from "../../common/lib/utils/messages";
 import { AwsWrapperError } from "../../common/lib/utils/errors";
+import { logger, uniqueId } from "../../common/logutils";
 
 export class AwsPgPoolClient implements AwsPoolClient {
   targetPool: pkgPg.Pool;
+  id: string;
 
   constructor(props: pkgPg.PoolConfig) {
     this.targetPool = new pkgPg.Pool(props);
+    this.id = uniqueId("AwsPgPoolClient_");
+    logger.debug(`Creating poolClient: ${this.id}`);
   }
 
   async end(): Promise<any> {
     try {
+      logger.debug(`Ending pool client: ${this.id}`);
       return await this.targetPool.end();
     } catch (error: any) {
       // Ignore

@@ -16,7 +16,7 @@
 
 import { ClientWrapper } from "./client_wrapper";
 import { HostInfo } from "./host_info";
-import { uniqueId } from "../logutils";
+import { logger, uniqueId } from "../logutils";
 import { ClientUtils } from "./utils/client_utils";
 
 export class PoolClientWrapper implements ClientWrapper {
@@ -46,6 +46,7 @@ export class PoolClientWrapper implements ClientWrapper {
 
   async end(): Promise<void> {
     try {
+      logger.debug(`Releasing connection: ${this.client?.id}`);
       return this.client?.release();
     } catch (error: any) {
       // Ignore

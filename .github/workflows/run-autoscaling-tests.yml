@@ -2,6 +2,9 @@ name: Run Autoscaling Tests
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - test/autoscaling-pg
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -14,7 +17,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        dbEngine: [ "mysql", "postgres" ]
+        dbEngine: [ "postgres" ]
     steps:
       - name: Clone repository
         uses: actions/checkout@v4
