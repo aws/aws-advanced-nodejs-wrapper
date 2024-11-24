@@ -124,7 +124,9 @@ export class InternalPooledConnectionProvider implements PooledConnectionProvide
   async releaseResources() {
     for (const [_key, value] of InternalPooledConnectionProvider.databasePools.entries) {
       if (value.item) {
+        logger.debug(`releasing resources`);
         await value.item.releaseResources();
+        logger.debug(`done releasing resources`);
       }
     }
     InternalPooledConnectionProvider.clearDatabasePools();

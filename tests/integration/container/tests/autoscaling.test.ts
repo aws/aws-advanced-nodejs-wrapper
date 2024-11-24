@@ -110,7 +110,7 @@ describe("pooled connection autoscaling", () => {
       }
     }
     logger.info(`Test finished: ${expect.getState().currentTestName}`);
-  }, 2320000);
+  }, 1320000);
 
   itIfMinFiveInstance(
     "set read only on old connection",

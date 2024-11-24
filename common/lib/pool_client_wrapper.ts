@@ -46,7 +46,7 @@ export class PoolClientWrapper implements ClientWrapper {
 
   async end(): Promise<void> {
     try {
-      logger.debug(`Releasing connection: ${this.client?.id}`);
+      logger.debug(`Releasing connection: ${this.id}`);
       return this.client?.release();
     } catch (error: any) {
       // Ignore
