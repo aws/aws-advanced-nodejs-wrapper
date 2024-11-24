@@ -17,10 +17,13 @@
 import {
   CreateDBInstanceCommand,
   CreateDBInstanceCommandOutput,
+  DBInstanceAlreadyExistsFault,
+  DBInstanceNotFoundFault,
   DeleteDBInstanceCommand,
   DescribeDBClustersCommand,
   DescribeDBInstancesCommand,
   FailoverDBClusterCommand,
+  InvalidDBInstanceStateFault,
   RDSClient,
   RebootDBInstanceCommand
 } from "@aws-sdk/client-rds";
@@ -70,11 +73,17 @@ export class AuroraTestUtility {
     let status = instanceInfo["DBInstanceStatus"];
     const waitTilTime: number = Date.now() + 15 * 60 * 1000; // 15 minutes
     while (status && !allowedStatuses.includes(status.toLowerCase()) && waitTilTime > Date.now()) {
-      await sleep(1000);
-      instanceInfo = await this.getDbInstance(instanceId);
-      if (instanceInfo !== null) {
-        status = instanceInfo["DBInstanceStatus"];
-        logger.info(`Instance ${instanceId} status: ${status.toLowerCase()}`);
+      await sleep(5000);
+      try {
+        instanceInfo = await this.getDbInstance(instanceId);
+        if (instanceInfo !== null) {
+          status = instanceInfo["DBInstanceStatus"];
+          logger.info(`Instance ${instanceId} status: ${status.toLowerCase()}`);
+        }
+      } catch (e: any) {
+        if (e instanceof DBInstanceNotFoundFault) {
+          // Wait for instance to be created.
+        }
       }
     }
 
@@ -258,9 +267,12 @@ export class AuroraTestUtility {
       Engine: info.databaseEngine,
       EngineVersion: info.databaseEngineVersion
     });
-    const response: CreateDBInstanceCommandOutput = await this.client.send(command);
-    if (!response.DBInstance) {
-      throw new Error(`The CreateDBInstanceCommand request for newly created instance ${instanceId} did not return an instance.`);
+    try {
+      await this.client.send(command);
+    } catch (e: any) {
+      if (!(e instanceof DBInstanceAlreadyExistsFault)) {
+        throw new Error(`The CreateDBInstanceCommand request for ${instanceId} failed: ${e.message}`);
+      }
     }
     await this.waitUntilInstanceHasRightState(
       instanceId,
@@ -285,19 +297,31 @@ export class AuroraTestUtility {
     }
 
     // set up stop time
-    const current = new Date();
-    const stopTime = current.setMinutes(current.getMinutes() + 15 * 60);
+    const current = Date.now();
+    const stopTime = current + 15 * 60 * 1000;
 
     // create and send command to delete
-    const command = new DeleteDBInstanceCommand({
-      DBInstanceIdentifier: instanceId,
-      SkipFinalSnapshot: true
-    });
-    await this.client.send(command);
+    try {
+      const command = new DeleteDBInstanceCommand({
+        DBInstanceIdentifier: instanceId,
+        SkipFinalSnapshot: true
+      });
+      await this.client.send(command);
+    } catch (e: any) {
+      if (e instanceof InvalidDBInstanceStateFault) {
+        // Instance is already being deleted.
+      } else {
+        throw e;
+      }
+    }
 
     // wait for it to delete
-    while ((await this.instanceExists(instanceId)) && new Date().getTime() < stopTime) {
-      await sleep(3000);
+    while ((await this.instanceExists(instanceId)) && Date.now() < stopTime) {
+      await sleep(5000);
+    }
+
+    if (await this.instanceExists(instanceId)) {
+      throw new Error(`The instance ${instanceId} was not deleted within the allotted time.`);
     }
   }
 

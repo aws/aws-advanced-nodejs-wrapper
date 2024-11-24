@@ -27,7 +27,12 @@ import { logger } from "../../../../common/logutils";
 import { TestEnvironmentFeatures } from "./utils/test_environment_features";
 import { features } from "./config";
 
-const itIf = !features.includes(TestEnvironmentFeatures.PERFORMANCE) && features.includes(TestEnvironmentFeatures.IAM) ? it : it.skip;
+const itIf =
+  !features.includes(TestEnvironmentFeatures.PERFORMANCE) &&
+  !features.includes(TestEnvironmentFeatures.RUN_AUTOSCALING_TESTS_ONLY) &&
+  features.includes(TestEnvironmentFeatures.IAM)
+    ? it
+    : it.skip;
 
 let env: TestEnvironment;
 let driver;
