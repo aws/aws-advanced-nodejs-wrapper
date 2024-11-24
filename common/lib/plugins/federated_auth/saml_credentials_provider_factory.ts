@@ -18,11 +18,8 @@ import { CredentialsProviderFactory } from "./credentials_provider_factory";
 import { AssumeRoleWithSAMLCommand, STSClient } from "@aws-sdk/client-sts";
 import { WrapperProperties } from "../../wrapper_property";
 
-import pkgAwsSdk from "aws-sdk";
-const { Credentials } = pkgAwsSdk;
-
 import { AwsWrapperError } from "../../utils/errors";
-import { AwsCredentialIdentityProvider, AwsCredentialIdentity } from "@smithy/types/dist-types/identity/awsCredentialIdentity";
+import { AwsCredentialIdentity, AwsCredentialIdentityProvider } from "@smithy/types/dist-types/identity/awsCredentialIdentity";
 import { decode } from "entities";
 
 export abstract class SamlCredentialsProviderFactory implements CredentialsProviderFactory {
@@ -46,11 +43,7 @@ export abstract class SamlCredentialsProviderFactory implements CredentialsProvi
     const credentials = results["Credentials"];
 
     if (credentials && credentials.AccessKeyId && credentials.SecretAccessKey && credentials.SessionToken) {
-      return new Credentials({
-        accessKeyId: credentials.AccessKeyId,
-        secretAccessKey: credentials.SecretAccessKey,
-        sessionToken: credentials.SessionToken
-      });
+      return new AwsCredentials(credentials.AccessKeyId, credentials.SecretAccessKey, credentials.SessionToken);
     }
     throw new AwsWrapperError("Credentials from SAML request not found");
   }
@@ -63,5 +56,23 @@ export abstract class SamlCredentialsProviderFactory implements CredentialsProvi
       return `https://${idpEndpoint}`;
     }
     return idpEndpoint;
+  }
+}
+
+export class AwsCredentials implements AwsCredentialIdentity {
+  accessKeyId: string;
+  secretAccessKey: string;
+  sessionToken?: string;
+  credentialScope?: string;
+  accountId?: string;
+  expiration?: Date;
+  AccessKeyId: string;
+  SecretAccessKey: string;
+  SessionToken: string;
+
+  constructor(accessKeyId: string, secretAccessKey: string, sessionToken?: string) {
+    this.accessKeyId = accessKeyId;
+    this.secretAccessKey = secretAccessKey;
+    this.sessionToken = sessionToken;
   }
 }
