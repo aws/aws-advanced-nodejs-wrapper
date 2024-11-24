@@ -155,7 +155,7 @@ describe("pooled connection autoscaling", () => {
 
         // Connect to instance.
         try {
-          const config = await initDefaultConfig(env.databaseInfo.writerInstanceEndpoint, env.databaseInfo.instanceEndpointPort, provider);
+          const config = await initConfigWithFailover(env.databaseInfo.writerInstanceEndpoint, env.databaseInfo.instanceEndpointPort, provider);
           newInstanceClient = initClientFunc(config);
           await newInstanceClient.connect();
           connectionsSet.add(newInstanceClient);
@@ -170,16 +170,16 @@ describe("pooled connection autoscaling", () => {
           expect(await auroraTestUtility.queryInstanceId(newInstanceClient)).toBe(writerInstance);
         } finally {
           const instance = newInstance.instanceId ? newInstance.instanceId : instanceId;
-          let deleted = false;
-          setTimeout(async () => {
-            const stopTime = Date.now() + 5 * 60 * 1000;
-            while (!deleted && Date.now() < stopTime) {
-              await auroraTestUtility.queryInstanceId(newInstanceClient);
-              await sleep(3000);
-            }
-          }, 3000);
+          // let deleted = false;
+          // setTimeout(async () => {
+          //   const stopTime = Date.now() + 5 * 60 * 1000;
+          //   while (!deleted && Date.now() < stopTime) {
+          //     await auroraTestUtility.queryInstanceId(newInstanceClient);
+          //     await sleep(3000);
+          //   }
+          // }, 3000);
           await auroraTestUtility.deleteInstance(instance);
-          deleted = true;
+          // deleted = true;
         }
 
         // Should have removed the pool with the deleted instance.
