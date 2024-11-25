@@ -20,6 +20,8 @@ import { AwsPoolClient } from "../aws_pool_client";
 import { HostInfo } from "../host_info";
 
 export interface DriverDialect {
+  queryTimeoutPropertyName: string;
+
   getDialectName(): string;
 
   connect(hostInfo: HostInfo, props: Map<string, any>): Promise<ClientWrapper>;
@@ -27,4 +29,6 @@ export interface DriverDialect {
   preparePoolClientProperties(props: Map<string, any>, poolConfig: AwsPoolConfig | undefined): any;
 
   getAwsPoolClient(props: any): AwsPoolClient;
+
+  setupDriverProperties(props: Map<string, any>): void;
 }

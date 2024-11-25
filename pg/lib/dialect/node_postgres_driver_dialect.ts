@@ -27,6 +27,8 @@ import { PgClientWrapper } from "../../../common/lib/pg_client_wrapper";
 import { HostInfo } from "../../../common/lib/host_info";
 
 export class NodePostgresDriverDialect implements DriverDialect {
+  readonly connectTimeoutPropertyName = "connectionTimeoutMillis";
+  readonly queryTimeoutPropertyName = "query_timeout";
   protected dialectName: string = this.constructor.name;
 
   getDialectName(): string {
@@ -54,5 +56,18 @@ export class NodePostgresDriverDialect implements DriverDialect {
 
   getAwsPoolClient(props: pkgPg.PoolConfig): AwsPoolClient {
     return new AwsPgPoolClient(props);
+  }
+
+  setupDriverProperties(props: Map<string, any>) {
+    const wrapperConnectTimeout = props.get(WrapperProperties.WRAPPER_CONNECT_TIMEOUT.name);
+    const wrapperQueryTimeout = props.get(WrapperProperties.WRAPPER_QUERY_TIMEOUT.name);
+
+    if (wrapperConnectTimeout) {
+      props.set(this.connectTimeoutPropertyName, wrapperConnectTimeout);
+    }
+
+    if (wrapperQueryTimeout) {
+      props.set(this.queryTimeoutPropertyName, wrapperQueryTimeout);
+    }
   }
 }
