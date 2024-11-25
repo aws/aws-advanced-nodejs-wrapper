@@ -18,11 +18,13 @@ import { ClientWrapper } from "./client_wrapper";
 import { HostInfo } from "./host_info";
 import { ClientUtils } from "./utils/client_utils";
 import { uniqueId } from "../logutils";
+import { DriverDialect } from "./driver_dialect/driver_dialect";
 
 /*
 This is an internal wrapper class for the target community driver client created by the MySQL2DriverDialect.
  */
 export class MySQLClientWrapper implements ClientWrapper {
+  private readonly driverDialect: DriverDialect;
   readonly client: any;
   readonly hostInfo: HostInfo;
   readonly properties: Map<string, string>;
@@ -34,15 +36,18 @@ export class MySQLClientWrapper implements ClientWrapper {
    * @param targetClient The community driver client created for an instance.
    * @param hostInfo Host information for the connected instance.
    * @param properties Connection properties for the target client.
+   * @param driverDialect The driver dialect to obtain driver-specific information.
    */
-  constructor(targetClient: any, hostInfo: HostInfo, properties: Map<string, any>) {
+  constructor(targetClient: any, hostInfo: HostInfo, properties: Map<string, any>, driverDialect: DriverDialect) {
     this.client = targetClient;
     this.hostInfo = hostInfo;
     this.properties = properties;
+    this.driverDialect = driverDialect;
     this.id = uniqueId("MySQLClient_");
   }
 
   query(sql: any): Promise<any> {
+    this.driverDialect.setQueryTimeout(this.properties, sql);
     return this.client?.query(sql);
   }
 
