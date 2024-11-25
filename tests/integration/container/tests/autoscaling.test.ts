@@ -14,18 +14,18 @@
   limitations under the License.
 */
 
-import { TestEnvironment } from "./utils/test_environment";
-import { DriverHelper } from "./utils/driver_helper";
-import { AuroraTestUtility } from "./utils/aurora_test_utility";
-import { logger } from "../../../../common/logutils";
-import { TestEnvironmentFeatures } from "./utils/test_environment_features";
-import { features, instanceCount } from "./config";
-import { InternalPooledConnectionProvider } from "../../../../common/lib/internal_pooled_connection_provider";
-import { AwsPoolConfig } from "../../../../common/lib/aws_pool_config";
-import { ConnectionProviderManager } from "../../../../common/lib/connection_provider_manager";
-import { TestInstanceInfo } from "./utils/test_instance_info";
-import { sleep } from "../../../../common/lib/utils/utils";
-import { FailoverSuccessError } from "../../../../common/lib/utils/errors";
+import { TestEnvironment } from "../integration/container/tests/utils/test_environment";
+import { DriverHelper } from "../integration/container/tests/utils/driver_helper";
+import { AuroraTestUtility } from "../integration/container/tests/utils/aurora_test_utility";
+import { logger } from "../../common/logutils";
+import { TestEnvironmentFeatures } from "../integration/container/tests/utils/test_environment_features";
+import { features, instanceCount } from "../integration/container/tests/config";
+import { InternalPooledConnectionProvider } from "../../common/lib/internal_pooled_connection_provider";
+import { AwsPoolConfig } from "../../common/lib/aws_pool_config";
+import { ConnectionProviderManager } from "../../common/lib/connection_provider_manager";
+import { TestInstanceInfo } from "../integration/container/tests/utils/test_instance_info";
+import { sleep } from "../../common/lib/utils/utils";
+import { FailoverSuccessError } from "../../common/lib/utils/errors";
 
 const itIf =
   !features.includes(TestEnvironmentFeatures.PERFORMANCE) &&

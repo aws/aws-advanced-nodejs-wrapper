@@ -38,8 +38,6 @@ export abstract class AwsClient extends EventEmitter {
   protected pluginManager: PluginManager;
   protected pluginService: PluginService;
   protected isConnected: boolean = false;
-  protected _isReadOnly: boolean = false;
-  protected _isolationLevel: number = 0;
   protected _connectionUrlParser: ConnectionUrlParser;
   readonly properties: Map<string, any>;
   config: any;
@@ -105,8 +103,6 @@ export abstract class AwsClient extends EventEmitter {
     return this._connectionUrlParser;
   }
 
-  abstract updateSessionStateReadOnly(readOnly: boolean): Promise<any | void>;
-
   abstract setReadOnly(readOnly: boolean): Promise<any | void>;
 
   abstract isReadOnly(): boolean;
@@ -132,8 +128,6 @@ export abstract class AwsClient extends EventEmitter {
   abstract connect(): Promise<any>;
 
   abstract rollback(): Promise<any>;
-
-  abstract resetState(): void;
 
   async isValid(): Promise<boolean> {
     if (!this.targetClient) {
