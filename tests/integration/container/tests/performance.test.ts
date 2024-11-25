@@ -30,7 +30,8 @@ import { PerfTestUtility } from "./utils/perf_util";
 const itIf =
   features.includes(TestEnvironmentFeatures.FAILOVER_SUPPORTED) &&
   features.includes(TestEnvironmentFeatures.PERFORMANCE) &&
-  features.includes(TestEnvironmentFeatures.NETWORK_OUTAGES_ENABLED)
+  features.includes(TestEnvironmentFeatures.NETWORK_OUTAGES_ENABLED) &&
+  !features.includes(TestEnvironmentFeatures.RUN_AUTOSCALING_TESTS_ONLY)
     ? it
     : it.skip;
 

@@ -27,7 +27,10 @@ import { features, instanceCount } from "./config";
 import { TestEnvironmentFeatures } from "./utils/test_environment_features";
 
 const itIf =
-  features.includes(TestEnvironmentFeatures.FAILOVER_SUPPORTED) && !features.includes(TestEnvironmentFeatures.PERFORMANCE) && instanceCount >= 2
+  features.includes(TestEnvironmentFeatures.FAILOVER_SUPPORTED) &&
+  !features.includes(TestEnvironmentFeatures.PERFORMANCE) &&
+  !features.includes(TestEnvironmentFeatures.RUN_AUTOSCALING_TESTS_ONLY) &&
+  instanceCount >= 2
     ? it
     : it.skip;
 const itIfTwoInstance = instanceCount == 2 ? itIf : it.skip;

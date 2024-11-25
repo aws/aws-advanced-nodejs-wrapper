@@ -85,7 +85,7 @@ export abstract class AbstractPgErrorHandler implements ErrorHandler {
     if (!clientWrapper || !clientWrapper.client) {
       return;
     }
-    clientWrapper.client.removeListener("error", this.noOpListener);
+    clientWrapper.client.removeListener("error", this.trackingListener);
     clientWrapper.client.on("error", this.noOpListener);
   }
 }

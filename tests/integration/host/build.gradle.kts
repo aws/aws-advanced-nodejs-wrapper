@@ -182,6 +182,32 @@ tasks.register<Test>("test-autoscaling") {
     }
 }
 
+tasks.register<Test>("test-autoscaling-mysql") {
+    group = "verification"
+    filter.includeTestsMatching("integration.host.TestRunner.runTests")
+    doFirst {
+        systemProperty("exclude-docker", "true")
+        systemProperty("exclude-performance", "true")
+        systemProperty("exclude-multi-az", "true")
+        systemProperty("exclude-pg-driver", "true")
+        systemProperty("exclude-pg-engine", "true")
+        systemProperty("test-autoscaling", "true")
+    }
+}
+
+tasks.register<Test>("test-autoscaling-postgres") {
+    group = "verification"
+    filter.includeTestsMatching("integration.host.TestRunner.runTests")
+    doFirst {
+        systemProperty("exclude-docker", "true")
+        systemProperty("exclude-performance", "true")
+        systemProperty("exclude-multi-az", "true")
+        systemProperty("exclude-mysql-driver", "true")
+        systemProperty("exclude-mysql-engine", "true")
+        systemProperty("test-autoscaling", "true")
+    }
+}
+
 // Debug
 
 tasks.register<Test>("debug-all-environments") {
