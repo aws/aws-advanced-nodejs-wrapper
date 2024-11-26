@@ -74,7 +74,7 @@ class SessionStateField<Type> {
   }
 
   toString() {
-    return `${this.pristineValue ? this.pristineValue : "(blank)"} => ${this.value ? this.value : "(blank)"}`;
+    return `${this.pristineValue ?? "(blank)"} => ${this.value ?? "(blank)"}`;
   }
 }
 
