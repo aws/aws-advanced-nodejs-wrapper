@@ -343,6 +343,8 @@ export class WrapperProperties {
 
   static readonly AWS_PROFILE = new WrapperProperty<string>("awsProfile", "Name of the AWS Profile to use for IAM/SecretsManager auth.", null);
 
+  static readonly PROFILE_NAME = new WrapperProperty<string>("profileName", "Driver configuration profile name", null);
+
   static removeWrapperProperties(props: Map<string, any>): any {
     const persistingProperties = [
       WrapperProperties.USER.name,
