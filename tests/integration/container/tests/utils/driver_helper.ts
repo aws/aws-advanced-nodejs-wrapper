@@ -113,11 +113,11 @@ export class DriverHelper {
       props["ssl"] = { rejectUnauthorized: false };
     } else if (engine === DatabaseEngine.PG && performance) {
       props["query_timeout"] = 120000;
-      props["connectionTimeoutMillis"] = 400;
-      props["monitoring_query_timeout"] = 400;
+      props["connectionTimeoutMillis"] = 3000;
+      props["monitoring_query_timeout"] = 3000;
     } else if (engine === DatabaseEngine.MYSQL && performance) {
-      props["connectTimeout"] = 400;
-      props["monitoring_mysqlQueryTimeout"] = 400;
+      props["connectTimeout"] = 3000;
+      props["monitoring_mysqlQueryTimeout"] = 3000;
       props["mysqlQueryTimeout"] = 120000;
     }
     return props;
