@@ -77,6 +77,11 @@ export abstract class AwsClient extends EventEmitter {
             this.properties.set(key, profileProperties.get(key));
           }
 
+          const connectionProvider = WrapperProperties.CONNECTION_PROVIDER.get(this.properties);
+          if (!connectionProvider) {
+            WrapperProperties.CONNECTION_PROVIDER.set(this.properties, this._configurationProfile.getAwsCredentialProvider());
+          }
+
           const customAwsCredentialProvider = WrapperProperties.CUSTOM_AWS_CREDENTIAL_PROVIDER_HANDLER.get(this.properties);
           if (!customAwsCredentialProvider) {
             WrapperProperties.CUSTOM_AWS_CREDENTIAL_PROVIDER_HANDLER.set(this.properties, this._configurationProfile.getAwsCredentialProvider());
@@ -105,9 +110,7 @@ export abstract class AwsClient extends EventEmitter {
     this.pluginManager = new PluginManager(
       container,
       this.properties,
-      new ConnectionProviderManager(
-        new DriverConnectionProvider(), 
-        WrapperProperties.CONNECTION_PROVIDER.get(this.properties) ?? this._configurationProfile?.getConnectionProvider()),
+      new ConnectionProviderManager(new DriverConnectionProvider(), WrapperProperties.CONNECTION_PROVIDER.get(this.properties)),
       this.telemetryFactory
     );
   }

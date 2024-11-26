@@ -78,8 +78,7 @@ export class PluginService implements ErrorHandler, HostListProviderService {
     this.sessionStateService = new SessionStateServiceImpl(this, this.props);
     container.pluginService = this;
 
-    const customDialect = WrapperProperties.CUSTOM_DATABASE_DIALECT.get(this.props);
-    this.dialect = customDialect ?? this.dbDialectProvider.getDialect(this.props);
+    this.dialect = WrapperProperties.CUSTOM_DATABASE_DIALECT.get(this.props) ?? this.dbDialectProvider.getDialect(this.props);
   }
 
   isInTransaction(): boolean {

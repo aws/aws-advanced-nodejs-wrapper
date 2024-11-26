@@ -15,6 +15,7 @@
 */
 
 import { ConnectionProvider } from "./connection_provider";
+import { DatabaseDialect } from "./database_dialect/database_dialect";
 
 export class WrapperProperty<T> {
   name: string;
@@ -329,7 +330,7 @@ export class WrapperProperties {
     600_000 // 10 min
   );
 
-  static readonly CUSTOM_DATABASE_DIALECT = new WrapperProperty<any>(
+  static readonly CUSTOM_DATABASE_DIALECT = new WrapperProperty<DatabaseDialect>(
     "customDatabaseDialect",
     "A reference to a custom database dialect object.",
     null
@@ -341,7 +342,7 @@ export class WrapperProperties {
     null
   );
 
-  static readonly AWS_PROFILE = new WrapperProperty<string>("awsProfile", "Name of the AWS Profile to use for IAM/SecretsManager auth.", null);
+  static readonly AWS_PROFILE = new WrapperProperty<string>("awsProfile", "Name of the AWS Profile to use for IAM or SecretsManager auth.", null);
 
   static readonly PROFILE_NAME = new WrapperProperty<string>("profileName", "Driver configuration profile name", null);
 
