@@ -1,5 +1,6 @@
 {
   "PluginManager.unknownPluginCode": "Unknown plugin code: '%s'",
+  "PluginManager.unknownPluginWeight": "Unknown plugin weight for %s.",
   "PluginManager.pipelineNone": "A pipeline was requested but the created pipeline evaluated to undefined.",
   "PluginManager.unableToRetrievePlugin": "Unable to retrieve plugin instance.",
   "ConnectionProvider.unsupportedHostSelectorStrategy": "Unsupported host selection strategy '%s' specified for this connection provider '%s'. Please visit the documentation for all supported strategies.",
@@ -181,5 +182,9 @@
   "LimitlessRouterServiceImpl.getLimitlessRoutersException": "Exception encountered getting Limitless Routers. %s",
   "LimitlessRouterServiceImpl.fetchedEmptyRouterList": "Empty router list was fetched.",
   "LimitlessRouterServiceImpl.errorStartingMonitor": "An error occurred while starting Limitless Router Monitor. %s",
-  "AwsCredentialsManager.wrongHandler": "Provided AWS credential provider handler should implement AwsCredentialsProviderHandler."
+  "AwsCredentialsManager.wrongHandler": "Provided AWS credential provider handler should implement AwsCredentialsProviderHandler.",
+  "ConfigurationProfileBuilder.notFound": "Configuration profile '%s' not found.",
+  "ConfigurationProfileBuilder.profileNameRequired": "Profile name is required.",
+  "ConfigurationProfileBuilder.canNotUpdateKnownPreset": "Can't add or update a built-in preset configuration profile '%s'.",
+  "AwsClient.configurationProfileNotFound": "Configuration profile '%s' not found."
 }
