@@ -46,7 +46,7 @@ See the following classes for examples:
 - [AuroraMySQLDatabaseDialect](../../mysql/lib/dialect/aurora_mysql_database_dialect.ts)
   - This dialect is an extension of MySQLDatabaseDialect, but also implements the `TopologyAwareDatabaseDialect` interface.
 
-Once the custom dialect class has been created, tell the AWS Advanced NodeJS Wrapper to use it by setting a `customDatabaseDialect` parameter. It is not necessary to set the `dialect` parameter in this case. See below for an example:
+Once the custom dialect class has been created, tell the AWS Advanced NodeJS Wrapper to use it by setting the `customDatabaseDialect` parameter. It is not necessary to set the `dialect` parameter in this case. See below for an example:
 
 ```typescript
 myDialect: DatabaseDialect = new CustomDialect();

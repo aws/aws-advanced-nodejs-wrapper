@@ -1,5 +1,6 @@
 {
   "PluginManager.unknownPluginCode": "Unknown plugin code: '%s'",
+  "PluginManager.unknownPluginWeight": "Unknown plugin weight for %s.",
   "PluginManager.pipelineNone": "A pipeline was requested but the created pipeline evaluated to undefined.",
   "PluginManager.unableToRetrievePlugin": "Unable to retrieve plugin instance.",
   "ConnectionProvider.unsupportedHostSelectorStrategy": "Unsupported host selection strategy '%s' specified for this connection provider '%s'. Please visit the documentation for all supported strategies.",
@@ -188,5 +189,9 @@
   "HostResponseTimeMonitor.interruptedErrorDuringMonitoring": "Response time task for host '%s' was interrupted.",
   "HostResponseTimeMonitor.openingConnection": "Opening a Response time connection to '%s'.",
   "HostResponseTimeMonitor.openedConnection": "Opened Response time connection: '%s'.",
-  "FastestResponseStrategyPlugin.unsupportedHostSelectorStrategy": "Unsupported host selector strategy: '%s'. To use the fastest response strategy plugin, please ensure the property 'readerHostSelectorStrategy' is set to 'fastestResponse'."
+  "FastestResponseStrategyPlugin.unsupportedHostSelectorStrategy": "Unsupported host selector strategy: '%s'. To use the fastest response strategy plugin, please ensure the property 'readerHostSelectorStrategy' is set to 'fastestResponse'.",
+  "ConfigurationProfileBuilder.notFound": "Configuration profile '%s' not found.",
+  "ConfigurationProfileBuilder.profileNameRequired": "Profile name is required.",
+  "ConfigurationProfileBuilder.canNotUpdateKnownPreset": "Can't add or update a built-in preset configuration profile '%s'.",
+  "AwsClient.configurationProfileNotFound": "Configuration profile '%s' not found."
 }

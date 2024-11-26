@@ -55,6 +55,9 @@ These parameters are applicable to any instance of the AWS Advanced NodeJS Wrapp
 | `wrapperQueryTimeout`          | `number`           | No                                                                               | Query timeout in milliseconds. This parameter will apply the provided timeout value to the underlying driver's built-in query timeout parameter, if there is one available. The wrapper will also use this value for its own query timeout implementation.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    | 20000                                                                                                                                                                        | `latest`          |
 | `wrapperKeepAliveProperties`   | `Map<string, any>` | No                                                                               | If the underlying target driver has keepAlive properties available, properties within this map will be applied to the underlying target driver's client configuration. For example, the node-postgres driver's `keepAlive` and `keepAliveInitialDelayMillis` properties can be configured by setting this property in the client configuration: `{ wrapperKeepAliveProperties: new Map<string, any>([["keepAlive", true], ["keepAliveInitialDelayMillis", 1234]]) }`. <br/><br/> Currently supported drivers: node-postgres                                                                                                                                                                                                                                                                                                                                                                   | `null`                                                                                                                                                                       |
 | `awsProfile`                   | `string`  | No                                                                               | Allows users to specify a profile name for AWS credentials. This parameter is used by plugins that require AWS credentials, like the [AWS IAM Authentication Plugin](./using-plugins/UsingTheIamAuthenticationPlugin.md) and the [AWS Secrets Manager Plugin](./using-plugins/UsingTheAwsSecretsManagerPlugin.md).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            | `null`                                                                                                                                                                       |
+| `connectionProvider`                 | `object`  | No                                                                               | Allows users to specify a connection provider used to create connections. Provided value should be an object that implements `ConnectionProvider` interface.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  | `null`                                                                                                                                                                       |
+| `customDatabaseDialect`              | `object`  | No                                                                               | Allows users to specify a custom database dialect. Provided value should be an object that implements `DatabaseDialect` interface.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            | `null`                                                                                                                                                                       |
+| `customAwsCredentialProviderHandler` | `object`  | No                                                                               | Allows users to specify a custom AWS credentials provider. This parameter is used by plugins that require AWS credentials, like the [AWS IAM Authentication Plugin](./using-plugins/UsingTheIamAuthenticationPlugin.md) and the [AWS Secrets Manager Plugin](./using-plugins/UsingTheAwsSecretsManagerPlugin.md). For more information see [AWS Credentials Provider Configuration](./custom-configuration/AwsCredentialsConfiguration.md).                                                                                                                                                                                                                                                                                                                                                                                                                                                   | `null`                                                                                                                                                                       |
 
 ## Host Pattern
 
@@ -73,10 +76,11 @@ Plugins are loaded and managed through the Connection Plugin Manager and may be 
 
 ### Connection Plugin Manager Parameters
 
-| Parameter                    | Value     | Required | Description                                                                                                                                                     | Default Value                          |
-| ---------------------------- | --------- | -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------- |
-| `plugins`                    | `String`  | No       | Comma separated list of connection plugin codes. <br><br>Example: `failover,efm`                                                                                | `auroraConnectionTracker,failover,efm` |
-| `autoSortWrapperPluginOrder` | `Boolean` | No       | Allows the AWS Advanced NodeJS Wrapper to sort connection plugins to prevent plugin misconfiguration. Allows a user to provide a custom plugin order if needed. | `true`                                 |
+| Parameter                    | Value     | Required | Description                                                                                                                                                                                   | Default Value                          |
+| ---------------------------- | --------- | -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------- |
+| `plugins`                    | `String`  | No       | Comma separated list of connection plugin codes. <br><br>Example: `failover,efm`                                                                                                              | `auroraConnectionTracker,failover,efm` |
+| `autoSortWrapperPluginOrder` | `Boolean` | No       | Allows the AWS Advanced NodeJS Wrapper to sort connection plugins to prevent plugin misconfiguration. Allows a user to provide a custom plugin order if needed.                               | `true`                                 |
+| `profileName`                | `String`  | No       | Driver configuration profile name. Instead of listing plugin codes with `plugins`, the driver profile can be set with this parameter. <br><br> Example: See [below](#configuration-profiles). | `null`                                 |
 
 To use a built-in plugin, specify its relevant plugin code for the `plugins` .
 The default value for `plugins` is `failover`. These plugins are enabled by default. To read more about these plugins, see the [List of Available Plugins](#list-of-available-plugins) section.
@@ -131,3 +135,50 @@ The AWS Advanced NodeJS Wrapper has several built-in plugins that are available 
 
 In addition to the built-in plugins, you can also create custom plugins more suitable for your needs.
 For more information, see [Custom Plugins](../development-guide/LoadablePlugins.md#using-custom-plugins).
+
+### Configuration Profiles
+
+An alternative way of loading plugins and providing configuration parameters is to use a configuration profile. You can create custom configuration profiles that specify which plugins the AWS Advanced NodeJS Wrapper should load. After creating the profile, set the [`profileName`](#connection-plugin-manager-parameters) parameter to the name of the created profile.
+This method of loading plugins will most often be used by those who require custom plugins that cannot be loaded with the [`plugins`](#connection-plugin-manager-parameters) parameter, or by those who are using preset configurations.
+
+Besides a list of plugins to load and configuration properties, configuration profiles may also include the following items:
+
+- [Database Dialect](./DatabaseDialects.md#database-dialects)
+- [Driver Dialect](../../common/lib/driver_dialect/driver_dialect.ts)
+- a custom exception handler
+- a custom connection provider
+
+The following example creates and sets a configuration profile:
+
+```typescript
+// Create a new configuration profile with name "testProfile"
+ConfigurationProfileBuilder.get()
+  .withName("testProfile")
+  .withPluginsFactories([FailoverPluginFactory, HostMonitoringPluginFactory, CustomConnectionPluginFactory])
+  .buildAndSet();
+
+// Use the configuration profile "testProfile"
+const client = new AwsMySQLClient({
+  user: "user",
+  password: "password",
+  host: "host",
+  database: "database",
+  profileName: "testProfile"
+});
+```
+
+Configuration profiles can be created based on other existing configuration profiles. Profile names are case sensitive and should be unique.
+
+```typescript
+// Create a new configuration profile with name "newProfile" based on "existingProfileName"
+ConfigurationProfileBuilder.get()
+  .from("existingProfileName")
+  .withName("newProfileName")
+  .withDatabaseDialect(new CustomDatabaseDialect())
+  .buildAndSet();
+
+// Delete configuration profile "testProfile"
+DriverConfigurationProfiles.remove("testProfile");
+```
+
+The AWS Advanced NodeJS Wrapper team has gathered and analyzed various user scenarios to create commonly used configuration profiles, or presets, for users. These preset configuration profiles are optimized, profiled, verified and can be used right away. Users can create their own configuration profiles based on the built-in presets as shown above. More details could be found at the [Configuration Presets](./ConfigurationPresets.md) page.
