@@ -28,6 +28,7 @@ import { HostInfo } from "../../../common/lib/host_info";
 
 export class NodePostgresDriverDialect implements DriverDialect {
   protected dialectName: string = this.constructor.name;
+  keepAlivePropertyNames: string[] = ["keepAlive", "keepAliveInitialDelayMillis"];
 
   getDialectName(): string {
     return this.dialectName;
