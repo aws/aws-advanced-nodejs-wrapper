@@ -18,8 +18,6 @@ import { HostListProvider } from "../host_list_provider/host_list_provider";
 import { HostListProviderService } from "../host_list_provider_service";
 import { ClientWrapper } from "../client_wrapper";
 import { FailoverRestriction } from "../plugins/failover/failover_restriction";
-import { AwsPoolClient } from "../aws_pool_client";
-import { AwsPoolConfig } from "../aws_pool_config";
 import { ErrorHandler } from "../error_handler";
 
 export enum DatabaseType {

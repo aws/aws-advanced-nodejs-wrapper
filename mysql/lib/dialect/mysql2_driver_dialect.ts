@@ -52,4 +52,6 @@ export class MySQL2DriverDialect implements DriverDialect {
   getAwsPoolClient(props: PoolOptions): AwsPoolClient {
     return new AwsMysqlPoolClient(props);
   }
+
+  setupInitialProperties(props: Map<string, any>) {}
 }
