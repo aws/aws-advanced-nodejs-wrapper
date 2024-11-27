@@ -63,6 +63,7 @@ class PluginChain<T> {
 
 export class PluginManager {
   private static readonly PLUGIN_CHAIN_CACHE = new Map<[string, HostInfo], PluginChain<any>>();
+  private static readonly GET_HOST_INFO_BY_STRATEGY_PLUGIN_CHAIN_CACHE = new Map<[string, PluginManager], Set<ConnectionPlugin>>();
   private static readonly ALL_METHODS: string = "*";
   private static readonly CONNECT_METHOD = "connect";
   private static readonly FORCE_CONNECT_METHOD = "forceConnect";
@@ -282,14 +283,34 @@ export class PluginManager {
   }
 
   getHostInfoByStrategy(role: HostRole, strategy: string, hosts?: HostInfo[]): HostInfo {
-    for (const plugin of this._plugins) {
-      const pluginSubscribedMethods = plugin.getSubscribedMethods();
-      const isSubscribed =
-        pluginSubscribedMethods.has(PluginManager.ALL_METHODS) || pluginSubscribedMethods.has(PluginManager.GET_HOST_INFO_BY_STRATEGY_METHOD);
+    let chain: Set<ConnectionPlugin> = PluginManager.GET_HOST_INFO_BY_STRATEGY_PLUGIN_CHAIN_CACHE.get([
+      PluginManager.GET_HOST_INFO_BY_STRATEGY_METHOD,
+      this
+    ]);
+    if (!chain) {
+      chain = new Set();
+      let host: HostInfo;
 
-      if (isSubscribed) {
+      for (const plugin of this._plugins) {
+        if (plugin.getSubscribedMethods().has("*") || plugin.getSubscribedMethods().has(PluginManager.GET_HOST_INFO_BY_STRATEGY_METHOD)) {
+          chain.add(plugin);
+          if (!host) {
+            try {
+              host = plugin.getHostInfoByStrategy(role, strategy, hosts);
+            } catch (error) {
+              // This plugin does not support the provided strategy, ignore the exception and move on
+            }
+          }
+        }
+      }
+      PluginManager.GET_HOST_INFO_BY_STRATEGY_PLUGIN_CHAIN_CACHE.set([PluginManager.GET_HOST_INFO_BY_STRATEGY_METHOD, this], chain);
+      if (host) {
+        return host;
+      }
+    } else {
+      for (const plugin of chain) {
         try {
-          const host = plugin.getHostInfoByStrategy(role, strategy, hosts);
+          const host: HostInfo = plugin.getHostInfoByStrategy(role, strategy, hosts);
           if (host) {
             return host;
           }
