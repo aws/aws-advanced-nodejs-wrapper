@@ -57,6 +57,7 @@ export function maskProperties(props: Map<string, any>) {
   if (maskedProperties.has(WrapperProperties.PASSWORD.name)) {
     maskedProperties.set(WrapperProperties.PASSWORD.name, "***");
   }
+  maskedProperties.delete(WrapperProperties.CONNECTION_PROVIDER.name);
   return maskedProperties;
 }
 

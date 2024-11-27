@@ -649,6 +649,7 @@ describe("aurora read write splitting", () => {
         for (let i = 0; i < numOverloadedReaderConnections; i++) {
           const readerConfig = await initDefaultConfig(env.databaseInfo.readerInstanceEndpoint, env.databaseInfo.instanceEndpointPort, false);
           readerConfig["arbitraryProp"] = "value" + i.toString();
+          readerConfig["connectionProvider"] = provider;
           readerConfig["readerHostSelectorStrategy"] = "leastConnections";
           const client = initClientFunc(readerConfig);
           await client.connect();
