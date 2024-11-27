@@ -109,7 +109,7 @@ export class ConfigurationProfileBuilder {
     );
   }
 
-  public buildAnsSet() {
+  public buildAndSet() {
     DriverConfigurationProfiles.addOrReplaceProfile(this.name, this.build());
   }
 }

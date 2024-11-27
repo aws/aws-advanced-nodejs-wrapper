@@ -72,9 +72,10 @@ Plugins are loaded and managed through the Connection Plugin Manager and may be 
 ### Connection Plugin Manager Parameters
 
 | Parameter                    | Value     | Required | Description                                                                                                                                                     | Default Value                          |
-| ---------------------------- | --------- | -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------- |
+|------------------------------| --------- | -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |----------------------------------------|
 | `plugins`                    | `String`  | No       | Comma separated list of connection plugin codes. <br><br>Example: `failover,efm`                                                                                | `auroraConnectionTracker,failover,efm` |
 | `autoSortWrapperPluginOrder` | `Boolean` | No       | Allows the AWS Advanced NodeJS Wrapper to sort connection plugins to prevent plugin misconfiguration. Allows a user to provide a custom plugin order if needed. | `true`                                 |
+| `profileName`                | `String` | No       | Driver configuration profile name. Instead of listing plugin codes with `wrapperPlugins`, the driver profile can be set with this parameter. <br><br> Example: See [below](#configuration-profiles). | `null`                                 |
 
 To use a built-in plugin, specify its relevant plugin code for the `plugins` .
 The default value for `plugins` is `failover`. These plugins are enabled by default. To read more about these plugins, see the [List of Available Plugins](#list-of-available-plugins) section.
@@ -128,3 +129,48 @@ The AWS Advanced NodeJS Wrapper has several built-in plugins that are available 
 
 In addition to the built-in plugins, you can also create custom plugins more suitable for your needs.
 For more information, see [Custom Plugins](../development-guide/LoadablePlugins.md#using-custom-plugins).
+
+### Configuration Profiles
+An alternative way of loading plugins and providing configuration parameters is to use a configuration profile. You can create custom configuration profiles that specify which plugins the AWS JDBC Driver should load. After creating the profile, set the [`profileName`](#connection-plugin-manager-parameters) parameter to the name of the created profile.
+This method of loading plugins will most often be used by those who require custom plugins that cannot be loaded with the [`plugins`](#connection-plugin-manager-parameters) parameter, or by those who are using preset configurations.
+
+Besides a list of plugins to load and configuration properties, configuration profiles may also include the following items:
+- [Database Dialect](./using-the-jdbc-driver/DatabaseDialects.md#database-dialects)
+- [Target Driver Dialect](./using-the-jdbc-driver/TargetDriverDialects.md#target-driver-dialects)
+- a custom exception handler
+- a custom connection provider
+
+The following example creates and sets a configuration profile:
+
+```typescript
+// Create a new configuration profile with name "testProfile"
+ConfigurationProfileBuilder.get()
+  .withName("testProfile")
+  .withPluginsFactories([FailoverPluginFactory, HostMonitoringPluginFactory, CustomConnectionPluginFactory])
+  .buildAndSet();
+
+// Use the configuration profile "testProfile"
+const client = new AwsMySQLClient({
+  user: "user",
+  password: "password",
+  host: "host",
+  database: "database",
+  profileName: "testProfile"
+});
+```
+
+Configuration profiles can be created based on other existing configuration profiles. Profile names are case sensitive and should be unique.
+
+```typescript
+// Create a new configuration profile with name "newProfile" based on "existingProfileName"
+ConfigurationProfileBuilder.get()
+  .from("existingProfileName")
+  .withName("newProfileName")
+  .withDatabaseDialect(new CustomDatabaseDialect())
+  .buildAndSet();
+
+// Delete configuration profile "testProfile"
+DriverConfigurationProfiles.remove("testProfile");
+```
+
+The AWS Advanced NodeJS Wrapper team has gathered and analyzed various user scenarios to create commonly used configuration profiles, or presets, for users. These preset configuration profiles are optimized, profiled, verified and can be used right away. Users can create their own configuration profiles based on the built-in presets as shown above. More details could be found at the [Configuration Presets](./ConfigurationPresets.md) page. 
