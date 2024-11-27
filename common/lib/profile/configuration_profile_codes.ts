@@ -14,8 +14,6 @@
   limitations under the License.
 */
 
-import { ConfigurationProfile } from "./configuration_profile";
-
 export class ConfigurationProfilePresetCodes {
   public static readonly A0 = "A0"; // Normal
   public static readonly A1 = "A1"; // Easy
@@ -33,11 +31,6 @@ export class ConfigurationProfilePresetCodes {
   public static readonly H = "H"; // Normal
   public static readonly I0 = "I0"; // Normal
   public static readonly I1 = "I1"; // Aggressive
-  public static readonly SF_D0 = "SF_D0"; // Normal
-  public static readonly SF_D1 = "SF_D1"; // Easy
-  public static readonly SF_E = "SF_E"; // Normal
-  public static readonly SF_F0 = "SF_F0"; // Normal
-  public static readonly SF_F1 = "SF_F1"; // Aggressive
 
   public static isKnownPreset(name: string): boolean {
     return Object.prototype.hasOwnProperty.call(ConfigurationProfilePresetCodes, name);
