@@ -23,9 +23,6 @@ import { anything, instance, mock, spy, verify, when } from "ts-mockito";
 import { CredentialsProviderFactory } from "../../common/lib/plugins/federated_auth/credentials_provider_factory";
 import { DatabaseDialect } from "../../common/lib/database_dialect/database_dialect";
 
-import pkgAwsSdk from "aws-sdk";
-const { Credentials } = pkgAwsSdk;
-
 import { HostRole } from "../../common/lib/host_role";
 import { NullTelemetryFactory } from "../../common/lib/utils/telemetry/null_telemetry_factory";
 import { jest } from "@jest/globals";
@@ -48,7 +45,11 @@ const mockDialectInstance = instance(mockDialect);
 const mockPluginService = mock(PluginService);
 const mockCredentialsProviderFactory = mock<CredentialsProviderFactory>();
 const spyIamUtils = spy(IamAuthUtils);
-const mockCredentials = mock(Credentials);
+const testCredentials = {
+  accessKeyId: "foo",
+  secretAccessKey: "bar",
+  sessionToken: "baz"
+};
 const mockConnectFunc = jest.fn(() => {
   return Promise.resolve(mock(PgClientWrapper));
 });
@@ -61,7 +62,7 @@ describe("federatedAuthTest", () => {
     when(mockPluginService.getDialect()).thenReturn(mockDialectInstance);
     when(mockPluginService.getTelemetryFactory()).thenReturn(new NullTelemetryFactory());
     when(mockDialect.getDefaultPort()).thenReturn(defaultPort);
-    when(mockCredentialsProviderFactory.getAwsCredentialsProvider(anything(), anything(), anything())).thenResolve(instance(mockCredentials));
+    when(mockCredentialsProviderFactory.getAwsCredentialsProvider(anything(), anything(), anything())).thenResolve(instance(testCredentials));
     props = new Map<string, any>();
     WrapperProperties.PLUGINS.set(props, "federatedAuth");
     WrapperProperties.DB_USER.set(props, dbUser);
