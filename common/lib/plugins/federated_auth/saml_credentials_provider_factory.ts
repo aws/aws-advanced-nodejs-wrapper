@@ -43,7 +43,11 @@ export abstract class SamlCredentialsProviderFactory implements CredentialsProvi
     const credentials = results["Credentials"];
 
     if (credentials && credentials.AccessKeyId && credentials.SecretAccessKey && credentials.SessionToken) {
-      return new AwsCredentials(credentials.AccessKeyId, credentials.SecretAccessKey, credentials.SessionToken);
+      return {
+        accessKeyId: credentials.AccessKeyId,
+        secretAccessKey: credentials.SecretAccessKey,
+        sessionToken: credentials.SessionToken
+      };
     }
     throw new AwsWrapperError("Credentials from SAML request not found");
   }
@@ -56,23 +60,5 @@ export abstract class SamlCredentialsProviderFactory implements CredentialsProvi
       return `https://${idpEndpoint}`;
     }
     return idpEndpoint;
-  }
-}
-
-export class AwsCredentials implements AwsCredentialIdentity {
-  accessKeyId: string;
-  secretAccessKey: string;
-  sessionToken?: string;
-  credentialScope?: string;
-  accountId?: string;
-  expiration?: Date;
-  AccessKeyId: string;
-  SecretAccessKey: string;
-  SessionToken: string;
-
-  constructor(accessKeyId: string, secretAccessKey: string, sessionToken?: string) {
-    this.accessKeyId = accessKeyId;
-    this.secretAccessKey = secretAccessKey;
-    this.sessionToken = sessionToken;
   }
 }
