@@ -23,6 +23,7 @@ import { DatabaseEngine } from "./utils/database_engine";
 import { TestEnvironmentFeatures } from "./utils/test_environment_features";
 import { features } from "./config";
 import { DatabaseEngineDeployment } from "./utils/database_engine_deployment";
+import { PluginManager } from "../../../../common/lib";
 
 const itIf =
   !features.includes(TestEnvironmentFeatures.PERFORMANCE) && !features.includes(TestEnvironmentFeatures.RUN_AUTOSCALING_TESTS_ONLY) ? it : it.skip;
@@ -54,6 +55,7 @@ afterEach(async () => {
       // pass
     }
   }
+  await PluginManager.releaseResources();
   logger.info(`Test finished: ${expect.getState().currentTestName}`);
 }, 1320000);
 

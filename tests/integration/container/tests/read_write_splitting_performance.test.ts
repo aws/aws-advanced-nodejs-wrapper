@@ -26,6 +26,7 @@ import { ExecuteTimePlugin } from "../../../../common/lib/plugins/execute_time_p
 import { TestDriver } from "./utils/test_driver";
 import { ConnectionProviderManager } from "../../../../common/lib/connection_provider_manager";
 import { InternalPooledConnectionProvider } from "../../../../common/lib/internal_pooled_connection_provider";
+import { PluginManager } from "../../../../common/lib";
 
 const itIf =
   features.includes(TestEnvironmentFeatures.FAILOVER_SUPPORTED) &&
@@ -52,6 +53,7 @@ describe("rwperformance", () => {
   });
 
   afterEach(async () => {
+    await PluginManager.releaseResources();
     logger.info(`Test finished: ${expect.getState().currentTestName}`);
   }, 1320000);
 
