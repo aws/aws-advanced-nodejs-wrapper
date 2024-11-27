@@ -26,6 +26,7 @@ import { features } from "./config";
 import { MonitorServiceImpl } from "../../../../common/lib/plugins/efm/monitor_service";
 import { PerfStat } from "./utils/perf_stat";
 import { PerfTestUtility } from "./utils/perf_util";
+import { PluginManager } from "../../../../common/lib";
 
 const itIf =
   features.includes(TestEnvironmentFeatures.FAILOVER_SUPPORTED) &&
@@ -253,6 +254,7 @@ describe("performance", () => {
   });
 
   afterEach(async () => {
+    await PluginManager.releaseResources();
     await TestEnvironment.verifyClusterStatus();
     logger.info(`Test finished: ${expect.getState().currentTestName}`);
   }, 1320000);

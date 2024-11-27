@@ -25,6 +25,7 @@ import { RdsUtils } from "../../../../common/lib/utils/rds_utils";
 import { logger } from "../../../../common/logutils";
 import { features, instanceCount } from "./config";
 import { TestEnvironmentFeatures } from "./utils/test_environment_features";
+import { PluginManager } from "../../../../common/lib";
 
 const itIf =
   features.includes(TestEnvironmentFeatures.FAILOVER_SUPPORTED) &&
@@ -94,6 +95,7 @@ describe("aurora failover", () => {
         // pass
       }
     }
+    await PluginManager.releaseResources();
     logger.info(`Test finished: ${expect.getState().currentTestName}`);
   }, 1320000);
 

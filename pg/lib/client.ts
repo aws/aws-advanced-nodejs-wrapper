@@ -189,7 +189,6 @@ export class AwsPGClient extends AwsClient {
       },
       null
     );
-    await this.releaseResources();
     return result;
   }
 
