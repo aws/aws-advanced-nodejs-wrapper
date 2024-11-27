@@ -22,6 +22,7 @@ import { PluginService } from "./plugin_service";
 import { AwsWrapperError, UnsupportedMethodError } from "./utils/errors";
 import { logger } from "../logutils";
 import { SessionStateTransferHandler } from "./session_state_transfer_handler";
+import { DatabaseDialect } from "./database_dialect/database_dialect";
 
 export class SessionStateServiceImpl implements SessionStateService {
   protected sessionState: SessionState;
@@ -61,7 +62,8 @@ export class SessionStateServiceImpl implements SessionStateService {
       this.sessionState.autoCommit.resetPristineValue();
       this.setupPristineAutoCommit();
       try {
-        await newClient.setAutoCommit(this.sessionState.autoCommit.value);
+        await newClient.targetClient.query(this.pluginService.getDialect().getSetAutoCommitQuery(this.sessionState.autoCommit.value));
+        this.setAutoCommit(this.sessionState.autoCommit.value);
       } catch (error: any) {
         if (error instanceof UnsupportedMethodError) {
           // ignore
@@ -74,7 +76,8 @@ export class SessionStateServiceImpl implements SessionStateService {
       this.sessionState.readOnly.resetPristineValue();
       this.setupPristineReadOnly();
       try {
-        await newClient.updateSessionStateReadOnly(this.sessionState.readOnly.value);
+        await newClient.targetClient.query(this.pluginService.getDialect().getSetReadOnlyQuery(this.sessionState.readOnly.value));
+        this.setReadOnly(this.sessionState.readOnly.value);
       } catch (error: any) {
         if (error instanceof UnsupportedMethodError) {
           // ignore
@@ -87,7 +90,8 @@ export class SessionStateServiceImpl implements SessionStateService {
       this.sessionState.catalog.resetPristineValue();
       this.setupPristineCatalog();
       try {
-        await newClient.setCatalog(this.sessionState.catalog.value);
+        await newClient.targetClient.query(this.pluginService.getDialect().getSetCatalogQuery(this.sessionState.catalog.value));
+        this.setCatalog(this.sessionState.catalog.value);
       } catch (error: any) {
         if (error instanceof UnsupportedMethodError) {
           // ignore
@@ -100,7 +104,8 @@ export class SessionStateServiceImpl implements SessionStateService {
       this.sessionState.schema.resetPristineValue();
       this.setupPristineSchema();
       try {
-        await newClient.setSchema(this.sessionState.schema.value);
+        await newClient.targetClient.query(this.pluginService.getDialect().getSetSchemaQuery(this.sessionState.schema.value));
+        this.setSchema(this.sessionState.schema.value);
       } catch (error: any) {
         if (error instanceof UnsupportedMethodError) {
           // ignore
@@ -113,7 +118,10 @@ export class SessionStateServiceImpl implements SessionStateService {
       this.sessionState.transactionIsolation.resetPristineValue();
       this.setupPristineTransactionIsolation();
       try {
-        await newClient.setTransactionIsolation(this.sessionState.transactionIsolation.value);
+        await newClient.targetClient.query(
+          this.pluginService.getDialect().getSetTransactionIsolationQuery(this.sessionState.transactionIsolation.value)
+        );
+        this.setTransactionIsolation(this.sessionState.transactionIsolation.value);
       } catch (error: any) {
         if (error instanceof UnsupportedMethodError) {
           // ignore
@@ -139,7 +147,8 @@ export class SessionStateServiceImpl implements SessionStateService {
 
     if (this.copySessionState?.autoCommit.canRestorePristine() && this.copySessionState?.autoCommit.pristineValue !== undefined) {
       try {
-        await client.setAutoCommit(this.copySessionState?.autoCommit.pristineValue);
+        await client.targetClient.query(this.pluginService.getDialect().getSetAutoCommitQuery(this.sessionState.autoCommit.pristineValue));
+        this.setAutoCommit(this.sessionState.autoCommit.pristineValue);
       } catch (error: any) {
         if (error instanceof UnsupportedMethodError) {
           // ignore
@@ -150,7 +159,8 @@ export class SessionStateServiceImpl implements SessionStateService {
 
     if (this.copySessionState?.readOnly.canRestorePristine() && this.copySessionState?.readOnly.pristineValue !== undefined) {
       try {
-        await client.updateSessionStateReadOnly(this.copySessionState?.readOnly.pristineValue);
+        await client.targetClient.query(this.pluginService.getDialect().getSetReadOnlyQuery(this.sessionState.readOnly.pristineValue));
+        this.setReadOnly(this.sessionState.readOnly.pristineValue);
       } catch (error: any) {
         if (error instanceof UnsupportedMethodError) {
           // ignore
@@ -161,7 +171,8 @@ export class SessionStateServiceImpl implements SessionStateService {
 
     if (this.copySessionState?.catalog.canRestorePristine() && this.copySessionState?.catalog.pristineValue !== undefined) {
       try {
-        await client.setCatalog(this.copySessionState?.catalog.pristineValue);
+        await client.targetClient.query(this.pluginService.getDialect().getSetCatalogQuery(this.sessionState.catalog.pristineValue));
+        this.setCatalog(this.sessionState.catalog.pristineValue);
       } catch (error: any) {
         if (error instanceof UnsupportedMethodError) {
           // ignore
@@ -172,7 +183,8 @@ export class SessionStateServiceImpl implements SessionStateService {
 
     if (this.copySessionState?.schema.canRestorePristine() && this.copySessionState?.schema.pristineValue !== undefined) {
       try {
-        await client.setSchema(this.copySessionState?.schema.pristineValue);
+        await client.targetClient.query(this.pluginService.getDialect().getSetSchemaQuery(this.sessionState.schema.pristineValue));
+        this.setSchema(this.sessionState.schema.pristineValue);
       } catch (error: any) {
         if (error instanceof UnsupportedMethodError) {
           // ignore
@@ -183,7 +195,10 @@ export class SessionStateServiceImpl implements SessionStateService {
 
     if (this.copySessionState?.transactionIsolation.canRestorePristine() && this.copySessionState?.transactionIsolation.pristineValue !== undefined) {
       try {
-        await client.setTransactionIsolation(this.copySessionState?.transactionIsolation.pristineValue);
+        await client.targetClient.query(
+          this.pluginService.getDialect().getSetTransactionIsolationQuery(this.sessionState.transactionIsolation.pristineValue)
+        );
+        this.setTransactionIsolation(this.sessionState.transactionIsolation.pristineValue);
       } catch (error: any) {
         if (error instanceof UnsupportedMethodError) {
           // ignore
@@ -284,6 +299,11 @@ export class SessionStateServiceImpl implements SessionStateService {
     } else {
       this.sessionState.readOnly.pristineValue = this.pluginService.getCurrentClient().isReadOnly();
     }
+  }
+
+  updateReadOnly(readOnly: boolean): void {
+    this.pluginService.getSessionStateService().setupPristineReadOnly();
+    this.pluginService.getSessionStateService().setReadOnly(readOnly);
   }
 
   getSchema(): string | undefined {
