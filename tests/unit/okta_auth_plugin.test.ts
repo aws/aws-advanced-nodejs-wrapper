@@ -22,8 +22,6 @@ import { HostInfo } from "../../common/lib/host_info";
 import { WrapperProperties } from "../../common/lib/wrapper_property";
 import { DatabaseDialect } from "../../common/lib/database_dialect/database_dialect";
 
-import { AwsCredentials } from "../../common/lib/plugins/federated_auth/saml_credentials_provider_factory";
-
 import { OktaAuthPlugin } from "../../common/lib/plugins/federated_auth/okta_auth_plugin";
 import { NullTelemetryFactory } from "../../common/lib/utils/telemetry/null_telemetry_factory";
 import { jest } from "@jest/globals";
@@ -41,7 +39,11 @@ const testTokenInfo = new TokenInfo(testToken, Date.now() + 300000);
 const mockPluginService = mock(PluginService);
 const mockDialect = mock<DatabaseDialect>();
 const mockDialectInstance = instance(mockDialect);
-const mockCredentials = mock(AwsCredentials);
+const testCredentials = {
+  accessKeyId: "foo",
+  secretAccessKey: "bar",
+  sessionToken: "baz"
+};
 const spyIamUtils = spy(IamAuthUtils);
 const mockCredentialsProviderFactory = mock<CredentialsProviderFactory>();
 const mockConnectFunc = jest.fn(() => {
@@ -56,7 +58,7 @@ describe("oktaAuthTest", () => {
     when(mockPluginService.getDialect()).thenReturn(mockDialectInstance);
     when(mockPluginService.getTelemetryFactory()).thenReturn(new NullTelemetryFactory());
     when(mockDialect.getDefaultPort()).thenReturn(defaultPort);
-    when(mockCredentialsProviderFactory.getAwsCredentialsProvider(anything(), anything(), anything())).thenResolve(mockCredentials);
+    when(mockCredentialsProviderFactory.getAwsCredentialsProvider(anything(), anything(), anything())).thenResolve(testCredentials);
     props = new Map<string, any>();
     WrapperProperties.PLUGINS.set(props, "okta");
     WrapperProperties.DB_USER.set(props, dbUser);
@@ -93,7 +95,7 @@ describe("oktaAuthTest", () => {
     await spyPluginInstance.connect(hostInfo, props, false, mockConnectFunc);
 
     verify(
-      spyIamUtils.generateAuthenticationToken(hostInfo.host, defaultPort, region, dbUser, mockCredentials, instance(mockPluginService))
+      spyIamUtils.generateAuthenticationToken(hostInfo.host, defaultPort, region, dbUser, testCredentials, instance(mockPluginService))
     ).called();
     expect(dbUser).toBe(WrapperProperties.USER.get(props));
     expect(testToken).toBe(WrapperProperties.PASSWORD.get(props));
@@ -106,7 +108,7 @@ describe("oktaAuthTest", () => {
     await spyPluginInstance.connect(hostInfo, props, true, mockConnectFunc);
 
     verify(
-      spyIamUtils.generateAuthenticationToken(hostInfo.host, defaultPort, region, dbUser, mockCredentials, instance(mockPluginService))
+      spyIamUtils.generateAuthenticationToken(hostInfo.host, defaultPort, region, dbUser, testCredentials, instance(mockPluginService))
     ).called();
     expect(dbUser).toBe(WrapperProperties.USER.get(props));
     expect(testToken).toBe(WrapperProperties.PASSWORD.get(props));
@@ -157,7 +159,7 @@ describe("oktaAuthTest", () => {
 
     await spyPluginInstance.connect(hostInfo, props, true, mockConnectFunc);
 
-    verify(spyIamUtils.generateAuthenticationToken(iamHost, defaultPort, region, dbUser, mockCredentials, instance(mockPluginService))).called();
+    verify(spyIamUtils.generateAuthenticationToken(iamHost, defaultPort, region, dbUser, testCredentials, instance(mockPluginService))).called();
     expect(dbUser).toBe(WrapperProperties.USER.get(props));
     expect(testToken).toBe(WrapperProperties.PASSWORD.get(props));
   });
