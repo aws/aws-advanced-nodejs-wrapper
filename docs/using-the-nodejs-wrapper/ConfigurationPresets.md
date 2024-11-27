@@ -36,6 +36,7 @@ const client = new AwsMySQLClient({
 ## Existing Configuration Presets
 
 Configuration Presets are optimized for 3 main user scenarios. They are:
+
 - **No connection pool** preset family: `A`, `B`, `C`
 - AWS Advanced NodeJS Wrapper **Internal connection pool** preset family: `D`, `E`, `F`
 - **External connection pool** preset family: `G`, `H`, `I`
