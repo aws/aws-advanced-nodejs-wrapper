@@ -149,4 +149,6 @@ export abstract class AwsClient extends EventEmitter {
   getPluginInstance<T>(iface: any): T {
     return this.pluginManager.getPluginInstance(iface);
   }
+
+  abstract setKeepAlive(keepAlive: boolean, options?: any): Promise<void>;
 }

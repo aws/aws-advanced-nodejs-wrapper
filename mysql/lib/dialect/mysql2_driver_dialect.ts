@@ -26,6 +26,7 @@ import { HostInfo } from "../../../common/lib/host_info";
 
 export class MySQL2DriverDialect implements DriverDialect {
   protected dialectName: string = this.constructor.name;
+  keepAlivePropertyNames: string[] = [];
 
   getDialectName(): string {
     return this.dialectName;
