@@ -26,6 +26,7 @@ import { IamAuthenticationPlugin } from "../../../../common/lib/authentication/i
 import { logger } from "../../../../common/logutils";
 import { TestEnvironmentFeatures } from "./utils/test_environment_features";
 import { features } from "./config";
+import { PluginManager } from "../../../../common/lib";
 
 const itIf =
   !features.includes(TestEnvironmentFeatures.PERFORMANCE) &&
@@ -89,6 +90,7 @@ describe("iam authentication", () => {
   });
 
   afterEach(async () => {
+    await PluginManager.releaseResources();
     await TestEnvironment.verifyClusterStatus();
     logger.info(`Test finished: ${expect.getState().currentTestName}`);
   }, 1320000);

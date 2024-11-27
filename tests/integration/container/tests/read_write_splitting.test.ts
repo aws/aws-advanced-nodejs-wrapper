@@ -29,6 +29,7 @@ import { AwsPoolConfig } from "../../../../common/lib/aws_pool_config";
 import { ConnectionProviderManager } from "../../../../common/lib/connection_provider_manager";
 import { InternalPoolMapping } from "../../../../common/lib/utils/internal_pool_mapping";
 import { HostInfo } from "../../../../common/lib/host_info";
+import { PluginManager } from "../../../../common/lib";
 
 const itIf =
   !features.includes(TestEnvironmentFeatures.PERFORMANCE) &&
@@ -121,6 +122,7 @@ describe("aurora read write splitting", () => {
         // pass
       }
     }
+    await PluginManager.releaseResources();
     logger.info(`Test finished: ${expect.getState().currentTestName}`);
   }, 1320000);
 

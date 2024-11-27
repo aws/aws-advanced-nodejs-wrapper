@@ -26,6 +26,7 @@ import { ConnectionProviderManager } from "../../../../common/lib/connection_pro
 import { TestInstanceInfo } from "./utils/test_instance_info";
 import { sleep } from "../../../../common/lib/utils/utils";
 import { FailoverSuccessError } from "../../../../common/lib/utils/errors";
+import { PluginManager } from "../../../../common/lib";
 
 const itIf =
   !features.includes(TestEnvironmentFeatures.PERFORMANCE) &&
@@ -109,6 +110,7 @@ describe("pooled connection autoscaling", () => {
         // pass
       }
     }
+    await PluginManager.releaseResources();
     logger.info(`Test finished: ${expect.getState().currentTestName}`);
   }, 1320000);
 
