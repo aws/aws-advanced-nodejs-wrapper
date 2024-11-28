@@ -80,7 +80,7 @@ export class LimitlessRouterMonitor {
     logger.debug(Messages.get("LimitlessRouterMonitor.running", this.hostInfo.host));
 
     while (!this.stopped) {
-      const telemetryContext = this.telemetryFactory.openTelemetryContext("limitless router monitor thread", TelemetryTraceLevel.TOP_LEVEL);
+      const telemetryContext = this.telemetryFactory.openTelemetryContext("limitless router monitor task", TelemetryTraceLevel.TOP_LEVEL);
       telemetryContext.setAttribute("url", this.hostInfo.host);
       await telemetryContext.start(async () => {
         try {
@@ -108,7 +108,7 @@ export class LimitlessRouterMonitor {
           }
           await sleep(this.intervalMillis);
         } catch (e: any) {
-          logger.debug(Messages.get("LimitlessRouterMonitor.exceptionDuringMonitoringStop", this.hostInfo.host, e.message));
+          logger.debug(Messages.get("LimitlessRouterMonitor.errorDuringMonitoringStop", this.hostInfo.host, e.message));
         }
       });
     }
