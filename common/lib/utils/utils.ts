@@ -57,6 +57,8 @@ export function maskProperties(props: Map<string, any>) {
   if (maskedProperties.has(WrapperProperties.PASSWORD.name)) {
     maskedProperties.set(WrapperProperties.PASSWORD.name, "***");
   }
+  // Remove connectionProvider property before displaying. AwsMysqlPoolClient.targetPool throws
+  // "TypeError: Converting circular structure to JSON" when sent to JSON.stringify.
   maskedProperties.delete(WrapperProperties.CONNECTION_PROVIDER.name);
   return maskedProperties;
 }
