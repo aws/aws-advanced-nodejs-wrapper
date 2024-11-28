@@ -109,6 +109,12 @@ export class WrapperProperties {
     30
   );
 
+  static readonly RESPONSE_MEASUREMENT_INTERVAL_MILLIS = new WrapperProperty<number>(
+    "responseMeasurementIntervalMs",
+    "Interval in millis between measuring response time to a database host.",
+    30000
+  );
+
   static readonly IAM_HOST = new WrapperProperty<string>("iamHost", "Overrides the host that is used to generate the IAM token", null);
   static readonly IAM_DEFAULT_PORT = new WrapperProperty<number>(
     "iamDefaultPort",
