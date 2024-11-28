@@ -179,5 +179,6 @@
   "LimitlessRouterServiceImpl.synchronouslyGetLimitlessRouters": "Fetching Limitless Routers synchronously.",
   "LimitlessRouterServiceImpl.getLimitlessRoutersException": "Exception encountered getting Limitless Routers. %s",
   "LimitlessRouterServiceImpl.fetchedEmptyRouterList": "Empty router list was fetched.",
-  "LimitlessRouterServiceImpl.errorStartingMonitor": "An error occurred while starting Limitless Router Monitor. %s"
+  "LimitlessRouterServiceImpl.errorStartingMonitor": "An error occurred while starting Limitless Router Monitor. %s",
+  "HostResponseTimeMonitor.stopped": "Host Response Time Monitor thread stopped on instance '%s'."
 }
