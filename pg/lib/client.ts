@@ -30,6 +30,8 @@ import { RdsMultiAZPgDatabaseDialect } from "./dialect/rds_multi_az_pg_database_
 import { HostInfo } from "../../common/lib/host_info";
 import { TelemetryTraceLevel } from "../../common/lib/utils/telemetry/telemetry_trace_level";
 import { NodePostgresDriverDialect } from "./dialect/node_postgres_driver_dialect";
+import { ClientUtils } from "../../common/lib/utils/client_utils";
+import { WrapperProperties } from "../../common/lib/wrapper_property";
 
 export class AwsPGClient extends AwsClient {
   private static readonly knownDialectsByCode: Map<string, DatabaseDialect> = new Map([

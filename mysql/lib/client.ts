@@ -31,6 +31,8 @@ import { ClientUtils } from "../../common/lib/utils/client_utils";
 import { RdsMultiAZMySQLDatabaseDialect } from "./dialect/rds_multi_az_mysql_database_dialect";
 import { TelemetryTraceLevel } from "../../common/lib/utils/telemetry/telemetry_trace_level";
 import { MySQL2DriverDialect } from "./dialect/mysql2_driver_dialect";
+import { WrapperProperties } from "../../common/lib/wrapper_property";
+import { sleep } from "../../common/lib/utils/utils";
 
 export class AwsMySQLClient extends AwsClient {
   private static readonly knownDialectsByCode: Map<string, DatabaseDialect> = new Map([

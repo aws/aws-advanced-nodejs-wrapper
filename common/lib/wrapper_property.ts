@@ -77,6 +77,18 @@ export class WrapperProperties {
     20000
   );
 
+  static readonly WRAPPER_CONNECT_TIMEOUT = new WrapperProperty<number>(
+    "wrapperConnectTimeout",
+    "Timeout in milliseconds for the wrapper to create a connection.",
+    10000
+  );
+
+  static readonly WRAPPER_QUERY_TIMEOUT = new WrapperProperty<number>(
+    "wrapperQueryTimeout",
+    "Timeout in milliseconds for the wrapper to execute queries.",
+    20000
+  );
+
   static readonly TRANSFER_SESSION_STATE_ON_SWITCH = new WrapperProperty<boolean>(
     "transferSessionStateOnSwitch",
     "Enables session state transfer to a new connection.",

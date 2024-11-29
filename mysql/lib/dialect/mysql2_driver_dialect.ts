@@ -17,7 +17,7 @@
 import { DriverDialect } from "../../../common/lib/driver_dialect/driver_dialect";
 import { ClientWrapper } from "../../../common/lib/client_wrapper";
 import { createConnection, PoolOptions } from "mysql2/promise";
-import { WrapperProperties } from "../../../common/lib/wrapper_property";
+import { WrapperProperties, WrapperProperty } from "../../../common/lib/wrapper_property";
 import { AwsPoolConfig } from "../../../common/lib/aws_pool_config";
 import { AwsPoolClient } from "../../../common/lib/aws_pool_client";
 import { AwsMysqlPoolClient } from "../mysql_pool_client";
@@ -25,6 +25,8 @@ import { MySQLClientWrapper } from "../../../common/lib/mysql_client_wrapper";
 import { HostInfo } from "../../../common/lib/host_info";
 
 export class MySQL2DriverDialect implements DriverDialect {
+  readonly connectTimeoutPropertyName = "connectTimeout";
+  readonly queryTimeoutPropertyName = "timeout";
   protected dialectName: string = this.constructor.name;
 
   getDialectName(): string {
@@ -33,7 +35,7 @@ export class MySQL2DriverDialect implements DriverDialect {
 
   async connect(hostInfo: HostInfo, props: Map<string, any>): Promise<ClientWrapper> {
     const targetClient = await createConnection(WrapperProperties.removeWrapperProperties(props));
-    return Promise.resolve(new MySQLClientWrapper(targetClient, hostInfo, props));
+    return Promise.resolve(new MySQLClientWrapper(targetClient, hostInfo, props, this));
   }
 
   preparePoolClientProperties(props: Map<string, any>, poolConfig: AwsPoolConfig | undefined): any {
@@ -51,5 +53,13 @@ export class MySQL2DriverDialect implements DriverDialect {
 
   getAwsPoolClient(props: PoolOptions): AwsPoolClient {
     return new AwsMysqlPoolClient(props);
+  }
+
+  setupDriverProperties(props: Map<string, any>) {
+    const wrapperConnectTimeout = props.get(WrapperProperties.WRAPPER_CONNECT_TIMEOUT.name);
+
+    if (wrapperConnectTimeout) {
+      props.set(this.connectTimeoutPropertyName, wrapperConnectTimeout);
+    }
   }
 }
