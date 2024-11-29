@@ -60,4 +60,8 @@ export class ConnectionProviderManager {
 
     return host;
   }
+
+  getDefaultConnectionProvider(): ConnectionProvider {
+    return this.defaultProvider;
+  }
 }

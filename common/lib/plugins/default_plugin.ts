@@ -51,7 +51,7 @@ export class DefaultPlugin extends AbstractConnectionPlugin {
     isInitialConnection: boolean,
     forceConnectFunc: () => Promise<ClientWrapper>
   ): Promise<ClientWrapper> {
-    return await this.connectInternal(hostInfo, props, this.connectionProviderManager.getConnectionProvider(hostInfo, props));
+    return await this.connectInternal(hostInfo, props, this.connectionProviderManager.getDefaultConnectionProvider());
   }
 
   override initHostProvider(
