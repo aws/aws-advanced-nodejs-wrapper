@@ -17,29 +17,34 @@
 import { HostInfo } from "../host_info";
 import { fromNodeProviderChain } from "@aws-sdk/credential-providers";
 import { AwsCredentialIdentityProvider } from "@smithy/types/dist-types/identity/awsCredentialIdentity";
+import { WrapperProperties } from "../wrapper_property";
+import { AwsWrapperError } from "../utils/errors";
+import { Messages } from "../utils/messages";
 
 interface AwsCredentialsProviderHandler {
   getAwsCredentialsProvider(hostInfo: HostInfo, properties: Map<string, any>): AwsCredentialIdentityProvider;
 }
 
 export class AwsCredentialsManager {
-  private static handler?: AwsCredentialsProviderHandler;
-
-  static setCustomHandler(customHandler: AwsCredentialsProviderHandler) {
-    AwsCredentialsManager.handler = customHandler;
-  }
-
   static getProvider(hostInfo: HostInfo, props: Map<string, any>): AwsCredentialIdentityProvider {
-    return AwsCredentialsManager.handler === undefined
-      ? AwsCredentialsManager.getDefaultProvider()
-      : AwsCredentialsManager.handler.getAwsCredentialsProvider(hostInfo, props);
+    const awsCredentialProviderHandler = WrapperProperties.CUSTOM_AWS_CREDENTIAL_PROVIDER_HANDLER.get(props);
+    if (awsCredentialProviderHandler && !AwsCredentialsManager.isAwsCredentialsProviderHandler(awsCredentialProviderHandler)) {
+      throw new AwsWrapperError(Messages.get("AwsCredentialsManager.wrongHandler"));
+    }
+
+    return !awsCredentialProviderHandler
+      ? AwsCredentialsManager.getDefaultProvider(WrapperProperties.AWS_PROFILE.get(props))
+      : awsCredentialProviderHandler.getAwsCredentialsProvider(hostInfo, props);
   }
 
-  static resetCustomHandler() {
-    AwsCredentialsManager.handler = undefined;
-  }
-
-  private static getDefaultProvider() {
+  private static getDefaultProvider(profileName: string | null) {
+    if (profileName) {
+      return fromNodeProviderChain({ profile: profileName });
+    }
     return fromNodeProviderChain();
+  }
+
+  private static isAwsCredentialsProviderHandler(arg: any): arg is AwsCredentialsProviderHandler {
+    return arg.getAwsCredentialsProvider !== undefined;
   }
 }

@@ -31,6 +31,10 @@ import { DefaultTelemetryFactory } from "./utils/telemetry/default_telemetry_fac
 import { TelemetryFactory } from "./utils/telemetry/telemetry_factory";
 import { DriverDialect } from "./driver_dialect/driver_dialect";
 import { WrapperProperties } from "./wrapper_property";
+import { DriverConfigurationProfiles } from "./profile/driver_configuration_profiles";
+import { ConfigurationProfile } from "./profile/configuration_profile";
+import { AwsWrapperError } from "./utils/errors";
+import { Messages } from "./utils/messages";
 
 export abstract class AwsClient extends EventEmitter {
   private _defaultPort: number = -1;
@@ -41,6 +45,7 @@ export abstract class AwsClient extends EventEmitter {
   protected _isReadOnly: boolean = false;
   protected _isolationLevel: number = 0;
   protected _connectionUrlParser: ConnectionUrlParser;
+  protected _configurationProfile: ConfigurationProfile | null = null;
   readonly properties: Map<string, any>;
   config: any;
   targetClient?: ClientWrapper;
@@ -58,9 +63,50 @@ export abstract class AwsClient extends EventEmitter {
 
     this.properties = new Map<string, any>(Object.entries(config));
 
+    const profileName = WrapperProperties.PROFILE_NAME.get(this.properties);
+    if (profileName && profileName.length > 0) {
+      this._configurationProfile = DriverConfigurationProfiles.getProfileConfiguration(profileName);
+      if (this._configurationProfile) {
+        const profileProperties = this._configurationProfile.getProperties();
+        if (profileProperties) {
+          for (const key of profileProperties.keys()) {
+            if (this.properties.has(key)) {
+              // Setting defined by a user has priority over property in configuration profile.
+              continue;
+            }
+            this.properties.set(key, profileProperties.get(key));
+          }
+
+          const connectionProvider = WrapperProperties.CONNECTION_PROVIDER.get(this.properties);
+          if (!connectionProvider) {
+            WrapperProperties.CONNECTION_PROVIDER.set(this.properties, this._configurationProfile.getAwsCredentialProvider());
+          }
+
+          const customAwsCredentialProvider = WrapperProperties.CUSTOM_AWS_CREDENTIAL_PROVIDER_HANDLER.get(this.properties);
+          if (!customAwsCredentialProvider) {
+            WrapperProperties.CUSTOM_AWS_CREDENTIAL_PROVIDER_HANDLER.set(this.properties, this._configurationProfile.getAwsCredentialProvider());
+          }
+
+          const customDatabaseDialect = WrapperProperties.CUSTOM_DATABASE_DIALECT.get(this.properties);
+          if (!customDatabaseDialect) {
+            WrapperProperties.CUSTOM_DATABASE_DIALECT.set(this.properties, this._configurationProfile.getDatabaseDialect());
+          }
+        }
+      } else {
+        throw new AwsWrapperError(Messages.get("AwsClient.configurationProfileNotFound", profileName));
+      }
+    }
+
     this.telemetryFactory = new DefaultTelemetryFactory(this.properties);
     const container = new PluginServiceManagerContainer();
-    this.pluginService = new PluginService(container, this, dbType, knownDialectsByCode, this.properties, driverDialect);
+    this.pluginService = new PluginService(
+      container,
+      this,
+      dbType,
+      knownDialectsByCode,
+      this.properties,
+      this._configurationProfile?.getDriverDialect() ?? driverDialect
+    );
     this.pluginManager = new PluginManager(
       container,
       this.properties,
@@ -71,7 +117,7 @@ export abstract class AwsClient extends EventEmitter {
 
   private async setup() {
     await this.telemetryFactory.init();
-    await this.pluginManager.init();
+    await this.pluginManager.init(this._configurationProfile);
   }
 
   protected async internalConnect() {
