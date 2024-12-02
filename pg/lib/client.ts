@@ -214,4 +214,22 @@ export class AwsPGClient extends AwsClient {
     this.schema = "";
     this._isolationLevel = TransactionIsolationLevel.TRANSACTION_READ_COMMITTED;
   }
+
+  async setKeepAlive(keepAlive: boolean, options?: Map<string, any>): Promise<void> {
+    if (this.targetClient) {
+      await this.pluginService.abortTargetClient(this.targetClient);
+    }
+
+    if (keepAlive) {
+      for (const [key, value] of options) {
+        this.properties.set(key, value);
+      }
+    } else {
+      for (const property of this.pluginService.getDriverDialect().keepAlivePropertyNames) {
+        this.properties.delete(property);
+      }
+    }
+
+    await this.connect();
+  }
 }

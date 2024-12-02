@@ -238,4 +238,8 @@ export class AwsMySQLClient extends AwsClient {
     this.catalog = "";
     this._isolationLevel = TransactionIsolationLevel.TRANSACTION_REPEATABLE_READ;
   }
+
+  async setKeepAlive(keepAlive: boolean, options?: Map<string, any>): Promise<void> {
+    throw new UnsupportedMethodError(Messages.get("Client.methodNotSupported", "setKeepAlive"));
+  }
 }
