@@ -14,17 +14,6 @@
   limitations under the License.
 */
 
-import { CustomConsole, LogMessage, LogType } from "@jest/console";
-
-function simpleFormatter(type: LogType, message: LogMessage): string {
-  return message
-    .split(/\n/)
-    .map((line) => "      " + line)
-    .join("\n");
-}
-
-global.console = new CustomConsole(process.stdout, process.stderr, simpleFormatter);
-
 const infoJson = process.env.TEST_ENV_INFO_JSON;
 if (infoJson === undefined) {
   throw new Error("env var required");
@@ -32,5 +21,11 @@ if (infoJson === undefined) {
 
 const testInfo = JSON.parse(infoJson);
 const request = testInfo.request;
-export const features = request.features;
-export const instanceCount = request.numOfInstances;
+
+const reportSetting: string = `${request.deployment}-${request.engine}_instance-${request.numOfInstances}`;
+process.env["JEST_HTML_REPORTER_OUTPUT_PATH"] = `./tests/integration/container/reports/${reportSetting}.html`;
+process.env["JEST_HTML_REPORTER_INCLUDE_FAILURE_MSG"] = "true";
+process.env["JEST_HTML_REPORTER_INCLUDE_CONSOLE_LOG"] = "true";
+
+// Required to use globalSetup:
+module.exports = async () => {};
