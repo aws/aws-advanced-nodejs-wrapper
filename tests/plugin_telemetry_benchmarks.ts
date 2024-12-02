@@ -154,21 +154,21 @@ suite(
   add("initAndReleaseBaseline", async () => {
     const wrapper = new TestConnectionWrapper(props, pluginManager, instance(mockPluginService));
     await pluginManager.init();
-    await wrapper.releaseResources();
+    await PluginManager.releaseResources();
     await wrapper.end();
   }),
 
   add("initAndReleaseWithExecuteTimePlugin", async () => {
     const wrapper = new TestConnectionWrapper(propsExecute, pluginManagerExecute, instance(mockPluginService));
     await pluginManagerExecute.init();
-    await wrapper.releaseResources();
+    await PluginManager.releaseResources();
     await wrapper.end();
   }),
 
   add("initAndReleaseWithReadWriteSplittingPlugin", async () => {
     const wrapper = new TestConnectionWrapper(propsReadWrite, pluginManagerReadWrite, instance(mockPluginService));
     await pluginManagerReadWrite.init();
-    await wrapper.releaseResources();
+    await PluginManager.releaseResources();
     await wrapper.end();
   }),
 

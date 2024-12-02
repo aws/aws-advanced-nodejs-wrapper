@@ -78,7 +78,7 @@ suite(
     const pluginManager = getPluginManager(props);
     const wrapper = new TestConnectionWrapper(props, pluginManager, instance(mockPluginService));
     await pluginManager.init();
-    await wrapper.releaseResources();
+    await PluginManager.releaseResources();
   }),
 
   add("initAndReleaseWithExecuteTimePlugin", async () => {
@@ -86,7 +86,7 @@ suite(
     const pluginManager = getPluginManager(props);
     const wrapper = new TestConnectionWrapper(props, pluginManager, instance(mockPluginService));
     await pluginManager.init();
-    await wrapper.releaseResources();
+    await PluginManager.releaseResources();
   }),
 
   add("initAndReleaseWithReadWriteSplittingPlugin", async () => {
@@ -94,7 +94,7 @@ suite(
     const pluginManager = getPluginManager(props);
     const wrapper = new TestConnectionWrapper(props, pluginManager, instance(mockPluginService));
     await pluginManager.init();
-    await wrapper.releaseResources();
+    await PluginManager.releaseResources();
   }),
 
   add("executeStatementBaseline", async () => {

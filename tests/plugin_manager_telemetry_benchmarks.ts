@@ -410,37 +410,37 @@ suite(
   add("releaseResourcesWithNoPlugins", async () => {
     const pluginManagerWithNoPlugins = getPluginManagerWithNoPlugins();
     await pluginManagerWithNoPlugins.init();
-    return async () => await pluginManagerWithNoPlugins.releaseResources();
+    return async () => await PluginManager.releaseResources();
   }),
 
   add("releaseResourcesWith1Plugins", async () => {
     const pluginManagerWithPlugins = getPluginManagerWithPlugins();
     await pluginManagerWithPlugins.init(await createPlugins(1, instance(mockPluginService), instance(mockConnectionProvider), propsWithPlugins));
-    return async () => await pluginManagerWithPlugins.releaseResources();
+    return async () => await PluginManager.releaseResources();
   }),
 
   add("releaseResourcesWith2Plugins", async () => {
     const pluginManagerWithPlugins = getPluginManagerWithPlugins();
     await pluginManagerWithPlugins.init(await createPlugins(2, instance(mockPluginService), instance(mockConnectionProvider), propsWithPlugins));
-    return async () => await pluginManagerWithPlugins.releaseResources();
+    return async () => await PluginManager.releaseResources();
   }),
 
   add("releaseResourcesWith5Plugins", async () => {
     const pluginManagerWithPlugins = getPluginManagerWithPlugins();
     await pluginManagerWithPlugins.init(await createPlugins(5, instance(mockPluginService), instance(mockConnectionProvider), propsWithPlugins));
-    return async () => await pluginManagerWithPlugins.releaseResources();
+    return async () => await PluginManager.releaseResources();
   }),
 
   add("releaseResourcesWith10Plugins", async () => {
     const pluginManagerWithPlugins = getPluginManagerWithPlugins();
     await pluginManagerWithPlugins.init(await createPlugins(10, instance(mockPluginService), instance(mockConnectionProvider), propsWithPlugins));
-    return async () => await pluginManagerWithPlugins.releaseResources();
+    return async () => await PluginManager.releaseResources();
   }),
 
   add.only("releaseResourcesWithDefaultPlugins", async () => {
     const pluginManagerWithPlugins = getPluginManagerWithPlugins();
     await pluginManagerWithPlugins.init();
-    return async () => await pluginManagerWithPlugins.releaseResources();
+    return async () => await PluginManager.releaseResources();
   }),
 
   cycle(),
