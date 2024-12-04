@@ -63,7 +63,7 @@ class PluginChain<T> {
 
 export class PluginManager {
   private static readonly PLUGIN_CHAIN_CACHE = new Map<[string, HostInfo], PluginChain<any>>();
-  private static readonly GET_HOST_INFO_BY_STRATEGY_PLUGIN_CHAIN_CACHE = new Map<[string, PluginManager], Set<ConnectionPlugin>>();
+  private static readonly STRATEGY_PLUGIN_CHAIN_CACHE = new Map<ConnectionPlugin[], Set<ConnectionPlugin>>();
   private static readonly ALL_METHODS: string = "*";
   private static readonly CONNECT_METHOD = "connect";
   private static readonly FORCE_CONNECT_METHOD = "forceConnect";
@@ -141,6 +141,7 @@ export class PluginManager {
   }
 
   async connect(hostInfo: HostInfo | null, props: Map<string, any>, isInitialConnection: boolean): Promise<ClientWrapper> {
+    const temp = this._plugins;
     if (hostInfo == null) {
       throw new AwsWrapperError(Messages.get("HostInfo.noHostParameter"));
     }
@@ -273,13 +274,30 @@ export class PluginManager {
   }
 
   acceptsStrategy(role: HostRole, strategy: string) {
-    for (const plugin of this._plugins) {
-      const pluginSubscribedMethods = plugin.getSubscribedMethods();
-      const isSubscribed =
-        pluginSubscribedMethods.has(PluginManager.ALL_METHODS) || pluginSubscribedMethods.has(PluginManager.ACCEPTS_STRATEGY_METHOD);
+    let chain: Set<ConnectionPlugin> = PluginManager.STRATEGY_PLUGIN_CHAIN_CACHE.get(this._plugins);
+    if (!chain) {
+      chain = new Set();
+      let acceptsStrategy: boolean = false;
 
-      if (isSubscribed && plugin.acceptsStrategy(role, strategy)) {
-        return true;
+      for (const plugin of this._plugins) {
+        if (
+          plugin.getSubscribedMethods().has(PluginManager.ALL_METHODS) ||
+          plugin.getSubscribedMethods().has(PluginManager.ACCEPTS_STRATEGY_METHOD)
+        ) {
+          chain.add(plugin);
+          if (!acceptsStrategy && plugin.acceptsStrategy(role, strategy)) {
+            acceptsStrategy = true;
+          }
+        }
+      }
+
+      PluginManager.STRATEGY_PLUGIN_CHAIN_CACHE.set(this._plugins, chain);
+      return acceptsStrategy;
+    } else {
+      for (const plugin of chain) {
+        if (plugin.acceptsStrategy(role, strategy)) {
+          return true;
+        }
       }
     }
 
@@ -287,16 +305,16 @@ export class PluginManager {
   }
 
   getHostInfoByStrategy(role: HostRole, strategy: string, hosts?: HostInfo[]): HostInfo {
-    let chain: Set<ConnectionPlugin> = PluginManager.GET_HOST_INFO_BY_STRATEGY_PLUGIN_CHAIN_CACHE.get([
-      PluginManager.GET_HOST_INFO_BY_STRATEGY_METHOD,
-      this
-    ]);
+    let chain: Set<ConnectionPlugin> = PluginManager.STRATEGY_PLUGIN_CHAIN_CACHE.get(this._plugins);
     if (!chain) {
       chain = new Set();
       let host: HostInfo;
 
       for (const plugin of this._plugins) {
-        if (plugin.getSubscribedMethods().has("*") || plugin.getSubscribedMethods().has(PluginManager.GET_HOST_INFO_BY_STRATEGY_METHOD)) {
+        if (
+          plugin.getSubscribedMethods().has(PluginManager.ALL_METHODS) ||
+          plugin.getSubscribedMethods().has(PluginManager.GET_HOST_INFO_BY_STRATEGY_METHOD)
+        ) {
           chain.add(plugin);
           if (!host) {
             try {
@@ -307,7 +325,7 @@ export class PluginManager {
           }
         }
       }
-      PluginManager.GET_HOST_INFO_BY_STRATEGY_PLUGIN_CHAIN_CACHE.set([PluginManager.GET_HOST_INFO_BY_STRATEGY_METHOD, this], chain);
+      PluginManager.STRATEGY_PLUGIN_CHAIN_CACHE.set(this._plugins, chain);
       if (host) {
         return host;
       }
