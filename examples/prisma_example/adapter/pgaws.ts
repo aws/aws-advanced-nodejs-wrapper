@@ -1,12 +1,12 @@
 /*
   Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
-
+ 
   Licensed under the Apache License, Version 2.0 (the "License").
   You may not use this file except in compliance with the License.
   You may obtain a copy of the License at
-
+ 
   http://www.apache.org/licenses/LICENSE-2.0
-
+ 
   Unless required by applicable law or agreed to in writing, software
   distributed under the License is distributed on an "AS IS" BASIS,
   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -42,7 +42,7 @@ class AwsQueryable<ClientT extends AwsPGClient> implements Queryable {
     const result = await this.performIO(query);
     const fields = result?.fields;
     let rows: Array<Array<unknown>> = [];
-    for (const row of result?.rows) {
+    for (const row of result.rows) {
       const temp = [];
       for (const key in row) {
         temp.push(row[key]);
