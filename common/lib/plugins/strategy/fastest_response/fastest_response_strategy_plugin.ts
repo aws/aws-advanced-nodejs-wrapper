@@ -96,7 +96,7 @@ export class FastestResponseStrategyPlugin extends AbstractConnectionPlugin {
       .filter((host) => role === host.role)
       .map((host) => new ResponseTimeTuple(host, this.hostResponseTimeService.getResponseTime(host)))
       .sort((a, b) => {
-        return b.responseTime - a.responseTime;
+        return a.responseTime - b.responseTime;
       })
       .map((host) => host.hostInfo);
     return calculatedFastestResponseHost.length === 0 ? null : calculatedFastestResponseHost[0];
