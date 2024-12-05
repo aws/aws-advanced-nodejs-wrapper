@@ -22,6 +22,7 @@ import { InternalPoolMapping } from "../../common/lib/utils/internal_pool_mappin
 import { ConnectionProviderManager } from "../../common/lib/connection_provider_manager";
 import { WrapperProperties } from "../../common/lib/wrapper_property";
 import { AwsPoolConfig } from "../../common/lib/aws_pool_config";
+import { PluginManager } from "../../common/lib";
 
 const postgresHost = "db-identifier.XYZ.us-east-2.rds.amazonaws.com";
 const username = "john_smith";
@@ -137,3 +138,6 @@ async function queryWithFailoverHandling(client: AwsPGClient, query: string) {
     }
   }
 }
+
+// Clean up resources used by the plugins.
+await PluginManager.releaseResources();

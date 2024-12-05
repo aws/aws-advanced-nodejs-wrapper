@@ -18,6 +18,7 @@ import { AwsMySQLClient } from "../../mysql/lib";
 import { ConnectionProviderManager } from "../../common/lib/connection_provider_manager";
 import { InternalPooledConnectionProvider } from "../../common/lib/internal_pooled_connection_provider";
 import { logger } from "../../common/logutils";
+import { PluginManager } from "../../common/lib";
 
 const mysqlHost = "db-identifier.XYZ.us-east-2.rds.amazonaws.com";
 const username = "john_smith";
@@ -91,3 +92,6 @@ try {
 } finally {
   logger.debug("example complete");
 }
+
+// Clean up resources used by the plugins.
+await PluginManager.releaseResources();
