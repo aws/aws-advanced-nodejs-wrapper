@@ -73,11 +73,11 @@ Plugins are loaded and managed through the Connection Plugin Manager and may be 
 
 ### Connection Plugin Manager Parameters
 
-| Parameter                    | Value     | Required | Description                                                                                                                                                                                          | Default Value                          |
-| ---------------------------- | --------- | -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------- |
-| `plugins`                    | `String`  | No       | Comma separated list of connection plugin codes. <br><br>Example: `failover,efm`                                                                                                                     | `auroraConnectionTracker,failover,efm` |
-| `autoSortWrapperPluginOrder` | `Boolean` | No       | Allows the AWS Advanced NodeJS Wrapper to sort connection plugins to prevent plugin misconfiguration. Allows a user to provide a custom plugin order if needed.                                      | `true`                                 |
-| `profileName`                | `String`  | No       | Driver configuration profile name. Instead of listing plugin codes with `wrapperPlugins`, the driver profile can be set with this parameter. <br><br> Example: See [below](#configuration-profiles). | `null`                                 |
+| Parameter                    | Value     | Required | Description                                                                                                                                                                                   | Default Value                          |
+| ---------------------------- | --------- | -------- |-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------| -------------------------------------- |
+| `plugins`                    | `String`  | No       | Comma separated list of connection plugin codes. <br><br>Example: `failover,efm`                                                                                                              | `auroraConnectionTracker,failover,efm` |
+| `autoSortWrapperPluginOrder` | `Boolean` | No       | Allows the AWS Advanced NodeJS Wrapper to sort connection plugins to prevent plugin misconfiguration. Allows a user to provide a custom plugin order if needed.                               | `true`                                 |
+| `profileName`                | `String`  | No       | Driver configuration profile name. Instead of listing plugin codes with `plugins`, the driver profile can be set with this parameter. <br><br> Example: See [below](#configuration-profiles). | `null`                                 |
 
 To use a built-in plugin, specify its relevant plugin code for the `plugins` .
 The default value for `plugins` is `failover`. These plugins are enabled by default. To read more about these plugins, see the [List of Available Plugins](#list-of-available-plugins) section.
@@ -134,13 +134,13 @@ For more information, see [Custom Plugins](../development-guide/LoadablePlugins.
 
 ### Configuration Profiles
 
-An alternative way of loading plugins and providing configuration parameters is to use a configuration profile. You can create custom configuration profiles that specify which plugins the AWS JDBC Driver should load. After creating the profile, set the [`profileName`](#connection-plugin-manager-parameters) parameter to the name of the created profile.
+An alternative way of loading plugins and providing configuration parameters is to use a configuration profile. You can create custom configuration profiles that specify which plugins the AWS Advanced NodeJS Wrapper should load. After creating the profile, set the [`profileName`](#connection-plugin-manager-parameters) parameter to the name of the created profile.
 This method of loading plugins will most often be used by those who require custom plugins that cannot be loaded with the [`plugins`](#connection-plugin-manager-parameters) parameter, or by those who are using preset configurations.
 
 Besides a list of plugins to load and configuration properties, configuration profiles may also include the following items:
 
-- [Database Dialect](./using-the-jdbc-driver/DatabaseDialects.md#database-dialects)
-- [Target Driver Dialect](./using-the-jdbc-driver/TargetDriverDialects.md#target-driver-dialects)
+- [Database Dialect](./DatabaseDialects.md#database-dialects)
+- [Driver Dialect](../../common/lib/driver_dialect/driver_dialect.ts)
 - a custom exception handler
 - a custom connection provider
 
