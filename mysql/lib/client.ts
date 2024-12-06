@@ -213,6 +213,7 @@ export class AwsMySQLClient extends AwsClient {
       },
       null
     );
+    await PluginManager.releaseResources();
     return result;
   }
 
