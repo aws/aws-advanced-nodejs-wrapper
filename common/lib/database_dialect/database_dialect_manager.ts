@@ -34,31 +34,34 @@ export class DatabaseDialectManager implements DatabaseDialectProvider {
    */
   private static readonly ENDPOINT_CACHE_EXPIRATION_MS = 86_400_000_000_000; // 24 hours
   protected static readonly knownEndpointDialects: CacheMap<string, string> = new CacheMap();
-  protected readonly knownDialectsByCode: Map<string, DatabaseDialect>;
 
-  private static customDialect: DatabaseDialect | null = null;
-  private readonly rdsHelper: RdsUtils = new RdsUtils();
-  private readonly dbType;
-  private canUpdate: boolean = false;
-  private dialect: DatabaseDialect;
-  private dialectCode: string = "";
+  protected readonly knownDialectsByCode: Map<string, DatabaseDialect>;
+  protected readonly customDialect: DatabaseDialect | null;
+  protected readonly rdsHelper: RdsUtils = new RdsUtils();
+  protected readonly dbType: DatabaseType;
+  protected canUpdate: boolean = false;
+  protected dialect: DatabaseDialect;
+  protected dialectCode: string = "";
 
   constructor(knownDialectsByCode: any, dbType: DatabaseType, props: Map<string, any>) {
     this.knownDialectsByCode = knownDialectsByCode;
     this.dbType = dbType;
+
+    const dialectSetting = WrapperProperties.CUSTOM_DATABASE_DIALECT.get(props);
+    if (dialectSetting && !this.isDatabaseDialect(dialectSetting)) {
+      throw new AwsWrapperError(Messages.get("DatabaseDialectManager.wrongCustomDialect"));
+    }
+    this.customDialect = dialectSetting;
+
     this.dialect = this.getDialect(props);
-  }
-
-  static setCustomDialect(dialect: DatabaseDialect) {
-    DatabaseDialectManager.customDialect = dialect;
-  }
-
-  static resetCustomDialect() {
-    DatabaseDialectManager.customDialect = null;
   }
 
   static resetEndpointCache() {
     DatabaseDialectManager.knownEndpointDialects.clear();
+  }
+
+  protected isDatabaseDialect(arg: any): arg is DatabaseDialect {
+    return arg.getDialectName !== undefined;
   }
 
   getDialect(props: Map<string, any>): DatabaseDialect {
@@ -68,9 +71,9 @@ export class DatabaseDialectManager implements DatabaseDialectProvider {
 
     this.canUpdate = false;
 
-    if (DatabaseDialectManager.customDialect) {
+    if (this.customDialect) {
       this.dialectCode = DatabaseDialectCodes.CUSTOM;
-      this.dialect = DatabaseDialectManager.customDialect;
+      this.dialect = this.customDialect;
       this.logCurrentDialect();
       return this.dialect;
     }
@@ -87,7 +90,7 @@ export class DatabaseDialectManager implements DatabaseDialectProvider {
         this.logCurrentDialect();
         return userDialect;
       }
-      throw new AwsWrapperError(Messages.get("DialectManager.unknownDialectCode", dialectCode));
+      throw new AwsWrapperError(Messages.get("DatabaseDialectManager.unknownDialectCode", dialectCode));
     }
 
     if (this.dbType === DatabaseType.MYSQL) {
@@ -148,7 +151,7 @@ export class DatabaseDialectManager implements DatabaseDialectProvider {
       return this.dialect;
     }
 
-    throw new AwsWrapperError(Messages.get("DialectManager.getDialectError"));
+    throw new AwsWrapperError(Messages.get("DatabaseDialectManager.getDialectError"));
   }
 
   async getDialectForUpdate(targetClient: ClientWrapper, originalHost: string, newHost: string): Promise<DatabaseDialect> {
@@ -161,7 +164,7 @@ export class DatabaseDialectManager implements DatabaseDialectProvider {
       for (const dialectCandidateCode of dialectCandidates) {
         const dialectCandidate = this.knownDialectsByCode.get(dialectCandidateCode);
         if (!dialectCandidate) {
-          throw new AwsWrapperError(Messages.get("DialectManager.unknownDialectCode", dialectCandidateCode));
+          throw new AwsWrapperError(Messages.get("DatabaseDialectManager.unknownDialectCode", dialectCandidateCode));
         }
 
         const isDialect = await dialectCandidate.isDialect(targetClient);
