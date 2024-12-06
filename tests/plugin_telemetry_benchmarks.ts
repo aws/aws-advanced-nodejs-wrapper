@@ -41,10 +41,13 @@ import { AwsInstrumentation } from "@opentelemetry/instrumentation-aws-sdk";
 import { AWSXRayIdGenerator } from "@opentelemetry/id-generator-aws-xray";
 import { ConnectionProviderManager } from "../common/lib/connection_provider_manager";
 import { PgClientWrapper } from "../common/lib/pg_client_wrapper";
+import { DriverDialect } from "../common/lib/driver_dialect/driver_dialect";
+import { NodePostgresDriverDialect } from "../pg/lib/dialect/node_postgres_driver_dialect";
 
 const mockConnectionProvider = mock<ConnectionProvider>();
 const mockPluginService = mock(PluginService);
 const mockClient = mock(AwsPGClient);
+const mockDialect: DriverDialect = mock(NodePostgresDriverDialect);
 
 const hostInfo = new HostInfoBuilder({ hostAvailabilityStrategy: new SimpleHostAvailabilityStrategy() }).withHost("host").build();
 
@@ -56,6 +59,7 @@ when(mockClient.query(anything())).thenReturn();
 when(mockPluginService.getCurrentHostInfo()).thenReturn(hostInfo);
 when(mockPluginService.getTelemetryFactory()).thenReturn(telemetryFactory);
 when(mockPluginService.getCurrentClient()).thenReturn(mockClientWrapper.client);
+when(mockPluginService.getDriverDialect()).thenReturn(mockDialect);
 
 const connectionString = "my.domain.com";
 const pluginServiceManagerContainer = new PluginServiceManagerContainer();
@@ -173,15 +177,16 @@ suite(
   }),
 
   add("executeStatementBaseline", async () => {
-    const wrapper = new TestConnectionWrapper(propsExecute, pluginManagerExecute, instance(mockPluginService));
+    const wrapper = new TestConnectionWrapper(props, pluginManagerExecute, instance(mockPluginService), telemetryFactory);
     await pluginManagerExecute.init();
+    await wrapper.query("select 1");
     await wrapper.end();
   }),
 
   add("executeStatementWithExecuteTimePlugin", async () => {
-    const wrapper = new TestConnectionWrapper(propsExecute, pluginManagerExecute, instance(mockPluginService));
+    const wrapper = new TestConnectionWrapper(propsExecute, pluginManagerExecute, instance(mockPluginService), telemetryFactory);
     await pluginManagerExecute.init();
-    await wrapper.executeQuery(propsExecute, "select 1", mockClientWrapper);
+    await wrapper.query("select 1"); //executeQuery(propsExecute, "select 1", mockClientWrapper);
     await wrapper.end();
   }),
 
