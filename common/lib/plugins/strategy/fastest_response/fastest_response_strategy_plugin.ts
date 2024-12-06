@@ -24,6 +24,9 @@ import { WrapperProperties } from "../../../wrapper_property";
 import { HostInfo } from "../../../host_info";
 import { HostChangeOptions } from "../../../host_change_options";
 import { RandomHostSelector } from "../../../random_host_selector";
+import { logger } from "../../../../logutils";
+import { Messages } from "../../../utils/messages";
+import { AwsWrapperError } from "../../../utils/errors";
 
 export class FastestResponseStrategyPlugin extends AbstractConnectionPlugin {
   static readonly FASTEST_RESPONSE_STRATEGY_NAME: string = "fastestResponse";
@@ -81,13 +84,14 @@ export class FastestResponseStrategyPlugin extends AbstractConnectionPlugin {
 
   getHostInfoByStrategy(role: HostRole, strategy: string, hosts?: HostInfo[]): HostInfo | undefined {
     if (!this.acceptsStrategy(role, strategy)) {
-      return undefined;
+      logger.error(Messages.get("FastestResponseStrategyPlugin.UnsupportedHostSelectorStrategy", strategy));
+      throw new AwsWrapperError(Messages.get("FastestResponseStrategyPlugin.UnsupportedHostSelectorStrategy", strategy));
     }
     // The cache holds a host with the fastest response time.
     // If the cache doesn't have a host for a role, it's necessary to find the fastest node in the topology.
     const fastestResponseHost: HostInfo = FastestResponseStrategyPlugin.cachedFastestResponseHostByRole.get(role);
     if (fastestResponseHost != null) {
-      // Found a fastest host. Find the host in the latest topology.
+      // Found the fastest host. Find the host in the latest topology.
 
       const foundHostInfo: HostInfo[] = this.pluginService.getHosts().filter((host) => host === fastestResponseHost);
       return foundHostInfo.length === 0 ? null : foundHostInfo[0];

@@ -21,8 +21,18 @@ import { SlidingExpirationCache } from "../../../utils/sliding_expiration_cache"
 import { HostResponseTimeMonitor } from "./host_response_time_monitor";
 
 export interface HostResponseTimeService {
+  /**
+   * Return a response time in milliseconds to the host.
+   * Return Number.MAX_SAFE_INTEGER if response time is not available.
+   *
+   * @param hostInfo the host details
+   * @return response time in milliseconds for a desired host.
+   */
   getResponseTime(hostInfo: HostInfo): number;
 
+  /**
+   * Provides an updated host list to a service.
+   */
   setHosts(hosts: HostInfo[]): void;
 }
 
@@ -72,7 +82,7 @@ export class HostResponseTimeServiceImpl implements HostResponseTimeService {
   setHosts(hosts: HostInfo[]): void {
     const oldHostMap: Map<string, HostInfo> = new Map(hosts.map((e) => [e.url, e]));
     this.hosts = hosts;
-    const eligibleHosts: HostInfo[] = hosts.filter((hostInfo: HostInfo) => hostInfo.url in oldHostMap);
+    const eligibleHosts: HostInfo[] = hosts.filter((hostInfo: HostInfo) => !(hostInfo.url in oldHostMap));
     eligibleHosts.forEach((hostInfo: HostInfo) => {
       HostResponseTimeServiceImpl.monitoringHosts.computeIfAbsent(
         hostInfo.url,

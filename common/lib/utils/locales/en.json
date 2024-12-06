@@ -184,5 +184,6 @@
   "HostResponseTimeMonitor.responseTime": "Response time for '%s': '%s' ms.",
   "HostResponseTimeMonitor.interruptedErrorDuringMonitoring": "Response time task for node '%s' was interrupted.",
   "HostResponseTimeMonitor.openingConnection": "Opening a Response time connection to '%s'.",
-  "HostResponseTimeMonitor.openedConnection": "Opened Response time connection: '%s'."
+  "HostResponseTimeMonitor.openedConnection": "Opened Response time connection: '%s'.",
+  "FastestResponseStrategyPlugin.UnsupportedHostSelectorStrategy": "Unsupported host selector strategy: '%s'. To use the fastest response strategy plugin, please ensure the property 'readerHostSelectorStrategy' is set to 'fastestResponse'."
 }
