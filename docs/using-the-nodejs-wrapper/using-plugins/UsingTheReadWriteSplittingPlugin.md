@@ -138,3 +138,6 @@ await client.connect();
 const client = new AwsPGClient(params);
 await client.connect();
 ```
+
+> [!WARNING]
+> Connections with the Read/Write Splitting Plugin may have cached resources used throughout multiple connections. To clean up any resources used by the plugins at the end of the application call `await PluginManager.releaseResources()`.

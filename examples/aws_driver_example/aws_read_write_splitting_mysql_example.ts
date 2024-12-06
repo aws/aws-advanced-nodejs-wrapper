@@ -16,6 +16,7 @@
 
 import { AwsMySQLClient } from "../../mysql/lib";
 import { FailoverFailedError, FailoverSuccessError, TransactionResolutionUnknownError } from "../../common/lib/utils/errors";
+import { PluginManager } from "../../common/lib";
 
 const mysqlHost = "db-identifier.XYZ.us-east-2.rds.amazonaws.com";
 const username = "john_smith";
@@ -105,3 +106,6 @@ async function queryWithFailoverHandling(client: AwsMySQLClient, query: string) 
     }
   }
 }
+
+// Clean up resources used by the plugins.
+await PluginManager.releaseResources();

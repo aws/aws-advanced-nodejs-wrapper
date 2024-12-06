@@ -16,3 +16,6 @@ When the application tries to continue the workflow with the idle connection tha
 
 Since the Aurora Connection Tracker Plugin keeps track of all the open connections, the plugin can close all impacted connections after failover.
 When the application tries to use the outdated idle connection, the application will get an error such as `Can't add new command when connection is in closed state` instead.
+
+> [!WARNING]
+> Connections with the Aurora Connection Tracker Plugin may have cached resources used throughout multiple connections. To clean up any resources used by the plugins at the end of the application call `await PluginManager.releaseResources()`.

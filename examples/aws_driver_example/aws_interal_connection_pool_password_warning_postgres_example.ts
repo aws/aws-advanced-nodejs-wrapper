@@ -18,6 +18,7 @@ import { ConnectionProviderManager } from "../../common/lib/connection_provider_
 import { InternalPooledConnectionProvider } from "../../common/lib/internal_pooled_connection_provider";
 import { logger } from "../../common/logutils";
 import { AwsPGClient } from "../../pg/lib";
+import { PluginManager } from "../../common/lib";
 
 const postgresHost = "db-identifier.XYZ.us-east-2.rds.amazonaws.com";
 const username = "john_smith";
@@ -91,3 +92,6 @@ try {
 } finally {
   logger.debug("example complete");
 }
+
+// Clean up resources used by the plugins.
+await PluginManager.releaseResources();

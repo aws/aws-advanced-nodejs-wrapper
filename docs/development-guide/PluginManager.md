@@ -9,6 +9,10 @@ The plugin manager has the following main functionalities:
 
 The plugin manager initializes all plugins with codes given to the [`plugins`](../using-the-nodejs-wrapper/UsingTheNodejsWrapper.md#connection-plugin-manager-parameters) connection parameter.
 
+### Clean Up Resources
+
+The Aurora Connection Tracker Plugin, Host Monitoring Connection Plugin, and Read/Write Splitting Plugin can have shared resources. The plugin manager handles cleaning up resources that may be shared between connections at the end of an application through the `releaseResources` method.
+
 ## Initiate Pipelines
 
 <div style="center"><img src="../images/initiate_pipelines.png" alt="diagram for the plugin service design"/></div>
