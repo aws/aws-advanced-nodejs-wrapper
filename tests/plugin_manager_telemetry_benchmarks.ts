@@ -43,14 +43,19 @@ import { AWSXRayIdGenerator } from "@opentelemetry/id-generator-aws-xray";
 import { ConnectionProviderManager } from "../common/lib/connection_provider_manager";
 import { PgDatabaseDialect } from "../pg/lib/dialect/pg_database_dialect";
 import { NodePostgresDriverDialect } from "../pg/lib/dialect/node_postgres_driver_dialect";
+import { ConnectionPluginFactory } from "../common/lib/plugin_factory";
+import { ConfigurationProfileBuilder } from "../common/lib/profile/configuration_profile_builder";
+import { AwsPGClient } from "../pg/lib";
 
 const mockConnectionProvider = mock<ConnectionProvider>();
 const mockHostListProviderService = mock<HostListProviderService>();
 const mockPluginService = mock(PluginService);
+const mockClient = mock(AwsPGClient);
 const telemetryFactory = new OpenTelemetryFactory();
 when(mockPluginService.getTelemetryFactory()).thenReturn(telemetryFactory);
 when(mockPluginService.getDialect()).thenReturn(new PgDatabaseDialect());
 when(mockPluginService.getDriverDialect()).thenReturn(new NodePostgresDriverDialect());
+when(mockPluginService.getCurrentClient()).thenReturn(mockClient);
 
 const pluginServiceManagerContainer = new PluginServiceManagerContainer();
 pluginServiceManagerContainer.pluginService = instance(mockPluginService);
@@ -91,6 +96,20 @@ function getPluginManagerWithNoPlugins() {
     new ConnectionProviderManager(instance(mockConnectionProvider), null),
     telemetryFactory
   );
+}
+
+async function initPluginManagerWithPlugins(numPlugins: number, pluginService, props) {
+  const pluginManager = getPluginManagerWithPlugins();
+  const factories = new Array<typeof ConnectionPluginFactory>();
+  const plugins = new Array<ConnectionPlugin>();
+  for (let i = 0; i < numPlugins; i++) {
+    factories.push(BenchmarkPluginFactory);
+    plugins.push(await new BenchmarkPluginFactory().getInstance(pluginService, props));
+  }
+  plugins.push(new DefaultPlugin(pluginService, new ConnectionProviderManager(instance(mockConnectionProvider), null)));
+  const configurationProfile = ConfigurationProfileBuilder.get().withName("benchmark").withPluginsFactories(factories).build();
+  pluginManager.init(configurationProfile, plugins);
+  return pluginManager;
 }
 
 const traceExporter = new OTLPTraceExporter({ url: "http://localhost:4317" });
@@ -167,8 +186,7 @@ suite(
   }),
 
   add("connectWith2Plugins", async () => {
-    const pluginManagerWithPlugins = getPluginManagerWithPlugins();
-    await pluginManagerWithPlugins.init(await createPlugins(2, instance(mockPluginService), instance(mockConnectionProvider), propsWithPlugins));
+    const pluginManagerWithPlugins = await initPluginManagerWithPlugins(2, instance(mockPluginService), propsWithPlugins);
     return async () =>
       await pluginManagerWithPlugins.connect(
         new HostInfoBuilder({ hostAvailabilityStrategy: new SimpleHostAvailabilityStrategy() }).withHost("host").build(),
@@ -178,8 +196,7 @@ suite(
   }),
 
   add("connectWith1Plugins", async () => {
-    const pluginManagerWithPlugins = getPluginManagerWithPlugins();
-    await pluginManagerWithPlugins.init(await createPlugins(1, instance(mockPluginService), instance(mockConnectionProvider), propsWithPlugins));
+    const pluginManagerWithPlugins = await initPluginManagerWithPlugins(1, instance(mockPluginService), propsWithPlugins);
     return async () =>
       await pluginManagerWithPlugins.connect(
         new HostInfoBuilder({ hostAvailabilityStrategy: new SimpleHostAvailabilityStrategy() }).withHost("host").build(),
@@ -189,8 +206,7 @@ suite(
   }),
 
   add("connectWith5Plugins", async () => {
-    const pluginManagerWithPlugins = getPluginManagerWithPlugins();
-    await pluginManagerWithPlugins.init(await createPlugins(5, instance(mockPluginService), instance(mockConnectionProvider), propsWithPlugins));
+    const pluginManagerWithPlugins = await initPluginManagerWithPlugins(5, instance(mockPluginService), propsWithPlugins);
     return async () =>
       await pluginManagerWithPlugins.connect(
         new HostInfoBuilder({ hostAvailabilityStrategy: new SimpleHostAvailabilityStrategy() }).withHost("host").build(),
@@ -200,8 +216,7 @@ suite(
   }),
 
   add("connectWith10Plugins", async () => {
-    const pluginManagerWithPlugins = getPluginManagerWithPlugins();
-    await pluginManagerWithPlugins.init(await createPlugins(10, instance(mockPluginService), instance(mockConnectionProvider), propsWithPlugins));
+    const pluginManagerWithPlugins = await initPluginManagerWithPlugins(10, instance(mockPluginService), propsWithPlugins);
     return async () =>
       await pluginManagerWithPlugins.connect(
         new HostInfoBuilder({ hostAvailabilityStrategy: new SimpleHostAvailabilityStrategy() }).withHost("host").build(),
@@ -248,8 +263,7 @@ suite(
   }),
 
   add("executeWith1Plugins", async () => {
-    const pluginManagerWithPlugins = getPluginManagerWithPlugins();
-    await pluginManagerWithPlugins.init(await createPlugins(1, instance(mockPluginService), instance(mockConnectionProvider), propsWithPlugins));
+    const pluginManagerWithPlugins = await initPluginManagerWithPlugins(1, instance(mockPluginService), propsWithPlugins);
     return async () =>
       await pluginManagerWithPlugins.execute(
         new HostInfoBuilder({ hostAvailabilityStrategy: new SimpleHostAvailabilityStrategy() }).withHost("host").build(),
@@ -261,8 +275,7 @@ suite(
   }),
 
   add("executeWith2Plugins", async () => {
-    const pluginManagerWithPlugins = getPluginManagerWithPlugins();
-    await pluginManagerWithPlugins.init(await createPlugins(2, instance(mockPluginService), instance(mockConnectionProvider), propsWithPlugins));
+    const pluginManagerWithPlugins = await initPluginManagerWithPlugins(2, instance(mockPluginService), propsWithPlugins);
     return async () =>
       await pluginManagerWithPlugins.execute(
         new HostInfoBuilder({ hostAvailabilityStrategy: new SimpleHostAvailabilityStrategy() }).withHost("host").build(),
@@ -274,8 +287,7 @@ suite(
   }),
 
   add("executeWith5Plugins", async () => {
-    const pluginManagerWithPlugins = getPluginManagerWithPlugins();
-    await pluginManagerWithPlugins.init(await createPlugins(5, instance(mockPluginService), instance(mockConnectionProvider), propsWithPlugins));
+    const pluginManagerWithPlugins = await initPluginManagerWithPlugins(5, instance(mockPluginService), propsWithPlugins);
     return async () =>
       await pluginManagerWithPlugins.execute(
         new HostInfoBuilder({ hostAvailabilityStrategy: new SimpleHostAvailabilityStrategy() }).withHost("host").build(),
@@ -287,8 +299,7 @@ suite(
   }),
 
   add("executeWith10Plugins", async () => {
-    const pluginManagerWithPlugins = getPluginManagerWithPlugins();
-    await pluginManagerWithPlugins.init(await createPlugins(10, instance(mockPluginService), instance(mockConnectionProvider), propsWithPlugins));
+    const pluginManagerWithPlugins = await initPluginManagerWithPlugins(10, instance(mockPluginService), propsWithPlugins);
     return async () =>
       await pluginManagerWithPlugins.execute(
         new HostInfoBuilder({ hostAvailabilityStrategy: new SimpleHostAvailabilityStrategy() }).withHost("host").build(),
@@ -322,8 +333,7 @@ suite(
   }),
 
   add("initHostProviderWith1Plugins", async () => {
-    const pluginManagerWithPlugins = getPluginManagerWithPlugins();
-    await pluginManagerWithPlugins.init(await createPlugins(1, instance(mockPluginService), instance(mockConnectionProvider), propsWithPlugins));
+    const pluginManagerWithPlugins = await initPluginManagerWithPlugins(1, instance(mockPluginService), propsWithPlugins);
     return async () =>
       await pluginManagerWithPlugins.initHostProvider(
         new HostInfoBuilder({ hostAvailabilityStrategy: new SimpleHostAvailabilityStrategy() }).withHost("host").build(),
@@ -333,8 +343,7 @@ suite(
   }),
 
   add("initHostProviderWith2Plugins", async () => {
-    const pluginManagerWithPlugins = getPluginManagerWithPlugins();
-    await pluginManagerWithPlugins.init(await createPlugins(2, instance(mockPluginService), instance(mockConnectionProvider), propsWithPlugins));
+    const pluginManagerWithPlugins = await initPluginManagerWithPlugins(2, instance(mockPluginService), propsWithPlugins);
     return async () =>
       await pluginManagerWithPlugins.initHostProvider(
         new HostInfoBuilder({ hostAvailabilityStrategy: new SimpleHostAvailabilityStrategy() }).withHost("host").build(),
@@ -344,8 +353,7 @@ suite(
   }),
 
   add("initHostProviderWith5Plugins", async () => {
-    const pluginManagerWithPlugins = getPluginManagerWithPlugins();
-    await pluginManagerWithPlugins.init(await createPlugins(5, instance(mockPluginService), instance(mockConnectionProvider), propsWithPlugins));
+    const pluginManagerWithPlugins = await initPluginManagerWithPlugins(5, instance(mockPluginService), propsWithPlugins);
     return async () =>
       await pluginManagerWithPlugins.initHostProvider(
         new HostInfoBuilder({ hostAvailabilityStrategy: new SimpleHostAvailabilityStrategy() }).withHost("host").build(),
@@ -355,8 +363,7 @@ suite(
   }),
 
   add("initHostProviderWith10Plugins", async () => {
-    const pluginManagerWithPlugins = getPluginManagerWithPlugins();
-    await pluginManagerWithPlugins.init(await createPlugins(10, instance(mockPluginService), instance(mockConnectionProvider), propsWithPlugins));
+    const pluginManagerWithPlugins = await initPluginManagerWithPlugins(10, instance(mockPluginService), propsWithPlugins);
     return async () =>
       await pluginManagerWithPlugins.initHostProvider(
         new HostInfoBuilder({ hostAvailabilityStrategy: new SimpleHostAvailabilityStrategy() }).withHost("host").build(),
@@ -380,29 +387,25 @@ suite(
   }),
 
   add("notifyConnectionChangedWith1Plugins", async () => {
-    const pluginManagerWithPlugins = getPluginManagerWithPlugins();
-    await pluginManagerWithPlugins.init(await createPlugins(1, instance(mockPluginService), instance(mockConnectionProvider), propsWithPlugins));
+    const pluginManagerWithPlugins = await initPluginManagerWithPlugins(1, instance(mockPluginService), propsWithPlugins);
     return async () =>
       await pluginManagerWithPlugins.notifyConnectionChanged(new Set<HostChangeOptions>([HostChangeOptions.INITIAL_CONNECTION]), null);
   }),
 
   add("notifyConnectionChangedWith2Plugins", async () => {
-    const pluginManagerWithPlugins = getPluginManagerWithPlugins();
-    await pluginManagerWithPlugins.init(await createPlugins(2, instance(mockPluginService), instance(mockConnectionProvider), propsWithPlugins));
+    const pluginManagerWithPlugins = await initPluginManagerWithPlugins(2, instance(mockPluginService), propsWithPlugins);
     return async () =>
       await pluginManagerWithPlugins.notifyConnectionChanged(new Set<HostChangeOptions>([HostChangeOptions.INITIAL_CONNECTION]), null);
   }),
 
   add("notifyConnectionChangedWith5Plugins", async () => {
-    const pluginManagerWithPlugins = getPluginManagerWithPlugins();
-    await pluginManagerWithPlugins.init(await createPlugins(5, instance(mockPluginService), instance(mockConnectionProvider), propsWithPlugins));
+    const pluginManagerWithPlugins = await initPluginManagerWithPlugins(5, instance(mockPluginService), propsWithPlugins);
     return async () =>
       await pluginManagerWithPlugins.notifyConnectionChanged(new Set<HostChangeOptions>([HostChangeOptions.INITIAL_CONNECTION]), null);
   }),
 
   add("notifyConnectionChangedWith10Plugins", async () => {
-    const pluginManagerWithPlugins = getPluginManagerWithPlugins();
-    await pluginManagerWithPlugins.init(await createPlugins(10, instance(mockPluginService), instance(mockConnectionProvider), propsWithPlugins));
+    const pluginManagerWithPlugins = await initPluginManagerWithPlugins(10, instance(mockPluginService), propsWithPlugins);
     return async () =>
       await pluginManagerWithPlugins.notifyConnectionChanged(new Set<HostChangeOptions>([HostChangeOptions.INITIAL_CONNECTION]), null);
   }),
@@ -414,30 +417,26 @@ suite(
   }),
 
   add("releaseResourcesWith1Plugins", async () => {
-    const pluginManagerWithPlugins = getPluginManagerWithPlugins();
-    await pluginManagerWithPlugins.init(await createPlugins(1, instance(mockPluginService), instance(mockConnectionProvider), propsWithPlugins));
+    const pluginManagerWithPlugins = await initPluginManagerWithPlugins(1, instance(mockPluginService), propsWithPlugins);
     return async () => await PluginManager.releaseResources();
   }),
 
   add("releaseResourcesWith2Plugins", async () => {
-    const pluginManagerWithPlugins = getPluginManagerWithPlugins();
-    await pluginManagerWithPlugins.init(await createPlugins(2, instance(mockPluginService), instance(mockConnectionProvider), propsWithPlugins));
+    const pluginManagerWithPlugins = await initPluginManagerWithPlugins(2, instance(mockPluginService), propsWithPlugins);
     return async () => await PluginManager.releaseResources();
   }),
 
   add("releaseResourcesWith5Plugins", async () => {
-    const pluginManagerWithPlugins = getPluginManagerWithPlugins();
-    await pluginManagerWithPlugins.init(await createPlugins(5, instance(mockPluginService), instance(mockConnectionProvider), propsWithPlugins));
+    const pluginManagerWithPlugins = await initPluginManagerWithPlugins(5, instance(mockPluginService), propsWithPlugins);
     return async () => await PluginManager.releaseResources();
   }),
 
   add("releaseResourcesWith10Plugins", async () => {
-    const pluginManagerWithPlugins = getPluginManagerWithPlugins();
-    await pluginManagerWithPlugins.init(await createPlugins(10, instance(mockPluginService), instance(mockConnectionProvider), propsWithPlugins));
+    const pluginManagerWithPlugins = await initPluginManagerWithPlugins(10, instance(mockPluginService), propsWithPlugins);
     return async () => await PluginManager.releaseResources();
   }),
 
-  add.only("releaseResourcesWithDefaultPlugins", async () => {
+  add("releaseResourcesWithDefaultPlugins", async () => {
     const pluginManagerWithPlugins = getPluginManagerWithPlugins();
     await pluginManagerWithPlugins.init();
     return async () => await PluginManager.releaseResources();
