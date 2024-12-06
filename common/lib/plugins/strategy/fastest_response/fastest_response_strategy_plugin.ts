@@ -23,6 +23,7 @@ import { PluginService } from "../../../plugin_service";
 import { WrapperProperties } from "../../../wrapper_property";
 import { HostInfo } from "../../../host_info";
 import { HostChangeOptions } from "../../../host_change_options";
+import { RandomHostSelector } from "../../../random_host_selector";
 
 export class FastestResponseStrategyPlugin extends AbstractConnectionPlugin {
   static readonly FASTEST_RESPONSE_STRATEGY_NAME: string = "fastestResponse";
@@ -32,6 +33,7 @@ export class FastestResponseStrategyPlugin extends AbstractConnectionPlugin {
   protected hostResponseTimeService: HostResponseTimeService;
   protected readonly properties: Map<string, any>;
   private pluginService: PluginService;
+  private randomHostSelector: RandomHostSelector = new RandomHostSelector();
 
   constructor(pluginService: PluginService, properties: Map<string, any>, hostResponseTimeService?: HostResponseTimeService) {
     super();
@@ -99,7 +101,13 @@ export class FastestResponseStrategyPlugin extends AbstractConnectionPlugin {
         return a.responseTime - b.responseTime;
       })
       .map((host) => host.hostInfo);
-    return calculatedFastestResponseHost.length === 0 ? null : calculatedFastestResponseHost[0];
+    const calculatedHost = calculatedFastestResponseHost.length === 0 ? null : calculatedFastestResponseHost[0];
+    if (calculatedHost === null) {
+      // Unable to identify the fastest response host.
+      // As a last resort, let's use a random host selector.
+      return this.randomHostSelector.getHost(hosts, role, this.properties);
+    }
+    FastestResponseStrategyPlugin.cachedFastestResponseHostByRole.put(role, calculatedHost, Number(this.cacheExpirationNanos));
   }
 
   async notifyHostListChanged(changes: Map<string, Set<HostChangeOptions>>): Promise<void> {
