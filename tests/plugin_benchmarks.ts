@@ -87,21 +87,21 @@ suite(
     const props = getProps("");
     const pluginManager = getPluginManager(props);
     const wrapper = new TestConnectionWrapper(props, pluginManager, instance(mockPluginService));
-    return async () => await initAndRelease(pluginManager); //await pluginManager.init(); await PluginManager.releaseResources();
+    return async () => await initAndRelease(pluginManager);
   }),
 
   add("initAndReleaseWithExecuteTimePlugin", async () => {
     const props = getProps("executeTime");
     const pluginManager = getPluginManager(props);
     const wrapper = new TestConnectionWrapper(props, pluginManager, instance(mockPluginService));
-    return async () => await initAndRelease(pluginManager); //await pluginManager.init(); await PluginManager.releaseResources();
+    return async () => await initAndRelease(pluginManager);
   }),
 
-  add.only("initAndReleaseWithReadWriteSplittingPlugin", async () => {
+  add("initAndReleaseWithReadWriteSplittingPlugin", async () => {
     const props = getProps("readWriteSplitting");
     const pluginManager = getPluginManager(props);
     const wrapper = new TestConnectionWrapper(props, pluginManager, instance(mockPluginService));
-    return async () => await initAndRelease(pluginManager); //await pluginManager.init(); await PluginManager.releaseResources();
+    return async () => await initAndRelease(pluginManager);
   }),
 
   add("executeStatementBaseline", async () => {
@@ -109,7 +109,7 @@ suite(
     const pluginManager = getPluginManager(props);
     const wrapper = new TestConnectionWrapper(props, pluginManager, instance(mockPluginService), telemetryFactory);
     await pluginManager.init();
-    return async () => await wrapper.query("select 1"); //executeQuery(props, "select 1", mockClientWrapper);
+    return async () => await wrapper.query("select 1");
   }),
 
   add("executeStatementWithExecuteTimePlugin", async () => {
@@ -117,7 +117,7 @@ suite(
     const pluginManager = getPluginManager(props);
     const wrapper = new TestConnectionWrapper(props, pluginManager, instance(mockPluginService), telemetryFactory);
     await pluginManager.init();
-    return async () => await wrapper.query("select 1"); //executeQuery(props, "select 1", mockClientWrapper);
+    return async () => await wrapper.query("select 1");
   }),
 
   add("executeStatementWithFailoverPlugin", async () => {
@@ -125,7 +125,7 @@ suite(
     const pluginManager = getPluginManager(props);
     const wrapper = new TestConnectionWrapper(props, pluginManager, instance(mockPluginService), telemetryFactory);
     await pluginManager.init();
-    return async () => await wrapper.query("select 1"); //executeQuery(props, "select 1", mockClientWrapper);
+    return async () => await wrapper.query("select 1");
   }),
 
   cycle(),

@@ -134,6 +134,11 @@ const sdk = new NodeSDK({
   idGenerator: new AWSXRayIdGenerator()
 });
 
+async function initAndRelease(manager: PluginManager) {
+  await manager.init();
+  await PluginManager.releaseResources();
+}
+
 // This enables the API to record telemetry.
 sdk.start();
 
@@ -157,37 +162,29 @@ suite(
 
   add("initAndReleaseBaseline", async () => {
     const wrapper = new TestConnectionWrapper(props, pluginManager, instance(mockPluginService));
-    await pluginManager.init();
-    await PluginManager.releaseResources();
-    await wrapper.end();
+    return async () => await initAndRelease(pluginManager);
   }),
 
   add("initAndReleaseWithExecuteTimePlugin", async () => {
     const wrapper = new TestConnectionWrapper(propsExecute, pluginManagerExecute, instance(mockPluginService));
-    await pluginManagerExecute.init();
-    await PluginManager.releaseResources();
-    await wrapper.end();
+    return async () => await initAndRelease(pluginManagerExecute);
   }),
 
   add("initAndReleaseWithReadWriteSplittingPlugin", async () => {
     const wrapper = new TestConnectionWrapper(propsReadWrite, pluginManagerReadWrite, instance(mockPluginService));
-    await pluginManagerReadWrite.init();
-    await PluginManager.releaseResources();
-    await wrapper.end();
+    return async () => await initAndRelease(pluginManagerReadWrite);
   }),
 
   add("executeStatementBaseline", async () => {
     const wrapper = new TestConnectionWrapper(props, pluginManagerExecute, instance(mockPluginService), telemetryFactory);
     await pluginManagerExecute.init();
-    await wrapper.query("select 1");
-    await wrapper.end();
+    return async () => await wrapper.query("select 1");
   }),
 
   add("executeStatementWithExecuteTimePlugin", async () => {
     const wrapper = new TestConnectionWrapper(propsExecute, pluginManagerExecute, instance(mockPluginService), telemetryFactory);
     await pluginManagerExecute.init();
-    await wrapper.query("select 1"); //executeQuery(propsExecute, "select 1", mockClientWrapper);
-    await wrapper.end();
+    return async () => await wrapper.query("select 1");
   }),
 
   cycle(),
