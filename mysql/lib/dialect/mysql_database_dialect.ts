@@ -18,7 +18,7 @@ import { DatabaseDialect, DatabaseType } from "../../../common/lib/database_dial
 import { HostListProviderService } from "../../../common/lib/host_list_provider_service";
 import { HostListProvider } from "../../../common/lib/host_list_provider/host_list_provider";
 import { ConnectionStringHostListProvider } from "../../../common/lib/host_list_provider/connection_string_host_list_provider";
-import { AwsWrapperError } from "../../../common/lib/utils/errors";
+import { AwsWrapperError, UnsupportedMethodError } from "../../../common/lib/utils/errors";
 import { DatabaseDialectCodes } from "../../../common/lib/database_dialect/database_dialect_codes";
 import { TransactionIsolationLevel } from "../../../common/lib/utils/transaction_isolation_level";
 import { ClientWrapper } from "../../../common/lib/client_wrapper";
@@ -26,11 +26,15 @@ import { ClientUtils } from "../../../common/lib/utils/client_utils";
 import { FailoverRestriction } from "../../../common/lib/plugins/failover/failover_restriction";
 import { ErrorHandler } from "../../../common/lib/error_handler";
 import { MySQLErrorHandler } from "../mysql_error_handler";
-import { error } from "winston";
+import { SessionState } from "../../../common/lib/session_state";
+import { Messages } from "../../../common/lib/utils/messages";
 
 export class MySQLDatabaseDialect implements DatabaseDialect {
   protected dialectName: string = this.constructor.name;
   protected defaultPort: number = 3306;
+  readonly defaultAutoCommit: boolean = true;
+  readonly defaultReadOnly: boolean = false;
+  readonly defaultTransactionIsolation: number = TransactionIsolationLevel.TRANSACTION_REPEATABLE_READ;
 
   getDefaultPort(): number {
     return this.defaultPort;
@@ -57,6 +61,43 @@ export class MySQLDatabaseDialect implements DatabaseDialect {
 
   getServerVersionQuery(): string {
     return "SHOW VARIABLES LIKE 'version_comment'";
+  }
+
+  getSetReadOnlyQuery(readOnly: boolean): string {
+    return `SET SESSION TRANSACTION READ ${readOnly ? "ONLY" : "WRITE"}`;
+  }
+
+  getSetAutoCommitQuery(autoCommit: boolean): string {
+    return `SET AUTOCOMMIT=${autoCommit}`;
+  }
+
+  getSetTransactionIsolationQuery(level: number): string {
+    let transactionIsolationLevel: string;
+    switch (level) {
+      case 0:
+        transactionIsolationLevel = "READ UNCOMMITTED";
+        break;
+      case 1:
+        transactionIsolationLevel = "READ COMMITTED";
+        break;
+      case 2:
+        transactionIsolationLevel = "REPEATABLE READ";
+        break;
+      case 3:
+        transactionIsolationLevel = "SERIALIZABLE";
+        break;
+      default:
+        throw new AwsWrapperError(Messages.get("Client.invalidTransactionIsolationLevel", String(level)));
+    }
+    return `SET SESSION TRANSACTION ISOLATION LEVEL ${transactionIsolationLevel}`;
+  }
+
+  getSetCatalogQuery(catalog: string): string {
+    return `USE ${catalog}`;
+  }
+
+  getSetSchemaQuery(schema: string): string {
+    throw new UnsupportedMethodError(Messages.get("Client.methodNotSupported", "setSchema"));
   }
 
   async isDialect(targetClient: ClientWrapper): Promise<boolean> {
@@ -166,5 +207,11 @@ export class MySQLDatabaseDialect implements DatabaseDialect {
 
   doesStatementSetSchema(statement: string): string | undefined {
     return undefined;
+  }
+
+  setDefaultSessionState(sessionState: SessionState) {
+    sessionState.readOnly.value = false;
+    sessionState.autoCommit.value = true;
+    sessionState.transactionIsolation.value = TransactionIsolationLevel.TRANSACTION_REPEATABLE_READ;
   }
 }

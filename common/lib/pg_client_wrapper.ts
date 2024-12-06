@@ -17,6 +17,8 @@
 import { ClientWrapper } from "./client_wrapper";
 import { HostInfo } from "./host_info";
 import { uniqueId } from "../logutils";
+import { SessionState } from "./session_state";
+import { TransactionIsolationLevel } from "./utils/transaction_isolation_level";
 
 /*
 This an internal wrapper class for a target community driver client created by the NodePostgresPgDriverDialect.
@@ -26,6 +28,7 @@ export class PgClientWrapper implements ClientWrapper {
   readonly hostInfo: HostInfo;
   readonly properties: Map<string, string>;
   readonly id: string;
+  readonly sessionState = new SessionState();
 
   /**
    * Creates a wrapper for the target community driver client.
@@ -38,7 +41,10 @@ export class PgClientWrapper implements ClientWrapper {
     this.client = targetClient;
     this.hostInfo = hostInfo;
     this.properties = properties;
+    this.sessionState = new SessionState();
     this.id = uniqueId("PgClient_");
+
+    this.setSessionStateDefault();
   }
 
   query(sql: any): Promise<any> {
@@ -63,5 +69,11 @@ export class PgClientWrapper implements ClientWrapper {
     } catch (error: any) {
       // Ignore
     }
+  }
+
+  setSessionStateDefault() {
+    this.sessionState.readOnly.value = false;
+    this.sessionState.schema.value = "";
+    this.sessionState.transactionIsolation.value = TransactionIsolationLevel.TRANSACTION_READ_COMMITTED;
   }
 }

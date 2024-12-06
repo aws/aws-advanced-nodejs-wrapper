@@ -85,6 +85,26 @@ export class SessionState {
   schema: SessionStateField<string> = new SessionStateField<string>();
   transactionIsolation: SessionStateField<number> = new SessionStateField<number>();
 
+  setAutoCommit(sessionState: SessionState): void {
+    this.autoCommit.value = sessionState.autoCommit.value;
+  }
+
+  setReadOnly(sessionState: SessionState): void {
+    this.readOnly.value = sessionState.readOnly.value;
+  }
+
+  setCatalog(sessionState: SessionState): void {
+    this.catalog.value = sessionState.catalog.value;
+  }
+
+  setSchema(sessionState: SessionState): void {
+    this.schema.value = sessionState.schema.value;
+  }
+
+  setTransactionIsolation(sessionState: SessionState): void {
+    this.transactionIsolation.value = sessionState.transactionIsolation.value;
+  }
+
   copy(): SessionState {
     const newSessionState = new SessionState();
     newSessionState.autoCommit = this.autoCommit.copy();
