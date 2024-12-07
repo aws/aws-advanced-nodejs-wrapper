@@ -37,7 +37,6 @@ import { ConnectionProviderManager } from "./connection_provider_manager";
 import { DeveloperConnectionPluginFactory } from "./plugins/dev/developer_connection_plugin_factory";
 import { ConnectionPluginFactory } from "./plugin_factory";
 import { LimitlessConnectionPluginFactory } from "./plugins/limitless/limitless_connection_plugin_factory";
-import { FastestResponseStrategyPlugin } from "./plugins/strategy/fastest_response/fastest_response_strategy_plugin";
 import { FastestResponseStrategyPluginFactory } from "./plugins/strategy/fastest_response/fastest_respose_strategy_plugin_factory";
 
 /*

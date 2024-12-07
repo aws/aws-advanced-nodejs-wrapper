@@ -90,11 +90,14 @@ export class FastestResponseStrategyPlugin extends AbstractConnectionPlugin {
     // The cache holds a host with the fastest response time.
     // If the cache doesn't have a host for a role, it's necessary to find the fastest node in the topology.
     const fastestResponseHost: HostInfo = FastestResponseStrategyPlugin.cachedFastestResponseHostByRole.get(role);
-    if (fastestResponseHost != null) {
+    if (fastestResponseHost) {
       // Found the fastest host. Find the host in the latest topology.
-
       const foundHostInfo: HostInfo[] = this.pluginService.getHosts().filter((host) => host === fastestResponseHost);
-      return foundHostInfo.length === 0 ? null : foundHostInfo[0];
+      const foundHost = foundHostInfo.length === 0 ? null : foundHostInfo[0];
+      if (foundHost) {
+        // Found a host in the topology.
+        return foundHost;
+      }
     }
     // Cached result isn't available. Need to find the fastest response time host.
     const calculatedFastestResponseHost: HostInfo[] = this.pluginService
@@ -106,12 +109,13 @@ export class FastestResponseStrategyPlugin extends AbstractConnectionPlugin {
       })
       .map((host) => host.hostInfo);
     const calculatedHost = calculatedFastestResponseHost.length === 0 ? null : calculatedFastestResponseHost[0];
-    if (calculatedHost === null) {
+    if (!calculatedHost) {
       // Unable to identify the fastest response host.
       // As a last resort, let's use a random host selector.
       return this.randomHostSelector.getHost(hosts, role, this.properties);
     }
     FastestResponseStrategyPlugin.cachedFastestResponseHostByRole.put(role, calculatedHost, Number(this.cacheExpirationNanos));
+    return calculatedHost;
   }
 
   async notifyHostListChanged(changes: Map<string, Set<HostChangeOptions>>): Promise<void> {
