@@ -71,9 +71,24 @@ export class WrapperProperties {
     null
   );
 
+  /**
+   * @deprecated since version 1.1.0 and replaced by wrapper property WRAPPER_QUERY_TIMEOUT.
+   */
   static readonly INTERNAL_QUERY_TIMEOUT = new WrapperProperty<number>(
     "mysqlQueryTimeout",
     "Timeout in milliseconds for the wrapper to execute queries against MySQL database engines",
+    20000
+  );
+
+  static readonly WRAPPER_CONNECT_TIMEOUT = new WrapperProperty<number>(
+    "wrapperConnectTimeout",
+    "Timeout in milliseconds for the wrapper to create a connection.",
+    10000
+  );
+
+  static readonly WRAPPER_QUERY_TIMEOUT = new WrapperProperty<number>(
+    "wrapperQueryTimeout",
+    "Timeout in milliseconds for the wrapper to execute queries.",
     20000
   );
 
