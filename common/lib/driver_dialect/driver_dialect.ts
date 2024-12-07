@@ -27,4 +27,6 @@ export interface DriverDialect {
   preparePoolClientProperties(props: Map<string, any>, poolConfig: AwsPoolConfig | undefined): any;
 
   getAwsPoolClient(props: any): AwsPoolClient;
+
+  setupInitialProperties(props: Map<string, any>): void;
 }
