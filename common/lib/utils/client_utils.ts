@@ -25,7 +25,7 @@ export class ClientUtils {
     const timeoutTask = getTimeoutTask(
       timer,
       Messages.get("ClientUtils.queryTaskTimeout"),
-      timeValue ?? WrapperProperties.INTERNAL_QUERY_TIMEOUT.get(props)
+      timeValue ?? WrapperProperties.WRAPPER_QUERY_TIMEOUT.get(props)
     );
     return await Promise.race([timeoutTask, newPromise])
       .catch((error: any) => {
