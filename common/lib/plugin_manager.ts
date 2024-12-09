@@ -31,6 +31,7 @@ import { TelemetryFactory } from "./utils/telemetry/telemetry_factory";
 import { TelemetryTraceLevel } from "./utils/telemetry/telemetry_trace_level";
 import { ConnectionProvider } from "./connection_provider";
 import { ConnectionPluginFactory } from "./plugin_factory";
+import { ConfigurationProfile } from "./profile/configuration_profile";
 
 type PluginFunc<T> = (plugin: ConnectionPlugin, targetFunc: () => Promise<T>) => Promise<T>;
 
@@ -90,9 +91,9 @@ export class PluginManager {
     this.telemetryFactory = telemetryFactory;
   }
 
-  async init(): Promise<void>;
-  async init(plugins: ConnectionPlugin[]): Promise<void>;
-  async init(plugins?: ConnectionPlugin[]) {
+  async init(configurationProfile?: ConfigurationProfile | null): Promise<void>;
+  async init(configurationProfile: ConfigurationProfile | null, plugins: ConnectionPlugin[]): Promise<void>;
+  async init(configurationProfile: ConfigurationProfile | null, plugins?: ConnectionPlugin[]) {
     if (this.pluginServiceManagerContainer.pluginService != null) {
       if (plugins) {
         this._plugins = plugins;
@@ -100,7 +101,8 @@ export class PluginManager {
         this._plugins = await ConnectionPluginChainBuilder.getPlugins(
           this.pluginServiceManagerContainer.pluginService,
           this.props,
-          this.connectionProviderManager
+          this.connectionProviderManager,
+          configurationProfile
         );
       }
     }

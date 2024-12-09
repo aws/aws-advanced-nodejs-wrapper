@@ -43,6 +43,7 @@ import { DatabaseDialectCodes } from "./database_dialect/database_dialect_codes"
 import { getWriter } from "./utils/utils";
 import { TelemetryFactory } from "./utils/telemetry/telemetry_factory";
 import { DriverDialect } from "./driver_dialect/driver_dialect";
+import { ConfigurationProfile } from "./profile/configuration_profile";
 
 export class PluginService implements ErrorHandler, HostListProviderService {
   private readonly _currentClient: AwsClient;
@@ -77,7 +78,7 @@ export class PluginService implements ErrorHandler, HostListProviderService {
     this.sessionStateService = new SessionStateServiceImpl(this, this.props);
     container.pluginService = this;
 
-    this.dialect = this.dbDialectProvider.getDialect(this.props);
+    this.dialect = WrapperProperties.CUSTOM_DATABASE_DIALECT.get(this.props) ?? this.dbDialectProvider.getDialect(this.props);
   }
 
   isInTransaction(): boolean {

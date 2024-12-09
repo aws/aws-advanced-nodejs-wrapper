@@ -27,6 +27,7 @@ import { logger } from "../../../../common/logutils";
 import { TestEnvironmentFeatures } from "./utils/test_environment_features";
 import { features } from "./config";
 import { PluginManager } from "../../../../common/lib";
+import { jest } from "@jest/globals";
 
 const itIf =
   !features.includes(TestEnvironmentFeatures.PERFORMANCE) &&
@@ -83,6 +84,7 @@ async function validateConnection(client: AwsPGClient | AwsMySQLClient) {
 describe("iam authentication", () => {
   beforeEach(async () => {
     logger.info(`Test started: ${expect.getState().currentTestName}`);
+    jest.useFakeTimers();
     env = await TestEnvironment.getCurrent();
     driver = DriverHelper.getDriverForDatabaseEngine(env.engine);
     initClientFunc = DriverHelper.getClient(driver);
