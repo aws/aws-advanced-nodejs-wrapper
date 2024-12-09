@@ -97,22 +97,21 @@ export class FastestResponseStrategyPlugin extends AbstractConnectionPlugin {
       }
     }
     // Cached result isn't available. Need to find the fastest response time host.
-    const calculatedFastestResponseHost: HostInfo[] = this.pluginService
+    const calculatedFastestResponseHost: ResponseTimeTuple[] = this.pluginService
       .getHosts()
       .filter((host) => role === host.role)
       .map((host) => new ResponseTimeTuple(host, this.hostResponseTimeService.getResponseTime(host)))
       .sort((a, b) => {
         return a.responseTime - b.responseTime;
-      })
-      .map((host) => host.hostInfo);
+      });
     const calculatedHost = calculatedFastestResponseHost.length === 0 ? null : calculatedFastestResponseHost[0];
     if (!calculatedHost) {
       // Unable to identify the fastest response host.
       // As a last resort, let's use a random host selector.
       return this.randomHostSelector.getHost(hosts, role, this.properties);
     }
-    FastestResponseStrategyPlugin.cachedFastestResponseHostByRole.put(role, calculatedHost, Number(this.cacheExpirationNanos));
-    return calculatedHost;
+    FastestResponseStrategyPlugin.cachedFastestResponseHostByRole.put(role, calculatedHost.hostInfo, Number(this.cacheExpirationNanos));
+    return calculatedHost.hostInfo;
   }
 
   async notifyHostListChanged(changes: Map<string, Set<HostChangeOptions>>): Promise<void> {
