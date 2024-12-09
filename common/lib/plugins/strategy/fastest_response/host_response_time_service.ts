@@ -47,7 +47,7 @@ export class HostResponseTimeServiceImpl implements HostResponseTimeService {
   private readonly telemetryFactory: TelemetryFactory;
   protected static monitoringHosts: SlidingExpirationCache<string, any> = new SlidingExpirationCache(
     HostResponseTimeServiceImpl.CACHE_CLEANUP_NANOS,
-    (monitor: any) => true,
+    undefined,
     async (monitor: HostResponseTimeMonitor) => {
       {
         try {
@@ -80,15 +80,15 @@ export class HostResponseTimeServiceImpl implements HostResponseTimeService {
   }
 
   setHosts(hosts: HostInfo[]): void {
-    const oldHostMap: Map<string, HostInfo> = new Map(hosts.map((e) => [e.url, e]));
-    this.hosts = hosts;
-    const eligibleHosts: HostInfo[] = hosts.filter((hostInfo: HostInfo) => !(hostInfo.url in oldHostMap));
-    eligibleHosts.forEach((hostInfo: HostInfo) => {
-      HostResponseTimeServiceImpl.monitoringHosts.computeIfAbsent(
-        hostInfo.url,
-        (key) => new HostResponseTimeMonitor(this.pluginService, hostInfo, this.properties, this.intervalMs),
-        HostResponseTimeServiceImpl.CACHE_EXPIRATION_NANOS
-      );
-    });
+    const oldHostMap: string[] = hosts.flatMap((host) => host.url);
+    this.hosts
+      .filter((hostInfo: HostInfo) => !(hostInfo.url in oldHostMap))
+      .forEach((hostInfo: HostInfo) => {
+        HostResponseTimeServiceImpl.monitoringHosts.computeIfAbsent(
+          hostInfo.url,
+          (key) => new HostResponseTimeMonitor(this.pluginService, hostInfo, this.properties, this.intervalMs),
+          HostResponseTimeServiceImpl.CACHE_EXPIRATION_NANOS
+        );
+      });
   }
 }

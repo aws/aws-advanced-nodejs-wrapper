@@ -78,7 +78,7 @@ export class FastestResponseStrategyPlugin extends AbstractConnectionPlugin {
   }
 
   acceptsStrategy(role: HostRole, strategy: string) {
-    return FastestResponseStrategyPlugin.FASTEST_RESPONSE_STRATEGY_NAME === strategy;
+    return FastestResponseStrategyPlugin.FASTEST_RESPONSE_STRATEGY_NAME.toLowerCase() === strategy.toLowerCase();
   }
 
   getHostInfoByStrategy(role: HostRole, strategy: string, hosts?: HostInfo[]): HostInfo | undefined {
