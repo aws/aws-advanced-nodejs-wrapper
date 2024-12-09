@@ -25,7 +25,7 @@ import { HostInfo } from "../../../host_info";
 import { HostChangeOptions } from "../../../host_change_options";
 import { RandomHostSelector } from "../../../random_host_selector";
 import { Messages } from "../../../utils/messages";
-import { logAndThrowError } from "../../../utils/utils";
+import { equalsIgnoreCase, logAndThrowError } from "../../../utils/utils";
 
 export class FastestResponseStrategyPlugin extends AbstractConnectionPlugin {
   static readonly FASTEST_RESPONSE_STRATEGY_NAME: string = "fastestResponse";
@@ -78,7 +78,7 @@ export class FastestResponseStrategyPlugin extends AbstractConnectionPlugin {
   }
 
   acceptsStrategy(role: HostRole, strategy: string) {
-    return FastestResponseStrategyPlugin.FASTEST_RESPONSE_STRATEGY_NAME.toLowerCase() === strategy.toLowerCase();
+    return equalsIgnoreCase(FastestResponseStrategyPlugin.FASTEST_RESPONSE_STRATEGY_NAME, strategy.toLowerCase());
   }
 
   getHostInfoByStrategy(role: HostRole, strategy: string, hosts?: HostInfo[]): HostInfo | undefined {
