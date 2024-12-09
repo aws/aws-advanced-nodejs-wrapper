@@ -93,8 +93,6 @@ export class FastestResponseStrategyPlugin extends AbstractConnectionPlugin {
       const foundHost = this.pluginService.getHosts().find((host) => host === fastestResponseHost);
       if (foundHost) {
         // Found a host in the topology.
-        console.log("cached host");
-
         return foundHost;
       }
     }
@@ -114,7 +112,6 @@ export class FastestResponseStrategyPlugin extends AbstractConnectionPlugin {
       return this.randomHostSelector.getHost(hosts, role, this.properties);
     }
     FastestResponseStrategyPlugin.cachedFastestResponseHostByRole.put(role, calculatedHost.hostInfo, Number(this.cacheExpirationNanos));
-    console.log("calculated host");
     return calculatedHost.hostInfo;
   }
 
