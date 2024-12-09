@@ -81,7 +81,7 @@ export class HostResponseTimeServiceImpl implements HostResponseTimeService {
 
   setHosts(hosts: HostInfo[]): void {
     const oldHostMap: string[] = hosts.flatMap((host) => host.url);
-    this.hosts
+    hosts
       .filter((hostInfo: HostInfo) => !(hostInfo.url in oldHostMap))
       .forEach((hostInfo: HostInfo) => {
         HostResponseTimeServiceImpl.monitoringHosts.computeIfAbsent(
