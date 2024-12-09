@@ -31,3 +31,4 @@
       - [Plugin Service](../docs/development-guide/PluginService.md)
       - [Pipelines](../docs/development-guide/Pipelines.md)
       - [Read-Write Splitting Plugin Performance Results](../docs/development-guide/ReadWriteSplittingPerformanceResults.md)
+  - [Using The NodeJS Wrapper with Prisma ORM](./../examples/prisma_example/README.md)

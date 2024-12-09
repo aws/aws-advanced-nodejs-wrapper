@@ -22,6 +22,12 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model bank_test {
+  id              Int     @id
+  name            String? @db.VarChar(40)
+  account_balance Int?
+}
+
 model Post {
   id        Int     @id @default(autoincrement())
   title     String
