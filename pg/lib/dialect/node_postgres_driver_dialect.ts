@@ -36,7 +36,7 @@ export class NodePostgresDriverDialect implements DriverDialect {
   }
 
   async connect(hostInfo: HostInfo, props: Map<string, any>): Promise<ClientWrapper> {
-    this.setupInitialProperties(props);
+    this.setKeepAliveProperties(props);
     const targetClient = new pkgPg.Client(WrapperProperties.removeWrapperProperties(props));
     await targetClient.connect();
     return Promise.resolve(new PgClientWrapper(targetClient, hostInfo, props));
@@ -59,7 +59,7 @@ export class NodePostgresDriverDialect implements DriverDialect {
     return new AwsPgPoolClient(props);
   }
 
-  setupInitialProperties(props: Map<string, any>) {
+  setKeepAliveProperties(props: Map<string, any>) {
     if (props.has(WrapperProperties.KEEPALIVE_PROPERTIES.name)) {
       const keepAliveProps = props.get(WrapperProperties.KEEPALIVE_PROPERTIES.name);
       props.set(NodePostgresDriverDialect.keepAlivePropertyName, keepAliveProps.get(NodePostgresDriverDialect.keepAlivePropertyName));
