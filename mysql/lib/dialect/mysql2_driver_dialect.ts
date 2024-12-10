@@ -34,7 +34,7 @@ export class MySQL2DriverDialect implements DriverDialect {
   }
 
   async connect(hostInfo: HostInfo, props: Map<string, any>): Promise<ClientWrapper> {
-    this.setupInitialNetworkTimeouts(props);
+    this.setNetworkTimeouts(props);
     const targetClient = await createConnection(WrapperProperties.removeWrapperProperties(props));
     return Promise.resolve(new MySQLClientWrapper(targetClient, hostInfo, props, this));
   }
@@ -56,7 +56,7 @@ export class MySQL2DriverDialect implements DriverDialect {
     return new AwsMysqlPoolClient(props);
   }
 
-  setupInitialNetworkTimeouts(props: Map<string, any>) {
+  setNetworkTimeouts(props: Map<string, any>) {
     this.setConnectTimeout(props);
   }
 
