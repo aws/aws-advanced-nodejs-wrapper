@@ -36,9 +36,10 @@ export class NodePostgresDriverDialect implements DriverDialect {
   }
 
   async connect(hostInfo: HostInfo, props: Map<string, any>): Promise<ClientWrapper> {
-    this.setNetworkTimeouts(props);
-
-    const targetClient = new pkgPg.Client(WrapperProperties.removeWrapperProperties(props));
+    const driverProperties = WrapperProperties.removeWrapperProperties(props);
+    this.setConnectTimeout(driverProperties, props.get(WrapperProperties.WRAPPER_CONNECT_TIMEOUT.name));
+    this.setConnectTimeout(driverProperties, props.get(WrapperProperties.WRAPPER_QUERY_TIMEOUT.name));
+    const targetClient = new pkgPg.Client(driverProperties);
     await targetClient.connect();
     return Promise.resolve(new PgClientWrapper(targetClient, hostInfo, props));
   }
@@ -60,24 +61,17 @@ export class NodePostgresDriverDialect implements DriverDialect {
     return new AwsPgPoolClient(props);
   }
 
-  setNetworkTimeouts(props: Map<string, any>) {
-    this.setConnectTimeout(props);
-    this.setQueryTimeout(props);
-  }
-
-  setConnectTimeout(props: Map<string, any>) {
-    const wrapperConnectTimeout = props.get(WrapperProperties.WRAPPER_CONNECT_TIMEOUT.name);
-
-    if (wrapperConnectTimeout) {
-      props.set(NodePostgresDriverDialect.connectTimeoutPropertyName, wrapperConnectTimeout);
+  setConnectTimeout(props: Map<string, any>, wrapperConnectTimeout?: any) {
+    const timeout = wrapperConnectTimeout ?? props.get(WrapperProperties.WRAPPER_CONNECT_TIMEOUT.name);
+    if (timeout) {
+      props.set(NodePostgresDriverDialect.connectTimeoutPropertyName, timeout);
     }
   }
 
-  setQueryTimeout(props: Map<string, any>, sql?: any) {
-    const wrapperQueryTimeout = props.get(WrapperProperties.WRAPPER_QUERY_TIMEOUT.name);
-
-    if (wrapperQueryTimeout) {
-      props.set(NodePostgresDriverDialect.queryTimeoutPropertyName, wrapperQueryTimeout);
+  setQueryTimeout(props: Map<string, any>, sql?: any, wrapperQueryTimeout?: any) {
+    const timeout = wrapperQueryTimeout ?? props.get(WrapperProperties.WRAPPER_QUERY_TIMEOUT.name);
+    if (timeout) {
+      props.set(NodePostgresDriverDialect.queryTimeoutPropertyName, timeout);
     }
   }
 }

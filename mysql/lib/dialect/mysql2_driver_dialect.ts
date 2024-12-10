@@ -34,8 +34,9 @@ export class MySQL2DriverDialect implements DriverDialect {
   }
 
   async connect(hostInfo: HostInfo, props: Map<string, any>): Promise<ClientWrapper> {
-    this.setNetworkTimeouts(props);
-    const targetClient = await createConnection(WrapperProperties.removeWrapperProperties(props));
+    const driverProperties = WrapperProperties.removeWrapperProperties(props);
+    this.setConnectTimeout(driverProperties, props.get(WrapperProperties.WRAPPER_QUERY_TIMEOUT.name));
+    const targetClient = await createConnection(driverProperties);
     return Promise.resolve(new MySQLClientWrapper(targetClient, hostInfo, props, this));
   }
 
@@ -56,22 +57,17 @@ export class MySQL2DriverDialect implements DriverDialect {
     return new AwsMysqlPoolClient(props);
   }
 
-  setNetworkTimeouts(props: Map<string, any>) {
-    this.setConnectTimeout(props);
-  }
-
-  setConnectTimeout(props: Map<string, any>) {
-    const wrapperConnectTimeout = props.get(WrapperProperties.WRAPPER_CONNECT_TIMEOUT.name);
-
-    if (wrapperConnectTimeout) {
-      props.set(MySQL2DriverDialect.connectTimeoutPropertyName, wrapperConnectTimeout);
+  setConnectTimeout(props: Map<string, any>, wrapperConnectTimeout?: any) {
+    const timeout = wrapperConnectTimeout ?? props.get(WrapperProperties.WRAPPER_CONNECT_TIMEOUT.name);
+    if (timeout) {
+      props.set(MySQL2DriverDialect.connectTimeoutPropertyName, timeout);
     }
   }
 
-  setQueryTimeout(props: Map<string, any>, sql?: any) {
-    const queryTimeout = props.get(WrapperProperties.WRAPPER_QUERY_TIMEOUT.name);
-    if (queryTimeout && !sql[MySQL2DriverDialect.queryTimeoutPropertyName]) {
-      sql[MySQL2DriverDialect.queryTimeoutPropertyName] = queryTimeout;
+  setQueryTimeout(props: Map<string, any>, sql?: any, wrapperConnectTimeout?: any) {
+    const timeout = wrapperConnectTimeout ?? props.get(WrapperProperties.WRAPPER_QUERY_TIMEOUT.name);
+    if (timeout && !sql[MySQL2DriverDialect.queryTimeoutPropertyName]) {
+      sql[MySQL2DriverDialect.queryTimeoutPropertyName] = timeout;
     }
   }
 }
