@@ -36,8 +36,9 @@ export class NodePostgresDriverDialect implements DriverDialect {
   }
 
   async connect(hostInfo: HostInfo, props: Map<string, any>): Promise<ClientWrapper> {
-    this.setKeepAliveProperties(props);
-    const targetClient = new pkgPg.Client(WrapperProperties.removeWrapperProperties(props));
+    const driverProperties = WrapperProperties.removeWrapperProperties(props);
+    this.setKeepAliveProperties(driverProperties, props.get(WrapperProperties.KEEPALIVE_PROPERTIES.name));
+    const targetClient = new pkgPg.Client(driverProperties);
     await targetClient.connect();
     return Promise.resolve(new PgClientWrapper(targetClient, hostInfo, props));
   }
@@ -59,15 +60,19 @@ export class NodePostgresDriverDialect implements DriverDialect {
     return new AwsPgPoolClient(props);
   }
 
-  setKeepAliveProperties(props: Map<string, any>) {
-    if (props.has(WrapperProperties.KEEPALIVE_PROPERTIES.name)) {
-      const keepAliveProps = props.get(WrapperProperties.KEEPALIVE_PROPERTIES.name);
-      props.set(NodePostgresDriverDialect.keepAlivePropertyName, keepAliveProps.get(NodePostgresDriverDialect.keepAlivePropertyName));
-      props.set(
-        NodePostgresDriverDialect.keepAliveInitialDelayMillisPropertyName,
-        keepAliveProps.get(NodePostgresDriverDialect.keepAliveInitialDelayMillisPropertyName)
-      );
-      props.delete(WrapperProperties.KEEPALIVE_PROPERTIES.name);
+  setKeepAliveProperties(props: Map<string, any>, keepAliveProps: any) {
+    if (!keepAliveProps) {
+      return;
+    }
+
+    const keepAlive = keepAliveProps.get(NodePostgresDriverDialect.keepAlivePropertyName);
+    const keepAliveInitialDelayMillis = keepAliveProps.get(NodePostgresDriverDialect.keepAliveInitialDelayMillisPropertyName);
+
+    if (keepAlive) {
+      props.set(NodePostgresDriverDialect.keepAlivePropertyName, keepAlive);
+    }
+    if (keepAliveInitialDelayMillis) {
+      props.set(NodePostgresDriverDialect.keepAliveInitialDelayMillisPropertyName, keepAliveInitialDelayMillis);
     }
   }
 }
