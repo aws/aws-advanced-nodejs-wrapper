@@ -22,7 +22,6 @@ import { TestEnvironmentFeatures } from "./utils/test_environment_features";
 import { features, instanceCount } from "./config";
 import { InternalPooledConnectionProvider } from "../../../../common/lib/internal_pooled_connection_provider";
 import { AwsPoolConfig } from "../../../../common/lib/aws_pool_config";
-import { ConnectionProviderManager } from "../../../../common/lib/connection_provider_manager";
 import { TestInstanceInfo } from "./utils/test_instance_info";
 import { sleep } from "../../../../common/lib/utils/utils";
 import { FailoverSuccessError } from "../../../../common/lib/utils/errors";

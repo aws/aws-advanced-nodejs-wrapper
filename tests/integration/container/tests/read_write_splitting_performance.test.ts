@@ -24,7 +24,6 @@ import { PerfTestUtility } from "./utils/perf_util";
 import { ConnectTimePlugin } from "../../../../common/lib/plugins/connect_time_plugin";
 import { ExecuteTimePlugin } from "../../../../common/lib/plugins/execute_time_plugin";
 import { TestDriver } from "./utils/test_driver";
-import { ConnectionProviderManager } from "../../../../common/lib/connection_provider_manager";
 import { InternalPooledConnectionProvider } from "../../../../common/lib/internal_pooled_connection_provider";
 import { PluginManager } from "../../../../common/lib";
 
