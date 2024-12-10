@@ -18,15 +18,26 @@ import { getTimeoutTask } from "./utils";
 import { Messages } from "./messages";
 import { AwsWrapperError, InternalQueryTimeoutError } from "./errors";
 import { WrapperProperties } from "../wrapper_property";
+import { logger } from "../../logutils";
 
 export class ClientUtils {
+  static hasWarnedDeprecation: boolean = false;
   static async queryWithTimeout(newPromise: Promise<any>, props: Map<string, any>, timeValue?: number): Promise<any> {
     const timer: any = {};
-    const timeoutTask = getTimeoutTask(
-      timer,
-      Messages.get("ClientUtils.queryTaskTimeout"),
-      timeValue ?? WrapperProperties.INTERNAL_QUERY_TIMEOUT.get(props)
-    );
+    let timeout = timeValue;
+    if (props.has(WrapperProperties.INTERNAL_QUERY_TIMEOUT.name)) {
+      timeout = WrapperProperties.INTERNAL_QUERY_TIMEOUT.get(props);
+      if (!ClientUtils.hasWarnedDeprecation) {
+        logger.warn(
+          "The connection configuration property 'mysqlQueryTimeout' is deprecated since version 1.1.0. Please use 'wrapperQueryTimeout' instead."
+        );
+        ClientUtils.hasWarnedDeprecation = true;
+      }
+    }
+    if (!timeout) {
+      timeout = WrapperProperties.WRAPPER_QUERY_TIMEOUT.get(props);
+    }
+    const timeoutTask = getTimeoutTask(timer, Messages.get("ClientUtils.queryTaskTimeout"), timeout);
     return await Promise.race([timeoutTask, newPromise])
       .catch((error: any) => {
         if (error instanceof InternalQueryTimeoutError) {
