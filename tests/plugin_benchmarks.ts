@@ -28,6 +28,8 @@ import { AwsPGClient } from "../pg/lib";
 import { NullTelemetryFactory } from "../common/lib/utils/telemetry/null_telemetry_factory";
 import { ConnectionProviderManager } from "../common/lib/connection_provider_manager";
 import { PgClientWrapper } from "../common/lib/pg_client_wrapper";
+import { NodePostgresDriverDialect } from "../pg/lib/dialect/node_postgres_driver_dialect";
+import { DriverDialect } from "../common/lib/driver_dialect/driver_dialect";
 
 const mockConnectionProvider = mock<ConnectionProvider>();
 const mockPluginService = mock(PluginService);
@@ -37,12 +39,15 @@ const hostInfo = new HostInfoBuilder({ hostAvailabilityStrategy: new SimpleHostA
 
 const mockClientWrapper = new PgClientWrapper(instance(mockClient), hostInfo, new Map<string, any>());
 
+const mockDialect: DriverDialect = mock(NodePostgresDriverDialect);
+
 const telemetryFactory = new NullTelemetryFactory();
 
 when(mockClient.query(anything())).thenReturn();
 when(mockPluginService.getCurrentHostInfo()).thenReturn(hostInfo);
 when(mockPluginService.getTelemetryFactory()).thenReturn(telemetryFactory);
 when(mockPluginService.getCurrentClient()).thenReturn(mockClientWrapper.client);
+when(mockPluginService.getDriverDialect()).thenReturn(mockDialect);
 
 const connectionString = "my.domain.com";
 const pluginServiceManagerContainer = new PluginServiceManagerContainer();
@@ -64,6 +69,11 @@ function getPluginManager(props: Map<string, any>) {
   );
 }
 
+async function initAndRelease(pluginManager: PluginManager) {
+  await pluginManager.init();
+  await PluginManager.releaseResources();
+}
+
 suite(
   "Plugin benchmarks",
 
@@ -77,48 +87,45 @@ suite(
     const props = getProps("");
     const pluginManager = getPluginManager(props);
     const wrapper = new TestConnectionWrapper(props, pluginManager, instance(mockPluginService));
-    await pluginManager.init();
-    await PluginManager.releaseResources();
+    return async () => await initAndRelease(pluginManager);
   }),
 
   add("initAndReleaseWithExecuteTimePlugin", async () => {
     const props = getProps("executeTime");
     const pluginManager = getPluginManager(props);
     const wrapper = new TestConnectionWrapper(props, pluginManager, instance(mockPluginService));
-    await pluginManager.init();
-    await PluginManager.releaseResources();
+    return async () => await initAndRelease(pluginManager);
   }),
 
   add("initAndReleaseWithReadWriteSplittingPlugin", async () => {
     const props = getProps("readWriteSplitting");
     const pluginManager = getPluginManager(props);
     const wrapper = new TestConnectionWrapper(props, pluginManager, instance(mockPluginService));
-    await pluginManager.init();
-    await PluginManager.releaseResources();
+    return async () => await initAndRelease(pluginManager);
   }),
 
   add("executeStatementBaseline", async () => {
     const props = getProps("");
     const pluginManager = getPluginManager(props);
-    const wrapper = new TestConnectionWrapper(props, pluginManager, instance(mockPluginService));
+    const wrapper = new TestConnectionWrapper(props, pluginManager, instance(mockPluginService), telemetryFactory);
     await pluginManager.init();
-    return async () => await wrapper.executeQuery(props, "select 1", mockClientWrapper);
+    return async () => await wrapper.query("select 1");
   }),
 
   add("executeStatementWithExecuteTimePlugin", async () => {
     const props = getProps("executeTime");
     const pluginManager = getPluginManager(props);
-    const wrapper = new TestConnectionWrapper(props, pluginManager, instance(mockPluginService));
+    const wrapper = new TestConnectionWrapper(props, pluginManager, instance(mockPluginService), telemetryFactory);
     await pluginManager.init();
-    return async () => await wrapper.executeQuery(props, "select 1", mockClientWrapper);
+    return async () => await wrapper.query("select 1");
   }),
 
   add("executeStatementWithFailoverPlugin", async () => {
     const props = getProps("failover");
     const pluginManager = getPluginManager(props);
-    const wrapper = new TestConnectionWrapper(props, pluginManager, instance(mockPluginService));
+    const wrapper = new TestConnectionWrapper(props, pluginManager, instance(mockPluginService), telemetryFactory);
     await pluginManager.init();
-    return async () => await wrapper.executeQuery(props, "select 1", mockClientWrapper);
+    return async () => await wrapper.query("select 1");
   }),
 
   cycle(),
