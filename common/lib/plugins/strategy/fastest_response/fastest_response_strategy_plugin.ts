@@ -29,7 +29,13 @@ import { equalsIgnoreCase, logAndThrowError } from "../../../utils/utils";
 
 export class FastestResponseStrategyPlugin extends AbstractConnectionPlugin {
   static readonly FASTEST_RESPONSE_STRATEGY_NAME: string = "fastestResponse";
-  private static readonly subscribedMethods = new Set<string>(["notifyHostListChanged", "acceptsStrategy", "getHostInfoByStrategy"]);
+  private static readonly subscribedMethods = new Set<string>([
+    "connect",
+    "forceConnect",
+    "notifyHostListChanged",
+    "acceptsStrategy",
+    "getHostInfoByStrategy"
+  ]);
   protected static readonly cachedFastestResponseHostByRole: CacheMap<string, HostInfo> = new CacheMap<string, HostInfo>();
   protected cacheExpirationNanos: bigint;
   protected hostResponseTimeService: HostResponseTimeService;
