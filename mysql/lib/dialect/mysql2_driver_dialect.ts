@@ -25,6 +25,8 @@ import { MySQLClientWrapper } from "../../../common/lib/mysql_client_wrapper";
 import { HostInfo } from "../../../common/lib/host_info";
 
 export class MySQL2DriverDialect implements DriverDialect {
+  static readonly connectTimeoutPropertyName = "connectTimeout";
+  static readonly queryTimeoutPropertyName = "timeout";
   protected dialectName: string = this.constructor.name;
 
   getDialectName(): string {
@@ -32,8 +34,9 @@ export class MySQL2DriverDialect implements DriverDialect {
   }
 
   async connect(hostInfo: HostInfo, props: Map<string, any>): Promise<ClientWrapper> {
+    this.setNetworkTimeouts(props);
     const targetClient = await createConnection(WrapperProperties.removeWrapperProperties(props));
-    return Promise.resolve(new MySQLClientWrapper(targetClient, hostInfo, props));
+    return Promise.resolve(new MySQLClientWrapper(targetClient, hostInfo, props, this));
   }
 
   preparePoolClientProperties(props: Map<string, any>, poolConfig: AwsPoolConfig | undefined): any {
@@ -51,5 +54,24 @@ export class MySQL2DriverDialect implements DriverDialect {
 
   getAwsPoolClient(props: PoolOptions): AwsPoolClient {
     return new AwsMysqlPoolClient(props);
+  }
+
+  setNetworkTimeouts(props: Map<string, any>) {
+    this.setConnectTimeout(props);
+  }
+
+  setConnectTimeout(props: Map<string, any>) {
+    const wrapperConnectTimeout = props.get(WrapperProperties.WRAPPER_CONNECT_TIMEOUT.name);
+
+    if (wrapperConnectTimeout) {
+      props.set(MySQL2DriverDialect.connectTimeoutPropertyName, wrapperConnectTimeout);
+    }
+  }
+
+  setQueryTimeout(props: Map<string, any>, sql?: any) {
+    const queryTimeout = props.get(WrapperProperties.WRAPPER_QUERY_TIMEOUT.name);
+    if (queryTimeout && !sql[MySQL2DriverDialect.queryTimeoutPropertyName]) {
+      sql[MySQL2DriverDialect.queryTimeoutPropertyName] = queryTimeout;
+    }
   }
 }
