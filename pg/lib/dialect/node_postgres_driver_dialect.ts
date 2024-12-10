@@ -36,7 +36,7 @@ export class NodePostgresDriverDialect implements DriverDialect {
   }
 
   async connect(hostInfo: HostInfo, props: Map<string, any>): Promise<ClientWrapper> {
-    this.setupInitialNetworkTimeouts(props);
+    this.setNetworkTimeouts(props);
 
     const targetClient = new pkgPg.Client(WrapperProperties.removeWrapperProperties(props));
     await targetClient.connect();
@@ -60,7 +60,7 @@ export class NodePostgresDriverDialect implements DriverDialect {
     return new AwsPgPoolClient(props);
   }
 
-  setupInitialNetworkTimeouts(props: Map<string, any>) {
+  setNetworkTimeouts(props: Map<string, any>) {
     this.setConnectTimeout(props);
     this.setQueryTimeout(props);
   }

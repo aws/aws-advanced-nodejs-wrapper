@@ -28,7 +28,7 @@ export interface DriverDialect {
 
   getAwsPoolClient(props: any): AwsPoolClient;
 
-  setupInitialNetworkTimeouts(props: Map<string, any>): void;
+  setNetworkTimeouts(props: Map<string, any>): void;
 
   setConnectTimeout(props: Map<string, any>): void;
 
