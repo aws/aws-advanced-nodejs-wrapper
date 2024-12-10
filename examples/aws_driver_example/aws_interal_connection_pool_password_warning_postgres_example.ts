@@ -72,6 +72,8 @@ try {
 } finally {
   await newClient.end();
 }
+// Clean up resources used by the plugins.
+await PluginManager.releaseResources();
 // Closes all pools and removes all cached pool connections.
 await provider.releaseResources();
 
@@ -92,6 +94,3 @@ try {
 } finally {
   logger.debug("example complete");
 }
-
-// Clean up resources used by the plugins.
-await PluginManager.releaseResources();
