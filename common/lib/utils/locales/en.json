@@ -158,9 +158,9 @@
   "ErrorHandler.NoOpListener": "[%s] NoOp error event listener caught error: '%s'",
   "ErrorHandler.TrackerListener": "[%s] Tracker error event listener caught error: '%s'",
   "LimitlessConnectionPlugin.unsupportedDialectOrDatabase": "Unsupported dialect '%s' encountered. Please ensure connection parameters are correct, and refer to the documentation to ensure that the connecting database is compatible with the Limitless Connection Plugin.",
-  "LimitlessRouterMonitor.stopped": "Limitless Router Monitor thread stopped on instance '%s'.",
-  "LimitlessRouterMonitor.running": "Limitless Router Monitor thread running on instance '%s'.",
-  "LimitlessRouterMonitor.exceptionDuringMonitoringStop": "Unhandled exception was thrown in Limitless Router Monitoring thread for instance '%s'.",
+  "LimitlessRouterMonitor.stopped": "Limitless Router Monitor task stopped on instance '%s'.",
+  "LimitlessRouterMonitor.running": "Limitless Router Monitor task running on instance '%s'.",
+  "LimitlessRouterMonitor.errorDuringMonitoringStop": "Unhandled error was thrown in Limitless Router Monitoring task for instance '%s'.",
   "LimitlessRouterMonitor.openingConnection": "Opening Limitless Router Monitor connection to '%s'.",
   "LimitlessRouterMonitor.openedConnection": "Opened Limitless Router Monitor connection to '%s'.",
   "LimitlessRouterServiceImpl.nullLimitlessRouterMonitor": "Limitless Router Monitor can't be instantiated.",
@@ -179,5 +179,11 @@
   "LimitlessRouterServiceImpl.synchronouslyGetLimitlessRouters": "Fetching Limitless Routers synchronously.",
   "LimitlessRouterServiceImpl.getLimitlessRoutersException": "Exception encountered getting Limitless Routers. %s",
   "LimitlessRouterServiceImpl.fetchedEmptyRouterList": "Empty router list was fetched.",
-  "LimitlessRouterServiceImpl.errorStartingMonitor": "An error occurred while starting Limitless Router Monitor. %s"
+  "LimitlessRouterServiceImpl.errorStartingMonitor": "An error occurred while starting Limitless Router Monitor. %s",
+  "HostResponseTimeMonitor.stopped": "Host Response Time Monitor task stopped on instance '%s'.",
+  "HostResponseTimeMonitor.responseTime": "Response time for '%s': '%s' ms.",
+  "HostResponseTimeMonitor.interruptedErrorDuringMonitoring": "Response time task for host '%s' was interrupted.",
+  "HostResponseTimeMonitor.openingConnection": "Opening a Response time connection to '%s'.",
+  "HostResponseTimeMonitor.openedConnection": "Opened Response time connection: '%s'.",
+  "FastestResponseStrategyPlugin.unsupportedHostSelectorStrategy": "Unsupported host selector strategy: '%s'. To use the fastest response strategy plugin, please ensure the property 'readerHostSelectorStrategy' is set to 'fastestResponse'."
 }
