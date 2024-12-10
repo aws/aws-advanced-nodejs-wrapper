@@ -108,6 +108,9 @@ try {
 } finally {
   await client.end();
 
+  // Clean up resources used by the plugins.
+  await PluginManager.releaseResources();
+
   // If configured to use internal connection pools, close them here.
   await provider.releaseResources();
 }
@@ -138,6 +141,3 @@ async function queryWithFailoverHandling(client: AwsMySQLClient, query: string) 
     }
   }
 }
-
-// Clean up resources used by the plugins.
-await PluginManager.releaseResources();

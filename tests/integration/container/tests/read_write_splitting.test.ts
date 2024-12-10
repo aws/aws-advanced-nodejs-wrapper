@@ -115,6 +115,7 @@ describe("aurora read write splitting", () => {
         // pass
       }
     }
+    await PluginManager.releaseResources();
     if (provider !== null) {
       try {
         await provider.releaseResources();
@@ -122,7 +123,6 @@ describe("aurora read write splitting", () => {
         // pass
       }
     }
-    await PluginManager.releaseResources();
     logger.info(`Test finished: ${expect.getState().currentTestName}`);
   }, 1320000);
 
