@@ -53,5 +53,5 @@ export class MySQL2DriverDialect implements DriverDialect {
     return new AwsMysqlPoolClient(props);
   }
 
-  setupInitialProperties(props: Map<string, any>) {}
+  setKeepAliveProperties(props: Map<string, any>) {}
 }
