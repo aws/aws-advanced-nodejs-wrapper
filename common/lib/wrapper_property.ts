@@ -335,6 +335,12 @@ export class WrapperProperties {
     600_000 // 10 min
   );
 
+  static readonly KEEPALIVE_PROPERTIES = new WrapperProperty<Map<string, any>>(
+    "wrapperKeepAliveProperties",
+    "Map containing any keepAlive properties that the target driver accepts in the client configuration.",
+    null
+  );
+
   static removeWrapperProperties(props: Map<string, any>): any {
     const persistingProperties = [
       WrapperProperties.USER.name,

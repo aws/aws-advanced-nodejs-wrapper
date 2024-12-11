@@ -28,13 +28,17 @@ import { HostInfo } from "../../../common/lib/host_info";
 
 export class NodePostgresDriverDialect implements DriverDialect {
   protected dialectName: string = this.constructor.name;
+  private static keepAlivePropertyName = "keepAlive";
+  private static keepAliveInitialDelayMillisPropertyName = "keepAliveInitialDelayMillis";
 
   getDialectName(): string {
     return this.dialectName;
   }
 
   async connect(hostInfo: HostInfo, props: Map<string, any>): Promise<ClientWrapper> {
-    const targetClient = new pkgPg.Client(WrapperProperties.removeWrapperProperties(props));
+    const driverProperties = WrapperProperties.removeWrapperProperties(props);
+    this.setKeepAliveProperties(driverProperties, props.get(WrapperProperties.KEEPALIVE_PROPERTIES.name));
+    const targetClient = new pkgPg.Client(driverProperties);
     await targetClient.connect();
     return Promise.resolve(new PgClientWrapper(targetClient, hostInfo, props));
   }
@@ -54,5 +58,21 @@ export class NodePostgresDriverDialect implements DriverDialect {
 
   getAwsPoolClient(props: pkgPg.PoolConfig): AwsPoolClient {
     return new AwsPgPoolClient(props);
+  }
+
+  setKeepAliveProperties(props: Map<string, any>, keepAliveProps: any) {
+    if (!keepAliveProps) {
+      return;
+    }
+
+    const keepAlive = keepAliveProps.get(NodePostgresDriverDialect.keepAlivePropertyName);
+    const keepAliveInitialDelayMillis = keepAliveProps.get(NodePostgresDriverDialect.keepAliveInitialDelayMillisPropertyName);
+
+    if (keepAlive) {
+      props.set(NodePostgresDriverDialect.keepAlivePropertyName, keepAlive);
+    }
+    if (keepAliveInitialDelayMillis) {
+      props.set(NodePostgresDriverDialect.keepAliveInitialDelayMillisPropertyName, keepAliveInitialDelayMillis);
+    }
   }
 }
