@@ -84,7 +84,9 @@ async function validateConnection(client: AwsPGClient | AwsMySQLClient) {
 describe("iam authentication", () => {
   beforeEach(async () => {
     logger.info(`Test started: ${expect.getState().currentTestName}`);
-    jest.useFakeTimers();
+    jest.useFakeTimers({
+      doNotFake: ["nextTick"]
+    });
     env = await TestEnvironment.getCurrent();
     driver = DriverHelper.getDriverForDatabaseEngine(env.engine);
     initClientFunc = DriverHelper.getClient(driver);
@@ -96,6 +98,11 @@ describe("iam authentication", () => {
     await TestEnvironment.verifyClusterStatus();
     logger.info(`Test finished: ${expect.getState().currentTestName}`);
   }, 1320000);
+
+  afterAll(async () => {
+    jest.runOnlyPendingTimers();
+    jest.useRealTimers();
+  });
 
   itIf(
     "iam wrong database username",

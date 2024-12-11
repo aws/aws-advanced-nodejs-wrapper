@@ -97,7 +97,7 @@ export class DriverConnectionProvider implements ConnectionProvider {
           JSON.stringify(Object.fromEntries(maskProperties(resultProps)))
       );
 
-      resultTargetClient = driverDialect.connect(hostInfo, resultProps);
+      resultTargetClient = await driverDialect.connect(hostInfo, resultProps);
     }
     pluginService.attachErrorListener(resultTargetClient);
     return resultTargetClient;
