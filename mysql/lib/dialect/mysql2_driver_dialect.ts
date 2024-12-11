@@ -23,6 +23,7 @@ import { AwsPoolClient } from "../../../common/lib/aws_pool_client";
 import { AwsMysqlPoolClient } from "../mysql_pool_client";
 import { MySQLClientWrapper } from "../../../common/lib/mysql_client_wrapper";
 import { HostInfo } from "../../../common/lib/host_info";
+import { UnsupportedMethodError } from "../../../common/lib/utils/errors";
 
 export class MySQL2DriverDialect implements DriverDialect {
   protected dialectName: string = this.constructor.name;
@@ -32,7 +33,10 @@ export class MySQL2DriverDialect implements DriverDialect {
   }
 
   async connect(hostInfo: HostInfo, props: Map<string, any>): Promise<ClientWrapper> {
-    const targetClient = await createConnection(WrapperProperties.removeWrapperProperties(props));
+    const driverProperties = WrapperProperties.removeWrapperProperties(props);
+    // MySQL2 does not support keep alive, explicitly check and throw an exception if this value is set.
+    this.setKeepAliveProperties(driverProperties, props.get(WrapperProperties.KEEPALIVE_PROPERTIES.name));
+    const targetClient = await createConnection(driverProperties);
     return Promise.resolve(new MySQLClientWrapper(targetClient, hostInfo, props));
   }
 
@@ -53,5 +57,9 @@ export class MySQL2DriverDialect implements DriverDialect {
     return new AwsMysqlPoolClient(props);
   }
 
-  setKeepAliveProperties(props: Map<string, any>, keepAliveProps: any) {}
+  setKeepAliveProperties(props: Map<string, any>, keepAliveProps: any) {
+    if (keepAliveProps) {
+      throw new UnsupportedMethodError("Keep alive configuration is not supported for MySQL2.");
+    }
+  }
 }
