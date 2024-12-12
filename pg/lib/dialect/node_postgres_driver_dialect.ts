@@ -27,11 +27,11 @@ import { PgClientWrapper } from "../../../common/lib/pg_client_wrapper";
 import { HostInfo } from "../../../common/lib/host_info";
 
 export class NodePostgresDriverDialect implements DriverDialect {
-  static readonly connectTimeoutPropertyName = "connectionTimeoutMillis";
-  static readonly queryTimeoutPropertyName = "query_timeout";
   protected dialectName: string = this.constructor.name;
-  private static keepAlivePropertyName = "keepAlive";
-  private static keepAliveInitialDelayMillisPropertyName = "keepAliveInitialDelayMillis";
+  private static readonly CONNECT_TIMEOUT_PROPERTY_NAME = "connectionTimeoutMillis";
+  private static readonly QUERY_TIMEOUT_PROPERTY_NAME = "query_timeout";
+  private static readonly KEEP_ALIVE_PROPERTY_NAME = "keepAlive";
+  private static readonly KEEP_ALIVE_INITIAL_DELAY_MILLIS_PROPERTY_NAME = "keepAliveInitialDelayMillis";
 
   getDialectName(): string {
     return this.dialectName;
@@ -42,7 +42,7 @@ export class NodePostgresDriverDialect implements DriverDialect {
     this.setKeepAliveProperties(driverProperties, props.get(WrapperProperties.KEEPALIVE_PROPERTIES.name));
     this.setConnectTimeout(driverProperties, props.get(WrapperProperties.WRAPPER_CONNECT_TIMEOUT.name));
     this.setQueryTimeout(driverProperties, props.get(WrapperProperties.WRAPPER_QUERY_TIMEOUT.name));
-    const targetClient = new pkgPg.Client(driverProperties);
+    const targetClient = new pkgPg.Client(Object.fromEntries(driverProperties.entries()));
     await targetClient.connect();
     return Promise.resolve(new PgClientWrapper(targetClient, hostInfo, props));
   }
@@ -67,14 +67,14 @@ export class NodePostgresDriverDialect implements DriverDialect {
   setConnectTimeout(props: Map<string, any>, wrapperConnectTimeout?: any) {
     const timeout = wrapperConnectTimeout ?? props.get(WrapperProperties.WRAPPER_CONNECT_TIMEOUT.name);
     if (timeout) {
-      props.set(NodePostgresDriverDialect.connectTimeoutPropertyName, timeout);
+      props.set(NodePostgresDriverDialect.CONNECT_TIMEOUT_PROPERTY_NAME, timeout);
     }
   }
 
   setQueryTimeout(props: Map<string, any>, sql?: any, wrapperQueryTimeout?: any) {
     const timeout = wrapperQueryTimeout ?? props.get(WrapperProperties.WRAPPER_QUERY_TIMEOUT.name);
     if (timeout) {
-      props.set(NodePostgresDriverDialect.queryTimeoutPropertyName, timeout);
+      props.set(NodePostgresDriverDialect.QUERY_TIMEOUT_PROPERTY_NAME, timeout);
     }
   }
 
@@ -83,14 +83,14 @@ export class NodePostgresDriverDialect implements DriverDialect {
       return;
     }
 
-    const keepAlive = keepAliveProps.get(NodePostgresDriverDialect.keepAlivePropertyName);
-    const keepAliveInitialDelayMillis = keepAliveProps.get(NodePostgresDriverDialect.keepAliveInitialDelayMillisPropertyName);
+    const keepAlive = keepAliveProps.get(NodePostgresDriverDialect.KEEP_ALIVE_PROPERTY_NAME);
+    const keepAliveInitialDelayMillis = keepAliveProps.get(NodePostgresDriverDialect.KEEP_ALIVE_INITIAL_DELAY_MILLIS_PROPERTY_NAME);
 
     if (keepAlive) {
-      props.set(NodePostgresDriverDialect.keepAlivePropertyName, keepAlive);
+      props.set(NodePostgresDriverDialect.KEEP_ALIVE_PROPERTY_NAME, keepAlive);
     }
     if (keepAliveInitialDelayMillis) {
-      props.set(NodePostgresDriverDialect.keepAliveInitialDelayMillisPropertyName, keepAliveInitialDelayMillis);
+      props.set(NodePostgresDriverDialect.KEEP_ALIVE_INITIAL_DELAY_MILLIS_PROPERTY_NAME, keepAliveInitialDelayMillis);
     }
   }
 }

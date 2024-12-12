@@ -38,6 +38,7 @@ import { DeveloperConnectionPluginFactory } from "./plugins/dev/developer_connec
 import { ConnectionPluginFactory } from "./plugin_factory";
 import { LimitlessConnectionPluginFactory } from "./plugins/limitless/limitless_connection_plugin_factory";
 import { FastestResponseStrategyPluginFactory } from "./plugins/strategy/fastest_response/fastest_respose_strategy_plugin_factory";
+import { ConfigurationProfile } from "./profile/configuration_profile";
 
 /*
   Type alias used for plugin factory sorting. It holds a reference to a plugin
@@ -69,56 +70,88 @@ export class ConnectionPluginChainBuilder {
     ["executeTime", { factory: ExecuteTimePluginFactory, weight: ConnectionPluginChainBuilder.WEIGHT_RELATIVE_TO_PRIOR_PLUGIN }]
   ]);
 
+  static readonly PLUGIN_WEIGHTS = new Map<typeof ConnectionPluginFactory, number>([
+    [AuroraInitialConnectionStrategyFactory, 390],
+    [AuroraConnectionTrackerPluginFactory, 400],
+    [StaleDnsPluginFactory, 500],
+    [ReadWriteSplittingPluginFactory, 600],
+    [FailoverPluginFactory, 700],
+    [HostMonitoringPluginFactory, 800],
+    [LimitlessConnectionPluginFactory, 950],
+    [IamAuthenticationPluginFactory, 1000],
+    [AwsSecretsManagerPluginFactory, 1100],
+    [FederatedAuthPluginFactory, 1200],
+    [OktaAuthPluginFactory, 1300],
+    [DeveloperConnectionPluginFactory, 1400],
+    [ConnectTimePluginFactory, ConnectionPluginChainBuilder.WEIGHT_RELATIVE_TO_PRIOR_PLUGIN],
+    [ExecuteTimePluginFactory, ConnectionPluginChainBuilder.WEIGHT_RELATIVE_TO_PRIOR_PLUGIN]
+  ]);
+
   static async getPlugins(
     pluginService: PluginService,
     props: Map<string, any>,
-    connectionProviderManager: ConnectionProviderManager
+    connectionProviderManager: ConnectionProviderManager,
+    configurationProfile: ConfigurationProfile | null
   ): Promise<ConnectionPlugin[]> {
+    let pluginFactoryInfoList: PluginFactoryInfo[] = [];
     const plugins: ConnectionPlugin[] = [];
-    let pluginCodes: string = props.get(WrapperProperties.PLUGINS.name);
-    if (pluginCodes == null) {
-      pluginCodes = WrapperProperties.DEFAULT_PLUGINS;
+    let usingDefault: boolean = false;
+
+    if (configurationProfile) {
+      const profilePluginFactories = configurationProfile.getPluginFactories();
+      if (profilePluginFactories) {
+        for (const factory of profilePluginFactories) {
+          const weight = ConnectionPluginChainBuilder.PLUGIN_WEIGHTS.get(factory);
+          if (!weight) {
+            throw new AwsWrapperError(Messages.get("PluginManager.unknownPluginWeight", factory.prototype.constructor.name));
+          }
+          pluginFactoryInfoList.push({ factory: factory, weight: weight });
+        }
+        usingDefault = true; // We assume that plugin factories in configuration profile is presorted.
+      }
+    } else {
+      let pluginCodes: string = props.get(WrapperProperties.PLUGINS.name);
+      if (pluginCodes == null) {
+        pluginCodes = WrapperProperties.DEFAULT_PLUGINS;
+      }
+      usingDefault = pluginCodes === WrapperProperties.DEFAULT_PLUGINS;
+
+      pluginCodes = pluginCodes.trim();
+      if (pluginCodes !== "") {
+        const pluginCodeList = pluginCodes.split(",").map((pluginCode) => pluginCode.trim());
+        let lastWeight = 0;
+        pluginCodeList.forEach((p) => {
+          if (!ConnectionPluginChainBuilder.PLUGIN_FACTORIES.has(p)) {
+            throw new AwsWrapperError(Messages.get("PluginManager.unknownPluginCode", p));
+          }
+
+          const factoryInfo = ConnectionPluginChainBuilder.PLUGIN_FACTORIES.get(p);
+          if (factoryInfo) {
+            if (factoryInfo.weight === ConnectionPluginChainBuilder.WEIGHT_RELATIVE_TO_PRIOR_PLUGIN) {
+              lastWeight++;
+            } else {
+              lastWeight = factoryInfo.weight;
+            }
+            pluginFactoryInfoList.push({ factory: factoryInfo.factory, weight: lastWeight });
+          }
+        });
+      }
     }
 
-    const usingDefault = pluginCodes === WrapperProperties.DEFAULT_PLUGINS;
+    if (!usingDefault && pluginFactoryInfoList.length > 1 && WrapperProperties.AUTO_SORT_PLUGIN_ORDER.get(props)) {
+      pluginFactoryInfoList = pluginFactoryInfoList.sort((a, b) => a.weight - b.weight);
 
-    pluginCodes = pluginCodes.trim();
-
-    if (pluginCodes !== "") {
-      const pluginCodeList = pluginCodes.split(",").map((pluginCode) => pluginCode.trim());
-      let pluginFactoryInfoList: PluginFactoryInfo[] = [];
-      let lastWeight = 0;
-      pluginCodeList.forEach((p) => {
-        if (!ConnectionPluginChainBuilder.PLUGIN_FACTORIES.has(p)) {
-          throw new AwsWrapperError(Messages.get("PluginManager.unknownPluginCode", p));
-        }
-
-        const factoryInfo = ConnectionPluginChainBuilder.PLUGIN_FACTORIES.get(p);
-        if (factoryInfo) {
-          if (factoryInfo.weight === ConnectionPluginChainBuilder.WEIGHT_RELATIVE_TO_PRIOR_PLUGIN) {
-            lastWeight++;
-          } else {
-            lastWeight = factoryInfo.weight;
-          }
-          pluginFactoryInfoList.push({ factory: factoryInfo.factory, weight: lastWeight });
-        }
-      });
-
-      if (!usingDefault && pluginFactoryInfoList.length > 1 && WrapperProperties.AUTO_SORT_PLUGIN_ORDER.get(props)) {
-        pluginFactoryInfoList = pluginFactoryInfoList.sort((a, b) => a.weight - b.weight);
-
-        if (!usingDefault) {
-          logger.info(
-            "Plugins order has been rearranged. The following order is in effect: " +
-              pluginFactoryInfoList.map((pluginFactoryInfo) => pluginFactoryInfo.factory.name.split("Factory")[0]).join(", ")
-          );
-        }
+      if (!usingDefault) {
+        logger.info(
+          "Plugins order has been rearranged. The following order is in effect: " +
+            pluginFactoryInfoList.map((pluginFactoryInfo) => pluginFactoryInfo.factory.name.split("Factory")[0]).join(", ")
+        );
       }
+    }
 
-      for (const pluginFactoryInfo of pluginFactoryInfoList) {
-        const factoryObj = new pluginFactoryInfo.factory();
-        plugins.push(await factoryObj.getInstance(pluginService, props));
-      }
+    for (const pluginFactoryInfo of pluginFactoryInfoList) {
+      const factoryObj = new pluginFactoryInfo.factory();
+      plugins.push(await factoryObj.getInstance(pluginService, props));
     }
 
     plugins.push(new DefaultPlugin(pluginService, connectionProviderManager));

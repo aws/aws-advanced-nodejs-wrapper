@@ -11,7 +11,7 @@ The AWS Advanced NodeJS Wrapper supports usage of database credentials stored as
 
 To enable the AWS Secrets Manager Connection Plugin, add the plugin code `secretsManager` to the [`plugins`](../UsingTheNodejsWrapper.md#connection-plugin-manager-parameters) connection parameter.
 
-This plugin requires a valid set of AWS credentials to retrieve the database credentials from AWS Secrets Manager. The AWS credentials must be located in [one of these locations](https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/Package/-aws-sdk-credential-providers/#fromNodeProviderChain) supported by the AWS SDK's default credentials provider.
+This plugin requires a valid set of AWS credentials to retrieve the database credentials from AWS Secrets Manager. The AWS credentials must be located in [one of these locations](https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/Package/-aws-sdk-credential-providers/#fromNodeProviderChain) supported by the AWS SDK's default credentials provider. See also at [AWS Credentials Configuration](../custom-configuration/AwsCredentialsConfiguration.md)
 
 ## AWS Secrets Manager Connection Plugin Parameters
 

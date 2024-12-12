@@ -29,7 +29,7 @@ class DevPluginTest extends DeveloperConnectionPlugin {
 
 class TestClient extends AwsPGClient {
   setManager() {
-    this.pluginManager.init([plugin]);
+    this.pluginManager.init(null, [plugin]);
   }
 }
 
