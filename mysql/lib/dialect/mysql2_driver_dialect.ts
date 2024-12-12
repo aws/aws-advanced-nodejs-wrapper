@@ -26,9 +26,10 @@ import { HostInfo } from "../../../common/lib/host_info";
 import { UnsupportedMethodError } from "../../../common/lib/utils/errors";
 
 export class MySQL2DriverDialect implements DriverDialect {
-  static readonly connectTimeoutPropertyName = "connectTimeout";
-  static readonly queryTimeoutPropertyName = "timeout";
   protected dialectName: string = this.constructor.name;
+  private static readonly CONNECT_TIMEOUT_PROPERTY_NAME = "connectTimeout";
+  private static readonly QUERY_TIMEOUT_PROPERTY_NAME = "timeout";
+  private static readonly KEEP_ALIVE_PROPERTY_NAME = "keepAlive";
 
   getDialectName(): string {
     return this.dialectName;
@@ -36,7 +37,7 @@ export class MySQL2DriverDialect implements DriverDialect {
 
   async connect(hostInfo: HostInfo, props: Map<string, any>): Promise<ClientWrapper> {
     const driverProperties = WrapperProperties.removeWrapperProperties(props);
-    // MySQL2 does not support keep alive, explicitly check and throw an exception if this value is set.
+    // MySQL2 does not support keep alive, explicitly check and throw an exception if this value is set to true.
     this.setKeepAliveProperties(driverProperties, props.get(WrapperProperties.KEEPALIVE_PROPERTIES.name));
     this.setConnectTimeout(driverProperties, props.get(WrapperProperties.WRAPPER_CONNECT_TIMEOUT.name));
     const targetClient = await createConnection(driverProperties);
@@ -63,19 +64,19 @@ export class MySQL2DriverDialect implements DriverDialect {
   setConnectTimeout(props: Map<string, any>, wrapperConnectTimeout?: any) {
     const timeout = wrapperConnectTimeout ?? props.get(WrapperProperties.WRAPPER_CONNECT_TIMEOUT.name);
     if (timeout) {
-      props.set(MySQL2DriverDialect.connectTimeoutPropertyName, timeout);
+      props.set(MySQL2DriverDialect.CONNECT_TIMEOUT_PROPERTY_NAME, timeout);
     }
   }
 
   setQueryTimeout(props: Map<string, any>, sql?: any, wrapperConnectTimeout?: any) {
     const timeout = wrapperConnectTimeout ?? props.get(WrapperProperties.WRAPPER_QUERY_TIMEOUT.name);
-    if (timeout && !sql[MySQL2DriverDialect.queryTimeoutPropertyName]) {
-      sql[MySQL2DriverDialect.queryTimeoutPropertyName] = timeout;
+    if (timeout && !sql[MySQL2DriverDialect.QUERY_TIMEOUT_PROPERTY_NAME]) {
+      sql[MySQL2DriverDialect.QUERY_TIMEOUT_PROPERTY_NAME] = timeout;
     }
   }
 
   setKeepAliveProperties(props: Map<string, any>, keepAliveProps: any) {
-    if (keepAliveProps) {
+    if (keepAliveProps && keepAliveProps.get(MySQL2DriverDialect.KEEP_ALIVE_PROPERTY_NAME)) {
       throw new UnsupportedMethodError("Keep alive configuration is not supported for MySQL2.");
     }
   }

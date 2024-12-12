@@ -36,10 +36,9 @@ export class DriverConfigurationProfiles {
         ConfigurationProfilePresetCodes.A0,
         [],
         new Map<string, any>([
-          //[WrapperProperties.CONNECT_TIMEOUT.name, 10000],
-          //[WrapperProperties.SOCKET_TIMEOUT.name, 5000],
-          //[WrapperProperties.LOGIN_TIMEOUT.name, 10000],
-          //[WrapperProperties.TCP_KEEP_ALIVE.name, false]
+          [WrapperProperties.WRAPPER_CONNECT_TIMEOUT.name, 10000],
+          [WrapperProperties.WRAPPER_QUERY_TIMEOUT.name, 5000],
+          [WrapperProperties.KEEPALIVE_PROPERTIES.name, { keepAlive: false }]
         ]),
         null,
         null,
@@ -53,10 +52,9 @@ export class DriverConfigurationProfiles {
         ConfigurationProfilePresetCodes.A1,
         [],
         new Map<string, any>([
-          //[WrapperProperties.CONNECT_TIMEOUT.name, 30000],
-          //[WrapperProperties.SOCKET_TIMEOUT.name, 30000],
-          //[WrapperProperties.LOGIN_TIMEOUT.name, 30000],
-          //[WrapperProperties.TCP_KEEP_ALIVE.name, false]
+          [WrapperProperties.WRAPPER_CONNECT_TIMEOUT.name, 30000],
+          [WrapperProperties.WRAPPER_QUERY_TIMEOUT.name, 30000],
+          [WrapperProperties.KEEPALIVE_PROPERTIES.name, { keepAlive: false }]
         ]),
         null,
         null,
@@ -70,10 +68,9 @@ export class DriverConfigurationProfiles {
         ConfigurationProfilePresetCodes.A2,
         [],
         new Map<string, any>([
-          //[WrapperProperties.CONNECT_TIMEOUT.name, 3000],
-          //[WrapperProperties.SOCKET_TIMEOUT.name, 3000],
-          //[WrapperProperties.LOGIN_TIMEOUT.name, 3000],
-          //[WrapperProperties.TCP_KEEP_ALIVE.name, false]
+          [WrapperProperties.WRAPPER_CONNECT_TIMEOUT.name, 3000],
+          [WrapperProperties.WRAPPER_QUERY_TIMEOUT.name, 3000],
+          [WrapperProperties.KEEPALIVE_PROPERTIES.name, { keepAlive: false }]
         ]),
         null,
         null,
@@ -87,10 +84,9 @@ export class DriverConfigurationProfiles {
         ConfigurationProfilePresetCodes.B,
         [],
         new Map<string, any>([
-          //[WrapperProperties.CONNECT_TIMEOUT.name, 10000],
-          //[WrapperProperties.SOCKET_TIMEOUT.name, 0],
-          //[WrapperProperties.LOGIN_TIMEOUT.name, 10000],
-          //[WrapperProperties.TCP_KEEP_ALIVE.name, true]
+          [WrapperProperties.WRAPPER_CONNECT_TIMEOUT.name, 10000],
+          [WrapperProperties.WRAPPER_QUERY_TIMEOUT.name, 0],
+          [WrapperProperties.KEEPALIVE_PROPERTIES.name, { keepAlive: true }]
         ]),
         null,
         null,
@@ -106,14 +102,12 @@ export class DriverConfigurationProfiles {
         new Map<string, any>([
           [WrapperProperties.FAILURE_DETECTION_TIME_MS.name, 60000],
           [WrapperProperties.FAILURE_DETECTION_COUNT.name, 5],
-          [WrapperProperties.FAILURE_DETECTION_INTERVAL_MS.name, 15000]
-          //[DriverConfigurationProfiles.MONITORING_CONNECTION_PREFIX + WrapperProperties.CONNECT_TIMEOUT.name, 10000],
-          //[DriverConfigurationProfiles.MONITORING_CONNECTION_PREFIX + WrapperProperties.SOCKET_TIMEOUT.name, 5000],
-          //[DriverConfigurationProfiles.MONITORING_CONNECTION_PREFIX + WrapperProperties.LOGIN_TIMEOUT.name, 10000],
-          //[WrapperProperties.CONNECT_TIMEOUT.name, 10000],
-          //[WrapperProperties.SOCKET_TIMEOUT.name, 0],
-          //[WrapperProperties.LOGIN_TIMEOUT.name, 10000],
-          //[WrapperProperties.TCP_KEEP_ALIVE.name, false]
+          [WrapperProperties.FAILURE_DETECTION_INTERVAL_MS.name, 15000],
+          [DriverConfigurationProfiles.MONITORING_CONNECTION_PREFIX + WrapperProperties.WRAPPER_CONNECT_TIMEOUT.name, 10000],
+          [DriverConfigurationProfiles.MONITORING_CONNECTION_PREFIX + WrapperProperties.WRAPPER_QUERY_TIMEOUT.name, 5000],
+          [WrapperProperties.WRAPPER_CONNECT_TIMEOUT.name, 10000],
+          [WrapperProperties.WRAPPER_QUERY_TIMEOUT.name, 0],
+          [WrapperProperties.KEEPALIVE_PROPERTIES.name, { keepAlive: false }]
         ]),
         null,
         null,
@@ -129,14 +123,12 @@ export class DriverConfigurationProfiles {
         new Map<string, any>([
           [WrapperProperties.FAILURE_DETECTION_TIME_MS.name, 30000],
           [WrapperProperties.FAILURE_DETECTION_COUNT.name, 3],
-          [WrapperProperties.FAILURE_DETECTION_INTERVAL_MS.name, 5000]
-          //[DriverConfigurationProfiles.MONITORING_CONNECTION_PREFIX + WrapperProperties.CONNECT_TIMEOUT.name, 3000],
-          //[DriverConfigurationProfiles.MONITORING_CONNECTION_PREFIX + WrapperProperties.SOCKET_TIMEOUT.name, 3000],
-          //[DriverConfigurationProfiles.MONITORING_CONNECTION_PREFIX + WrapperProperties.LOGIN_TIMEOUT.name, 3000],
-          //[WrapperProperties.CONNECT_TIMEOUT.name, 10000],
-          //[WrapperProperties.SOCKET_TIMEOUT.name, 0],
-          //[WrapperProperties.LOGIN_TIMEOUT.name, 10000],
-          //[WrapperProperties.TCP_KEEP_ALIVE.name, false]
+          [WrapperProperties.FAILURE_DETECTION_INTERVAL_MS.name, 5000],
+          [DriverConfigurationProfiles.MONITORING_CONNECTION_PREFIX + WrapperProperties.WRAPPER_CONNECT_TIMEOUT.name, 3000],
+          [DriverConfigurationProfiles.MONITORING_CONNECTION_PREFIX + WrapperProperties.WRAPPER_QUERY_TIMEOUT.name, 3000],
+          [WrapperProperties.WRAPPER_CONNECT_TIMEOUT.name, 10000],
+          [WrapperProperties.WRAPPER_QUERY_TIMEOUT.name, 0],
+          [WrapperProperties.KEEPALIVE_PROPERTIES.name, { keepAlive: false }]
         ]),
         null,
         null,
@@ -151,10 +143,9 @@ export class DriverConfigurationProfiles {
         // Factories should be presorted by weights!
         [AuroraInitialConnectionStrategyFactory, AuroraConnectionTrackerPluginFactory, ReadWriteSplittingPluginFactory, FailoverPluginFactory],
         new Map<string, any>([
-          //[WrapperProperties.CONNECT_TIMEOUT.name, 10000],
-          //[WrapperProperties.SOCKET_TIMEOUT.name, 5000],
-          //[WrapperProperties.LOGIN_TIMEOUT.name, 10000],
-          //[WrapperProperties.TCP_KEEP_ALIVE.name, false]
+          [WrapperProperties.WRAPPER_CONNECT_TIMEOUT.name, 10000],
+          [WrapperProperties.WRAPPER_QUERY_TIMEOUT.name, 5000],
+          [WrapperProperties.KEEPALIVE_PROPERTIES.name, { keepAlive: false }]
         ]),
         null,
         null,
@@ -179,10 +170,9 @@ export class DriverConfigurationProfiles {
         // Factories should be presorted by weights!
         [AuroraInitialConnectionStrategyFactory, AuroraConnectionTrackerPluginFactory, ReadWriteSplittingPluginFactory, FailoverPluginFactory],
         new Map<string, any>([
-          //[WrapperProperties.CONNECT_TIMEOUT.name, 30000],
-          //[WrapperProperties.SOCKET_TIMEOUT.name, 30000],
-          //[WrapperProperties.LOGIN_TIMEOUT.name, 30000],
-          //[WrapperProperties.TCP_KEEP_ALIVE.name, false]
+          [WrapperProperties.WRAPPER_CONNECT_TIMEOUT.name, 30000],
+          [WrapperProperties.WRAPPER_QUERY_TIMEOUT.name, 30000],
+          [WrapperProperties.KEEPALIVE_PROPERTIES.name, { keepAlive: false }]
         ]),
         null,
         null,
@@ -207,10 +197,9 @@ export class DriverConfigurationProfiles {
         // Factories should be presorted by weights!
         [AuroraInitialConnectionStrategyFactory, AuroraConnectionTrackerPluginFactory, ReadWriteSplittingPluginFactory, FailoverPluginFactory],
         new Map<string, any>([
-          //[WrapperProperties.CONNECT_TIMEOUT.name, 10000],
-          //[WrapperProperties.SOCKET_TIMEOUT.name, 0],
-          //[WrapperProperties.LOGIN_TIMEOUT.name, 10000],
-          //[WrapperProperties.TCP_KEEP_ALIVE.name, true]
+          [WrapperProperties.WRAPPER_CONNECT_TIMEOUT.name, 10000],
+          [WrapperProperties.WRAPPER_QUERY_TIMEOUT.name, 0],
+          [WrapperProperties.KEEPALIVE_PROPERTIES.name, { keepAlive: true }]
         ]),
         null,
         null,
@@ -243,14 +232,12 @@ export class DriverConfigurationProfiles {
         new Map<string, any>([
           [WrapperProperties.FAILURE_DETECTION_TIME_MS.name, 60000],
           [WrapperProperties.FAILURE_DETECTION_COUNT.name, 5],
-          [WrapperProperties.FAILURE_DETECTION_INTERVAL_MS.name, 15000]
-          //[DriverConfigurationProfiles.MONITORING_CONNECTION_PREFIX + WrapperProperties.CONNECT_TIMEOUT.name, 10000],
-          //[DriverConfigurationProfiles.MONITORING_CONNECTION_PREFIX + WrapperProperties.SOCKET_TIMEOUT.name, 5000],
-          //[DriverConfigurationProfiles.MONITORING_CONNECTION_PREFIX + WrapperProperties.LOGIN_TIMEOUT.name, 10000],
-          //[WrapperProperties.CONNECT_TIMEOUT.name, 10000],
-          //[WrapperProperties.SOCKET_TIMEOUT.name, 0],
-          //[WrapperProperties.LOGIN_TIMEOUT.name, 10000],
-          //[WrapperProperties.TCP_KEEP_ALIVE.name, false]
+          [WrapperProperties.FAILURE_DETECTION_INTERVAL_MS.name, 15000],
+          [DriverConfigurationProfiles.MONITORING_CONNECTION_PREFIX + WrapperProperties.WRAPPER_CONNECT_TIMEOUT.name, 10000],
+          [DriverConfigurationProfiles.MONITORING_CONNECTION_PREFIX + WrapperProperties.WRAPPER_QUERY_TIMEOUT.name, 5000],
+          [WrapperProperties.WRAPPER_CONNECT_TIMEOUT.name, 10000],
+          [WrapperProperties.WRAPPER_QUERY_TIMEOUT.name, 0],
+          [WrapperProperties.KEEPALIVE_PROPERTIES.name, { keepAlive: false }]
         ]),
         null,
         null,
@@ -283,14 +270,12 @@ export class DriverConfigurationProfiles {
         new Map<string, any>([
           [WrapperProperties.FAILURE_DETECTION_TIME_MS.name, 30000],
           [WrapperProperties.FAILURE_DETECTION_COUNT.name, 3],
-          [WrapperProperties.FAILURE_DETECTION_INTERVAL_MS.name, 5000]
-          //[DriverConfigurationProfiles.MONITORING_CONNECTION_PREFIX + WrapperProperties.CONNECT_TIMEOUT.name, 3000],
-          //[DriverConfigurationProfiles.MONITORING_CONNECTION_PREFIX + WrapperProperties.SOCKET_TIMEOUT.name, 3000],
-          //[DriverConfigurationProfiles.MONITORING_CONNECTION_PREFIX + WrapperProperties.LOGIN_TIMEOUT.name, 3000],
-          //[WrapperProperties.CONNECT_TIMEOUT.name, 10000],
-          //[WrapperProperties.SOCKET_TIMEOUT.name, 0],
-          //[WrapperProperties.LOGIN_TIMEOUT.name, 10000],
-          //[WrapperProperties.TCP_KEEP_ALIVE.name, false]
+          [WrapperProperties.FAILURE_DETECTION_INTERVAL_MS.name, 5000],
+          [DriverConfigurationProfiles.MONITORING_CONNECTION_PREFIX + WrapperProperties.WRAPPER_CONNECT_TIMEOUT.name, 3000],
+          [DriverConfigurationProfiles.MONITORING_CONNECTION_PREFIX + WrapperProperties.WRAPPER_QUERY_TIMEOUT.name, 3000],
+          [WrapperProperties.WRAPPER_CONNECT_TIMEOUT.name, 10000],
+          [WrapperProperties.WRAPPER_QUERY_TIMEOUT.name, 0],
+          [WrapperProperties.KEEPALIVE_PROPERTIES.name, { keepAlive: false }]
         ]),
         null,
         null,
@@ -315,10 +300,9 @@ export class DriverConfigurationProfiles {
         // Factories should be presorted by weights!
         [AuroraConnectionTrackerPluginFactory, StaleDnsPluginFactory, FailoverPluginFactory],
         new Map<string, any>([
-          //[WrapperProperties.CONNECT_TIMEOUT.name, 10000],
-          //[WrapperProperties.SOCKET_TIMEOUT.name, 5000],
-          //[WrapperProperties.LOGIN_TIMEOUT.name, 10000],
-          //[WrapperProperties.TCP_KEEP_ALIVE.name, false]
+          [WrapperProperties.WRAPPER_CONNECT_TIMEOUT.name, 10000],
+          [WrapperProperties.WRAPPER_QUERY_TIMEOUT.name, 5000],
+          [WrapperProperties.KEEPALIVE_PROPERTIES.name, { keepAlive: false }]
         ]),
         null,
         null,
@@ -333,10 +317,9 @@ export class DriverConfigurationProfiles {
         // Factories should be presorted by weights!
         [AuroraConnectionTrackerPluginFactory, StaleDnsPluginFactory, FailoverPluginFactory],
         new Map<string, any>([
-          //[WrapperProperties.CONNECT_TIMEOUT.name, 30000],
-          //[WrapperProperties.SOCKET_TIMEOUT.name, 30000],
-          //[WrapperProperties.LOGIN_TIMEOUT.name, 30000],
-          //[WrapperProperties.TCP_KEEP_ALIVE.name, false]
+          [WrapperProperties.WRAPPER_CONNECT_TIMEOUT.name, 30000],
+          [WrapperProperties.WRAPPER_QUERY_TIMEOUT.name, 30000],
+          [WrapperProperties.KEEPALIVE_PROPERTIES.name, { keepAlive: false }]
         ]),
         null,
         null,
@@ -351,10 +334,9 @@ export class DriverConfigurationProfiles {
         // Factories should be presorted by weights!
         [AuroraConnectionTrackerPluginFactory, StaleDnsPluginFactory, FailoverPluginFactory],
         new Map<string, any>([
-          //[WrapperProperties.CONNECT_TIMEOUT.name, 10000],
-          //[WrapperProperties.SOCKET_TIMEOUT.name, 0],
-          //[WrapperProperties.LOGIN_TIMEOUT.name, 10000],
-          //[WrapperProperties.TCP_KEEP_ALIVE.name, true]
+          [WrapperProperties.WRAPPER_CONNECT_TIMEOUT.name, 10000],
+          [WrapperProperties.WRAPPER_QUERY_TIMEOUT.name, 0],
+          [WrapperProperties.KEEPALIVE_PROPERTIES.name, { keepAlive: true }]
         ]),
         null,
         null,
@@ -371,14 +353,12 @@ export class DriverConfigurationProfiles {
         new Map<string, any>([
           [WrapperProperties.FAILURE_DETECTION_TIME_MS.name, 60000],
           [WrapperProperties.FAILURE_DETECTION_COUNT.name, 5],
-          [WrapperProperties.FAILURE_DETECTION_INTERVAL_MS.name, 15000]
-          //[DriverConfigurationProfiles.MONITORING_CONNECTION_PREFIX + WrapperProperties.CONNECT_TIMEOUT.name, 10000],
-          //[DriverConfigurationProfiles.MONITORING_CONNECTION_PREFIX + WrapperProperties.SOCKET_TIMEOUT.name, 5000],
-          //[DriverConfigurationProfiles.MONITORING_CONNECTION_PREFIX + WrapperProperties.LOGIN_TIMEOUT.name, 10000],
-          //[WrapperProperties.CONNECT_TIMEOUT.name, 10000],
-          //[WrapperProperties.SOCKET_TIMEOUT.name, 0],
-          //[WrapperProperties.LOGIN_TIMEOUT.name, 10000],
-          //[WrapperProperties.TCP_KEEP_ALIVE.name, true]
+          [WrapperProperties.FAILURE_DETECTION_INTERVAL_MS.name, 15000],
+          [DriverConfigurationProfiles.MONITORING_CONNECTION_PREFIX + WrapperProperties.WRAPPER_CONNECT_TIMEOUT.name, 10000],
+          [DriverConfigurationProfiles.MONITORING_CONNECTION_PREFIX + WrapperProperties.WRAPPER_QUERY_TIMEOUT.name, 5000],
+          [WrapperProperties.WRAPPER_CONNECT_TIMEOUT.name, 10000],
+          [WrapperProperties.WRAPPER_QUERY_TIMEOUT.name, 0],
+          [WrapperProperties.KEEPALIVE_PROPERTIES.name, { keepAlive: true }]
         ]),
         null,
         null,
@@ -395,14 +375,12 @@ export class DriverConfigurationProfiles {
         new Map<string, any>([
           [WrapperProperties.FAILURE_DETECTION_TIME_MS.name, 30000],
           [WrapperProperties.FAILURE_DETECTION_COUNT.name, 3],
-          [WrapperProperties.FAILURE_DETECTION_INTERVAL_MS.name, 5000]
-          //[DriverConfigurationProfiles.MONITORING_CONNECTION_PREFIX + WrapperProperties.CONNECT_TIMEOUT.name, 3000],
-          //[DriverConfigurationProfiles.MONITORING_CONNECTION_PREFIX + WrapperProperties.SOCKET_TIMEOUT.name, 3000],
-          //[DriverConfigurationProfiles.MONITORING_CONNECTION_PREFIX + WrapperProperties.LOGIN_TIMEOUT.name, 3000],
-          //[WrapperProperties.CONNECT_TIMEOUT.name, 10000],
-          //[WrapperProperties.SOCKET_TIMEOUT.name, 0],
-          //[WrapperProperties.LOGIN_TIMEOUT.name, 10000],
-          //[WrapperProperties.TCP_KEEP_ALIVE.name, false]
+          [WrapperProperties.FAILURE_DETECTION_INTERVAL_MS.name, 5000],
+          [DriverConfigurationProfiles.MONITORING_CONNECTION_PREFIX + WrapperProperties.WRAPPER_CONNECT_TIMEOUT.name, 3000],
+          [DriverConfigurationProfiles.MONITORING_CONNECTION_PREFIX + WrapperProperties.WRAPPER_QUERY_TIMEOUT.name, 3000],
+          [WrapperProperties.WRAPPER_CONNECT_TIMEOUT.name, 10000],
+          [WrapperProperties.WRAPPER_QUERY_TIMEOUT.name, 0],
+          [WrapperProperties.KEEPALIVE_PROPERTIES.name, { keepAlive: false }]
         ]),
         null,
         null,
