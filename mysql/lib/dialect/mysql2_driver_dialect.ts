@@ -40,7 +40,7 @@ export class MySQL2DriverDialect implements DriverDialect {
     // MySQL2 does not support keep alive, explicitly check and throw an exception if this value is set to true.
     this.setKeepAliveProperties(driverProperties, props.get(WrapperProperties.KEEPALIVE_PROPERTIES.name));
     this.setConnectTimeout(driverProperties, props.get(WrapperProperties.WRAPPER_CONNECT_TIMEOUT.name));
-    const targetClient = await createConnection(driverProperties);
+    const targetClient = await createConnection(Object.fromEntries(driverProperties.entries()));
     return Promise.resolve(new MySQLClientWrapper(targetClient, hostInfo, props, this));
   }
 

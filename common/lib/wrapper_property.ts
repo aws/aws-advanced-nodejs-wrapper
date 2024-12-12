@@ -373,7 +373,7 @@ export class WrapperProperties {
 
   static readonly PROFILE_NAME = new WrapperProperty<string>("profileName", "Driver configuration profile name", null);
 
-  static removeWrapperProperties(props: Map<string, any>): any {
+  static removeWrapperProperties(props: Map<string, any>): Map<string, any> {
     const persistingProperties = [
       WrapperProperties.USER.name,
       WrapperProperties.PASSWORD.name,
@@ -401,6 +401,6 @@ export class WrapperProperties {
       }
     });
 
-    return Object.fromEntries(copy.entries());
+    return copy;
   }
 }

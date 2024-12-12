@@ -42,7 +42,7 @@ export class NodePostgresDriverDialect implements DriverDialect {
     this.setKeepAliveProperties(driverProperties, props.get(WrapperProperties.KEEPALIVE_PROPERTIES.name));
     this.setConnectTimeout(driverProperties, props.get(WrapperProperties.WRAPPER_CONNECT_TIMEOUT.name));
     this.setQueryTimeout(driverProperties, props.get(WrapperProperties.WRAPPER_QUERY_TIMEOUT.name));
-    const targetClient = new pkgPg.Client(driverProperties);
+    const targetClient = new pkgPg.Client(Object.fromEntries(driverProperties.entries()));
     await targetClient.connect();
     return Promise.resolve(new PgClientWrapper(targetClient, hostInfo, props));
   }
