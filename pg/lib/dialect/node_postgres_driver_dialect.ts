@@ -51,7 +51,7 @@ export class NodePostgresDriverDialect implements DriverDialect {
     const finalPoolConfig: pkgPg.PoolConfig = {};
     const finalClientProps = WrapperProperties.removeWrapperProperties(props);
 
-    Object.assign(finalPoolConfig, finalClientProps);
+    Object.assign(finalPoolConfig, Object.fromEntries(finalClientProps.entries()));
     finalPoolConfig.max = poolConfig?.maxConnections;
     finalPoolConfig.idleTimeoutMillis = poolConfig?.idleTimeoutMillis;
     finalPoolConfig.allowExitOnIdle = poolConfig?.allowExitOnIdle;

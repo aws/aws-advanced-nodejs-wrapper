@@ -48,7 +48,7 @@ export class MySQL2DriverDialect implements DriverDialect {
     const finalPoolConfig: PoolOptions = {};
     const finalClientProps = WrapperProperties.removeWrapperProperties(props);
 
-    Object.assign(finalPoolConfig, finalClientProps);
+    Object.assign(finalPoolConfig, Object.fromEntries(finalClientProps.entries()));
     finalPoolConfig.connectionLimit = poolConfig?.maxConnections;
     finalPoolConfig.idleTimeout = poolConfig?.idleTimeoutMillis;
     finalPoolConfig.maxIdle = poolConfig?.maxIdleConnections;
