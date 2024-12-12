@@ -10,5 +10,5 @@ To get a connection with the AWS Advanced NodeJS Wrapper, the user application c
 
 | Database Type | Client           | Driver Dialect              | Underlying Node Driver                                   |
 | ------------- | ---------------- | --------------------------- | -------------------------------------------------------- |
-| MySQL         | `AwsMySQLClient` | `MySQL2DriverDialect`       | [node-postgres](https://github.com/brianc/node-postgres) |
-| PostgreSQL    | `AwsPgClient`    | `NodePostgresDriverDialect` | [node-mysql2](https://github.com/sidorares/node-mysql2)  |
+| MySQL         | `AwsMySQLClient` | `MySQL2DriverDialect`       | [node-mysql2](https://github.com/sidorares/node-mysql2)  |
+| PostgreSQL    | `AwsPgClient`    | `NodePostgresDriverDialect` | [node-postgres](https://github.com/brianc/node-postgres) |
