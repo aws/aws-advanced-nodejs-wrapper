@@ -26,6 +26,8 @@ import { HostInfo } from "../../../common/lib/host_info";
 import { UnsupportedMethodError } from "../../../common/lib/utils/errors";
 
 export class MySQL2DriverDialect implements DriverDialect {
+  static readonly connectTimeoutPropertyName = "connectTimeout";
+  static readonly queryTimeoutPropertyName = "timeout";
   protected dialectName: string = this.constructor.name;
 
   getDialectName(): string {
@@ -36,8 +38,9 @@ export class MySQL2DriverDialect implements DriverDialect {
     const driverProperties = WrapperProperties.removeWrapperProperties(props);
     // MySQL2 does not support keep alive, explicitly check and throw an exception if this value is set.
     this.setKeepAliveProperties(driverProperties, props.get(WrapperProperties.KEEPALIVE_PROPERTIES.name));
+    this.setConnectTimeout(driverProperties, props.get(WrapperProperties.WRAPPER_CONNECT_TIMEOUT.name));
     const targetClient = await createConnection(driverProperties);
-    return Promise.resolve(new MySQLClientWrapper(targetClient, hostInfo, props));
+    return Promise.resolve(new MySQLClientWrapper(targetClient, hostInfo, props, this));
   }
 
   preparePoolClientProperties(props: Map<string, any>, poolConfig: AwsPoolConfig | undefined): any {
@@ -55,6 +58,20 @@ export class MySQL2DriverDialect implements DriverDialect {
 
   getAwsPoolClient(props: PoolOptions): AwsPoolClient {
     return new AwsMysqlPoolClient(props);
+  }
+
+  setConnectTimeout(props: Map<string, any>, wrapperConnectTimeout?: any) {
+    const timeout = wrapperConnectTimeout ?? props.get(WrapperProperties.WRAPPER_CONNECT_TIMEOUT.name);
+    if (timeout) {
+      props.set(MySQL2DriverDialect.connectTimeoutPropertyName, timeout);
+    }
+  }
+
+  setQueryTimeout(props: Map<string, any>, sql?: any, wrapperConnectTimeout?: any) {
+    const timeout = wrapperConnectTimeout ?? props.get(WrapperProperties.WRAPPER_QUERY_TIMEOUT.name);
+    if (timeout && !sql[MySQL2DriverDialect.queryTimeoutPropertyName]) {
+      sql[MySQL2DriverDialect.queryTimeoutPropertyName] = timeout;
+    }
   }
 
   setKeepAliveProperties(props: Map<string, any>, keepAliveProps: any) {
