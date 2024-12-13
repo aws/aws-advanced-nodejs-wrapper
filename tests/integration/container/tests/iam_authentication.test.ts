@@ -84,10 +84,10 @@ async function validateConnection(client: AwsPGClient | AwsMySQLClient) {
 describe("iam authentication", () => {
   beforeEach(async () => {
     logger.info(`Test started: ${expect.getState().currentTestName}`);
+    env = await TestEnvironment.getCurrent();
     jest.useFakeTimers({
       doNotFake: ["nextTick"]
     });
-    env = await TestEnvironment.getCurrent();
     driver = DriverHelper.getDriverForDatabaseEngine(env.engine);
     initClientFunc = DriverHelper.getClient(driver);
     IamAuthenticationPlugin.clearCache();
@@ -100,7 +100,7 @@ describe("iam authentication", () => {
   }, 1320000);
 
   afterAll(async () => {
-    jest.runOnlyPendingTimers();
+    await jest.runOnlyPendingTimersAsync();
     jest.useRealTimers();
   });
 
