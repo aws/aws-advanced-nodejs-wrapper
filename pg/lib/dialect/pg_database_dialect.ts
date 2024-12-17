@@ -31,9 +31,6 @@ import { Messages } from "../../../common/lib/utils/messages";
 export class PgDatabaseDialect implements DatabaseDialect {
   protected dialectName: string = this.constructor.name;
   protected defaultPort: number = 5432;
-  readonly defaultSchema: string = "";
-  readonly defaultReadOnly: boolean = false;
-  readonly defaultTransactionIsolation: number = TransactionIsolationLevel.TRANSACTION_READ_COMMITTED;
 
   getDefaultPort(): number {
     return this.defaultPort;
@@ -191,11 +188,5 @@ export class PgDatabaseDialect implements DatabaseDialect {
     }
 
     return undefined;
-  }
-
-  setDefaultSessionState(sessionState: SessionState) {
-    sessionState.readOnly.value = false;
-    sessionState.schema.value = "";
-    sessionState.transactionIsolation.value = TransactionIsolationLevel.TRANSACTION_READ_COMMITTED;
   }
 }

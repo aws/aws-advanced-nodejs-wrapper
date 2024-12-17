@@ -33,6 +33,4 @@ export interface ClientWrapper {
   abort(): Promise<void>;
 
   queryWithTimeout(sql: string): Promise<any>;
-
-  setSessionStateDefault(): void;
 }

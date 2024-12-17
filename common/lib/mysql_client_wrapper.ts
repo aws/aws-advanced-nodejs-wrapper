@@ -47,8 +47,6 @@ export class MySQLClientWrapper implements ClientWrapper {
     this.properties = properties;
     this.driverDialect = driverDialect;
     this.id = uniqueId("MySQLClient_");
-
-    this.setSessionStateDefault();
   }
 
   query(sql: any): Promise<any> {
@@ -74,12 +72,5 @@ export class MySQLClientWrapper implements ClientWrapper {
     } catch (error: any) {
       // ignore
     }
-  }
-
-  setSessionStateDefault() {
-    this.sessionState.readOnly.value = false;
-    this.sessionState.autoCommit.value = true;
-    this.sessionState.catalog.value = "";
-    this.sessionState.transactionIsolation.value = TransactionIsolationLevel.TRANSACTION_REPEATABLE_READ;
   }
 }

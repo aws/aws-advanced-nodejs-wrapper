@@ -57,6 +57,4 @@ export class PoolClientWrapper implements ClientWrapper {
   rollback(): Promise<void> {
     return this.client?.rollback();
   }
-
-  setSessionStateDefault() {}
 }
