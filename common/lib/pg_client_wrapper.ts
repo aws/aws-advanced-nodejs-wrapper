@@ -43,8 +43,6 @@ export class PgClientWrapper implements ClientWrapper {
     this.properties = properties;
     this.sessionState = new SessionState();
     this.id = uniqueId("PgClient_");
-
-    this.setSessionStateDefault();
   }
 
   query(sql: any): Promise<any> {
@@ -69,11 +67,5 @@ export class PgClientWrapper implements ClientWrapper {
     } catch (error: any) {
       // Ignore
     }
-  }
-
-  setSessionStateDefault() {
-    this.sessionState.readOnly.value = false;
-    this.sessionState.schema.value = "";
-    this.sessionState.transactionIsolation.value = TransactionIsolationLevel.TRANSACTION_READ_COMMITTED;
   }
 }

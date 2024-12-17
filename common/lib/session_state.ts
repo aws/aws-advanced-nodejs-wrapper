@@ -85,24 +85,24 @@ export class SessionState {
   schema: SessionStateField<string> = new SessionStateField<string>();
   transactionIsolation: SessionStateField<number> = new SessionStateField<number>();
 
-  setAutoCommit(sessionState: SessionState): void {
-    this.autoCommit.value = sessionState.autoCommit.value;
+  setAutoCommit(sessionState: SessionState, usePristine: boolean = false): void {
+    this.autoCommit.value = usePristine ? sessionState.autoCommit.pristineValue : sessionState.autoCommit.value;
   }
 
-  setReadOnly(sessionState: SessionState): void {
-    this.readOnly.value = sessionState.readOnly.value;
+  setReadOnly(sessionState: SessionState, usePristine: boolean = false): void {
+    this.readOnly.value = usePristine ? sessionState.readOnly.pristineValue : sessionState.readOnly.value;
   }
 
-  setCatalog(sessionState: SessionState): void {
-    this.catalog.value = sessionState.catalog.value;
+  setCatalog(sessionState: SessionState, usePristine: boolean = false): void {
+    this.catalog.value = usePristine ? sessionState.catalog.pristineValue : sessionState.catalog.value;
   }
 
-  setSchema(sessionState: SessionState): void {
-    this.schema.value = sessionState.schema.value;
+  setSchema(sessionState: SessionState, usePristine: boolean = false): void {
+    this.schema.value = usePristine ? sessionState.schema.pristineValue : sessionState.schema.value;
   }
 
-  setTransactionIsolation(sessionState: SessionState): void {
-    this.transactionIsolation.value = sessionState.transactionIsolation.value;
+  setTransactionIsolation(sessionState: SessionState, usePristine: boolean = false): void {
+    this.transactionIsolation.value = usePristine ? sessionState.transactionIsolation.pristineValue : sessionState.transactionIsolation.value;
   }
 
   copy(): SessionState {

@@ -17,7 +17,9 @@
 import { DatabaseDialect, DatabaseType } from "../../../common/lib/database_dialect/database_dialect";
 import { HostListProviderService } from "../../../common/lib/host_list_provider_service";
 import { HostListProvider } from "../../../common/lib/host_list_provider/host_list_provider";
-import { ConnectionStringHostListProvider } from "../../../common/lib/host_list_provider/connection_string_host_list_provider";
+import {
+  ConnectionStringHostListProvider
+} from "../../../common/lib/host_list_provider/connection_string_host_list_provider";
 import { AwsWrapperError, UnsupportedMethodError } from "../../../common/lib/utils/errors";
 import { DatabaseDialectCodes } from "../../../common/lib/database_dialect/database_dialect_codes";
 import { TransactionIsolationLevel } from "../../../common/lib/utils/transaction_isolation_level";
@@ -32,10 +34,7 @@ import { Messages } from "../../../common/lib/utils/messages";
 export class MySQLDatabaseDialect implements DatabaseDialect {
   protected dialectName: string = this.constructor.name;
   protected defaultPort: number = 3306;
-  readonly defaultAutoCommit: boolean = true;
-  readonly defaultReadOnly: boolean = false;
-  readonly defaultTransactionIsolation: number = TransactionIsolationLevel.TRANSACTION_REPEATABLE_READ;
-
+  
   getDefaultPort(): number {
     return this.defaultPort;
   }
@@ -207,11 +206,5 @@ export class MySQLDatabaseDialect implements DatabaseDialect {
 
   doesStatementSetSchema(statement: string): string | undefined {
     return undefined;
-  }
-
-  setDefaultSessionState(sessionState: SessionState) {
-    sessionState.readOnly.value = false;
-    sessionState.autoCommit.value = true;
-    sessionState.transactionIsolation.value = TransactionIsolationLevel.TRANSACTION_REPEATABLE_READ;
   }
 }

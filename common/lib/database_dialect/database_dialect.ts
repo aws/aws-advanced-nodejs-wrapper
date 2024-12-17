@@ -27,12 +27,6 @@ export enum DatabaseType {
 }
 
 export interface DatabaseDialect {
-  readonly defaultAutoCommit?: boolean;
-  readonly defaultReadOnly?: boolean;
-  readonly defaultTransactionIsolation?: number;
-  readonly defaultCatalog?: string;
-  readonly defaultSchema?: string;
-
   getDefaultPort(): number;
   getHostAliasQuery(): string;
   getHostAliasAndParseResults(targetClient: ClientWrapper): Promise<string>;
@@ -55,5 +49,4 @@ export interface DatabaseDialect {
   doesStatementSetAutoCommit(statement: string): boolean | undefined;
   doesStatementSetSchema(statement: string): string | undefined;
   doesStatementSetCatalog(statement: string): string | undefined;
-  setDefaultSessionState(sessionState: SessionState): void;
 }

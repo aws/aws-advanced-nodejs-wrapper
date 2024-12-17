@@ -22,6 +22,7 @@ import { PluginService } from "./plugin_service";
 import { AwsWrapperError, UnsupportedMethodError } from "./utils/errors";
 import { logger } from "../logutils";
 import { SessionStateTransferHandler } from "./session_state_transfer_handler";
+import { ClientWrapper } from "./client_wrapper";
 
 export class SessionStateServiceImpl implements SessionStateService {
   protected sessionState: SessionState;
@@ -57,12 +58,13 @@ export class SessionStateServiceImpl implements SessionStateService {
       }
     }
 
+    const targetClient: ClientWrapper = newClient.targetClient;
     if (this.sessionState.autoCommit.value !== undefined) {
       this.sessionState.autoCommit.resetPristineValue();
       this.setupPristineAutoCommit();
       try {
-        await newClient.targetClient.query(this.pluginService.getDialect().getSetAutoCommitQuery(this.sessionState.autoCommit.value));
-        newClient.targetClient.sessionState.setAutoCommit(this.sessionState);
+        await targetClient.query(this.pluginService.getDialect().getSetAutoCommitQuery(this.sessionState.autoCommit.value));
+        targetClient.sessionState.setAutoCommit(this.sessionState);
       } catch (error: any) {
         if (error instanceof UnsupportedMethodError) {
           // ignore
@@ -75,8 +77,8 @@ export class SessionStateServiceImpl implements SessionStateService {
       this.sessionState.readOnly.resetPristineValue();
       this.setupPristineReadOnly();
       try {
-        await newClient.targetClient.query(this.pluginService.getDialect().getSetReadOnlyQuery(this.sessionState.readOnly.value));
-        newClient.targetClient.sessionState.readOnly.value = this.sessionState.readOnly.value;
+        await targetClient.query(this.pluginService.getDialect().getSetReadOnlyQuery(this.sessionState.readOnly.value));
+        targetClient.sessionState.setReadOnly(this.sessionState);
       } catch (error: any) {
         if (error instanceof UnsupportedMethodError) {
           // ignore
@@ -89,8 +91,8 @@ export class SessionStateServiceImpl implements SessionStateService {
       this.sessionState.catalog.resetPristineValue();
       this.setupPristineCatalog();
       try {
-        await newClient.targetClient.query(this.pluginService.getDialect().getSetCatalogQuery(this.sessionState.catalog.value));
-        newClient.targetClient.sessionState.catalog.value = this.sessionState.catalog.value;
+        await targetClient.query(this.pluginService.getDialect().getSetCatalogQuery(this.sessionState.catalog.value));
+        targetClient.sessionState.setCatalog(this.sessionState);
       } catch (error: any) {
         if (error instanceof UnsupportedMethodError) {
           // ignore
@@ -103,8 +105,8 @@ export class SessionStateServiceImpl implements SessionStateService {
       this.sessionState.schema.resetPristineValue();
       this.setupPristineSchema();
       try {
-        await newClient.targetClient.query(this.pluginService.getDialect().getSetSchemaQuery(this.sessionState.schema.value));
-        newClient.targetClient.sessionState.schema.value = this.sessionState.schema.value;
+        await targetClient.query(this.pluginService.getDialect().getSetSchemaQuery(this.sessionState.schema.value));
+        targetClient.sessionState.setSchema(this.sessionState);
       } catch (error: any) {
         if (error instanceof UnsupportedMethodError) {
           // ignore
@@ -117,10 +119,8 @@ export class SessionStateServiceImpl implements SessionStateService {
       this.sessionState.transactionIsolation.resetPristineValue();
       this.setupPristineTransactionIsolation();
       try {
-        await newClient.targetClient.query(
-          this.pluginService.getDialect().getSetTransactionIsolationQuery(this.sessionState.transactionIsolation.value)
-        );
-        newClient.targetClient.sessionState.transactionIsolation.value = this.sessionState.transactionIsolation.value;
+        await targetClient.query(this.pluginService.getDialect().getSetTransactionIsolationQuery(this.sessionState.transactionIsolation.value));
+        targetClient.sessionState.setTransactionIsolation(this.sessionState);
       } catch (error: any) {
         if (error instanceof UnsupportedMethodError) {
           // ignore
@@ -144,11 +144,12 @@ export class SessionStateServiceImpl implements SessionStateService {
       }
     }
 
+    const targetClient: ClientWrapper = client.targetClient;
     if (this.copySessionState?.autoCommit.canRestorePristine() && this.copySessionState?.autoCommit.pristineValue !== undefined) {
       try {
-        await client.targetClient.query(this.pluginService.getDialect().getSetAutoCommitQuery(this.copySessionState.autoCommit.pristineValue));
+        await targetClient.query(this.pluginService.getDialect().getSetAutoCommitQuery(this.copySessionState.autoCommit.pristineValue));
         this.setAutoCommit(this.copySessionState.autoCommit.pristineValue);
-        client.targetClient.sessionState.autoCommit.value = this.copySessionState.autoCommit.pristineValue;
+        targetClient.sessionState.setAutoCommit(this.copySessionState, true);
       } catch (error: any) {
         if (error instanceof UnsupportedMethodError) {
           // ignore
@@ -159,9 +160,9 @@ export class SessionStateServiceImpl implements SessionStateService {
 
     if (this.copySessionState?.readOnly.canRestorePristine() && this.copySessionState?.readOnly.pristineValue !== undefined) {
       try {
-        await client.targetClient.query(this.pluginService.getDialect().getSetReadOnlyQuery(this.copySessionState.readOnly.pristineValue));
+        await targetClient.query(this.pluginService.getDialect().getSetReadOnlyQuery(this.copySessionState.readOnly.pristineValue));
         this.setReadOnly(this.sessionState.readOnly.pristineValue);
-        client.targetClient.sessionState.readOnly.value = this.copySessionState.readOnly.pristineValue;
+        targetClient.sessionState.setReadOnly(this.copySessionState, true);
       } catch (error: any) {
         if (error instanceof UnsupportedMethodError) {
           // ignore
@@ -172,9 +173,9 @@ export class SessionStateServiceImpl implements SessionStateService {
 
     if (this.copySessionState?.catalog.canRestorePristine() && this.copySessionState?.catalog.pristineValue !== undefined) {
       try {
-        await client.targetClient.query(this.pluginService.getDialect().getSetCatalogQuery(this.copySessionState.catalog.pristineValue));
+        await targetClient.query(this.pluginService.getDialect().getSetCatalogQuery(this.copySessionState.catalog.pristineValue));
         this.setCatalog(this.copySessionState.catalog.pristineValue);
-        client.targetClient.sessionState.catalog.value = this.copySessionState.catalog.pristineValue;
+        targetClient.sessionState.setCatalog(this.copySessionState, true);
       } catch (error: any) {
         if (error instanceof UnsupportedMethodError) {
           // ignore
@@ -185,9 +186,9 @@ export class SessionStateServiceImpl implements SessionStateService {
 
     if (this.copySessionState?.schema.canRestorePristine() && this.copySessionState?.schema.pristineValue !== undefined) {
       try {
-        await client.targetClient.query(this.pluginService.getDialect().getSetSchemaQuery(this.copySessionState.schema.pristineValue));
+        await targetClient.query(this.pluginService.getDialect().getSetSchemaQuery(this.copySessionState.schema.pristineValue));
         this.setSchema(this.copySessionState.schema.pristineValue);
-        client.targetClient.sessionState.schema.value = this.copySessionState.schema.pristineValue;
+        targetClient.sessionState.setSchema(this.copySessionState, true);
       } catch (error: any) {
         if (error instanceof UnsupportedMethodError) {
           // ignore
@@ -198,11 +199,11 @@ export class SessionStateServiceImpl implements SessionStateService {
 
     if (this.copySessionState?.transactionIsolation.canRestorePristine() && this.copySessionState?.transactionIsolation.pristineValue !== undefined) {
       try {
-        await client.targetClient.query(
+        await targetClient.query(
           this.pluginService.getDialect().getSetTransactionIsolationQuery(this.copySessionState.transactionIsolation.pristineValue)
         );
         this.setTransactionIsolation(this.copySessionState.transactionIsolation.pristineValue);
-        client.targetClient.sessionState.transactionIsolation.value = this.copySessionState.transactionIsolation.pristineValue;
+        targetClient.sessionState.setTransactionIsolation(this.copySessionState, true);
       } catch (error: any) {
         if (error instanceof UnsupportedMethodError) {
           // ignore
