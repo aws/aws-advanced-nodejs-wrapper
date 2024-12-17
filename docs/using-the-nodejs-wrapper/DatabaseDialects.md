@@ -1,8 +1,8 @@
 # Database Dialects
 
-## What are database dialects?
+## What are Database Dialects?
 
-The AWS Advanced NodeJS Wrapper is a wrapper that requires an underlying driver, and it is meant to be compatible with any NodeJS driver. Database dialects help the AWS Advanced NodeJS Wrapper determine what kind of underlying database is being used. To function correctly, the AWS Advanced NodeJS Wrapper requires details unique to specific databases such as the default port number or the method to get the current host from the database. These details can be defined and provided to the AWS Advanced NodeJS Wrapper by using database dialects.
+The AWS Advanced NodeJS Wrapper is a wrapper that requires an underlying driver. It is currently compatible with [pg](https://github.com/brianc/node-postgres) and [mysql2](https://github.com/sidorares/node-mysql2). Database dialects help the AWS Advanced NodeJS Wrapper determine what kind of underlying database is being used. To function correctly, the AWS Advanced NodeJS Wrapper requires details unique to specific databases such as the default port number or the method to get the current host from the database. These details can be defined and provided to the AWS Advanced NodeJS Wrapper by using database dialects.
 
 ## Configuration Parameters
 
