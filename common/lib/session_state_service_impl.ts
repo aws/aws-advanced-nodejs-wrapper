@@ -161,7 +161,7 @@ export class SessionStateServiceImpl implements SessionStateService {
     if (this.copySessionState?.readOnly.canRestorePristine() && this.copySessionState?.readOnly.pristineValue !== undefined) {
       try {
         await targetClient.query(this.pluginService.getDialect().getSetReadOnlyQuery(this.copySessionState.readOnly.pristineValue));
-        this.setReadOnly(this.sessionState.readOnly.pristineValue);
+        this.setReadOnly(this.copySessionState.readOnly.pristineValue);
         targetClient.sessionState.setReadOnly(this.copySessionState, true);
       } catch (error: any) {
         if (error instanceof UnsupportedMethodError) {
@@ -237,11 +237,7 @@ export class SessionStateServiceImpl implements SessionStateService {
       return;
     }
 
-    if (autoCommit !== undefined) {
-      this.sessionState.autoCommit.pristineValue = autoCommit;
-    } else {
-      this.sessionState.autoCommit.pristineValue = this.pluginService.getCurrentClient().getAutoCommit();
-    }
+    this.sessionState.autoCommit.pristineValue = autoCommit ?? this.pluginService.getCurrentClient().getAutoCommit();
   }
 
   getCatalog(): string | undefined {
@@ -267,12 +263,7 @@ export class SessionStateServiceImpl implements SessionStateService {
     if (this.sessionState.catalog.pristineValue !== undefined) {
       return;
     }
-
-    if (catalog !== undefined) {
-      this.sessionState.catalog.pristineValue = catalog;
-    } else {
-      this.sessionState.catalog.pristineValue = this.pluginService.getCurrentClient().getCatalog();
-    }
+    this.sessionState.catalog.pristineValue = catalog ?? this.pluginService.getCurrentClient().getCatalog();
   }
 
   getReadOnly(): boolean | undefined {
@@ -299,11 +290,7 @@ export class SessionStateServiceImpl implements SessionStateService {
       return;
     }
 
-    if (readOnly !== undefined) {
-      this.sessionState.readOnly.pristineValue = readOnly;
-    } else {
-      this.sessionState.readOnly.pristineValue = this.pluginService.getCurrentClient().isReadOnly();
-    }
+    this.sessionState.readOnly.pristineValue = readOnly ?? this.pluginService.getCurrentClient().isReadOnly();
   }
 
   updateReadOnly(readOnly: boolean): void {
@@ -335,11 +322,7 @@ export class SessionStateServiceImpl implements SessionStateService {
       return;
     }
 
-    if (schema !== undefined) {
-      this.sessionState.schema.pristineValue = schema;
-    } else {
-      this.sessionState.schema.pristineValue = this.pluginService.getCurrentClient().getSchema();
-    }
+    this.sessionState.schema.pristineValue = schema ?? this.pluginService.getCurrentClient().getSchema();
   }
 
   getTransactionIsolation(): number | undefined {
@@ -366,11 +349,7 @@ export class SessionStateServiceImpl implements SessionStateService {
       return;
     }
 
-    if (transactionIsolation !== undefined) {
-      this.sessionState.transactionIsolation.pristineValue = transactionIsolation;
-    } else {
-      this.sessionState.transactionIsolation.pristineValue = this.pluginService.getCurrentClient().getTransactionIsolation();
-    }
+    this.sessionState.transactionIsolation.pristineValue = transactionIsolation ?? this.pluginService.getCurrentClient().getTransactionIsolation();
   }
 
   begin(): void {
