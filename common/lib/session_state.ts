@@ -14,9 +14,25 @@
   limitations under the License.
 */
 
-class SessionStateField<Type> {
+import { DatabaseDialect } from "./database_dialect/database_dialect";
+import { AwsClient } from "./aws_client";
+
+export abstract class SessionStateField<Type> {
   value?: Type;
   pristineValue?: Type;
+
+  constructor(copy?: SessionStateField<Type>) {
+    this.value = copy.value;
+    this.pristineValue = copy.pristineValue;
+  }
+
+  abstract setValue(state: SessionState): void;
+
+  abstract setPristineValue(state: SessionState): void;
+
+  abstract getQuery(dialect: DatabaseDialect, isPristine: boolean): string;
+
+  abstract getClientValue(client: AwsClient): Type;
 
   resetValue(): void {
     this.value = undefined;
@@ -60,58 +76,123 @@ class SessionStateField<Type> {
     return true;
   }
 
-  copy(): SessionStateField<Type> {
-    const newField: SessionStateField<Type> = new SessionStateField();
-    if (this.value !== undefined) {
-      newField.value = this.value;
-    }
-
-    if (this.pristineValue !== undefined) {
-      newField.pristineValue = this.pristineValue;
-    }
-
-    return newField;
-  }
-
   toString() {
     return `${this.pristineValue ?? "(blank)"} => ${this.value ?? "(blank)"}`;
   }
 }
 
+class AutoCommitState extends SessionStateField<boolean> {
+  setValue(state: SessionState) {
+    this.value = state.autoCommit.value;
+  }
+
+  setPristineValue(state: SessionState) {
+    this.value = state.autoCommit.pristineValue;
+  }
+
+  getQuery(dialect: DatabaseDialect, isPristine: boolean = false) {
+    return dialect.getSetAutoCommitQuery(isPristine ? this.pristineValue : this.value);
+  }
+
+  getClientValue(client: AwsClient): boolean {
+    return client.getAutoCommit();
+  }
+}
+
+class ReadOnlyState extends SessionStateField<boolean> {
+  setValue(state: SessionState) {
+    this.value = state.readOnly.value;
+  }
+
+  setPristineValue(state: SessionState) {
+    this.value = state.readOnly.pristineValue;
+  }
+
+  getQuery(dialect: DatabaseDialect, isPristine: boolean = false) {
+    return dialect.getSetReadOnlyQuery(this.value);
+  }
+
+  getClientValue(client: AwsClient): boolean {
+    return client.isReadOnly();
+  }
+}
+
+class CatalogState extends SessionStateField<string> {
+  setValue(state: SessionState) {
+    this.value = state.catalog.value;
+  }
+
+  setPristineValue(state: SessionState) {
+    this.value = state.catalog.pristineValue;
+  }
+
+  getQuery(dialect: DatabaseDialect, isPristine: boolean = false) {
+    return dialect.getSetCatalogQuery(isPristine ? this.pristineValue : this.value);
+  }
+
+  getClientValue(client: AwsClient): string {
+    return client.getCatalog();
+  }
+}
+
+class SchemaState extends SessionStateField<string> {
+  setValue(state: SessionState) {
+    this.value = state.schema.value;
+  }
+
+  setPristineValue(state: SessionState) {
+    this.value = state.schema.pristineValue;
+  }
+
+  getQuery(dialect: DatabaseDialect, isPristine: boolean = false) {
+    return dialect.getSetSchemaQuery(isPristine ? this.pristineValue : this.value);
+  }
+
+  getClientValue(client: AwsClient): string {
+    return client.getSchema();
+  }
+}
+
+class TransactionIsolationState extends SessionStateField<number> {
+  setValue(state: SessionState) {
+    this.value = state.transactionIsolation.value;
+  }
+
+  setPristineValue(state: SessionState) {
+    this.value = state.transactionIsolation.pristineValue;
+  }
+
+  getQuery(dialect: DatabaseDialect, isPristine: boolean = false) {
+    return dialect.getSetTransactionIsolationQuery(isPristine ? this.pristineValue : this.value);
+  }
+
+  getClientValue(client: AwsClient): number {
+    return client.getTransactionIsolation();
+  }
+}
+
 export class SessionState {
-  autoCommit: SessionStateField<boolean> = new SessionStateField<boolean>();
-  readOnly: SessionStateField<boolean> = new SessionStateField<boolean>();
-  catalog: SessionStateField<string> = new SessionStateField<string>();
-  schema: SessionStateField<string> = new SessionStateField<string>();
-  transactionIsolation: SessionStateField<number> = new SessionStateField<number>();
+  autoCommit: AutoCommitState = new AutoCommitState();
+  readOnly: ReadOnlyState = new ReadOnlyState();
+  catalog: CatalogState = new CatalogState();
+  schema: SchemaState = new SchemaState();
+  transactionIsolation: TransactionIsolationState = new TransactionIsolationState();
 
-  setAutoCommit(sessionState: SessionState, usePristine: boolean = false): void {
-    this.autoCommit.value = usePristine ? sessionState.autoCommit.pristineValue : sessionState.autoCommit.value;
+  static setState(target: SessionStateField<any>, source: SessionState): void {
+    target.setValue(source);
   }
 
-  setReadOnly(sessionState: SessionState, usePristine: boolean = false): void {
-    this.readOnly.value = usePristine ? sessionState.readOnly.pristineValue : sessionState.readOnly.value;
-  }
-
-  setCatalog(sessionState: SessionState, usePristine: boolean = false): void {
-    this.catalog.value = usePristine ? sessionState.catalog.pristineValue : sessionState.catalog.value;
-  }
-
-  setSchema(sessionState: SessionState, usePristine: boolean = false): void {
-    this.schema.value = usePristine ? sessionState.schema.pristineValue : sessionState.schema.value;
-  }
-
-  setTransactionIsolation(sessionState: SessionState, usePristine: boolean = false): void {
-    this.transactionIsolation.value = usePristine ? sessionState.transactionIsolation.pristineValue : sessionState.transactionIsolation.value;
+  static setPristineState(target: SessionStateField<any>, source: SessionState): void {
+    target.setPristineValue(source);
   }
 
   copy(): SessionState {
     const newSessionState = new SessionState();
-    newSessionState.autoCommit = this.autoCommit.copy();
-    newSessionState.readOnly = this.readOnly.copy();
-    newSessionState.catalog = this.catalog.copy();
-    newSessionState.schema = this.schema.copy();
-    newSessionState.transactionIsolation = this.transactionIsolation.copy();
+    newSessionState.autoCommit = new AutoCommitState(this.autoCommit);
+    newSessionState.readOnly = new ReadOnlyState(this.readOnly);
+    newSessionState.catalog = new CatalogState(this.catalog);
+    newSessionState.schema = new SchemaState(this.schema);
+    newSessionState.transactionIsolation = new TransactionIsolationState(this.transactionIsolation);
 
     return newSessionState;
   }
