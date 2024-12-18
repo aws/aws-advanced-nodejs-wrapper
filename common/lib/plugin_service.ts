@@ -386,8 +386,8 @@ export class PluginService implements ErrorHandler, HostListProviderService {
   async abortCurrentClient(): Promise<void> {
     if (this._currentClient.targetClient) {
       await this._currentClient.targetClient.abort();
-      // this.setInTransaction(false);
-      // this.getSessionStateService().reset();
+      this.setInTransaction(false);
+      this.getSessionStateService().reset();
     }
   }
 

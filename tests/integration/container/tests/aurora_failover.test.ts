@@ -100,77 +100,77 @@ describe("aurora failover", () => {
     logger.info(`Test finished: ${expect.getState().currentTestName}`);
   }, 1320000);
 
-  // itIf(
-  //   "fails from writer to new writer on connection invocation",
-  //   async () => {
-  //     const config = await initDefaultConfig(env.databaseInfo.writerInstanceEndpoint, env.databaseInfo.instanceEndpointPort, false);
-  //     client = initClientFunc(config);
-  //
-  //     await client.connect();
-  //
-  //     const initialWriterId = await auroraTestUtility.queryInstanceId(client);
-  //     expect(await auroraTestUtility.isDbInstanceWriter(initialWriterId)).toStrictEqual(true);
-  //
-  //     // Crash instance 1 and nominate a new writer
-  //     await auroraTestUtility.failoverClusterAndWaitUntilWriterChanged();
-  //
-  //     await expect(async () => {
-  //       await auroraTestUtility.queryInstanceId(client);
-  //     }).rejects.toThrow(FailoverSuccessError);
-  //
-  //     // Assert that we are connected to the new writer after failover happens
-  //     const currentConnectionId = await auroraTestUtility.queryInstanceId(client);
-  //     expect(await auroraTestUtility.isDbInstanceWriter(currentConnectionId)).toBe(true);
-  //     expect(currentConnectionId).not.toBe(initialWriterId);
-  //   },
-  //   1320000
-  // );
-  //
-  // itIf(
-  //   "writer fails within transaction",
-  //   async () => {
-  //     const config = await initDefaultConfig(env.databaseInfo.writerInstanceEndpoint, env.databaseInfo.instanceEndpointPort, false);
-  //     client = initClientFunc(config);
-  //
-  //     await client.connect();
-  //     const initialWriterId = await auroraTestUtility.queryInstanceId(client);
-  //     expect(await auroraTestUtility.isDbInstanceWriter(initialWriterId)).toStrictEqual(true);
-  //
-  //     await DriverHelper.executeQuery(env.engine, client, "DROP TABLE IF EXISTS test3_3");
-  //     await DriverHelper.executeQuery(env.engine, client, "CREATE TABLE test3_3 (id int not null primary key, test3_3_field varchar(255) not null)");
-  //
-  //     await DriverHelper.executeQuery(env.engine, client, "START TRANSACTION"); // start transaction
-  //     await DriverHelper.executeQuery(env.engine, client, "INSERT INTO test3_3 VALUES (1, 'test field string 1')");
-  //
-  //     // Crash instance 1 and nominate a new writer
-  //     await auroraTestUtility.failoverClusterAndWaitUntilWriterChanged();
-  //
-  //     await expect(async () => {
-  //       await DriverHelper.executeQuery(env.engine, client, "INSERT INTO test3_3 VALUES (2, 'test field string 2')");
-  //     }).rejects.toThrow(TransactionResolutionUnknownError);
-  //
-  //     // Attempt to query the instance id.
-  //     const currentConnectionId = await auroraTestUtility.queryInstanceId(client);
-  //
-  //     // Assert that we are connected to the new writer after failover happens.
-  //     expect(await auroraTestUtility.isDbInstanceWriter(currentConnectionId)).toBe(true);
-  //
-  //     const nextClusterWriterId = await auroraTestUtility.getClusterWriterInstanceId();
-  //     expect(currentConnectionId).toBe(nextClusterWriterId);
-  //     expect(initialWriterId).not.toBe(nextClusterWriterId);
-  //
-  //     // Assert that NO row has been inserted to the table.
-  //     const result = await DriverHelper.executeQuery(env.engine, client, "SELECT count(*) from test3_3");
-  //     if (env.engine === DatabaseEngine.PG) {
-  //       expect((result as QueryResult).rows[0]["count"]).toBe("0");
-  //     } else if (env.engine === DatabaseEngine.MYSQL) {
-  //       expect(JSON.parse(JSON.stringify(result))[0][0]["count(*)"]).toBe(0);
-  //     }
-  //
-  //     await DriverHelper.executeQuery(env.engine, client, "DROP TABLE IF EXISTS test3_3");
-  //   },
-  //   2000000
-  // );
+  itIf(
+    "fails from writer to new writer on connection invocation",
+    async () => {
+      const config = await initDefaultConfig(env.databaseInfo.writerInstanceEndpoint, env.databaseInfo.instanceEndpointPort, false);
+      client = initClientFunc(config);
+
+      await client.connect();
+
+      const initialWriterId = await auroraTestUtility.queryInstanceId(client);
+      expect(await auroraTestUtility.isDbInstanceWriter(initialWriterId)).toStrictEqual(true);
+
+      // Crash instance 1 and nominate a new writer
+      await auroraTestUtility.failoverClusterAndWaitUntilWriterChanged();
+
+      await expect(async () => {
+        await auroraTestUtility.queryInstanceId(client);
+      }).rejects.toThrow(FailoverSuccessError);
+
+      // Assert that we are connected to the new writer after failover happens
+      const currentConnectionId = await auroraTestUtility.queryInstanceId(client);
+      expect(await auroraTestUtility.isDbInstanceWriter(currentConnectionId)).toBe(true);
+      expect(currentConnectionId).not.toBe(initialWriterId);
+    },
+    1320000
+  );
+
+  itIf(
+    "writer fails within transaction",
+    async () => {
+      const config = await initDefaultConfig(env.databaseInfo.writerInstanceEndpoint, env.databaseInfo.instanceEndpointPort, false);
+      client = initClientFunc(config);
+
+      await client.connect();
+      const initialWriterId = await auroraTestUtility.queryInstanceId(client);
+      expect(await auroraTestUtility.isDbInstanceWriter(initialWriterId)).toStrictEqual(true);
+
+      await DriverHelper.executeQuery(env.engine, client, "DROP TABLE IF EXISTS test3_3");
+      await DriverHelper.executeQuery(env.engine, client, "CREATE TABLE test3_3 (id int not null primary key, test3_3_field varchar(255) not null)");
+
+      await DriverHelper.executeQuery(env.engine, client, "START TRANSACTION"); // start transaction
+      await DriverHelper.executeQuery(env.engine, client, "INSERT INTO test3_3 VALUES (1, 'test field string 1')");
+
+      // Crash instance 1 and nominate a new writer
+      await auroraTestUtility.failoverClusterAndWaitUntilWriterChanged();
+
+      await expect(async () => {
+        await DriverHelper.executeQuery(env.engine, client, "INSERT INTO test3_3 VALUES (2, 'test field string 2')");
+      }).rejects.toThrow(TransactionResolutionUnknownError);
+
+      // Attempt to query the instance id.
+      const currentConnectionId = await auroraTestUtility.queryInstanceId(client);
+
+      // Assert that we are connected to the new writer after failover happens.
+      expect(await auroraTestUtility.isDbInstanceWriter(currentConnectionId)).toBe(true);
+
+      const nextClusterWriterId = await auroraTestUtility.getClusterWriterInstanceId();
+      expect(currentConnectionId).toBe(nextClusterWriterId);
+      expect(initialWriterId).not.toBe(nextClusterWriterId);
+
+      // Assert that NO row has been inserted to the table.
+      const result = await DriverHelper.executeQuery(env.engine, client, "SELECT count(*) from test3_3");
+      if (env.engine === DatabaseEngine.PG) {
+        expect((result as QueryResult).rows[0]["count"]).toBe("0");
+      } else if (env.engine === DatabaseEngine.MYSQL) {
+        expect(JSON.parse(JSON.stringify(result))[0][0]["count(*)"]).toBe(0);
+      }
+
+      await DriverHelper.executeQuery(env.engine, client, "DROP TABLE IF EXISTS test3_3");
+    },
+    2000000
+  );
 
   itIf(
     "fails from writer and transfers session state",
