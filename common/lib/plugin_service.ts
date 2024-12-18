@@ -40,7 +40,7 @@ import { ClientWrapper } from "./client_wrapper";
 import { logger } from "../logutils";
 import { Messages } from "./utils/messages";
 import { DatabaseDialectCodes } from "./database_dialect/database_dialect_codes";
-import { getWriter } from "./utils/utils";
+import { getWriter, logTopology } from "./utils/utils";
 import { TelemetryFactory } from "./utils/telemetry/telemetry_factory";
 import { DriverDialect } from "./driver_dialect/driver_dialect";
 import { ConfigurationProfile } from "./profile/configuration_profile";

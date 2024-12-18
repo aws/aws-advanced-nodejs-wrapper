@@ -100,7 +100,6 @@ export class AuroraConnectionTrackerPlugin extends AbstractConnectionPlugin impl
 
   private async checkWriterChanged(): Promise<void> {
     const hostInfoAfterFailover = this.getWriter(this.pluginService.getHosts());
-
     if (this.currentWriter === null) {
       this.currentWriter = hostInfoAfterFailover;
       this.needUpdateCurrentWriter = false;
@@ -127,10 +126,12 @@ export class AuroraConnectionTrackerPlugin extends AbstractConnectionPlugin impl
   async notifyHostListChanged(changes: Map<string, Set<HostChangeOptions>>): Promise<void> {
     for (const [key, _] of changes.entries()) {
       const hostChanges = changes.get(key);
+
       if (hostChanges) {
         if (hostChanges.has(HostChangeOptions.PROMOTED_TO_READER)) {
           await this.tracker.invalidateAllConnectionsMultipleHosts(key);
         }
+
         if (hostChanges.has(HostChangeOptions.PROMOTED_TO_WRITER)) {
           this.needUpdateCurrentWriter = true;
         }

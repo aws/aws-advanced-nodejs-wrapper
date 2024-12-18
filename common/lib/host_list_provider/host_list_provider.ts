@@ -33,7 +33,7 @@ export interface HostListProvider {
 
   forceRefresh(client: ClientWrapper): Promise<HostInfo[]>;
 
-  getHostRole(client: AwsClient, dialect: DatabaseDialect): Promise<HostRole>;
+  getHostRole(client: ClientWrapper, dialect: DatabaseDialect): Promise<HostRole>;
 
   identifyConnection(targetClient: ClientWrapper, dialect: DatabaseDialect): Promise<HostInfo | null>;
 
