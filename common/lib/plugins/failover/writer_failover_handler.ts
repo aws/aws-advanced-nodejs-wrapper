@@ -27,6 +27,7 @@ import { logger } from "../../../logutils";
 import { WrapperProperties } from "../../wrapper_property";
 import { ClientWrapper } from "../../client_wrapper";
 import { FailoverRestriction } from "./failover_restriction";
+import { HostRole } from "../../host_role";
 
 export interface WriterFailoverHandler {
   failover(currentTopology: HostInfo[]): Promise<WriterFailoverResult>;
@@ -435,6 +436,13 @@ class WaitForNewWriterHandlerTask {
       let targetClient = null;
       try {
         targetClient = await this.pluginService.forceConnect(writerCandidate, props);
+        // eslint-disable-next-line no-constant-condition
+        while (true) {
+          await this.pluginService.forceRefreshHostList();
+          if ((await this.pluginService.getHostRole(targetClient)) === HostRole.WRITER) {
+            break;
+          }
+        }
         this.pluginService.setAvailability(writerCandidate.allAliases, HostAvailability.AVAILABLE);
         await this.callCloseClient(this.currentReaderTargetClient);
         await this.callCloseClient(this.currentClient);
