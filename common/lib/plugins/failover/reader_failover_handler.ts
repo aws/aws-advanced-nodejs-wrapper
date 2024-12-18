@@ -322,6 +322,13 @@ class ConnectionAttemptTask {
     );
     try {
       this.targetClient = await this.pluginService.forceConnect(this.newHost, copy);
+      // eslint-disable-next-line no-constant-condition
+      while (true) {
+        await this.pluginService.forceRefreshHostList();
+        if ((await this.pluginService.getHostRole(this.targetClient)) === HostRole.READER) {
+          break;
+        }
+      }
       this.pluginService.setAvailability(this.newHost.allAliases, HostAvailability.AVAILABLE);
       logger.info(Messages.get("ClusterAwareReaderFailoverHandler.successfulReaderConnection", this.newHost.host));
       if (this.taskHandler.getSelectedConnectionAttemptTask(this.failoverTaskId) === -1) {
