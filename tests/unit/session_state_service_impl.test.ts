@@ -14,7 +14,7 @@
   limitations under the License.
 */
 
-import { anything, instance, mock, reset, spy, verify, when } from "ts-mockito";
+import { anything, instance, mock, reset, spy, when } from "ts-mockito";
 import { SessionStateServiceImpl } from "../../common/lib/session_state_service_impl";
 import { PluginService } from "../../common/lib/plugin_service";
 import { AwsPGClient } from "../../pg/lib";
@@ -27,7 +27,7 @@ import { HostInfoBuilder } from "../../common/lib/host_info_builder";
 import { SimpleHostAvailabilityStrategy } from "../../common/lib/host_availability/simple_host_availability_strategy";
 import { MySQLDatabaseDialect } from "../../mysql/lib/dialect/mysql_database_dialect";
 import { PgDatabaseDialect } from "../../pg/lib/dialect/pg_database_dialect";
-import { TransactionIsolationLevel } from "../../common/lib/utils/transaction_isolation_level";
+import { MySQL2DriverDialect } from "../../mysql/lib/dialect/mysql2_driver_dialect";
 
 const hostInfoBuilder = new HostInfoBuilder({ hostAvailabilityStrategy: new SimpleHostAvailabilityStrategy() });
 const mockPluginService = mock(PluginService);
@@ -39,6 +39,7 @@ let sessionStateService: SessionStateService;
 const mockPgClientWrapper: PgClientWrapper = mock(PgClientWrapper);
 const mockMySQLClientWrapper: MySQLClientWrapper = mock(MySQLClientWrapper);
 const hostInfo = new HostInfoBuilder({ hostAvailabilityStrategy: new SimpleHostAvailabilityStrategy() }).withHost("host").build();
+const mockMySQLDriverDialect = mock(MySQL2DriverDialect);
 
 describe("testSessionStateServiceImpl", () => {
   beforeEach(() => {
@@ -49,8 +50,8 @@ describe("testSessionStateServiceImpl", () => {
     sessionStateService = new SessionStateServiceImpl(instance(mockPluginService), new Map());
     awsPGClient.targetClient = new PgClientWrapper(undefined, hostInfoBuilder.withHost("host").build(), new Map());
     mockAwsPGClient.targetClient = new PgClientWrapper(undefined, hostInfoBuilder.withHost("host").build(), new Map());
-    awsMySQLClient.targetClient = new MySQLClientWrapper(undefined, hostInfoBuilder.withHost("host").build(), new Map());
-    mockAwsMySQLClient.targetClient = new MySQLClientWrapper(undefined, hostInfoBuilder.withHost("host").build(), new Map());
+    awsMySQLClient.targetClient = new MySQLClientWrapper(undefined, hostInfoBuilder.withHost("host").build(), new Map(), mockMySQLDriverDialect);
+    mockAwsMySQLClient.targetClient = new MySQLClientWrapper(undefined, hostInfoBuilder.withHost("host").build(), new Map(), mockMySQLDriverDialect);
     when(mockMySQLClientWrapper.query(anything())).thenResolve();
     when(mockPgClientWrapper.query(anything())).thenResolve();
     when(mockPluginService.getSessionStateService()).thenReturn(sessionStateService);
@@ -77,7 +78,7 @@ describe("testSessionStateServiceImpl", () => {
       awsClient.targetClient = new PgClientWrapper(undefined, hostInfo, new Map());
       when(mockPluginService.getDialect()).thenReturn(new PgDatabaseDialect());
     } else {
-      awsClient.targetClient = new MySQLClientWrapper(undefined, hostInfo, new Map());
+      awsClient.targetClient = new MySQLClientWrapper(undefined, hostInfo, new Map(), mockMySQLDriverDialect);
       when(mockPluginService.getDialect()).thenReturn(new MySQLDatabaseDialect());
     }
     when(mockPluginService.getCurrentClient()).thenReturn(awsClient);
@@ -85,17 +86,17 @@ describe("testSessionStateServiceImpl", () => {
     expect(sessionStateService.getReadOnly()).toBe(undefined);
     sessionStateService.setupPristineReadOnly();
     sessionStateService.setReadOnly(value);
-    const sessionStateSpy = spy(sessionStateService);
     expect(sessionStateService.getReadOnly()).toBe(value);
 
     sessionStateService.begin();
     await sessionStateService.applyPristineSessionState(awsClient);
     sessionStateService.complete();
-
     if (shouldReset) {
-      verify(sessionStateSpy.setReadOnly(anything())).once();
+      // Should reset to pristine value
+      expect(sessionStateService.getReadOnly()).toBe(pristineValue);
     } else {
-      verify(sessionStateSpy.setReadOnly(anything())).never();
+      // No-op, value should stay unchanged
+      expect(sessionStateService.getReadOnly()).toBe(value);
     }
   });
 
@@ -114,7 +115,6 @@ describe("testSessionStateServiceImpl", () => {
     expect(sessionStateService.getAutoCommit()).toBe(undefined);
     sessionStateService.setupPristineAutoCommit();
     sessionStateService.setAutoCommit(value);
-    const sessionStateSpy = spy(sessionStateService);
     expect(sessionStateService.getAutoCommit()).toBe(value);
 
     sessionStateService.begin();
@@ -122,9 +122,11 @@ describe("testSessionStateServiceImpl", () => {
     sessionStateService.complete();
 
     if (shouldReset) {
-      verify(sessionStateSpy.setAutoCommit(pristineValue)).once();
+      // Should reset to pristine value
+      expect(sessionStateService.getAutoCommit()).toBe(pristineValue);
     } else {
-      verify(sessionStateSpy.setAutoCommit(anything())).never();
+      // No-op, value should stay unchanged
+      expect(sessionStateService.getAutoCommit()).toBe(value);
     }
   });
 
@@ -143,7 +145,6 @@ describe("testSessionStateServiceImpl", () => {
     expect(sessionStateService.getCatalog()).toBe(undefined);
     sessionStateService.setupPristineCatalog();
     sessionStateService.setCatalog(value);
-    const sessionStateSpy = spy(sessionStateService);
     expect(sessionStateService.getCatalog()).toBe(value);
 
     sessionStateService.begin();
@@ -151,9 +152,11 @@ describe("testSessionStateServiceImpl", () => {
     sessionStateService.complete();
 
     if (shouldReset) {
-      verify(sessionStateSpy.setCatalog(pristineValue)).once();
+      // Should reset to pristine value
+      expect(sessionStateService.getCatalog()).toBe(pristineValue);
     } else {
-      verify(sessionStateSpy.setCatalog(anything())).never();
+      // No-op, value should stay unchanged
+      expect(sessionStateService.getCatalog()).toBe(value);
     }
   });
 
@@ -172,7 +175,6 @@ describe("testSessionStateServiceImpl", () => {
     expect(sessionStateService.getSchema()).toBe(undefined);
     sessionStateService.setupPristineSchema();
     sessionStateService.setSchema(value);
-    const sessionStateSpy = spy(sessionStateService);
     expect(sessionStateService.getSchema()).toBe(value);
 
     sessionStateService.begin();
@@ -180,9 +182,11 @@ describe("testSessionStateServiceImpl", () => {
     sessionStateService.complete();
 
     if (shouldReset) {
-      verify(sessionStateSpy.setSchema(pristineValue)).once();
+      // Should reset to pristine value
+      expect(sessionStateService.getSchema()).toBe(pristineValue);
     } else {
-      verify(sessionStateSpy.setSchema(anything())).never();
+      // No-op, value should stay unchanged
+      expect(sessionStateService.getSchema()).toBe(value);
     }
   });
 
@@ -210,7 +214,6 @@ describe("testSessionStateServiceImpl", () => {
     expect(sessionStateService.getTransactionIsolation()).toBe(undefined);
     sessionStateService.setupPristineTransactionIsolation();
     sessionStateService.setTransactionIsolation(value);
-    const sessionStateSpy = spy(sessionStateService);
     expect(sessionStateService.getTransactionIsolation()).toBe(value);
 
     sessionStateService.begin();
@@ -218,27 +221,11 @@ describe("testSessionStateServiceImpl", () => {
     sessionStateService.complete();
 
     if (shouldReset) {
-      verify(sessionStateSpy.setTransactionIsolation(pristineValue)).once();
+      // Should reset to pristine value
+      expect(sessionStateService.getTransactionIsolation()).toBe(pristineValue);
     } else {
-      verify(sessionStateSpy.setTransactionIsolation(anything())).never();
+      // No-op, value should stay unchanged
+      expect(sessionStateService.getTransactionIsolation()).toBe(value);
     }
-  });
-
-  it("test default pg client wrapper state", async () => {
-    const clientWrapper = new PgClientWrapper({}, hostInfo, new Map());
-    expect(clientWrapper.sessionState.readOnly.value).toBe(false);
-    expect(clientWrapper.sessionState.autoCommit.value).toBe(undefined);
-    expect(clientWrapper.sessionState.catalog.value).toBe(undefined);
-    expect(clientWrapper.sessionState.schema.value).toBe("");
-    expect(clientWrapper.sessionState.transactionIsolation.value).toBe(TransactionIsolationLevel.TRANSACTION_READ_COMMITTED);
-  });
-
-  it("test default mysql client wrapper state", async () => {
-    const clientWrapper = new MySQLClientWrapper({}, hostInfo, new Map());
-    expect(clientWrapper.sessionState.readOnly.value).toBe(false);
-    expect(clientWrapper.sessionState.autoCommit.value).toBe(true);
-    expect(clientWrapper.sessionState.catalog.value).toBe("");
-    expect(clientWrapper.sessionState.schema.value).toBe(undefined);
-    expect(clientWrapper.sessionState.transactionIsolation.value).toBe(TransactionIsolationLevel.TRANSACTION_REPEATABLE_READ);
   });
 });

@@ -388,9 +388,9 @@ export class FailoverPlugin extends AbstractConnectionPlugin {
             throw new FailoverFailedError(Messages.get("Failover.unableToConnectToReader"));
           }
 
-          this.pluginService.getCurrentHostInfo()?.removeAlias(Array.from(oldAliases));
           await this.pluginService.abortCurrentClient();
           await this.pluginService.setCurrentClient(result.client, result.newHost);
+          this.pluginService.getCurrentHostInfo()?.removeAlias(Array.from(oldAliases));
           await this.updateTopology(true);
           this.failoverReaderSuccessCounter.inc();
         } catch (error: any) {

@@ -18,8 +18,6 @@ import { ClientWrapper } from "./client_wrapper";
 import { HostInfo } from "./host_info";
 import { ClientUtils } from "./utils/client_utils";
 import { uniqueId } from "../logutils";
-import { SessionState } from "./session_state";
-import { TransactionIsolationLevel } from "./utils/transaction_isolation_level";
 import { DriverDialect } from "./driver_dialect/driver_dialect";
 
 /*
@@ -31,7 +29,6 @@ export class MySQLClientWrapper implements ClientWrapper {
   readonly hostInfo: HostInfo;
   readonly properties: Map<string, string>;
   readonly id: string;
-  readonly sessionState: SessionState = new SessionState();
 
   /**
    * Creates a wrapper for the target community driver client.

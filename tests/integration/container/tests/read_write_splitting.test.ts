@@ -52,7 +52,7 @@ async function initDefaultConfig(host: string, port: number, connectToProxy: boo
   let config: any = {
     user: env.databaseInfo.username,
     host: host,
-    database: env.databaseInfo.default_db_name,
+    database: env.databaseInfo.defaultDbName,
     password: env.databaseInfo.password,
     port: port,
     plugins: "readWriteSplitting",
@@ -72,7 +72,7 @@ async function initConfigWithFailover(host: string, port: number, connectToProxy
   let config: any = {
     user: env.databaseInfo.username,
     host: host,
-    database: env.databaseInfo.default_db_name,
+    database: env.databaseInfo.defaultDbName,
     password: env.databaseInfo.password,
     port: port,
     plugins: "readWriteSplitting,failover",

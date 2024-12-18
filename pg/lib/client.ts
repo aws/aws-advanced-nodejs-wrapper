@@ -29,6 +29,7 @@ import { RdsMultiAZPgDatabaseDialect } from "./dialect/rds_multi_az_pg_database_
 import { HostInfo } from "../../common/lib/host_info";
 import { TelemetryTraceLevel } from "../../common/lib/utils/telemetry/telemetry_trace_level";
 import { NodePostgresDriverDialect } from "./dialect/node_postgres_driver_dialect";
+import { TransactionIsolationLevel } from "../../common/lib/utils/transaction_isolation_level";
 
 export class AwsPGClient extends AwsClient {
   private static readonly knownDialectsByCode: Map<string, DatabaseDialect> = new Map([
@@ -87,13 +88,12 @@ export class AwsPGClient extends AwsClient {
   async setReadOnly(readOnly: boolean): Promise<QueryResult | void> {
     this.pluginService.getSessionStateService().setupPristineReadOnly();
     const result = await this.queryWithoutUpdate(`SET SESSION CHARACTERISTICS AS TRANSACTION READ ${readOnly ? "ONLY" : "WRITE"}`);
-    this.targetClient.sessionState.readOnly.value = readOnly;
     this.pluginService.getSessionStateService().updateReadOnly(readOnly);
     return result;
   }
 
   isReadOnly(): boolean {
-    return this.targetClient.sessionState.readOnly.value;
+    return this.pluginService.getSessionStateService().getReadOnly();
   }
 
   async setAutoCommit(autoCommit: boolean): Promise<QueryResult | void> {
@@ -112,27 +112,26 @@ export class AwsPGClient extends AwsClient {
     this.pluginService.getSessionStateService().setupPristineTransactionIsolation();
 
     switch (level) {
-      case 0:
+      case TransactionIsolationLevel.TRANSACTION_READ_UNCOMMITTED:
+        await this.queryWithoutUpdate("SET SESSION CHARACTERISTICS AS TRANSACTION ISOLATION LEVEL READ UNCOMMITTED");
+        break;
+      case TransactionIsolationLevel.TRANSACTION_READ_COMMITTED:
         await this.queryWithoutUpdate("SET SESSION CHARACTERISTICS AS TRANSACTION ISOLATION LEVEL READ COMMITTED");
         break;
-      case 1:
-        await this.queryWithoutUpdate("SET SESSION CHARACTERISTICS AS TRANSACTION ISOLATION LEVEL READ COMMITTED");
-        break;
-      case 2:
+      case TransactionIsolationLevel.TRANSACTION_REPEATABLE_READ:
         await this.queryWithoutUpdate("SET SESSION CHARACTERISTICS AS TRANSACTION ISOLATION LEVEL REPEATABLE READ");
         break;
-      case 3:
+      case TransactionIsolationLevel.TRANSACTION_SERIALIZABLE:
         await this.queryWithoutUpdate("SET SESSION CHARACTERISTICS AS TRANSACTION ISOLATION LEVEL SERIALIZABLE");
         break;
       default:
         throw new AwsWrapperError(Messages.get("Client.invalidTransactionIsolationLevel", String(level)));
     }
-    this.targetClient.sessionState.transactionIsolation.value = level;
     this.pluginService.getSessionStateService().setTransactionIsolation(level);
   }
 
   getTransactionIsolation(): number {
-    return this.targetClient.sessionState.transactionIsolation.value;
+    return this.pluginService.getSessionStateService().getTransactionIsolation();
   }
 
   async setCatalog(catalog: string): Promise<void> {
@@ -150,13 +149,12 @@ export class AwsPGClient extends AwsClient {
 
     this.pluginService.getSessionStateService().setupPristineSchema();
     const result = await this.queryWithoutUpdate(`SET search_path TO ${schema};`);
-    this.targetClient.sessionState.schema.value = schema;
     this.pluginService.getSessionStateService().setSchema(schema);
     return result;
   }
 
   getSchema(): string {
-    return this.targetClient.sessionState.schema.value;
+    return this.pluginService.getSessionStateService().getSchema();
   }
 
   async end() {

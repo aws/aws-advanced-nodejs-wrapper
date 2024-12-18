@@ -33,7 +33,8 @@ describe("test sql method utils", () => {
     ["commit", false],
     [" select 1", false],
     [" INSERT INTO test_table VALUES (1) ; ", false],
-    [" set autocommit = 1 ", false]
+    [" set autocommit = 1 ", false],
+    ["CREATE DATABASE fooBar", false]
   ])("test open transaction", (sql: string, expectedResult: boolean) => {
     expect(SqlMethodUtils.doesOpenTransaction(sql)).toBe(expectedResult);
   });

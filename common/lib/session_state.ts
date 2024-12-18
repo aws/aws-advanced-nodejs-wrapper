@@ -22,8 +22,10 @@ export abstract class SessionStateField<Type> {
   pristineValue?: Type;
 
   constructor(copy?: SessionStateField<Type>) {
-    this.value = copy.value;
-    this.pristineValue = copy.pristineValue;
+    if (copy) {
+      this.value = copy.value;
+      this.pristineValue = copy.pristineValue;
+    }
   }
 
   abstract setValue(state: SessionState): void;

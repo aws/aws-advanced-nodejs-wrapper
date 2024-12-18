@@ -96,13 +96,12 @@ export class AwsMySQLClient extends AwsClient {
   async setReadOnly(readOnly: boolean): Promise<Query | void> {
     this.pluginService.getSessionStateService().setupPristineReadOnly();
     const result = await this.queryWithoutUpdate({ sql: `SET SESSION TRANSACTION READ ${readOnly ? "ONLY" : "WRITE"}` });
-    this.targetClient.sessionState.readOnly.value = readOnly;
     this.pluginService.getSessionStateService().updateReadOnly(readOnly);
     return result;
   }
 
   isReadOnly(): boolean {
-    return this.targetClient.sessionState.readOnly.value;
+    return this.pluginService.getSessionStateService().getReadOnly();
   }
 
   async setAutoCommit(autoCommit: boolean): Promise<Query | void> {
@@ -113,24 +112,22 @@ export class AwsMySQLClient extends AwsClient {
       setting = "0";
     }
     const result = await this.queryWithoutUpdate({ sql: `SET AUTOCOMMIT=${setting}` });
-    this.targetClient.sessionState.autoCommit.value = autoCommit;
     this.pluginService.getSessionStateService().setAutoCommit(autoCommit);
     return result;
   }
 
   getAutoCommit(): boolean {
-    return this.targetClient.sessionState.autoCommit.value;
+    return this.pluginService.getSessionStateService().getAutoCommit();
   }
 
   async setCatalog(catalog: string): Promise<Query | void> {
     this.pluginService.getSessionStateService().setupPristineCatalog();
     await this.queryWithoutUpdate({ sql: `USE ${catalog}` });
-    this.targetClient.sessionState.catalog.value = catalog;
     this.pluginService.getSessionStateService().setCatalog(catalog);
   }
 
   getCatalog(): string {
-    return this.targetClient.sessionState.catalog.value;
+    return this.pluginService.getSessionStateService().getCatalog();
   }
 
   async setSchema(schema: string): Promise<Query | void> {
@@ -145,28 +142,27 @@ export class AwsMySQLClient extends AwsClient {
     this.pluginService.getSessionStateService().setupPristineTransactionIsolation();
 
     switch (level) {
-      case 0:
+      case TransactionIsolationLevel.TRANSACTION_READ_UNCOMMITTED:
         await this.queryWithoutUpdate({ sql: "SET SESSION TRANSACTION ISOLATION LEVEL READ UNCOMMITTED" });
         break;
-      case 1:
+      case TransactionIsolationLevel.TRANSACTION_READ_COMMITTED:
         await this.queryWithoutUpdate({ sql: "SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED" });
         break;
-      case 2:
+      case TransactionIsolationLevel.TRANSACTION_REPEATABLE_READ:
         await this.queryWithoutUpdate({ sql: "SET SESSION TRANSACTION ISOLATION LEVEL REPEATABLE READ" });
         break;
-      case 3:
+      case TransactionIsolationLevel.TRANSACTION_SERIALIZABLE:
         await this.queryWithoutUpdate({ sql: "SET SESSION TRANSACTION ISOLATION LEVEL SERIALIZABLE" });
         break;
       default:
         throw new AwsWrapperError(Messages.get("Client.invalidTransactionIsolationLevel", String(level)));
     }
 
-    this.targetClient.sessionState.transactionIsolation.value = level;
     this.pluginService.getSessionStateService().setTransactionIsolation(level);
   }
 
   getTransactionIsolation(): number {
-    return this.targetClient.sessionState.transactionIsolation.value;
+    return this.pluginService.getSessionStateService().getTransactionIsolation();
   }
 
   async end() {

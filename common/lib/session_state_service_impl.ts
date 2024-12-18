@@ -61,9 +61,9 @@ export class SessionStateServiceImpl implements SessionStateService {
     const targetClient: ClientWrapper = newClient.targetClient;
 
     // Apply current state for all 5 states: autoCommit, readOnly, catalog, schema, transactionIsolation
-    for (const key of Object.keys(this.copySessionState)) {
-      const state = this.copySessionState[key];
-      if (state.constructor === SessionStateField) {
+    for (const key of Object.keys(this.sessionState)) {
+      const state = this.sessionState[key];
+      if (state instanceof SessionStateField) {
         await this.applyCurrentState(targetClient, state);
       }
     }
@@ -93,7 +93,7 @@ export class SessionStateServiceImpl implements SessionStateService {
     // The states that will be set are: autoCommit, readonly, schema, catalog, transactionIsolation.
     for (const key of Object.keys(this.copySessionState)) {
       const state = this.copySessionState[key];
-      if (state.constructor === SessionStateField) {
+      if (state instanceof SessionStateField) {
         await this.setPristineStateOnTarget(targetClient, state, key);
       }
     }
@@ -104,12 +104,7 @@ export class SessionStateServiceImpl implements SessionStateService {
   }
 
   setAutoCommit(autoCommit: boolean): void {
-    if (!this.transferStateEnabledSetting()) {
-      return;
-    }
-
-    this.sessionState.autoCommit.value = autoCommit;
-    this.logCurrentState();
+    return this.setState("autoCommit", autoCommit);
   }
 
   setupPristineAutoCommit(): void;
@@ -123,12 +118,7 @@ export class SessionStateServiceImpl implements SessionStateService {
   }
 
   setCatalog(catalog: string): void {
-    if (!this.transferStateEnabledSetting()) {
-      return;
-    }
-
-    this.sessionState.catalog.value = catalog;
-    this.logCurrentState();
+    return this.setState("catalog", catalog);
   }
 
   setupPristineCatalog(): void;
@@ -142,12 +132,7 @@ export class SessionStateServiceImpl implements SessionStateService {
   }
 
   setReadOnly(readOnly: boolean): void {
-    if (!this.transferStateEnabledSetting()) {
-      return;
-    }
-
-    this.sessionState.readOnly.value = readOnly;
-    this.logCurrentState();
+    return this.setState("readOnly", readOnly);
   }
 
   setupPristineReadOnly(): void;
@@ -157,11 +142,8 @@ export class SessionStateServiceImpl implements SessionStateService {
   }
 
   updateReadOnly(readOnly: boolean): void {
-    // TODO: review this
-    // this.pluginService.getSessionStateService().setupPristineReadOnly(readOnly);
-    // this.pluginService.getSessionStateService().setReadOnly(readOnly);
-    this.setupPristineState(this.sessionState.readOnly, readOnly);
-    this.setState(this.sessionState.readOnly, readOnly);
+    this.pluginService.getSessionStateService().setupPristineReadOnly(readOnly);
+    this.pluginService.getSessionStateService().setReadOnly(readOnly);
   }
 
   getSchema(): string | undefined {
@@ -169,12 +151,7 @@ export class SessionStateServiceImpl implements SessionStateService {
   }
 
   setSchema(schema: string): void {
-    if (!this.transferStateEnabledSetting()) {
-      return;
-    }
-
-    this.sessionState.schema.value = schema;
-    this.logCurrentState();
+    return this.setState("schema", schema);
   }
 
   setupPristineSchema(): void;
@@ -188,12 +165,7 @@ export class SessionStateServiceImpl implements SessionStateService {
   }
 
   setTransactionIsolation(transactionIsolation: number): void {
-    if (!this.transferStateEnabledSetting()) {
-      return;
-    }
-
-    this.sessionState.transactionIsolation.value = transactionIsolation;
-    this.logCurrentState();
+    return this.setState("transactionIsolation", transactionIsolation);
   }
 
   setupPristineTransactionIsolation(): void;

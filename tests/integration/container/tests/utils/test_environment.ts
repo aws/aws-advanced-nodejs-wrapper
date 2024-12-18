@@ -111,7 +111,7 @@ export class TestEnvironment {
                 port: info?.databaseInfo.instanceEndpointPort ?? 5432,
                 user: info?.databaseInfo.username,
                 password: info?.databaseInfo.password,
-                database: info?.databaseInfo.default_db_name,
+                database: info?.databaseInfo.defaultDbName,
                 query_timeout: 3000,
                 connectionTimeoutMillis: 3000
               });
@@ -135,7 +135,7 @@ export class TestEnvironment {
                 port: info?.databaseInfo.instanceEndpointPort ?? 3306,
                 user: info?.databaseInfo.username,
                 password: info?.databaseInfo.password,
-                database: info?.databaseInfo.default_db_name,
+                database: info?.databaseInfo.defaultDbName,
                 connectTimeout: 3000
               } as ConnectionOptions);
 
