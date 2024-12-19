@@ -19,6 +19,7 @@ import { HostListProviderService } from "../host_list_provider_service";
 import { ClientWrapper } from "../client_wrapper";
 import { FailoverRestriction } from "../plugins/failover/failover_restriction";
 import { ErrorHandler } from "../error_handler";
+import { SessionState } from "../session_state";
 
 export enum DatabaseType {
   MYSQL,
@@ -30,6 +31,11 @@ export interface DatabaseDialect {
   getHostAliasQuery(): string;
   getHostAliasAndParseResults(targetClient: ClientWrapper): Promise<string>;
   getServerVersionQuery(): string;
+  getSetReadOnlyQuery(readOnly: boolean): string;
+  getSetAutoCommitQuery(autoCommit: boolean): string;
+  getSetTransactionIsolationQuery(level: number): string;
+  getSetCatalogQuery(catalog: string): string;
+  getSetSchemaQuery(schema: string): string;
   getDialectUpdateCandidates(): string[];
   getErrorHandler(): ErrorHandler;
   isDialect(targetClient: ClientWrapper): Promise<boolean>;

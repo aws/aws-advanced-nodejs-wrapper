@@ -17,11 +17,12 @@
 import { WrapperProperties } from "./wrapper_property";
 import { SessionStateService } from "./session_state_service";
 import { AwsClient } from "./aws_client";
-import { SessionState } from "./session_state";
+import { SessionState, SessionStateField } from "./session_state";
 import { PluginService } from "./plugin_service";
 import { AwsWrapperError, UnsupportedMethodError } from "./utils/errors";
 import { logger } from "../logutils";
 import { SessionStateTransferHandler } from "./session_state_transfer_handler";
+import { ClientWrapper } from "./client_wrapper";
 
 export class SessionStateServiceImpl implements SessionStateService {
   protected sessionState: SessionState;
@@ -57,68 +58,13 @@ export class SessionStateServiceImpl implements SessionStateService {
       }
     }
 
-    if (this.sessionState.autoCommit.value !== undefined) {
-      this.sessionState.autoCommit.resetPristineValue();
-      this.setupPristineAutoCommit();
-      try {
-        await newClient.setAutoCommit(this.sessionState.autoCommit.value);
-      } catch (error: any) {
-        if (error instanceof UnsupportedMethodError) {
-          // ignore
-        }
-        throw error;
-      }
-    }
+    const targetClient: ClientWrapper = newClient.targetClient;
 
-    if (this.sessionState.readOnly.value !== undefined) {
-      this.sessionState.readOnly.resetPristineValue();
-      this.setupPristineReadOnly();
-      try {
-        await newClient.updateSessionStateReadOnly(this.sessionState.readOnly.value);
-      } catch (error: any) {
-        if (error instanceof UnsupportedMethodError) {
-          // ignore
-        }
-        throw error;
-      }
-    }
-
-    if (this.sessionState.catalog.value !== undefined) {
-      this.sessionState.catalog.resetPristineValue();
-      this.setupPristineCatalog();
-      try {
-        await newClient.setCatalog(this.sessionState.catalog.value);
-      } catch (error: any) {
-        if (error instanceof UnsupportedMethodError) {
-          // ignore
-        }
-        throw error;
-      }
-    }
-
-    if (this.sessionState.schema.value !== undefined) {
-      this.sessionState.schema.resetPristineValue();
-      this.setupPristineSchema();
-      try {
-        await newClient.setSchema(this.sessionState.schema.value);
-      } catch (error: any) {
-        if (error instanceof UnsupportedMethodError) {
-          // ignore
-        }
-        throw error;
-      }
-    }
-
-    if (this.sessionState.transactionIsolation.value !== undefined) {
-      this.sessionState.transactionIsolation.resetPristineValue();
-      this.setupPristineTransactionIsolation();
-      try {
-        await newClient.setTransactionIsolation(this.sessionState.transactionIsolation.value);
-      } catch (error: any) {
-        if (error instanceof UnsupportedMethodError) {
-          // ignore
-        }
-        throw error;
+    // Apply current state for all 5 states: autoCommit, readOnly, catalog, schema, transactionIsolation
+    for (const key of Object.keys(this.copySessionState)) {
+      const state = this.copySessionState[key];
+      if (state instanceof SessionStateField) {
+        await this.applyCurrentState(targetClient, state);
       }
     }
   }
@@ -137,58 +83,18 @@ export class SessionStateServiceImpl implements SessionStateService {
       }
     }
 
-    if (this.copySessionState?.autoCommit.canRestorePristine() && this.copySessionState?.autoCommit.pristineValue !== undefined) {
-      try {
-        await client.setAutoCommit(this.copySessionState?.autoCommit.pristineValue);
-      } catch (error: any) {
-        if (error instanceof UnsupportedMethodError) {
-          // ignore
-        }
-        throw error;
-      }
+    if (this.copySessionState === undefined) {
+      return;
     }
 
-    if (this.copySessionState?.readOnly.canRestorePristine() && this.copySessionState?.readOnly.pristineValue !== undefined) {
-      try {
-        await client.updateSessionStateReadOnly(this.copySessionState?.readOnly.pristineValue);
-      } catch (error: any) {
-        if (error instanceof UnsupportedMethodError) {
-          // ignore
-        }
-        throw error;
-      }
-    }
+    const targetClient: ClientWrapper = client.targetClient;
 
-    if (this.copySessionState?.catalog.canRestorePristine() && this.copySessionState?.catalog.pristineValue !== undefined) {
-      try {
-        await client.setCatalog(this.copySessionState?.catalog.pristineValue);
-      } catch (error: any) {
-        if (error instanceof UnsupportedMethodError) {
-          // ignore
-        }
-        throw error;
-      }
-    }
-
-    if (this.copySessionState?.schema.canRestorePristine() && this.copySessionState?.schema.pristineValue !== undefined) {
-      try {
-        await client.setSchema(this.copySessionState?.schema.pristineValue);
-      } catch (error: any) {
-        if (error instanceof UnsupportedMethodError) {
-          // ignore
-        }
-        throw error;
-      }
-    }
-
-    if (this.copySessionState?.transactionIsolation.canRestorePristine() && this.copySessionState?.transactionIsolation.pristineValue !== undefined) {
-      try {
-        await client.setTransactionIsolation(this.copySessionState?.transactionIsolation.pristineValue);
-      } catch (error: any) {
-        if (error instanceof UnsupportedMethodError) {
-          // ignore
-        }
-        throw error;
+    // Set pristine states on all target client.
+    // The states that will be set are: autoCommit, readonly, schema, catalog, transactionIsolation.
+    for (const key of Object.keys(this.copySessionState)) {
+      const state = this.copySessionState[key];
+      if (state instanceof SessionStateField) {
+        await this.setPristineStateOnTarget(targetClient, state, key);
       }
     }
   }
@@ -209,19 +115,7 @@ export class SessionStateServiceImpl implements SessionStateService {
   setupPristineAutoCommit(): void;
   setupPristineAutoCommit(autoCommit: boolean): void;
   setupPristineAutoCommit(autoCommit?: boolean): void {
-    if (!this.resetStateEnabledSetting()) {
-      return;
-    }
-
-    if (this.sessionState.autoCommit.pristineValue !== undefined) {
-      return;
-    }
-
-    if (autoCommit !== undefined) {
-      this.sessionState.autoCommit.pristineValue = autoCommit;
-    } else {
-      this.sessionState.autoCommit.pristineValue = this.pluginService.getCurrentClient().getAutoCommit();
-    }
+    return this.setupPristineState(this.sessionState.autoCommit, autoCommit);
   }
 
   getCatalog(): string | undefined {
@@ -237,22 +131,10 @@ export class SessionStateServiceImpl implements SessionStateService {
     this.logCurrentState();
   }
 
-  setupPristineCatalog(): string | undefined;
-  setupPristineCatalog(catalog: string): string | undefined;
-  setupPristineCatalog(catalog?: string): string | undefined {
-    if (!this.resetStateEnabledSetting()) {
-      return;
-    }
-
-    if (this.sessionState.catalog.pristineValue !== undefined) {
-      return;
-    }
-
-    if (catalog !== undefined) {
-      this.sessionState.catalog.pristineValue = catalog;
-    } else {
-      this.sessionState.catalog.pristineValue = this.pluginService.getCurrentClient().getCatalog();
-    }
+  setupPristineCatalog(): void;
+  setupPristineCatalog(catalog: string): void;
+  setupPristineCatalog(catalog?: string): void {
+    this.setupPristineState(this.sessionState.catalog, catalog);
   }
 
   getReadOnly(): boolean | undefined {
@@ -268,22 +150,18 @@ export class SessionStateServiceImpl implements SessionStateService {
     this.logCurrentState();
   }
 
-  setupPristineReadOnly(): boolean | undefined;
-  setupPristineReadOnly(readOnly: boolean): boolean | undefined;
-  setupPristineReadOnly(readOnly?: boolean): boolean | undefined {
-    if (!this.resetStateEnabledSetting()) {
-      return;
-    }
+  setupPristineReadOnly(): void;
+  setupPristineReadOnly(readOnly: boolean): void;
+  setupPristineReadOnly(readOnly?: boolean): void {
+    this.setupPristineState(this.sessionState.readOnly, readOnly);
+  }
 
-    if (this.sessionState.readOnly.pristineValue !== undefined) {
-      return;
-    }
-
-    if (readOnly !== undefined) {
-      this.sessionState.readOnly.pristineValue = readOnly;
-    } else {
-      this.sessionState.readOnly.pristineValue = this.pluginService.getCurrentClient().isReadOnly();
-    }
+  updateReadOnly(readOnly: boolean): void {
+    // TODO: review this
+    // this.pluginService.getSessionStateService().setupPristineReadOnly(readOnly);
+    // this.pluginService.getSessionStateService().setReadOnly(readOnly);
+    this.setupPristineState(this.sessionState.readOnly, readOnly);
+    this.setState(this.sessionState.readOnly, readOnly);
   }
 
   getSchema(): string | undefined {
@@ -299,22 +177,10 @@ export class SessionStateServiceImpl implements SessionStateService {
     this.logCurrentState();
   }
 
-  setupPristineSchema(): string | undefined;
-  setupPristineSchema(schema: string): string | undefined;
-  setupPristineSchema(schema?: string): string | undefined {
-    if (!this.resetStateEnabledSetting()) {
-      return;
-    }
-
-    if (this.sessionState.schema.pristineValue !== undefined) {
-      return;
-    }
-
-    if (schema !== undefined) {
-      this.sessionState.schema.pristineValue = schema;
-    } else {
-      this.sessionState.schema.pristineValue = this.pluginService.getCurrentClient().getSchema();
-    }
+  setupPristineSchema(): void;
+  setupPristineSchema(schema: string): void;
+  setupPristineSchema(schema?: string): void {
+    this.setupPristineState(this.sessionState.schema, schema);
   }
 
   getTransactionIsolation(): number | undefined {
@@ -330,22 +196,72 @@ export class SessionStateServiceImpl implements SessionStateService {
     this.logCurrentState();
   }
 
-  setupPristineTransactionIsolation(): number | undefined;
-  setupPristineTransactionIsolation(transactionIsolation: number): number | undefined;
-  setupPristineTransactionIsolation(transactionIsolation?: number): number | undefined {
+  setupPristineTransactionIsolation(): void;
+  setupPristineTransactionIsolation(transactionIsolation: number): void;
+  setupPristineTransactionIsolation(transactionIsolation?: number): void {
+    this.setupPristineState<number>(this.sessionState.transactionIsolation, transactionIsolation);
+  }
+
+  private setState<Type>(state: any, val: Type): void {
+    if (!this.transferStateEnabledSetting()) {
+      return;
+    }
+
+    this.sessionState[state].value = val;
+    this.logCurrentState();
+  }
+
+  private async applyCurrentState(targetClient: ClientWrapper, sessionState: SessionStateField<any>): Promise<void> {
+    if (sessionState.value !== undefined) {
+      sessionState.resetPristineValue();
+      this.setupPristineState(sessionState);
+      await this.setStateOnTarget(targetClient, sessionState);
+    }
+  }
+
+  private async setStateOnTarget(targetClient: ClientWrapper, sessionStateField: SessionStateField<any>): Promise<void> {
+    try {
+      await targetClient.query(sessionStateField.getQuery(this.pluginService.getDialect(), false));
+      SessionState.setState(sessionStateField, this.sessionState);
+    } catch (error: any) {
+      if (error instanceof UnsupportedMethodError) {
+        // ignore
+      }
+      throw error;
+    }
+  }
+
+  private async setPristineStateOnTarget(
+    targetClient: ClientWrapper,
+    sessionStateField: SessionStateField<any>,
+    sessionStateName: string
+  ): Promise<void> {
+    if (sessionStateField.canRestorePristine() && sessionStateField.pristineValue !== undefined) {
+      try {
+        await targetClient.query(sessionStateField.getQuery(this.pluginService.getDialect(), true));
+        this.setState(sessionStateName, sessionStateField.pristineValue);
+        SessionState.setPristineState(sessionStateField, this.copySessionState);
+      } catch (error: any) {
+        if (error instanceof UnsupportedMethodError) {
+          // ignore
+        }
+        throw error;
+      }
+    }
+  }
+
+  private setupPristineState<Type>(state: SessionStateField<Type>): void;
+  private setupPristineState<Type>(state: SessionStateField<Type>, val: Type): void;
+  private setupPristineState<Type>(state: SessionStateField<Type>, val?: Type): void {
     if (!this.resetStateEnabledSetting()) {
       return;
     }
 
-    if (this.sessionState.transactionIsolation.pristineValue !== undefined) {
+    if (state.pristineValue !== undefined) {
       return;
     }
 
-    if (transactionIsolation !== undefined) {
-      this.sessionState.transactionIsolation.pristineValue = transactionIsolation;
-    } else {
-      this.sessionState.transactionIsolation.pristineValue = this.pluginService.getCurrentClient().getTransactionIsolation();
-    }
+    state.pristineValue = val ?? state.getClientValue(this.pluginService.getCurrentClient());
   }
 
   begin(): void {

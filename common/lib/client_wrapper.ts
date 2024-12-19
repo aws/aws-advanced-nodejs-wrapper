@@ -15,12 +15,14 @@
 */
 
 import { HostInfo } from "./host_info";
+import { SessionState } from "./session_state";
 
 export interface ClientWrapper {
   readonly client: any;
   readonly hostInfo: HostInfo;
   readonly properties: Map<string, any>;
   readonly id: string;
+  readonly sessionState: SessionState;
 
   query(sql: any): Promise<any>;
 

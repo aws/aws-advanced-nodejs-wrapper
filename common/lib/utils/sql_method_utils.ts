@@ -47,7 +47,7 @@ export class SqlMethodUtils {
   }
 
   static doesSetAutoCommit(statements: string[], dialect: DatabaseDialect): boolean | undefined {
-    let autoCommit;
+    let autoCommit = undefined;
     for (const statement of statements) {
       const cleanStatement = statement
         .toLowerCase()
@@ -60,7 +60,7 @@ export class SqlMethodUtils {
   }
 
   static doesSetCatalog(statements: string[], dialect: DatabaseDialect): string | undefined {
-    let catalog;
+    let catalog = undefined;
     for (const statement of statements) {
       const cleanStatement = statement
         .toLowerCase()
@@ -73,7 +73,7 @@ export class SqlMethodUtils {
   }
 
   static doesSetSchema(statements: string[], dialect: DatabaseDialect): string | undefined {
-    let schema;
+    let schema = undefined;
     for (const statement of statements) {
       const cleanStatement = statement
         .toLowerCase()
@@ -86,7 +86,7 @@ export class SqlMethodUtils {
   }
 
   static doesSetTransactionIsolation(statements: string[], dialect: DatabaseDialect): TransactionIsolationLevel | undefined {
-    let transactionIsolation;
+    let transactionIsolation = undefined;
     for (const statement of statements) {
       const cleanStatement = statement
         .toLowerCase()
