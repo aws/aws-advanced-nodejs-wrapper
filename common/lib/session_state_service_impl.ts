@@ -63,7 +63,7 @@ export class SessionStateServiceImpl implements SessionStateService {
     // Apply current state for all 5 states: autoCommit, readOnly, catalog, schema, transactionIsolation
     for (const key of Object.keys(this.copySessionState)) {
       const state = this.copySessionState[key];
-      if (state.constructor === SessionStateField) {
+      if (state instanceof SessionStateField) {
         await this.applyCurrentState(targetClient, state);
       }
     }
@@ -93,7 +93,7 @@ export class SessionStateServiceImpl implements SessionStateService {
     // The states that will be set are: autoCommit, readonly, schema, catalog, transactionIsolation.
     for (const key of Object.keys(this.copySessionState)) {
       const state = this.copySessionState[key];
-      if (state.constructor === SessionStateField) {
+      if (state instanceof SessionStateField) {
         await this.setPristineStateOnTarget(targetClient, state, key);
       }
     }
