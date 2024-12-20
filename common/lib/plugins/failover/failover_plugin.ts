@@ -172,7 +172,7 @@ export class FailoverPlugin extends AbstractConnectionPlugin {
     }
 
     // Log changes
-    if (logger.level === "silly") {
+    if (logger.level === "debug") {
       let str = "Changes:";
       for (const [key, values] of changes.entries()) {
         str = str.concat("\n");
@@ -189,7 +189,6 @@ export class FailoverPlugin extends AbstractConnectionPlugin {
     if (currentHost) {
       const url = currentHost.url;
       if (this.isHostStillValid(url, changes)) {
-        console.log("url still valid: " + url);
         return Promise.resolve();
       }
 
@@ -440,7 +439,7 @@ export class FailoverPlugin extends AbstractConnectionPlugin {
 
           await this.pluginService.abortCurrentClient();
           await this.pluginService.setCurrentClient(result.client, writerHostInfo);
-          console.log(Messages.get("Failover.establishedConnection", this.pluginService.getCurrentHostInfo()?.host ?? ""));
+          logger.debug(Messages.get("Failover.establishedConnection", this.pluginService.getCurrentHostInfo()?.host ?? ""));
           await this.pluginService.refreshHostList();
           this.failoverWriterSuccessCounter.inc();
         } catch (error: any) {
@@ -547,7 +546,6 @@ export class FailoverPlugin extends AbstractConnectionPlugin {
   }
 
   private canDirectExecute(methodName: string): boolean {
-    console.log("methodNamedirect " + methodName);
     return methodName === FailoverPlugin.METHOD_END;
   }
 

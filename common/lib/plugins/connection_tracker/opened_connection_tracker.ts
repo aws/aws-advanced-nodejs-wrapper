@@ -111,7 +111,6 @@ export class OpenedConnectionTracker {
       }
     }
     console.log(`Opened Connections Tracked: \n\t${str}`);
-    console.log(logTopology(this.pluginService.getHosts(), "logging connections topology : "));
   }
 
   private logConnectionQueue(host: string, queue: Array<WeakRef<ClientWrapper>>): void {

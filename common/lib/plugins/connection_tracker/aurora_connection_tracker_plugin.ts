@@ -57,7 +57,6 @@ export class AuroraConnectionTrackerPlugin extends AbstractConnectionPlugin impl
     isInitialConnection: boolean,
     connectFunc: () => Promise<ClientWrapper>
   ): Promise<ClientWrapper> {
-
     return this.connectInternal(hostInfo, connectFunc);
   }
 

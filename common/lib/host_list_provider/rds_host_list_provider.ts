@@ -143,8 +143,7 @@ export class RdsHostListProvider implements DynamicHostListProvider {
     }
 
     if (client) {
-      const val = await dialect.getHostRole(client);
-      return val;
+      return await dialect.getHostRole(client);
     } else {
       throw new AwsWrapperError(Messages.get("AwsClient targetClient not defined."));
     }

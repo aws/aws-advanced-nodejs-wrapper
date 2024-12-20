@@ -20,14 +20,13 @@ import { ClusterAwareReaderFailoverHandler } from "./reader_failover_handler";
 import { PluginService } from "../../plugin_service";
 import { HostAvailability } from "../../host_availability/host_availability";
 import { AwsWrapperError } from "../../utils/errors";
-import { getWriter, logTopology, maskProperties, sleep } from "../../utils/utils";
+import { getWriter, logTopology, maskProperties } from "../../utils/utils";
 import { ReaderFailoverResult } from "./reader_failover_result";
 import { Messages } from "../../utils/messages";
 import { logger } from "../../../logutils";
 import { WrapperProperties } from "../../wrapper_property";
 import { ClientWrapper } from "../../client_wrapper";
 import { FailoverRestriction } from "./failover_restriction";
-import { HostRole } from "../../host_role";
 
 export interface WriterFailoverHandler {
   failover(currentTopology: HostInfo[]): Promise<WriterFailoverResult>;
@@ -269,7 +268,6 @@ class ReconnectToWriterHandlerTask {
     } finally {
       if (this.currentClient && (this.failoverCompletedDueToError || !success)) {
         await this.pluginService.abortTargetClient(this.currentClient);
-
       }
       logger.info(Messages.get("ClusterAwareWriterFailoverHandler.taskAFinished"));
     }
@@ -283,7 +281,6 @@ class ReconnectToWriterHandlerTask {
     // Task B was returned.
     if (selectedTask && selectedTask === ClusterAwareWriterFailoverHandler.WAIT_NEW_WRITER_TASK) {
       await this.pluginService.abortTargetClient(this.currentClient);
-
     }
   }
 }
