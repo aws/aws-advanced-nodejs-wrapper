@@ -48,6 +48,7 @@ export class FailoverPlugin extends AbstractConnectionPlugin {
   private static readonly TELEMETRY_WRITER_FAILOVER = "failover to writer instance";
   private static readonly TELEMETRY_READER_FAILOVER = "failover to replica";
   private static readonly METHOD_END = "end";
+
   private static readonly subscribedMethods: Set<string> = new Set([
     "initHostProvider",
     "connect",
@@ -165,12 +166,13 @@ export class FailoverPlugin extends AbstractConnectionPlugin {
   }
 
   override async notifyHostListChanged(changes: Map<string, Set<HostChangeOptions>>): Promise<void> {
+    console.log("notifyHostListChange in failover plugin");
     if (!this.enableFailoverSetting) {
       return Promise.resolve();
     }
 
     // Log changes
-    if (logger.level === "debug") {
+    if (logger.level === "silly") {
       let str = "Changes:";
       for (const [key, values] of changes.entries()) {
         str = str.concat("\n");
@@ -187,6 +189,7 @@ export class FailoverPlugin extends AbstractConnectionPlugin {
     if (currentHost) {
       const url = currentHost.url;
       if (this.isHostStillValid(url, changes)) {
+        console.log("url still valid: " + url);
         return Promise.resolve();
       }
 
@@ -437,7 +440,7 @@ export class FailoverPlugin extends AbstractConnectionPlugin {
 
           await this.pluginService.abortCurrentClient();
           await this.pluginService.setCurrentClient(result.client, writerHostInfo);
-          logger.debug(Messages.get("Failover.establishedConnection", this.pluginService.getCurrentHostInfo()?.host ?? ""));
+          console.log(Messages.get("Failover.establishedConnection", this.pluginService.getCurrentHostInfo()?.host ?? ""));
           await this.pluginService.refreshHostList();
           this.failoverWriterSuccessCounter.inc();
         } catch (error: any) {
@@ -544,6 +547,7 @@ export class FailoverPlugin extends AbstractConnectionPlugin {
   }
 
   private canDirectExecute(methodName: string): boolean {
+    console.log("methodNamedirect " + methodName);
     return methodName === FailoverPlugin.METHOD_END;
   }
 

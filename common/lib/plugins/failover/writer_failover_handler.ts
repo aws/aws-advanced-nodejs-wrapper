@@ -20,7 +20,7 @@ import { ClusterAwareReaderFailoverHandler } from "./reader_failover_handler";
 import { PluginService } from "../../plugin_service";
 import { HostAvailability } from "../../host_availability/host_availability";
 import { AwsWrapperError } from "../../utils/errors";
-import { getWriter, logTopology, maskProperties } from "../../utils/utils";
+import { getWriter, logTopology, maskProperties, sleep } from "../../utils/utils";
 import { ReaderFailoverResult } from "./reader_failover_result";
 import { Messages } from "../../utils/messages";
 import { logger } from "../../../logutils";
@@ -269,6 +269,7 @@ class ReconnectToWriterHandlerTask {
     } finally {
       if (this.currentClient && (this.failoverCompletedDueToError || !success)) {
         await this.pluginService.abortTargetClient(this.currentClient);
+
       }
       logger.info(Messages.get("ClusterAwareWriterFailoverHandler.taskAFinished"));
     }
@@ -282,6 +283,7 @@ class ReconnectToWriterHandlerTask {
     // Task B was returned.
     if (selectedTask && selectedTask === ClusterAwareWriterFailoverHandler.WAIT_NEW_WRITER_TASK) {
       await this.pluginService.abortTargetClient(this.currentClient);
+
     }
   }
 }
@@ -436,13 +438,6 @@ class WaitForNewWriterHandlerTask {
       let targetClient = null;
       try {
         targetClient = await this.pluginService.forceConnect(writerCandidate, props);
-        // eslint-disable-next-line no-constant-condition
-        while (true) {
-          await this.pluginService.forceRefreshHostList();
-          if ((await this.pluginService.getHostRole(targetClient)) === HostRole.WRITER) {
-            break;
-          }
-        }
         this.pluginService.setAvailability(writerCandidate.allAliases, HostAvailability.AVAILABLE);
         await this.callCloseClient(this.currentReaderTargetClient);
         await this.callCloseClient(this.currentClient);

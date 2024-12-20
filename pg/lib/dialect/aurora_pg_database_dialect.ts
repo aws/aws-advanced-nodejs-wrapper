@@ -67,7 +67,9 @@ export class AuroraPgDatabaseDialect extends PgDatabaseDialect implements Topolo
 
   async getHostRole(targetClient: ClientWrapper): Promise<HostRole> {
     const res = await targetClient.query(AuroraPgDatabaseDialect.IS_READER_QUERY);
-    return Promise.resolve(res.rows[0]["is_reader"] === "true" ? HostRole.READER : HostRole.WRITER);
+    console.log("gethostrole: " + res.rows[0]["is_reader"]);
+    const val = res.rows[0]["is_reader"] === true ? HostRole.READER : HostRole.WRITER;
+    return Promise.resolve(val)
   }
 
   async isDialect(targetClient: ClientWrapper): Promise<boolean> {

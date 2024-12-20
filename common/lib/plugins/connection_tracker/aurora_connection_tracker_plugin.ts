@@ -26,6 +26,8 @@ import { FailoverError } from "../../utils/errors";
 import { HostChangeOptions } from "../../host_change_options";
 import { HostRole } from "../../host_role";
 import { OpenedConnectionTracker } from "./opened_connection_tracker";
+import { logger } from "../../../logutils";
+import { logTopology } from "../../utils/utils";
 
 export class AuroraConnectionTrackerPlugin extends AbstractConnectionPlugin implements CanReleaseResources {
   private static readonly subscribedMethods = new Set<string>(["notifyHostListChanged"].concat(SubscribedMethodHelper.NETWORK_BOUND_METHODS));
@@ -55,6 +57,7 @@ export class AuroraConnectionTrackerPlugin extends AbstractConnectionPlugin impl
     isInitialConnection: boolean,
     connectFunc: () => Promise<ClientWrapper>
   ): Promise<ClientWrapper> {
+
     return this.connectInternal(hostInfo, connectFunc);
   }
 
@@ -100,7 +103,6 @@ export class AuroraConnectionTrackerPlugin extends AbstractConnectionPlugin impl
 
   private async checkWriterChanged(): Promise<void> {
     const hostInfoAfterFailover = this.getWriter(this.pluginService.getHosts());
-
     if (this.currentWriter === null) {
       this.currentWriter = hostInfoAfterFailover;
       this.needUpdateCurrentWriter = false;
@@ -127,10 +129,12 @@ export class AuroraConnectionTrackerPlugin extends AbstractConnectionPlugin impl
   async notifyHostListChanged(changes: Map<string, Set<HostChangeOptions>>): Promise<void> {
     for (const [key, _] of changes.entries()) {
       const hostChanges = changes.get(key);
+
       if (hostChanges) {
         if (hostChanges.has(HostChangeOptions.PROMOTED_TO_READER)) {
           await this.tracker.invalidateAllConnectionsMultipleHosts(key);
         }
+
         if (hostChanges.has(HostChangeOptions.PROMOTED_TO_WRITER)) {
           this.needUpdateCurrentWriter = true;
         }
