@@ -324,8 +324,8 @@ class ConnectionAttemptTask {
       this.targetClient = await this.pluginService.forceConnect(this.newHost, copy);
 
       // ensure that new connection is a connection to a reader node
-      // eslint-disable-next-line no-constant-condition
       try {
+        // eslint-disable-next-line no-constant-condition
         while (1) {
           await this.pluginService.forceRefreshHostList();
           if ((await this.pluginService.getHostRole(this.targetClient)) === HostRole.READER) {

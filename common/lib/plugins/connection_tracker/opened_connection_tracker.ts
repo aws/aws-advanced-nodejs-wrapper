@@ -110,7 +110,7 @@ export class OpenedConnectionTracker {
         str = hostList.join("\n\t");
       }
     }
-    console.log(`Opened Connections Tracked: \n\t${str}`);
+    logger.debug(`Opened Connections Tracked: \n\t${str}`);
   }
 
   private logConnectionQueue(host: string, queue: Array<WeakRef<ClientWrapper>>): void {

@@ -166,7 +166,6 @@ export class FailoverPlugin extends AbstractConnectionPlugin {
   }
 
   override async notifyHostListChanged(changes: Map<string, Set<HostChangeOptions>>): Promise<void> {
-    console.log("notifyHostListChange in failover plugin");
     if (!this.enableFailoverSetting) {
       return Promise.resolve();
     }
