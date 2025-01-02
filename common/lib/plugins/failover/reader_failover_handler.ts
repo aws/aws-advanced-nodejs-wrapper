@@ -83,7 +83,7 @@ export class ClusterAwareReaderFailoverHandler implements ReaderFailoverHandler 
     const timer: any = {};
     const endTime = Date.now() + this.maxFailoverTimeoutMs;
 
-    const timeoutTask = getTimeoutTask(timer, "Internal failover task timed out.", this.maxFailoverTimeoutMs);
+    const timeoutTask = getTimeoutTask(timer, Messages.get("Failover.timeoutError"), this.maxFailoverTimeoutMs);
     const failoverTask = this.internalFailoverTask(hosts, currentHost, endTime);
 
     return await Promise.race([timeoutTask, failoverTask])
@@ -130,7 +130,7 @@ export class ClusterAwareReaderFailoverHandler implements ReaderFailoverHandler 
         await sleep(1000);
       }
     }
-    throw new InternalQueryTimeoutError("Internal failover task has timed out.");
+    throw new InternalQueryTimeoutError(Messages.get("Failover.timeoutError"));
   }
 
   async failoverInternal(hosts: HostInfo[], currentHost: HostInfo | null): Promise<ReaderFailoverResult> {

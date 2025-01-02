@@ -23,6 +23,9 @@ import { TopologyAwareDatabaseDialect } from "../../../common/lib/topology_aware
 import { HostRole } from "../../../common/lib/host_role";
 import { ClientWrapper } from "../../../common/lib/client_wrapper";
 import { DatabaseDialectCodes } from "../../../common/lib/database_dialect/database_dialect_codes";
+import { WrapperProperties } from "../../../common/lib/wrapper_property";
+import { MonitoringRdsHostListProvider } from "../../../common/lib/host_list_provider/monitoring/monitoring_host_list_provider";
+import { PluginService } from "../../../common/lib/plugin_service";
 
 export class AuroraMySQLDatabaseDialect extends MySQLDatabaseDialect implements TopologyAwareDatabaseDialect {
   private static readonly TOPOLOGY_QUERY: string =
@@ -33,9 +36,16 @@ export class AuroraMySQLDatabaseDialect extends MySQLDatabaseDialect implements 
     "WHERE time_to_sec(timediff(now(), LAST_UPDATE_TIMESTAMP)) <= 300 OR SESSION_ID = 'MASTER_SESSION_ID' ";
   private static readonly HOST_ID_QUERY: string = "SELECT @@aurora_server_id as host";
   private static readonly IS_READER_QUERY: string = "SELECT @@innodb_read_only as is_reader";
+  private static readonly IS_WRITER_QUERY: string =
+    "SELECT server_id " +
+    "FROM information_schema.replica_host_status " +
+    "WHERE SESSION_ID = 'MASTER_SESSION_ID' AND SERVER_ID = @@aurora_server_id";
   private static readonly AURORA_VERSION_QUERY = "SHOW VARIABLES LIKE 'aurora_version'";
 
   getHostListProvider(props: Map<string, any>, originalUrl: string, hostListProviderService: HostListProviderService): HostListProvider {
+    if (WrapperProperties.PLUGINS.get(props).includes("failover2")) {
+      return new MonitoringRdsHostListProvider(props, originalUrl, hostListProviderService, <PluginService>hostListProviderService);
+    }
     return new RdsHostListProvider(props, originalUrl, hostListProviderService);
   }
 
@@ -64,7 +74,21 @@ export class AuroraMySQLDatabaseDialect extends MySQLDatabaseDialect implements 
 
   async getHostRole(targetClient: ClientWrapper): Promise<HostRole> {
     const res = await targetClient.query(AuroraMySQLDatabaseDialect.IS_READER_QUERY);
-    return Promise.resolve(res[0]["is_reader"] === "true" ? HostRole.READER : HostRole.WRITER);
+    return Promise.resolve(res[0][0]["is_reader"] === 1 ? HostRole.READER : HostRole.WRITER);
+  }
+
+  async getWriterId(targetClient: ClientWrapper): Promise<string | null> {
+    const res = await targetClient.query(AuroraMySQLDatabaseDialect.IS_WRITER_QUERY);
+    try {
+      const writerId: string = res[0][0]["server_id"];
+      return writerId ? writerId : null;
+    } catch (e) {
+      if (e.message.includes("Cannot read properties of undefined")) {
+        // Query returned no result, targetClient is not connected to a writer.
+        return null;
+      }
+      throw e;
+    }
   }
 
   async isDialect(targetClient: ClientWrapper): Promise<boolean> {

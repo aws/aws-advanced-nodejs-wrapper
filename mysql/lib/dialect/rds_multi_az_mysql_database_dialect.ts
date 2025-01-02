@@ -121,6 +121,10 @@ export class RdsMultiAZMySQLDatabaseDialect extends MySQLDatabaseDialect impleme
     return (await this.executeTopologyRelatedQuery(client, RdsMultiAZMySQLDatabaseDialect.IS_READER_QUERY)) ? HostRole.WRITER : HostRole.READER;
   }
 
+  getWriterId(client: ClientWrapper): Promise<string> {
+    throw new Error("Method not implemented.");
+  }
+
   async identifyConnection(client: ClientWrapper): Promise<string> {
     return await this.executeTopologyRelatedQuery(
       client,

@@ -16,6 +16,8 @@
 
 import { ConnectionProvider } from "./connection_provider";
 import { DatabaseDialect } from "./database_dialect/database_dialect";
+import { Failover2Plugin } from "./plugins/failover2/failover2_plugin";
+import { ClusterTopologyMonitorImpl } from "./host_list_provider/monitoring/cluster_topology_monitor";
 
 export class WrapperProperty<T> {
   name: string;
@@ -193,12 +195,24 @@ export class WrapperProperties {
   );
   static readonly FAILOVER_MODE = new WrapperProperty<string>("failoverMode", "Set host role to follow during failover.", "");
 
+  static readonly FAILOVER_READER_HOST_SELECTOR_STRATEGY = new WrapperProperty<string>(
+    "failoverReaderHostSelectorStrategy",
+    "The strategy that should be used to select a new reader host while opening a new connection.",
+    "random"
+  );
+
   static readonly CLUSTER_TOPOLOGY_REFRESH_RATE_MS = new WrapperProperty<number>(
     "clusterTopologyRefreshRateMs",
     "Cluster topology refresh rate in millis. " +
       "The cached topology for the cluster will be invalidated after the specified time, " +
       "after which it will be updated during the next interaction with the connection.",
     30000
+  );
+
+  static readonly CLUSTER_TOPOLOGY_HIGH_REFRESH_RATE_MS = new WrapperProperty<number>(
+    "clusterTopologyHighRefreshRateMs",
+    "Cluster topology high refresh rate in millis.",
+    100
   );
 
   static readonly CLUSTER_ID = new WrapperProperty<string>(
@@ -385,7 +399,11 @@ export class WrapperProperties {
     const copy = new Map(props);
 
     for (const key of props.keys()) {
-      if (!key.startsWith(WrapperProperties.MONITORING_PROPERTY_PREFIX)) {
+      if (
+        !key.startsWith(WrapperProperties.MONITORING_PROPERTY_PREFIX) &&
+        !key.startsWith(ClusterTopologyMonitorImpl.MONITORING_PROPERTY_PREFIX) &&
+        key !== Failover2Plugin.INTERNAL_CONNECT_PROPERTY_NAME
+      ) {
         continue;
       }
 

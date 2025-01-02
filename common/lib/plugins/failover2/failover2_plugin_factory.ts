@@ -21,17 +21,17 @@ import { RdsUtils } from "../../utils/rds_utils";
 import { AwsWrapperError } from "../../utils/errors";
 import { Messages } from "../../utils/messages";
 
-export class FailoverPluginFactory extends ConnectionPluginFactory {
-  private static failoverPlugin: any;
+export class Failover2PluginFactory extends ConnectionPluginFactory {
+  private static failover2Plugin: any;
 
   async getInstance(pluginService: PluginService, properties: Map<string, any>): Promise<ConnectionPlugin> {
     try {
-      if (!FailoverPluginFactory.failoverPlugin) {
-        FailoverPluginFactory.failoverPlugin = await import("./failover_plugin");
+      if (!Failover2PluginFactory.failover2Plugin) {
+        Failover2PluginFactory.failover2Plugin = await import("./failover2_plugin");
       }
-      return new FailoverPluginFactory.failoverPlugin.FailoverPlugin(pluginService, properties, new RdsUtils());
+      return new Failover2PluginFactory.failover2Plugin.Failover2Plugin(pluginService, properties, new RdsUtils());
     } catch (error: any) {
-      throw new AwsWrapperError(Messages.get("ConnectionPluginChainBuilder.errorImportingPlugin", error.message, "FailoverPlugin"));
+      throw new AwsWrapperError(Messages.get("ConnectionPluginChainBuilder.errorImportingPlugin", error.message, "Failover2Plugin"));
     }
   }
 }

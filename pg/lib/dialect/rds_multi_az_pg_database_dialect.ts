@@ -128,6 +128,10 @@ export class RdsMultiAZPgDatabaseDialect extends PgDatabaseDialect implements To
     return (await this.executeTopologyRelatedQuery(client, RdsMultiAZPgDatabaseDialect.IS_READER_QUERY)) ? HostRole.WRITER : HostRole.READER;
   }
 
+  getWriterId(client: ClientWrapper): Promise<string> {
+    throw new Error("Method not implemented.");
+  }
+
   getErrorHandler(): ErrorHandler {
     return new MultiAzPgErrorHandler();
   }
