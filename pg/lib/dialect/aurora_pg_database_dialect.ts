@@ -24,6 +24,9 @@ import { HostRole } from "../../../common/lib/host_role";
 import { ClientWrapper } from "../../../common/lib/client_wrapper";
 import { DatabaseDialectCodes } from "../../../common/lib/database_dialect/database_dialect_codes";
 import { LimitlessDatabaseDialect } from "../../../common/lib/database_dialect/limitless_database_dialect";
+import { WrapperProperties } from "../../../common/lib/wrapper_property";
+import { MonitoringRdsHostListProvider } from "../../../common/lib/host_list_provider/monitoring/monitoring_host_list_provider";
+import { PluginService } from "../../../common/lib/plugin_service";
 
 export class AuroraPgDatabaseDialect extends PgDatabaseDialect implements TopologyAwareDatabaseDialect, LimitlessDatabaseDialect {
   private static readonly TOPOLOGY_QUERY: string =
@@ -39,6 +42,9 @@ export class AuroraPgDatabaseDialect extends PgDatabaseDialect implements Topolo
   private static readonly IS_READER_QUERY: string = "SELECT pg_is_in_recovery() as is_reader";
 
   getHostListProvider(props: Map<string, any>, originalUrl: string, hostListProviderService: HostListProviderService): HostListProvider {
+    if (WrapperProperties.PLUGINS.get(props).includes("failover2")) {
+      return new MonitoringRdsHostListProvider(props, originalUrl, hostListProviderService, <PluginService>hostListProviderService);
+    }
     return new RdsHostListProvider(props, originalUrl, hostListProviderService);
   }
 
