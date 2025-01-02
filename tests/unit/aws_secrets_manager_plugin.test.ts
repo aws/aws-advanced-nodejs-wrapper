@@ -120,7 +120,7 @@ describe("testSecretsManager", () => {
   it("missing required parameters", () => {
     expect(async () => {
       await new AwsSecretsManagerPlugin(mockPluginService, new Map()).connect(TEST_HOSTINFO, TEST_PROPS, true, mockConnectFunction);
-    }).rejects.toStrictEqual(new AwsWrapperError(Messages.get("AwsSecretsManagerConnectionPlugin.missingRequiredConfigParameter")));
+    }).rejects.toStrictEqual(new AwsWrapperError(Messages.get("AwsSecretsManagerConnectionPlugin.missingRequiredConfigParameter", "secretId")));
   });
 
   // The plugin will attempt to open a connection with a cached secret, but it will fail with a unhandled error.
