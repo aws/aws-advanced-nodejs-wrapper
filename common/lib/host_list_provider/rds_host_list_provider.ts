@@ -39,7 +39,7 @@ export class RdsHostListProvider implements DynamicHostListProvider {
   protected readonly properties: Map<string, any>;
   private rdsUrlType: RdsUrlType;
   private initialHostList: HostInfo[];
-  private initialHost: HostInfo;
+  protected initialHost: HostInfo;
   private refreshRateNano: number;
   private suggestedClusterIdRefreshRateNano: number = 10 * 60 * 1_000_000_000; // 10 minutes
   private hostList?: HostInfo[];

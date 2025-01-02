@@ -1,0 +1,108 @@
+/*
+  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ 
+  Licensed under the Apache License, Version 2.0 (the "License").
+  You may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+ 
+  http://www.apache.org/licenses/LICENSE-2.0
+ 
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+*/
+
+import { RdsHostListProvider } from "../rds_host_list_provider";
+import { HostInfo } from "../../host_info";
+import { SlidingExpirationCache } from "../../utils/sliding_expiration_cache";
+import { ClusterToplogyMonitor, ClusterToplogyMonitorImpl } from "./cluster_topology_monitor";
+import { PluginService } from "../../plugin_service";
+import { HostListProviderService } from "../../host_list_provider_service";
+import { ClientWrapper } from "../../client_wrapper";
+import { DatabaseDialect } from "../../database_dialect/database_dialect";
+import { AwsWrapperError } from "../../utils/errors";
+import { Messages } from "../../utils/messages";
+
+export class MonitoringRdsHostListProvider extends RdsHostListProvider {
+  static CACHE_CLEANUP_NANOS: bigint = BigInt(60_000_000_000); // 1 minute
+  static MONITOR_EXPIRATION_NANO: bigint = BigInt(15 * 60_000_000_000); // 15 minutes
+  static TOPOLOGY_QUERY_TIMEOUT = 5000;
+
+  pluginService: PluginService;
+
+  protected static monitors: SlidingExpirationCache<string, ClusterToplogyMonitorImpl> = new SlidingExpirationCache(
+    MonitoringRdsHostListProvider.CACHE_CLEANUP_NANOS,
+    () => true,
+    async (monitor: ClusterToplogyMonitorImpl) => {
+      try {
+        await monitor.close();
+      } catch {
+        // ignore
+      }
+    }
+  );
+
+  constructor(properties: Map<string, any>, originalUrl: string, hostListProviderService: HostListProviderService, pluginService: PluginService) {
+    super(properties, originalUrl, hostListProviderService);
+    this.pluginService = pluginService;
+  }
+
+  static async clearAll(): Promise<void> {
+    super.clearAll();
+    for (const [key, monitor] of this.monitors.entries) {
+      await monitor.item.close();
+    }
+    MonitoringRdsHostListProvider.monitors.clear();
+  }
+
+  async queryForTopology(targetClient: ClientWrapper, dialect: DatabaseDialect): Promise<HostInfo[]> {
+    let monitor: ClusterToplogyMonitor = MonitoringRdsHostListProvider.monitors.get(
+      this.clusterId,
+      MonitoringRdsHostListProvider.MONITOR_EXPIRATION_NANO
+    );
+    if (!monitor) {
+      monitor = this.initMonitor();
+    }
+
+    try {
+      return await monitor.forceRefresh(targetClient, MonitoringRdsHostListProvider.TOPOLOGY_QUERY_TIMEOUT);
+    } catch {
+      return null;
+    }
+  }
+
+  async forceMonitoringRefresh(shouldVerifyWriter: boolean, timeoutMs: number): Promise<HostInfo[]> {
+    let monitor: ClusterToplogyMonitor = MonitoringRdsHostListProvider.monitors.get(
+      this.clusterId,
+      MonitoringRdsHostListProvider.MONITOR_EXPIRATION_NANO
+    );
+    if (!monitor) {
+      monitor = this.initMonitor();
+    }
+
+    if (!monitor) {
+      throw new AwsWrapperError(Messages.get("MonitoringHostListProvider.requiresMonitor"));
+    }
+    return await monitor.forceMonitoringRefresh(shouldVerifyWriter, timeoutMs);
+  }
+
+  protected initMonitor(): ClusterToplogyMonitor {
+    const monitor = new ClusterToplogyMonitorImpl(
+      this.clusterId,
+      MonitoringRdsHostListProvider.topologyCache,
+      this.initialHost,
+      this.properties,
+      this.pluginService,
+      this.hostListProviderService,
+      this,
+      this.clusterInstanceTemplate
+    );
+    return MonitoringRdsHostListProvider.monitors.computeIfAbsent(
+      this.clusterId,
+      (x) => monitor,
+      MonitoringRdsHostListProvider.MONITOR_EXPIRATION_NANO
+    );
+  }
+}

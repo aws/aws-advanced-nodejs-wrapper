@@ -43,7 +43,7 @@ import { DatabaseDialectCodes } from "./database_dialect/database_dialect_codes"
 import { getWriter } from "./utils/utils";
 import { TelemetryFactory } from "./utils/telemetry/telemetry_factory";
 import { DriverDialect } from "./driver_dialect/driver_dialect";
-import { ConfigurationProfile } from "./profile/configuration_profile";
+import { MonitoringRdsHostListProvider } from "./host_list_provider/monitoring/monitoring_host_list_provider";
 
 export class PluginService implements ErrorHandler, HostListProviderService {
   private readonly _currentClient: AwsClient;
@@ -172,6 +172,19 @@ export class PluginService implements ErrorHandler, HostListProviderService {
     if (updatedHostList && updatedHostList !== this.hosts) {
       this.updateHostAvailability(updatedHostList);
       await this.setHostList(this.hosts, updatedHostList);
+    }
+  }
+
+  async initiateTopologyUpdate(shouldVerifyWriter: boolean, timeoutMs: number): Promise<void> {
+    const hostListProvider: HostListProvider = this.getHostListProvider();
+    if (!(hostListProvider instanceof MonitoringRdsHostListProvider)) {
+      throw new AwsWrapperError(Messages.get("PluginService.requiredMonitoringRdsHostListProvider"), typeof hostListProvider);
+    }
+
+    try {
+      await (hostListProvider as MonitoringRdsHostListProvider).forceMonitoringRefresh(shouldVerifyWriter, timeoutMs);
+    } catch (err) {
+      //do nothing
     }
   }
 
