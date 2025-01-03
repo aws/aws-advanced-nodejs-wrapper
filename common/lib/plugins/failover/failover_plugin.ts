@@ -48,6 +48,7 @@ export class FailoverPlugin extends AbstractConnectionPlugin {
   private static readonly TELEMETRY_WRITER_FAILOVER = "failover to writer instance";
   private static readonly TELEMETRY_READER_FAILOVER = "failover to replica";
   private static readonly METHOD_END = "end";
+
   private static readonly subscribedMethods: Set<string> = new Set([
     "initHostProvider",
     "connect",

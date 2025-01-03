@@ -21,6 +21,7 @@ import { logger } from "../../../logutils";
 import { MapUtils } from "../../utils/map_utils";
 import { Messages } from "../../utils/messages";
 import { PluginService } from "../../plugin_service";
+import { logTopology } from "../../utils/utils";
 
 export class OpenedConnectionTracker {
   static readonly openedConnections: Map<string, Array<WeakRef<ClientWrapper>>> = new Map<string, Array<WeakRef<ClientWrapper>>>();

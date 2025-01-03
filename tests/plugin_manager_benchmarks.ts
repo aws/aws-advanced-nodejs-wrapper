@@ -283,7 +283,7 @@ suite(
   }),
 
   add("initHostProviderWith10Plugins", async () => {
-    const pluginManagerWithPlugins = await initPluginManagerWithPlugins(10, instance(mockPluginService), propsWithPlugins);;
+    const pluginManagerWithPlugins = await initPluginManagerWithPlugins(10, instance(mockPluginService), propsWithPlugins);
     return async () =>
       await pluginManagerWithPlugins.initHostProvider(
         new HostInfoBuilder({ hostAvailabilityStrategy: new SimpleHostAvailabilityStrategy() }).withHost("host").build(),
@@ -325,7 +325,7 @@ suite(
   }),
 
   add("notifyConnectionChangedWith10Plugins", async () => {
-    const pluginManagerWithPlugins = await initPluginManagerWithPlugins(10, instance(mockPluginService), propsWithPlugins);;
+    const pluginManagerWithPlugins = await initPluginManagerWithPlugins(10, instance(mockPluginService), propsWithPlugins);
     return async () =>
       await pluginManagerWithPlugins.notifyConnectionChanged(new Set<HostChangeOptions>([HostChangeOptions.INITIAL_CONNECTION]), null);
   }),
