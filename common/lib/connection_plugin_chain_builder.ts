@@ -26,6 +26,7 @@ import { ExecuteTimePluginFactory } from "./plugins/execute_time_plugin_factory"
 import { ConnectTimePluginFactory } from "./plugins/connect_time_plugin_factory";
 import { AwsSecretsManagerPluginFactory } from "./authentication/aws_secrets_manager_plugin_factory";
 import { FailoverPluginFactory } from "./plugins/failover/failover_plugin_factory";
+import { Failover2PluginFactory } from "./plugins/failover2/failover2_plugin_factory";
 import { StaleDnsPluginFactory } from "./plugins/stale_dns/stale_dns_plugin_factory";
 import { FederatedAuthPluginFactory } from "./plugins/federated_auth/federated_auth_plugin_factory";
 import { ReadWriteSplittingPluginFactory } from "./plugins/read_write_splitting_plugin_factory";
@@ -66,6 +67,7 @@ export class ConnectionPluginChainBuilder {
     ["federatedAuth", { factory: FederatedAuthPluginFactory, weight: 1200 }],
     ["okta", { factory: OktaAuthPluginFactory, weight: 1300 }],
     ["dev", { factory: DeveloperConnectionPluginFactory, weight: 1400 }],
+    ["failover2", { factory: Failover2PluginFactory, weight: 1500 }],
     ["connectTime", { factory: ConnectTimePluginFactory, weight: ConnectionPluginChainBuilder.WEIGHT_RELATIVE_TO_PRIOR_PLUGIN }],
     ["executeTime", { factory: ExecuteTimePluginFactory, weight: ConnectionPluginChainBuilder.WEIGHT_RELATIVE_TO_PRIOR_PLUGIN }]
   ]);
@@ -83,6 +85,7 @@ export class ConnectionPluginChainBuilder {
     [FederatedAuthPluginFactory, 1200],
     [OktaAuthPluginFactory, 1300],
     [DeveloperConnectionPluginFactory, 1400],
+    [Failover2PluginFactory, 1400],
     [ConnectTimePluginFactory, ConnectionPluginChainBuilder.WEIGHT_RELATIVE_TO_PRIOR_PLUGIN],
     [ExecuteTimePluginFactory, ConnectionPluginChainBuilder.WEIGHT_RELATIVE_TO_PRIOR_PLUGIN]
   ]);
