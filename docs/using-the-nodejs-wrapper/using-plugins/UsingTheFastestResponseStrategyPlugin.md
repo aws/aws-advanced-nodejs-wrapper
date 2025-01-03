@@ -9,7 +9,8 @@ The host response time is measured at an interval set by `responseMeasurementInt
 The plugin can be loaded by adding the plugin code `FastestResponseStrategy` to the [`plugins`](../UsingTheNodeJsWrapper#aws-advanced-nodejs-wrapper-parameters) parameter. The Fastest Response Strategy Plugin is not loaded by default, and must be loaded along with the [`readWriteSplitting`](./UsingTheReadWriteSplittingPlugin.md) plugin.
 
 > [!IMPORTANT]\
-> **`readerHostSelectorStrategy` must be set to `fastestReponse` when using this plugin. Otherwise an error will be thrown:** > `Unsupported host selector strategy: 'random'. To use the fastest response strategy plugin, please ensure the property readerHostSelectorStrategy is set to 'fastestResponse'.`
+> **The `readerHostSelectorStrategy` parameter must be set to `fastestReponse` when using this plugin, otherwise an error will be thrown:**
+> `Unsupported host selector strategy: 'random'. To use the fastest response strategy plugin, please ensure the property readerHostSelectorStrategy is set to 'fastestResponse'.`
 
 ```ts
 params = {
@@ -31,8 +32,8 @@ await client.connect();
 
 | Parameter                       |  Value   | Required | Description                                                                                                                              | Default Value |
 | ------------------------------- | :------: | :------: | :--------------------------------------------------------------------------------------------------------------------------------------- | ------------- |
-| `readerHostSelectorStrategy`    | `string` |   Yes    | Setting to `fastestReponse` sets the reader host selector strategy to choose the fastest host using the Fastest Response Strategy Plugin | `random`      |
-| `responseMeasurementIntervalMs` | `number` |    No    | Interval in milliseconds between measuring response time to a database host                                                              | `30_000`      |
+| `readerHostSelectorStrategy`    | `string` |   Yes    | Setting to `fastestReponse` sets the reader host selector strategy to choose the fastest host using the Fastest Response Strategy Plugin. | `random`      |
+| `responseMeasurementIntervalMs` | `number` |    No    | Interval in milliseconds between measuring response time to a database host.                                                              | `30_000`      |
 
 ## Host Response Time Monitor
 
@@ -57,9 +58,9 @@ const client = new AwsMySQLClient({
 ```
 
 > [!IMPORTANT]\
-> **When specifying a frt\_ prefixed timeout, always ensure you provide a non-zero timeout value**
+> **When specifying a frt\_ prefixed timeout, always ensure you provide a non-zero timeout value.**
 
 ### Sample Code
 
-[Postgres fastest response strategy sample code](../../../examples/aws_driver_example/fastest_response_strategy_postgres_example.ts)<br>
+[PostgreSQL fastest response strategy sample code](../../../examples/aws_driver_example/fastest_response_strategy_postgres_example.ts)<br>
 [MySQL fastest response strategy sample code](../../../examples/aws_driver_example/fastest_response_strategy_mysql_example.ts)
