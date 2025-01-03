@@ -23,6 +23,7 @@ import { AwsWrapperError, UnsupportedMethodError } from "./utils/errors";
 import { logger } from "../logutils";
 import { SessionStateTransferHandler } from "./session_state_transfer_handler";
 import { ClientWrapper } from "./client_wrapper";
+import { TransactionIsolationLevel } from "./utils/transaction_isolation_level";
 
 export class SessionStateServiceImpl implements SessionStateService {
   protected sessionState: SessionState;
@@ -65,6 +66,8 @@ export class SessionStateServiceImpl implements SessionStateService {
       const state = this.sessionState[key];
       if (state instanceof SessionStateField) {
         await this.applyCurrentState(targetClient, state);
+      } else {
+        throw new AwsWrapperError(`Unexpected session state key: ${key}`);
       }
     }
   }
@@ -95,6 +98,8 @@ export class SessionStateServiceImpl implements SessionStateService {
       const state = this.copySessionState[key];
       if (state instanceof SessionStateField) {
         await this.setPristineStateOnTarget(targetClient, state, key);
+      } else {
+        throw new AwsWrapperError(`Unexpected session state key: ${key}`);
       }
     }
   }
@@ -160,18 +165,18 @@ export class SessionStateServiceImpl implements SessionStateService {
     this.setupPristineState(this.sessionState.schema, schema);
   }
 
-  getTransactionIsolation(): number | undefined {
+  getTransactionIsolation(): TransactionIsolationLevel | undefined {
     return this.sessionState.transactionIsolation.value;
   }
 
-  setTransactionIsolation(transactionIsolation: number): void {
+  setTransactionIsolation(transactionIsolation: TransactionIsolationLevel): void {
     return this.setState("transactionIsolation", transactionIsolation);
   }
 
   setupPristineTransactionIsolation(): void;
-  setupPristineTransactionIsolation(transactionIsolation: number): void;
-  setupPristineTransactionIsolation(transactionIsolation?: number): void {
-    this.setupPristineState<number>(this.sessionState.transactionIsolation, transactionIsolation);
+  setupPristineTransactionIsolation(transactionIsolation: TransactionIsolationLevel): void;
+  setupPristineTransactionIsolation(transactionIsolation?: TransactionIsolationLevel): void {
+    this.setupPristineState<TransactionIsolationLevel>(this.sessionState.transactionIsolation, transactionIsolation);
   }
 
   private setState<Type>(state: any, val: Type): void {
@@ -197,7 +202,10 @@ export class SessionStateServiceImpl implements SessionStateService {
       SessionState.setState(sessionStateField, this.sessionState);
     } catch (error: any) {
       if (error instanceof UnsupportedMethodError) {
-        // ignore
+        // UnsupportedMethodError is thrown if the database does not support setting this state.
+        // For instance, PostgreSQL does not support setting the catalog and instead supports setting the schema.
+        // In this case, ignore the error.
+        return;
       }
       throw error;
     }
@@ -215,7 +223,10 @@ export class SessionStateServiceImpl implements SessionStateService {
         SessionState.setPristineState(sessionStateField, this.copySessionState);
       } catch (error: any) {
         if (error instanceof UnsupportedMethodError) {
-          // ignore
+          // UnsupportedMethodError is thrown if the database does not support setting this state.
+          // For instance, PostgreSQL does not support setting the catalog and instead supports setting the schema.
+          // In this case, ignore the error.
+          return;
         }
         throw error;
       }

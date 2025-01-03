@@ -15,6 +15,7 @@
 */
 
 import { AwsClient } from "./aws_client";
+import { TransactionIsolationLevel } from "./utils/transaction_isolation_level";
 
 export interface SessionStateService {
   // auto commit
@@ -43,10 +44,10 @@ export interface SessionStateService {
   setupPristineSchema(schema: string): void;
 
   // transaction isolation
-  getTransactionIsolation(): number | undefined;
-  setTransactionIsolation(transactionIsolation: number): void;
+  getTransactionIsolation(): TransactionIsolationLevel | undefined;
+  setTransactionIsolation(transactionIsolation: TransactionIsolationLevel): void;
   setupPristineTransactionIsolation(): void;
-  setupPristineTransactionIsolation(transactionIsolation: number): void;
+  setupPristineTransactionIsolation(transactionIsolation: TransactionIsolationLevel): void;
 
   reset(): void;
 

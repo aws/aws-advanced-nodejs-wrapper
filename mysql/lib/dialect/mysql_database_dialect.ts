@@ -68,19 +68,19 @@ export class MySQLDatabaseDialect implements DatabaseDialect {
     return `SET AUTOCOMMIT=${autoCommit}`;
   }
 
-  getSetTransactionIsolationQuery(level: number): string {
+  getSetTransactionIsolationQuery(level: TransactionIsolationLevel): string {
     let transactionIsolationLevel: string;
     switch (level) {
-      case 0:
+      case TransactionIsolationLevel.TRANSACTION_READ_UNCOMMITTED:
         transactionIsolationLevel = "READ UNCOMMITTED";
         break;
-      case 1:
+      case TransactionIsolationLevel.TRANSACTION_READ_COMMITTED:
         transactionIsolationLevel = "READ COMMITTED";
         break;
-      case 2:
+      case TransactionIsolationLevel.TRANSACTION_REPEATABLE_READ:
         transactionIsolationLevel = "REPEATABLE READ";
         break;
-      case 3:
+      case TransactionIsolationLevel.TRANSACTION_SERIALIZABLE:
         transactionIsolationLevel = "SERIALIZABLE";
         break;
       default:

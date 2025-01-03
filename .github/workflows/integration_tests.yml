@@ -5,7 +5,6 @@ on:
   push:
     branches:
       - main
-      - refactor/update-read-only
     paths-ignore:
       - "**/*.md"
       - "**/*.jpg"

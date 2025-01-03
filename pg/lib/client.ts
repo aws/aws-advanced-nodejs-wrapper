@@ -104,8 +104,8 @@ export class AwsPGClient extends AwsClient {
     throw new UnsupportedMethodError(Messages.get("Client.methodNotSupported", "getAutoCommit"));
   }
 
-  async setTransactionIsolation(level: number): Promise<QueryResult | void> {
-    if (level === this.getTransactionIsolation()) {
+  async setTransactionIsolation(level: TransactionIsolationLevel): Promise<QueryResult | void> {
+    if (level == this.getTransactionIsolation()) {
       return;
     }
 
@@ -130,7 +130,7 @@ export class AwsPGClient extends AwsClient {
     this.pluginService.getSessionStateService().setTransactionIsolation(level);
   }
 
-  getTransactionIsolation(): number {
+  getTransactionIsolation(): TransactionIsolationLevel {
     return this.pluginService.getSessionStateService().getTransactionIsolation();
   }
 
@@ -143,6 +143,10 @@ export class AwsPGClient extends AwsClient {
   }
 
   async setSchema(schema: string): Promise<QueryResult | void> {
+    if (!schema) {
+      return;
+    }
+
     if (schema === this.getSchema()) {
       return;
     }

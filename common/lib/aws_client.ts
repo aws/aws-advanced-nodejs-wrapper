@@ -35,6 +35,7 @@ import { DriverConfigurationProfiles } from "./profile/driver_configuration_prof
 import { ConfigurationProfile } from "./profile/configuration_profile";
 import { AwsWrapperError } from "./utils/errors";
 import { Messages } from "./utils/messages";
+import { TransactionIsolationLevel } from "./utils/transaction_isolation_level";
 
 export abstract class AwsClient extends EventEmitter {
   private _defaultPort: number = -1;
@@ -157,9 +158,9 @@ export abstract class AwsClient extends EventEmitter {
 
   abstract getAutoCommit(): boolean;
 
-  abstract setTransactionIsolation(transactionIsolation: number): Promise<any | void>;
+  abstract setTransactionIsolation(level: TransactionIsolationLevel): Promise<any | void>;
 
-  abstract getTransactionIsolation(): number;
+  abstract getTransactionIsolation(): TransactionIsolationLevel;
 
   abstract setSchema(schema: any): Promise<any | void>;
 

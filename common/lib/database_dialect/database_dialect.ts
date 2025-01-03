@@ -20,6 +20,7 @@ import { ClientWrapper } from "../client_wrapper";
 import { FailoverRestriction } from "../plugins/failover/failover_restriction";
 import { ErrorHandler } from "../error_handler";
 import { SessionState } from "../session_state";
+import { TransactionIsolationLevel } from "../utils/transaction_isolation_level";
 
 export enum DatabaseType {
   MYSQL,
@@ -33,7 +34,7 @@ export interface DatabaseDialect {
   getServerVersionQuery(): string;
   getSetReadOnlyQuery(readOnly: boolean): string;
   getSetAutoCommitQuery(autoCommit: boolean): string;
-  getSetTransactionIsolationQuery(level: number): string;
+  getSetTransactionIsolationQuery(level: TransactionIsolationLevel): string;
   getSetCatalogQuery(catalog: string): string;
   getSetSchemaQuery(schema: string): string;
   getDialectUpdateCandidates(): string[];
@@ -45,7 +46,7 @@ export interface DatabaseDialect {
   getDialectName(): string;
   getFailoverRestrictions(): FailoverRestriction[];
   doesStatementSetReadOnly(statement: string): boolean | undefined;
-  doesStatementSetTransactionIsolation(statement: string): number | undefined;
+  doesStatementSetTransactionIsolation(statement: string): TransactionIsolationLevel | undefined;
   doesStatementSetAutoCommit(statement: string): boolean | undefined;
   doesStatementSetSchema(statement: string): string | undefined;
   doesStatementSetCatalog(statement: string): string | undefined;

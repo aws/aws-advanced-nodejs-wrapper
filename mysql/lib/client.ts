@@ -121,6 +121,9 @@ export class AwsMySQLClient extends AwsClient {
   }
 
   async setCatalog(catalog: string): Promise<Query | void> {
+    if (!catalog) {
+      return;
+    }
     this.pluginService.getSessionStateService().setupPristineCatalog();
     await this.queryWithoutUpdate({ sql: `USE ${catalog}` });
     this.pluginService.getSessionStateService().setCatalog(catalog);
@@ -139,6 +142,10 @@ export class AwsMySQLClient extends AwsClient {
   }
 
   async setTransactionIsolation(level: TransactionIsolationLevel): Promise<Query | void> {
+    if (level == this.getTransactionIsolation()) {
+      return;
+    }
+
     this.pluginService.getSessionStateService().setupPristineTransactionIsolation();
 
     switch (level) {
@@ -161,7 +168,7 @@ export class AwsMySQLClient extends AwsClient {
     this.pluginService.getSessionStateService().setTransactionIsolation(level);
   }
 
-  getTransactionIsolation(): number {
+  getTransactionIsolation(): TransactionIsolationLevel {
     return this.pluginService.getSessionStateService().getTransactionIsolation();
   }
 

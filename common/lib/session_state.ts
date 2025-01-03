@@ -16,6 +16,7 @@
 
 import { DatabaseDialect } from "./database_dialect/database_dialect";
 import { AwsClient } from "./aws_client";
+import { TransactionIsolationLevel } from "./utils/transaction_isolation_level";
 
 export abstract class SessionStateField<Type> {
   value?: Type;
@@ -155,7 +156,7 @@ class SchemaState extends SessionStateField<string> {
   }
 }
 
-class TransactionIsolationState extends SessionStateField<number> {
+class TransactionIsolationState extends SessionStateField<TransactionIsolationLevel> {
   setValue(state: SessionState) {
     this.value = state.transactionIsolation.value;
   }
