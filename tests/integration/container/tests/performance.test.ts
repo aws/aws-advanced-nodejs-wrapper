@@ -75,7 +75,7 @@ function initDefaultConfig(host: string, port: number): any {
   let config: any = {
     user: env.databaseInfo.username,
     host: host,
-    database: env.databaseInfo.default_db_name,
+    database: env.databaseInfo.defaultDbName,
     password: env.databaseInfo.password,
     port: port,
     failoverTimeoutMs: 250000

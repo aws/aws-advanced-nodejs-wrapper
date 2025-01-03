@@ -24,12 +24,12 @@ import { PgDatabaseDialect } from "./dialect/pg_database_dialect";
 import { AuroraPgDatabaseDialect } from "./dialect/aurora_pg_database_dialect";
 import { AwsWrapperError, UnsupportedMethodError } from "../../common/lib/utils/errors";
 import { Messages } from "../../common/lib/utils/messages";
-import { TransactionIsolationLevel } from "../../common/lib/utils/transaction_isolation_level";
 import { ClientWrapper } from "../../common/lib/client_wrapper";
 import { RdsMultiAZPgDatabaseDialect } from "./dialect/rds_multi_az_pg_database_dialect";
 import { HostInfo } from "../../common/lib/host_info";
 import { TelemetryTraceLevel } from "../../common/lib/utils/telemetry/telemetry_trace_level";
 import { NodePostgresDriverDialect } from "./dialect/node_postgres_driver_dialect";
+import { TransactionIsolationLevel } from "../../common/lib/utils/transaction_isolation_level";
 
 export class AwsPGClient extends AwsClient {
   private static readonly knownDialectsByCode: Map<string, DatabaseDialect> = new Map([
@@ -38,11 +38,9 @@ export class AwsPGClient extends AwsClient {
     [DatabaseDialectCodes.AURORA_PG, new AuroraPgDatabaseDialect()],
     [DatabaseDialectCodes.RDS_MULTI_AZ_PG, new RdsMultiAZPgDatabaseDialect()]
   ]);
-  private schema: string = "";
 
   constructor(config: any) {
     super(config, DatabaseType.POSTGRES, AwsPGClient.knownDialectsByCode, new PgConnectionUrlParser(), new NodePostgresDriverDialect());
-    this.resetState();
   }
 
   async connect(): Promise<void> {
@@ -75,11 +73,7 @@ export class AwsPGClient extends AwsClient {
     });
   }
 
-  async updateSessionStateReadOnly(readOnly: boolean): Promise<QueryResult | void> {
-    return await this.targetClient.query(`SET SESSION CHARACTERISTICS AS TRANSACTION READ ${readOnly ? "ONLY" : "WRITE"}`);
-  }
-
-  private async readOnlyQuery(text: string): Promise<QueryResult> {
+  private async queryWithoutUpdate(text: string): Promise<QueryResult> {
     return this.pluginManager.execute(
       this.pluginService.getCurrentHostInfo(),
       this.properties,
@@ -92,20 +86,14 @@ export class AwsPGClient extends AwsClient {
   }
 
   async setReadOnly(readOnly: boolean): Promise<QueryResult | void> {
-    let result;
-    if (readOnly) {
-      result = await this.readOnlyQuery("SET SESSION CHARACTERISTICS AS TRANSACTION READ ONLY");
-    } else {
-      result = await this.readOnlyQuery("SET SESSION CHARACTERISTICS AS TRANSACTION READ WRITE");
-    }
-    this._isReadOnly = readOnly;
     this.pluginService.getSessionStateService().setupPristineReadOnly();
-    this.pluginService.getSessionStateService().setReadOnly(readOnly);
+    const result = await this.queryWithoutUpdate(`SET SESSION CHARACTERISTICS AS TRANSACTION READ ${readOnly ? "ONLY" : "WRITE"}`);
+    this.pluginService.getSessionStateService().updateReadOnly(readOnly);
     return result;
   }
 
   isReadOnly(): boolean {
-    return this._isReadOnly;
+    return this.pluginService.getSessionStateService().getReadOnly();
   }
 
   async setAutoCommit(autoCommit: boolean): Promise<QueryResult | void> {
@@ -116,35 +104,34 @@ export class AwsPGClient extends AwsClient {
     throw new UnsupportedMethodError(Messages.get("Client.methodNotSupported", "getAutoCommit"));
   }
 
-  async setTransactionIsolation(level: number): Promise<QueryResult | void> {
-    if (level === this.getTransactionIsolation()) {
+  async setTransactionIsolation(level: TransactionIsolationLevel): Promise<QueryResult | void> {
+    if (level == this.getTransactionIsolation()) {
       return;
     }
 
     this.pluginService.getSessionStateService().setupPristineTransactionIsolation();
-    this.pluginService.getSessionStateService().setTransactionIsolation(level);
 
-    this._isolationLevel = level;
     switch (level) {
-      case 0:
-        await this.query("SET SESSION CHARACTERISTICS AS TRANSACTION ISOLATION LEVEL READ COMMITTED");
+      case TransactionIsolationLevel.TRANSACTION_READ_UNCOMMITTED:
+        await this.queryWithoutUpdate("SET SESSION CHARACTERISTICS AS TRANSACTION ISOLATION LEVEL READ UNCOMMITTED");
         break;
-      case 1:
-        await this.query("SET SESSION CHARACTERISTICS AS TRANSACTION ISOLATION LEVEL READ COMMITTED");
+      case TransactionIsolationLevel.TRANSACTION_READ_COMMITTED:
+        await this.queryWithoutUpdate("SET SESSION CHARACTERISTICS AS TRANSACTION ISOLATION LEVEL READ COMMITTED");
         break;
-      case 2:
-        await this.query("SET SESSION CHARACTERISTICS AS TRANSACTION ISOLATION LEVEL REPEATABLE READ");
+      case TransactionIsolationLevel.TRANSACTION_REPEATABLE_READ:
+        await this.queryWithoutUpdate("SET SESSION CHARACTERISTICS AS TRANSACTION ISOLATION LEVEL REPEATABLE READ");
         break;
-      case 3:
-        await this.query("SET SESSION CHARACTERISTICS AS TRANSACTION ISOLATION LEVEL SERIALIZABLE");
+      case TransactionIsolationLevel.TRANSACTION_SERIALIZABLE:
+        await this.queryWithoutUpdate("SET SESSION CHARACTERISTICS AS TRANSACTION ISOLATION LEVEL SERIALIZABLE");
         break;
       default:
         throw new AwsWrapperError(Messages.get("Client.invalidTransactionIsolationLevel", String(level)));
     }
+    this.pluginService.getSessionStateService().setTransactionIsolation(level);
   }
 
-  getTransactionIsolation(): number {
-    return this._isolationLevel;
+  getTransactionIsolation(): TransactionIsolationLevel {
+    return this.pluginService.getSessionStateService().getTransactionIsolation();
   }
 
   async setCatalog(catalog: string): Promise<void> {
@@ -156,19 +143,22 @@ export class AwsPGClient extends AwsClient {
   }
 
   async setSchema(schema: string): Promise<QueryResult | void> {
+    if (!schema) {
+      return;
+    }
+
     if (schema === this.getSchema()) {
       return;
     }
 
     this.pluginService.getSessionStateService().setupPristineSchema();
+    const result = await this.queryWithoutUpdate(`SET search_path TO ${schema};`);
     this.pluginService.getSessionStateService().setSchema(schema);
-
-    this.schema = schema;
-    return await this.query(`SET search_path TO ${schema};`);
+    return result;
   }
 
   getSchema(): string {
-    return this.schema;
+    return this.pluginService.getSessionStateService().getSchema();
   }
 
   async end() {
@@ -178,7 +168,7 @@ export class AwsPGClient extends AwsClient {
       return;
     }
     const hostInfo: HostInfo | null = this.pluginService.getCurrentHostInfo();
-    const result = await this.pluginManager.execute(
+    return await this.pluginManager.execute(
       hostInfo,
       this.properties,
       "end",
@@ -189,7 +179,6 @@ export class AwsPGClient extends AwsClient {
       },
       null
     );
-    return result;
   }
 
   async rollback(): Promise<any> {
@@ -206,11 +195,5 @@ export class AwsPGClient extends AwsClient {
       },
       null
     );
-  }
-
-  resetState() {
-    this._isReadOnly = false;
-    this.schema = "";
-    this._isolationLevel = TransactionIsolationLevel.TRANSACTION_READ_COMMITTED;
   }
 }

@@ -22,7 +22,6 @@ import { TestEnvironmentFeatures } from "./utils/test_environment_features";
 import { features, instanceCount } from "./config";
 import { InternalPooledConnectionProvider } from "../../../../common/lib/internal_pooled_connection_provider";
 import { AwsPoolConfig } from "../../../../common/lib/aws_pool_config";
-import { ConnectionProviderManager } from "../../../../common/lib/connection_provider_manager";
 import { TestInstanceInfo } from "./utils/test_instance_info";
 import { sleep } from "../../../../common/lib/utils/utils";
 import { FailoverSuccessError } from "../../../../common/lib/utils/errors";
@@ -50,7 +49,7 @@ async function initDefaultConfig(host: string, port: number, provider: InternalP
   let config: any = {
     user: env.databaseInfo.username,
     host: host,
-    database: env.databaseInfo.default_db_name,
+    database: env.databaseInfo.defaultDbName,
     password: env.databaseInfo.password,
     port: port,
     plugins: "readWriteSplitting",
@@ -70,7 +69,7 @@ async function initConfigWithFailover(host: string, port: number, provider: Inte
   let config: any = {
     user: env.databaseInfo.username,
     host: host,
-    database: env.databaseInfo.default_db_name,
+    database: env.databaseInfo.defaultDbName,
     password: env.databaseInfo.password,
     port: port,
     plugins: "readWriteSplitting,failover",

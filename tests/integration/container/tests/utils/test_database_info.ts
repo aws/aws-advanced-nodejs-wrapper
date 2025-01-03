@@ -20,7 +20,7 @@ import { DBInstance } from "@aws-sdk/client-rds/dist-types/models/models_0";
 export class TestDatabaseInfo {
   private readonly _username: string;
   private readonly _password: string;
-  private readonly _default_db_name: string;
+  private readonly _defaultDbName: string;
   private readonly _clusterEndpoint: string;
   private readonly _clusterEndpointPort: number;
   private readonly _clusterReadOnlyEndpoint: string;
@@ -32,7 +32,7 @@ export class TestDatabaseInfo {
   constructor(databaseInfo: { [s: string]: any }) {
     this._username = String(databaseInfo["username"]);
     this._password = String(databaseInfo["password"]);
-    this._default_db_name = String(databaseInfo["defaultDbName"]);
+    this._defaultDbName = String(databaseInfo["defaultDbName"]);
     this._clusterEndpoint = String(databaseInfo["clusterEndpoint"]);
     this._clusterEndpointPort = Number(databaseInfo["clusterEndpointPort"]);
     this._clusterReadOnlyEndpoint = String(databaseInfo["clusterReadOnlyEndpoint"]);
@@ -53,8 +53,8 @@ export class TestDatabaseInfo {
     return this._password;
   }
 
-  get default_db_name(): string {
-    return this._default_db_name;
+  get defaultDbName(): string {
+    return this._defaultDbName;
   }
 
   get writerInstanceEndpoint() {

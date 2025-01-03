@@ -39,12 +39,9 @@ export class AwsMySQLClient extends AwsClient {
     [DatabaseDialectCodes.AURORA_MYSQL, new AuroraMySQLDatabaseDialect()],
     [DatabaseDialectCodes.RDS_MULTI_AZ_MYSQL, new RdsMultiAZMySQLDatabaseDialect()]
   ]);
-  private isAutoCommit: boolean = true;
-  private catalog = "";
 
   constructor(config: any) {
     super(config, DatabaseType.MYSQL, AwsMySQLClient.knownDialectsByCode, new MySQLConnectionUrlParser(), new MySQL2DriverDialect());
-    this.resetState();
   }
 
   async connect(): Promise<void> {
@@ -82,7 +79,7 @@ export class AwsMySQLClient extends AwsClient {
     });
   }
 
-  private async readOnlyQuery(options: QueryOptions, callback?: any): Promise<Query> {
+  private async queryWithoutUpdate(options: QueryOptions, callback?: any): Promise<Query> {
     const host = this.pluginService.getCurrentHostInfo();
 
     return this.pluginManager.execute(
@@ -96,61 +93,44 @@ export class AwsMySQLClient extends AwsClient {
     );
   }
 
-  async updateSessionStateReadOnly(readOnly: boolean): Promise<Query | void> {
-    const result = await this.targetClient.queryWithTimeout(`SET SESSION TRANSACTION READ ${readOnly ? "ONLY" : "WRITE"}`);
-
-    this._isReadOnly = readOnly;
-    this.pluginService.getSessionStateService().setupPristineReadOnly();
-    this.pluginService.getSessionStateService().setReadOnly(readOnly);
-    return result;
-  }
-
   async setReadOnly(readOnly: boolean): Promise<Query | void> {
-    const result = await this.readOnlyQuery({ sql: `SET SESSION TRANSACTION READ ${readOnly ? "ONLY" : "WRITE"}` });
-    this._isReadOnly = readOnly;
     this.pluginService.getSessionStateService().setupPristineReadOnly();
-    this.pluginService.getSessionStateService().setReadOnly(readOnly);
+    const result = await this.queryWithoutUpdate({ sql: `SET SESSION TRANSACTION READ ${readOnly ? "ONLY" : "WRITE"}` });
+    this.pluginService.getSessionStateService().updateReadOnly(readOnly);
     return result;
   }
 
   isReadOnly(): boolean {
-    return this._isReadOnly;
+    return this.pluginService.getSessionStateService().getReadOnly();
   }
 
   async setAutoCommit(autoCommit: boolean): Promise<Query | void> {
-    if (autoCommit === this.getAutoCommit()) {
-      return;
-    }
-
     this.pluginService.getSessionStateService().setupPristineAutoCommit();
-    this.pluginService.getSessionStateService().setAutoCommit(autoCommit);
 
-    this.isAutoCommit = autoCommit;
     let setting = "1";
     if (!autoCommit) {
       setting = "0";
     }
-    return await this.query({ sql: `SET AUTOCOMMIT=${setting}` });
+    const result = await this.queryWithoutUpdate({ sql: `SET AUTOCOMMIT=${setting}` });
+    this.pluginService.getSessionStateService().setAutoCommit(autoCommit);
+    return result;
   }
 
   getAutoCommit(): boolean {
-    return this.isAutoCommit;
+    return this.pluginService.getSessionStateService().getAutoCommit();
   }
 
   async setCatalog(catalog: string): Promise<Query | void> {
-    if (catalog === this.getCatalog()) {
+    if (!catalog) {
       return;
     }
-
     this.pluginService.getSessionStateService().setupPristineCatalog();
+    await this.queryWithoutUpdate({ sql: `USE ${catalog}` });
     this.pluginService.getSessionStateService().setCatalog(catalog);
-
-    this.catalog = catalog;
-    await this.query({ sql: `USE ${catalog}` });
   }
 
   getCatalog(): string {
-    return this.catalog;
+    return this.pluginService.getSessionStateService().getCatalog();
   }
 
   async setSchema(schema: string): Promise<Query | void> {
@@ -162,36 +142,34 @@ export class AwsMySQLClient extends AwsClient {
   }
 
   async setTransactionIsolation(level: TransactionIsolationLevel): Promise<Query | void> {
-    if (level === this.getTransactionIsolation()) {
+    if (level == this.getTransactionIsolation()) {
       return;
     }
 
     this.pluginService.getSessionStateService().setupPristineTransactionIsolation();
-    this.pluginService.getSessionStateService().setTransactionIsolation(level);
 
-    this._isolationLevel = level;
     switch (level) {
-      case 0:
-        await this.query({ sql: "SET SESSION TRANSACTION ISOLATION LEVEL READ UNCOMMITTED" });
+      case TransactionIsolationLevel.TRANSACTION_READ_UNCOMMITTED:
+        await this.queryWithoutUpdate({ sql: "SET SESSION TRANSACTION ISOLATION LEVEL READ UNCOMMITTED" });
         break;
-      case 1:
-        await this.query({ sql: "SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED" });
+      case TransactionIsolationLevel.TRANSACTION_READ_COMMITTED:
+        await this.queryWithoutUpdate({ sql: "SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED" });
         break;
-      case 2:
-        await this.query({ sql: "SET SESSION TRANSACTION ISOLATION LEVEL REPEATABLE READ" });
+      case TransactionIsolationLevel.TRANSACTION_REPEATABLE_READ:
+        await this.queryWithoutUpdate({ sql: "SET SESSION TRANSACTION ISOLATION LEVEL REPEATABLE READ" });
         break;
-      case 3:
-        await this.query({ sql: "SET SESSION TRANSACTION ISOLATION LEVEL SERIALIZABLE" });
+      case TransactionIsolationLevel.TRANSACTION_SERIALIZABLE:
+        await this.queryWithoutUpdate({ sql: "SET SESSION TRANSACTION ISOLATION LEVEL SERIALIZABLE" });
         break;
       default:
         throw new AwsWrapperError(Messages.get("Client.invalidTransactionIsolationLevel", String(level)));
     }
 
-    this._isolationLevel = level;
+    this.pluginService.getSessionStateService().setTransactionIsolation(level);
   }
 
-  getTransactionIsolation(): number {
-    return this._isolationLevel;
+  getTransactionIsolation(): TransactionIsolationLevel {
+    return this.pluginService.getSessionStateService().getTransactionIsolation();
   }
 
   async end() {
@@ -201,7 +179,7 @@ export class AwsMySQLClient extends AwsClient {
       return;
     }
 
-    const result = await this.pluginManager.execute(
+    return await this.pluginManager.execute(
       this.pluginService.getCurrentHostInfo(),
       this.properties,
       "end",
@@ -212,7 +190,6 @@ export class AwsMySQLClient extends AwsClient {
       },
       null
     );
-    return result;
   }
 
   async rollback(): Promise<any> {
@@ -229,12 +206,5 @@ export class AwsMySQLClient extends AwsClient {
       },
       null
     );
-  }
-
-  resetState() {
-    this._isReadOnly = false;
-    this.isAutoCommit = true;
-    this.catalog = "";
-    this._isolationLevel = TransactionIsolationLevel.TRANSACTION_REPEATABLE_READ;
   }
 }

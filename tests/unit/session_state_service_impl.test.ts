@@ -14,20 +14,32 @@
   limitations under the License.
 */
 
-import { anything, instance, mock, reset, spy, verify, when } from "ts-mockito";
+import { anything, instance, mock, reset, spy, when } from "ts-mockito";
 import { SessionStateServiceImpl } from "../../common/lib/session_state_service_impl";
 import { PluginService } from "../../common/lib/plugin_service";
 import { AwsPGClient } from "../../pg/lib";
 import { SessionStateService } from "../../common/lib/session_state_service";
 import { AwsClient } from "../../common/lib/aws_client";
 import { AwsMySQLClient } from "../../mysql/lib";
+import { PgClientWrapper } from "../../common/lib/pg_client_wrapper";
+import { MySQLClientWrapper } from "../../common/lib/mysql_client_wrapper";
+import { HostInfoBuilder } from "../../common/lib/host_info_builder";
+import { SimpleHostAvailabilityStrategy } from "../../common/lib/host_availability/simple_host_availability_strategy";
+import { MySQLDatabaseDialect } from "../../mysql/lib/dialect/mysql_database_dialect";
+import { PgDatabaseDialect } from "../../pg/lib/dialect/pg_database_dialect";
+import { MySQL2DriverDialect } from "../../mysql/lib/dialect/mysql2_driver_dialect";
 
+const hostInfoBuilder = new HostInfoBuilder({ hostAvailabilityStrategy: new SimpleHostAvailabilityStrategy() });
 const mockPluginService = mock(PluginService);
 let awsPGClient: AwsClient;
 let mockAwsPGClient: AwsClient;
 let awsMySQLClient: AwsClient;
 let mockAwsMySQLClient: AwsClient;
 let sessionStateService: SessionStateService;
+const mockPgClientWrapper: PgClientWrapper = mock(PgClientWrapper);
+const mockMySQLClientWrapper: MySQLClientWrapper = mock(MySQLClientWrapper);
+const hostInfo = new HostInfoBuilder({ hostAvailabilityStrategy: new SimpleHostAvailabilityStrategy() }).withHost("host").build();
+const mockMySQLDriverDialect = mock(MySQL2DriverDialect);
 
 describe("testSessionStateServiceImpl", () => {
   beforeEach(() => {
@@ -36,6 +48,13 @@ describe("testSessionStateServiceImpl", () => {
     awsMySQLClient = new AwsMySQLClient({});
     mockAwsMySQLClient = spy(awsMySQLClient);
     sessionStateService = new SessionStateServiceImpl(instance(mockPluginService), new Map());
+    awsPGClient.targetClient = new PgClientWrapper(undefined, hostInfoBuilder.withHost("host").build(), new Map());
+    mockAwsPGClient.targetClient = new PgClientWrapper(undefined, hostInfoBuilder.withHost("host").build(), new Map());
+    awsMySQLClient.targetClient = new MySQLClientWrapper(undefined, hostInfoBuilder.withHost("host").build(), new Map(), mockMySQLDriverDialect);
+    mockAwsMySQLClient.targetClient = new MySQLClientWrapper(undefined, hostInfoBuilder.withHost("host").build(), new Map(), mockMySQLDriverDialect);
+    when(mockMySQLClientWrapper.query(anything())).thenResolve();
+    when(mockPgClientWrapper.query(anything())).thenResolve();
+    when(mockPluginService.getSessionStateService()).thenReturn(sessionStateService);
   });
 
   afterEach(() => {
@@ -55,10 +74,16 @@ describe("testSessionStateServiceImpl", () => {
   ])("test reset client readOnly", async (pristineValue: boolean, value: boolean, shouldReset: boolean, driver: number) => {
     const mockAwsClient = driver === 0 ? mockAwsPGClient : mockAwsMySQLClient;
     const awsClient = driver === 0 ? awsPGClient : awsMySQLClient;
+    if (driver === 0) {
+      awsClient.targetClient = new PgClientWrapper(undefined, hostInfo, new Map());
+      when(mockPluginService.getDialect()).thenReturn(new PgDatabaseDialect());
+    } else {
+      awsClient.targetClient = new MySQLClientWrapper(undefined, hostInfo, new Map(), mockMySQLDriverDialect);
+      when(mockPluginService.getDialect()).thenReturn(new MySQLDatabaseDialect());
+    }
     when(mockPluginService.getCurrentClient()).thenReturn(awsClient);
     when(mockAwsClient.isReadOnly()).thenReturn(pristineValue);
     expect(sessionStateService.getReadOnly()).toBe(undefined);
-    when(mockAwsClient.updateSessionStateReadOnly(anything())).thenResolve();
     sessionStateService.setupPristineReadOnly();
     sessionStateService.setReadOnly(value);
     expect(sessionStateService.getReadOnly()).toBe(value);
@@ -66,11 +91,12 @@ describe("testSessionStateServiceImpl", () => {
     sessionStateService.begin();
     await sessionStateService.applyPristineSessionState(awsClient);
     sessionStateService.complete();
-
     if (shouldReset) {
-      verify(mockAwsClient.updateSessionStateReadOnly(pristineValue)).once();
+      // Should reset to pristine value
+      expect(sessionStateService.getReadOnly()).toBe(pristineValue);
     } else {
-      verify(mockAwsClient.updateSessionStateReadOnly(anything())).never();
+      // No-op, value should stay unchanged
+      expect(sessionStateService.getReadOnly()).toBe(value);
     }
   });
 
@@ -83,6 +109,7 @@ describe("testSessionStateServiceImpl", () => {
     const mockAwsClient = driver === 0 ? mockAwsPGClient : mockAwsMySQLClient;
     const awsClient = driver === 0 ? awsPGClient : awsMySQLClient;
 
+    when(mockPluginService.getDialect()).thenReturn(new MySQLDatabaseDialect());
     when(mockPluginService.getCurrentClient()).thenReturn(awsClient);
     when(mockAwsClient.getAutoCommit()).thenReturn(pristineValue);
     expect(sessionStateService.getAutoCommit()).toBe(undefined);
@@ -95,9 +122,11 @@ describe("testSessionStateServiceImpl", () => {
     sessionStateService.complete();
 
     if (shouldReset) {
-      verify(mockAwsClient.setAutoCommit(pristineValue)).once();
+      // Should reset to pristine value
+      expect(sessionStateService.getAutoCommit()).toBe(pristineValue);
     } else {
-      verify(mockAwsClient.setAutoCommit(anything())).never();
+      // No-op, value should stay unchanged
+      expect(sessionStateService.getAutoCommit()).toBe(value);
     }
   });
 
@@ -110,6 +139,7 @@ describe("testSessionStateServiceImpl", () => {
     const mockAwsClient = driver === 0 ? mockAwsPGClient : mockAwsMySQLClient;
     const awsClient = driver === 0 ? awsPGClient : awsMySQLClient;
 
+    when(mockPluginService.getDialect()).thenReturn(new MySQLDatabaseDialect());
     when(mockPluginService.getCurrentClient()).thenReturn(awsClient);
     when(mockAwsClient.getCatalog()).thenReturn(pristineValue);
     expect(sessionStateService.getCatalog()).toBe(undefined);
@@ -122,9 +152,11 @@ describe("testSessionStateServiceImpl", () => {
     sessionStateService.complete();
 
     if (shouldReset) {
-      verify(mockAwsClient.setCatalog(pristineValue)).once();
+      // Should reset to pristine value
+      expect(sessionStateService.getCatalog()).toBe(pristineValue);
     } else {
-      verify(mockAwsClient.setCatalog(anything())).never();
+      // No-op, value should stay unchanged
+      expect(sessionStateService.getCatalog()).toBe(value);
     }
   });
 
@@ -137,6 +169,7 @@ describe("testSessionStateServiceImpl", () => {
     const mockAwsClient = driver === 0 ? mockAwsPGClient : mockAwsMySQLClient;
     const awsClient = driver === 0 ? awsPGClient : awsMySQLClient;
 
+    when(mockPluginService.getDialect()).thenReturn(new PgDatabaseDialect());
     when(mockPluginService.getCurrentClient()).thenReturn(awsClient);
     when(mockAwsClient.getSchema()).thenReturn(pristineValue);
     expect(sessionStateService.getSchema()).toBe(undefined);
@@ -149,9 +182,11 @@ describe("testSessionStateServiceImpl", () => {
     sessionStateService.complete();
 
     if (shouldReset) {
-      verify(mockAwsClient.setSchema(pristineValue)).once();
+      // Should reset to pristine value
+      expect(sessionStateService.getSchema()).toBe(pristineValue);
     } else {
-      verify(mockAwsClient.setSchema(anything())).never();
+      // No-op, value should stay unchanged
+      expect(sessionStateService.getSchema()).toBe(value);
     }
   });
 
@@ -168,6 +203,12 @@ describe("testSessionStateServiceImpl", () => {
     const mockAwsClient = driver === 0 ? mockAwsPGClient : mockAwsMySQLClient;
     const awsClient = driver === 0 ? awsPGClient : awsMySQLClient;
 
+    if (driver === 0) {
+      when(mockPluginService.getDialect()).thenReturn(new PgDatabaseDialect());
+    } else {
+      when(mockPluginService.getDialect()).thenReturn(new MySQLDatabaseDialect());
+    }
+
     when(mockPluginService.getCurrentClient()).thenReturn(awsClient);
     when(mockAwsClient.getTransactionIsolation()).thenReturn(pristineValue);
     expect(sessionStateService.getTransactionIsolation()).toBe(undefined);
@@ -180,9 +221,11 @@ describe("testSessionStateServiceImpl", () => {
     sessionStateService.complete();
 
     if (shouldReset) {
-      verify(mockAwsClient.setTransactionIsolation(pristineValue)).once();
+      // Should reset to pristine value
+      expect(sessionStateService.getTransactionIsolation()).toBe(pristineValue);
     } else {
-      verify(mockAwsClient.setTransactionIsolation(anything())).never();
+      // No-op, value should stay unchanged
+      expect(sessionStateService.getTransactionIsolation()).toBe(value);
     }
   });
 });

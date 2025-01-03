@@ -54,7 +54,7 @@ async function initDefaultConfig(host: string): Promise<any> {
   let props = {
     user: "jane_doe",
     host: host,
-    database: env.databaseInfo.default_db_name,
+    database: env.databaseInfo.defaultDbName,
     password: env.databaseInfo.password,
     port: env.databaseInfo.instanceEndpointPort,
     plugins: "iam",
