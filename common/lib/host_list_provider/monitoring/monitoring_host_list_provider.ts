@@ -54,7 +54,6 @@ export class MonitoringRdsHostListProvider extends RdsHostListProvider {
     for (const [key, monitor] of this.monitors.entries) {
       await monitor.item.close();
     }
-    MonitoringRdsHostListProvider.monitors.clear();
   }
 
   async queryForTopology(targetClient: ClientWrapper, dialect: DatabaseDialect): Promise<HostInfo[]> {
@@ -71,6 +70,15 @@ export class MonitoringRdsHostListProvider extends RdsHostListProvider {
     } catch {
       return null;
     }
+  }
+
+  async sqlQueryForTopology(targetClient: ClientWrapper): Promise<HostInfo[]> {
+    const dialect: DatabaseDialect = this.hostListProviderService.getDialect();
+    if (!this.isTopologyAwareDatabaseDialect(dialect)) {
+      throw new TypeError(Messages.get("RdsHostListProvider.incorrectDialect"));
+    }
+
+    return await dialect.queryForTopology(targetClient, this).then((res: any) => this.processQueryResults(res));
   }
 
   async forceMonitoringRefresh(shouldVerifyWriter: boolean, timeoutMs: number): Promise<HostInfo[]> {

@@ -276,7 +276,7 @@ export class RdsHostListProvider implements DynamicHostListProvider {
     return await dialect.queryForTopology(targetClient, this).then((res: any) => this.processQueryResults(res));
   }
 
-  private async processQueryResults(result: HostInfo[]): Promise<HostInfo[]> {
+  protected async processQueryResults(result: HostInfo[]): Promise<HostInfo[]> {
     const hostMap: Map<string, HostInfo> = new Map<string, HostInfo>();
 
     let hosts: HostInfo[] = [];

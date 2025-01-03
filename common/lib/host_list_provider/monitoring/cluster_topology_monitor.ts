@@ -23,10 +23,8 @@ import { logTopology, sleep } from "../../utils/utils";
 import { logger } from "../../../logutils";
 import { HostRole } from "../../host_role";
 import { ClientWrapper } from "../../client_wrapper";
-import { Messages } from "../../utils/messages";
-import { TopologyAwareDatabaseDialect } from "../../topology_aware_database_dialect";
-import { HostListProvider } from "../host_list_provider";
 import { AwsWrapperError } from "../../utils/errors";
+import { MonitoringRdsHostListProvider } from "./monitoring_host_list_provider";
 
 export interface ClusterToplogyMonitor {
   forceRefresh(client: any, timeoutMs: number): Promise<HostInfo[]>;
@@ -41,14 +39,14 @@ export interface ClusterToplogyMonitor {
 export class ClusterToplogyMonitorImpl implements ClusterToplogyMonitor {
   public clusterId: string;
   public topologyMap: CacheMap<string, HostInfo[]>;
-  private topologyCacheExpirationNanos: number = 10000; // TODO: investigate values and set in constructor.
-  protected initialHostInfo: HostInfo;
+  private topologyCacheExpirationNanos: number = 60000000000; // 1 minute // TODO: investigate values and set in constructor.
+  initialHostInfo: HostInfo;
   public properties: Map<string, any>;
   public pluginService: PluginService;
   protected hostListProviderService: HostListProviderService;
-  private hostListProvider: HostListProvider;
-  protected refreshRate: number = 300; // TODO: investigate issues with setting lower values.
-  private highRefreshRate: number = 300;
+  hostListProvider: MonitoringRdsHostListProvider;
+  protected refreshRate: number = 100;
+  private highRefreshRate: number = 100;
 
   private writerHostInfo: HostInfo = null;
   private isVerifiedWriterConnection: boolean = false;
@@ -60,7 +58,7 @@ export class ClusterToplogyMonitorImpl implements ClusterToplogyMonitor {
 
   // Controls for stopping the ClusterTopologyMonitor run.
   private stopMonitoring: boolean = false;
-  private runPromise: Promise<void>;
+  private readonly runPromise: Promise<void>;
 
   // Tracking of the host monitors.
   private hostMonitors: Map<string, HostMonitor> = new Map();
@@ -88,7 +86,7 @@ export class ClusterToplogyMonitorImpl implements ClusterToplogyMonitor {
     props,
     pluginService: PluginService,
     hostListProviderService: HostListProviderService,
-    hostListProvider: HostListProvider,
+    hostListProvider: MonitoringRdsHostListProvider,
     refreshRateNano
   ) {
     this.clusterId = clusterId;
@@ -99,8 +97,7 @@ export class ClusterToplogyMonitorImpl implements ClusterToplogyMonitor {
     this.hostListProvider = hostListProvider;
     this.properties = props;
     //this.refreshRateNano = refreshRateNano; // TODO: coordinate timeouts for bigint or number.
-    const runMonitor = this.run();
-    this.runPromise = runMonitor;
+    this.runPromise = this.run();
   }
 
   async close(): Promise<void> {
@@ -127,7 +124,7 @@ export class ClusterToplogyMonitorImpl implements ClusterToplogyMonitor {
       await this.closeConnection(client);
     }
 
-    return this.waitTillTopologyGetsUpdated(timeoutMs);
+    return await this.waitTillTopologyGetsUpdated(timeoutMs);
   }
 
   async forceRefresh(client: any, timeoutMs: number): Promise<HostInfo[]> {
@@ -180,7 +177,7 @@ export class ClusterToplogyMonitorImpl implements ClusterToplogyMonitor {
     }
 
     try {
-      const hosts: HostInfo[] = await this.queryForTopology(client);
+      const hosts: HostInfo[] = await this.hostListProvider.sqlQueryForTopology(client);
       if (hosts) {
         this.updateTopologyCache(hosts);
       }
@@ -194,51 +191,6 @@ export class ClusterToplogyMonitorImpl implements ClusterToplogyMonitor {
   private openAnyClientAndUpdateTopology() {
     // TODO: implement method.
     return [];
-  }
-
-  async queryForTopology(targetClient: ClientWrapper): Promise<HostInfo[]> {
-    const dialect = this.hostListProviderService.getDialect();
-    if (!this.isTopologyAwareDatabaseDialect(dialect)) {
-      throw new TypeError(Messages.get("RdsHostListProvider.incorrectDialect"));
-    }
-    return await dialect.queryForTopology(targetClient, this.hostListProvider).then((res: any) => this.processQueryResults(res));
-  }
-
-  protected isTopologyAwareDatabaseDialect(arg: any): arg is TopologyAwareDatabaseDialect {
-    return arg;
-  }
-
-  private async processQueryResults(result: HostInfo[]): Promise<HostInfo[]> {
-    const hostMap: Map<string, HostInfo> = new Map<string, HostInfo>();
-
-    let hosts: HostInfo[] = [];
-    const writers: HostInfo[] = [];
-    result.forEach((host) => {
-      hostMap.set(host.host, host);
-    });
-
-    hostMap.forEach((host) => {
-      if (host.role !== HostRole.WRITER) {
-        hosts.push(host);
-      } else {
-        writers.push(host);
-      }
-    });
-
-    const writerCount: number = writers.length;
-    if (writerCount === 0) {
-      hosts = [];
-    } else if (writerCount === 1) {
-      hosts.push(writers[0]);
-    } else {
-      const sortedWriters: HostInfo[] = writers.sort((a, b) => {
-        return b.lastUpdateTime - a.lastUpdateTime;
-      });
-
-      hosts.push(sortedWriters[0]);
-    }
-
-    return hosts;
   }
 
   updateTopologyCache(hosts: HostInfo[]) {
@@ -344,7 +296,7 @@ export class ClusterToplogyMonitorImpl implements ClusterToplogyMonitor {
             this.untrackedPromises = [];
             this.hostMonitors.clear();
           }
-          const hosts = this.fetchTopologyAndUpdateCache(this.monitoringClient);
+          const hosts = await this.fetchTopologyAndUpdateCache(this.monitoringClient);
           if (!hosts) {
             // Unable to gather topology, switch to panic mode.
             const client = this.monitoringClient;
@@ -358,7 +310,7 @@ export class ClusterToplogyMonitorImpl implements ClusterToplogyMonitor {
           }
           if (this.highRefreshRateEndTime == 0) {
             // Log topology when not in high refresh rate.
-            logger.debug(logTopology(this.topologyMap.get(this.clusterId), ""));
+            this.logTopology("");
           }
           // Set an easily interruptible delay between topology refreshes.
           await this.delay(false);
@@ -384,6 +336,13 @@ export class ClusterToplogyMonitorImpl implements ClusterToplogyMonitor {
       await sleep(50);
     }
     this.requestToUpdateTopology = false;
+  }
+
+  logTopology(msgPrefix: string) {
+    const hosts: HostInfo[] = this.topologyMap.get(this.clusterId);
+    if (hosts && hosts.length !== 0) {
+      logger.debug(logTopology(hosts, msgPrefix));
+    }
   }
 }
 
@@ -433,9 +392,8 @@ export class HostMonitor {
               this.monitor.hostMonitorsStop = true;
 
               await this.monitor.fetchTopologyAndUpdateCache(client);
-              logger.debug(logTopology(this.monitor.topologyMap.get(this.monitor.clusterId), ""));
+              this.monitor.logTopology("");
             }
-
             client = null;
             return;
           } else if (!client) {
@@ -467,7 +425,7 @@ export class HostMonitor {
 
     let hosts: HostInfo[];
     try {
-      hosts = await this.monitor.queryForTopology(client);
+      hosts = await this.monitor.hostListProvider.sqlQueryForTopology(client);
     } catch (error) {
       return;
     }
