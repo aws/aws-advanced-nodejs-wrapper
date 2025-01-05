@@ -18,12 +18,14 @@ import { ClientWrapper } from "./client_wrapper";
 import { HostInfo } from "./host_info";
 import { uniqueId } from "../logutils";
 import { ClientUtils } from "./utils/client_utils";
+import { SessionState } from "./session_state";
 
 export class PoolClientWrapper implements ClientWrapper {
   readonly client: any;
   readonly hostInfo: HostInfo;
   readonly properties: Map<string, string>;
   readonly id: string;
+  readonly sessionState = new SessionState();
 
   constructor(targetClient: any, hostInfo: HostInfo, properties: Map<string, any>) {
     this.client = targetClient;

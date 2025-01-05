@@ -70,7 +70,7 @@ describe("basic_connectivity", () => {
       let props = {
         user: env.databaseInfo.username,
         host: env.databaseInfo.clusterReadOnlyEndpoint,
-        database: env.databaseInfo.default_db_name,
+        database: env.databaseInfo.defaultDbName,
         password: env.databaseInfo.password,
         port: env.databaseInfo.clusterEndpointPort,
         plugins: "failover,efm",
@@ -96,7 +96,7 @@ describe("basic_connectivity", () => {
       let props = {
         user: env.databaseInfo.username,
         host: env.databaseInfo.clusterEndpoint,
-        database: env.databaseInfo.default_db_name,
+        database: env.databaseInfo.defaultDbName,
         password: env.databaseInfo.password,
         port: env.databaseInfo.clusterEndpointPort,
         plugins: "failover,efm",
@@ -122,7 +122,7 @@ describe("basic_connectivity", () => {
       let props = {
         user: env.databaseInfo.username,
         host: env.databaseInfo.instances[0].host,
-        database: env.databaseInfo.default_db_name,
+        database: env.databaseInfo.defaultDbName,
         password: env.databaseInfo.password,
         port: env.databaseInfo.clusterEndpointPort,
         plugins: "failover,efm",
@@ -148,7 +148,7 @@ describe("basic_connectivity", () => {
       let props = {
         user: env.databaseInfo.username,
         host: env.databaseInfo.instances[0].host,
-        database: env.databaseInfo.default_db_name,
+        database: env.databaseInfo.defaultDbName,
         password: env.databaseInfo.password,
         port: env.databaseInfo.instanceEndpointPort,
         plugins: "",
@@ -178,7 +178,7 @@ describe("basic_connectivity", () => {
       let props = {
         user: env.databaseInfo.username,
         host: env.proxyDatabaseInfo.instances[0].host,
-        database: env.databaseInfo.default_db_name,
+        database: env.databaseInfo.defaultDbName,
         password: env.databaseInfo.password,
         port: env.proxyDatabaseInfo.instanceEndpointPort,
         plugins: "",

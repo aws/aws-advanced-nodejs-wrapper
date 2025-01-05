@@ -15,6 +15,7 @@
 */
 
 import { AwsClient } from "./aws_client";
+import { TransactionIsolationLevel } from "./utils/transaction_isolation_level";
 
 export interface SessionStateService {
   // auto commit
@@ -26,26 +27,27 @@ export interface SessionStateService {
   // read only
   getReadOnly(): boolean | undefined;
   setReadOnly(readOnly: boolean): void;
-  setupPristineReadOnly(): boolean | undefined;
-  setupPristineReadOnly(readOnly: boolean): boolean | undefined;
+  setupPristineReadOnly(): void;
+  setupPristineReadOnly(readOnly: boolean): void;
+  updateReadOnly(readOnly: boolean): void;
 
   // catalog
   getCatalog(): string | undefined;
   setCatalog(catalog: string): void;
-  setupPristineCatalog(): string | undefined;
-  setupPristineCatalog(catalog: string): string | undefined;
+  setupPristineCatalog(): void;
+  setupPristineCatalog(catalog: string): void;
 
   // schema
   getSchema(): string | undefined;
   setSchema(schema: string): void;
-  setupPristineSchema(): string | undefined;
-  setupPristineSchema(schema: string): string | undefined;
+  setupPristineSchema(): void;
+  setupPristineSchema(schema: string): void;
 
   // transaction isolation
-  getTransactionIsolation(): number | undefined;
-  setTransactionIsolation(transactionIsolation: number): void;
-  setupPristineTransactionIsolation(): number | undefined;
-  setupPristineTransactionIsolation(transactionIsolation: number): number | undefined;
+  getTransactionIsolation(): TransactionIsolationLevel | undefined;
+  setTransactionIsolation(transactionIsolation: TransactionIsolationLevel): void;
+  setupPristineTransactionIsolation(): void;
+  setupPristineTransactionIsolation(transactionIsolation: TransactionIsolationLevel): void;
 
   reset(): void;
 

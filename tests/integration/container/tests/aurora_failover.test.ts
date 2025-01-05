@@ -26,6 +26,7 @@ import { logger } from "../../../../common/logutils";
 import { features, instanceCount } from "./config";
 import { TestEnvironmentFeatures } from "./utils/test_environment_features";
 import { PluginManager } from "../../../../common/lib";
+import { TransactionIsolationLevel } from "../../../../common/lib/utils/transaction_isolation_level";
 
 const itIf =
   features.includes(TestEnvironmentFeatures.FAILOVER_SUPPORTED) &&
@@ -48,7 +49,7 @@ async function initDefaultConfig(host: string, port: number, connectToProxy: boo
   let config: any = {
     user: env.databaseInfo.username,
     host: host,
-    database: env.databaseInfo.default_db_name,
+    database: env.databaseInfo.defaultDbName,
     password: env.databaseInfo.password,
     port: port,
     plugins: "failover",
@@ -182,7 +183,14 @@ describe("aurora failover", () => {
       expect(await auroraTestUtility.isDbInstanceWriter(initialWriterId)).toBe(true);
 
       await client.setReadOnly(true);
-      const writerId = await auroraTestUtility.queryInstanceId(client);
+      await client.setTransactionIsolation(TransactionIsolationLevel.TRANSACTION_SERIALIZABLE);
+
+      if (driver === DatabaseEngine.PG) {
+        await client.setSchema(env.databaseInfo.defaultDbName);
+      } else if (driver === DatabaseEngine.MYSQL) {
+        await client.setAutoCommit(false);
+        await client.setCatalog(env.databaseInfo.defaultDbName);
+      }
 
       // Failover cluster and nominate a new writer
       await auroraTestUtility.failoverClusterAndWaitUntilWriterChanged();
@@ -195,6 +203,14 @@ describe("aurora failover", () => {
       const currentConnectionId = await auroraTestUtility.queryInstanceId(client);
       expect(await auroraTestUtility.isDbInstanceWriter(currentConnectionId)).toBe(true);
       expect(currentConnectionId).not.toBe(initialWriterId);
+      expect(client.isReadOnly()).toBe(true);
+      expect(client.getTransactionIsolation()).toBe(TransactionIsolationLevel.TRANSACTION_SERIALIZABLE);
+      if (driver === DatabaseEngine.PG) {
+        expect(client.getSchema()).toBe(env.databaseInfo.defaultDbName);
+      } else if (driver === DatabaseEngine.MYSQL) {
+        expect(client.getAutoCommit()).toBe(false);
+        expect(client.getCatalog()).toBe(env.databaseInfo.defaultDbName);
+      }
     },
     1320000
   );

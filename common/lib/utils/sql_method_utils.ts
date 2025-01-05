@@ -20,11 +20,17 @@ import { TransactionIsolationLevel } from "./transaction_isolation_level";
 export class SqlMethodUtils {
   static doesOpenTransaction(sql: string) {
     const firstStatement = SqlMethodUtils.getFirstSqlStatement(sql);
+    if (!firstStatement) {
+      return false;
+    }
     return firstStatement.toLowerCase().startsWith("start transaction") || firstStatement.toLowerCase().startsWith("begin");
   }
 
   static doesCloseTransaction(sql: string) {
     const firstStatement = SqlMethodUtils.getFirstSqlStatement(sql);
+    if (!firstStatement) {
+      return false;
+    }
     return (
       firstStatement.toLowerCase().startsWith("commit") ||
       firstStatement.toLowerCase().startsWith("rollback") ||
@@ -47,7 +53,7 @@ export class SqlMethodUtils {
   }
 
   static doesSetAutoCommit(statements: string[], dialect: DatabaseDialect): boolean | undefined {
-    let autoCommit;
+    let autoCommit = undefined;
     for (const statement of statements) {
       const cleanStatement = statement
         .toLowerCase()
@@ -60,7 +66,7 @@ export class SqlMethodUtils {
   }
 
   static doesSetCatalog(statements: string[], dialect: DatabaseDialect): string | undefined {
-    let catalog;
+    let catalog = undefined;
     for (const statement of statements) {
       const cleanStatement = statement
         .toLowerCase()
@@ -73,7 +79,7 @@ export class SqlMethodUtils {
   }
 
   static doesSetSchema(statements: string[], dialect: DatabaseDialect): string | undefined {
-    let schema;
+    let schema = undefined;
     for (const statement of statements) {
       const cleanStatement = statement
         .toLowerCase()
@@ -86,7 +92,7 @@ export class SqlMethodUtils {
   }
 
   static doesSetTransactionIsolation(statements: string[], dialect: DatabaseDialect): TransactionIsolationLevel | undefined {
-    let transactionIsolation;
+    let transactionIsolation = undefined;
     for (const statement of statements) {
       const cleanStatement = statement
         .toLowerCase()
@@ -100,7 +106,6 @@ export class SqlMethodUtils {
 
   static getFirstSqlStatement(sql: string) {
     const statements = SqlMethodUtils.parseMultiStatementQueries(sql);
-
     if (statements.length === 0) {
       return sql;
     }
