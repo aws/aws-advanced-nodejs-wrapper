@@ -2,7 +2,7 @@
 
 The Fastest Response Strategy Plugin is a host selection strategy plugin that monitors the response time of each reader host, and returns the host with the fastest response time. The plugin stores the fastest host in a cache so it can easily be retrieved again.
 
-The host response time is measured at an interval set by `responseMeasurementIntervalMs`, at which time the old cache expires and is updated with the current fastest host.
+The host response time is measured at an interval set by the configuration parameter `responseMeasurementIntervalMs`, at which time the old cache expires and is updated with the current fastest host.
 
 ## Using the Fastest Response Strategy Plugin
 
