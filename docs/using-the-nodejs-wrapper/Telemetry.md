@@ -140,10 +140,10 @@ Metrics can be one of 3 types: counters, gauges or histograms.
 
 ### EFM plugin
 
-| Metric name                        | Metric type | Description                                                                                           |
-| ---------------------------------- | ----------- | ----------------------------------------------------------------------------------------------------- |
-| efm.connections.aborted            | Counter     | Number of times a connection was aborted after being defined as unhealthy by an EFM monitoring thread |
-| efm.hostUnhealthy.count.[INSTANCE] | Counter     | Number of times a specific instance has been defined as unhealthy                                     |
+| Metric name                        | Metric type | Description                                                                                         |
+| ---------------------------------- | ----------- | --------------------------------------------------------------------------------------------------- |
+| efm.connections.aborted            | Counter     | Number of times a connection was aborted after being defined as unhealthy by an EFM monitoring task |
+| efm.hostUnhealthy.count.[INSTANCE] | Counter     | Number of times a specific instance has been defined as unhealthy                                   |
 
 ### Secrets Manager plugin
 
