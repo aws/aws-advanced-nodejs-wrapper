@@ -9,8 +9,7 @@ The host response time is measured at an interval set by the configuration param
 The plugin can be loaded by adding the plugin code `fastestResponseStrategy` to the [`plugins`](../UsingTheNodeJsWrapper#aws-advanced-nodejs-wrapper-parameters) parameter. The Fastest Response Strategy Plugin is not loaded by default, and must be loaded along with the [`readWriteSplitting`](./UsingTheReadWriteSplittingPlugin.md) plugin.
 
 > [!IMPORTANT]\
-> **The `readerHostSelectorStrategy` parameter must be set to `fastestReponse` when using this plugin, otherwise an error will be thrown:**
-> `Unsupported host selector strategy: 'random'. To use the fastest response strategy plugin, please ensure the property readerHostSelectorStrategy is set to 'fastestResponse'.`
+> **The `readerHostSelectorStrategy` parameter must be set to `fastestReponse` when using this plugin, otherwise an error will be thrown:** > `Unsupported host selector strategy: 'random'. To use the fastest response strategy plugin, please ensure the property readerHostSelectorStrategy is set to 'fastestResponse'.`
 
 ```ts
 params = {
