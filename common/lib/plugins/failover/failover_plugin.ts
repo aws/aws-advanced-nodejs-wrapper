@@ -345,17 +345,7 @@ export class FailoverPlugin extends AbstractConnectionPlugin {
     } else {
       await this.failoverReader(failedHost);
     }
-
-    if (this._isInTransaction || this.pluginService.isInTransaction()) {
-      // "Transaction resolution unknown. Please re-configure session state if required and try
-      // restarting transaction."
-      logger.debug(Messages.get("Failover.transactionResolutionUnknownError"));
-      throw new TransactionResolutionUnknownError(Messages.get("Failover.transactionResolutionUnknownError"));
-    } else {
-      // "The active SQL connection has changed due to a connection failure. Please re-configure
-      // session state if required."
-      throw new FailoverSuccessError(Messages.get("Failover.connectionChangedError"));
-    }
+    this.throwFailoverSuccessError();
   }
 
   async failoverReader(failedHostInfo: HostInfo) {
@@ -393,7 +383,7 @@ export class FailoverPlugin extends AbstractConnectionPlugin {
           await this.pluginService.setCurrentClient(result.client, result.newHost);
           this.pluginService.getCurrentHostInfo()?.removeAlias(Array.from(oldAliases));
           await this.updateTopology(true);
-          await this.throwFailoverSuccessError();
+          this.failoverWriterSuccessCounter.inc();
         } catch (error: any) {
           this.failoverReaderFailedCounter.inc();
           throw error;
@@ -406,7 +396,7 @@ export class FailoverPlugin extends AbstractConnectionPlugin {
     }
   }
 
-  async throwFailoverSuccessError() {
+  throwFailoverSuccessError() {
     if (this._isInTransaction || this.pluginService.isInTransaction()) {
       this.pluginService.setInTransaction(false);
 
@@ -455,7 +445,8 @@ export class FailoverPlugin extends AbstractConnectionPlugin {
           await this.pluginService.setCurrentClient(result.client, writerHostInfo);
           logger.debug(Messages.get("Failover.establishedConnection", this.pluginService.getCurrentHostInfo()?.host ?? ""));
           await this.pluginService.refreshHostList();
-          await this.throwFailoverSuccessError();
+          this.throwFailoverSuccessError();
+          this.failoverWriterSuccessCounter.inc();
         } catch (error: any) {
           this.failoverWriterFailedCounter.inc();
           throw error;
