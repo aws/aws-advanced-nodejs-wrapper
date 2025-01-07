@@ -199,6 +199,7 @@ describe("reader failover handler", () => {
     when(mockHostInfo.allAliases).thenReturn(new Set<string>(["alias1", "aslias2"]));
     when(mockHostInfo.getRawAvailability()).thenReturn(HostAvailability.AVAILABLE);
     when(mockPluginService.getHosts()).thenReturn(hosts);
+    when(await mockPluginService.getHostRole(anything())).thenReturn(HostRole.WRITER);
 
     when(mockReaderResult.isConnected).thenReturn(true);
     when(mockReaderResult.client).thenReturn(mockClientWrapper);

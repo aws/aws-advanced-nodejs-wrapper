@@ -328,8 +328,9 @@ describe("reader failover handler", () => {
     const reader = new HostInfo("reader", 1234, HostRole.READER);
     const hosts = [writer, reader];
     when(mockPluginService.getHosts()).thenReturn(hosts);
-    when(await mockPluginService.getHostRole(anything())).thenReturn(HostRole.READER);
-
+    when(await mockPluginService.getHostRole(anything()))
+      .thenReturn(HostRole.READER)
+      .thenReturn(HostRole.WRITER);
 
     const mockPluginServiceInstance = instance(mockPluginService);
     const target = new ClusterAwareReaderFailoverHandler(
@@ -342,13 +343,13 @@ describe("reader failover handler", () => {
 
     // We expect only reader nodes to be chosen.
     let hostsByPriority = target.getHostsByPriority(hosts);
-    expect(hostsByPriority).toStrictEqual([reader]);
+    expect(hostsByPriority).toStrictEqual([reader, writer]);
 
     // Should pick the reader even if unavailable.
     reader.setAvailability(HostAvailability.NOT_AVAILABLE);
 
     hostsByPriority = target.getHostsByPriority(hosts);
-    expect(hostsByPriority).toStrictEqual([reader]);
+    expect(hostsByPriority).toStrictEqual([writer, reader]);
 
     // Writer node will only be picked if it is the only node in topology;
     hostsByPriority = target.getHostsByPriority([writer]);
