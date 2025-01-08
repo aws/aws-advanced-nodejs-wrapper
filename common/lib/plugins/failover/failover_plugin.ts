@@ -48,6 +48,7 @@ export class FailoverPlugin extends AbstractConnectionPlugin {
   private static readonly TELEMETRY_WRITER_FAILOVER = "failover to writer instance";
   private static readonly TELEMETRY_READER_FAILOVER = "failover to replica";
   private static readonly METHOD_END = "end";
+
   private static readonly subscribedMethods: Set<string> = new Set([
     "initHostProvider",
     "connect",
@@ -344,17 +345,7 @@ export class FailoverPlugin extends AbstractConnectionPlugin {
     } else {
       await this.failoverReader(failedHost);
     }
-
-    if (this._isInTransaction || this.pluginService.isInTransaction()) {
-      // "Transaction resolution unknown. Please re-configure session state if required and try
-      // restarting transaction."
-      logger.debug(Messages.get("Failover.transactionResolutionUnknownError"));
-      throw new TransactionResolutionUnknownError(Messages.get("Failover.transactionResolutionUnknownError"));
-    } else {
-      // "The active SQL connection has changed due to a connection failure. Please re-configure
-      // session state if required."
-      throw new FailoverSuccessError(Messages.get("Failover.connectionChangedError"));
-    }
+    this.throwFailoverSuccessError();
   }
 
   async failoverReader(failedHostInfo: HostInfo) {
@@ -392,7 +383,7 @@ export class FailoverPlugin extends AbstractConnectionPlugin {
           await this.pluginService.setCurrentClient(result.client, result.newHost);
           this.pluginService.getCurrentHostInfo()?.removeAlias(Array.from(oldAliases));
           await this.updateTopology(true);
-          this.failoverReaderSuccessCounter.inc();
+          this.failoverWriterSuccessCounter.inc();
         } catch (error: any) {
           this.failoverReaderFailedCounter.inc();
           throw error;
@@ -402,6 +393,21 @@ export class FailoverPlugin extends AbstractConnectionPlugin {
       if (this.telemetryFailoverAdditionalTopTraceSetting) {
         await telemetryFactory.postCopy(telemetryContext, TelemetryTraceLevel.FORCE_TOP_LEVEL);
       }
+    }
+  }
+
+  throwFailoverSuccessError() {
+    if (this._isInTransaction || this.pluginService.isInTransaction()) {
+      this.pluginService.setInTransaction(false);
+
+      // "Transaction resolution unknown. Please re-configure session state if required and try
+      // restarting transaction."
+      logger.debug(Messages.get("Failover.transactionResolutionUnknownError"));
+      throw new TransactionResolutionUnknownError(Messages.get("Failover.transactionResolutionUnknownError"));
+    } else {
+      // "The active SQL connection has changed due to a connection failure. Please re-configure
+      // session state if required."
+      throw new FailoverSuccessError(Messages.get("Failover.connectionChangedError"));
     }
   }
 
@@ -439,6 +445,7 @@ export class FailoverPlugin extends AbstractConnectionPlugin {
           await this.pluginService.setCurrentClient(result.client, writerHostInfo);
           logger.debug(Messages.get("Failover.establishedConnection", this.pluginService.getCurrentHostInfo()?.host ?? ""));
           await this.pluginService.refreshHostList();
+          this.throwFailoverSuccessError();
           this.failoverWriterSuccessCounter.inc();
         } catch (error: any) {
           this.failoverWriterFailedCounter.inc();

@@ -17,7 +17,7 @@
 import { HostInfo } from "../../host_info";
 import { PluginService } from "../../plugin_service";
 import { ReaderFailoverResult } from "./reader_failover_result";
-import { getTimeoutTask, maskProperties, shuffleList, sleep } from "../../utils/utils";
+import { getTimeoutTask, logAndThrowError, maskProperties, shuffleList, sleep } from "../../utils/utils";
 import { HostRole } from "../../host_role";
 import { HostAvailability } from "../../host_availability/host_availability";
 import { AwsWrapperError, InternalQueryTimeoutError } from "../../utils/errors";
@@ -110,25 +110,15 @@ export class ClusterAwareReaderFailoverHandler implements ReaderFailoverHandler 
           return result; // connection to any host is acceptable
         }
 
-        // ensure new connection is to a reader host
+        // Ensure new connection is to a reader host
         await this.pluginService.refreshHostList();
-        const topology = this.pluginService.getHosts();
-
-        for (let i = 0; i < topology.length; i++) {
-          const host = topology[i];
-          if (host.host === result.newHost.host) {
-            // found new connection host in the latest topology
-            if (host.role === HostRole.READER) {
-              return result;
-            }
+        try {
+          if ((await this.pluginService.getHostRole(result.client)) !== HostRole.READER) {
+            return result;
           }
+        } catch (error) {
+          logger.debug(Messages.get("ClusterAwareReaderFailoverHandler.errorGettingHostRole", error.message));
         }
-
-        // New host is not found in the latest topology. There are few possible reasons for that.
-        // - Host is not yet presented in the topology due to failover process in progress
-        // - Host is in the topology but its role isn't a
-        //   READER (that is not acceptable option due to this.strictReader setting)
-        // Need to continue this loop and to make another try to connect to a reader.
 
         try {
           await this.pluginService.abortTargetClient(result.client);
@@ -276,7 +266,9 @@ export class ClusterAwareReaderFailoverHandler implements ReaderFailoverHandler 
 
     const hostsByPriority: HostInfo[] = [...activeReaders];
     const numReaders: number = activeReaders.length + downHostList.length;
-    if (writerHost && (!this.enableFailoverStrictReader || numReaders === 0)) {
+    // Since the writer instance may change during failover, the original writer is likely now a reader. We will include
+    // it and then verify the role once connected if using "strict-reader".
+    if (writerHost || numReaders === 0) {
       hostsByPriority.push(writerHost);
     }
     hostsByPriority.push(...downHostList);
@@ -322,6 +314,7 @@ class ConnectionAttemptTask {
     );
     try {
       this.targetClient = await this.pluginService.forceConnect(this.newHost, copy);
+
       this.pluginService.setAvailability(this.newHost.allAliases, HostAvailability.AVAILABLE);
       logger.info(Messages.get("ClusterAwareReaderFailoverHandler.successfulReaderConnection", this.newHost.host));
       if (this.taskHandler.getSelectedConnectionAttemptTask(this.failoverTaskId) === -1) {

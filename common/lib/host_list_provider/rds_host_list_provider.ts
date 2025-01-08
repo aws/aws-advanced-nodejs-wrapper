@@ -137,15 +137,15 @@ export class RdsHostListProvider implements DynamicHostListProvider {
     throw new AwsWrapperError("Could not retrieve targetClient.");
   }
 
-  async getHostRole(client: AwsClient, dialect: DatabaseDialect): Promise<HostRole> {
+  async getHostRole(client: ClientWrapper, dialect: DatabaseDialect): Promise<HostRole> {
     if (!this.isTopologyAwareDatabaseDialect(dialect)) {
       throw new TypeError(Messages.get("RdsHostListProvider.incorrectDialect"));
     }
 
-    if (client.targetClient) {
-      return dialect.getHostRole(client.targetClient);
+    if (client) {
+      return await dialect.getHostRole(client);
     } else {
-      throw new AwsWrapperError(Messages.get("AwsClient targetClient not defined."));
+      throw new AwsWrapperError(Messages.get("AwsClient.targetClientNotDefined"));
     }
   }
 

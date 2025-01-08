@@ -48,6 +48,7 @@
   "ClusterAwareWriterFailoverHandler.standaloneHost": "[TaskB] Host %s is not yet connected to a cluster. The cluster is still being reconfigured.",
   "ClusterAwareWriterFailoverHandler.taskBAttemptConnectionToNewWriter": "[TaskB] Trying to connect to a new writer: '%s'",
   "ClusterAwareWriterFailoverHandler.alreadyWriter": "Current reader connection is actually a new writer connection.",
+  "ClusterAwareReaderFailoverHandler.errorGettingHostRole": "An error occurred while trying to determine the role of the reader candidate: %s.",
   "Failover.TransactionResolutionUnknownError": "Transaction resolution unknown. Please re-configure session state if required and try restarting the transaction.",
   "Failover.connectionChangedError": "The active SQL connection has changed due to a connection failure. Please re-configure session state if required.",
   "Failover.parameterValue": "%s = %s",
@@ -193,5 +194,6 @@
   "ConfigurationProfileBuilder.notFound": "Configuration profile '%s' not found.",
   "ConfigurationProfileBuilder.profileNameRequired": "Profile name is required.",
   "ConfigurationProfileBuilder.canNotUpdateKnownPreset": "Can't add or update a built-in preset configuration profile '%s'.",
-  "AwsClient.configurationProfileNotFound": "Configuration profile '%s' not found."
+  "AwsClient.configurationProfileNotFound": "Configuration profile '%s' not found.",
+  "AwsClient.targetClientNotDefined": "AwsClient targetClient not defined."
 }
