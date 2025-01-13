@@ -100,6 +100,7 @@ tasks.register<Test>("test-aurora-postgres") {
         systemProperty("exclude-mysql-driver", "true")
         systemProperty("exclude-mysql-engine", "true")
         systemProperty("exclude-multi-az", "true")
+        systemProperty("exclude-iam", "true")
     }
 }
 

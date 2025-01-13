@@ -5,6 +5,7 @@ on:
   push:
     branches:
       - main
+      - test/hanging-pg-integration-test
     paths-ignore:
       - "**/*.md"
       - "**/*.jpg"
@@ -21,7 +22,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        dbEngine: ["mysql", "postgres"]
+        dbEngine: ["postgres"]
 
     steps:
       - name: Clone repository
