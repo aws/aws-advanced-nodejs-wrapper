@@ -195,8 +195,9 @@ export class MySQLDatabaseDialect implements DatabaseDialect {
   }
 
   doesStatementSetCatalog(statement: string): string | undefined {
-    if (statement.includes("use")) {
-      return statement.split(" ")[1];
+    const catalogRegexp = /^use\s+(\w+)/i;
+    if (catalogRegexp.test(statement)) {
+      return statement.split(catalogRegexp)[1];
     }
 
     return undefined;

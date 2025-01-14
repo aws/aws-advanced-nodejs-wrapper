@@ -127,7 +127,9 @@ describe("test sql method utils", () => {
     [[" /* COMMENT */ select /* COMMENT */ 1 "], undefined],
     [[" use dbName "], "dbname"],
     [[" use/* COMMENT use dbName3*/ dbName "], "dbname"],
-    [[" use dbName1 ", " use dbName2 "], "dbname2"]
+    [[" use dbName1 ", " use dbName2 "], "dbname2"],
+    [[" select * from user", " select /* use dbName */ * from user "], undefined],
+    [[" use dbName; select 1"], "dbname"]
   ])("test catalog", (sql: string[], expectedResult: string | undefined) => {
     expect(SqlMethodUtils.doesSetCatalog(sql, new MySQLDatabaseDialect())).toBe(expectedResult);
   });
