@@ -198,5 +198,17 @@
   "ConfigurationProfileBuilder.canNotUpdateKnownPreset": "Can't add or update a built-in preset configuration profile '%s'.",
   "AwsClient.configurationProfileNotFound": "Configuration profile '%s' not found.",
   "AwsClient.targetClientNotDefined": "AwsClient targetClient not defined.",
-  "Failover2.unableToConnect": "Unable to establish SQL connection to the instance."
+  "Failover2.unableToConnect": "Unable to establish SQL connection to the instance.",
+  "Failover2.failoverWriterConnectedToReader": "Unable to establish SQL connection to a writer instance.",
+  "ClusterTopologyMonitor.timeoutError": "ClusterTopologyMonitor topology update timed out in '%s' ms.",
+  "ClusterTopologyMonitor.errorFetchingTopology": "Error fetching topology: '%s'.",
+  "ClusterTopologyMonitor.unableToConnect": "Could not connect to inital host: '%s'.",
+  "ClusterTopologyMonitor.openedMonitoringConnection": "Opened monitoring connection to: '%s'.",
+  "ClusterTopologyMonitor.startMonitoring": "Start cluster monitoring task.",
+  "ClusterTopologyMonitor.errorDuringMonitoring": "Error thrown during cluster topology monitoring: '%s'.",
+  "ClusterTopologyMonitor.endMonitoring": "Stop cluster topology monitoring.",
+  "HostMonitor.startMonitoring": "Host monitor '%s' started.",
+  "HostMonitor.detectedWriter": "Detected writer: '%s'.",
+  "HostMonitor.endMonitoring": "Host monitor '%s' completed in '%s'.",
+  "HostMonitor.writerHostChanged": "Writer host has changed from '%s' to '%s'."
 }

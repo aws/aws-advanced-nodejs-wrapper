@@ -97,7 +97,7 @@ describe("aurora failover2", () => {
         // pass
       }
     }
-    await MonitoringRdsHostListProvider.clearAll();
+    await MonitoringRdsHostListProvider.releaseResources();
     await PluginManager.releaseResources();
     logger.info(`Test finished: ${expect.getState().currentTestName}`);
   }, 1320000);

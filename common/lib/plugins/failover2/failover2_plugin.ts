@@ -28,8 +28,6 @@ import { WrapperProperties } from "../../wrapper_property";
 import { RdsUrlType } from "../../utils/rds_url_type";
 import { logger } from "../../../logutils";
 import { Messages } from "../../utils/messages";
-import { HostChangeOptions } from "../../host_change_options";
-import { OldConnectionSuggestionAction } from "../../old_connection_suggestion_action";
 import {
   AwsWrapperError,
   FailoverFailedError,
@@ -37,29 +35,24 @@ import {
   TransactionResolutionUnknownError,
   UnavailableHostError
 } from "../../utils/errors";
-import { getWriter, shuffleList } from "../../utils/utils";
+import { shuffleList } from "../../utils/utils";
 import { ClientWrapper } from "../../client_wrapper";
 import { HostAvailability } from "../../host_availability/host_availability";
 import { TelemetryTraceLevel } from "../../utils/telemetry/telemetry_trace_level";
 import { HostRole } from "../../host_role";
 import { SubscribedMethodHelper } from "../../utils/subscribed_method_helper";
+import { OldConnectionSuggestionAction } from "../../old_connection_suggestion_action";
+import { HostChangeOptions } from "../../host_change_options";
 
 export class Failover2Plugin extends AbstractConnectionPlugin {
   private static readonly TELEMETRY_WRITER_FAILOVER = "failover to writer instance";
   private static readonly TELEMETRY_READER_FAILOVER = "failover to replica";
   private static readonly METHOD_END = "end";
-  private static readonly INTERNAL_CONNECT_PROPERTY_NAME: string = "76c06979-49c4-4c86-9600-a63605b83f50";
-  private static readonly subscribedMethods: Set<string> = new Set([
-    "initHostProvider",
-    "connect",
-    "forceConnect",
-    "query",
-    "notifyConnectionChanged",
-    "notifyHostListChanged"
-  ]);
+  static readonly INTERNAL_CONNECT_PROPERTY_NAME: string = "76c06979-49c4-4c86-9600-a63605b83f50";
+  private static readonly subscribedMethods: Set<string> = new Set(["initHostProvider", "connect", "query", "notifyConnectionChanged"]);
   private readonly _staleDnsHelper: StaleDnsHelper;
   private readonly _properties: Map<string, any>;
-  private pluginService: PluginService;
+  private readonly pluginService: PluginService;
   private readonly _rdsHelper: RdsUtils;
   private readonly failoverWriterTriggeredCounter: TelemetryCounter;
   private readonly failoverWriterSuccessCounter: TelemetryCounter;
@@ -72,11 +65,8 @@ export class Failover2Plugin extends AbstractConnectionPlugin {
   private _isInTransaction: boolean = false;
   private _closedExplicitly: boolean = false;
   private _lastError: any;
-  /*protected failoverClusterTopologyRefreshRateMsSetting: number = WrapperProperties.FAILOVER_CLUSTER_TOPOLOGY_REFRESH_RATE_MS.defaultValue;
-  protected failoverWriterReconnectIntervalMsSetting: number = WrapperProperties.FAILOVER_WRITER_RECONNECT_INTERVAL_MS.defaultValue;
-  protected failoverReaderConnectTimeoutMsSetting: number = WrapperProperties.FAILOVER_READER_CONNECT_TIMEOUT_MS.defaultValue;*/
   protected isClosed: boolean = false;
-  failoverMode: FailoverMode | null = null;
+  failoverMode: FailoverMode = FailoverMode.UNKNOWN;
 
   private hostListProviderService?: HostListProviderService;
   protected enableFailoverSetting: boolean = WrapperProperties.ENABLE_CLUSTER_AWARE_FAILOVER.defaultValue;
@@ -139,53 +129,7 @@ export class Failover2Plugin extends AbstractConnectionPlugin {
     return Promise.resolve(OldConnectionSuggestionAction.NO_OPINION);
   }
 
-  override async notifyHostListChanged(changes: Map<string, Set<HostChangeOptions>>): Promise<void> {
-    if (!this.enableFailoverSetting) {
-      return Promise.resolve();
-    }
-
-    // Log changes
-    if (logger.level === "debug") {
-      let str = "Changes:";
-      for (const [key, values] of changes.entries()) {
-        str = str.concat("\n");
-        // Convert from int back into enum
-        const valStr = Array.from(values)
-          .map((x) => HostChangeOptions[x])
-          .join(", ");
-        str = str.concat(`\tHost '${key}': ${valStr}`);
-      }
-      logger.debug(str);
-    }
-
-    const currentHost = this.pluginService.getCurrentHostInfo();
-    if (currentHost) {
-      const url = currentHost.url;
-      if (this.isHostStillValid(url, changes)) {
-        return Promise.resolve();
-      }
-
-      for (const alias of currentHost.allAliases) {
-        if (this.isHostStillValid(alias + "/", changes)) {
-          return Promise.resolve();
-        }
-      }
-    }
-    logger.info(Messages.get("Failover.invalidHost", currentHost?.host ?? "empty host"));
-    return Promise.resolve();
-  }
-
-  private isHostStillValid(host: string, changes: Map<string, Set<HostChangeOptions>>): boolean {
-    if (changes.has(host)) {
-      const options = changes.get(host);
-      if (options) {
-        return !options.has(HostChangeOptions.HOST_DELETED) && !options.has(HostChangeOptions.WENT_DOWN);
-      }
-    }
-    return true;
-  }
-
-  isFailoverEnabled(): boolean {
+  private isFailoverEnabled(): boolean {
     return (
       this.enableFailoverSetting &&
       this._rdsUrlType !== RdsUrlType.RDS_PROXY &&
@@ -206,17 +150,13 @@ export class Failover2Plugin extends AbstractConnectionPlugin {
     throw new AwsWrapperError(Messages.get("Failover.noOperationsAfterConnectionClosed"));
   }
 
-  async updateTopology(forceUpdate: boolean) {
+  async updateTopology() {
     const client = this.pluginService.getCurrentClient();
-    if (!this.isFailoverEnabled() || !client || !(await client.isValid())) {
+    if (!this.isFailoverEnabled() || !(await client.isValid())) {
       return;
     }
 
-    if (forceUpdate) {
-      await this.pluginService.forceRefreshHostList();
-    } else {
-      await this.pluginService.refreshHostList();
-    }
+    await this.pluginService.refreshHostList();
   }
 
   override async connect(
@@ -255,7 +195,7 @@ export class Failover2Plugin extends AbstractConnectionPlugin {
         this.pluginService.setAvailability(hostInfo.allAliases, HostAvailability.NOT_AVAILABLE);
 
         try {
-          this.failover(hostInfo);
+          await this.failover(hostInfo);
         } catch (error) {
           if (error instanceof FailoverSuccessError) {
             client = this.pluginService.getCurrentClient();
@@ -264,8 +204,8 @@ export class Failover2Plugin extends AbstractConnectionPlugin {
       }
     } else {
       try {
-        this.pluginService.refreshHostList();
-        this.failover(hostInfo);
+        await this.pluginService.refreshHostList();
+        await this.failover(hostInfo);
       } catch (error) {
         if (error instanceof FailoverSuccessError) {
           client = this.pluginService.getCurrentClient();
@@ -279,7 +219,7 @@ export class Failover2Plugin extends AbstractConnectionPlugin {
     }
 
     if (isInitialConnection) {
-      this.pluginService.refreshHostList();
+      await this.pluginService.refreshHostList();
     }
 
     return client;
@@ -302,7 +242,7 @@ export class Failover2Plugin extends AbstractConnectionPlugin {
       }
 
       if (this.canUpdateTopology(methodName)) {
-        await this.updateTopology(false);
+        await this.updateTopology();
       }
 
       return await methodFunc();
@@ -377,7 +317,6 @@ export class Failover2Plugin extends AbstractConnectionPlugin {
             readerCandidateClient = await this.pluginService.connect(readerCandidateHostInfo, copyProps);
           } catch (err) {
             readerCandidateClient = null;
-            logger.debug(`Error connecting to ${readerCandidateHostInfo?.hostId}: ${err.message}`);
           }
         }
 
@@ -394,7 +333,7 @@ export class Failover2Plugin extends AbstractConnectionPlugin {
         this.pluginService.getCurrentHostInfo()?.removeAlias(Array.from(oldAliases));
         await this.pluginService.abortCurrentClient();
         await this.pluginService.setCurrentClient(readerCandidateClient, readerCandidateHostInfo);
-        await this.updateTopology(false);
+        await this.updateTopology();
         this.failoverReaderSuccessCounter.inc();
       });
     } finally {
@@ -419,6 +358,7 @@ export class Failover2Plugin extends AbstractConnectionPlugin {
           throw new FailoverFailedError(Messages.get("Failover.unableToConnectToWriter"));
         }
 
+        await this.updateTopology();
         const hosts: HostInfo[] = this.pluginService.getHosts();
 
         // Signal to connect that this is an internal call and does not require additional processing.
@@ -448,15 +388,15 @@ export class Failover2Plugin extends AbstractConnectionPlugin {
           } catch (error) {
             // Do nothing.
           }
-          logger.warn(Messages.get("Failover.unableToConnectToWriter"));
+          logger.warn(Messages.get("Failover2.failoverWriterConnectedToReader"));
           this.failoverWriterFailedCounter.inc();
-          throw new FailoverFailedError(Messages.get("Failover.unableToConnectToWriter"));
+          throw new FailoverFailedError(Messages.get("Failover2.failoverWriterConnectedToReader"));
         }
 
         await this.pluginService.abortCurrentClient();
         await this.pluginService.setCurrentClient(writerCandidateClient, writerCandidateHostInfo);
         logger.info(Messages.get("Failover.establishedConnection", writerCandidateHostInfo.host));
-        await this.updateTopology(false);
+        await this.updateTopology();
         this.failoverWriterSuccessCounter.inc();
       });
     } finally {
@@ -507,7 +447,7 @@ export class Failover2Plugin extends AbstractConnectionPlugin {
       try {
         await client.rollback();
       } catch (error) {
-        // swallow this error
+        // Do nothing.
       }
     }
 
@@ -517,7 +457,7 @@ export class Failover2Plugin extends AbstractConnectionPlugin {
         await this.pluginService.abortCurrentClient();
       }
     } catch (error) {
-      // swallow this error, current target client should be useless anyway.
+      // Do nothing.
     }
   }
 
@@ -528,24 +468,6 @@ export class Failover2Plugin extends AbstractConnectionPlugin {
     }
 
     await this.failover(this.pluginService.getCurrentHostInfo());
-  }
-
-  private isWriter(hostInfo: HostInfo): boolean {
-    return hostInfo.role === HostRole.WRITER;
-  }
-
-  private shouldAttemptReaderConnection(): boolean {
-    const topology = this.pluginService.getHosts();
-    if (!topology || this.failoverMode === FailoverMode.STRICT_WRITER) {
-      return false;
-    }
-
-    for (const hostInfo of topology) {
-      if (hostInfo.role === HostRole.READER) {
-        return true;
-      }
-    }
-    return false;
   }
 
   private canUpdateTopology(methodName: string) {

@@ -38,7 +38,7 @@ export class MonitoringRdsHostListProvider extends RdsHostListProvider {
       try {
         await monitor.close();
       } catch {
-        // ignore
+        // Ignore.
       }
     }
   );
@@ -50,11 +50,12 @@ export class MonitoringRdsHostListProvider extends RdsHostListProvider {
     this.pluginService = pluginService;
   }
 
-  static async clearAll(): Promise<void> {
+  static async releaseResources(): Promise<void> {
     super.clearAll();
     for (const [key, monitor] of this.monitors.entries) {
       await monitor.item.close();
     }
+    this.monitors.map.clear();
   }
 
   async queryForTopology(targetClient: ClientWrapper, dialect: DatabaseDialect): Promise<HostInfo[]> {

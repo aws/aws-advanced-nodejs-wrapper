@@ -74,66 +74,35 @@ describe("reader failover handler", () => {
     reset(mockRdsHostListProvider);
   });
 
-  it("test notify list changed with failover disabled", async () => {
-    properties.set(WrapperProperties.ENABLE_CLUSTER_AWARE_FAILOVER.name, false);
-    const changes: Map<string, Set<HostChangeOptions>> = new Map();
-
-    initializePlugin(instance(mockPluginService));
-    await plugin.notifyHostListChanged(changes);
-
-    verify(mockPluginService.getCurrentHostInfo()).never();
-  });
-
-  it("test notify list changed with valid connection not in topology", async () => {
-    const changes: Map<string, Set<HostChangeOptions>> = new Map();
-    changes.set("cluster-host/", new Set<HostChangeOptions>([HostChangeOptions.HOST_DELETED]));
-    changes.set("instance/", new Set<HostChangeOptions>([HostChangeOptions.HOST_ADDED]));
-
-    initializePlugin(instance(mockPluginService));
-    await plugin.notifyHostListChanged(changes);
-
-    when(mockHostInfo.url).thenReturn("cluster-url/");
-    when(mockHostInfo.allAliases).thenReturn(new Set<string>(["instance"]));
-
-    verify(mockPluginService.getCurrentHostInfo()).once();
-    verify(mockHostInfo.allAliases).never();
-  });
-
   it("test update topology", async () => {
     when(mockAwsClient.isValid()).thenResolve(true);
 
-    // Test updateTopology with failover disabled
+    // Test updateTopology with failover disabled.
     WrapperProperties.ENABLE_CLUSTER_AWARE_FAILOVER.set(properties, false);
     initializePlugin(instance(mockPluginService));
-    await plugin.updateTopology(false);
+    await plugin.updateTopology();
     verify(mockPluginService.forceRefreshHostList()).never();
     verify(mockPluginService.refreshHostList()).never();
 
-    // Test updateTopology with no connection
+    // Test updateTopology with no connection.
     WrapperProperties.ENABLE_CLUSTER_AWARE_FAILOVER.set(properties, true);
     initializePlugin(instance(mockPluginService));
     when(mockPluginService.getCurrentHostInfo()).thenReturn(null);
-    await plugin.updateTopology(false);
+    await plugin.updateTopology();
     verify(mockPluginService.forceRefreshHostList()).never();
     verify(mockPluginService.refreshHostList()).never();
 
-    // Test updateTopology with closed connection
+    // Test updateTopology with closed connection.
     when(mockAwsClient.isValid()).thenResolve(true);
-    await plugin.updateTopology(false);
+    await plugin.updateTopology();
     verify(mockPluginService.forceRefreshHostList()).never();
     verify(mockPluginService.refreshHostList()).never();
 
-    // Test with hosts
+    // Test with hosts.
     when(mockPluginService.getHosts()).thenReturn([builder.withHost("host").build()]);
 
-    // Test updateTopology with forceUpdate == true
-    await plugin.updateTopology(true);
-    verify(mockPluginService.forceRefreshHostList()).once();
-    verify(mockPluginService.refreshHostList()).never();
-    resetCalls(mockPluginService);
-
-    // Test updateTopology with forceUpdate == false
-    await plugin.updateTopology(false);
+    // Test updateTopology.
+    await plugin.updateTopology();
     verify(mockPluginService.forceRefreshHostList()).never();
     verify(mockPluginService.refreshHostList()).once();
   });
@@ -168,7 +137,6 @@ describe("reader failover handler", () => {
   });
 
   it("test failover reader success", async () => {
-    // TODO
     const hostInfo = builder.withHost("hostA").build();
     const hosts = [hostInfo];
 
@@ -186,7 +154,7 @@ describe("reader failover handler", () => {
     plugin.initHostProvider(mockHostInfoInstance, properties, mockPluginServiceInstance, () => {});
 
     const spyPlugin: Failover2Plugin = spy(plugin);
-    when(spyPlugin.updateTopology(false)).thenReturn();
+    when(spyPlugin.updateTopology()).thenReturn();
 
     await plugin.failoverReader();
 
