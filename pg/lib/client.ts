@@ -30,6 +30,7 @@ import { HostInfo } from "../../common/lib/host_info";
 import { TelemetryTraceLevel } from "../../common/lib/utils/telemetry/telemetry_trace_level";
 import { NodePostgresDriverDialect } from "./dialect/node_postgres_driver_dialect";
 import { TransactionIsolationLevel } from "../../common/lib/utils/transaction_isolation_level";
+import { isDialectTopologyAware } from "../../common/lib/utils/utils";
 
 export class AwsPGClient extends AwsClient {
   private static readonly knownDialectsByCode: Map<string, DatabaseDialect> = new Map([
@@ -52,6 +53,19 @@ export class AwsPGClient extends AwsClient {
         throw new AwsWrapperError(Messages.get("HostInfo.noHostParameter"));
       }
       const result: ClientWrapper = await this.pluginManager.connect(hostInfo, this.properties, true);
+      if (isDialectTopologyAware(this.pluginService.getDialect())) {
+        try {
+          const role = await this.pluginService.getHostRole(result);
+          // The current host role may be incorrect, use the created client to confirm the host role.
+          if (role !== result.hostInfo.role) {
+            result.hostInfo.role = role;
+            this.pluginService.setCurrentHostInfo(result.hostInfo);
+            this.pluginService.setInitialConnectionHostInfo(result.hostInfo);
+          }
+        } catch (error) {
+          // Ignore
+        }
+      }
       await this.pluginService.setCurrentClient(result, result.hostInfo);
       await this.internalPostConnect();
     });

@@ -64,7 +64,7 @@ export class AuroraMySQLDatabaseDialect extends MySQLDatabaseDialect implements 
 
   async getHostRole(targetClient: ClientWrapper): Promise<HostRole> {
     const res = await targetClient.query(AuroraMySQLDatabaseDialect.IS_READER_QUERY);
-    return Promise.resolve(res[0]["is_reader"] === "true" ? HostRole.READER : HostRole.WRITER);
+    return Promise.resolve(res[0][0]["is_reader"] === 1 ? HostRole.READER : HostRole.WRITER);
   }
 
   async isDialect(targetClient: ClientWrapper): Promise<boolean> {

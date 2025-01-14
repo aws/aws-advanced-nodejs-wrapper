@@ -14,8 +14,6 @@
   limitations under the License.
 */
 
-import { Messages } from "./messages";
-
 export class AwsWrapperError extends Error {
   constructor(message?: string, cause?: any) {
     super(message);

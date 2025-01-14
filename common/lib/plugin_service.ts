@@ -43,10 +43,10 @@ import { DatabaseDialectCodes } from "./database_dialect/database_dialect_codes"
 import { getWriter, logTopology } from "./utils/utils";
 import { TelemetryFactory } from "./utils/telemetry/telemetry_factory";
 import { DriverDialect } from "./driver_dialect/driver_dialect";
-import { ConfigurationProfile } from "./profile/configuration_profile";
-import { SessionState } from "./session_state";
+import { AllowedAndBlockedHosts } from "./AllowedAndBlockedHosts";
 
 export class PluginService implements ErrorHandler, HostListProviderService {
+  private static readonly DEFAULT_HOST_AVAILABILITY_CACHE_EXPIRE_NANO = 5 * 60_000_000_000; // 5 minutes
   private readonly _currentClient: AwsClient;
   private _currentHostInfo?: HostInfo;
   private _hostListProvider?: HostListProvider;
@@ -61,6 +61,7 @@ export class PluginService implements ErrorHandler, HostListProviderService {
   protected readonly sessionStateService: SessionStateService;
   protected static readonly hostAvailabilityExpiringCache: CacheMap<string, HostAvailability> = new CacheMap<string, HostAvailability>();
   readonly props: Map<string, any>;
+  private allowedAndBlockedHosts: AllowedAndBlockedHosts | null = null;
 
   constructor(
     container: PluginServiceManagerContainer,
@@ -116,17 +117,29 @@ export class PluginService implements ErrorHandler, HostListProviderService {
       this._currentHostInfo = this._initialConnectionHostInfo;
 
       if (!this._currentHostInfo) {
-        if (this.getHosts().length === 0) {
+        if (this.getAllHosts().length === 0) {
           throw new AwsWrapperError(Messages.get("PluginService.hostListEmpty"));
         }
 
-        const writerHost = getWriter(this.getHosts());
+        const writerHost = getWriter(this.getAllHosts());
+        if (!this.getHosts().some((hostInfo: HostInfo) => hostInfo.host === writerHost?.host)) {
+          throw new AwsWrapperError(
+            Messages.get(
+              "PluginService.currentHostNotAllowed",
+              this._currentHostInfo ? this._currentHostInfo.host : "<null>",
+              logTopology(this.hosts, "[PluginService.currentHostNotAllowed]")
+            )
+          );
+        }
+
         if (writerHost) {
           this._currentHostInfo = writerHost;
         } else {
           this._currentHostInfo = this.getHosts()[0];
         }
       }
+
+      logger.debug(`Set current host to: ${this._currentHostInfo.host}`);
     }
 
     return this._currentHostInfo;
@@ -260,11 +273,64 @@ export class PluginService implements ErrorHandler, HostListProviderService {
     }
   }
 
-  getHosts(): HostInfo[] {
+  getAllHosts(): HostInfo[] {
     return this.hosts;
   }
 
-  setAvailability(hostAliases: Set<string>, availability: HostAvailability) {}
+  getHosts(): HostInfo[] {
+    const hostPermissions = this.allowedAndBlockedHosts;
+    if (!hostPermissions) {
+      return this.hosts;
+    }
+
+    let hosts = this.hosts;
+    const allowedHostIds = hostPermissions.getAllowedHostIds();
+    const blockedHostIds = hostPermissions.getBlockedHostIds();
+
+    if (allowedHostIds && allowedHostIds.size > 0) {
+      hosts = hosts.filter((host: HostInfo) => allowedHostIds.has(host.hostId));
+    }
+
+    if (blockedHostIds && blockedHostIds.size > 0) {
+      hosts = hosts.filter((host: HostInfo) => !blockedHostIds.has(host.hostId));
+    }
+
+    return hosts;
+  }
+
+  setAvailability(hostAliases: Set<string>, availability: HostAvailability) {
+    if (hostAliases.size === 0) {
+      return;
+    }
+
+    const hostsToChange = [
+      ...new Set(
+        this.getAllHosts().filter(
+          (host: HostInfo) => hostAliases.has(host.asAlias) || [...host.aliases].some((hostAlias: string) => hostAliases.has(hostAlias))
+        )
+      )
+    ];
+
+    if (hostsToChange.length === 0) {
+      logger.debug(Messages.get("PluginService.hostsChangeListEmpty"));
+      return;
+    }
+
+    const changes = new Map<string, Set<HostChangeOptions>>();
+    for (const host of hostsToChange) {
+      const currentAvailability = host.getAvailability();
+      PluginService.hostAvailabilityExpiringCache.put(host.url, availability, PluginService.DEFAULT_HOST_AVAILABILITY_CACHE_EXPIRE_NANO);
+      if (currentAvailability !== availability) {
+        let hostChanges = new Set<HostChangeOptions>();
+        if (availability === HostAvailability.AVAILABLE) {
+          hostChanges = new Set([HostChangeOptions.WENT_UP, HostChangeOptions.HOST_CHANGED]);
+        } else {
+          hostChanges = new Set([HostChangeOptions.WENT_DOWN, HostChangeOptions.HOST_CHANGED]);
+        }
+        changes.set(host.url, hostChanges);
+      }
+    }
+  }
 
   updateConfigWithProperties(props: Map<string, any>) {
     this._currentClient.config = Object.fromEntries(props.entries());
@@ -500,5 +566,9 @@ export class PluginService implements ErrorHandler, HostListProviderService {
 
   attachNoOpErrorListener(clientWrapper: ClientWrapper | undefined): void {
     this.getDialect().getErrorHandler().attachNoOpErrorListener(clientWrapper);
+  }
+
+  setAllowedAndBlockedHosts(allowedAndBlockedHosts: AllowedAndBlockedHosts) {
+    this.allowedAndBlockedHosts = allowedAndBlockedHosts;
   }
 }

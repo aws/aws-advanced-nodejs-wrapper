@@ -21,6 +21,7 @@ import { DatabaseDialect } from "./database_dialect/database_dialect";
 import { HostInfoBuilder } from "./host_info_builder";
 import { ConnectionUrlParser } from "./utils/connection_url_parser";
 import { TelemetryFactory } from "./utils/telemetry/telemetry_factory";
+import { AllowedAndBlockedHosts } from "./AllowedAndBlockedHosts";
 
 export interface HostListProviderService {
   getHostListProvider(): HostListProvider | null;
@@ -50,4 +51,6 @@ export interface HostListProviderService {
   isClientValid(targetClient: any): Promise<boolean>;
 
   getTelemetryFactory(): TelemetryFactory;
+
+  setAllowedAndBlockedHosts(allowedAndBlockedHosts: AllowedAndBlockedHosts): void;
 }
