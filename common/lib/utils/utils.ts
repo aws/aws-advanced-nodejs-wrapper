@@ -20,6 +20,7 @@ import { WrapperProperties } from "../wrapper_property";
 import { HostRole } from "../host_role";
 import { logger } from "../../logutils";
 import { AwsWrapperError, InternalQueryTimeoutError } from "./errors";
+import { TopologyAwareDatabaseDialect } from "../topology_aware_database_dialect";
 
 export function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -78,4 +79,8 @@ export function logAndThrowError(message: string) {
 
 export function equalsIgnoreCase(value1: string | null, value2: string | null): boolean {
   return value1 != null && value2 != null && value1.localeCompare(value2, undefined, { sensitivity: "accent" }) === 0;
+}
+
+export function isDialectTopologyAware(dialect: any): dialect is TopologyAwareDatabaseDialect {
+  return dialect;
 }

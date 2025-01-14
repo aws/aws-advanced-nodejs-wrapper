@@ -29,6 +29,8 @@ import { AwsPoolConfig } from "../../../../common/lib/aws_pool_config";
 import { InternalPoolMapping } from "../../../../common/lib/utils/internal_pool_mapping";
 import { HostInfo } from "../../../../common/lib/host_info";
 import { PluginManager } from "../../../../common/lib";
+import { RdsHostListProvider } from "../../../../common/lib/host_list_provider/rds_host_list_provider";
+import { PluginService } from "../../../../common/lib/plugin_service";
 
 const itIf =
   !features.includes(TestEnvironmentFeatures.PERFORMANCE) &&
@@ -99,6 +101,9 @@ describe("aurora read write splitting", () => {
     await TestEnvironment.verifyClusterStatus();
     await TestEnvironment.verifyAllInstancesHasRightState("available");
     await TestEnvironment.verifyAllInstancesUp();
+
+    RdsHostListProvider.clearAll();
+    PluginService.clearHostAvailabilityCache();
   }, 1320000);
 
   afterEach(async () => {

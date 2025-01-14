@@ -27,8 +27,7 @@ import { WrapperProperties } from "../wrapper_property";
 import { logger } from "../../logutils";
 import { HostAvailability } from "../host_availability/host_availability";
 import { CacheMap } from "../utils/cache_map";
-import { logTopology } from "../utils/utils";
-import { TopologyAwareDatabaseDialect } from "../topology_aware_database_dialect";
+import { isDialectTopologyAware, logTopology } from "../utils/utils";
 import { DatabaseDialect } from "../database_dialect/database_dialect";
 import { ClientWrapper } from "../client_wrapper";
 
@@ -137,7 +136,7 @@ export class RdsHostListProvider implements DynamicHostListProvider {
   }
 
   async getHostRole(client: ClientWrapper, dialect: DatabaseDialect): Promise<HostRole> {
-    if (!this.isTopologyAwareDatabaseDialect(dialect)) {
+    if (!isDialectTopologyAware(dialect)) {
       throw new TypeError(Messages.get("RdsHostListProvider.incorrectDialect"));
     }
 
@@ -150,7 +149,7 @@ export class RdsHostListProvider implements DynamicHostListProvider {
 
   async getWriterId(client: ClientWrapper): Promise<string | null> {
     const dialect = this.hostListProviderService.getDialect();
-    if (!this.isTopologyAwareDatabaseDialect(dialect)) {
+    if (!isDialectTopologyAware(dialect)) {
       throw new TypeError(Messages.get("RdsHostListProvider.incorrectDialect"));
     }
 
@@ -162,7 +161,7 @@ export class RdsHostListProvider implements DynamicHostListProvider {
   }
 
   async identifyConnection(targetClient: ClientWrapper, dialect: DatabaseDialect): Promise<HostInfo | null> {
-    if (!this.isTopologyAwareDatabaseDialect(dialect)) {
+    if (!isDialectTopologyAware(dialect)) {
       throw new TypeError(Messages.get("RdsHostListProvider.incorrectDialect"));
     }
     const instanceName = await dialect.identifyConnection(targetClient);
@@ -276,12 +275,8 @@ export class RdsHostListProvider implements DynamicHostListProvider {
     }
   }
 
-  protected isTopologyAwareDatabaseDialect(arg: any): arg is TopologyAwareDatabaseDialect {
-    return arg;
-  }
-
   async queryForTopology(targetClient: ClientWrapper, dialect: DatabaseDialect): Promise<HostInfo[]> {
-    if (!this.isTopologyAwareDatabaseDialect(dialect)) {
+    if (!isDialectTopologyAware(dialect)) {
       throw new TypeError(Messages.get("RdsHostListProvider.incorrectDialect"));
     }
 

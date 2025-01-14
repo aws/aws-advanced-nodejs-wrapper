@@ -27,6 +27,7 @@ import { CredentialsProviderFactory } from "./credentials_provider_factory";
 import { SamlUtils } from "../../utils/saml_utils";
 import { ClientWrapper } from "../../client_wrapper";
 import { TelemetryCounter } from "../../utils/telemetry/telemetry_counter";
+import { RegionUtils } from "../../utils/region_utils";
 
 export class FederatedAuthPlugin extends AbstractConnectionPlugin {
   protected static readonly tokenCache = new Map<string, TokenInfo>();
@@ -70,7 +71,7 @@ export class FederatedAuthPlugin extends AbstractConnectionPlugin {
 
     const host = IamAuthUtils.getIamHost(props, hostInfo);
     const port = IamAuthUtils.getIamPort(props, hostInfo, this.pluginService.getDialect().getDefaultPort());
-    const region: string = IamAuthUtils.getRdsRegion(host, this.rdsUtils, props);
+    const region: string = RegionUtils.getRegion(props.get(WrapperProperties.IAM_REGION.name), host);
 
     const cacheKey = IamAuthUtils.getCacheKey(port, WrapperProperties.DB_USER.get(props), host, region);
     const tokenInfo = FederatedAuthPlugin.tokenCache.get(cacheKey);

@@ -99,7 +99,7 @@ export class AuroraConnectionTrackerPlugin extends AbstractConnectionPlugin impl
   }
 
   private async checkWriterChanged(): Promise<void> {
-    const hostInfoAfterFailover = this.getWriter(this.pluginService.getHosts());
+    const hostInfoAfterFailover = this.getWriter(this.pluginService.getAllHosts());
     if (this.currentWriter === null) {
       this.currentWriter = hostInfoAfterFailover;
       this.needUpdateCurrentWriter = false;
@@ -114,7 +114,7 @@ export class AuroraConnectionTrackerPlugin extends AbstractConnectionPlugin impl
 
   private rememberWriter(): void {
     if (this.currentWriter === null || this.needUpdateCurrentWriter) {
-      this.currentWriter = this.getWriter(this.pluginService.getHosts());
+      this.currentWriter = this.getWriter(this.pluginService.getAllHosts());
       this.needUpdateCurrentWriter = false;
     }
   }

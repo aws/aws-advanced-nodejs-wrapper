@@ -40,7 +40,7 @@ import { RdsUrlType } from "../../utils/rds_url_type";
 import { RdsUtils } from "../../utils/rds_utils";
 import { Messages } from "../../utils/messages";
 import { ClientWrapper } from "../../client_wrapper";
-import { getWriter } from "../../utils/utils";
+import { getWriter, logTopology } from "../../utils/utils";
 import { TelemetryCounter } from "../../utils/telemetry/telemetry_counter";
 import { TelemetryTraceLevel } from "../../utils/telemetry/telemetry_trace_level";
 
@@ -150,15 +150,6 @@ export class FailoverPlugin extends AbstractConnectionPlugin {
     }
 
     initHostProviderFunc();
-
-    this.failoverMode = failoverModeFromValue(WrapperProperties.FAILOVER_MODE.get(this._properties));
-    this._rdsUrlType = this._rdsHelper.identifyRdsType(hostInfo.host);
-
-    if (this.failoverMode === FailoverMode.UNKNOWN) {
-      this.failoverMode = this._rdsUrlType === RdsUrlType.RDS_READER_CLUSTER ? FailoverMode.READER_OR_WRITER : FailoverMode.STRICT_WRITER;
-    }
-
-    logger.debug(Messages.get("Failover.parameterValue", "failoverMode", FailoverMode[this.failoverMode]));
   }
 
   override notifyConnectionChanged(changes: Set<HostChangeOptions>): Promise<OldConnectionSuggestionAction> {
@@ -215,8 +206,8 @@ export class FailoverPlugin extends AbstractConnectionPlugin {
     return (
       this.enableFailoverSetting &&
       this._rdsUrlType !== RdsUrlType.RDS_PROXY &&
-      this.pluginService.getHosts() &&
-      this.pluginService.getHosts().length > 0
+      this.pluginService.getAllHosts() &&
+      this.pluginService.getAllHosts().length > 0
     );
   }
 
@@ -230,7 +221,7 @@ export class FailoverPlugin extends AbstractConnectionPlugin {
   }
 
   private getCurrentWriter(): HostInfo | null {
-    const topology = this.pluginService.getHosts();
+    const topology = this.pluginService.getAllHosts();
     if (topology.length == 0) {
       return null;
     }
@@ -284,6 +275,7 @@ export class FailoverPlugin extends AbstractConnectionPlugin {
     isInitialConnection: boolean,
     connectFunc: () => Promise<ClientWrapper>
   ): Promise<ClientWrapper> {
+    this.initFailoverMode();
     return await this._staleDnsHelper.getVerifiedConnection(hostInfo.host, isInitialConnection, this.hostListProviderService!, props, connectFunc);
   }
 
@@ -405,7 +397,7 @@ export class FailoverPlugin extends AbstractConnectionPlugin {
     try {
       await telemetryContext.start(async () => {
         try {
-          const result = await this._writerFailoverHandler.failover(this.pluginService.getHosts());
+          const result = await this._writerFailoverHandler.failover(this.pluginService.getAllHosts());
 
           if (result) {
             const error = result.error;
@@ -425,13 +417,27 @@ export class FailoverPlugin extends AbstractConnectionPlugin {
             throw new AwsWrapperError(Messages.get("Failover.unableToDetermineWriter"));
           }
 
+          await this.pluginService.refreshHostList();
+          const allowedHosts = this.pluginService.getHosts();
+          if (!allowedHosts.some((hostInfo: HostInfo) => hostInfo.host === writerHostInfo?.host)) {
+            const failoverErrorMessage = Messages.get(
+              "Failover.newWriterNotAllowed",
+              writerHostInfo ? writerHostInfo.host : "<null>",
+              logTopology(allowedHosts, "[Failover.newWriterNotAllowed] ")
+            );
+            logger.error(failoverErrorMessage);
+            await this.pluginService.abortTargetClient(result.client);
+            throw new FailoverFailedError(failoverErrorMessage);
+          }
+
           await this.pluginService.abortCurrentClient();
           await this.pluginService.setCurrentClient(result.client, writerHostInfo);
           logger.debug(Messages.get("Failover.establishedConnection", this.pluginService.getCurrentHostInfo()?.host ?? ""));
-          await this.pluginService.refreshHostList();
           this.throwFailoverSuccessError();
-          this.failoverWriterSuccessCounter.inc();
         } catch (error: any) {
+          if (error instanceof FailoverSuccessError) {
+            this.failoverWriterSuccessCounter.inc();
+          }
           this.failoverWriterFailedCounter.inc();
           throw error;
         }
@@ -549,5 +555,21 @@ export class FailoverPlugin extends AbstractConnectionPlugin {
     }
 
     return false;
+  }
+
+  initFailoverMode(): void {
+    if (!this._rdsUrlType) {
+      this.failoverMode = failoverModeFromValue(WrapperProperties.FAILOVER_MODE.get(this._properties));
+      const initialHostInfo = this.hostListProviderService.getInitialConnectionHostInfo();
+      this._rdsUrlType = this._rdsHelper.identifyRdsType(initialHostInfo.host);
+
+      if (this.failoverMode === FailoverMode.UNKNOWN) {
+        this.failoverMode = this._rdsUrlType === RdsUrlType.RDS_READER_CLUSTER ? FailoverMode.READER_OR_WRITER : FailoverMode.STRICT_WRITER;
+      }
+
+      this._readerFailoverHandler.setEnableFailoverStrictReader(this.failoverMode === FailoverMode.STRICT_READER);
+
+      logger.debug(Messages.get("Failover.parameterValue", "failoverMode", FailoverMode[this.failoverMode]));
+    }
   }
 }

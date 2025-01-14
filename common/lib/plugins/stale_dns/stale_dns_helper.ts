@@ -27,7 +27,7 @@ import { AwsWrapperError } from "../../utils/errors";
 import { HostChangeOptions } from "../../host_change_options";
 import { WrapperProperties } from "../../wrapper_property";
 import { ClientWrapper } from "../../client_wrapper";
-import { getWriter } from "../../utils/utils";
+import { getWriter, logTopology } from "../../utils/utils";
 import { TelemetryFactory } from "../../utils/telemetry/telemetry_factory";
 import { TelemetryCounter } from "../../utils/telemetry/telemetry_counter";
 
@@ -87,6 +87,8 @@ export class StaleDnsHelper {
     } else {
       await this.pluginService.refreshHostList(currentTargetClient);
     }
+
+    logger.debug(logTopology(this.pluginService.getAllHosts(), "[StaleDnsHelper.getVerifiedConnection] "));
 
     if (!this.writerHostInfo) {
       const writerCandidate = getWriter(this.pluginService.getHosts());

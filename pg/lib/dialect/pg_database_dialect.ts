@@ -25,8 +25,8 @@ import { ClientWrapper } from "../../../common/lib/client_wrapper";
 import { FailoverRestriction } from "../../../common/lib/plugins/failover/failover_restriction";
 import { ErrorHandler } from "../../../common/lib/error_handler";
 import { PgErrorHandler } from "../pg_error_handler";
-import { SessionState } from "../../../common/lib/session_state";
 import { Messages } from "../../../common/lib/utils/messages";
+import { HostRole } from "../../../common/lib/host_role";
 
 export class PgDatabaseDialect implements DatabaseDialect {
   protected dialectName: string = this.constructor.name;
@@ -188,5 +188,9 @@ export class PgDatabaseDialect implements DatabaseDialect {
     }
 
     return undefined;
+  }
+
+  async getHostRole(targetClient: ClientWrapper): Promise<HostRole> {
+    throw new UnsupportedMethodError(`Method getHostRole not supported for dialect: ${this.dialectName}`);
   }
 }

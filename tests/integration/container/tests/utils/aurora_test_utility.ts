@@ -16,7 +16,6 @@
 
 import {
   CreateDBInstanceCommand,
-  CreateDBInstanceCommandOutput,
   DBInstanceAlreadyExistsFault,
   DBInstanceNotFoundFault,
   DeleteDBInstanceCommand,
@@ -135,7 +134,7 @@ export class AuroraTestUtility {
     return clusters[0];
   }
 
-  async failoverClusterAndWaitUntilWriterChanged(initialWriter?: string, clusterId?: string) {
+  async failoverClusterAndWaitUntilWriterChanged(initialWriter?: string, clusterId?: string, targetWriterId?: string) {
     if (this.isNullOrUndefined(clusterId)) {
       clusterId = (await TestEnvironment.getCurrent()).info.auroraClusterName;
     }
@@ -148,7 +147,7 @@ export class AuroraTestUtility {
     const clusterEndpoint = databaseInfo.clusterEndpoint;
     const initialClusterAddress = await dns.promises.lookup(clusterEndpoint);
 
-    await this.failoverCluster(clusterId);
+    await this.failoverClusterToTarget(clusterId, targetWriterId);
 
     let remainingAttempts: number = 5;
     while (!(await this.writerChanged(initialWriter, clusterId, 300))) {
@@ -157,7 +156,7 @@ export class AuroraTestUtility {
         throw new Error("failover request unsuccessful");
       }
 
-      await this.failoverCluster(clusterId);
+      await this.failoverClusterToTarget(clusterId, targetWriterId);
     }
 
     let clusterAddress: dns.LookupAddress = await dns.promises.lookup(clusterEndpoint);
@@ -167,7 +166,7 @@ export class AuroraTestUtility {
     }
   }
 
-  async failoverCluster(clusterId?: string) {
+  async failoverClusterToTarget(clusterId?: string, targetInstanceId?: string): Promise<void> {
     const info = (await TestEnvironment.getCurrent()).info;
     if (clusterId == null) {
       clusterId = info.auroraClusterName;
@@ -175,10 +174,15 @@ export class AuroraTestUtility {
 
     await this.waitUntilClusterHasDesiredStatus(clusterId);
 
-    let remainingAttempts = 10;
-    const command = new FailoverDBClusterCommand({
+    const input: any = {
       DBClusterIdentifier: clusterId
-    });
+    };
+    if (targetInstanceId) {
+      input.TargetDBInstanceIdentifier = targetInstanceId;
+    }
+
+    let remainingAttempts = 10;
+    const command = new FailoverDBClusterCommand(input);
     const auroraUtility = new AuroraTestUtility(info.region);
     while (remainingAttempts-- > 0) {
       try {
