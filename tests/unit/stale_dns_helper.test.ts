@@ -113,6 +113,7 @@ describe("test_stale_dns_helper", () => {
 
     const mockHostListProviderServiceInstance = instance(mockHostListProviderService);
     when(mockPluginService.getHosts()).thenReturn(readerHostList);
+    when(mockPluginService.getAllHosts()).thenReturn(readerHostList);
 
     when(mockPluginService.getCurrentHostInfo()).thenReturn(readerA);
 
@@ -140,6 +141,7 @@ describe("test_stale_dns_helper", () => {
     const mockHostListProviderServiceInstance = instance(mockHostListProviderService);
 
     when(mockPluginService.getHosts()).thenReturn(clusterHostList);
+    when(mockPluginService.getAllHosts()).thenReturn(clusterHostList);
 
     const lookupAddress = { address: "5.5.5.5", family: 0 };
     when(target.lookupResult(anything())).thenResolve(lookupAddress);
@@ -161,6 +163,7 @@ describe("test_stale_dns_helper", () => {
     const target: StaleDnsHelper = spy(new StaleDnsHelper(instance(mockPluginService)));
     const targetInstance = instance(target);
     when(mockPluginService.getHosts()).thenReturn(instanceHostList);
+    when(mockPluginService.getAllHosts()).thenReturn(instanceHostList);
 
     const mockHostListProviderServiceInstance = instance(mockHostListProviderService);
 
@@ -185,6 +188,7 @@ describe("test_stale_dns_helper", () => {
     const target: StaleDnsHelper = spy(new StaleDnsHelper(instance(mockPluginService)));
     const targetInstance = instance(target);
     when(mockPluginService.getHosts()).thenReturn(readerHostList);
+    when(mockPluginService.getAllHosts()).thenReturn(readerHostList);
     const mockHostListProviderServiceInstance = instance(mockHostListProviderService);
 
     const firstCall = { address: "5.5.5.5", family: 0 };
@@ -209,6 +213,7 @@ describe("test_stale_dns_helper", () => {
     const target: StaleDnsHelper = spy(new StaleDnsHelper(instance(mockPluginService)));
     const targetInstance = instance(target);
     when(mockPluginService.getHosts()).thenReturn(instanceHostList);
+    when(mockPluginService.getAllHosts()).thenReturn(instanceHostList);
     const mockHostListProviderServiceInstance = instance(mockHostListProviderService);
 
     const firstCall = { address: "5.5.5.5", family: 0 };
@@ -234,6 +239,7 @@ describe("test_stale_dns_helper", () => {
     const targetInstance = instance(target);
 
     when(mockPluginService.getHosts()).thenReturn(clusterHostList);
+    when(mockPluginService.getAllHosts()).thenReturn(clusterHostList);
     const mockHostListProviderServiceInstance = instance(mockHostListProviderService);
     targetInstance["writerHostInfo"] = writerCluster;
 
@@ -260,6 +266,7 @@ describe("test_stale_dns_helper", () => {
     const targetInstance = instance(target);
 
     when(mockPluginService.getHosts()).thenReturn(clusterHostList);
+    when(mockPluginService.getAllHosts()).thenReturn(clusterHostList);
     const mockHostListProviderServiceInstance = instance(mockHostListProviderService);
     targetInstance["writerHostInfo"] = writerCluster;
     when(mockHostListProviderService.getInitialConnectionHostInfo()).thenReturn(writerCluster);

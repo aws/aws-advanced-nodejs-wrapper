@@ -27,6 +27,7 @@ import { Messages } from "../../utils/messages";
 import { AwsWrapperError } from "../../utils/errors";
 import { ClientWrapper } from "../../client_wrapper";
 import { TelemetryCounter } from "../../utils/telemetry/telemetry_counter";
+import { RegionUtils } from "../../utils/region_utils";
 
 export class OktaAuthPlugin extends AbstractConnectionPlugin {
   protected static readonly tokenCache = new Map<string, TokenInfo>();
@@ -70,7 +71,7 @@ export class OktaAuthPlugin extends AbstractConnectionPlugin {
 
     const host = IamAuthUtils.getIamHost(props, hostInfo);
     const port = IamAuthUtils.getIamPort(props, hostInfo, this.pluginService.getDialect().getDefaultPort());
-    const region = IamAuthUtils.getRdsRegion(host, this.rdsUtils, props);
+    const region = RegionUtils.getRegion(props.get(WrapperProperties.IAM_REGION.name), host);
 
     const cacheKey = IamAuthUtils.getCacheKey(port, WrapperProperties.DB_USER.get(props), host, region);
     const tokenInfo = OktaAuthPlugin.tokenCache.get(cacheKey);

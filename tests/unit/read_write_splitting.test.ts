@@ -83,6 +83,7 @@ const mockExecuteFuncThrowsFailoverSuccessError = jest.fn(() => {
 describe("reader write splitting test", () => {
   beforeEach(() => {
     when(mockPluginService.getHostListProvider()).thenReturn(instance(mockHostListProvider));
+    when(mockPluginService.getAllHosts()).thenReturn(defaultHosts);
     when(mockPluginService.getHosts()).thenReturn(defaultHosts);
     when(mockPluginService.isInTransaction()).thenReturn(false);
     when(mockPluginService.getDialect()).thenReturn(mockDialect);
@@ -105,7 +106,7 @@ describe("reader write splitting test", () => {
 
   it("test set read only true", async () => {
     const mockPluginServiceInstance = instance(mockPluginService);
-    when(mockPluginService.getHosts()).thenReturn(singleReaderTopology);
+    when(mockPluginService.getAllHosts()).thenReturn(singleReaderTopology);
     when(mockPluginService.getHostInfoByStrategy(anything(), anything())).thenReturn(readerHost1);
     when(mockPluginService.getCurrentClient()).thenReturn(instance(mockWriterClient));
     when(await mockWriterClient.isValid()).thenReturn(true);
@@ -129,7 +130,7 @@ describe("reader write splitting test", () => {
   it("test set read only false", async () => {
     const mockPluginServiceInstance = instance(mockPluginService);
 
-    when(mockPluginService.getHosts()).thenReturn(singleReaderTopology);
+    when(mockPluginService.getAllHosts()).thenReturn(singleReaderTopology);
     when(mockPluginService.getHostInfoByStrategy(anything(), anything())).thenReturn(writerHost);
     when(mockPluginService.getCurrentClient()).thenReturn(instance(mockReaderClient));
     when(await mockReaderClient.isValid()).thenReturn(true);
@@ -153,7 +154,7 @@ describe("reader write splitting test", () => {
     const mockPluginServiceInstance = instance(mockPluginService);
     const mockHostListProviderServiceInstance = instance(mockHostListProviderService);
 
-    when(mockPluginService.getHosts()).thenReturn(singleReaderTopology);
+    when(mockPluginService.getAllHosts()).thenReturn(singleReaderTopology);
     when(mockPluginService.getHostInfoByStrategy(anything(), anything())).thenReturn(readerHost1);
     when(mockPluginService.getCurrentClient()).thenReturn(instance(mockReaderClient));
     when(await mockReaderClient.isValid()).thenReturn(true);
@@ -177,7 +178,7 @@ describe("reader write splitting test", () => {
   it("test set read only false already on reader", async () => {
     const mockPluginServiceInstance = instance(mockPluginService);
     const mockHostListProviderServiceInstance = instance(mockHostListProviderService);
-    when(mockPluginService.getHosts()).thenReturn(singleReaderTopology);
+    when(mockPluginService.getAllHosts()).thenReturn(singleReaderTopology);
     when(mockPluginService.getHostInfoByStrategy(anything(), anything())).thenReturn(readerHost1);
     when(mockPluginService.getCurrentClient()).thenReturn(instance(mockWriterClient));
     when(await mockWriterClient.isValid()).thenReturn(true);
@@ -254,7 +255,7 @@ describe("reader write splitting test", () => {
   it("test set read only false writer connection failed", async () => {
     const mockPluginServiceInstance = instance(mockPluginService);
 
-    when(mockPluginService.getHosts()).thenReturn(singleReaderTopology);
+    when(mockPluginService.getAllHosts()).thenReturn(singleReaderTopology);
     when(mockPluginService.getHostInfoByStrategy(anything(), anything())).thenReturn(readerHost1);
     when(mockPluginService.getCurrentClient()).thenReturn(instance(mockReaderClient));
     when(mockPluginService.getCurrentHostInfo()).thenReturn(readerHost1);

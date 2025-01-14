@@ -261,7 +261,7 @@ export class AuroraInitialConnectionStrategyPlugin extends AbstractConnectionPlu
   }
 
   private getWriter(): HostInfo | null {
-    return this.pluginService.getHosts().find((x) => x.role === HostRole.WRITER) ?? null;
+    return this.pluginService.getAllHosts().find((x) => x.role === HostRole.WRITER) ?? null;
   }
 
   private getReader(props: Map<string, any>): HostInfo | undefined {
@@ -278,6 +278,6 @@ export class AuroraInitialConnectionStrategyPlugin extends AbstractConnectionPlu
   }
 
   private hasNoReaders(): boolean {
-    return this.pluginService.getHosts().find((x) => x.role === HostRole.READER) !== undefined;
+    return this.pluginService.getAllHosts().find((x) => x.role === HostRole.READER) !== undefined;
   }
 }

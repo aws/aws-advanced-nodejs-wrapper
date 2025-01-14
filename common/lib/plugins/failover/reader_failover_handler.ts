@@ -120,6 +120,18 @@ export class ClusterAwareReaderFailoverHandler implements ReaderFailoverHandler 
           logger.debug(Messages.get("ClusterAwareReaderFailoverHandler.errorGettingHostRole", error.message));
         }
 
+        const topology = this.pluginService.getAllHosts();
+
+        for (let i = 0; i < topology.length; i++) {
+          const host = topology[i];
+          if (host.host === result.newHost.host) {
+            // Found new connection host in the latest topology.
+            if (host.role === HostRole.READER) {
+              return result;
+            }
+          }
+        }
+
         try {
           await this.pluginService.abortTargetClient(result.client);
         } catch (error) {
