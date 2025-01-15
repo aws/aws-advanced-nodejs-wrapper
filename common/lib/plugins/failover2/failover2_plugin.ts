@@ -43,13 +43,15 @@ import { HostRole } from "../../host_role";
 import { SubscribedMethodHelper } from "../../utils/subscribed_method_helper";
 import { OldConnectionSuggestionAction } from "../../old_connection_suggestion_action";
 import { HostChangeOptions } from "../../host_change_options";
+import { CanReleaseResources } from "../../can_release_resources";
+import { MonitoringRdsHostListProvider } from "../../host_list_provider/monitoring/monitoring_host_list_provider";
 
-export class Failover2Plugin extends AbstractConnectionPlugin {
+export class Failover2Plugin extends AbstractConnectionPlugin implements CanReleaseResources {
   private static readonly TELEMETRY_WRITER_FAILOVER = "failover to writer instance";
   private static readonly TELEMETRY_READER_FAILOVER = "failover to replica";
   private static readonly METHOD_END = "end";
-  static readonly INTERNAL_CONNECT_PROPERTY_NAME: string = "76c06979-49c4-4c86-9600-a63605b83f50";
   private static readonly subscribedMethods: Set<string> = new Set(["initHostProvider", "connect", "query", "notifyConnectionChanged"]);
+  static readonly INTERNAL_CONNECT_PROPERTY_NAME: string = "monitoring_76c06979-49c4-4c86-9600-a63605b83f50";
   private readonly _staleDnsHelper: StaleDnsHelper;
   private readonly _properties: Map<string, any>;
   private readonly pluginService: PluginService;
@@ -72,7 +74,6 @@ export class Failover2Plugin extends AbstractConnectionPlugin {
   protected enableFailoverSetting: boolean = WrapperProperties.ENABLE_CLUSTER_AWARE_FAILOVER.defaultValue;
   private failoverTimeoutSettingMs: number = WrapperProperties.FAILOVER_TIMEOUT_MS.defaultValue;
 
-  constructor(pluginService: PluginService, properties: Map<string, any>, rdsHelper: RdsUtils);
   constructor(
     pluginService: PluginService,
     properties: Map<string, any>,
@@ -247,7 +248,7 @@ export class Failover2Plugin extends AbstractConnectionPlugin {
 
       return await methodFunc();
     } catch (e: any) {
-      logger.debug(Messages.get("Failover.detectedException", e.message));
+      logger.debug(Messages.get("Failover.detectedError", e.message));
       if (this._lastError !== e && this.shouldErrorTriggerClientSwitch(e)) {
         await this.invalidateCurrentClient();
         const currentHostInfo = this.pluginService.getCurrentHostInfo();
@@ -295,10 +296,10 @@ export class Failover2Plugin extends AbstractConnectionPlugin {
     try {
       logger.debug(Messages.get("Failover.startReaderFailover"));
       await telemetryContext.start(async () => {
-        if (!(await this.pluginService.initiateTopologyUpdate(false, this.failoverTimeoutSettingMs))) {
+        if (!(await this.pluginService.initiateTopologyUpdate(false, 0))) {
           // Unable to establish SQL connection to an instance.
           this.failoverReaderFailedCounter.inc();
-          logger.warn(Messages.get("Failover.unableToConnectToReader"));
+          logger.warn(Messages.get("Failover2.unableToFetchTopology"));
           throw new FailoverFailedError(Messages.get("Failover.unableToConnectToReader"));
         }
 
@@ -354,7 +355,7 @@ export class Failover2Plugin extends AbstractConnectionPlugin {
         if (!(await this.pluginService.initiateTopologyUpdate(true, this.failoverTimeoutSettingMs))) {
           // Unable to establish SQL connection to writer node.
           this.failoverWriterFailedCounter.inc();
-          logger.warn(Messages.get("Failover.unableToConnectToWriter"));
+          logger.warn(Messages.get("Failover2.unableToFetchTopology"));
           throw new FailoverFailedError(Messages.get("Failover.unableToConnectToWriter"));
         }
 
@@ -382,7 +383,7 @@ export class Failover2Plugin extends AbstractConnectionPlugin {
           throw new FailoverFailedError(Messages.get("Failover.unableToConnectToWriter"));
         }
 
-        if (writerCandidateClient.hostInfo.role && (await this.pluginService.getHostRole(writerCandidateClient)) !== HostRole.WRITER) {
+        if ((await this.pluginService.getHostRole(writerCandidateClient)) !== HostRole.WRITER) {
           try {
             await writerCandidateClient.end();
           } catch (error) {
@@ -463,7 +464,7 @@ export class Failover2Plugin extends AbstractConnectionPlugin {
 
   async pickNewConnection() {
     if (this.isClosed && this._closedExplicitly) {
-      logger.debug(Messages.get("Failover.transactionResolutionUnknownError"));
+      logger.debug(Messages.get("Failover.connectionExplicitlyClosed"));
       return;
     }
 
@@ -493,5 +494,9 @@ export class Failover2Plugin extends AbstractConnectionPlugin {
     }
 
     return false;
+  }
+
+  async releaseResources(): Promise<void> {
+    await MonitoringRdsHostListProvider.releaseResources();
   }
 }

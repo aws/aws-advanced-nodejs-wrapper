@@ -186,10 +186,11 @@ export class PluginService implements ErrorHandler, HostListProviderService {
         shouldVerifyWriter,
         timeoutMs
       );
-
-      if (updatedHostList && updatedHostList !== this.hosts) {
-        this.updateHostAvailability(updatedHostList);
-        await this.setHostList(this.hosts, updatedHostList);
+      if (updatedHostList) {
+        if (updatedHostList !== this.hosts) {
+          this.updateHostAvailability(updatedHostList);
+          await this.setHostList(this.hosts, updatedHostList);
+        }
         return true;
       }
     } catch (err) {

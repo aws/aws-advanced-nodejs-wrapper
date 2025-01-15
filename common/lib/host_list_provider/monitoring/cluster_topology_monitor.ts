@@ -130,7 +130,8 @@ export class ClusterTopologyMonitorImpl implements ClusterTopologyMonitor {
       const client = this.monitoringClient;
       this.monitoringClient = null;
       this.isVerifiedWriterConnection = false;
-      await this.closeConnection(client);
+      // Abort needed for MySQLClientWrapper in case client already closed.
+      await client.abort();
     }
 
     return await this.waitTillTopologyGetsUpdated(timeoutMs);
@@ -150,9 +151,13 @@ export class ClusterTopologyMonitorImpl implements ClusterTopologyMonitor {
     this.requestToUpdateTopology = true;
 
     const currentHosts: HostInfo[] = this.topologyMap.get(this.clusterId);
-    let latestHosts: HostInfo[];
+
+    if (currentHosts && timeoutMs === 0) {
+      return currentHosts;
+    }
 
     const endTime = Date.now() + timeoutMs;
+    let latestHosts: HostInfo[];
 
     while ((latestHosts = this.topologyMap.get(this.clusterId)) === currentHosts && Date.now() < endTime) {
       await sleep(1000);
@@ -193,7 +198,7 @@ export class ClusterTopologyMonitorImpl implements ClusterTopologyMonitor {
 
       if (client && !this.monitoringClient) {
         this.monitoringClient = client;
-        logger.debug(Messages.get("ClusterTopologyMonitor.openedMonitoringConnection", this.initialHostInfo.hostId));
+        logger.debug(Messages.get("ClusterTopologyMonitor.openedMonitoringConnection", this.initialHostInfo.host));
         if (this.getWriterHostId(this.monitoringClient) !== null) {
           this.isVerifiedWriterConnection = true;
           this.writerHostInfo = this.initialHostInfo;
@@ -324,7 +329,7 @@ export class ClusterTopologyMonitorImpl implements ClusterTopologyMonitor {
           }
           if (this.highRefreshRateEndTime == 0) {
             // Log topology when not in high refresh rate.
-            this.logTopology(`[clusterTopologyMonitor `);
+            this.logTopology(`[clusterTopologyMonitor] `);
           }
           // Set an easily interruptible delay between topology refreshes.
           await this.delay(false);

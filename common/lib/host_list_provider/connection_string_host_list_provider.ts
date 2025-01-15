@@ -14,7 +14,6 @@
   limitations under the License.
 */
 
-import { AwsClient } from "../aws_client";
 import { HostAvailability } from "../host_availability/host_availability";
 import { HostInfo } from "../host_info";
 import { HostListProviderService } from "../host_list_provider_service";

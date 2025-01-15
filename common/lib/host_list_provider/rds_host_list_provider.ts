@@ -16,7 +16,6 @@
 
 import { DynamicHostListProvider } from "./host_list_provider";
 import { HostInfo } from "../host_info";
-import { AwsClient } from "../aws_client";
 import { HostRole } from "../host_role";
 import { RdsUrlType } from "../utils/rds_url_type";
 import { RdsUtils } from "../utils/rds_utils";
