@@ -2,12 +2,15 @@
 
 ### Prerequisites
 
+Before running the integration tests for the AWS Advanced NodeJS Wrapper, you must install:
+
 - Docker Desktop:
   - [Docker Desktop for Mac](https://docs.docker.com/desktop/install/mac-install/)
   - [Docker Desktop for Windows](https://docs.docker.com/desktop/install/windows-install/)
-- [Environment variables](#Environment-Variables)
+  - [Docker Desktop for Linux](https://docs.docker.com/desktop/setup/install/linux/)
+- Amazon Corretto 8+ or Java 8+
 
-##### Aurora Test Requirements
+#### Aurora Test Requirements
 
 - An AWS account with:
 
@@ -15,24 +18,10 @@
   - EC2 permissions so integration tests can add the current IP address in the Aurora cluster's EC2 security group.
   - For more information, see: [Setting Up for Amazon RDS User Guide](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/CHAP_SettingUp.html).
 
-- An available Aurora PostgreSQL or MySQL DB cluster is required if you're running the tests against an existing DB cluster.
+- An available Aurora PostgreSQL or MySQL DB cluster is required if you're running the tests against an existing DB cluster. The `REUSE_RDS_CLUSTER` [environment variable](#environment-variables) is required to run tests against an existing cluster.
 - An IAM user or role with permissions to AWS X-Ray and Amazon CloudWatch is required to visualize the telemetry data in the AWS Console. For more details, see: [Telemetry](../using-the-nodejs-wrapper/Telemetry.md).
 
-### Aurora Integration Tests
-
-The Aurora integration tests are focused on testing connection strings and failover capabilities of any driver.
-The tests are run in Docker but make a connection to test against an Aurora cluster. These tests will spin up Aurora clusters and incur costs.
-PostgreSQL and MySQL tests are currently supported.
-
-> [!TIP]
-> After running the integration tests, ensure all test resources are cleaned up.
-
-### Standard Integration Tests
-
-These integration tests are focused on testing connection strings against a local database inside a Docker container.
-PostgreSQL and MySQL tests are currently supported.
-
-### Environment Variables
+#### Environment Variables
 
 If the environment variable `REUSE_RDS_CLUSTER` is set to true, the integration tests will use the existing cluster defined by your environment variables. Otherwise, the integration tests will create a new Aurora cluster and then delete it automatically when the tests are done. Note that you will need a valid Docker environment to run any of the integration tests because they are run using a Docker environment as a host. The appropriate Docker containers will be created automatically when you run the tests, so you will not need to execute any Docker commands manually.
 
@@ -56,9 +45,23 @@ If the environment variable `REUSE_RDS_CLUSTER` is set to true, the integration 
 | `AURORA_PG_DB_ENGINE_VERSION`    | No       | The PostgreSQL database version to run against, either `default` or `latest`.                                                                                                                                    | `default`                                    |
 | `NUM_INSTANCES`                  | No       | The number of database instances in the cluster to test with.                                                                                                                                                    | `5`                                          |
 
-### Running the Integration Tests
+### Aurora Integration Tests
 
-To run the integration tests, you can select from a number of tasks:
+The Aurora integration tests are focused on testing connection strings and failover capabilities.
+The tests are run in Docker but make a connection to test against an Aurora cluster. These tests will spin up Aurora clusters and incur costs.
+PostgreSQL and MySQL tests are currently supported.
+
+> [!TIP]
+> After running the integration tests, ensure all test resources are cleaned up.
+
+### Standard Integration Tests
+
+These integration tests are focused on testing connection strings against a local database inside a Docker container.
+PostgreSQL and MySQL tests are currently supported.
+
+### Available Integration Test Tasks
+
+The following are the currently available integration test tasks. Each task may run a different subset of integration tests:
 
 - `test-all-environments`: run all Aurora and standard database tests
 - `test-docker`: run standard database tests
@@ -73,7 +76,12 @@ To run the integration tests, you can select from a number of tasks:
 - `debug-multi-az-mysql`: debug Aurora tests using Multi-AZ Deployment on the MySQL database type
 - `debug-multi-az-postgres`: debug Aurora tests using Multi-AZ Deployment on the PostgreSQL database type
 
-For example, to run all integration tests, you can use the following commands:
+### Running the Integration Tests
+
+1. Ensure all [prerequisites](#prerequisites) have been installed. Docker Desktop must be running.
+2. If you are running any Aurora integration tests, ensure the [Aurora Test Requirements](#aurora-test-requirements) have been met.
+3. Setup [environment variables](#environment-variables).
+4. Run one of the available [integration test tasks](#available-integration-test-tasks). For example, to run all integration tests, you can use the following commands:
 
 macOS:
 
@@ -85,6 +93,12 @@ Windows:
 
 ```bash
 cmd /c ./gradlew --no-parallel --no-daemon test-all-environments
+```
+
+Linux:
+
+```bash
+./gradlew --no-parallel --no-daemon test-all-environments
 ```
 
 Test results can be found in `tests/integration/host/build/test-results/test-all-environments/`.
