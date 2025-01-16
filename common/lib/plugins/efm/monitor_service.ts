@@ -158,7 +158,7 @@ export class MonitorServiceImpl implements MonitorService {
   }
 
   async releaseResources() {
-    for (const [key, monitor] of MonitorServiceImpl.monitors.entries) {
+    for (const [_key, monitor] of MonitorServiceImpl.monitors.entries) {
       if (monitor.item) {
         await monitor.item.releaseResources();
       }

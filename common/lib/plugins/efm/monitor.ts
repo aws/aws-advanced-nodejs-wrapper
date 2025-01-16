@@ -20,11 +20,11 @@ import { PluginService } from "../../plugin_service";
 import { logger } from "../../../logutils";
 import { Messages } from "../../utils/messages";
 import { ClientWrapper } from "../../client_wrapper";
-import { sleep } from "../../utils/utils";
-import { WrapperProperties } from "../../wrapper_property";
+import { getCurrentTimeNano, sleep } from "../../utils/utils";
 import { TelemetryFactory } from "../../utils/telemetry/telemetry_factory";
 import { TelemetryCounter } from "../../utils/telemetry/telemetry_counter";
 import { TelemetryTraceLevel } from "../../utils/telemetry/telemetry_trace_level";
+import { HostResponseTimeMonitor } from "../strategy/fastest_response/host_response_time_monitor";
 
 export interface Monitor {
   startMonitoring(context: MonitorConnectionContext): void;
@@ -79,7 +79,7 @@ export class MonitorImpl implements Monitor {
     this.properties = properties;
     this.hostInfo = hostInfo;
     this.monitorDisposalTimeMillis = monitorDisposalTimeMillis;
-    this.contextLastUsedTimestampNanos = this.getCurrentTimeNano();
+    this.contextLastUsedTimestampNanos = getCurrentTimeNano();
     const instanceId = this.hostInfo.hostId ?? this.hostInfo.host;
     this.instanceInvalidCounter = this.telemetryFactory.createCounter(`efm.hostUnhealthy.count.${instanceId}`);
   }
@@ -94,7 +94,7 @@ export class MonitorImpl implements Monitor {
       logger.warn(Messages.get("MonitorImpl.monitorIsStopped", this.hostInfo.host));
     }
 
-    const currentTimeNanos: number = this.getCurrentTimeNano();
+    const currentTimeNanos: number = getCurrentTimeNano();
     context.startMonitorTimeNano = currentTimeNanos;
     this.contextLastUsedTimestampNanos = currentTimeNanos;
     this.newContexts.push(context);
@@ -110,7 +110,7 @@ export class MonitorImpl implements Monitor {
     }
 
     context.isActiveContext = false;
-    this.contextLastUsedTimestampNanos = this.getCurrentTimeNano();
+    this.contextLastUsedTimestampNanos = getCurrentTimeNano();
   }
 
   async run(): Promise<void> {
@@ -121,7 +121,7 @@ export class MonitorImpl implements Monitor {
         try {
           let newMonitorContext: MonitorConnectionContext | undefined;
           let firstAddedNewMonitorContext: MonitorConnectionContext | null = null;
-          const currentTimeNano: number = this.getCurrentTimeNano();
+          const currentTimeNano: number = getCurrentTimeNano();
 
           while ((newMonitorContext = this.newContexts.shift()) != null) {
             if (firstAddedNewMonitorContext === newMonitorContext) {
@@ -140,9 +140,9 @@ export class MonitorImpl implements Monitor {
           }
 
           if (this.activeContexts.length > 0) {
-            this.contextLastUsedTimestampNanos = this.getCurrentTimeNano();
+            this.contextLastUsedTimestampNanos = getCurrentTimeNano();
 
-            const statusCheckStartTimeNanos: number = this.getCurrentTimeNano();
+            const statusCheckStartTimeNanos: number = getCurrentTimeNano();
             this.contextLastUsedTimestampNanos = statusCheckStartTimeNanos;
 
             const status: ConnectionStatus = await this.checkConnectionStatus();
@@ -199,7 +199,7 @@ export class MonitorImpl implements Monitor {
               this.delayMillisTimeoutId = setTimeout(resolve, delayMillis);
             });
           } else {
-            if (this.getCurrentTimeNano() - this.contextLastUsedTimestampNanos >= this.monitorDisposalTimeMillis * 1_000_000) {
+            if (getCurrentTimeNano() - this.contextLastUsedTimestampNanos >= this.monitorDisposalTimeMillis * 1_000_000) {
               break;
             }
             await new Promise((resolve) => {
@@ -229,36 +229,33 @@ export class MonitorImpl implements Monitor {
     const connectContext = this.telemetryFactory.openTelemetryContext("Connection status check", TelemetryTraceLevel.FORCE_TOP_LEVEL);
     connectContext.setAttribute("url", this.hostInfo.host);
     return await connectContext.start(async () => {
-      const startNanos = this.getCurrentTimeNano();
+      const startNanos = getCurrentTimeNano();
       try {
         const clientIsValid = this.monitoringClient && (await this.pluginService.isClientValid(this.monitoringClient));
 
         if (this.monitoringClient !== null && clientIsValid) {
-          return Promise.resolve(new ConnectionStatus(clientIsValid, this.getCurrentTimeNano() - startNanos));
+          return Promise.resolve(new ConnectionStatus(clientIsValid, getCurrentTimeNano() - startNanos));
         }
 
         await this.endMonitoringClient();
-
         // Open a new connection.
         const monitoringConnProperties: Map<string, any> = new Map(this.properties);
-
-        for (const key of this.properties.keys()) {
-          if (!key.startsWith(WrapperProperties.MONITORING_PROPERTY_PREFIX)) {
+        for (const key of monitoringConnProperties.keys()) {
+          if (!key.startsWith(HostResponseTimeMonitor.MONITORING_PROPERTY_PREFIX)) {
             continue;
           }
-
-          monitoringConnProperties.set(key.substring(WrapperProperties.MONITORING_PROPERTY_PREFIX.length), this.properties.get(key));
+          monitoringConnProperties.set(key.substring(HostResponseTimeMonitor.MONITORING_PROPERTY_PREFIX.length), this.properties.get(key));
           monitoringConnProperties.delete(key);
         }
 
         logger.debug(`Opening a monitoring connection to ${this.hostInfo.url}`);
         this.monitoringClient = await this.pluginService.forceConnect(this.hostInfo, monitoringConnProperties);
         logger.debug(`Successfully opened monitoring connection to ${this.monitoringClient.id} - ${this.hostInfo.url}`);
-        return Promise.resolve(new ConnectionStatus(true, this.getCurrentTimeNano() - startNanos));
+        return Promise.resolve(new ConnectionStatus(true, getCurrentTimeNano() - startNanos));
       } catch (error: any) {
         this.instanceInvalidCounter.inc();
         await this.endMonitoringClient();
-        return Promise.resolve(new ConnectionStatus(false, this.getCurrentTimeNano() - startNanos));
+        return Promise.resolve(new ConnectionStatus(false, getCurrentTimeNano() - startNanos));
       }
     });
   }
@@ -270,10 +267,6 @@ export class MonitorImpl implements Monitor {
 
   isStopped(): boolean {
     return this.stopped || this.cancelled;
-  }
-
-  protected getCurrentTimeNano() {
-    return Number(process.hrtime.bigint());
   }
 
   async releaseResources() {

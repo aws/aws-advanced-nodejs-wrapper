@@ -5,7 +5,7 @@
   "PluginManager.unableToRetrievePlugin": "Unable to retrieve plugin instance.",
   "ConnectionProvider.unsupportedHostSelectorStrategy": "Unsupported host selection strategy '%s' specified for this connection provider '%s'. Please visit the documentation for all supported strategies.",
   "ConnectionPluginChainBuilder.errorImportingPlugin": "The plugin could not be imported due to error '%s'. Please ensure the required dependencies have been installed. Plugin: '%s'",
-  "ClientUtils.queryTaskTimeout": "Client query task timed out, if a network error did not occur, please review the usage of the 'mysqlQueryTimeout' connection parameter.",
+  "ClientUtils.queryTaskTimeout": "Client query task timed out, if a network error did not occur, please review the usage of the 'wrapperQueryTimeout' connection parameter.",
   "ClientUtils.connectTimeout": "Client connect timed out.",
   "DatabaseDialectManager.unknownDialectCode": "Unknown dialect code: '%s'.",
   "DatabaseDialectManager.getDialectError": "Was not able to get a database dialect.",
@@ -126,7 +126,7 @@
   "HostAvailabilityStrategy.invalidInitialBackoffTime": "Invalid value of '%s'  for configuration parameter `hostAvailabilityStrategyInitialBackoffTime`. It must be an integer greater or equal to 1.",
   "MonitorConnectionContext.errorAbortingConnection": "Error during aborting connection: %s.",
   "MonitorConnectionContext.hostDead": "Host %s is *dead*.",
-  "MonitorConnectionContext.hostNotResponding": "Host %s is not *responding* %s",
+  "MonitorConnectionContext.hostNotResponding": "Host %s is not *responding* with failureCount: %s",
   "MonitorConnectionContext.hostAlive": "Host %s is *alive*.",
   "MonitorImpl.contextNullWarning": "Parameter 'context' should not be null or undefined.",
   "MonitorImpl.errorDuringMonitoringContinue": "Continuing monitoring after unhandled error was thrown in monitoring for host %s.",
@@ -135,6 +135,8 @@
   "MonitorImpl.stopped": "Stopped monitoring for host '%s'.",
   "MonitorImpl.startMonitoring": "Start monitoring for %s.",
   "MonitorImpl.stopMonitoring": "Stop monitoring for %s.",
+  "MonitorImpl.startMonitoringTaskNewContext": "Start monitoring thread for checking new contexts for '%s'",
+  "MonitorImpl.stopMonitoringTaskNewContext": "Stop monitoring thread for checking new contexts for '%s'",
   "MonitorService.startMonitoringNullMonitor": "Start monitoring called but could not find monitor for host: '%s'.",
   "MonitorService.emptyAliasSet": "Empty alias set passed for '%s'. Set should not be empty.",
   "PluginService.hostListEmpty": "Current host list is empty.",
@@ -150,6 +152,7 @@
   "HostMonitoringConnectionPlugin.unableToIdentifyConnection": "Unable to identify the given connection: '%s', please ensure the correct host list provider is specified. The host list provider in use is: '%s'.",
   "HostMonitoringConnectionPlugin.errorIdentifyingConnection": "Error occurred while identifying connection: '%s'.",
   "HostMonitoringConnectionPlugin.unavailableHost": "Host '%s' is unavailable.",
+  "HostMonitoringConnectionPlugin.identifyClusterConnection": "Monitoring host info is associated with a cluster endpoint, plugin needs to identify the cluster connection.",
   "PluginServiceImpl.failedToRetrieveHostPort": "PluginServiceImpl.failedToRetrieveHostPort",
   "AuroraInitialConnectionStrategyPlugin.unsupportedStrategy": "Unsupported host selection strategy '%s'.",
   "AuroraInitialConnectionStrategyPlugin.requireDynamicProvider": "Dynamic host list provider is required.",
@@ -226,5 +229,7 @@
   "HostMonitor.startMonitoring": "Host monitor '%s' started.",
   "HostMonitor.detectedWriter": "Detected writer: '%s'.",
   "HostMonitor.endMonitoring": "Host monitor '%s' completed in '%s'.",
-  "HostMonitor.writerHostChanged": "Writer host has changed from '%s' to '%s'."
+  "HostMonitor.writerHostChanged": "Writer host has changed from '%s' to '%s'.",
+  "HostMonitoringConnectionPlugin.monitoringDeactivated": "Monitoring deactivated for method '%s'.",
+  "MonitorImpl.exceptionDuringMonitoringContinue": "MonitorImpl.exceptionDuringMonitoringContinue"
 }

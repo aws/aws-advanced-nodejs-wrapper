@@ -75,7 +75,7 @@ async function initConfigWithFailover(host: string, port: number, connectToProxy
     database: env.databaseInfo.defaultDbName,
     password: env.databaseInfo.password,
     port: port,
-    plugins: "readWriteSplitting,failover",
+    plugins: "readWriteSplitting,efm2,failover",
     failoverTimeoutMs: 400000,
     enableTelemetry: true,
     telemetryTracesBackend: "OTLP",
