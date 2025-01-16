@@ -126,7 +126,13 @@ export class RdsMultiAZMySQLDatabaseDialect extends MySQLDatabaseDialect impleme
   }
 
   async getHostRole(client: ClientWrapper): Promise<HostRole> {
-    return (await this.executeTopologyRelatedQuery(client, RdsMultiAZMySQLDatabaseDialect.IS_READER_QUERY, RdsMultiAZMySQLDatabaseDialect.IS_READER_QUERY_COLUMN_NAME)) == "0" ? HostRole.WRITER : HostRole.READER;
+    return (await this.executeTopologyRelatedQuery(
+      client,
+      RdsMultiAZMySQLDatabaseDialect.IS_READER_QUERY,
+      RdsMultiAZMySQLDatabaseDialect.IS_READER_QUERY_COLUMN_NAME
+    )) == "0"
+      ? HostRole.WRITER
+      : HostRole.READER;
   }
 
   async getWriterId(targetClient: ClientWrapper): Promise<string> {

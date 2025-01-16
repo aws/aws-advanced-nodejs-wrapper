@@ -43,7 +43,7 @@ export class MonitorConnectionContext {
 
   constructor(
     monitor: Monitor,
-    clientToAbort: any,
+    clientToAbort: ClientWrapper,
     failureDetectionTimeMillis: number,
     failureDetectionIntervalMillis: number,
     failureDetectionCount: number,
@@ -127,7 +127,6 @@ export class MonitorConnectionContext {
 
       const invalidHostDurationNano: number = statusCheckEndNano - this.invalidHostStartTimeNano;
       const maxInvalidHostDurationMillis: number = this.failureDetectionIntervalMillis * Math.max(0, this.failureDetectionCount);
-
       if (this.failureCount >= this.failureDetectionCount || invalidHostDurationNano >= maxInvalidHostDurationMillis * 1_000_000) {
         logger.debug(Messages.get("MonitorConnectionContext.hostDead", hostName));
         this.isHostUnhealthy = true;
@@ -135,7 +134,7 @@ export class MonitorConnectionContext {
         return;
       }
 
-      logger.debug(Messages.get("MonitorConnectionContext.hostNotResponding", hostName, String(this.failureCount)));
+      logger.debug(Messages.get("MonitorConnectionContext.hostNotResponding", hostName));
       return;
     }
 

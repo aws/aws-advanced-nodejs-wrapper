@@ -163,7 +163,7 @@ async function executeFailureDetectionTimeFailoverAndEfmEnabled(
 ) {
   const props = new Map();
   const config = await initDefaultConfig(env.proxyDatabaseInfo.writerInstanceEndpoint, env.proxyDatabaseInfo.clusterEndpointPort);
-  config["plugins"] = "efm,failover";
+  config["plugins"] = "efm2,failover";
   config[WrapperProperties.FAILURE_DETECTION_TIME_MS.name] = detectionTimeMillis;
   config[WrapperProperties.FAILURE_DETECTION_INTERVAL_MS.name] = detectionIntervalMillis;
   config[WrapperProperties.FAILURE_DETECTION_COUNT.name] = detectionCount;
