@@ -55,7 +55,7 @@ const client = new AwsPGClient({
   user: username,
   password: password,
   database: database,
-  plugins: "readWriteSplitting,failover,efm",
+  plugins: "readWriteSplitting,failover,efm2",
 
   // Optional: PoolKey property value and connection provider used in internal connection pools.
   connectionProvider: provider,

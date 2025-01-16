@@ -31,7 +31,7 @@ const client = new AwsPGClient({
   user: username,
   password: password,
   database: database,
-  plugins: "readWriteSplitting, fastestResponseStrategy, failover, efm",
+  plugins: "readWriteSplitting, fastestResponseStrategy, failover, efm2",
   readerHostSelectorStrategy: "fastestResponse"
 });
 

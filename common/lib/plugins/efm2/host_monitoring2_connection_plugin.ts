@@ -26,15 +26,14 @@ import { MonitorConnectionContext } from "./monitor_connection_context";
 import { logger, uniqueId } from "../../../logutils";
 import { Messages } from "../../utils/messages";
 import { MonitorService, MonitorServiceImpl } from "./monitor_service";
-import { AwsWrapperError, UnavailableHostError } from "../../utils/errors";
+import { AwsWrapperError } from "../../utils/errors";
 import { HostListProvider } from "../../host_list_provider/host_list_provider";
-import { HostAvailability } from "../../host_availability/host_availability";
 import { CanReleaseResources } from "../../can_release_resources";
 import { SubscribedMethodHelper } from "../../utils/subscribed_method_helper";
 import { ClientWrapper } from "../../client_wrapper";
 
-export class HostMonitoringConnectionPlugin extends AbstractConnectionPlugin implements CanReleaseResources {
-  id: string = uniqueId("_efmPlugin");
+export class HostMonitoring2ConnectionPlugin extends AbstractConnectionPlugin implements CanReleaseResources {
+  id: string = uniqueId("_efm2Plugin");
   private readonly properties: Map<string, any>;
   private pluginService: PluginService;
   private rdsUtils: RdsUtils;
@@ -103,7 +102,6 @@ export class HostMonitoringConnectionPlugin extends AbstractConnectionPlugin imp
 
       monitorContext = await this.monitorService.startMonitoring(
         this.pluginService.getCurrentClient().targetClient,
-        monitoringHostInfo.allAliases,
         monitoringHostInfo,
         this.properties,
         failureDetectionTimeMillis,
@@ -111,38 +109,12 @@ export class HostMonitoringConnectionPlugin extends AbstractConnectionPlugin imp
         failureDetectionCount
       );
 
-      result = await Promise.race([monitorContext.trackHealthStatus(), methodFunc()])
-        .then((result: any) => {
-          return result;
-        })
-        .catch((error: any) => {
-          throw error;
-        });
+      result = await methodFunc();
     } finally {
       if (monitorContext != null) {
-        await this.monitorService.stopMonitoring(monitorContext);
+        await this.monitorService.stopMonitoring(monitorContext, this.pluginService.getCurrentClient().targetClient);
+
         logger.debug(Messages.get("HostMonitoringConnectionPlugin.monitoringDeactivated", methodName));
-
-        if (monitorContext.isHostUnhealthy) {
-          const monitoringHostInfo = await this.getMonitoringHostInfo();
-          if (monitoringHostInfo) {
-            this.pluginService.setAvailability(monitoringHostInfo.allAliases, HostAvailability.NOT_AVAILABLE);
-          }
-
-          const targetClient = this.pluginService.getCurrentClient().targetClient;
-          let isClientValid = false;
-          if (targetClient) {
-            isClientValid = await this.pluginService.isClientValid(targetClient);
-          }
-
-          if (!targetClient || !isClientValid) {
-            if (targetClient) {
-              await this.pluginService.abortTargetClient(targetClient);
-            }
-            // eslint-disable-next-line no-unsafe-finally
-            throw new UnavailableHostError(Messages.get("HostMonitoringConnectionPlugin.unavailableHost", monitoringHostInfo.host));
-          }
-        }
       }
     }
 
@@ -190,16 +162,11 @@ export class HostMonitoringConnectionPlugin extends AbstractConnectionPlugin imp
   }
 
   async notifyConnectionChanged(changes: Set<HostChangeOptions>): Promise<OldConnectionSuggestionAction> {
-    if (changes.has(HostChangeOptions.WENT_DOWN) || changes.has(HostChangeOptions.HOST_DELETED)) {
-      const aliases = (await this.getMonitoringHostInfo())?.allAliases;
-      if (aliases && aliases.size > 0) {
-        this.monitorService.stopMonitoringForAllConnections(aliases);
-      }
+    if (changes.has(HostChangeOptions.HOSTNAME) || changes.has(HostChangeOptions.HOST_CHANGED)) {
+      // Reset monitoring host info since the associated connection has changed.
+      this.monitoringHostInfo = null;
+      return OldConnectionSuggestionAction.NO_OPINION;
     }
-
-    // Reset monitoring host info since the associated connection has changed.
-    this.monitoringHostInfo = null;
-    return OldConnectionSuggestionAction.NO_OPINION;
   }
 
   async releaseResources(): Promise<void> {

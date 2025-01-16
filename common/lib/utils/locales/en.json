@@ -123,7 +123,7 @@
   "HostAvailabilityStrategy.invalidInitialBackoffTime": "Invalid value of '%s'  for configuration parameter `hostAvailabilityStrategyInitialBackoffTime`. It must be an integer greater or equal to 1.",
   "MonitorConnectionContext.exceptionAbortingConnection": "Exception during aborting connection: %s.",
   "MonitorConnectionContext.hostDead": "Host %s is *dead*.",
-  "MonitorConnectionContext.hostNotResponding": "Host %s is not *responding* %s",
+  "MonitorConnectionContext.hostNotResponding": "Host %s is not *responding* with failureCount: %s",
   "MonitorConnectionContext.hostAlive": "Host %s is *alive*.",
   "MonitorImpl.contextNullWarning": "Parameter 'context' should not be null or undefined.",
   "MonitorImpl.exceptionDuringMonitoringContinue": "Continuing monitoring after unhandled exception was thrown in monitoring for host %s.",
@@ -132,6 +132,8 @@
   "MonitorImpl.stopped": "Stopped monitoring for host '%s'.",
   "MonitorImpl.startMonitoring": "Start monitoring for %s.",
   "MonitorImpl.stopMonitoring": "Stop monitoring for %s.",
+  "MonitorImpl.startMonitoringTaskNewContext": "Start monitoring thread for checking new contexts for '%s'",
+  "MonitorImpl.stopMonitoringTaskNewContext": "Stop monitoring thread for checking new contexts for '%s'",
   "MonitorService.startMonitoringNullMonitor": "Start monitoring called but could not find monitor for host: '%s'.",
   "MonitorService.emptyAliasSet": "Empty alias set passed for '%s'. Set should not be empty.",
   "PluginService.hostListEmpty": "Current host list is empty.",
@@ -195,5 +197,6 @@
   "ConfigurationProfileBuilder.profileNameRequired": "Profile name is required.",
   "ConfigurationProfileBuilder.canNotUpdateKnownPreset": "Can't add or update a built-in preset configuration profile '%s'.",
   "AwsClient.configurationProfileNotFound": "Configuration profile '%s' not found.",
-  "AwsClient.targetClientNotDefined": "AwsClient targetClient not defined."
+  "AwsClient.targetClientNotDefined": "AwsClient targetClient not defined.",
+  "HostMonitoringConnectionPlugin.monitoringDeactivated": "Monitoring deactivated for method '%s'"
 }
