@@ -50,12 +50,12 @@ export class MonitoringRdsHostListProvider extends RdsHostListProvider {
     this.pluginService = pluginService;
   }
 
-  static async releaseResources(): Promise<void> {
-    super.clearAll();
-    for (const [key, monitor] of this.monitors.entries) {
+  async clearAll(): Promise<void> {
+    RdsHostListProvider.clearAll();
+    for (const [key, monitor] of MonitoringRdsHostListProvider.monitors.entries) {
       await monitor.item.close();
     }
-    this.monitors.map.clear();
+    MonitoringRdsHostListProvider.monitors.map.clear();
   }
 
   async queryForTopology(targetClient: ClientWrapper, dialect: DatabaseDialect): Promise<HostInfo[]> {
@@ -79,8 +79,12 @@ export class MonitoringRdsHostListProvider extends RdsHostListProvider {
     if (!this.isTopologyAwareDatabaseDialect(dialect)) {
       throw new TypeError(Messages.get("RdsHostListProvider.incorrectDialect"));
     }
-
     return await dialect.queryForTopology(targetClient, this).then((res: any) => this.processQueryResults(res));
+  }
+
+  async getWriterId(targetClient: ClientWrapper): Promise<string> {
+    const hostInfo: HostInfo = await this.identifyConnection(targetClient, this.hostListProviderService.getDialect());
+    return hostInfo ? hostInfo.hostId : null;
   }
 
   async forceMonitoringRefresh(shouldVerifyWriter: boolean, timeoutMs: number): Promise<HostInfo[]> {
@@ -95,7 +99,6 @@ export class MonitoringRdsHostListProvider extends RdsHostListProvider {
     if (!monitor) {
       throw new AwsWrapperError(Messages.get("MonitoringHostListProvider.requiresMonitor"));
     }
-
     return await monitor.forceMonitoringRefresh(shouldVerifyWriter, timeoutMs);
   }
 

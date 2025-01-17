@@ -52,7 +52,7 @@ export class ClusterTopologyMonitorImpl implements ClusterTopologyMonitor {
   private monitoringClient: ClientWrapper = null;
   private highRefreshRateEndTime: number = 0;
   private highRefreshPeriodAfterPanicMs: number = 30000; // 30 seconds.
-  private ignoreNewTopologyRequestsEndTime: number = 0;
+  private ignoreNewTopologyRequestsEndTime: number = -1;
   private ignoreTopologyRequestMs: number = 10000; // 10 seconds.
 
   // Tracking of the host monitors.
@@ -60,7 +60,7 @@ export class ClusterTopologyMonitorImpl implements ClusterTopologyMonitor {
   public hostMonitorsWriterClient = null;
   public hostMonitorsWriterInfo: HostInfo = null;
   public hostMonitorsReaderClient = null;
-  public hostMonitorsLatestTopology: HostInfo[] = null;
+  public hostMonitorsLatestTopology: HostInfo[] = [];
 
   // Controls for stopping asynchronous monitoring tasks.
   private stopMonitoring: boolean = false;
@@ -127,11 +127,13 @@ export class ClusterTopologyMonitorImpl implements ClusterTopologyMonitor {
     }
 
     if (shouldVerifyWriter) {
-      const client = this.monitoringClient;
-      this.monitoringClient = null;
       this.isVerifiedWriterConnection = false;
-      // Abort needed for MySQLClientWrapper in case client already closed.
-      await client.abort();
+      if (this.monitoringClient) {
+        const client = this.monitoringClient;
+        this.monitoringClient = null;
+        // Abort needed for MySQLClientWrapper in case client already closed.
+        await client.abort();
+      }
     }
 
     return await this.waitTillTopologyGetsUpdated(timeoutMs);
@@ -187,6 +189,7 @@ export class ClusterTopologyMonitorImpl implements ClusterTopologyMonitor {
   }
 
   private async openAnyClientAndUpdateTopology() {
+    let writerVerifiedByThisThread = false;
     if (!this.monitoringClient) {
       let client: ClientWrapper;
       try {
@@ -199,9 +202,15 @@ export class ClusterTopologyMonitorImpl implements ClusterTopologyMonitor {
       if (client && !this.monitoringClient) {
         this.monitoringClient = client;
         logger.debug(Messages.get("ClusterTopologyMonitor.openedMonitoringConnection", this.initialHostInfo.host));
-        if (this.getWriterHostId(this.monitoringClient) !== null) {
-          this.isVerifiedWriterConnection = true;
-          this.writerHostInfo = this.initialHostInfo;
+        try {
+          const writerId = await this.getWriterHostId(this.monitoringClient);
+          if (writerId) {
+            this.isVerifiedWriterConnection = true;
+            this.writerHostInfo = this.initialHostInfo;
+            writerVerifiedByThisThread = true;
+          }
+        } catch {
+          // Do nothing.
         }
       } else {
         // Monitoring connection already set by another task, close the new connection.
@@ -210,7 +219,15 @@ export class ClusterTopologyMonitorImpl implements ClusterTopologyMonitor {
     }
 
     const hosts: HostInfo[] = await this.fetchTopologyAndUpdateCache(this.monitoringClient);
-    if (!hosts) {
+    if (writerVerifiedByThisThread) {
+      if (this.ignoreNewTopologyRequestsEndTime === -1) {
+        this.ignoreNewTopologyRequestsEndTime = 0;
+      } else {
+        this.ignoreNewTopologyRequestsEndTime = Date.now() + this.ignoreTopologyRequestMs;
+      }
+    }
+
+    if (hosts === null) {
       const clientToClose = this.monitoringClient;
       this.monitoringClient = null;
       this.isVerifiedWriterConnection = false;
@@ -225,8 +242,8 @@ export class ClusterTopologyMonitorImpl implements ClusterTopologyMonitor {
     this.requestToUpdateTopology = false;
   }
 
-  getWriterHostId(client: ClientWrapper) {
-    return client && client.hostInfo.role === HostRole.WRITER ? client.id : null;
+  async getWriterHostId(client: ClientWrapper): Promise<string> {
+    return await this.hostListProvider.getWriterId(client);
   }
 
   async closeConnection(client: ClientWrapper) {
@@ -254,7 +271,7 @@ export class ClusterTopologyMonitorImpl implements ClusterTopologyMonitor {
             this.hostMonitorsWriterClient = null;
             this.hostMonitorsReaderClient = null;
             this.hostMonitorsWriterInfo = null;
-            this.hostMonitorsLatestTopology = null;
+            this.hostMonitorsLatestTopology = [];
 
             // Use any client to gather topology information.
             let hosts: HostInfo[] = this.topologyMap.get(this.clusterId);
@@ -399,7 +416,7 @@ export class HostMonitor {
         if (client) {
           let writerId = null;
           try {
-            writerId = this.monitor.getWriterHostId(client);
+            writerId = await this.monitor.getWriterHostId(client);
           } catch (error) {
             await this.monitor.closeConnection(client);
             client = null;
@@ -449,11 +466,10 @@ export class HostMonitor {
     let hosts: HostInfo[];
     try {
       hosts = await this.monitor.hostListProvider.sqlQueryForTopology(client);
+      this.monitor.hostMonitorsLatestTopology = hosts;
     } catch (error) {
       return;
     }
-
-    this.monitor.hostMonitorsLatestTopology = hosts;
 
     if (this.writerChanged) {
       this.monitor.updateTopologyCache(hosts);

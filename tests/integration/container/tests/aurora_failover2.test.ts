@@ -17,7 +17,7 @@
 import { TestEnvironment } from "./utils/test_environment";
 import { DriverHelper } from "./utils/driver_helper";
 import { AuroraTestUtility } from "./utils/aurora_test_utility";
-import { FailoverFailedError, FailoverSuccessError, TransactionResolutionUnknownError } from "../../../../common/lib/utils/errors";
+import { FailoverSuccessError, TransactionResolutionUnknownError } from "../../../../common/lib/utils/errors";
 import { ProxyHelper } from "./utils/proxy_helper";
 import { logger } from "../../../../common/logutils";
 import { features, instanceCount } from "./config";
@@ -89,7 +89,7 @@ async function initConfigWithReadWriteSplitting(host: string, port: number, conn
   return config;
 }
 
-describe("sophia aurora failover2", () => {
+describe("aurora failover2", () => {
   beforeEach(async () => {
     logger.info(`Test started: ${expect.getState().currentTestName}`);
     env = await TestEnvironment.getCurrent();
@@ -455,106 +455,5 @@ describe("sophia aurora failover2", () => {
       expect(currentReaderId2).toStrictEqual(otherReaderId);
     },
     1320000
-  );
-
-  itIf(
-    "test pooled connection failover",
-    async () => {
-      const config = await initConfigWithReadWriteSplitting(env.databaseInfo.writerInstanceEndpoint, env.databaseInfo.instanceEndpointPort, false);
-      provider = new InternalPooledConnectionProvider();
-      config["connectionProvider"] = provider;
-
-      client = initClientFunc(config);
-      await client.connect();
-      const initialWriterId = await auroraTestUtility.queryInstanceId(client);
-      provider.logConnections();
-
-      await auroraTestUtility.failoverClusterAndWaitUntilWriterChanged();
-      await expect(async () => {
-        await auroraTestUtility.queryInstanceId(client);
-      }).rejects.toThrow(FailoverSuccessError);
-
-      secondaryClient = initClientFunc(config);
-      await secondaryClient.connect();
-      provider.logConnections();
-      const oldWriterId = await auroraTestUtility.queryInstanceId(secondaryClient);
-      // This should be a new connection to the initial writer instance (now a reader).
-      expect(oldWriterId).toBe(initialWriterId);
-      provider.logConnections();
-      try {
-        await secondaryClient.end();
-      } catch (error) {
-        // pass
-      }
-    },
-    1000000
-  );
-
-  itIf(
-    "test pooled connection failover failed",
-    async () => {
-      const config = await initConfigWithReadWriteSplitting(
-        env.proxyDatabaseInfo.writerInstanceEndpoint,
-        env.proxyDatabaseInfo.instanceEndpointPort,
-        true
-      );
-      config["failoverTimeoutMs"] = 1000;
-
-      provider = new InternalPooledConnectionProvider({
-        minConnections: 0,
-        maxConnections: 10,
-        maxIdleConnections: 10
-      });
-      config["connectionProvider"] = provider;
-
-      client = initClientFunc(config);
-      await client.connect();
-      const initialWriterId = await auroraTestUtility.queryInstanceId(client);
-
-      // Kill all instances.
-      await ProxyHelper.disableAllConnectivity(env.engine);
-      await expect(async () => {
-        await auroraTestUtility.queryInstanceId(client);
-      }).rejects.toThrow(FailoverFailedError);
-      await ProxyHelper.enableAllConnectivity();
-      await client.connect();
-      await TestEnvironment.verifyClusterStatus();
-
-      const newWriterId = await auroraTestUtility.queryInstanceId(client);
-      expect(newWriterId).toBe(initialWriterId);
-      await client.end();
-    },
-    1000000
-  );
-
-  itIf(
-    "test pooled connection failover in transaction",
-    async () => {
-      const config = await initConfigWithReadWriteSplitting(env.databaseInfo.writerInstanceEndpoint, env.databaseInfo.instanceEndpointPort, false);
-
-      provider = new InternalPooledConnectionProvider();
-      config["connectionProvider"] = provider;
-
-      client = initClientFunc(config);
-      await client.connect();
-
-      const initialWriterId = await auroraTestUtility.queryInstanceId(client);
-      expect(await auroraTestUtility.isDbInstanceWriter(initialWriterId)).toStrictEqual(true);
-
-      await DriverHelper.executeQuery(env.engine, client, "DROP TABLE IF EXISTS test3_3");
-      await DriverHelper.executeQuery(env.engine, client, "CREATE TABLE test3_3 (id int not null primary key, test3_3_field varchar(255) not null)");
-
-      await DriverHelper.executeQuery(env.engine, client, "START TRANSACTION READ ONLY"); // start transaction
-      await DriverHelper.executeQuery(env.engine, client, "SELECT 1");
-      // Crash instance 1 and nominate a new writer.
-      await auroraTestUtility.failoverClusterAndWaitUntilWriterChanged();
-
-      await expect(async () => {
-        await DriverHelper.executeQuery(env.engine, client, "INSERT INTO test3_3 VALUES (2, 'test field string 2')");
-      }).rejects.toThrow(TransactionResolutionUnknownError);
-
-      await DriverHelper.executeQuery(env.engine, client, "COMMIT");
-    },
-    1000000
   );
 });

@@ -497,6 +497,6 @@ export class Failover2Plugin extends AbstractConnectionPlugin implements CanRele
   }
 
   async releaseResources(): Promise<void> {
-    await MonitoringRdsHostListProvider.releaseResources();
+    await (this.pluginService.getHostListProvider() as MonitoringRdsHostListProvider).clearAll();
   }
 }
