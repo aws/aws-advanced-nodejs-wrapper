@@ -90,7 +90,7 @@ describe("aurora connection tracker tests", () => {
       .withRole(HostRole.WRITER)
       .build();
     new HostInfoBuilder({ hostAvailabilityStrategy: new SimpleHostAvailabilityStrategy() }).withHost("new-host").withRole(HostRole.WRITER).build();
-    when(mockPluginService.getHosts()).thenReturn([originalHost]);
+    when(mockPluginService.getAllHosts()).thenReturn([originalHost]);
 
     const plugin = new AuroraConnectionTrackerPlugin(instance(mockPluginService), instance(mockRdsUtils), instance(mockTracker));
 
@@ -103,7 +103,7 @@ describe("aurora connection tracker tests", () => {
     const originalHost = new HostInfoBuilder({ hostAvailabilityStrategy: new SimpleHostAvailabilityStrategy() }).withHost("host").build();
     const failoverTargetHost = new HostInfoBuilder({ hostAvailabilityStrategy: new SimpleHostAvailabilityStrategy() }).withHost("host2").build();
 
-    when(mockPluginService.getHosts()).thenReturn([originalHost]).thenReturn([failoverTargetHost]);
+    when(mockPluginService.getAllHosts()).thenReturn([originalHost]).thenReturn([failoverTargetHost]);
     mockSqlFunc.mockResolvedValueOnce("1").mockRejectedValueOnce(expectedException);
 
     const plugin = new AuroraConnectionTrackerPlugin(instance(mockPluginService), instance(mockRdsUtils), instance(mockTracker));

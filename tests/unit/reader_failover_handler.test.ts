@@ -56,6 +56,7 @@ describe("reader failover handler", () => {
     const currentHostIndex = 2;
     const successHostIndex = 3;
 
+    when(mockPluginService.getAllHosts()).thenReturn(hosts);
     when(mockPluginService.getHosts()).thenReturn(hosts);
     when(await mockPluginService.getHostRole(anything())).thenReturn(HostRole.READER);
 
@@ -96,6 +97,7 @@ describe("reader failover handler", () => {
     const hosts = [...defaultHosts];
     const currentHostIndex = 2;
 
+    when(mockPluginService.getAllHosts()).thenReturn(hosts);
     when(mockPluginService.getHosts()).thenReturn(hosts);
     when(mockPluginService.forceConnect(anything(), properties)).thenCall(async () => {
       await new Promise((resolve, reject) => {
@@ -129,6 +131,7 @@ describe("reader failover handler", () => {
   }, 10000);
 
   it("test failover with empty host list", async () => {
+    when(mockPluginService.getAllHosts()).thenReturn([]);
     when(mockPluginService.getHosts()).thenReturn([]);
     const currentHost = host1;
 
@@ -156,6 +159,7 @@ describe("reader failover handler", () => {
     const slowHost = hosts[1];
     const fastHost = hosts[2];
 
+    when(mockPluginService.getAllHosts()).thenReturn([]);
     when(mockPluginService.getHosts()).thenReturn([]);
     when(mockPluginService.forceConnect(slowHost, anything())).thenCall(async () => {
       await new Promise((resolve, reject) => {
@@ -189,6 +193,7 @@ describe("reader failover handler", () => {
     // first connection attempt to return fails
     // expected test result: failure to get reader
     const hosts = [host1, host2, host3, host4]; // 3 connection attempts (writer not attempted)
+    when(mockPluginService.getAllHosts()).thenReturn(hosts);
     when(mockPluginService.getHosts()).thenReturn(hosts);
     when(mockPluginService.forceConnect(anything(), anything())).thenThrow(new AwsWrapperError());
     const mockPluginServiceInstance = instance(mockPluginService);
@@ -214,6 +219,7 @@ describe("reader failover handler", () => {
     let timeoutId: any = -1;
     const hosts = [host1, host2, host3]; // 2 connection attempts (writer not attempted)
 
+    when(mockPluginService.getAllHosts()).thenReturn(hosts);
     when(mockPluginService.getHosts()).thenReturn(hosts);
     when(mockPluginService.forceConnect(anything(), anything())).thenCall(async () => {
       await new Promise((resolve, reject) => {
@@ -327,6 +333,7 @@ describe("reader failover handler", () => {
     const writer = new HostInfo("writer", 1234, HostRole.WRITER);
     const reader = new HostInfo("reader", 1234, HostRole.READER);
     const hosts = [writer, reader];
+    when(mockPluginService.getAllHosts()).thenReturn(hosts);
     when(mockPluginService.getHosts()).thenReturn(hosts);
     when(await mockPluginService.getHostRole(anything()))
       .thenReturn(HostRole.READER)

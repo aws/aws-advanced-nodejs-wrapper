@@ -16,7 +16,7 @@
 
 import { logger } from "../../logutils";
 import { HostInfo } from "../host_info";
-import { WrapperProperties } from "../wrapper_property";
+import { WrapperProperties, WrapperProperty } from "../wrapper_property";
 import { AwsWrapperError } from "./errors";
 import { Messages } from "./messages";
 import { RdsUtils } from "./rds_utils";
@@ -49,7 +49,7 @@ export class IamAuthUtils {
     }
   }
 
-  public static getRdsRegion(hostname: string, rdsUtils: RdsUtils, props: Map<string, any>): string {
+  public static getRdsRegion(hostname: string, rdsUtils: RdsUtils, props: Map<string, any>, wrapperProperty: WrapperProperty<any>): string {
     const rdsRegion = rdsUtils.getRdsRegion(hostname);
 
     if (!rdsRegion) {
@@ -58,7 +58,7 @@ export class IamAuthUtils {
       throw new AwsWrapperError(errorMessage);
     }
 
-    return WrapperProperties.IAM_REGION.get(props) ? WrapperProperties.IAM_REGION.get(props) : rdsRegion;
+    return wrapperProperty.get(props) ? wrapperProperty.get(props) : rdsRegion;
   }
 
   public static getCacheKey(port: number, user?: string, hostname?: string, region?: string): string {

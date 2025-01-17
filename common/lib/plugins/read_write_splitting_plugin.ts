@@ -337,6 +337,11 @@ export class ReadWriteSplittingPlugin extends AbstractConnectionPlugin implement
       return;
     }
 
+    if (this._readerHostInfo && !hosts.includes(this._readerHostInfo)) {
+      // The old reader cannot be used anymore because it is no longer in the list of allowed hosts.
+      await this.closeTargetClientIfIdle(this.readerTargetClient);
+    }
+
     this._inReadWriteSplit = true;
     if (!(await this.isTargetClientUsable(this.readerTargetClient))) {
       await this.initializeReaderClient(hosts);

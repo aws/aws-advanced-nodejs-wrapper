@@ -40,7 +40,7 @@ import { RdsUrlType } from "../../utils/rds_url_type";
 import { RdsUtils } from "../../utils/rds_utils";
 import { Messages } from "../../utils/messages";
 import { ClientWrapper } from "../../client_wrapper";
-import { getWriter } from "../../utils/utils";
+import { getWriter, logTopology } from "../../utils/utils";
 import { TelemetryCounter } from "../../utils/telemetry/telemetry_counter";
 import { TelemetryTraceLevel } from "../../utils/telemetry/telemetry_trace_level";
 
@@ -215,8 +215,8 @@ export class FailoverPlugin extends AbstractConnectionPlugin {
     return (
       this.enableFailoverSetting &&
       this._rdsUrlType !== RdsUrlType.RDS_PROXY &&
-      this.pluginService.getHosts() &&
-      this.pluginService.getHosts().length > 0
+      this.pluginService.getAllHosts() &&
+      this.pluginService.getAllHosts().length > 0
     );
   }
 
@@ -242,7 +242,7 @@ export class FailoverPlugin extends AbstractConnectionPlugin {
   }
 
   private getCurrentWriter(): HostInfo | null {
-    const topology = this.pluginService.getHosts();
+    const topology = this.pluginService.getAllHosts();
     if (topology.length == 0) {
       return null;
     }
@@ -421,7 +421,7 @@ export class FailoverPlugin extends AbstractConnectionPlugin {
     try {
       await telemetryContext.start(async () => {
         try {
-          const result = await this._writerFailoverHandler.failover(this.pluginService.getHosts());
+          const result = await this._writerFailoverHandler.failover(this.pluginService.getAllHosts());
 
           if (result) {
             const error = result.exception;
@@ -439,6 +439,17 @@ export class FailoverPlugin extends AbstractConnectionPlugin {
           const writerHostInfo = getWriter(result.topology);
           if (!writerHostInfo) {
             throw new AwsWrapperError(Messages.get("Failover.unableToDetermineWriter"));
+          }
+
+          const allowedHosts = this.pluginService.getHosts();
+          if (!allowedHosts.includes(writerHostInfo)) {
+            const failoverErrorMessage = Messages.get(
+              "Failover.newWriterNotAllowed",
+              writerHostInfo ? "<null>" : writerHostInfo.host,
+              logTopology(allowedHosts, "")
+            );
+            logger.error(failoverErrorMessage);
+            throw new FailoverFailedError(failoverErrorMessage);
           }
 
           await this.pluginService.abortCurrentClient();
