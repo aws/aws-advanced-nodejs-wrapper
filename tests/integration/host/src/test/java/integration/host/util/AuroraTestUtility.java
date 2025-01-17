@@ -252,7 +252,7 @@ public class AuroraTestUtility {
                 builder.filters(
                     Filter.builder().name("db-cluster-id").values(dbIdentifier).build()));
     final String endpoint = dbInstancesResult.dbInstances().get(0).endpoint().address();
-    final String clusterDomainPrefix = endpoint.substring(endpoint.indexOf('.') + 1);
+    final String clusterDomainSuffix= endpoint.substring(endpoint.indexOf('.') + 1);
 
     for (DBInstance instance : dbInstancesResult.dbInstances()) {
       this.instances.add(
@@ -262,7 +262,7 @@ public class AuroraTestUtility {
               instance.endpoint().port()));
     }
 
-    return clusterDomainPrefix;
+    return clusterDomainSuffix;
   }
 
   /**
@@ -320,7 +320,7 @@ public class AuroraTestUtility {
                 builder.filters(
                     Filter.builder().name("db-cluster-id").values(dbIdentifier).build()));
     final String endpoint = dbInstancesResult.dbInstances().get(0).endpoint().address();
-    final String clusterDomainPrefix = endpoint.substring(endpoint.indexOf('.') + 1);
+    final String clusterDomainSuffix = endpoint.substring(endpoint.indexOf('.') + 1);
 
     for (DBInstance instance : dbInstancesResult.dbInstances()) {
       this.instances.add(
@@ -330,7 +330,7 @@ public class AuroraTestUtility {
               instance.endpoint().port()));
     }
 
-    return clusterDomainPrefix;
+    return clusterDomainSuffix;
   }
 
   /**

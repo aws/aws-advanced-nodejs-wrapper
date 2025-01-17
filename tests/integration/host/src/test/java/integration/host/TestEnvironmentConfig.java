@@ -242,10 +242,6 @@ public class TestEnvironmentConfig implements AutoCloseable {
     env.rdsMySqlDbEngineVersion = System.getenv("RDS_MYSQL_DB_ENGINE_VERSION"); // "latest", "default"
     env.rdsPgDbEngineVersion = System.getenv("RDS_PG_DB_ENGINE_VERSION");
 
-    if (StringUtils.isNullOrEmpty(env.auroraClusterDomain)) {
-      throw new RuntimeException("Environment variable RDS_CLUSTER_DOMAIN is required.");
-    }
-
     env.auroraUtil =
         new AuroraTestUtility(
             env.info.getRegion(),
@@ -257,6 +253,9 @@ public class TestEnvironmentConfig implements AutoCloseable {
     ArrayList<TestInstanceInfo> instances = new ArrayList<>();
 
     if (env.reuseAuroraDbCluster) {
+      if (StringUtils.isNullOrEmpty(env.auroraClusterDomain)) {
+        throw new RuntimeException("Environment variable RDS_CLUSTER_DOMAIN is required when testing against an existing Aurora DB cluster.");
+      }
       if (!env.auroraUtil.doesClusterExist(env.auroraClusterName)) {
         throw new RuntimeException(
             "It's requested to reuse existing DB cluster but it doesn't exist: "
