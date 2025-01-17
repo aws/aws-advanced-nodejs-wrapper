@@ -321,7 +321,7 @@ export class FailoverPlugin extends AbstractConnectionPlugin {
 
       return await methodFunc();
     } catch (e: any) {
-      logger.debug(Messages.get("Failover.detectedException", e.message));
+      logger.debug(Messages.get("Failover.detectedError", e.message));
       if (this._lastError !== e && this.shouldErrorTriggerClientSwitch(e)) {
         await this.invalidateCurrentClient();
         const currentHostInfo = this.pluginService.getCurrentHostInfo();

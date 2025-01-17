@@ -14,7 +14,6 @@
   limitations under the License.
 */
 
-import { AwsClient } from "../aws_client";
 import { HostInfo } from "../host_info";
 import { HostRole } from "../host_role";
 import { DatabaseDialect } from "../database_dialect/database_dialect";

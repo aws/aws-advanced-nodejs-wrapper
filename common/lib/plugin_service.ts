@@ -40,11 +40,10 @@ import { ClientWrapper } from "./client_wrapper";
 import { logger } from "../logutils";
 import { Messages } from "./utils/messages";
 import { DatabaseDialectCodes } from "./database_dialect/database_dialect_codes";
-import { getWriter, logTopology } from "./utils/utils";
+import { getWriter } from "./utils/utils";
 import { TelemetryFactory } from "./utils/telemetry/telemetry_factory";
 import { DriverDialect } from "./driver_dialect/driver_dialect";
-import { ConfigurationProfile } from "./profile/configuration_profile";
-import { SessionState } from "./session_state";
+import { MonitoringRdsHostListProvider } from "./host_list_provider/monitoring/monitoring_host_list_provider";
 
 export class PluginService implements ErrorHandler, HostListProviderService {
   private readonly _currentClient: AwsClient;
@@ -174,6 +173,31 @@ export class PluginService implements ErrorHandler, HostListProviderService {
       this.updateHostAvailability(updatedHostList);
       await this.setHostList(this.hosts, updatedHostList);
     }
+  }
+
+  async initiateTopologyUpdate(shouldVerifyWriter: boolean, timeoutMs: number): Promise<boolean> {
+    const hostListProvider = this.getHostListProvider();
+    if (!(hostListProvider instanceof MonitoringRdsHostListProvider)) {
+      throw new AwsWrapperError(Messages.get("PluginService.requiredMonitoringRdsHostListProvider"), typeof hostListProvider);
+    }
+
+    try {
+      const updatedHostList: HostInfo[] = await (hostListProvider as MonitoringRdsHostListProvider).forceMonitoringRefresh(
+        shouldVerifyWriter,
+        timeoutMs
+      );
+      if (updatedHostList) {
+        if (updatedHostList !== this.hosts) {
+          this.updateHostAvailability(updatedHostList);
+          await this.setHostList(this.hosts, updatedHostList);
+        }
+        return true;
+      }
+    } catch (err) {
+      // Do nothing.
+    }
+
+    return false;
   }
 
   async refreshHostList(): Promise<void>;

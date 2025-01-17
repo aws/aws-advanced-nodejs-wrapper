@@ -23,6 +23,9 @@ import { TopologyAwareDatabaseDialect } from "../../../common/lib/topology_aware
 import { HostRole } from "../../../common/lib/host_role";
 import { ClientWrapper } from "../../../common/lib/client_wrapper";
 import { DatabaseDialectCodes } from "../../../common/lib/database_dialect/database_dialect_codes";
+import { WrapperProperties } from "../../../common/lib/wrapper_property";
+import { MonitoringRdsHostListProvider } from "../../../common/lib/host_list_provider/monitoring/monitoring_host_list_provider";
+import { PluginService } from "../../../common/lib/plugin_service";
 
 export class AuroraMySQLDatabaseDialect extends MySQLDatabaseDialect implements TopologyAwareDatabaseDialect {
   private static readonly TOPOLOGY_QUERY: string =
@@ -36,6 +39,9 @@ export class AuroraMySQLDatabaseDialect extends MySQLDatabaseDialect implements 
   private static readonly AURORA_VERSION_QUERY = "SHOW VARIABLES LIKE 'aurora_version'";
 
   getHostListProvider(props: Map<string, any>, originalUrl: string, hostListProviderService: HostListProviderService): HostListProvider {
+    if (WrapperProperties.PLUGINS.get(props).includes("failover2")) {
+      return new MonitoringRdsHostListProvider(props, originalUrl, hostListProviderService, <PluginService>hostListProviderService);
+    }
     return new RdsHostListProvider(props, originalUrl, hostListProviderService);
   }
 

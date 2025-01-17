@@ -16,6 +16,7 @@
 
 import { ConnectionProvider } from "./connection_provider";
 import { DatabaseDialect } from "./database_dialect/database_dialect";
+import { Failover2Plugin } from "./plugins/failover2/failover2_plugin";
 
 export class WrapperProperty<T> {
   name: string;
@@ -385,7 +386,7 @@ export class WrapperProperties {
     const copy = new Map(props);
 
     for (const key of props.keys()) {
-      if (!key.startsWith(WrapperProperties.MONITORING_PROPERTY_PREFIX)) {
+      if (!key.startsWith(WrapperProperties.MONITORING_PROPERTY_PREFIX) || key !== Failover2Plugin.INTERNAL_CONNECT_PROPERTY_NAME) {
         continue;
       }
 
