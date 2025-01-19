@@ -20,7 +20,6 @@ import { ConnectionPlugin } from "../../connection_plugin";
 import { RdsUtils } from "../../utils/rds_utils";
 import { AwsWrapperError } from "../../utils/errors";
 import { Messages } from "../../utils/messages";
-import { HostMonitoringConnectionPlugin } from "./host_monitoring_connection_plugin";
 
 export class HostMonitoring2PluginFactory extends ConnectionPluginFactory {
   private static hostMonitoring2Plugin: any;

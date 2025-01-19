@@ -86,7 +86,7 @@ export class MonitorImpl implements Monitor {
     this.telemetryFactory.createGauge(`efm2.hostHealthy.${hostId}`, () => !!this.hostUnhealthy);
     const task1 = this.newContextRun();
     const task2 = this.run();
-    Promise.all([task1, task2]).then(() => {
+    Promise.race([task1, task2]).then(() => {
       console.log("both tasks done");
     });
   }
