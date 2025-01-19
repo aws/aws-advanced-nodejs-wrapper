@@ -52,7 +52,7 @@ export class MonitorImpl implements Monitor {
 
   private readonly failureDetectionTimeNano: number;
   private readonly failureDetectionIntervalNanos: number;
-  private failureDetectionCount: number;
+  private readonly failureDetectionCount: number;
 
   private invalidHostStartTimeNano: number;
   private failureCount: number;

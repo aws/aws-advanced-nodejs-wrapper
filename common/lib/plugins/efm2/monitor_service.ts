@@ -89,6 +89,8 @@ export class MonitorServiceImpl implements MonitorService {
 
   constructor(pluginService: PluginService) {
     this.pluginService = pluginService;
+    this.telemetryFactory = pluginService.getTelemetryFactory();
+    this.abortedConnectionsCounter = this.telemetryFactory.createCounter("efm2.connections.aborted");
   }
 
   async startMonitoring(
