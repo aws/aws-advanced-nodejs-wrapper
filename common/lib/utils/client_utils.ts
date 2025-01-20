@@ -43,7 +43,7 @@ export class ClientUtils {
         if (error instanceof InternalQueryTimeoutError) {
           throw error;
         }
-        throw new AwsWrapperError(error);
+        throw new AwsWrapperError(error.message, error);
       })
       .finally(() => {
         clearTimeout(timer.timeoutId);
