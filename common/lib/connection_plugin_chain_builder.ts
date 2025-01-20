@@ -39,6 +39,7 @@ import { ConnectionPluginFactory } from "./plugin_factory";
 import { LimitlessConnectionPluginFactory } from "./plugins/limitless/limitless_connection_plugin_factory";
 import { FastestResponseStrategyPluginFactory } from "./plugins/strategy/fastest_response/fastest_respose_strategy_plugin_factory";
 import { ConfigurationProfile } from "./profile/configuration_profile";
+import { HostMonitoring2PluginFactory } from "./plugins/efm2/host_monitoring2_plugin_factory";
 
 /*
   Type alias used for plugin factory sorting. It holds a reference to a plugin
@@ -59,6 +60,7 @@ export class ConnectionPluginChainBuilder {
     ["readWriteSplitting", { factory: ReadWriteSplittingPluginFactory, weight: 600 }],
     ["failover", { factory: FailoverPluginFactory, weight: 700 }],
     ["efm", { factory: HostMonitoringPluginFactory, weight: 800 }],
+    ["efm2", { factory: HostMonitoring2PluginFactory, weight: 810 }],
     ["fastestResponseStrategy", { factory: FastestResponseStrategyPluginFactory, weight: 900 }],
     ["limitless", { factory: LimitlessConnectionPluginFactory, weight: 950 }],
     ["iam", { factory: IamAuthenticationPluginFactory, weight: 1000 }],
