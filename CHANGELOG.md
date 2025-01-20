@@ -20,10 +20,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ### :crab: Changed
 
 - Deprecated configuration parameter [mysqlQueryTimeout](./docs/using-the-nodejs-wrapper/UsingTheNodejsWrapper.md#aws-advanced-nodejs-wrapper-parameters).
-- Updated documentation on host patterns, custom endpoints, and prerequisites for the Okta and ADFS Plugins ([PR #319](https://github.com/aws/aws-advanced-nodejs-wrapper/pull/319) & ([PR #327](https://github.com/aws/aws-advanced-nodejs-wrapper/pull/327)).
+- Updated documentation on host patterns, custom endpoints, and prerequisites for the Okta and ADFS Plugins ([PR #319](https://github.com/aws/aws-advanced-nodejs-wrapper/pull/319)) & ([PR #327](https://github.com/aws/aws-advanced-nodejs-wrapper/pull/327)).
 - Migrated to AWS JS SDK v3 ([PR #331](https://github.com/aws/aws-advanced-nodejs-wrapper/pull/331)).
 - Optimized getHostInfoByStrategy and acceptsStrategy calls for the Plugin Manager ([PR #332](https://github.com/aws/aws-advanced-nodejs-wrapper/pull/332)).
-- Updated AwsClient#releaseResources to be a static method called at the end of an application ([PR #333](https://github.com/aws/aws-advanced-nodejs-wrapper/pull/333) & [PR #347](https://github.com/aws/aws-advanced-nodejs-wrapper/pull/347)).
+- Updated AwsClient#releaseResources to be a static method called at the end of an application ([PR #333](https://github.com/aws/aws-advanced-nodejs-wrapper/pull/333)) & [PR #347](https://github.com/aws/aws-advanced-nodejs-wrapper/pull/347)).
 - Updated Session State logging to display false values ([PR #337](https://github.com/aws/aws-advanced-nodejs-wrapper/pull/337)).
 
 ## [1.0.0] - 2024-11-19
