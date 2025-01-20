@@ -32,7 +32,7 @@ import { CanReleaseResources } from "../../can_release_resources";
 import { SubscribedMethodHelper } from "../../utils/subscribed_method_helper";
 import { ClientWrapper } from "../../client_wrapper";
 
-export class HostMonitoringConnectionPlugin extends AbstractConnectionPlugin implements CanReleaseResources {
+export class HostMonitoring2ConnectionPlugin extends AbstractConnectionPlugin implements CanReleaseResources {
   id: string = uniqueId("_efm2Plugin");
   private readonly properties: Map<string, any>;
   private pluginService: PluginService;

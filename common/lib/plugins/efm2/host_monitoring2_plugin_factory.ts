@@ -27,9 +27,9 @@ export class HostMonitoring2PluginFactory extends ConnectionPluginFactory {
   async getInstance(pluginService: PluginService, properties: Map<string, any>): Promise<ConnectionPlugin> {
     try {
       if (!HostMonitoring2PluginFactory.hostMonitoring2Plugin) {
-        HostMonitoring2PluginFactory.hostMonitoring2Plugin = await import("./host_monitoring_connection_plugin");
+        HostMonitoring2PluginFactory.hostMonitoring2Plugin = await import("./host_monitoring2_connection_plugin");
       }
-      return new HostMonitoring2PluginFactory.hostMonitoring2Plugin.HostMonitoringConnectionPlugin(pluginService, properties, new RdsUtils());
+      return new HostMonitoring2PluginFactory.hostMonitoring2Plugin.HostMonitoring2ConnectionPlugin(pluginService, properties, new RdsUtils());
     } catch (error: any) {
       throw new AwsWrapperError(Messages.get("ConnectionPluginChainBuilder.errorImportingPlugin", error.message, "HostMonitoringPlugin"));
     }

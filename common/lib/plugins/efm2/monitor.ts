@@ -27,6 +27,7 @@ import { TelemetryCounter } from "../../utils/telemetry/telemetry_counter";
 import { TelemetryTraceLevel } from "../../utils/telemetry/telemetry_trace_level";
 import { HostAvailability } from "../../host_availability/host_availability";
 import { MapUtils } from "../../utils/map_utils";
+import { AwsWrapperError, InternalQueryTimeoutError } from "../../utils/errors";
 
 export interface Monitor {
   startMonitoring(context: MonitorConnectionContext): void;
@@ -83,11 +84,14 @@ export class MonitorImpl implements Monitor {
 
     this.telemetryFactory.createGauge(`efm2.activeContexts.size.${hostId}`, () => this.activeContexts.length == Number.MAX_SAFE_INTEGER);
 
-    this.telemetryFactory.createGauge(`efm2.hostHealthy.${hostId}`, () => !!this.hostUnhealthy);
+    this.telemetryFactory.createGauge(`efm2.hostHealthy.${hostId}`, () => (this.hostUnhealthy ? 0 : 1));
     const task1 = this.newContextRun();
     const task2 = this.run();
-    Promise.race([task1, task2]).then(() => {
-      console.log("both tasks done");
+    Promise.all([task1, task2]).catch((error: any) => {
+      if (error instanceof InternalQueryTimeoutError) {
+        throw error;
+      }
+      throw new AwsWrapperError(error);
     });
   }
 
@@ -114,7 +118,7 @@ export class MonitorImpl implements Monitor {
       startMonitorTimeNano,
       (k) => new Array<WeakRef<MonitorConnectionContext>>()
     );
-    connectionQueue!.push(new WeakRef<MonitorConnectionContext>(context));
+    connectionQueue.push(new WeakRef<MonitorConnectionContext>(context));
   }
 
   async newContextRun(): Promise<void> {
@@ -150,6 +154,7 @@ export class MonitorImpl implements Monitor {
     } catch (err) {
       // do nothing, exit task
     }
+    logger.debug(Messages.get("MonitorImpl.stopMonitoringTaskNewContext", this.hostInfo.host));
   }
 
   async run(): Promise<void> {
@@ -158,7 +163,7 @@ export class MonitorImpl implements Monitor {
     try {
       while (!this.isStopped()) {
         try {
-          while (this.activeContexts.length > 0 && !this.hostUnhealthy) {
+          while (this.activeContexts.length === 0 && !this.hostUnhealthy) {
             await sleep(MonitorImpl.TASK_SLEEP_NANOS / 1000000);
           }
 
@@ -168,7 +173,7 @@ export class MonitorImpl implements Monitor {
 
           await this.updateHostHealthStatus(isValid, statusCheckStartTimeNanos, statusCheckEndTimeNanos);
 
-          if (!this.hostUnhealthy) {
+          if (this.hostUnhealthy) {
             this.pluginService.setAvailability(this.hostInfo.aliases, HostAvailability.NOT_AVAILABLE);
           }
           const tmpActiveContexts: WeakRef<MonitorConnectionContext>[] = [];
@@ -231,7 +236,7 @@ export class MonitorImpl implements Monitor {
       try {
         const clientIsValid = this.monitoringClient && (await this.pluginService.isClientValid(this.monitoringClient));
 
-        if (this.monitoringClient !== null && clientIsValid) {
+        if (this.monitoringClient === null && !clientIsValid) {
           // Open a new connection.
           const monitoringConnProperties: Map<string, any> = new Map(this.properties);
 
