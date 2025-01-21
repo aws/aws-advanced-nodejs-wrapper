@@ -81,7 +81,7 @@
     "jest-html-reporter": "^3.10.2",
     "lint-staged": "^15.2.10",
     "mysql2": "^3.11.0",
-    "node-fetch": "^2.7.0",
+    "node-fetch": "^3.3.2",
     "pg": "^8.13.1",
     "prettier": "^3.3.3",
     "querystring": "^0.2.1",
