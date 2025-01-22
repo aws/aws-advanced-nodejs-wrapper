@@ -14,4 +14,4 @@
   limitations under the License.
 */
 
-export interface TelemetryGauge {}
+export type TelemetryGauge = object;
