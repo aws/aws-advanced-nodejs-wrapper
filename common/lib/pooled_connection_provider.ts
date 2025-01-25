@@ -16,4 +16,4 @@
 
 import { ConnectionProvider } from "./connection_provider";
 
-export interface PooledConnectionProvider extends ConnectionProvider {}
+export type PooledConnectionProvider = ConnectionProvider;
