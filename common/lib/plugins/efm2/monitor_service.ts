@@ -117,11 +117,10 @@ export class MonitorServiceImpl implements MonitorService {
       context.setInactive();
       try {
         await clientToAbort.abort();
-        await clientToAbort.end();
         this.abortedConnectionsCounter.inc();
       } catch (error) {
         // ignore
-        logger.debug(Messages.get("MonitorConnectionContext.exceptionAbortingConnection", error.message));
+        logger.debug(Messages.get("MonitorConnectionContext.errorAbortingConnection", error.message));
       }
     } else {
       context.setInactive();

@@ -121,7 +121,8 @@ export class HostMonitoring2ConnectionPlugin extends AbstractConnectionPlugin im
     return result;
   }
 
-  private throwUnableToIdentifyConnection(host: HostInfo | null, provider: HostListProvider | null): never {
+  private throwUnableToIdentifyConnection(host: HostInfo | null): never {
+    const provider: HostListProvider | null = this.pluginService.getHostListProvider();
     throw new AwsWrapperError(
       Messages.get(
         "HostMonitoringConnectionPlugin.unableToIdentifyConnection",
@@ -134,19 +135,18 @@ export class HostMonitoring2ConnectionPlugin extends AbstractConnectionPlugin im
   async getMonitoringHostInfo(): Promise<HostInfo> {
     if (this.monitoringHostInfo == null) {
       this.monitoringHostInfo = this.pluginService.getCurrentHostInfo();
-      const provider: HostListProvider | null = this.pluginService.getHostListProvider();
       if (this.monitoringHostInfo == null) {
-        this.throwUnableToIdentifyConnection(null, provider);
+        this.throwUnableToIdentifyConnection(null);
       }
       const rdsUrlType: RdsUrlType = this.rdsUtils.identifyRdsType(this.monitoringHostInfo.url);
 
       try {
         if (rdsUrlType.isRdsCluster) {
-          logger.debug("Monitoring host info is associated with a cluster endpoint, plugin needs to identify the cluster connection");
+          logger.debug(Messages.get("HostMonitoringConnectionPlugin.identifyClusterConnection"));
           this.monitoringHostInfo = await this.pluginService.identifyConnection(this.pluginService.getCurrentClient().targetClient!);
           if (this.monitoringHostInfo == null) {
             const host: HostInfo | null = this.pluginService.getCurrentHostInfo();
-            this.throwUnableToIdentifyConnection(host, provider);
+            this.throwUnableToIdentifyConnection(host);
           }
           await this.pluginService.fillAliases(this.pluginService.getCurrentClient().targetClient!, this.monitoringHostInfo);
         }
@@ -165,8 +165,8 @@ export class HostMonitoring2ConnectionPlugin extends AbstractConnectionPlugin im
     if (changes.has(HostChangeOptions.HOSTNAME) || changes.has(HostChangeOptions.HOST_CHANGED)) {
       // Reset monitoring host info since the associated connection has changed.
       this.monitoringHostInfo = null;
-      return OldConnectionSuggestionAction.NO_OPINION;
     }
+    return OldConnectionSuggestionAction.NO_OPINION;
   }
 
   async releaseResources(): Promise<void> {
