@@ -14,15 +14,14 @@
   limitations under the License.
 */
 
-import { AwsClient } from "../aws_client";
 import { HostInfo } from "../host_info";
 import { HostRole } from "../host_role";
 import { DatabaseDialect } from "../database_dialect/database_dialect";
 import { ClientWrapper } from "../client_wrapper";
 
-export interface DynamicHostListProvider extends HostListProvider {}
+export type DynamicHostListProvider = HostListProvider;
 
-export interface StaticHostListProvider extends HostListProvider {}
+export type StaticHostListProvider = HostListProvider;
 
 export interface HostListProvider {
   refresh(): Promise<HostInfo[]>;

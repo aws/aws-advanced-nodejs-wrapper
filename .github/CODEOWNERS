@@ -1,0 +1,2 @@
+# For all files (*), aws/atlas-dev-support is required as reviewer
+* @aws/atlas-aws-nodejs-wrapper

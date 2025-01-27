@@ -78,7 +78,7 @@ try {
     // https://github.com/aws/aws-advanced-nodejs-wrapper/blob/main/docs/using-the-nodejs-wrapper/using-plugins/UsingTheFailoverPlugin.md#transactionresolutionunknownerror
     throw error;
   } else {
-    // Unexpected exception unrelated to failover. This should be handled by the user application.
+    // Unexpected error unrelated to failover. This should be handled by the user application.
     throw error;
   }
 } finally {

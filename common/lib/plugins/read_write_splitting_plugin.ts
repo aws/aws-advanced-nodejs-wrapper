@@ -171,10 +171,10 @@ export class ReadWriteSplittingPlugin extends AbstractConnectionPlugin implement
       return await executeFunc();
     } catch (error: any) {
       if (error instanceof FailoverError) {
-        logger.debug(Messages.get("ReadWriteSplittingPlugin.failoverExceptionWhileExecutingCommand", methodName));
+        logger.debug(Messages.get("ReadWriteSplittingPlugin.failoverErrorWhileExecutingCommand", methodName));
         await this.closeIdleClients();
       } else {
-        logger.debug(Messages.get("ReadWriteSplittingPlugin.exceptionWhileExecutingCommand", methodName, error.message));
+        logger.debug(Messages.get("ReadWriteSplittingPlugin.errorWhileExecutingCommand", methodName, error.message));
       }
 
       throw error;

@@ -124,7 +124,7 @@ describe("host monitoring plugin test", () => {
     expect(queryCounter).toBe(1);
   });
 
-  it("execute cleanup when checking connection status throws exception", async () => {
+  it("execute cleanup when checking connection status throws error", async () => {
     initializePlugin();
 
     const expectedError = new AwsWrapperError("Error thrown during isClientValid");
@@ -133,7 +133,7 @@ describe("host monitoring plugin test", () => {
     await expect(plugin.execute(MONITOR_METHOD_NAME, incrementQueryCounter, {})).rejects.toThrow(expectedError);
   });
 
-  it("execute cleanup when abort connection throws exception", async () => {
+  it("execute cleanup when abort connection throws error", async () => {
     initializePlugin();
 
     when(mockPluginService.isClientValid(mockClientWrapper)).thenResolve(false);

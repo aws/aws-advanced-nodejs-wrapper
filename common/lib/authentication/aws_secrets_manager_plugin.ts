@@ -123,7 +123,7 @@ export class AwsSecretsManagerPlugin extends AbstractConnectionPlugin {
             return await connectFunc();
           }
         }
-        logger.debug(Messages.get("AwsSecretsManagerConnectionPlugin.unhandledException", error.name, error.message));
+        logger.debug(Messages.get("AwsSecretsManagerConnectionPlugin.unhandledError", error.name, error.message));
       }
       throw error;
     }
@@ -149,7 +149,7 @@ export class AwsSecretsManagerPlugin extends AbstractConnectionPlugin {
           } else if (error instanceof Error && error.message.includes("AWS SDK error")) {
             logAndThrowError(Messages.get("AwsSecretsManagerConnectionPlugin.endpointOverrideInvalidConnection", error.message));
           } else {
-            logAndThrowError(Messages.get("AwsSecretsManagerConnectionPlugin.unhandledException", error.message));
+            logAndThrowError(Messages.get("AwsSecretsManagerConnectionPlugin.unhandledError", error.message));
           }
         }
       }

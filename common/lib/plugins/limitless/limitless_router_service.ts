@@ -202,7 +202,7 @@ export class LimitlessRouterServiceImpl implements LimitlessRouterService {
         }
         await sleep(retryIntervalMs);
       } catch (e) {
-        logger.debug(Messages.get("LimitlessRouterServiceImpl.getLimitlessRoutersException", e.message));
+        logger.debug(Messages.get("LimitlessRouterServiceImpl.getLimitlessRoutersError", e.message));
       }
     } while (remainingAttempts-- >= 0);
 

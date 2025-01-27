@@ -38,7 +38,7 @@ const client = new AwsPGClient({
   plugins: "dev"
 });
 
-// Simulate an exception while opening a new connection.
+// Simulate an error while opening a new connection.
 ErrorSimulatorManager.raiseErrorOnNextConnect(errorToRaise);
 
 // Attempt connection. Throws errorToRaise.
@@ -65,7 +65,7 @@ try {
 // Query executes normally without error.
 const anotherResult = await client.query("select 1");
 
-// Check call parameters to decide whether to return an exception or not.
+// Check call parameters to decide whether to return an error or not.
 class TestErrorCallback implements ErrorSimulatorMethodCallback {
   getErrorToRaise<T>(methodName: string, methodArgs: any): Error | null {
     if (methodName == "query" && methodArgs == "select 1") {

@@ -70,10 +70,14 @@ export class ProxyHelper {
     const proxy = proxyInfo.proxy;
 
     if (proxy !== undefined) {
-      const toxics = proxy.toxics;
-      toxics.forEach((toxic) => {
-        toxic.remove();
-      });
+      try {
+        const upstreamToxic = await proxy.getToxic("UP-STREAM");
+        await upstreamToxic.remove();
+        const downstreamToxic = await proxy.getToxic("DOWN-STREAM");
+        await downstreamToxic.remove();
+      } catch (e) {
+        // Ignore
+      }
     }
   }
 }

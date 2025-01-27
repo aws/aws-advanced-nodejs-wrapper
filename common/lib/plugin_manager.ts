@@ -321,7 +321,7 @@ export class PluginManager {
             try {
               host = plugin.getHostInfoByStrategy(role, strategy, hosts);
             } catch (error) {
-              // This plugin does not support the provided strategy, ignore the exception and move on
+              // This plugin does not support the provided strategy, ignore the error and move on.
             }
           }
         }
@@ -338,7 +338,7 @@ export class PluginManager {
             return host;
           }
         } catch (error) {
-          // This plugin does not support the provided strategy, ignore the exception and move on
+          // This plugin does not support the provided strategy, ignore the error and move on.
         }
       }
     }
