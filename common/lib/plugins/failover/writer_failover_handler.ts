@@ -113,7 +113,7 @@ export class ClusterAwareWriterFailoverHandler implements WriterFailoverHandler 
       .then((result) => {
         selectedTask = result.taskName;
         // If the first resolved promise is connected or has an error, return it.
-        if (result.isConnected || result.exception || singleTask) {
+        if (result.isConnected || result.error || singleTask) {
           return result;
         }
 
@@ -239,9 +239,9 @@ class ReconnectToWriterHandlerTask {
           await this.pluginService.forceRefreshHostList(this.currentClient);
           latestTopology = this.pluginService.getHosts();
         } catch (error) {
-          // Propagate exceptions that are not caused by network errors.
+          // Propagate errors that are not caused by network errors.
           if (error instanceof AwsWrapperError && !this.pluginService.isNetworkError(error)) {
-            logger.info(Messages.get("ClusterAwareWriterFailoverHandler.taskAEncounteredException", error.message));
+            logger.info(Messages.get("ClusterAwareWriterFailoverHandler.taskAEncounteredError", error.message));
             return new WriterFailoverResult(false, false, [], ClusterAwareWriterFailoverHandler.RECONNECT_WRITER_TASK, null, error);
           }
         }
@@ -342,7 +342,7 @@ class WaitForNewWriterHandlerTask {
 
       return new WriterFailoverResult(true, true, this.currentTopology, ClusterAwareWriterFailoverHandler.WAIT_NEW_WRITER_TASK, this.currentClient);
     } catch (error: any) {
-      logger.error(Messages.get("ClusterAwareWriterFailoverHandler.taskBEncounteredException", error.message));
+      logger.error(Messages.get("ClusterAwareWriterFailoverHandler.taskBEncounteredError", error.message));
       throw error;
     } finally {
       logger.info(Messages.get("ClusterAwareWriterFailoverHandler.taskBFinished"));
@@ -410,7 +410,7 @@ class WaitForNewWriterHandlerTask {
           }
         }
       } catch (error: any) {
-        logger.info(Messages.get("ClusterAwareWriterFailoverHandler.taskBEncounteredException", error.message));
+        logger.info(Messages.get("ClusterAwareWriterFailoverHandler.taskBEncounteredError", error.message));
         return false;
       }
 

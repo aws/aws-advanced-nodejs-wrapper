@@ -166,7 +166,7 @@ describe("testSecretsManager", () => {
     expect(TEST_PROPS.get(WrapperProperties.PASSWORD.name)).toBe(TEST_PASSWORD);
   });
 
-  // The plugin will attempt to open a connection after fetching a secret, but it will fail because an exception was
+  // The plugin will attempt to open a connection after fetching a secret, but it will fail because an error was
   // thrown by the AWS Secrets Manager.
   it("failed to get secrets", async () => {
     when(mockSecretsManagerClient.send(anything())).thenThrow(secretsManagerClientException);

@@ -207,11 +207,11 @@ export class MonitorImpl implements Monitor {
             });
           }
         } catch (error: any) {
-          logger.debug(Messages.get("MonitorImpl.exceptionDuringMonitoringContinue", error.message));
+          logger.debug(Messages.get("MonitorImpl.errorDuringMonitoringContinue", error.message));
         }
       }
     } catch (error: any) {
-      logger.debug(Messages.get("MonitorImpl.exceptionDuringMonitoringStop", error.message));
+      logger.debug(Messages.get("MonitorImpl.errorDuringMonitoringStop", error.message));
     } finally {
       this.stopped = true;
       await this.endMonitoringClient();

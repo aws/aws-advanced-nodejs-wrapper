@@ -233,7 +233,7 @@ describe("reader failover handler", () => {
     when(mockHostInfo.allAliases).thenReturn(new Set<string>(["alias1", "alias2"]));
     when(mockHostInfo.getRawAvailability()).thenReturn(HostAvailability.AVAILABLE);
     when(mockPluginService.getHosts()).thenReturn(hosts);
-    when(mockReaderResult.exception).thenReturn(test);
+    when(mockReaderResult.error).thenReturn(test);
     when(mockReaderResult.newHost).thenReturn(hostInfo);
     when(mockReaderFailoverHandler.failover(anything(), anything())).thenResolve(instance(mockReaderResult));
 
@@ -249,14 +249,14 @@ describe("reader failover handler", () => {
     verify(mockReaderFailoverHandlerInstance.failover(anything(), anything()));
   });
 
-  it("test failover writer failed - failover throws exception", async () => {
+  it("test failover writer failed - failover throws error", async () => {
     const hostInfo = builder.withHost("hostA").build();
     const hosts = [hostInfo];
     const test = new AwsWrapperError("test");
 
     when(mockHostInfo.allAliases).thenReturn(new Set<string>(["alias1", "alias2"]));
     when(mockPluginService.getHosts()).thenReturn(hosts);
-    when(mockWriterResult.exception).thenReturn(test);
+    when(mockWriterResult.error).thenReturn(test);
     when(mockWriterFailoverHandler.failover(anything())).thenResolve(instance(mockWriterResult));
 
     const mockHostInfoInstance = instance(mockHostInfo);

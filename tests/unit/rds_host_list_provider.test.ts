@@ -167,7 +167,7 @@ describe("testRdsHostListProvider", () => {
     verify(spiedProvider.queryForTopology(anything(), anything())).atMost(1);
   });
 
-  it("testQueryForTopology_queryResultsInException", async () => {
+  it("testQueryForTopology_queryResultsInError", async () => {
     const rdsHostListProvider = getRdsHostListProvider("someUrl");
     when(mockDialect.queryForTopology(anything(), anything())).thenThrow(new AwsWrapperError("bad things"));
 

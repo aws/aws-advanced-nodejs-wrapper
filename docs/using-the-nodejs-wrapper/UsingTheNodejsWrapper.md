@@ -145,7 +145,7 @@ Besides a list of plugins to load and configuration properties, configuration pr
 
 - [Database Dialect](./DatabaseDialects.md#database-dialects)
 - [Driver Dialect](../../common/lib/driver_dialect/driver_dialect.ts)
-- a custom exception handler
+- a custom error handler
 - a custom connection provider
 
 The following example creates and sets a configuration profile:

@@ -23,14 +23,14 @@ export class WriterFailoverResult {
   readonly topology: HostInfo[];
   readonly client: ClientWrapper | null;
   readonly taskName: string;
-  readonly exception: Error | undefined;
+  readonly error: Error | undefined;
 
-  constructor(isConnected: boolean, isNewHost: boolean, topology: HostInfo[], taskName: string, client: ClientWrapper | null, exception?: Error) {
+  constructor(isConnected: boolean, isNewHost: boolean, topology: HostInfo[], taskName: string, client: ClientWrapper | null, error?: Error) {
     this.isConnected = isConnected;
     this.isNewHost = isNewHost;
     this.topology = topology;
     this.client = client;
     this.taskName = taskName;
-    this.exception = exception;
+    this.error = error;
   }
 }

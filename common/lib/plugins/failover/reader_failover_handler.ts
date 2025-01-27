@@ -148,7 +148,7 @@ export class ClusterAwareReaderFailoverHandler implements ReaderFailoverHandler 
       // submit connection attempt tasks in batches of 2
       try {
         const result = await this.getResultFromNextTaskBatch(hosts, i, failoverTaskId);
-        if (result && (result.isConnected || result.exception)) {
+        if (result && (result.isConnected || result.error)) {
           return result;
         }
       } catch (error) {
@@ -326,7 +326,7 @@ class ConnectionAttemptTask {
     } catch (error) {
       this.pluginService.setAvailability(this.newHost.allAliases, HostAvailability.NOT_AVAILABLE);
       if (error instanceof Error) {
-        // Propagate exceptions that are not caused by network errors.
+        // Propagate errors that are not caused by network errors.
         if (!this.pluginService.isNetworkError(error)) {
           return new ReaderFailoverResult(null, null, false, error, this.taskId);
         }
