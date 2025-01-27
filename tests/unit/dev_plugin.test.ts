@@ -65,7 +65,7 @@ describe("testDevPlugin", () => {
     plugin = new DeveloperConnectionPlugin(instance(mockPluginService), properties, instance(mockRdsUtils), undefined, undefined, undefined);
   });
 
-  it("testRaiseException", async () => {
+  it("testRaiseError", async () => {
     await expect(plugin.connect(hostInfo, properties, false, mockConnectFunc)).toHaveReturned;
 
     await expect(plugin.execute("query", mockFunction, [])).toHaveReturned;
@@ -75,7 +75,7 @@ describe("testDevPlugin", () => {
     await expect(plugin.execute("query", mockFunction, [])).rejects.toEqual(TEST_ERROR);
   });
 
-  it("testRaiseExceptionForMethodName", async () => {
+  it("testRaiseErrorForMethodName", async () => {
     await expect(plugin.connect(hostInfo, properties, false, mockConnectFunc)).toHaveReturned;
 
     await expect(plugin.execute("query", mockFunction, [])).toHaveReturned;
@@ -85,7 +85,7 @@ describe("testDevPlugin", () => {
     await expect(plugin.execute("query", mockFunction, [])).rejects.toEqual(TEST_ERROR);
   });
 
-  it("testRaiseExceptionForAnyMethodName", async () => {
+  it("testRaiseErrorForAnyMethodName", async () => {
     await expect(plugin.connect(hostInfo, properties, false, mockConnectFunc)).toHaveReturned;
 
     await expect(plugin.execute("query", mockFunction, [])).toHaveReturned;
@@ -95,7 +95,7 @@ describe("testDevPlugin", () => {
     await expect(plugin.execute("query", mockFunction, [])).rejects.toEqual(TEST_ERROR);
   });
 
-  it("testRaiseExceptionForWrongMethodName", async () => {
+  it("testRaiseErrorForWrongMethodName", async () => {
     await expect(plugin.connect(hostInfo, properties, false, mockConnectFunc)).toHaveReturned;
 
     await expect(plugin.execute("query", mockFunction, [])).toHaveReturned;
@@ -105,7 +105,7 @@ describe("testDevPlugin", () => {
     await expect(plugin.execute("query", mockFunction, [])).toHaveReturned;
   });
 
-  it("testRaiseExceptionWithCallback", async () => {
+  it("testRaiseErrorWithCallback", async () => {
     plugin.setCallback(instance(mockMethodCallback));
 
     const mockArgs = ["test", "employees"];
@@ -118,7 +118,7 @@ describe("testDevPlugin", () => {
     await expect(plugin.execute("query", mockFunction, ["test", "admin"])).toHaveReturned;
   });
 
-  it("testRaiseNoExceptionWithCallback", async () => {
+  it("testRaiseNoErrorWithCallback", async () => {
     plugin.setCallback(instance(mockMethodCallback));
 
     const mockArgs = ["test", "employees"];

@@ -21,14 +21,14 @@ export class ReaderFailoverResult {
   readonly client: ClientWrapper | null;
   readonly newHost: HostInfo | null;
   readonly isConnected: boolean;
-  readonly exception?: Error;
+  readonly error?: Error;
   readonly taskId?: number;
 
-  constructor(client: ClientWrapper | null, newHost: HostInfo | null, isConnected: boolean, exception?: Error, taskId?: number) {
+  constructor(client: ClientWrapper | null, newHost: HostInfo | null, isConnected: boolean, error?: Error, taskId?: number) {
     this.client = client;
     this.newHost = newHost;
     this.isConnected = isConnected;
-    this.exception = exception;
+    this.error = error;
     this.taskId = taskId;
   }
 }

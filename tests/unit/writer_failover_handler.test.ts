@@ -66,7 +66,7 @@ describe("writer failover handler", () => {
     reset(mockReaderFailover);
   });
 
-  it("test reconnect to writer - task B reader exception", async () => {
+  it("test reconnect to writer - task B reader error", async () => {
     when(mockPluginService.forceConnect(writer, anything())).thenResolve(mockClientWrapper);
     when(mockPluginService.forceConnect(readerA, anything())).thenThrow(new AwsWrapperError());
     when(mockPluginService.forceConnect(readerB, anything())).thenThrow(new AwsWrapperError());
@@ -242,7 +242,7 @@ describe("writer failover handler", () => {
     clearTimeout(newWriterTimeoutId);
   }, 10000);
 
-  it("test failed to connect - task A exception, task B writer exception", async () => {
+  it("test failed to connect - task A error, task B writer error", async () => {
     const error = new AwsWrapperError();
     when(mockPluginService.forceConnect(writer, anything())).thenThrow(error);
     when(mockPluginService.forceConnect(newWriterHost, anything())).thenThrow(error);

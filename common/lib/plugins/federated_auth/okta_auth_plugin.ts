@@ -90,14 +90,14 @@ export class OktaAuthPlugin extends AbstractConnectionPlugin {
       return await connectFunc();
     } catch (e: any) {
       if (!this.pluginService.isLoginError(e as Error) || !isCachedToken) {
-        logger.debug(Messages.get("Authentication.connectException", e.message));
+        logger.debug(Messages.get("Authentication.connectError", e.message));
         throw e;
       }
       try {
         await this.updateAuthenticationToken(hostInfo, props, region, cacheKey, host);
         return await connectFunc();
       } catch (e: any) {
-        throw new AwsWrapperError(Messages.get("SamlAuthPlugin.unhandledException", e.message));
+        throw new AwsWrapperError(Messages.get("SamlAuthPlugin.unhandledError", e.message));
       }
     }
   }

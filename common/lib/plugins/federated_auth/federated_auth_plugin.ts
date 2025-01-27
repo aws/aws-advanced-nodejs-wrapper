@@ -96,7 +96,7 @@ export class FederatedAuthPlugin extends AbstractConnectionPlugin {
         await this.updateAuthenticationToken(hostInfo, props, region, cacheKey, host);
         return await connectFunc();
       } catch (e: any) {
-        throw new AwsWrapperError(Messages.get("SamlAuthPlugin.unhandledException", e.message));
+        throw new AwsWrapperError(Messages.get("SamlAuthPlugin.unhandledError", e.message));
       }
     }
   }

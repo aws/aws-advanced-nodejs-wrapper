@@ -321,7 +321,7 @@ export class FailoverPlugin extends AbstractConnectionPlugin {
 
       return await methodFunc();
     } catch (e: any) {
-      logger.debug(Messages.get("Failover.detectedException", e.message));
+      logger.debug(Messages.get("Failover.detectedError", e.message));
       if (this._lastError !== e && this.shouldErrorTriggerClientSwitch(e)) {
         await this.invalidateCurrentClient();
         const currentHostInfo = this.pluginService.getCurrentHostInfo();
@@ -368,7 +368,7 @@ export class FailoverPlugin extends AbstractConnectionPlugin {
           const result = await this._readerFailoverHandler.failover(this.pluginService.getHosts(), failedHost);
 
           if (result) {
-            const error = result.exception;
+            const error = result.error;
             if (error) {
               throw error;
             }
@@ -424,7 +424,7 @@ export class FailoverPlugin extends AbstractConnectionPlugin {
           const result = await this._writerFailoverHandler.failover(this.pluginService.getHosts());
 
           if (result) {
-            const error = result.exception;
+            const error = result.error;
             if (error) {
               throw error;
             }

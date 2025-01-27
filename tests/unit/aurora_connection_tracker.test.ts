@@ -82,8 +82,8 @@ describe("aurora connection tracker tests", () => {
   });
 
   it("test invalidate opened connections when writer host not changed", async () => {
-    const expectedException = new FailoverError();
-    mockSqlFunc.mockRejectedValue(expectedException);
+    const expectedError = new FailoverError();
+    mockSqlFunc.mockRejectedValue(expectedError);
 
     const originalHost = new HostInfoBuilder({ hostAvailabilityStrategy: new SimpleHostAvailabilityStrategy() })
       .withHost("host")
@@ -94,22 +94,22 @@ describe("aurora connection tracker tests", () => {
 
     const plugin = new AuroraConnectionTrackerPlugin(instance(mockPluginService), instance(mockRdsUtils), instance(mockTracker));
 
-    await expect(plugin.execute("query", mockSqlFunc, SQL_ARGS)).rejects.toThrow(expectedException);
+    await expect(plugin.execute("query", mockSqlFunc, SQL_ARGS)).rejects.toThrow(expectedError);
     verify(mockTracker.invalidateAllConnections(originalHost)).never();
   });
 
   it("test invalidate opened connections when writer host changed", async () => {
-    const expectedException = new FailoverError("reason", "sqlstate");
+    const expectedError = new FailoverError("reason", "sqlstate");
     const originalHost = new HostInfoBuilder({ hostAvailabilityStrategy: new SimpleHostAvailabilityStrategy() }).withHost("host").build();
     const failoverTargetHost = new HostInfoBuilder({ hostAvailabilityStrategy: new SimpleHostAvailabilityStrategy() }).withHost("host2").build();
 
     when(mockPluginService.getHosts()).thenReturn([originalHost]).thenReturn([failoverTargetHost]);
-    mockSqlFunc.mockResolvedValueOnce("1").mockRejectedValueOnce(expectedException);
+    mockSqlFunc.mockResolvedValueOnce("1").mockRejectedValueOnce(expectedError);
 
     const plugin = new AuroraConnectionTrackerPlugin(instance(mockPluginService), instance(mockRdsUtils), instance(mockTracker));
 
     await plugin.execute("query", mockSqlFunc, SQL_ARGS);
-    await expect(plugin.execute("query", mockSqlFunc, SQL_ARGS)).rejects.toThrow(expectedException);
+    await expect(plugin.execute("query", mockSqlFunc, SQL_ARGS)).rejects.toThrow(expectedError);
     verify(mockTracker.invalidateAllConnections(originalHost)).once();
   });
 });

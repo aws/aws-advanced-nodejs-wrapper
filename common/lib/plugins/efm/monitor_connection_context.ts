@@ -77,7 +77,7 @@ export class MonitorConnectionContext {
       this.telemetryAbortedConnectionCounter.inc();
     } catch (error: any) {
       // ignore
-      logger.debug(Messages.get("MonitorConnectionContext.exceptionAbortingConnection", error.message));
+      logger.debug(Messages.get("MonitorConnectionContext.errorAbortingConnection", error.message));
     }
     this.abortedConnectionCounter++;
   }

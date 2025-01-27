@@ -85,11 +85,11 @@ const newClient2 = new AwsMySQLClient({
   plugins: "readWriteSplitting"
 });
 
-// Correctly throws an exception - creates a fresh connection pool which will check the password
+// Correctly throws an error - creates a fresh connection pool which will check the password
 // because there are no cached pool connections.
 try {
   await newClient2.connect();
-  // Will not reach - exception will be thrown.
+  // Will not reach - error will be thrown.
 } finally {
   // Clean up resources used by the plugins.
   await PluginManager.releaseResources();
