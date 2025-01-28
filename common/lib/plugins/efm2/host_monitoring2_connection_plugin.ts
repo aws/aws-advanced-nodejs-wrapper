@@ -133,9 +133,9 @@ export class HostMonitoring2ConnectionPlugin extends AbstractConnectionPlugin im
   }
 
   async getMonitoringHostInfo(): Promise<HostInfo> {
-    if (this.monitoringHostInfo == null) {
+    if (this.monitoringHostInfo === null) {
       this.monitoringHostInfo = this.pluginService.getCurrentHostInfo();
-      if (this.monitoringHostInfo == null) {
+      if (this.monitoringHostInfo === null) {
         this.throwUnableToIdentifyConnection(null);
       }
       const rdsUrlType: RdsUrlType = this.rdsUtils.identifyRdsType(this.monitoringHostInfo.url);
