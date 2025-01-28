@@ -254,7 +254,7 @@ export class LimitlessRouterServiceImpl implements LimitlessRouterService {
     }
   }
 
-  static clearMonitors() {
-    LimitlessRouterServiceImpl.monitors.clear();
+  static async clearMonitors() {
+    await LimitlessRouterServiceImpl.monitors.clear();
   }
 }

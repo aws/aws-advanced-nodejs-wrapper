@@ -39,11 +39,11 @@ class CacheItem<V> {
 export class SlidingExpirationCache<K, V> {
   private _cleanupIntervalNanos: bigint = BigInt(10 * 60_000_000_000); // 10 minutes
   private readonly _shouldDisposeFunc?: (item: V) => boolean;
-  private readonly _itemDisposalFunc?: (item: V) => void;
+  private readonly _itemDisposalFunc?: (item: V) => Promise<void>;
   map: Map<K, CacheItem<V>> = new Map<K, CacheItem<V>>();
   private _cleanupTimeNanos: bigint;
 
-  constructor(cleanupIntervalNanos: bigint, shouldDisposeFunc?: (item: V) => boolean, itemDisposalFunc?: (item: V) => void) {
+  constructor(cleanupIntervalNanos: bigint, shouldDisposeFunc?: (item: V) => boolean, itemDisposalFunc?: (item: V) => Promise<void>) {
     this._cleanupIntervalNanos = cleanupIntervalNanos;
     this._shouldDisposeFunc = shouldDisposeFunc;
     this._itemDisposalFunc = itemDisposalFunc;
@@ -116,7 +116,7 @@ export class SlidingExpirationCache<K, V> {
       return cacheItem;
     });
 
-    if (item != undefined && item != null && this._itemDisposalFunc != null) {
+    if (item != undefined && this._itemDisposalFunc != null) {
       this._itemDisposalFunc(item);
     }
   }
@@ -128,10 +128,10 @@ export class SlidingExpirationCache<K, V> {
     return getTimeInNanos() > cacheItem.expirationTimeNs;
   }
 
-  clear(): void {
+  async clear(): Promise<void> {
     for (const [key, val] of this.map.entries()) {
       if (val !== undefined && this._itemDisposalFunc !== undefined) {
-        this._itemDisposalFunc(val.item);
+        await this._itemDisposalFunc(val.item);
       }
     }
     this.map.clear();

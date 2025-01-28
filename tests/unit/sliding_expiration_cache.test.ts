@@ -25,7 +25,7 @@ class DisposableItem {
     this.disposed = false;
   }
 
-  dispose() {
+  async dispose() {
     this.disposed = true;
   }
 }
@@ -52,7 +52,7 @@ describe("test_sliding_expiration_cache", () => {
     const target = new SlidingExpirationCache(
       BigInt(50_000_000),
       (item: DisposableItem) => item.shouldDispose,
-      (item) => item.dispose()
+      async (item) => item.dispose()
     );
     const itemToRemove = new DisposableItem(true);
     let result = target.computeIfAbsent("itemToRemove", () => itemToRemove, BigInt(15_000_000_000));
@@ -89,7 +89,7 @@ describe("test_sliding_expiration_cache", () => {
     const target = new SlidingExpirationCache(
       BigInt(50_000_000),
       (item: DisposableItem) => item.shouldDispose,
-      (item) => item.dispose()
+      async (item) => item.dispose()
     );
     const item1 = new DisposableItem(false);
     const item2 = new DisposableItem(false);
@@ -101,7 +101,7 @@ describe("test_sliding_expiration_cache", () => {
     expect(target.get(1)).toEqual(item1);
     expect(target.get(2)).toEqual(item2);
 
-    target.clear();
+    await target.clear();
 
     expect(target.size).toEqual(0);
     expect(target.get(1)).toEqual(undefined);
