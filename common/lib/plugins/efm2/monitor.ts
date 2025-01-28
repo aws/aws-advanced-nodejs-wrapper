@@ -105,8 +105,7 @@ export class MonitorImpl implements Monitor {
       logger.warn(Messages.get("MonitorImpl.monitorIsStopped", this.hostInfo.host));
     }
 
-    const currentTimeNanos: number = this.getCurrentTimeNano();
-    const startMonitorTimeNano = currentTimeNanos + this.failureDetectionTimeNano;
+    const startMonitorTimeNano = this.getCurrentTimeNano()+ this.failureDetectionTimeNano;
     const connectionQueue = MapUtils.computeIfAbsent(
       MonitorImpl.newContexts,
       startMonitorTimeNano,
