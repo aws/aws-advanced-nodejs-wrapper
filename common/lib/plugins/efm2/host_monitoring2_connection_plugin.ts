@@ -89,9 +89,9 @@ export class HostMonitoring2ConnectionPlugin extends AbstractConnectionPlugin im
       return methodFunc();
     }
 
-    const failureDetectionTimeMillis: number = WrapperProperties.FAILURE_DETECTION_TIME_MS.get(this.properties) as number;
-    const failureDetectionIntervalMillis: number = WrapperProperties.FAILURE_DETECTION_INTERVAL_MS.get(this.properties) as number;
-    const failureDetectionCount: number = WrapperProperties.FAILURE_DETECTION_COUNT.get(this.properties) as number;
+    const failureDetectionTimeMillis: number = WrapperProperties.FAILURE_DETECTION_TIME_MS.get(this.properties);
+    const failureDetectionIntervalMillis: number = WrapperProperties.FAILURE_DETECTION_INTERVAL_MS.get(this.properties);
+    const failureDetectionCount: number = WrapperProperties.FAILURE_DETECTION_COUNT.get(this.properties);
 
     let result: T;
     let monitorContext: MonitorConnectionContext | null = null;
