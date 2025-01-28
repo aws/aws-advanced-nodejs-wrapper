@@ -126,8 +126,8 @@ export class HostMonitoring2ConnectionPlugin extends AbstractConnectionPlugin im
     throw new AwsWrapperError(
       Messages.get(
         "HostMonitoringConnectionPlugin.unableToIdentifyConnection",
-        host != null ? host.host : "unknown host",
-        provider != null ? provider.getHostProviderType() : "unknown provider"
+        host !== null ? host.host : "unknown host",
+        provider !== null ? provider.getHostProviderType() : "unknown provider"
       )
     );
   }
