@@ -83,7 +83,7 @@ export class HostMonitoring2ConnectionPlugin extends AbstractConnectionPlugin im
   }
 
   async execute<T>(methodName: string, methodFunc: () => Promise<T>, methodArgs: any): Promise<T> {
-    const isEnabled: boolean = WrapperProperties.FAILURE_DETECTION_ENABLED.get(this.properties) as boolean;
+    const isEnabled: boolean = WrapperProperties.FAILURE_DETECTION_ENABLED.get(this.properties);
 
     if (!isEnabled || !SubscribedMethodHelper.NETWORK_BOUND_METHODS.includes(methodName)) {
       return methodFunc();
