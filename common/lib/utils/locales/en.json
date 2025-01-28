@@ -248,4 +248,7 @@
   "CustomEndpointMonitorImpl.stoppingMonitor": "Stopping custom endpoint monitor for '%s'.",
   "CustomEndpointMonitorImpl.noEndpoints": "Unable to find any custom endpoints. When connecting with a custom endpoint, at least one custom endpoint should be detected.",
   "AwsSdk.unsupportedRegion": "Unsupported AWS region '%s'. For supported regions please read https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/Concepts.RegionsAndAvailabilityZones.html"
+  "HostMonitor.writerHostChanged": "Writer host has changed from '%s' to '%s'.",
+  "SlidingExpirationCacheWithCleanupTask.cleaningUp": "Cleanup interval of '%s' minutes has passed, cleaning up sliding expiration cache.",
+  "SlidingExpirationCacheWithCleanupTask.cleanUpTaskInterrupted": "Cleanup task has been interrupted and is exiting."
 }

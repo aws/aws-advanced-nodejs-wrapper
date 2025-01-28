@@ -27,6 +27,7 @@ import { Messages } from "../../utils/messages";
 import { WrapperProperties } from "../../wrapper_property";
 import { BlockingHostListProvider } from "../host_list_provider";
 import { logger } from "../../../logutils";
+import { SlidingExpirationCacheWithCleanupTask } from "../../utils/sliding_expiration_cache_with_cleanup_task";
 import { isDialectTopologyAware } from "../../utils/utils";
 
 export class MonitoringRdsHostListProvider extends RdsHostListProvider implements BlockingHostListProvider {
@@ -34,12 +35,12 @@ export class MonitoringRdsHostListProvider extends RdsHostListProvider implement
   static readonly MONITOR_EXPIRATION_NANOS: bigint = BigInt(15 * 60_000_000_000); // 15 minutes.
   static readonly DEFAULT_TOPOLOGY_QUERY_TIMEOUT_MS = 5000; // 5 seconds.
 
-  private static monitors: SlidingExpirationCache<string, ClusterTopologyMonitor> = new SlidingExpirationCache(
+  private static monitors: SlidingExpirationCacheWithCleanupTask<string, ClusterTopologyMonitor> = new SlidingExpirationCacheWithCleanupTask(
     MonitoringRdsHostListProvider.CACHE_CLEANUP_NANOS,
     () => true,
-    async (monitor: ClusterTopologyMonitor) => {
+    async (item: ClusterTopologyMonitor) => {
       try {
-        await monitor.close();
+        await item.close();
       } catch {
         // Ignore.
       }
@@ -55,13 +56,7 @@ export class MonitoringRdsHostListProvider extends RdsHostListProvider implement
 
   async clearAll(): Promise<void> {
     RdsHostListProvider.clearAll();
-    // TODO: refactor when sliding-expiration-cache refactoring is merged.
-    for (const [key, monitor] of MonitoringRdsHostListProvider.monitors.entries) {
-      if (monitor !== undefined) {
-        await monitor.item.close();
-      }
-    }
-    MonitoringRdsHostListProvider.monitors.clear();
+    await MonitoringRdsHostListProvider.monitors.clear();
   }
 
   async queryForTopology(targetClient: ClientWrapper, dialect: DatabaseDialect): Promise<HostInfo[]> {
