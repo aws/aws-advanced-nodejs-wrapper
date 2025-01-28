@@ -224,5 +224,7 @@
   "HostMonitor.startMonitoring": "Host monitor '%s' started.",
   "HostMonitor.detectedWriter": "Detected writer: '%s'.",
   "HostMonitor.endMonitoring": "Host monitor '%s' completed in '%s'.",
-  "HostMonitor.writerHostChanged": "Writer host has changed from '%s' to '%s'."
+  "HostMonitor.writerHostChanged": "Writer host has changed from '%s' to '%s'.",
+  "SlidingExpirationCacheWithCleanupTask.cleaningUp": "Cleanup interval of '%s' minutes has passed, cleaning up sliding expiration cache.",
+  "SlidingExpirationCacheWithCleanupTask.cleanUpTaskInterrupted": "Cleanup task has been interrupted and is exiting."
 }
