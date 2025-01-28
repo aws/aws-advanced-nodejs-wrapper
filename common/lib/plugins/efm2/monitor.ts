@@ -84,9 +84,9 @@ export class MonitorImpl implements Monitor {
 
     const hostId: string = this.hostInfo.hostId ?? this.hostInfo.host;
 
-    this.telemetryFactory.createGauge(`efm2.newContexts.size.${hostId}`, () => MonitorImpl.newContexts.size == Number.MAX_SAFE_INTEGER);
+    this.telemetryFactory.createGauge(`efm2.newContexts.size.${hostId}`, () => MonitorImpl.newContexts.size === Number.MAX_SAFE_INTEGER);
 
-    this.telemetryFactory.createGauge(`efm2.activeContexts.size.${hostId}`, () => this.activeContexts.length == Number.MAX_SAFE_INTEGER);
+    this.telemetryFactory.createGauge(`efm2.activeContexts.size.${hostId}`, () => this.activeContexts.length === Number.MAX_SAFE_INTEGER);
 
     this.telemetryFactory.createGauge(`efm2.hostHealthy.${hostId}`, () => (this.hostUnhealthy ? 0 : 1));
     const task1 = this.newContextRun();
