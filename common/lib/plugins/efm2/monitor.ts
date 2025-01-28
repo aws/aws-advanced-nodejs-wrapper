@@ -200,7 +200,7 @@ export class MonitorImpl implements Monitor {
             this.activeContexts.push(...tmpActiveContexts);
 
             const delayNanos = this.failureDetectionIntervalNanos - (statusCheckEndTimeNanos - statusCheckStartTimeNanos);
-            await sleep(delayNanos < MonitorImpl.TASK_SLEEP_NANOS ? MonitorImpl.TASK_SLEEP_NANOS / 1000000 : delayNanos / 1000000);
+            await sleep(Math.max(delayNanos, MonitorImpl.TASK_SLEEP_NANOS) / 1000000);
           }
         } catch (error: any) {
           logger.debug(Messages.get("MonitorImpl.exceptionDuringMonitoringContinue", error.message));
