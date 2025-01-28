@@ -43,7 +43,7 @@ export interface MonitorService {
    *
    * @param context The {@link MonitorConnectionContext} representing a connection.
    * @param clientToAbort A reference to the connection associated with this context that will be aborted.
-   * */
+   */
   stopMonitoring(context: MonitorConnectionContext, clientToAbort: any): Promise<void>;
 
   releaseResources(): Promise<void>;
