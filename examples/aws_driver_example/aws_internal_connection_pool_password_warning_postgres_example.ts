@@ -14,7 +14,6 @@
   limitations under the License.
 */
 
-import { ConnectionProviderManager } from "../../common/lib/connection_provider_manager";
 import { InternalPooledConnectionProvider } from "../../common/lib/internal_pooled_connection_provider";
 import { logger } from "../../common/logutils";
 import { AwsPGClient } from "../../pg/lib";
