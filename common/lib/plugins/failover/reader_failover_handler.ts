@@ -152,13 +152,9 @@ export class ClusterAwareReaderFailoverHandler implements ReaderFailoverHandler 
           return result;
         }
       } catch (error) {
-        if (error instanceof AggregateError && error.message.includes("All promises were rejected")) {
-          // ignore and try the next batch
-        } else {
-          // Failover has failed.
-          this.taskHandler.setSelectedConnectionAttemptTask(failoverTaskId, ClusterAwareReaderFailoverHandler.FAILOVER_FAILED);
-          throw error;
-        }
+        // Failover has failed.
+        this.taskHandler.setSelectedConnectionAttemptTask(failoverTaskId, ClusterAwareReaderFailoverHandler.FAILOVER_FAILED);
+        throw error;
       }
 
       await sleep(1000);
@@ -184,7 +180,7 @@ export class ClusterAwareReaderFailoverHandler implements ReaderFailoverHandler 
         throw new AwsWrapperError("Connection attempt task timed out.");
       })
       .catch((error) => {
-        if (error instanceof InternalQueryTimeoutError || (error instanceof AggregateError && error.message.includes("All promises were rejected"))) {
+        if (error instanceof InternalQueryTimeoutError) {
           // ignore so the next task batch can be attempted
           return ClusterAwareReaderFailoverHandler.FAILED_READER_FAILOVER_RESULT;
         }
@@ -207,7 +203,26 @@ export class ClusterAwareReaderFailoverHandler implements ReaderFailoverHandler 
       tasks.push(secondTask.call());
     }
 
-    return await Promise.any(tasks);
+    return await Promise.any(tasks).catch((error: AggregateError) => {
+      let errors: string = "";
+      for (const e of error.errors) {
+        // Propagate errors that are not caused by network errors.
+        if (!this.pluginService.isNetworkError(e)) {
+          errors += `\n\t${e} - ${e.message}`;
+        }
+      }
+      if (errors) {
+        const awsWrapperError = new AwsWrapperError(
+          Messages.get(
+            "ClusterAwareReaderFailoverHandler.batchFailed",
+            `[${hosts[i].hostId}${numTasks === 2 ? `, ${hosts[i + 1].hostId}` : ``}]`,
+            `[\n${errors}\n]`
+          )
+        );
+        return new ReaderFailoverResult(null, null, false, awsWrapperError);
+      }
+      return new ReaderFailoverResult(null, null, false, undefined);
+    });
   }
 
   getReaderHostsByPriority(hosts: HostInfo[]): HostInfo[] {
@@ -321,18 +336,9 @@ class ConnectionAttemptTask {
         this.taskHandler.setSelectedConnectionAttemptTask(this.failoverTaskId, this.taskId);
         return new ReaderFailoverResult(this.targetClient, this.newHost, true, undefined, this.taskId);
       }
-      await this.pluginService.abortTargetClient(this.targetClient);
-      return new ReaderFailoverResult(null, null, false, undefined, this.taskId);
+      throw new AwsWrapperError(Messages.get("ClusterAwareReaderFailoverHandler.selectedTaskChosen", this.newHost.host));
     } catch (error) {
       this.pluginService.setAvailability(this.newHost.allAliases, HostAvailability.NOT_AVAILABLE);
-      if (error instanceof Error) {
-        // Propagate errors that are not caused by network errors.
-        if (!this.pluginService.isNetworkError(error)) {
-          return new ReaderFailoverResult(null, null, false, error, this.taskId);
-        }
-
-        return new ReaderFailoverResult(null, null, false, undefined, this.taskId);
-      }
       throw error;
     } finally {
       await this.performFinalCleanup();
