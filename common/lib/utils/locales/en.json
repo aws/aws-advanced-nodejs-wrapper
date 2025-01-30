@@ -122,7 +122,7 @@
   "HostAvailabilityStrategy.invalidInitialBackoffTime": "Invalid value of '%s'  for configuration parameter `hostAvailabilityStrategyInitialBackoffTime`. It must be an integer greater or equal to 1.",
   "MonitorConnectionContext.errorAbortingConnection": "Error during aborting connection: %s.",
   "MonitorConnectionContext.hostDead": "Host %s is *dead*.",
-  "MonitorConnectionContext.hostNotResponding": "Host %s is not *responding* %s",
+  "MonitorConnectionContext.hostNotResponding": "Host %s is not *responding* with failureCount: %s",
   "MonitorConnectionContext.hostAlive": "Host %s is *alive*.",
   "MonitorImpl.contextNullWarning": "Parameter 'context' should not be null or undefined.",
   "MonitorImpl.errorDuringMonitoringContinue": "Continuing monitoring after unhandled error was thrown in monitoring for host %s.",
@@ -131,6 +131,8 @@
   "MonitorImpl.stopped": "Stopped monitoring for host '%s'.",
   "MonitorImpl.startMonitoring": "Start monitoring for %s.",
   "MonitorImpl.stopMonitoring": "Stop monitoring for %s.",
+  "MonitorImpl.startMonitoringTaskNewContext": "Start monitoring thread for checking new contexts for '%s'",
+  "MonitorImpl.stopMonitoringTaskNewContext": "Stop monitoring thread for checking new contexts for '%s'",
   "MonitorService.startMonitoringNullMonitor": "Start monitoring called but could not find monitor for host: '%s'.",
   "MonitorService.emptyAliasSet": "Empty alias set passed for '%s'. Set should not be empty.",
   "PluginService.hostListEmpty": "Current host list is empty.",
@@ -142,6 +144,7 @@
   "HostMonitoringConnectionPlugin.unableToIdentifyConnection": "Unable to identify the given connection: '%s', please ensure the correct host list provider is specified. The host list provider in use is: '%s'.",
   "HostMonitoringConnectionPlugin.errorIdentifyingConnection": "Error occurred while identifying connection: '%s'.",
   "HostMonitoringConnectionPlugin.unavailableHost": "Host '%s' is unavailable.",
+  "HostMonitoringConnectionPlugin.identifyClusterConnection": "Monitoring host info is associated with a cluster endpoint, plugin needs to identify the cluster connection.",
   "PluginServiceImpl.failedToRetrieveHostPort": "PluginServiceImpl.failedToRetrieveHostPort",
   "AuroraInitialConnectionStrategyPlugin.unsupportedStrategy": "Unsupported host selection strategy '%s'.",
   "AuroraInitialConnectionStrategyPlugin.requireDynamicProvider": "Dynamic host list provider is required.",
@@ -194,5 +197,6 @@
   "ConfigurationProfileBuilder.profileNameRequired": "Profile name is required.",
   "ConfigurationProfileBuilder.canNotUpdateKnownPreset": "Can't add or update a built-in preset configuration profile '%s'.",
   "AwsClient.configurationProfileNotFound": "Configuration profile '%s' not found.",
-  "AwsClient.targetClientNotDefined": "AwsClient targetClient not defined."
+  "AwsClient.targetClientNotDefined": "AwsClient targetClient not defined.",
+  "HostMonitoringConnectionPlugin.monitoringDeactivated": "Monitoring deactivated for method '%s'"
 }

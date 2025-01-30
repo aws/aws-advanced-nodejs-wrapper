@@ -25,13 +25,13 @@ const database = "database";
 const port = 3306;
 
 const client = new AwsMySQLClient({
-  // Configure connection parameters. Enable readWriteSplitting, failover, and efm plugins.
+  // Configure connection parameters. Enable readWriteSplitting, failover, and efm2 plugins.
   host: mysqlHost,
   port: port,
   user: username,
   password: password,
   database: database,
-  plugins: "readWriteSplitting, fastestResponseStrategy, failover, efm",
+  plugins: "readWriteSplitting, fastestResponseStrategy, failover, efm2",
   readerHostSelectorStrategy: "fastestResponse"
 });
 
