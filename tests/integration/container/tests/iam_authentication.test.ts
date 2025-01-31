@@ -25,11 +25,12 @@ import { AwsMySQLClient } from "../../../../mysql/lib";
 import { IamAuthenticationPlugin } from "../../../../common/lib/authentication/iam_authentication_plugin";
 import { logger } from "../../../../common/logutils";
 import { TestEnvironmentFeatures } from "./utils/test_environment_features";
-import { features } from "./config";
+import { features, runTests } from "./config";
 import { PluginManager } from "../../../../common/lib";
 import { jest } from "@jest/globals";
 
 const itIf =
+  runTests &&
   !features.includes(TestEnvironmentFeatures.PERFORMANCE) &&
   !features.includes(TestEnvironmentFeatures.RUN_AUTOSCALING_TESTS_ONLY) &&
   features.includes(TestEnvironmentFeatures.IAM)

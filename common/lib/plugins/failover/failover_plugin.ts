@@ -433,7 +433,9 @@ export class FailoverPlugin extends AbstractConnectionPlugin {
             throw new AwsWrapperError(Messages.get("Failover.unableToDetermineWriter"));
           }
 
+          logger.silly(`Failover writer complete with writer host: ${writerHostInfo.host}`);
           const allowedHosts = this.pluginService.getHosts();
+          console.log(allowedHosts);
           if (!allowedHosts.some((hostInfo: HostInfo) => hostInfo.host === writerHostInfo?.host)) {
             const failoverErrorMessage = Messages.get(
               "Failover.newWriterNotAllowed",

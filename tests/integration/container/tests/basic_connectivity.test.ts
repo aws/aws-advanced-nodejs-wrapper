@@ -21,12 +21,14 @@ import { AuroraTestUtility } from "./utils/aurora_test_utility";
 import { logger } from "../../../../common/logutils";
 import { DatabaseEngine } from "./utils/database_engine";
 import { TestEnvironmentFeatures } from "./utils/test_environment_features";
-import { features } from "./config";
+import { features, runTests } from "./config";
 import { DatabaseEngineDeployment } from "./utils/database_engine_deployment";
 import { PluginManager } from "../../../../common/lib";
 
 const itIf =
-  !features.includes(TestEnvironmentFeatures.PERFORMANCE) && !features.includes(TestEnvironmentFeatures.RUN_AUTOSCALING_TESTS_ONLY) ? it : it.skip;
+  runTests && !features.includes(TestEnvironmentFeatures.PERFORMANCE) && !features.includes(TestEnvironmentFeatures.RUN_AUTOSCALING_TESTS_ONLY)
+    ? it
+    : it.skip;
 
 let client: any;
 let auroraTestUtility: AuroraTestUtility;

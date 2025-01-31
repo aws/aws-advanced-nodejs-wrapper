@@ -245,6 +245,9 @@ export class PluginService implements ErrorHandler, HostListProviderService {
   }
 
   private async setHostList(oldHosts: HostInfo[], newHosts: HostInfo[]) {
+    logger.silly("Setting host list");
+    console.log(oldHosts);
+    console.log(newHosts);
     const oldHostMap: Map<string, HostInfo> = new Map(oldHosts.map((e) => [e.url, e]));
     const newHostMap: Map<string, HostInfo> = new Map(newHosts.map((e) => [e.url, e]));
 
@@ -267,7 +270,10 @@ export class PluginService implements ErrorHandler, HostListProviderService {
       }
     });
 
+    console.log("changes: ");
+    console.log(changes);
     if (changes.size > 0) {
+      logger.silly("Changes found, setting hosts");
       this.hosts = newHosts ? newHosts : [];
       await this.pluginServiceManagerContainer.pluginManager!.notifyHostListChanged(changes);
     }
