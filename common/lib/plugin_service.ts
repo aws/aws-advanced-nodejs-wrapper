@@ -43,8 +43,6 @@ import { DatabaseDialectCodes } from "./database_dialect/database_dialect_codes"
 import { getWriter } from "./utils/utils";
 import { TelemetryFactory } from "./utils/telemetry/telemetry_factory";
 import { DriverDialect } from "./driver_dialect/driver_dialect";
-import { MonitoringRdsHostListProvider } from "./host_list_provider/monitoring/monitoring_host_list_provider";
-import { TopologyAwareDatabaseDialect } from "./topology_aware_database_dialect";
 
 export class PluginService implements ErrorHandler, HostListProviderService {
   private readonly _currentClient: AwsClient;
@@ -179,14 +177,12 @@ export class PluginService implements ErrorHandler, HostListProviderService {
   async forceMonitoringRefresh(shouldVerifyWriter: boolean, timeoutMs: number): Promise<boolean> {
     const hostListProvider: HostListProvider = this.getHostListProvider();
     if (!this.isBlockingHostListProvider(hostListProvider)) {
-      throw new AwsWrapperError(Messages.get("PluginService.requiredMonitoringRdsHostListProvider"), typeof hostListProvider);
+      logger.info(Messages.get("PluginService.requiredBlockingHostListProvider", typeof hostListProvider));
+      throw new AwsWrapperError(Messages.get("PluginService.requiredBlockingHostListProvider", typeof hostListProvider));
     }
 
     try {
-      const updatedHostList: HostInfo[] = await (hostListProvider as MonitoringRdsHostListProvider).forceMonitoringRefresh(
-        shouldVerifyWriter,
-        timeoutMs
-      );
+      const updatedHostList: HostInfo[] = await hostListProvider.forceMonitoringRefresh(shouldVerifyWriter, timeoutMs);
       if (updatedHostList) {
         if (updatedHostList !== this.hosts) {
           this.updateHostAvailability(updatedHostList);

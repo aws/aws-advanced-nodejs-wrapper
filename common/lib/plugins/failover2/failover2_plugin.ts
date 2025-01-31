@@ -124,28 +124,19 @@ export class Failover2Plugin extends AbstractConnectionPlugin implements CanRele
     );
   }
 
-  async updateTopology() {
-    const client = this.pluginService.getCurrentClient();
-    if (!this.isFailoverEnabled() || !(await client.isValid())) {
-      return;
-    }
-
-    await this.pluginService.refreshHostList();
-  }
-
   override async connect(
     hostInfo: HostInfo,
     props: Map<string, any>,
     isInitialConnection: boolean,
     connectFunc: () => Promise<ClientWrapper>
   ): Promise<ClientWrapper> {
-    // Call was initiated by Failover2 Plugin, does not require additional processing.
-    if (props.has(Failover2Plugin.INTERNAL_CONNECT_PROPERTY_NAME)) {
-      return await this._staleDnsHelper.getVerifiedConnection(hostInfo.host, isInitialConnection, this.hostListProviderService!, props, connectFunc);
-    }
-
-    // Failover is not enabled, does not require additional processing.
-    if (!this.enableFailoverSetting || !WrapperProperties.ENABLE_CLUSTER_AWARE_FAILOVER.get(props)) {
+    if (
+      // Call was initiated by Failover2 Plugin, does not require additional processing.
+      props.has(Failover2Plugin.INTERNAL_CONNECT_PROPERTY_NAME) ||
+      // Failover is not enabled, does not require additional processing.
+      !this.enableFailoverSetting ||
+      !WrapperProperties.ENABLE_CLUSTER_AWARE_FAILOVER.get(props)
+    ) {
       return await this._staleDnsHelper.getVerifiedConnection(hostInfo.host, isInitialConnection, this.hostListProviderService!, props, connectFunc);
     }
 
@@ -388,9 +379,7 @@ export class Failover2Plugin extends AbstractConnectionPlugin implements CanRele
       await telemetryContext.start(async () => {
         if (!(await this.pluginService.forceMonitoringRefresh(true, this.failoverTimeoutSettingMs))) {
           // Unable to establish SQL connection to writer node.
-          this.failoverWriterFailedCounter.inc();
-          logger.error(Messages.get("Failover2.unableToFetchTopology"));
-          throw new FailoverFailedError(Messages.get("Failover.unableToConnectToWriter"));
+          this.logAndThrowError(Messages.get("Failover2.unableToFetchTopology"));
         }
 
         const hosts: HostInfo[] = this.pluginService.getHosts();
@@ -402,16 +391,12 @@ export class Failover2Plugin extends AbstractConnectionPlugin implements CanRele
           try {
             writerCandidateClient = await this.createConnectionForHost(writerCandidateHostInfo);
           } catch (err) {
-            logger.error(Messages.get("Failover.unableToConnectToWriter"));
-            this.failoverWriterFailedCounter.inc();
-            throw new FailoverFailedError(Messages.get("Failover.unableToConnectToWriter"));
+            this.logAndThrowError("Failover.unableToConnectToWriter");
           }
         }
 
         if (!writerCandidateClient) {
-          logger.error(Messages.get("Failover.unableToConnectToWriter"));
-          this.failoverWriterFailedCounter.inc();
-          throw new FailoverFailedError(Messages.get("Failover.unableToConnectToWriter"));
+          this.logAndThrowError("Failover.unableToConnectToWriter");
         }
 
         if ((await this.pluginService.getHostRole(writerCandidateClient)) !== HostRole.WRITER) {
@@ -420,9 +405,7 @@ export class Failover2Plugin extends AbstractConnectionPlugin implements CanRele
           } catch (error) {
             // Do nothing.
           }
-          logger.error(Messages.get("Failover2.failoverWriterConnectedToReader"));
-          this.failoverWriterFailedCounter.inc();
-          throw new FailoverFailedError(Messages.get("Failover2.failoverWriterConnectedToReader"));
+          this.logAndThrowError(Messages.get("Failover2.failoverWriterConnectedToReader"));
         }
 
         await this.pluginService.abortCurrentClient();
@@ -489,6 +472,12 @@ export class Failover2Plugin extends AbstractConnectionPlugin implements CanRele
     }
 
     return false;
+  }
+
+  private logAndThrowError(errorMessage: string) {
+    logger.error(errorMessage);
+    this.failoverWriterFailedCounter.inc();
+    throw new FailoverFailedError(errorMessage);
   }
 
   async releaseResources(): Promise<void> {

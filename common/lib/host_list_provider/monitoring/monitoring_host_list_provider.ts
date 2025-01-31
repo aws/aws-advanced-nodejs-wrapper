@@ -26,6 +26,7 @@ import { AwsWrapperError } from "../../utils/errors";
 import { Messages } from "../../utils/messages";
 import { WrapperProperties } from "../../wrapper_property";
 import { BlockingHostListProvider } from "../host_list_provider";
+import { logger } from "../../../logutils";
 
 export class MonitoringRdsHostListProvider extends RdsHostListProvider implements BlockingHostListProvider {
   static readonly CACHE_CLEANUP_NANOS: bigint = BigInt(60_000_000_000); // 1 minute.
@@ -63,17 +64,12 @@ export class MonitoringRdsHostListProvider extends RdsHostListProvider implement
   }
 
   async queryForTopology(targetClient: ClientWrapper, dialect: DatabaseDialect): Promise<HostInfo[]> {
-    let monitor: ClusterTopologyMonitor = MonitoringRdsHostListProvider.monitors.get(
-      this.clusterId,
-      MonitoringRdsHostListProvider.MONITOR_EXPIRATION_NANOS
-    );
-    if (!monitor) {
-      monitor = this.initMonitor();
-    }
+    const monitor: ClusterTopologyMonitor = this.initMonitor();
 
     try {
       return await monitor.forceRefresh(targetClient, MonitoringRdsHostListProvider.DEFAULT_TOPOLOGY_QUERY_TIMEOUT_MS);
-    } catch {
+    } catch (error) {
+      logger.info(Messages.get("MonitoringHostListProvider.errorForceRefresh", error.message));
       return null;
     }
   }
@@ -87,36 +83,31 @@ export class MonitoringRdsHostListProvider extends RdsHostListProvider implement
   }
 
   async forceMonitoringRefresh(shouldVerifyWriter: boolean, timeoutMs: number): Promise<HostInfo[]> {
-    let monitor: ClusterTopologyMonitor = MonitoringRdsHostListProvider.monitors.get(
-      this.clusterId,
-      MonitoringRdsHostListProvider.MONITOR_EXPIRATION_NANOS
-    );
-    if (!monitor) {
-      monitor = this.initMonitor();
-    }
+    const monitor: ClusterTopologyMonitor = this.initMonitor();
 
-    if (!monitor) {
-      throw new AwsWrapperError(Messages.get("MonitoringHostListProvider.requiresMonitor"));
-    }
     return await monitor.forceMonitoringRefresh(shouldVerifyWriter, timeoutMs);
   }
 
   protected initMonitor(): ClusterTopologyMonitor {
-    const monitor = new ClusterTopologyMonitorImpl(
+    const monitor: ClusterTopologyMonitor = MonitoringRdsHostListProvider.monitors.computeIfAbsent(
       this.clusterId,
-      MonitoringRdsHostListProvider.topologyCache,
-      this.initialHost,
-      this.properties,
-      this.pluginService,
-      this,
-      WrapperProperties.CLUSTER_TOPOLOGY_REFRESH_RATE_MS.get(this.properties),
-      WrapperProperties.CLUSTER_TOPOLOGY_HIGH_REFRESH_RATE_MS.get(this.properties)
-    );
-
-    return MonitoringRdsHostListProvider.monitors.computeIfAbsent(
-      this.clusterId,
-      (x) => monitor,
+      () =>
+        new ClusterTopologyMonitorImpl(
+          this.clusterId,
+          MonitoringRdsHostListProvider.topologyCache,
+          this.initialHost,
+          this.properties,
+          this.pluginService,
+          this,
+          WrapperProperties.CLUSTER_TOPOLOGY_REFRESH_RATE_MS.get(this.properties),
+          WrapperProperties.CLUSTER_TOPOLOGY_HIGH_REFRESH_RATE_MS.get(this.properties)
+        ),
       MonitoringRdsHostListProvider.MONITOR_EXPIRATION_NANOS
     );
+
+    if (monitor === null) {
+      throw new AwsWrapperError(Messages.get("MonitoringHostListProvider.requiresMonitor"));
+    }
+    return monitor;
   }
 }

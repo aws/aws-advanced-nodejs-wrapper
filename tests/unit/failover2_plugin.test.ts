@@ -73,39 +73,6 @@ describe("reader failover handler", () => {
     reset(mockRdsHostListProvider);
   });
 
-  it("test update topology", async () => {
-    when(mockAwsClient.isValid()).thenResolve(true);
-
-    // Test updateTopology with failover disabled.
-    WrapperProperties.ENABLE_CLUSTER_AWARE_FAILOVER.set(properties, false);
-    initializePlugin(instance(mockPluginService));
-    await plugin.updateTopology();
-    verify(mockPluginService.forceRefreshHostList()).never();
-    verify(mockPluginService.refreshHostList()).never();
-
-    // Test updateTopology with no connection.
-    WrapperProperties.ENABLE_CLUSTER_AWARE_FAILOVER.set(properties, true);
-    initializePlugin(instance(mockPluginService));
-    when(mockPluginService.getCurrentHostInfo()).thenReturn(null);
-    await plugin.updateTopology();
-    verify(mockPluginService.forceRefreshHostList()).never();
-    verify(mockPluginService.refreshHostList()).never();
-
-    // Test updateTopology with closed connection.
-    when(mockAwsClient.isValid()).thenResolve(true);
-    await plugin.updateTopology();
-    verify(mockPluginService.forceRefreshHostList()).never();
-    verify(mockPluginService.refreshHostList()).never();
-
-    // Test with hosts.
-    when(mockPluginService.getHosts()).thenReturn([builder.withHost("host").build()]);
-
-    // Test updateTopology.
-    await plugin.updateTopology();
-    verify(mockPluginService.forceRefreshHostList()).never();
-    verify(mockPluginService.refreshHostList()).once();
-  });
-
   it("test failover - failover reader", async () => {
     when(mockPluginService.isInTransaction()).thenReturn(true);
     initializePlugin(instance(mockPluginService));
@@ -152,9 +119,6 @@ describe("reader failover handler", () => {
 
     initializePlugin(mockPluginServiceInstance);
     plugin.initHostProvider(mockHostInfoInstance, properties, mockPluginServiceInstance, () => {});
-
-    const spyPlugin: Failover2Plugin = spy(plugin);
-    when(spyPlugin.updateTopology()).thenReturn();
 
     await plugin.failoverReader();
 
