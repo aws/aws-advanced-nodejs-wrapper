@@ -23,7 +23,7 @@ import { QueryResult } from "pg";
 import { ProxyHelper } from "./utils/proxy_helper";
 import { logger } from "../../../../common/logutils";
 import { TestEnvironmentFeatures } from "./utils/test_environment_features";
-import { features, instanceCount } from "./config";
+import { features, instanceCount, runTests } from "./config";
 import { InternalPooledConnectionProvider } from "../../../../common/lib/internal_pooled_connection_provider";
 import { AwsPoolConfig } from "../../../../common/lib/aws_pool_config";
 import { InternalPoolMapping } from "../../../../common/lib/utils/internal_pool_mapping";
@@ -31,6 +31,7 @@ import { HostInfo } from "../../../../common/lib/host_info";
 import { PluginManager } from "../../../../common/lib";
 
 const itIf =
+  runTests &&
   !features.includes(TestEnvironmentFeatures.PERFORMANCE) &&
   features.includes(TestEnvironmentFeatures.IAM) &&
   !features.includes(TestEnvironmentFeatures.RUN_AUTOSCALING_TESTS_ONLY) &&

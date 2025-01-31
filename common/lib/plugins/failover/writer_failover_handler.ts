@@ -237,7 +237,7 @@ class ReconnectToWriterHandlerTask {
           props.set(WrapperProperties.HOST.name, this.originalWriterHost.host);
           this.currentClient = await this.pluginService.forceConnect(this.originalWriterHost, props);
           await this.pluginService.forceRefreshHostList(this.currentClient);
-          latestTopology = this.pluginService.getHosts();
+          latestTopology = this.pluginService.getAllHosts();
         } catch (error) {
           // Propagate errors that are not caused by network errors.
           if (error instanceof AwsWrapperError && !this.pluginService.isNetworkError(error)) {
@@ -384,7 +384,7 @@ class WaitForNewWriterHandlerTask {
         if (this.currentReaderTargetClient) {
           await this.pluginService.forceRefreshHostList(this.currentReaderTargetClient);
         }
-        const topology = this.pluginService.getHosts();
+        const topology = this.pluginService.getAllHosts();
 
         if (topology && topology.length > 0) {
           if (topology.length === 1) {

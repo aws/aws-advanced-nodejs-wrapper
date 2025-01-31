@@ -388,6 +388,10 @@ export class TestEnvironment {
     return this.info.request.deployment;
   }
 
+  get auroraClusterName(): string {
+    return this.info.auroraClusterName;
+  }
+
   private static createProxyUrl(host: string, port: number) {
     return `http://${host}:${port}`;
   }

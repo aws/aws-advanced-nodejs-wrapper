@@ -15,16 +15,16 @@
 */
 
 import { PluginService } from "../plugin_service";
-import { RdsUtils } from "../utils/rds_utils";
 import { Messages } from "../utils/messages";
 import { logger } from "../../logutils";
 import { AwsWrapperError } from "../utils/errors";
 import { HostInfo } from "../host_info";
 import { AwsCredentialsManager } from "./aws_credentials_manager";
 import { AbstractConnectionPlugin } from "../abstract_connection_plugin";
-import { WrapperProperties } from "../wrapper_property";
+import { WrapperProperties, WrapperProperty } from "../wrapper_property";
 import { IamAuthUtils, TokenInfo } from "../utils/iam_auth_utils";
 import { ClientWrapper } from "../client_wrapper";
+import { RegionUtils } from "../utils/region_utils";
 
 export class IamAuthenticationPlugin extends AbstractConnectionPlugin {
   private static readonly SUBSCRIBED_METHODS = new Set<string>(["connect", "forceConnect"]);
@@ -32,7 +32,6 @@ export class IamAuthenticationPlugin extends AbstractConnectionPlugin {
   private readonly telemetryFactory;
   private readonly fetchTokenCounter;
   private pluginService: PluginService;
-  rdsUtil: RdsUtils = new RdsUtils();
 
   constructor(pluginService: PluginService) {
     super();
@@ -75,7 +74,7 @@ export class IamAuthenticationPlugin extends AbstractConnectionPlugin {
     }
 
     const host = IamAuthUtils.getIamHost(props, hostInfo);
-    const region: string = IamAuthUtils.getRdsRegion(host, this.rdsUtil, props);
+    const region: string = RegionUtils.getRegion(props.get(WrapperProperties.IAM_REGION.name), host);
     const port = IamAuthUtils.getIamPort(props, hostInfo, this.pluginService.getCurrentClient().defaultPort);
     const tokenExpirationSec = WrapperProperties.IAM_TOKEN_EXPIRATION.get(props);
     if (tokenExpirationSec < 0) {

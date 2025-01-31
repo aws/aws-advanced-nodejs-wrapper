@@ -77,7 +77,7 @@ export abstract class ConnectionUrlParser {
     const hostsList: HostInfo[] = [];
     const hosts: string[] = this.getHostPortPairsFromUrl(initialConnection);
     hosts.forEach((pair, i) => {
-      let host;
+      let host: HostInfo;
       if (singleWriterConnectionString) {
         const role: HostRole = i > 0 ? HostRole.READER : HostRole.WRITER;
         host = this.parseHostPortPair(pair, fallbackPort, builderFunc, role);

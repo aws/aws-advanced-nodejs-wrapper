@@ -34,3 +34,4 @@ const testInfo = JSON.parse(infoJson);
 const request = testInfo.request;
 export const features = request.features;
 export const instanceCount = request.numOfInstances;
+export const runTests = false; // TODO: remove

@@ -165,7 +165,7 @@ export class RdsUtils {
       RdsUtils.AURORA_OLD_CHINA_DNS_PATTERN,
       RdsUtils.AURORA_GOV_DNS_PATTERN
     );
-    if (this.getRegexGroup(matcher, RdsUtils.DNS_GROUP)) {
+    if (this.getRegexGroup(matcher, RdsUtils.DNS_GROUP) !== null) {
       return this.getRegexGroup(matcher, RdsUtils.INSTANCE_GROUP);
     }
 

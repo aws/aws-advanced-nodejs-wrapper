@@ -30,6 +30,7 @@ import { AwsWrapperError } from "../../common/lib/utils/errors";
 import { MySQLClientWrapper } from "../../common/lib/mysql_client_wrapper";
 import { jest } from "@jest/globals";
 import { PgClientWrapper } from "../../common/lib/pg_client_wrapper";
+import { MySQL2DriverDialect } from "../../mysql/lib/dialect/mysql2_driver_dialect";
 
 const mockPluginService = mock(PluginService);
 const mockHostListProviderService = mock<HostListProviderService>();
@@ -62,8 +63,8 @@ describe("Aurora initial connection strategy plugin", () => {
     plugin.initHostProvider(hostInfo, props, instance(mockHostListProviderService), mockFunc);
     WrapperProperties.OPEN_CONNECTION_RETRY_TIMEOUT_MS.set(props, 1000);
 
-    writerClient = new MySQLClientWrapper(undefined, writerHostInfo, new Map<string, any>());
-    readerClient = new MySQLClientWrapper(undefined, readerHostInfo, new Map<string, any>());
+    writerClient = new MySQLClientWrapper(undefined, writerHostInfo, new Map<string, any>(), new MySQL2DriverDialect());
+    readerClient = new MySQLClientWrapper(undefined, readerHostInfo, new Map<string, any>(), new MySQL2DriverDialect());
   });
 
   afterEach(() => {
@@ -100,13 +101,13 @@ describe("Aurora initial connection strategy plugin", () => {
 
   it("test writer - not found", async () => {
     when(mockRdsUtils.identifyRdsType(anything())).thenReturn(RdsUrlType.RDS_WRITER_CLUSTER);
-    when(mockPluginService.getHosts()).thenReturn([hostInfoBuilder.withRole(HostRole.READER).build()]);
+    when(mockPluginService.getAllHosts()).thenReturn([hostInfoBuilder.withRole(HostRole.READER).build()]);
     expect(await plugin.connect(hostInfo, props, true, mockFuncUndefined)).toBe(undefined);
   });
 
   it("test writer - resolves to reader", async () => {
     when(mockRdsUtils.identifyRdsType(anything())).thenReturn(RdsUrlType.RDS_WRITER_CLUSTER);
-    when(mockPluginService.getHosts()).thenReturn([hostInfoBuilder.withRole(HostRole.WRITER).build()]);
+    when(mockPluginService.getAllHosts()).thenReturn([hostInfoBuilder.withRole(HostRole.WRITER).build()]);
     when(mockPluginService.connect(anything(), anything())).thenResolve(instance(readerClient));
 
     expect(await plugin.connect(hostInfo, props, true, mockFunc)).toBe(undefined);
@@ -114,7 +115,7 @@ describe("Aurora initial connection strategy plugin", () => {
 
   it("test writer - resolve to writer", async () => {
     when(mockRdsUtils.identifyRdsType(anything())).thenReturn(RdsUrlType.RDS_WRITER_CLUSTER);
-    when(mockPluginService.getHosts()).thenReturn([hostInfoBuilder.withRole(HostRole.WRITER).build()]);
+    when(mockPluginService.getAllHosts()).thenReturn([hostInfoBuilder.withRole(HostRole.WRITER).build()]);
     when(mockPluginService.getHostRole(writerClient)).thenReturn(Promise.resolve(HostRole.WRITER));
     when(mockPluginService.connect(anything(), anything())).thenResolve(writerClient);
 
@@ -152,7 +153,7 @@ describe("Aurora initial connection strategy plugin", () => {
 
   it("test reader - return writer", async () => {
     when(mockRdsUtils.identifyRdsType(anything())).thenReturn(RdsUrlType.RDS_READER_CLUSTER);
-    when(mockPluginService.getHosts())
+    when(mockPluginService.getAllHosts())
       .thenReturn([hostInfoBuilder.withRole(HostRole.READER).build()])
       .thenReturn([hostInfoBuilder.withRole(HostRole.WRITER).build()]);
     when(mockPluginService.connect(anything(), anything())).thenResolve(writerClient);

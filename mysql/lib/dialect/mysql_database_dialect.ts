@@ -28,6 +28,7 @@ import { ErrorHandler } from "../../../common/lib/error_handler";
 import { MySQLErrorHandler } from "../mysql_error_handler";
 import { SessionState } from "../../../common/lib/session_state";
 import { Messages } from "../../../common/lib/utils/messages";
+import { HostRole } from "../../../common/lib/host_role";
 
 export class MySQLDatabaseDialect implements DatabaseDialect {
   protected dialectName: string = this.constructor.name;
@@ -205,5 +206,9 @@ export class MySQLDatabaseDialect implements DatabaseDialect {
 
   doesStatementSetSchema(statement: string): string | undefined {
     return undefined;
+  }
+
+  async getHostRole(targetClient: ClientWrapper): Promise<HostRole> {
+    throw new UnsupportedMethodError(`Method getHostRole not supported for dialect: ${this.dialectName}`);
   }
 }
