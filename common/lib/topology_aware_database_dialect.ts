@@ -25,4 +25,6 @@ export interface TopologyAwareDatabaseDialect {
   identifyConnection(targetClient: ClientWrapper): Promise<string>;
 
   getHostRole(client: ClientWrapper): Promise<HostRole>;
+
+  getWriterId(client: ClientWrapper): Promise<string | null>;
 }

@@ -16,7 +16,6 @@
 
 import { DynamicHostListProvider } from "./host_list_provider";
 import { HostInfo } from "../host_info";
-import { AwsClient } from "../aws_client";
 import { HostRole } from "../host_role";
 import { RdsUrlType } from "../utils/rds_url_type";
 import { RdsUtils } from "../utils/rds_utils";
@@ -39,7 +38,7 @@ export class RdsHostListProvider implements DynamicHostListProvider {
   protected readonly properties: Map<string, any>;
   private rdsUrlType: RdsUrlType;
   private initialHostList: HostInfo[];
-  private initialHost: HostInfo;
+  protected initialHost: HostInfo;
   private refreshRateNano: number;
   private suggestedClusterIdRefreshRateNano: number = 10 * 60 * 1_000_000_000; // 10 minutes
   private hostList?: HostInfo[];
@@ -144,6 +143,19 @@ export class RdsHostListProvider implements DynamicHostListProvider {
 
     if (client) {
       return await dialect.getHostRole(client);
+    } else {
+      throw new AwsWrapperError(Messages.get("AwsClient.targetClientNotDefined"));
+    }
+  }
+
+  async getWriterId(client: ClientWrapper): Promise<string | null> {
+    const dialect = this.hostListProviderService.getDialect();
+    if (!this.isTopologyAwareDatabaseDialect(dialect)) {
+      throw new TypeError(Messages.get("RdsHostListProvider.incorrectDialect"));
+    }
+
+    if (client) {
+      return await dialect.getWriterId(client);
     } else {
       throw new AwsWrapperError(Messages.get("AwsClient.targetClientNotDefined"));
     }
@@ -276,7 +288,7 @@ export class RdsHostListProvider implements DynamicHostListProvider {
     return await dialect.queryForTopology(targetClient, this).then((res: any) => this.processQueryResults(res));
   }
 
-  private async processQueryResults(result: HostInfo[]): Promise<HostInfo[]> {
+  protected async processQueryResults(result: HostInfo[]): Promise<HostInfo[]> {
     const hostMap: Map<string, HostInfo> = new Map<string, HostInfo>();
 
     let hosts: HostInfo[] = [];

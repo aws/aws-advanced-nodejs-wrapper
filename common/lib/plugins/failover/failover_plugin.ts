@@ -71,17 +71,15 @@ export class FailoverPlugin extends AbstractConnectionPlugin {
   private telemetryFailoverAdditionalTopTraceSetting: boolean = false;
   private _rdsUrlType: RdsUrlType | null = null;
   private _isInTransaction: boolean = false;
-  private _closedExplicitly: boolean = false;
   private _lastError: any;
   protected failoverTimeoutMsSetting: number = WrapperProperties.FAILOVER_TIMEOUT_MS.defaultValue;
   protected failoverClusterTopologyRefreshRateMsSetting: number = WrapperProperties.FAILOVER_CLUSTER_TOPOLOGY_REFRESH_RATE_MS.defaultValue;
   protected failoverWriterReconnectIntervalMsSetting: number = WrapperProperties.FAILOVER_WRITER_RECONNECT_INTERVAL_MS.defaultValue;
   protected failoverReaderConnectTimeoutMsSetting: number = WrapperProperties.FAILOVER_READER_CONNECT_TIMEOUT_MS.defaultValue;
-  protected isClosed: boolean = false;
   failoverMode: FailoverMode | null = null;
 
   private hostListProviderService?: HostListProviderService;
-  private pluginService: PluginService;
+  private readonly pluginService: PluginService;
   protected enableFailoverSetting: boolean = WrapperProperties.ENABLE_CLUSTER_AWARE_FAILOVER.defaultValue;
 
   constructor(pluginService: PluginService, properties: Map<string, any>, rdsHelper: RdsUtils);
@@ -229,18 +227,6 @@ export class FailoverPlugin extends AbstractConnectionPlugin {
     this.telemetryFailoverAdditionalTopTraceSetting = WrapperProperties.TELEMETRY_FAILOVER_ADDITIONAL_TOP_TRACE.get(this._properties);
   }
 
-  private async invalidInvocationOnClosedConnection() {
-    if (!this._closedExplicitly) {
-      this.isClosed = false;
-      await this.pickNewConnection();
-
-      // "The active SQL connection has changed. Please re-configure session state if required."
-      logger.debug(Messages.get("Failover.connectionChangedError"));
-      throw new FailoverSuccessError(Messages.get("Failover.connectionChangedError"));
-    }
-    throw new AwsWrapperError(Messages.get("Failover.noOperationsAfterConnectionClosed"));
-  }
-
   private getCurrentWriter(): HostInfo | null {
     const topology = this.pluginService.getHosts();
     if (topology.length == 0) {
@@ -309,10 +295,6 @@ export class FailoverPlugin extends AbstractConnectionPlugin {
 
       if (!this.enableFailoverSetting || this.canDirectExecute(methodName)) {
         return await methodFunc();
-      }
-
-      if (this.isClosed) {
-        await this.invalidInvocationOnClosedConnection();
       }
 
       if (this.canUpdateTopology(methodName)) {
@@ -485,10 +467,6 @@ export class FailoverPlugin extends AbstractConnectionPlugin {
   }
 
   async pickNewConnection() {
-    if (this.isClosed && this._closedExplicitly) {
-      logger.debug(Messages.get("Failover.transactionResolutionUnknownError"));
-      return;
-    }
     const currentClient = this.pluginService.getCurrentClient();
     const currentWriter = this.getCurrentWriter();
     if (currentWriter && currentClient.targetClient == null && !this.shouldAttemptReaderConnection()) {

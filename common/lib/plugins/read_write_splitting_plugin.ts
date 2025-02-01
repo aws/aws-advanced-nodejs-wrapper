@@ -196,7 +196,9 @@ export class ReadWriteSplittingPlugin extends AbstractConnectionPlugin implement
     const props = new Map(this._properties);
     props.set(WrapperProperties.HOST.name, writerHost.host);
     try {
-      const targetClient = await this.pluginService.connect(writerHost, props);
+      const copyProps = new Map<string, any>(props);
+      WrapperProperties.ENABLE_CLUSTER_AWARE_FAILOVER.set(copyProps, false);
+      const targetClient = await this.pluginService.connect(writerHost, copyProps);
       this.isWriterClientFromInternalPool = targetClient instanceof PoolClientWrapper;
       this.setWriterClient(targetClient, writerHost);
       await this.switchCurrentTargetClientTo(this.writerTargetClient, writerHost);
@@ -289,7 +291,9 @@ export class ReadWriteSplittingPlugin extends AbstractConnectionPlugin implement
         props.set(WrapperProperties.HOST.name, host.host);
 
         try {
-          targetClient = await this.pluginService.connect(host, props);
+          const copyProps = new Map<string, any>(props);
+          WrapperProperties.ENABLE_CLUSTER_AWARE_FAILOVER.set(copyProps, false);
+          targetClient = await this.pluginService.connect(host, copyProps);
           this.isReaderClientFromInternalPool = targetClient instanceof PoolClientWrapper;
           readerHost = host;
           break;

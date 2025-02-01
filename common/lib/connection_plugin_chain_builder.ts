@@ -26,6 +26,7 @@ import { ExecuteTimePluginFactory } from "./plugins/execute_time_plugin_factory"
 import { ConnectTimePluginFactory } from "./plugins/connect_time_plugin_factory";
 import { AwsSecretsManagerPluginFactory } from "./authentication/aws_secrets_manager_plugin_factory";
 import { FailoverPluginFactory } from "./plugins/failover/failover_plugin_factory";
+import { Failover2PluginFactory } from "./plugins/failover2/failover2_plugin_factory";
 import { StaleDnsPluginFactory } from "./plugins/stale_dns/stale_dns_plugin_factory";
 import { FederatedAuthPluginFactory } from "./plugins/federated_auth/federated_auth_plugin_factory";
 import { ReadWriteSplittingPluginFactory } from "./plugins/read_write_splitting_plugin_factory";
@@ -58,6 +59,7 @@ export class ConnectionPluginChainBuilder {
     ["staleDns", { factory: StaleDnsPluginFactory, weight: 500 }],
     ["readWriteSplitting", { factory: ReadWriteSplittingPluginFactory, weight: 600 }],
     ["failover", { factory: FailoverPluginFactory, weight: 700 }],
+    ["failover2", { factory: Failover2PluginFactory, weight: 710 }],
     ["efm", { factory: HostMonitoringPluginFactory, weight: 800 }],
     ["fastestResponseStrategy", { factory: FastestResponseStrategyPluginFactory, weight: 900 }],
     ["limitless", { factory: LimitlessConnectionPluginFactory, weight: 950 }],
@@ -76,6 +78,7 @@ export class ConnectionPluginChainBuilder {
     [StaleDnsPluginFactory, 500],
     [ReadWriteSplittingPluginFactory, 600],
     [FailoverPluginFactory, 700],
+    [Failover2PluginFactory, 710],
     [HostMonitoringPluginFactory, 800],
     [LimitlessConnectionPluginFactory, 950],
     [IamAuthenticationPluginFactory, 1000],

@@ -24,6 +24,9 @@ import { HostRole } from "../../../common/lib/host_role";
 import { ClientWrapper } from "../../../common/lib/client_wrapper";
 import { DatabaseDialectCodes } from "../../../common/lib/database_dialect/database_dialect_codes";
 import { LimitlessDatabaseDialect } from "../../../common/lib/database_dialect/limitless_database_dialect";
+import { WrapperProperties } from "../../../common/lib/wrapper_property";
+import { MonitoringRdsHostListProvider } from "../../../common/lib/host_list_provider/monitoring/monitoring_host_list_provider";
+import { PluginService } from "../../../common/lib/plugin_service";
 
 export class AuroraPgDatabaseDialect extends PgDatabaseDialect implements TopologyAwareDatabaseDialect, LimitlessDatabaseDialect {
   private static readonly TOPOLOGY_QUERY: string =
@@ -37,8 +40,13 @@ export class AuroraPgDatabaseDialect extends PgDatabaseDialect implements Topolo
     "SELECT (setting LIKE '%aurora_stat_utils%') AS aurora_stat_utils FROM pg_settings WHERE name='rds.extensions'";
   private static readonly HOST_ID_QUERY: string = "SELECT aurora_db_instance_identifier() as host";
   private static readonly IS_READER_QUERY: string = "SELECT pg_is_in_recovery() as is_reader";
+  private static readonly IS_WRITER_QUERY: string =
+    "SELECT server_id " + "FROM aurora_replica_status() " + "WHERE SESSION_ID = 'MASTER_SESSION_ID' AND SERVER_ID = aurora_db_instance_identifier()";
 
   getHostListProvider(props: Map<string, any>, originalUrl: string, hostListProviderService: HostListProviderService): HostListProvider {
+    if (WrapperProperties.PLUGINS.get(props).includes("failover2")) {
+      return new MonitoringRdsHostListProvider(props, originalUrl, hostListProviderService, <PluginService>hostListProviderService);
+    }
     return new RdsHostListProvider(props, originalUrl, hostListProviderService);
   }
 
@@ -68,6 +76,20 @@ export class AuroraPgDatabaseDialect extends PgDatabaseDialect implements Topolo
   async getHostRole(targetClient: ClientWrapper): Promise<HostRole> {
     const res = await targetClient.query(AuroraPgDatabaseDialect.IS_READER_QUERY);
     return Promise.resolve(res.rows[0]["is_reader"] === true ? HostRole.READER : HostRole.WRITER);
+  }
+
+  async getWriterId(targetClient: ClientWrapper): Promise<string | null> {
+    const res = await targetClient.query(AuroraPgDatabaseDialect.IS_WRITER_QUERY);
+    try {
+      const writerId: string = res.rows[0]["server_id"];
+      return writerId ? writerId : null;
+    } catch (e) {
+      if (e.message.includes("Cannot read properties of undefined")) {
+        // Query returned no result, targetClient is not connected to a writer.
+        return null;
+      }
+      throw e;
+    }
   }
 
   async isDialect(targetClient: ClientWrapper): Promise<boolean> {
