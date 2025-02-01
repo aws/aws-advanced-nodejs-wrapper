@@ -43,10 +43,10 @@ import { logger } from "../logutils";
 export class InternalPooledConnectionProvider implements PooledConnectionProvider, CanReleaseResources {
   static readonly CACHE_CLEANUP_NANOS: bigint = BigInt(10 * 60_000_000_000); // 10 minutes
   static readonly POOL_EXPIRATION_NANOS: bigint = BigInt(30 * 60_000_000_000); // 30 minutes
-  protected static databasePools: SlidingExpirationCache<string, any> = new SlidingExpirationCache(
+  protected static databasePools: SlidingExpirationCache<string, AwsPoolClient> = new SlidingExpirationCache(
     InternalPooledConnectionProvider.CACHE_CLEANUP_NANOS,
-    (pool: any) => pool.getActiveCount() === 0,
-    (pool: any) => pool.end()
+    (pool: AwsPoolClient) => pool.getActiveCount() === 0,
+    (pool: AwsPoolClient) => pool.end()
   );
 
   private static readonly acceptedStrategies: Map<string, HostSelector> = new Map([
@@ -122,16 +122,7 @@ export class InternalPooledConnectionProvider implements PooledConnectionProvide
   }
 
   async releaseResources() {
-    for (const [_key, value] of InternalPooledConnectionProvider.databasePools.entries) {
-      if (value.item) {
-        await value.item.releaseResources();
-      }
-    }
-    InternalPooledConnectionProvider.clearDatabasePools();
-  }
-
-  static clearDatabasePools() {
-    InternalPooledConnectionProvider.databasePools.clear();
+    await InternalPooledConnectionProvider.databasePools.clear();
   }
 
   getHostInfoByStrategy(hosts: HostInfo[], role: HostRole, strategy: string, props?: Map<string, any>): HostInfo {
