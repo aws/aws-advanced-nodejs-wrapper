@@ -25,6 +25,7 @@ import { ClientWrapper } from "../../common/lib/client_wrapper";
 import { PgDatabaseDialect } from "../../pg/lib/dialect/pg_database_dialect";
 import { NodePostgresDriverDialect } from "../../pg/lib/dialect/node_postgres_driver_dialect";
 import { PgClientWrapper } from "../../common/lib/pg_client_wrapper";
+import { sleep } from "../../common/lib/utils/utils";
 
 const host1 = new HostInfo("writer", 1234, HostRole.WRITER);
 const host2 = new HostInfo("reader1", 1234, HostRole.READER);
@@ -83,6 +84,49 @@ describe("reader failover handler", () => {
     expect(result.isConnected).toBe(true);
     expect(result.client).toBe(mockClientWrapper);
     expect(result.newHost).toBe(hosts[successHostIndex]);
+  }, 30000);
+
+  it("test failover - batch failure", async () => {
+    const expectedClients: ClientWrapper[] = [];
+    const hosts = [...defaultHosts];
+    const successHostIndex = 1;
+
+    when(mockPluginService.getHosts()).thenReturn(hosts);
+    when(await mockPluginService.getHostRole(anything())).thenReturn(HostRole.READER);
+
+    for (let i = 0; i < hosts.length; i++) {
+      if (i === successHostIndex) {
+        const client = new PgClientWrapper({}, hosts[i], properties);
+        expectedClients.push(client);
+        when(mockPluginService.forceConnect(hosts[i], anything())).thenCall(async () => {
+          await sleep(100);
+          return client;
+        });
+      } else {
+        when(mockPluginService.forceConnect(hosts[i], anything())).thenCall(async () => {
+          await sleep(100);
+          throw new AwsWrapperError("Rejecting test");
+        });
+        when(mockPluginService.isNetworkError(anything())).thenReturn(true);
+        expectedClients.push(undefined);
+      }
+    }
+    const mockPluginServiceInstance = instance(mockPluginService);
+
+    const target = new ClusterAwareReaderFailoverHandler(
+      mockPluginServiceInstance,
+      properties,
+      ClusterAwareReaderFailoverHandler.DEFAULT_FAILOVER_TIMEOUT,
+      ClusterAwareReaderFailoverHandler.DEFAULT_READER_CONNECT_TIMEOUT,
+      false
+    );
+    const result = await target.getConnectionFromHostGroup(hosts);
+    expect(result.isConnected).toBe(true);
+    expect(result.client).toBe(expectedClients[successHostIndex]);
+    expect(result.newHost).toBe(hosts[successHostIndex]);
+    verify(mockPluginService.forceConnect(hosts[successHostIndex], anything())).once();
+    verify(mockPluginService.abortTargetClient(undefined)).once();
+    verify(mockPluginService.abortTargetClient(expectedClients[successHostIndex])).never();
   }, 30000);
 
   it("test failover timeout", async () => {

@@ -25,6 +25,8 @@
   "ClusterAwareReaderFailoverHandler.attemptingReaderConnection": "Trying to connect to reader: '%s', with properties '%s'",
   "ClusterAwareReaderFailoverHandler.successfulReaderConnection": "Connected to reader: '%s'",
   "ClusterAwareReaderFailoverHandler.failedReaderConnection": "Failed to connect to reader: '%s'",
+  "ClusterAwareReaderFailoverHandler.batchFailed": "Reader connections for hosts [%s] failed with the following errors: %s",
+  "ClusterAwareReaderFailoverHandler.selectedTaskChosen": "Selected task has already been chosen. Abort client for host: %s",
   "Utils.topology": "Topology: %s",
   "RdsHostListProvider.incorrectDialect": "Dialect needs to be a topology aware dialect.",
   "RdsHostListProvider.suggestedClusterId": "ClusterId '%s' is suggested for url '%s'.",
