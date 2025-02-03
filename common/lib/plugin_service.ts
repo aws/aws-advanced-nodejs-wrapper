@@ -198,7 +198,7 @@ export class PluginService implements ErrorHandler, HostListProviderService {
     return false;
   }
 
-  protected isBlockingHostListProvider(arg: any): arg is BlockingHostListProvider {
+  isBlockingHostListProvider(arg: any): arg is BlockingHostListProvider {
     return arg;
   }
 

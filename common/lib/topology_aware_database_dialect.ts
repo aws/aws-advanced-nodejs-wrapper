@@ -26,5 +26,6 @@ export interface TopologyAwareDatabaseDialect {
 
   getHostRole(client: ClientWrapper): Promise<HostRole>;
 
-  getWriterId(client: ClientWrapper): Promise<string | null>;
+  // Returns the host id of the targetClient if it is connected to a writer, null otherwise.
+  getWriterId(targetClient: ClientWrapper): Promise<string | null>;
 }

@@ -26,16 +26,21 @@ import { AwsWrapperError } from "../../../common/lib/utils/errors";
 import { TopologyAwareDatabaseDialect } from "../../../common/lib/topology_aware_database_dialect";
 import { RdsHostListProvider } from "../../../common/lib/host_list_provider/rds_host_list_provider";
 import { FailoverRestriction } from "../../../common/lib/plugins/failover/failover_restriction";
+import { WrapperProperties } from "../../../common/lib/wrapper_property";
+import { PluginService } from "../../../common/lib/plugin_service";
+import { MonitoringRdsHostListProvider } from "../../../common/lib/host_list_provider/monitoring/monitoring_host_list_provider";
 
 export class RdsMultiAZMySQLDatabaseDialect extends MySQLDatabaseDialect implements TopologyAwareDatabaseDialect {
   private static readonly TOPOLOGY_QUERY: string = "SELECT id, endpoint, port FROM mysql.rds_topology";
   private static readonly TOPOLOGY_TABLE_EXIST_QUERY: string =
     "SELECT 1 AS tmp FROM information_schema.tables WHERE" + " table_schema = 'mysql' AND table_name = 'rds_topology'";
+  // For reader hosts, the query should return a writer host id. For a writer host, the query should return no data.
   private static readonly FETCH_WRITER_HOST_QUERY: string = "SHOW REPLICA STATUS";
   private static readonly FETCH_WRITER_HOST_QUERY_COLUMN_NAME: string = "Source_Server_Id";
   private static readonly HOST_ID_QUERY: string = "SELECT @@server_id AS host";
   private static readonly HOST_ID_QUERY_COLUMN_NAME: string = "host";
-  private static readonly IS_READER_QUERY: string = "SELECT @@read_only";
+  private static readonly IS_READER_QUERY: string = "SELECT @@read_only AS is_reader";
+  private static readonly IS_READER_QUERY_COLUMN_NAME: string = "is_reader";
 
   async isDialect(targetClient: ClientWrapper): Promise<boolean> {
     const res = await targetClient.query(RdsMultiAZMySQLDatabaseDialect.TOPOLOGY_TABLE_EXIST_QUERY).catch(() => false);
@@ -48,6 +53,9 @@ export class RdsMultiAZMySQLDatabaseDialect extends MySQLDatabaseDialect impleme
   }
 
   getHostListProvider(props: Map<string, any>, originalUrl: string, hostListProviderService: HostListProviderService): HostListProvider {
+    if (WrapperProperties.PLUGINS.get(props).includes("failover2")) {
+      return new MonitoringRdsHostListProvider(props, originalUrl, hostListProviderService, <PluginService>hostListProviderService);
+    }
     return new RdsHostListProvider(props, originalUrl, hostListProviderService);
   }
 
@@ -118,11 +126,26 @@ export class RdsMultiAZMySQLDatabaseDialect extends MySQLDatabaseDialect impleme
   }
 
   async getHostRole(client: ClientWrapper): Promise<HostRole> {
-    return (await this.executeTopologyRelatedQuery(client, RdsMultiAZMySQLDatabaseDialect.IS_READER_QUERY)) ? HostRole.WRITER : HostRole.READER;
+    return (await this.executeTopologyRelatedQuery(client, RdsMultiAZMySQLDatabaseDialect.IS_READER_QUERY, RdsMultiAZMySQLDatabaseDialect.IS_READER_QUERY_COLUMN_NAME)) == "0" ? HostRole.WRITER : HostRole.READER;
   }
 
-  getWriterId(client: ClientWrapper): Promise<string> {
-    throw new Error("Method not implemented.");
+  async getWriterId(targetClient: ClientWrapper): Promise<string> {
+    try {
+      const writerHostId: string = await this.executeTopologyRelatedQuery(
+        targetClient,
+        RdsMultiAZMySQLDatabaseDialect.FETCH_WRITER_HOST_QUERY,
+        RdsMultiAZMySQLDatabaseDialect.FETCH_WRITER_HOST_QUERY_COLUMN_NAME
+      );
+      // The above query returns the writer host id if it is a reader, nothing if the writer.
+      if ((!writerHostId)) {
+        const currentConnection = await this.identifyConnection(targetClient);
+        return currentConnection ? currentConnection : null;
+      } else {
+        return null;
+      }
+    } catch (error: any) {
+      throw new AwsWrapperError(Messages.get("RdsMultiAZMySQLDatabaseDialect.invalidQuery", error.message));
+    }
   }
 
   async identifyConnection(client: ClientWrapper): Promise<string> {
