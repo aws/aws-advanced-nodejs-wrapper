@@ -118,17 +118,14 @@ export class MySQLDatabaseDialect implements DatabaseDialect {
 
   async isClientValid(targetClient: ClientWrapper): Promise<boolean> {
     try {
-      return await ClientUtils.queryWithTimeout(
-        targetClient
-          .query({ sql: "SELECT 1" })
-          .then(() => {
-            return true;
-          })
-          .catch(() => {
-            return false;
-          }),
-        targetClient.properties
-      );
+      return await targetClient
+        .query("SELECT 1")
+        .then(() => {
+          return true;
+        })
+        .catch(() => {
+          return false;
+        });
     } catch (error) {
       return false;
     }

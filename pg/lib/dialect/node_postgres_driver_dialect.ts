@@ -71,7 +71,7 @@ export class NodePostgresDriverDialect implements DriverDialect {
     }
   }
 
-  setQueryTimeout(props: Map<string, any>, sql?: any, wrapperQueryTimeout?: any) {
+  setQueryTimeout(props: Map<string, any>, wrapperQueryTimeout?: any) {
     const timeout = wrapperQueryTimeout ?? props.get(WrapperProperties.WRAPPER_QUERY_TIMEOUT.name);
     if (timeout) {
       props.set(NodePostgresDriverDialect.QUERY_TIMEOUT_PROPERTY_NAME, timeout);

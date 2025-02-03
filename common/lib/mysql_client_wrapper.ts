@@ -47,8 +47,9 @@ export class MySQLClientWrapper implements ClientWrapper {
   }
 
   query(sql: any): Promise<any> {
-    this.driverDialect.setQueryTimeout(this.properties, sql);
-    return this.client?.query(sql);
+    const query = { sql: sql };
+    this.driverDialect.setQueryTimeout(this.properties, query);
+    return this.client?.query(query);
   }
 
   async queryWithTimeout(sql: string): Promise<any> {
