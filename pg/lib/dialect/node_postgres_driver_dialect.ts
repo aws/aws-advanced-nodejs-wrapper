@@ -83,13 +83,13 @@ export class NodePostgresDriverDialect implements DriverDialect {
       return;
     }
 
-    const keepAlive = keepAliveProps.get(NodePostgresDriverDialect.KEEP_ALIVE_PROPERTY_NAME);
-    const keepAliveInitialDelayMillis = keepAliveProps.get(NodePostgresDriverDialect.KEEP_ALIVE_INITIAL_DELAY_MILLIS_PROPERTY_NAME);
+    const keepAlive = keepAliveProps[NodePostgresDriverDialect.KEEP_ALIVE_PROPERTY_NAME];
+    const keepAliveInitialDelayMillis = keepAliveProps[NodePostgresDriverDialect.KEEP_ALIVE_INITIAL_DELAY_MILLIS_PROPERTY_NAME];
 
-    if (keepAlive) {
+    if (keepAlive !== undefined) {
       props.set(NodePostgresDriverDialect.KEEP_ALIVE_PROPERTY_NAME, keepAlive);
     }
-    if (keepAliveInitialDelayMillis) {
+    if (keepAliveInitialDelayMillis !== undefined) {
       props.set(NodePostgresDriverDialect.KEEP_ALIVE_INITIAL_DELAY_MILLIS_PROPERTY_NAME, keepAliveInitialDelayMillis);
     }
   }
