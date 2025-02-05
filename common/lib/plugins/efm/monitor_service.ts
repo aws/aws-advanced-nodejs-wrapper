@@ -49,7 +49,8 @@ export class MonitorServiceImpl implements MonitorService {
     undefined,
     async (monitor: Monitor) => {
       await monitor.releaseResources();
-    }
+    },
+    "MonitorServiceImpl.monitors"
   );
   private readonly pluginService: PluginService;
   private cachedMonitorHostKeys: Set<string> | undefined;

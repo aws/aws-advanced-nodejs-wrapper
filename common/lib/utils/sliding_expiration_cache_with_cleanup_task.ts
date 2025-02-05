@@ -22,22 +22,29 @@ import { logger } from "../../logutils";
 
 export class SlidingExpirationCacheWithCleanupTask<K, V> extends SlidingExpirationCache<K, V> {
   private readonly _asyncItemDisposalFunc?: (item: V) => Promise<void>;
+  private readonly cacheId: string;
   private stopCleanupTask: boolean = false;
   private cleanupTask: Promise<void>;
   private interruptCleanupTask: () => void;
   private isInitialized: boolean = false;
 
-  constructor(cleanupIntervalNanos: bigint, shouldDisposeFunc?: (item: V) => boolean, asyncItemDisposalFunc?: (item: V) => Promise<void>) {
+  constructor(
+    cleanupIntervalNanos: bigint,
+    shouldDisposeFunc?: (item: V) => boolean,
+    asyncItemDisposalFunc?: (item: V) => Promise<void>,
+    cacheId?: string
+  ) {
     super(cleanupIntervalNanos, shouldDisposeFunc);
     this._asyncItemDisposalFunc = asyncItemDisposalFunc;
+    this.cacheId = cacheId;
   }
 
   async clear(): Promise<void> {
+    logger.debug(Messages.get("SlidingExpirationCacheWithCleanupTask.clear", this.cacheId));
     this.stopCleanupTask = true;
     // If the cleanup task is currently sleeping this will interrupt it.
     this.interruptCleanupTask();
     await this.cleanupTask;
-
     for (const [key, val] of this.map.entries()) {
       if (val !== undefined && this._asyncItemDisposalFunc !== undefined) {
         await this._asyncItemDisposalFunc(val.item);
@@ -73,21 +80,24 @@ export class SlidingExpirationCacheWithCleanupTask<K, V> extends SlidingExpirati
 
   async initCleanupTask(): Promise<void> {
     this.isInitialized = true;
+    logger.debug(Messages.get("SlidingExpirationCacheWithCleanupTask.cleanUpTaskInitialized", this.cacheId));
     while (!this.stopCleanupTask) {
-      const [sleepPromise, temp] = sleepWithAbort(
+      const [sleepPromise, abortSleepFunc] = sleepWithAbort(
         convertNanosToMs(this._cleanupIntervalNanos),
-        Messages.get("SlidingExpirationCacheWithCleanupTask.cleanUpTaskInterrupted")
+        Messages.get("SlidingExpirationCacheWithCleanupTask.cleanUpTaskInterrupted", this.cacheId)
       );
-      this.interruptCleanupTask = temp;
+      this.interruptCleanupTask = abortSleepFunc;
       try {
         await sleepPromise;
       } catch (error) {
         // Sleep has been interrupted, exit cleanup task.
-        logger.info(error.message);
+        logger.debug(error.message);
         return;
       }
 
-      logger.info(Messages.get("SlidingExpirationCacheWithCleanupTask.cleaningUp", convertNanosToMinutes(this._cleanupIntervalNanos).toString()));
+      logger.debug(
+        Messages.get("SlidingExpirationCacheWithCleanupTask.cleaningUp", convertNanosToMinutes(this._cleanupIntervalNanos).toString(), this.cacheId)
+      );
 
       const itemsToRemove = [];
       for (const [key, val] of this.map.entries()) {
@@ -102,5 +112,6 @@ export class SlidingExpirationCacheWithCleanupTask<K, V> extends SlidingExpirati
         // Ignore.
       }
     }
+    logger.debug(Messages.get("SlidingExpirationCacheWithCleanupTask.cleanUpTaskStopped", this.cacheId));
   }
 }

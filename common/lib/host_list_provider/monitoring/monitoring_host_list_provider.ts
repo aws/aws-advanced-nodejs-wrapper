@@ -16,7 +16,6 @@
 
 import { RdsHostListProvider } from "../rds_host_list_provider";
 import { HostInfo } from "../../host_info";
-import { SlidingExpirationCache } from "../../utils/sliding_expiration_cache";
 import { ClusterTopologyMonitor, ClusterTopologyMonitorImpl } from "./cluster_topology_monitor";
 import { PluginService } from "../../plugin_service";
 import { HostListProviderService } from "../../host_list_provider_service";
@@ -44,7 +43,8 @@ export class MonitoringRdsHostListProvider extends RdsHostListProvider implement
       } catch {
         // Ignore.
       }
-    }
+    },
+    "MonitoringRdsHostListProvider.monitors"
   );
 
   private readonly pluginService: PluginService;

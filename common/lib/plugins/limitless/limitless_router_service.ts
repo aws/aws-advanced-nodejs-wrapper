@@ -45,7 +45,8 @@ export class LimitlessRouterServiceImpl implements LimitlessRouterService {
     new SlidingExpirationCacheWithCleanupTask(
       LimitlessRouterServiceImpl.CACHE_CLEANUP_NANOS,
       undefined,
-      async (monitor: LimitlessRouterMonitor) => await monitor.close()
+      async (monitor: LimitlessRouterMonitor) => await monitor.close(),
+      "LimitlessRouterServiceImpl.monitors"
     );
   protected static readonly limitlessRouterCache: SlidingExpirationCache<string, HostInfo[]> = new SlidingExpirationCache(
     LimitlessRouterServiceImpl.CACHE_CLEANUP_NANOS,
