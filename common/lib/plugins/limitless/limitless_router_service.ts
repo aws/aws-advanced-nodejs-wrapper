@@ -31,6 +31,7 @@ import { HostRole } from "../../host_role";
 import { HostAvailability } from "../../host_availability/host_availability";
 import { HighestWeightHostSelector } from "../../highest_weight_host_selector";
 import { sleep } from "../../utils/utils";
+import { SlidingExpirationCacheWithCleanupTask } from "../../utils/sliding_expiration_cache_with_cleanup_task";
 
 export interface LimitlessRouterService {
   startMonitor(hostInfo: HostInfo, properties: Map<string, any>): void;
@@ -40,11 +41,13 @@ export interface LimitlessRouterService {
 
 export class LimitlessRouterServiceImpl implements LimitlessRouterService {
   protected static readonly CACHE_CLEANUP_NANOS = BigInt(60_000_000_000); // 1 min
-  protected static readonly monitors: SlidingExpirationCache<string, LimitlessRouterMonitor> = new SlidingExpirationCache(
-    LimitlessRouterServiceImpl.CACHE_CLEANUP_NANOS,
-    undefined,
-    async (monitor) => await monitor.close()
-  );
+  protected static readonly monitors: SlidingExpirationCacheWithCleanupTask<string, LimitlessRouterMonitor> =
+    new SlidingExpirationCacheWithCleanupTask(
+      LimitlessRouterServiceImpl.CACHE_CLEANUP_NANOS,
+      undefined,
+      async (monitor: LimitlessRouterMonitor) => await monitor.close(),
+      "LimitlessRouterServiceImpl.monitors"
+    );
   protected static readonly limitlessRouterCache: SlidingExpirationCache<string, HostInfo[]> = new SlidingExpirationCache(
     LimitlessRouterServiceImpl.CACHE_CLEANUP_NANOS,
     undefined,
@@ -254,7 +257,7 @@ export class LimitlessRouterServiceImpl implements LimitlessRouterService {
     }
   }
 
-  static clearMonitors() {
-    LimitlessRouterServiceImpl.monitors.clear();
+  static async clearMonitors() {
+    await LimitlessRouterServiceImpl.monitors.clear();
   }
 }
