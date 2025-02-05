@@ -4,12 +4,15 @@
 
 A Configuration Preset is a [configuration profile](./UsingTheNodejsWrapper.md#configuration-profiles) that has already been set up by the AWS Advanced NodeJS Wrapper team. Preset configuration profiles are optimized, profiled, verified and can be used right away. If the existing presets do not cover an exact use case, users can also create their own configuration profiles based on the built-in presets.
 
+> [!WARNING]
+> Configuration profiles can only be used to connect to PostgreSQL sources. An error will be thrown when attempting a connection to a MySQL source.
+
 ## Using Configuration Presets
 
 The Configuration Preset name should be specified with the [`profileName`](./UsingTheNodejsWrapper.md#connection-plugin-manager-parameters) parameter.
 
 ```typescript
-const client = new AwsMySQLClient({
+const client = new AwsPGClient({
   ...
   profileName: "A2"
 });
@@ -27,7 +30,7 @@ ConfigurationProfileBuilder.get()
   .withDatabaseDialect(new CustomDatabaseDialect())
   .buildAndSet();
 
-const client = new AwsMySQLClient({
+const client = new AwsPGClient({
   ...
   profileName: "myNewProfile"
 });
