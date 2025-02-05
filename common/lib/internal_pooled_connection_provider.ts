@@ -43,10 +43,11 @@ import { SlidingExpirationCacheWithCleanupTask } from "./utils/sliding_expiratio
 export class InternalPooledConnectionProvider implements PooledConnectionProvider, CanReleaseResources {
   static readonly CACHE_CLEANUP_NANOS: bigint = BigInt(10 * 60_000_000_000); // 10 minutes
   static readonly POOL_EXPIRATION_NANOS: bigint = BigInt(30 * 60_000_000_000); // 30 minutes
-  protected static databasePools: SlidingExpirationCacheWithCleanupTask<string, AwsPoolClient> = new SlidingExpirationCacheWithCleanupTask(
+  protected static databasePools: SlidingExpirationCacheWithCleanupTask<string, any> = new SlidingExpirationCacheWithCleanupTask(
     InternalPooledConnectionProvider.CACHE_CLEANUP_NANOS,
-    (pool: AwsPoolClient) => pool.getActiveCount() === 0,
-    async (pool: AwsPoolClient) => await pool.end()
+    (pool: any) => pool.getActiveCount() === 0,
+    async (pool: any) => await pool.end(),
+    "InternalPooledConnectionProvider.databasePools"
   );
 
   private static readonly acceptedStrategies: Map<string, HostSelector> = new Map([

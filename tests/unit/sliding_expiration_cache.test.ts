@@ -63,6 +63,7 @@ describe("test_sliding_expiration_cache", () => {
     expect(result3).toEqual("b");
     expect(target.get(1)).toEqual("b");
   });
+
   it("test remove", async () => {
     const target = new SlidingExpirationCache(
       BigInt(50_000_000),
@@ -100,6 +101,7 @@ describe("test_sliding_expiration_cache", () => {
     expect(target.get("nonExpiredItem")).toEqual(nonExpiredItem);
     expect(nonExpiredItem.disposed).toEqual(false);
   });
+
   it("test clear", async () => {
     const target = new SlidingExpirationCache(
       BigInt(50_000_000),
@@ -124,13 +126,15 @@ describe("test_sliding_expiration_cache", () => {
     expect(item1.disposed).toEqual(true);
     expect(item2.disposed).toEqual(true);
   });
+
   it("test async cleanup thread", async () => {
     const cleanupIntervalNanos = BigInt(300_000_000); // .3 seconds
     const disposeMs = 1000;
     const target = new SlidingExpirationCacheWithCleanupTask(
       cleanupIntervalNanos,
       (item: AsyncDisposableItem) => item.shouldDispose,
-      async (item) => await item.dispose(disposeMs)
+      async (item) => await item.dispose(disposeMs),
+      "slidingExpirationCache.test"
     );
     const item1 = new AsyncDisposableItem(true);
     const item2 = new AsyncDisposableItem(false);
@@ -161,11 +165,13 @@ describe("test_sliding_expiration_cache", () => {
     expect(target.get(2)).toEqual(undefined);
     expect(item2.disposed).toEqual(true);
   });
+
   it("test async clear", async () => {
     const target = new SlidingExpirationCacheWithCleanupTask(
       BigInt(50_000_000),
       (item: AsyncDisposableItem) => item.shouldDispose,
-      async (item) => await item.dispose(1000)
+      async (item) => await item.dispose(1000),
+      "slidingExpirationCache.test"
     );
     const item1 = new AsyncDisposableItem(false);
     const item2 = new AsyncDisposableItem(false);
