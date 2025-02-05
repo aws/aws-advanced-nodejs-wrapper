@@ -38,7 +38,7 @@ export class PoolClientWrapper implements ClientWrapper {
     return this.end();
   }
 
-  query(sql: any): Promise<any> {
+  query(sql: string): Promise<any> {
     return this.client?.query(sql);
   }
 
