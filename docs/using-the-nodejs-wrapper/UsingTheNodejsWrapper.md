@@ -139,6 +139,9 @@ For more information, see [Custom Plugins](../development-guide/LoadablePlugins.
 
 ### Configuration Profiles
 
+> [!WARNING]
+> Configuration profiles can only be used to connect to PostgreSQL sources. An error will be thrown when attempting a connection to a MySQL source.
+
 An alternative way of loading plugins and providing configuration parameters is to use a configuration profile. You can create custom configuration profiles that specify which plugins the AWS Advanced NodeJS Wrapper should load. After creating the profile, set the [`profileName`](#connection-plugin-manager-parameters) parameter to the name of the created profile.
 This method of loading plugins will most often be used by those who require custom plugins that cannot be loaded with the [`plugins`](#connection-plugin-manager-parameters) parameter, or by those who are using preset configurations.
 
@@ -159,7 +162,7 @@ ConfigurationProfileBuilder.get()
   .buildAndSet();
 
 // Use the configuration profile "testProfile"
-const client = new AwsMySQLClient({
+const client = new AwsPGClient({
   user: "user",
   password: "password",
   host: "host",
