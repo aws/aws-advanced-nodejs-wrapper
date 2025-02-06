@@ -83,6 +83,10 @@ export class NodePostgresDriverDialect implements DriverDialect {
       return;
     }
 
+    if (keepAliveProps instanceof Map) {
+      keepAliveProps = Object.fromEntries(keepAliveProps);
+    }
+
     const keepAlive = keepAliveProps[NodePostgresDriverDialect.KEEP_ALIVE_PROPERTY_NAME];
     const keepAliveInitialDelayMillis = keepAliveProps[NodePostgresDriverDialect.KEEP_ALIVE_INITIAL_DELAY_MILLIS_PROPERTY_NAME];
 

@@ -38,6 +38,8 @@ import { Messages } from "../../common/lib/utils/messages";
 import { HostChangeOptions } from "../../common/lib/host_change_options";
 import { NullTelemetryFactory } from "../../common/lib/utils/telemetry/null_telemetry_factory";
 import { MySQLClientWrapper } from "../../common/lib/mysql_client_wrapper";
+import { DriverDialect } from "../../common/lib/driver_dialect/driver_dialect";
+import { MySQL2DriverDialect } from "../../mysql/lib/dialect/mysql2_driver_dialect";
 
 const builder = new HostInfoBuilder({ hostAvailabilityStrategy: new SimpleHostAvailabilityStrategy() });
 
@@ -52,8 +54,9 @@ let mockWriterFailoverHandlerInstance;
 const mockWriterFailoverHandler: ClusterAwareWriterFailoverHandler = mock(ClusterAwareWriterFailoverHandler);
 const mockReaderResult: ReaderFailoverResult = mock(ReaderFailoverResult);
 const mockWriterResult: WriterFailoverResult = mock(WriterFailoverResult);
+const mockDriverDialect: DriverDialect = mock(MySQL2DriverDialect);
 
-const mockClientWrapper = new MySQLClientWrapper(undefined, mockHostInfo, new Map<string, any>());
+const mockClientWrapper = new MySQLClientWrapper(undefined, mockHostInfo, new Map<string, any>(), mockDriverDialect);
 
 const properties: Map<string, any> = new Map();
 

@@ -29,6 +29,8 @@ import { ClientWrapper } from "../../common/lib/client_wrapper";
 import { HostInfo } from "../../common/lib/host_info";
 import { MySQLClientWrapper } from "../../common/lib/mysql_client_wrapper";
 import { jest } from "@jest/globals";
+import { DriverDialect } from "../../common/lib/driver_dialect/driver_dialect";
+import { MySQL2DriverDialect } from "../../mysql/lib/dialect/mysql2_driver_dialect";
 
 const props = new Map<string, any>();
 const SQL_ARGS = ["sql"];
@@ -48,8 +50,9 @@ const mockRdsUtils = mock(RdsUtils);
 const mockClient = mock(AwsClient);
 const mockHostInfo = mock(HostInfo);
 
+const mockDriverDialect: DriverDialect = mock(MySQL2DriverDialect);
 const mockClientInstance = instance(mockClient);
-const mockClientWrapper: ClientWrapper = new MySQLClientWrapper(undefined, mockHostInfo, props);
+const mockClientWrapper: ClientWrapper = new MySQLClientWrapper(undefined, mockHostInfo, props, mockDriverDialect);
 
 mockClientInstance.targetClient = mockClientWrapper;
 

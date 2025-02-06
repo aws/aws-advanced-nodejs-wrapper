@@ -278,8 +278,7 @@ describe("test database dialects", () => {
       databaseType,
       expectedDialect!.dialects,
       props,
-      mockDriverDialect,
-      null
+      mockDriverDialect
     );
     await pluginService.updateDialect(mockClientWrapper);
     expect(pluginService.getDialect()).toBe(expectedDialectClass);
