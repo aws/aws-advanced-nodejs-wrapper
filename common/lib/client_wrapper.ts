@@ -22,7 +22,7 @@ export interface ClientWrapper {
   readonly properties: Map<string, any>;
   readonly id: string;
 
-  query(sql: any): Promise<any>;
+  query(sql: string): Promise<any>;
 
   end(): Promise<void>;
 

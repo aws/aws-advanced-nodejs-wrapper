@@ -120,7 +120,7 @@ export class MySQLDatabaseDialect implements DatabaseDialect {
     try {
       return await ClientUtils.queryWithTimeout(
         targetClient
-          .query({ sql: "SELECT 1" })
+          .query("SELECT 1")
           .then(() => {
             return true;
           })

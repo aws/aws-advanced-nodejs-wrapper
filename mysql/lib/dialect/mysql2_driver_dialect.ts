@@ -68,10 +68,10 @@ export class MySQL2DriverDialect implements DriverDialect {
     }
   }
 
-  setQueryTimeout(props: Map<string, any>, sql?: any, wrapperConnectTimeout?: any) {
-    const timeout = wrapperConnectTimeout ?? props.get(WrapperProperties.WRAPPER_QUERY_TIMEOUT.name);
+  setQueryTimeout(props: Map<string, any>, sql?: any, wrapperQueryTimeout?: any) {
+    const timeout = wrapperQueryTimeout ?? props.get(WrapperProperties.WRAPPER_QUERY_TIMEOUT.name);
     if (timeout && !sql[MySQL2DriverDialect.QUERY_TIMEOUT_PROPERTY_NAME]) {
-      sql[MySQL2DriverDialect.QUERY_TIMEOUT_PROPERTY_NAME] = timeout;
+      sql[MySQL2DriverDialect.QUERY_TIMEOUT_PROPERTY_NAME] = Number(timeout);
     }
   }
 

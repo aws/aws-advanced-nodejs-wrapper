@@ -41,7 +41,7 @@ export class PgClientWrapper implements ClientWrapper {
     this.id = uniqueId("PgClient_");
   }
 
-  query(sql: any): Promise<any> {
+  query(sql: string): Promise<any> {
     return this.client?.query(sql);
   }
 
