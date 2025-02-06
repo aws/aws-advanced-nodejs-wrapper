@@ -101,6 +101,9 @@ export class FailoverPlugin extends AbstractConnectionPlugin {
     this._properties = properties;
     this.pluginService = pluginService;
     this._rdsHelper = rdsHelper;
+
+    this.initSettings();
+
     this._readerFailoverHandler = readerFailoverHandler
       ? readerFailoverHandler
       : new ClusterAwareReaderFailoverHandler(
@@ -120,7 +123,6 @@ export class FailoverPlugin extends AbstractConnectionPlugin {
           this.failoverClusterTopologyRefreshRateMsSetting,
           this.failoverWriterReconnectIntervalMsSetting
         );
-    this.initSettings();
     this._staleDnsHelper = new StaleDnsHelper(this.pluginService);
 
     const telemetryFactory = this.pluginService.getTelemetryFactory();
