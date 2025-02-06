@@ -28,6 +28,7 @@ import { WriterFailoverResult } from "../../common/lib/plugins/failover/writer_f
 import { ClientWrapper } from "../../common/lib/client_wrapper";
 import { PgDatabaseDialect } from "../../pg/lib/dialect/pg_database_dialect";
 import { MySQLClientWrapper } from "../../common/lib/mysql_client_wrapper";
+import { MySQL2DriverDialect } from "../../mysql/lib/dialect/mysql2_driver_dialect";
 
 const builder = new HostInfoBuilder({ hostAvailabilityStrategy: new SimpleHostAvailabilityStrategy() });
 
@@ -46,10 +47,20 @@ const mockPluginService = mock(PluginService);
 const mockReaderFailover = mock(ClusterAwareReaderFailoverHandler);
 
 const mockTargetClient = { client: 123 };
-const mockClientWrapper: ClientWrapper = new MySQLClientWrapper(mockTargetClient, builder.withHost("host").build(), new Map<string, any>());
+const mockClientWrapper: ClientWrapper = new MySQLClientWrapper(
+  mockTargetClient,
+  builder.withHost("host").build(),
+  new Map<string, any>(),
+  new MySQL2DriverDialect()
+);
 
 const mockTargetClientB = { client: 456 };
-const mockClientWrapperB: ClientWrapper = new MySQLClientWrapper(mockTargetClientB, builder.withHost("host").build(), new Map<string, any>());
+const mockClientWrapperB: ClientWrapper = new MySQLClientWrapper(
+  mockTargetClientB,
+  builder.withHost("host").build(),
+  new Map<string, any>(),
+  new MySQL2DriverDialect()
+);
 
 describe("writer failover handler", () => {
   beforeEach(() => {
