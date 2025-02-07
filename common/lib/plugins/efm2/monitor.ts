@@ -160,6 +160,7 @@ export class MonitorImpl implements Monitor {
             await new Promise((resolve) => {
               this.delayMillisTimeoutId = setTimeout(resolve, MonitorImpl.TASK_SLEEP_MILLIS);
             });
+            continue;
           }
 
           const statusCheckStartTimeNanos: number = getCurrentTimeNano();
@@ -202,7 +203,6 @@ export class MonitorImpl implements Monitor {
             this.activeContexts.push(...tmpActiveContexts);
 
             const delayMillis = (this.failureDetectionIntervalNanos - (statusCheckEndTimeNanos - statusCheckStartTimeNanos)) / 1000000;
-
             await new Promise((resolve) => {
               this.delayMillisTimeoutId = setTimeout(
                 resolve,
@@ -288,11 +288,12 @@ export class MonitorImpl implements Monitor {
 
     if (this.failureCount > 0) {
       // Host is back alive
-      logger.debug(Messages.get("MonitorConnectionContext.hostAlive", this.hostInfo.host));
+      logger.debug(Messages.get("MonitorConnectionContext.hostBackAlive", this.hostInfo.host));
     }
     this.failureCount = 0;
     this.invalidHostStartTimeNano = 0;
     this.hostUnhealthy = false;
+    logger.debug(Messages.get("MonitorConnectionContext.hostAlive", this.hostInfo.host));
   }
 
   async releaseResources() {

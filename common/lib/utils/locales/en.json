@@ -128,6 +128,7 @@
   "MonitorConnectionContext.hostDead": "Host %s is *dead*.",
   "MonitorConnectionContext.hostNotResponding": "Host %s is not *responding* with failureCount: %s",
   "MonitorConnectionContext.hostAlive": "Host %s is *alive*.",
+  "MonitorConnectionContext.hostBackAlive": "Host %s is back *alive* after being down.",
   "MonitorImpl.contextNullWarning": "Parameter 'context' should not be null or undefined.",
   "MonitorImpl.errorDuringMonitoringContinue": "Continuing monitoring after unhandled error was thrown in monitoring for host %s.",
   "MonitorImpl.errorDuringMonitoringStop": "Stopping monitoring after unhandled error was thrown during monitoring for host %s.",
