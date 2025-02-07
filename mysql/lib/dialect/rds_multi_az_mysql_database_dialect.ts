@@ -137,9 +137,9 @@ export class RdsMultiAZMySQLDatabaseDialect extends MySQLDatabaseDialect impleme
         RdsMultiAZMySQLDatabaseDialect.FETCH_WRITER_HOST_QUERY_COLUMN_NAME
       );
       // The above query returns the writer host id if it is a reader, nothing if the writer.
-      if ((!writerHostId)) {
+      if (!writerHostId) {
         const currentConnection = await this.identifyConnection(targetClient);
-        return currentConnection ? currentConnection : null;
+        return currentConnection ?? null;
       } else {
         return null;
       }

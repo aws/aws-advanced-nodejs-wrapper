@@ -143,11 +143,7 @@ export class RdsMultiAZPgDatabaseDialect extends PgDatabaseDialect implements To
       );
       const currentConnection = await this.identifyConnection(targetClient);
 
-      if (currentConnection === writerHostId) {
-        return currentConnection ? currentConnection : null;
-      } else {
-        return null;
-      }
+      return (currentConnection && currentConnection === writerHostId) ? currentConnection : null;
     } catch (error: any) {
       throw new AwsWrapperError(Messages.get("RdsMultiAZPgDatabaseDialect.invalidQuery", error.message));
     }
