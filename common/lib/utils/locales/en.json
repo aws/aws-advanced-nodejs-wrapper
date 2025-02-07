@@ -126,7 +126,7 @@
   "HostAvailabilityStrategy.invalidInitialBackoffTime": "Invalid value of '%s'  for configuration parameter `hostAvailabilityStrategyInitialBackoffTime`. It must be an integer greater or equal to 1.",
   "MonitorConnectionContext.errorAbortingConnection": "Error during aborting connection: %s.",
   "MonitorConnectionContext.hostDead": "Host %s is *dead*.",
-  "MonitorConnectionContext.hostNotResponding": "Host %s is not *responding* with failureCount: %s",
+  "MonitorConnectionContext.hostNotResponding": "Host %s is not *responding*",
   "MonitorConnectionContext.hostAlive": "Host %s is *alive*.",
   "MonitorConnectionContext.hostBackAlive": "Host %s is back *alive* after being down.",
   "MonitorImpl.contextNullWarning": "Parameter 'context' should not be null or undefined.",

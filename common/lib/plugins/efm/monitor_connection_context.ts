@@ -134,7 +134,7 @@ export class MonitorConnectionContext {
         return;
       }
 
-      logger.debug(Messages.get("MonitorConnectionContext.hostNotResponding", hostName, String(this.failureCount)));
+      logger.debug(Messages.get("MonitorConnectionContext.hostNotResponding", hostName));
       return;
     }
 

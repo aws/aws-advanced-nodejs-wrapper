@@ -282,7 +282,7 @@ export class MonitorImpl implements Monitor {
         this.hostUnhealthy = true;
         return Promise.resolve();
       }
-      logger.debug(Messages.get("MonitorConnectionContext.hostNotResponding", this.hostInfo.host, this.failureCount.toString()));
+      logger.debug(Messages.get("MonitorConnectionContext.hostNotResponding", this.hostInfo.host));
       return Promise.resolve();
     }
 
