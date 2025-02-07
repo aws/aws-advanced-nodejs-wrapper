@@ -30,6 +30,8 @@ import { AwsWrapperError } from "../../common/lib/utils/errors";
 import { MySQLClientWrapper } from "../../common/lib/mysql_client_wrapper";
 import { jest } from "@jest/globals";
 import { PgClientWrapper } from "../../common/lib/pg_client_wrapper";
+import { DriverDialect } from "../../common/lib/driver_dialect/driver_dialect";
+import { MySQL2DriverDialect } from "../../mysql/lib/dialect/mysql2_driver_dialect";
 
 const mockPluginService = mock(PluginService);
 const mockHostListProviderService = mock<HostListProviderService>();
@@ -48,6 +50,7 @@ const hostInfo = hostInfoBuilder.withHost("host").build();
 
 const writerHostInfo = hostInfoBuilder.withHost("host").withRole(HostRole.WRITER).build();
 const readerHostInfo = hostInfoBuilder.withHost("host").withHost(HostRole.READER).build();
+const mockDriverDialect: DriverDialect = mock(MySQL2DriverDialect);
 
 describe("Aurora initial connection strategy plugin", () => {
   let props: Map<string, any>;
@@ -62,8 +65,8 @@ describe("Aurora initial connection strategy plugin", () => {
     plugin.initHostProvider(hostInfo, props, instance(mockHostListProviderService), mockFunc);
     WrapperProperties.OPEN_CONNECTION_RETRY_TIMEOUT_MS.set(props, 1000);
 
-    writerClient = new MySQLClientWrapper(undefined, writerHostInfo, new Map<string, any>());
-    readerClient = new MySQLClientWrapper(undefined, readerHostInfo, new Map<string, any>());
+    writerClient = new MySQLClientWrapper(undefined, writerHostInfo, new Map<string, any>(), mockDriverDialect);
+    readerClient = new MySQLClientWrapper(undefined, readerHostInfo, new Map<string, any>(), mockDriverDialect);
   });
 
   afterEach(() => {

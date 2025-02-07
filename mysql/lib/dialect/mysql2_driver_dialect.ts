@@ -76,7 +76,11 @@ export class MySQL2DriverDialect implements DriverDialect {
   }
 
   setKeepAliveProperties(props: Map<string, any>, keepAliveProps: any) {
-    if (keepAliveProps && keepAliveProps.get(MySQL2DriverDialect.KEEP_ALIVE_PROPERTY_NAME)) {
+    if (keepAliveProps instanceof Map) {
+      keepAliveProps = Object.fromEntries(keepAliveProps);
+    }
+
+    if (keepAliveProps && keepAliveProps[MySQL2DriverDialect.KEEP_ALIVE_PROPERTY_NAME] !== undefined) {
       throw new UnsupportedMethodError("Keep alive configuration is not supported for MySQL2.");
     }
   }

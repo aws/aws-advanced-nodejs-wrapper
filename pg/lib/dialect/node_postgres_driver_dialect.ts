@@ -41,7 +41,7 @@ export class NodePostgresDriverDialect implements DriverDialect {
     const driverProperties = WrapperProperties.removeWrapperProperties(props);
     this.setKeepAliveProperties(driverProperties, props.get(WrapperProperties.KEEPALIVE_PROPERTIES.name));
     this.setConnectTimeout(driverProperties, props.get(WrapperProperties.WRAPPER_CONNECT_TIMEOUT.name));
-    this.setQueryTimeout(driverProperties, props.get(WrapperProperties.WRAPPER_QUERY_TIMEOUT.name));
+    this.setQueryTimeout(driverProperties, undefined, props.get(WrapperProperties.WRAPPER_QUERY_TIMEOUT.name));
     const targetClient = new pkgPg.Client(Object.fromEntries(driverProperties.entries()));
     await targetClient.connect();
     return Promise.resolve(new PgClientWrapper(targetClient, hostInfo, props));
@@ -83,13 +83,17 @@ export class NodePostgresDriverDialect implements DriverDialect {
       return;
     }
 
-    const keepAlive = keepAliveProps.get(NodePostgresDriverDialect.KEEP_ALIVE_PROPERTY_NAME);
-    const keepAliveInitialDelayMillis = keepAliveProps.get(NodePostgresDriverDialect.KEEP_ALIVE_INITIAL_DELAY_MILLIS_PROPERTY_NAME);
+    if (keepAliveProps instanceof Map) {
+      keepAliveProps = Object.fromEntries(keepAliveProps);
+    }
 
-    if (keepAlive) {
+    const keepAlive = keepAliveProps[NodePostgresDriverDialect.KEEP_ALIVE_PROPERTY_NAME];
+    const keepAliveInitialDelayMillis = keepAliveProps[NodePostgresDriverDialect.KEEP_ALIVE_INITIAL_DELAY_MILLIS_PROPERTY_NAME];
+
+    if (keepAlive !== undefined) {
       props.set(NodePostgresDriverDialect.KEEP_ALIVE_PROPERTY_NAME, keepAlive);
     }
-    if (keepAliveInitialDelayMillis) {
+    if (keepAliveInitialDelayMillis !== undefined) {
       props.set(NodePostgresDriverDialect.KEEP_ALIVE_INITIAL_DELAY_MILLIS_PROPERTY_NAME, keepAliveInitialDelayMillis);
     }
   }

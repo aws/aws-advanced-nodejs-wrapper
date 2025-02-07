@@ -28,6 +28,7 @@ import { WriterFailoverResult } from "../../common/lib/plugins/failover/writer_f
 import { ClientWrapper } from "../../common/lib/client_wrapper";
 import { PgDatabaseDialect } from "../../pg/lib/dialect/pg_database_dialect";
 import { MySQLClientWrapper } from "../../common/lib/mysql_client_wrapper";
+import { DriverDialect } from "../../common/lib/driver_dialect/driver_dialect";
 import { MySQL2DriverDialect } from "../../mysql/lib/dialect/mysql2_driver_dialect";
 
 const builder = new HostInfoBuilder({ hostAvailabilityStrategy: new SimpleHostAvailabilityStrategy() });
@@ -45,6 +46,7 @@ const mockClient = mock(AwsPGClient); // Using AwsPGClient in order to have abst
 const mockClientInstance = instance(mockClient);
 const mockPluginService = mock(PluginService);
 const mockReaderFailover = mock(ClusterAwareReaderFailoverHandler);
+const mockDriverDialect: DriverDialect = mock(MySQL2DriverDialect);
 
 const mockTargetClient = { client: 123 };
 const mockClientWrapper: ClientWrapper = new MySQLClientWrapper(
