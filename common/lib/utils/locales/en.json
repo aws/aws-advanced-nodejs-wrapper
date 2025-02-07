@@ -230,6 +230,5 @@
   "HostMonitor.detectedWriter": "Detected writer: '%s'.",
   "HostMonitor.endMonitoring": "Host monitor '%s' completed in '%s'.",
   "HostMonitor.writerHostChanged": "Writer host has changed from '%s' to '%s'.",
-  "HostMonitoringConnectionPlugin.monitoringDeactivated": "Monitoring deactivated for method '%s'.",
-  "MonitorImpl.exceptionDuringMonitoringContinue": "MonitorImpl.exceptionDuringMonitoringContinue"
+  "HostMonitoringConnectionPlugin.monitoringDeactivated": "Monitoring deactivated for method '%s'."
 }

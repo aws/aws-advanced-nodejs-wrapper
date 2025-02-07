@@ -175,12 +175,12 @@ export class MonitorImpl implements Monitor {
 
           let monitorContextRef: WeakRef<MonitorConnectionContext> | undefined;
 
-          while ((monitorContextRef = this.activeContexts.shift()) != null) {
+          while ((monitorContextRef = this.activeContexts.shift())) {
             if (this.isStopped()) {
               break;
             }
-            const monitorContext = monitorContextRef.deref();
-            if (monitorContext == null) {
+            const monitorContext: MonitorConnectionContext = monitorContextRef?.deref() ?? null;
+            if (!monitorContext) {
               continue;
             }
 
@@ -193,7 +193,7 @@ export class MonitorImpl implements Monitor {
                 await this.endMonitoringClient();
                 this.abortedConnectionsCounter.inc();
               }
-            } else if (monitorContext.isActive()) {
+            } else if (monitorContext && monitorContext.isActive()) {
               tmpActiveContexts.push(monitorContextRef);
             }
 
@@ -201,7 +201,7 @@ export class MonitorImpl implements Monitor {
             // Add active contexts back to the queue.
             this.activeContexts.push(...tmpActiveContexts);
 
-            const delayMillis = this.failureDetectionIntervalNanos - (statusCheckEndTimeNanos - statusCheckStartTimeNanos) / 1000000;
+            const delayMillis = (this.failureDetectionIntervalNanos - (statusCheckEndTimeNanos - statusCheckStartTimeNanos)) / 1000000;
 
             await new Promise((resolve) => {
               this.delayMillisTimeoutId = setTimeout(
@@ -211,11 +211,11 @@ export class MonitorImpl implements Monitor {
             });
           }
         } catch (error: any) {
-          logger.debug(Messages.get("MonitorImpl.exceptionDuringMonitoringContinue", error.message));
+          logger.debug(Messages.get("MonitorImpl.errorDuringMonitoringContinue", error.message));
         }
       }
     } catch (error: any) {
-      logger.debug(Messages.get("MonitorImpl.exceptionDuringMonitoringStop", error.message));
+      logger.debug(Messages.get("MonitorImpl.errorDuringMonitoringStop", error.message));
     } finally {
       await this.endMonitoringClient();
       await sleep(3000);
@@ -245,7 +245,7 @@ export class MonitorImpl implements Monitor {
         }
 
         logger.debug(`Opening a monitoring connection to ${this.hostInfo.url}`);
-        this.monitoringClient = await this.pluginService.forceConnect(this.hostInfo, this.properties);
+        this.monitoringClient = await this.pluginService.forceConnect(this.hostInfo, monitoringConnProperties);
         logger.debug(`Successfully opened monitoring connection to ${this.monitoringClient.id} - ${this.hostInfo.url}`);
         return true;
       }

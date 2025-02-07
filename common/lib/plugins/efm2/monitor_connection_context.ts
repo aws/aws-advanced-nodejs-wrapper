@@ -52,6 +52,7 @@ export class MonitorConnectionContext {
   }
 
   isActive() {
-    return this.clientToAbortRef.deref() !== null;
+    const val = this.clientToAbortRef?.deref() ?? null;
+    return val !== null;
   }
 }
