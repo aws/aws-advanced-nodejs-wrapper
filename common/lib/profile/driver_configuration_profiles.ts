@@ -27,7 +27,7 @@ import { AwsPoolConfig } from "../aws_pool_config";
 import { StaleDnsPluginFactory } from "../plugins/stale_dns/stale_dns_plugin_factory";
 
 export class DriverConfigurationProfiles {
-  private static readonly MONITORING_CONNECTION_PREFIX = "monitoring-";
+  private static readonly MONITORING_CONNECTION_PREFIX = "monitoring_";
   private static readonly activeProfiles: Map<string, ConfigurationProfile> = new Map<string, ConfigurationProfile>();
   private static readonly presets: Map<string, ConfigurationProfile> = new Map<string, ConfigurationProfile>([
     [
