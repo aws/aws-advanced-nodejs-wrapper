@@ -27,7 +27,9 @@ import { RdsHostListProvider } from "../../../common/lib/host_list_provider/rds_
 import { PgDatabaseDialect } from "./pg_database_dialect";
 import { ErrorHandler } from "../../../common/lib/error_handler";
 import { MultiAzPgErrorHandler } from "../multi_az_pg_error_handler";
-import { error, info, query } from "winston";
+import { WrapperProperties } from "../../../common/lib/wrapper_property";
+import { PluginService } from "../../../common/lib/plugin_service";
+import { MonitoringRdsHostListProvider } from "../../../common/lib/host_list_provider/monitoring/monitoring_host_list_provider";
 
 export class RdsMultiAZPgDatabaseDialect extends PgDatabaseDialect implements TopologyAwareDatabaseDialect {
   constructor() {
@@ -42,7 +44,8 @@ export class RdsMultiAZPgDatabaseDialect extends PgDatabaseDialect implements To
   private static readonly FETCH_WRITER_HOST_QUERY_COLUMN_NAME: string = "multi_az_db_cluster_source_dbi_resource_id";
   private static readonly HOST_ID_QUERY: string = "SELECT dbi_resource_id FROM rds_tools.dbi_resource_id()";
   private static readonly HOST_ID_QUERY_COLUMN_NAME: string = "dbi_resource_id";
-  private static readonly IS_READER_QUERY: string = "SELECT pg_is_in_recovery()";
+  private static readonly IS_READER_QUERY: string = "SELECT pg_is_in_recovery() AS is_reader";
+  private static readonly IS_READER_QUERY_COLUMN_NAME: string = "is_reader";
 
   async isDialect(targetClient: ClientWrapper): Promise<boolean> {
     const res = await targetClient.query(RdsMultiAZPgDatabaseDialect.WRITER_HOST_FUNC_EXIST_QUERY).catch(() => false);
@@ -55,6 +58,9 @@ export class RdsMultiAZPgDatabaseDialect extends PgDatabaseDialect implements To
   }
 
   getHostListProvider(props: Map<string, any>, originalUrl: string, hostListProviderService: HostListProviderService): HostListProvider {
+    if (WrapperProperties.PLUGINS.get(props).includes("failover2")) {
+      return new MonitoringRdsHostListProvider(props, originalUrl, hostListProviderService, <PluginService>hostListProviderService);
+    }
     return new RdsHostListProvider(props, originalUrl, hostListProviderService);
   }
 
@@ -77,7 +83,7 @@ export class RdsMultiAZPgDatabaseDialect extends PgDatabaseDialect implements To
     }
   }
 
-  private async executeTopologyRelatedQuery(targetClient: ClientWrapper, query: string, resultColumnName?: string): Promise<string> {
+  private async executeTopologyRelatedQuery(targetClient: ClientWrapper, query: string, resultColumnName?: string): Promise<any> {
     const res = await targetClient.query(query);
     const rows: any[] = res.rows;
     if (rows.length > 0) {
@@ -125,11 +131,22 @@ export class RdsMultiAZPgDatabaseDialect extends PgDatabaseDialect implements To
   }
 
   async getHostRole(client: ClientWrapper): Promise<HostRole> {
-    return (await this.executeTopologyRelatedQuery(client, RdsMultiAZPgDatabaseDialect.IS_READER_QUERY)) ? HostRole.WRITER : HostRole.READER;
+    return (await this.executeTopologyRelatedQuery(client, RdsMultiAZPgDatabaseDialect.IS_READER_QUERY, RdsMultiAZPgDatabaseDialect.IS_READER_QUERY_COLUMN_NAME)) === false ? HostRole.WRITER : HostRole.READER;
   }
 
-  getWriterId(client: ClientWrapper): Promise<string> {
-    throw new Error("Method not implemented.");
+  async getWriterId(targetClient: ClientWrapper): Promise<string> {
+    try {
+      const writerHostId: string = await this.executeTopologyRelatedQuery(
+        targetClient,
+        RdsMultiAZPgDatabaseDialect.FETCH_WRITER_HOST_QUERY,
+        RdsMultiAZPgDatabaseDialect.FETCH_WRITER_HOST_QUERY_COLUMN_NAME
+      );
+      const currentConnection = await this.identifyConnection(targetClient);
+
+      return (currentConnection && currentConnection === writerHostId) ? currentConnection : null;
+    } catch (error: any) {
+      throw new AwsWrapperError(Messages.get("RdsMultiAZPgDatabaseDialect.invalidQuery", error.message));
+    }
   }
 
   getErrorHandler(): ErrorHandler {

@@ -25,6 +25,8 @@ export type StaticHostListProvider = HostListProvider;
 
 export interface BlockingHostListProvider extends HostListProvider {
   forceMonitoringRefresh(shouldVerifyWriter: boolean, timeoutMs: number): Promise<HostInfo[]>;
+
+  clearAll(): Promise<void>;
 }
 
 export interface HostListProvider {
