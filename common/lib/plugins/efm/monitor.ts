@@ -25,6 +25,7 @@ import { TelemetryFactory } from "../../utils/telemetry/telemetry_factory";
 import { TelemetryCounter } from "../../utils/telemetry/telemetry_counter";
 import { TelemetryTraceLevel } from "../../utils/telemetry/telemetry_trace_level";
 import { HostResponseTimeMonitor } from "../strategy/fastest_response/host_response_time_monitor";
+import { WrapperProperties } from "../../wrapper_property";
 
 export interface Monitor {
   startMonitoring(context: MonitorConnectionContext): void;
@@ -241,7 +242,7 @@ export class MonitorImpl implements Monitor {
         // Open a new connection.
         const monitoringConnProperties: Map<string, any> = new Map(this.properties);
         for (const key of monitoringConnProperties.keys()) {
-          if (!key.startsWith(HostResponseTimeMonitor.MONITORING_PROPERTY_PREFIX)) {
+          if (!key.startsWith(WrapperProperties.MONITORING_PROPERTY_PREFIX)) {
             continue;
           }
           monitoringConnProperties.set(key.substring(HostResponseTimeMonitor.MONITORING_PROPERTY_PREFIX.length), this.properties.get(key));
