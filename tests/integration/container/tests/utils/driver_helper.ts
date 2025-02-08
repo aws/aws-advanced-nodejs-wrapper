@@ -109,17 +109,14 @@ export class DriverHelper {
 
   static addDriverSpecificConfiguration(props: any, engine: DatabaseEngine, performance: boolean = false) {
     if (engine === DatabaseEngine.PG && !performance) {
-      props["query_timeout"] = 10000;
       props["ssl"] = { rejectUnauthorized: false };
-    } else if (engine === DatabaseEngine.PG && performance) {
-      props["query_timeout"] = 120000;
-      props["connectionTimeoutMillis"] = 3000;
-      props["monitoring_query_timeout"] = 3000;
-    } else if (engine === DatabaseEngine.MYSQL && performance) {
-      props["connectTimeout"] = 3000;
-      props["monitoring_wrapperQueryTimeout"] = 3000;
-      props["wrapperQueryTimeout"] = 120000;
     }
+
+    props["wrapperConnectTimeout"] = 3000;
+    props["wrapperQueryTimeout"] = 120000;
+    props["monitoring_wrapperQueryTimeout"] = 3000;
+    props["monitoring_wrapperConnectTimeout"] = 3000;
+    props["failureDetectionTime"] = 1000;
     return props;
   }
 }
