@@ -81,7 +81,7 @@ async function initConfigWithFailover(host: string, port: number, connectToProxy
 }
 
 async function initConfigWithFailover2(host: string, port: number, connectToProxy: boolean): Promise<any> {
-  const config: any = await initConfig(host, port, connectToProxy, "readWriteSplitting,failover2");
+  const config: any = await initConfig(host, port, connectToProxy, "readWriteSplitting,efm2,failover2");
   config["failoverTimeoutMs"] = 400000;
   return config;
 }

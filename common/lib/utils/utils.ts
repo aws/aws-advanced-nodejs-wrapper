@@ -34,6 +34,10 @@ export function getTimeoutTask(timer: any, message: string, timeoutValue: number
   });
 }
 
+export function getCurrentTimeNano() {
+  return Number(process.hrtime.bigint());
+}
+
 export function shuffleList(list: any[]) {
   for (let i = list.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));

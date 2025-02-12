@@ -22,10 +22,11 @@ import { WrapperProperties } from "../../wrapper_property";
 import { SlidingExpirationCache } from "../../utils/sliding_expiration_cache";
 import { PluginService } from "../../plugin_service";
 import { Messages } from "../../utils/messages";
+import { ClientWrapper } from "../../client_wrapper";
 
 export interface MonitorService {
   startMonitoring(
-    clientToAbort: any,
+    clientToAbort: ClientWrapper,
     hostKeys: Set<string>,
     hostInfo: HostInfo,
     properties: Map<string, any>,
@@ -59,7 +60,7 @@ export class MonitorServiceImpl implements MonitorService {
   }
 
   async startMonitoring(
-    clientToAbort: any,
+    clientToAbort: ClientWrapper,
     hostKeys: Set<string>,
     hostInfo: HostInfo,
     properties: Map<string, any>,
@@ -158,7 +159,7 @@ export class MonitorServiceImpl implements MonitorService {
   }
 
   async releaseResources() {
-    for (const [key, monitor] of MonitorServiceImpl.monitors.entries) {
+    for (const [_key, monitor] of MonitorServiceImpl.monitors.entries) {
       if (monitor.item) {
         await monitor.item.releaseResources();
       }

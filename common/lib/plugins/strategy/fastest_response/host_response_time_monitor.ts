@@ -23,6 +23,7 @@ import { Messages } from "../../../utils/messages";
 import { TelemetryTraceLevel } from "../../../utils/telemetry/telemetry_trace_level";
 import { ClientWrapper } from "../../../client_wrapper";
 import { TelemetryContext } from "../../../utils/telemetry/telemetry_context";
+import { WrapperProperties } from "../../../wrapper_property";
 
 export class HostResponseTimeMonitor {
   static readonly MONITORING_PROPERTY_PREFIX = "frt_";
@@ -125,10 +126,10 @@ export class HostResponseTimeMonitor {
       }
       const monitoringConnProperties: Map<string, any> = new Map(this.properties);
       for (const key of monitoringConnProperties.keys()) {
-        if (!key.startsWith(HostResponseTimeMonitor.MONITORING_PROPERTY_PREFIX)) {
+        if (!key.startsWith(WrapperProperties.MONITORING_PROPERTY_PREFIX)) {
           continue;
         }
-        monitoringConnProperties.set(key.substring(HostResponseTimeMonitor.MONITORING_PROPERTY_PREFIX.length), this.properties.get(key));
+        monitoringConnProperties.set(key.substring(WrapperProperties.MONITORING_PROPERTY_PREFIX.length), this.properties.get(key));
         monitoringConnProperties.delete(key);
       }
       logger.debug(Messages.get("HostResponseTimeMonitor.openingConnection", this.hostInfo.url));
