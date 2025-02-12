@@ -133,6 +133,7 @@ describe("reader failover handler", () => {
     when(mockHostInfo.allAliases).thenReturn(new Set<string>(["alias1", "alias2"]));
     when(mockHostInfo.getRawAvailability()).thenReturn(HostAvailability.AVAILABLE);
     when(mockPluginService.getHosts()).thenReturn(hosts);
+    when(mockPluginService.getAllHosts()).thenReturn(hosts);
     when(mockPluginService.forceMonitoringRefresh(true, anything())).thenResolve(true);
     when(mockPluginService.connect(mockHostInfo, anything())).thenReject(test);
 
@@ -182,6 +183,7 @@ describe("reader failover handler", () => {
 
     when(mockHostInfo.allAliases).thenReturn(new Set<string>(["alias1", "alias2"]));
     when(mockPluginService.getHosts()).thenReturn(hosts);
+    when(mockPluginService.getAllHosts()).thenReturn(hosts);
     when(mockPluginService.forceMonitoringRefresh(true, anything())).thenResolve(true);
     when(mockPluginService.connect(mockHostInfo, anything())).thenResolve(null);
 
@@ -210,6 +212,7 @@ describe("reader failover handler", () => {
 
     when(mockHostInfo.allAliases).thenReturn(new Set<string>(["alias1", "alias2"]));
     when(mockPluginService.getHosts()).thenReturn(hosts);
+    when(mockPluginService.getAllHosts()).thenReturn(hosts);
     when(mockPluginService.forceMonitoringRefresh(true, anything())).thenResolve(true);
     when(mockPluginService.connect(hostInfo, anything())).thenResolve(mockClientWrapper);
     when(mockPluginService.getHostRole(mockClientWrapper)).thenResolve(HostRole.WRITER);

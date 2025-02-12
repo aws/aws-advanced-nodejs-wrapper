@@ -29,7 +29,6 @@ import { ClientWrapper } from "../../common/lib/client_wrapper";
 import { HostInfo } from "../../common/lib/host_info";
 import { MySQLClientWrapper } from "../../common/lib/mysql_client_wrapper";
 import { jest } from "@jest/globals";
-import { DriverDialect } from "../../common/lib/driver_dialect/driver_dialect";
 import { MySQL2DriverDialect } from "../../mysql/lib/dialect/mysql2_driver_dialect";
 
 const props = new Map<string, any>();
@@ -42,17 +41,14 @@ const mockSqlFunc = jest.fn(() => {
 const mockConnectFunc = jest.fn(() => {
   return Promise.resolve(mockClientWrapper);
 });
-const mockCloseOrAbortFunc = jest.fn(() => {
-  return Promise.resolve();
-});
+
 const mockTracker = mock(OpenedConnectionTracker);
 const mockRdsUtils = mock(RdsUtils);
 const mockClient = mock(AwsClient);
 const mockHostInfo = mock(HostInfo);
 
-const mockDriverDialect: DriverDialect = mock(MySQL2DriverDialect);
 const mockClientInstance = instance(mockClient);
-const mockClientWrapper: ClientWrapper = new MySQLClientWrapper(undefined, mockHostInfo, props, mockDriverDialect);
+const mockClientWrapper: ClientWrapper = new MySQLClientWrapper(undefined, mockHostInfo, props, new MySQL2DriverDialect());
 
 mockClientInstance.targetClient = mockClientWrapper;
 
@@ -93,7 +89,7 @@ describe("aurora connection tracker tests", () => {
       .withRole(HostRole.WRITER)
       .build();
     new HostInfoBuilder({ hostAvailabilityStrategy: new SimpleHostAvailabilityStrategy() }).withHost("new-host").withRole(HostRole.WRITER).build();
-    when(mockPluginService.getHosts()).thenReturn([originalHost]);
+    when(mockPluginService.getAllHosts()).thenReturn([originalHost]);
 
     const plugin = new AuroraConnectionTrackerPlugin(instance(mockPluginService), instance(mockRdsUtils), instance(mockTracker));
 
@@ -106,7 +102,7 @@ describe("aurora connection tracker tests", () => {
     const originalHost = new HostInfoBuilder({ hostAvailabilityStrategy: new SimpleHostAvailabilityStrategy() }).withHost("host").build();
     const failoverTargetHost = new HostInfoBuilder({ hostAvailabilityStrategy: new SimpleHostAvailabilityStrategy() }).withHost("host2").build();
 
-    when(mockPluginService.getHosts()).thenReturn([originalHost]).thenReturn([failoverTargetHost]);
+    when(mockPluginService.getAllHosts()).thenReturn([originalHost]).thenReturn([failoverTargetHost]);
     mockSqlFunc.mockResolvedValueOnce("1").mockRejectedValueOnce(expectedError);
 
     const plugin = new AuroraConnectionTrackerPlugin(instance(mockPluginService), instance(mockRdsUtils), instance(mockTracker));

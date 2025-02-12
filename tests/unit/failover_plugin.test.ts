@@ -38,7 +38,6 @@ import { Messages } from "../../common/lib/utils/messages";
 import { HostChangeOptions } from "../../common/lib/host_change_options";
 import { NullTelemetryFactory } from "../../common/lib/utils/telemetry/null_telemetry_factory";
 import { MySQLClientWrapper } from "../../common/lib/mysql_client_wrapper";
-import { DriverDialect } from "../../common/lib/driver_dialect/driver_dialect";
 import { MySQL2DriverDialect } from "../../mysql/lib/dialect/mysql2_driver_dialect";
 
 const builder = new HostInfoBuilder({ hostAvailabilityStrategy: new SimpleHostAvailabilityStrategy() });
@@ -54,9 +53,8 @@ let mockWriterFailoverHandlerInstance;
 const mockWriterFailoverHandler: ClusterAwareWriterFailoverHandler = mock(ClusterAwareWriterFailoverHandler);
 const mockReaderResult: ReaderFailoverResult = mock(ReaderFailoverResult);
 const mockWriterResult: WriterFailoverResult = mock(WriterFailoverResult);
-const mockDriverDialect: DriverDialect = mock(MySQL2DriverDialect);
 
-const mockClientWrapper = new MySQLClientWrapper(undefined, mockHostInfo, new Map<string, any>(), mockDriverDialect);
+const mockClientWrapper = new MySQLClientWrapper(undefined, mockHostInfo, new Map<string, any>(), new MySQL2DriverDialect());
 
 const properties: Map<string, any> = new Map();
 
@@ -151,7 +149,7 @@ describe("reader failover handler", () => {
     verify(mockPluginService.refreshHostList()).never();
 
     // Test with hosts
-    when(mockPluginService.getHosts()).thenReturn([builder.withHost("host").build()]);
+    when(mockPluginService.getAllHosts()).thenReturn([builder.withHost("host").build()]);
 
     // Test updateTopology with forceUpdate == true
     await plugin.updateTopology(true);
@@ -258,7 +256,7 @@ describe("reader failover handler", () => {
     const test = new AwsWrapperError("test");
 
     when(mockHostInfo.allAliases).thenReturn(new Set<string>(["alias1", "alias2"]));
-    when(mockPluginService.getHosts()).thenReturn(hosts);
+    when(mockPluginService.getAllHosts()).thenReturn(hosts);
     when(mockWriterResult.error).thenReturn(test);
     when(mockWriterFailoverHandler.failover(anything())).thenResolve(instance(mockWriterResult));
 
@@ -279,7 +277,7 @@ describe("reader failover handler", () => {
     const hosts = [hostInfo];
 
     when(mockHostInfo.allAliases).thenReturn(new Set<string>(["alias1", "alias2"]));
-    when(mockPluginService.getHosts()).thenReturn(hosts);
+    when(mockPluginService.getAllHosts()).thenReturn(hosts);
     when(mockWriterResult.isConnected).thenReturn(false);
     when(mockWriterFailoverHandler.failover(anything())).thenResolve(instance(mockWriterResult));
 
@@ -309,7 +307,7 @@ describe("reader failover handler", () => {
     const hosts = [hostInfo];
 
     when(mockHostInfo.allAliases).thenReturn(new Set<string>(["alias1", "alias2"]));
-    when(mockPluginService.getHosts()).thenReturn(hosts);
+    when(mockPluginService.getAllHosts()).thenReturn(hosts);
     when(mockWriterResult.isConnected).thenReturn(false);
     when(mockWriterResult.topology).thenReturn(hosts);
     when(mockWriterFailoverHandler.failover(anything())).thenResolve(instance(mockWriterResult));

@@ -39,6 +39,7 @@ import { DeveloperConnectionPluginFactory } from "./plugins/dev/developer_connec
 import { ConnectionPluginFactory } from "./plugin_factory";
 import { LimitlessConnectionPluginFactory } from "./plugins/limitless/limitless_connection_plugin_factory";
 import { FastestResponseStrategyPluginFactory } from "./plugins/strategy/fastest_response/fastest_respose_strategy_plugin_factory";
+import { CustomEndpointPluginFactory } from "./plugins/custom_endpoint/custom_endpoint_plugin_factory";
 import { ConfigurationProfile } from "./profile/configuration_profile";
 
 /*
@@ -54,6 +55,7 @@ export class ConnectionPluginChainBuilder {
   static readonly WEIGHT_RELATIVE_TO_PRIOR_PLUGIN = -1;
 
   static readonly PLUGIN_FACTORIES = new Map<string, PluginFactoryInfo>([
+    ["customEndpoint", { factory: CustomEndpointPluginFactory, weight: 380 }],
     ["initialConnection", { factory: AuroraInitialConnectionStrategyFactory, weight: 390 }],
     ["auroraConnectionTracker", { factory: AuroraConnectionTrackerPluginFactory, weight: 400 }],
     ["staleDns", { factory: StaleDnsPluginFactory, weight: 500 }],

@@ -27,6 +27,7 @@ import { Messages } from "../../utils/messages";
 import { WrapperProperties } from "../../wrapper_property";
 import { BlockingHostListProvider } from "../host_list_provider";
 import { logger } from "../../../logutils";
+import { isDialectTopologyAware } from "../../utils/utils";
 
 export class MonitoringRdsHostListProvider extends RdsHostListProvider implements BlockingHostListProvider {
   static readonly CACHE_CLEANUP_NANOS: bigint = BigInt(60_000_000_000); // 1 minute.
@@ -76,7 +77,7 @@ export class MonitoringRdsHostListProvider extends RdsHostListProvider implement
 
   async sqlQueryForTopology(targetClient: ClientWrapper): Promise<HostInfo[]> {
     const dialect: DatabaseDialect = this.hostListProviderService.getDialect();
-    if (!this.isTopologyAwareDatabaseDialect(dialect)) {
+    if (!isDialectTopologyAware(dialect)) {
       throw new TypeError(Messages.get("RdsHostListProvider.incorrectDialect"));
     }
     return await dialect.queryForTopology(targetClient, this).then((res: any) => this.processQueryResults(res));

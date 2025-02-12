@@ -17,7 +17,7 @@
 import { HostInfo } from "../../host_info";
 import { PluginService } from "../../plugin_service";
 import { ReaderFailoverResult } from "./reader_failover_result";
-import { getTimeoutTask, logAndThrowError, maskProperties, shuffleList, sleep } from "../../utils/utils";
+import { getTimeoutTask, maskProperties, shuffleList, sleep } from "../../utils/utils";
 import { HostRole } from "../../host_role";
 import { HostAvailability } from "../../host_availability/host_availability";
 import { AwsWrapperError, InternalQueryTimeoutError } from "../../utils/errors";
@@ -31,6 +31,8 @@ export interface ReaderFailoverHandler {
   failover(hosts: HostInfo[], currentHost: HostInfo): Promise<ReaderFailoverResult>;
 
   getReaderConnection(hostList: HostInfo[]): Promise<ReaderFailoverResult>;
+
+  setEnableFailoverStrictReader(enableFailoverStrictReader: boolean): void;
 }
 
 export class ClusterAwareReaderFailoverHandler implements ReaderFailoverHandler {
@@ -41,7 +43,7 @@ export class ClusterAwareReaderFailoverHandler implements ReaderFailoverHandler 
   private readonly initialConnectionProps: Map<string, any>;
   private readonly maxFailoverTimeoutMs: number;
   private readonly timeoutMs: number;
-  private readonly enableFailoverStrictReader: boolean;
+  private enableFailoverStrictReader: boolean;
   private readonly pluginService: PluginService;
   private taskHandler: ReaderTaskSelectorHandler = new ReaderTaskSelectorHandler();
 
@@ -56,6 +58,10 @@ export class ClusterAwareReaderFailoverHandler implements ReaderFailoverHandler 
     this.initialConnectionProps = initialConnectionProps;
     this.maxFailoverTimeoutMs = maxFailoverTimeoutMs;
     this.timeoutMs = timeoutMs;
+    this.enableFailoverStrictReader = enableFailoverStrictReader;
+  }
+
+  setEnableFailoverStrictReader(enableFailoverStrictReader: boolean): void {
     this.enableFailoverStrictReader = enableFailoverStrictReader;
   }
 
@@ -113,7 +119,7 @@ export class ClusterAwareReaderFailoverHandler implements ReaderFailoverHandler 
         // Ensure new connection is to a reader host
         await this.pluginService.refreshHostList();
         try {
-          if ((await this.pluginService.getHostRole(result.client)) !== HostRole.READER) {
+          if ((await this.pluginService.getHostRole(result.client)) === HostRole.READER) {
             return result;
           }
         } catch (error) {

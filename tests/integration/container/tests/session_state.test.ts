@@ -74,111 +74,115 @@ class TestAwsPGClient extends AwsPGClient {
 }
 
 describe("session state", () => {
-  it.only("test update state", async () => {
-    const env = await TestEnvironment.getCurrent();
-    const driver = DriverHelper.getDriverForDatabaseEngine(env.engine);
-    let initClientFunc;
-    switch (driver) {
-      case TestDriver.MYSQL:
-        initClientFunc = (options: any) => new TestAwsMySQLClient(options);
-        break;
-      case TestDriver.PG:
-        initClientFunc = (options: any) => new TestAwsPGClient(options);
-        break;
-      default:
-        throw new Error("invalid driver");
-    }
-
-    let props = {
-      user: env.databaseInfo.username,
-      host: env.databaseInfo.clusterEndpoint,
-      database: env.databaseInfo.defaultDbName,
-      password: env.databaseInfo.password,
-      port: env.databaseInfo.clusterEndpointPort
-    };
-    props = DriverHelper.addDriverSpecificConfiguration(props, env.engine);
-    client = initClientFunc(props);
-
-    const newClient = initClientFunc(props);
-
-    try {
-      await client.connect();
-      await newClient.connect();
-      const targetClient = client.targetClient;
-      const newTargetClient = newClient.targetClient;
-
-      expect(targetClient).not.toEqual(newTargetClient);
-      if (driver === TestDriver.MYSQL) {
-        await DriverHelper.executeQuery(env.engine, client, "CREATE DATABASE IF NOT EXISTS testSessionState");
-        await client.setReadOnly(true);
-        await client.setCatalog("testSessionState");
-        await client.setTransactionIsolation(TransactionIsolationLevel.TRANSACTION_SERIALIZABLE);
-        await client.setAutoCommit(false);
-
-        // Assert new client's session states are using server default values.
-        let readOnly = await DriverHelper.executeQuery(env.engine, newClient, "SELECT @@SESSION.transaction_read_only AS readonly");
-        let catalog = await DriverHelper.executeQuery(env.engine, newClient, "SELECT DATABASE() AS catalog");
-        let autoCommit = await DriverHelper.executeQuery(env.engine, newClient, "SELECT @@SESSION.autocommit AS autocommit");
-        let transactionIsolation = await DriverHelper.executeQuery(env.engine, newClient, "SELECT @@SESSION.transaction_isolation AS level");
-        expect(readOnly[0][0].readonly).toEqual(0);
-        expect(catalog[0][0].catalog).toEqual(env.databaseInfo.defaultDbName);
-        expect(autoCommit[0][0].autocommit).toEqual(1);
-        expect(transactionIsolation[0][0].level).toEqual("REPEATABLE-READ");
-
-        await client.getPluginService().setCurrentClient(newClient.targetClient);
-
-        expect(client.targetClient).not.toEqual(targetClient);
-        expect(client.targetClient).toEqual(newTargetClient);
-
-        // Assert new client's session states are set.
-        readOnly = await DriverHelper.executeQuery(env.engine, newClient, "SELECT @@SESSION.transaction_read_only AS readonly");
-        catalog = await DriverHelper.executeQuery(env.engine, newClient, "SELECT DATABASE() AS catalog");
-        autoCommit = await DriverHelper.executeQuery(env.engine, newClient, "SELECT @@SESSION.autocommit AS autocommit");
-        transactionIsolation = await DriverHelper.executeQuery(env.engine, newClient, "SELECT @@SESSION.transaction_isolation AS level");
-        expect(readOnly[0][0].readonly).toEqual(1);
-        expect(catalog[0][0].catalog).toEqual("testSessionState");
-        expect(autoCommit[0][0].autocommit).toEqual(0);
-        expect(transactionIsolation[0][0].level).toEqual("SERIALIZABLE");
-
-        await client.setReadOnly(false);
-        await client.setAutoCommit(true);
-        await DriverHelper.executeQuery(env.engine, client, "DROP DATABASE IF EXISTS testSessionState");
-      } else if (driver === TestDriver.PG) {
-        // End any current transaction before we can create a new test database.
-        await DriverHelper.executeQuery(env.engine, client, "END TRANSACTION");
-        await DriverHelper.executeQuery(env.engine, client, "DROP DATABASE IF EXISTS testSessionState");
-        await DriverHelper.executeQuery(env.engine, client, "CREATE DATABASE testSessionState");
-        await client.setReadOnly(true);
-        await client.setSchema("testSessionState");
-        await client.setTransactionIsolation(TransactionIsolationLevel.TRANSACTION_SERIALIZABLE);
-
-        // Assert new client's session states are using server default values.
-        let readOnly = await DriverHelper.executeQuery(env.engine, newClient, "SHOW transaction_read_only");
-        let schema = await DriverHelper.executeQuery(env.engine, newClient, "SHOW search_path");
-        let transactionIsolation = await DriverHelper.executeQuery(env.engine, newClient, "SHOW TRANSACTION ISOLATION LEVEL");
-        expect(readOnly.rows[0]["transaction_read_only"]).toEqual("off");
-        expect(schema.rows[0]["search_path"]).not.toEqual("testSessionState");
-        expect(transactionIsolation.rows[0]["transaction_isolation"]).toEqual("read committed");
-
-        await client.getPluginService().setCurrentClient(newClient.targetClient);
-        expect(client.targetClient).not.toEqual(targetClient);
-        expect(client.targetClient).toEqual(newTargetClient);
-
-        // Assert new client's session states are set.
-        readOnly = await DriverHelper.executeQuery(env.engine, newClient, "SHOW transaction_read_only");
-        schema = await DriverHelper.executeQuery(env.engine, newClient, "SHOW search_path");
-        transactionIsolation = await DriverHelper.executeQuery(env.engine, newClient, "SHOW TRANSACTION ISOLATION LEVEL");
-        expect(readOnly.rows[0]["transaction_read_only"]).toEqual("on");
-        expect(schema.rows[0]["search_path"]).toEqual("testsessionstate");
-        expect(transactionIsolation.rows[0]["transaction_isolation"]).toEqual("serializable");
-
-        await client.setReadOnly(false);
-        await DriverHelper.executeQuery(env.engine, client, "DROP DATABASE IF EXISTS testSessionState");
+  itIf(
+    "test update state",
+    async () => {
+      const env = await TestEnvironment.getCurrent();
+      const driver = DriverHelper.getDriverForDatabaseEngine(env.engine);
+      let initClientFunc;
+      switch (driver) {
+        case TestDriver.MYSQL:
+          initClientFunc = (options: any) => new TestAwsMySQLClient(options);
+          break;
+        case TestDriver.PG:
+          initClientFunc = (options: any) => new TestAwsPGClient(options);
+          break;
+        default:
+          throw new Error("invalid driver");
       }
-    } catch (e) {
-      await client.end();
-      await newClient.end();
-      throw e;
-    }
-  }, 1320000);
+
+      let props = {
+        user: env.databaseInfo.username,
+        host: env.databaseInfo.clusterEndpoint,
+        database: env.databaseInfo.defaultDbName,
+        password: env.databaseInfo.password,
+        port: env.databaseInfo.clusterEndpointPort
+      };
+      props = DriverHelper.addDriverSpecificConfiguration(props, env.engine);
+      client = initClientFunc(props);
+
+      const newClient = initClientFunc(props);
+
+      try {
+        await client.connect();
+        await newClient.connect();
+        const targetClient = client.targetClient;
+        const newTargetClient = newClient.targetClient;
+
+        expect(targetClient).not.toEqual(newTargetClient);
+        if (driver === TestDriver.MYSQL) {
+          await DriverHelper.executeQuery(env.engine, client, "CREATE DATABASE IF NOT EXISTS testSessionState");
+          await client.setReadOnly(true);
+          await client.setCatalog("testSessionState");
+          await client.setTransactionIsolation(TransactionIsolationLevel.TRANSACTION_SERIALIZABLE);
+          await client.setAutoCommit(false);
+
+          // Assert new client's session states are using server default values.
+          let readOnly = await DriverHelper.executeQuery(env.engine, newClient, "SELECT @@SESSION.transaction_read_only AS readonly");
+          let catalog = await DriverHelper.executeQuery(env.engine, newClient, "SELECT DATABASE() AS catalog");
+          let autoCommit = await DriverHelper.executeQuery(env.engine, newClient, "SELECT @@SESSION.autocommit AS autocommit");
+          let transactionIsolation = await DriverHelper.executeQuery(env.engine, newClient, "SELECT @@SESSION.transaction_isolation AS level");
+          expect(readOnly[0][0].readonly).toEqual(0);
+          expect(catalog[0][0].catalog).toEqual(env.databaseInfo.defaultDbName);
+          expect(autoCommit[0][0].autocommit).toEqual(1);
+          expect(transactionIsolation[0][0].level).toEqual("REPEATABLE-READ");
+
+          await client.getPluginService().setCurrentClient(newClient.targetClient);
+
+          expect(client.targetClient).not.toEqual(targetClient);
+          expect(client.targetClient).toEqual(newTargetClient);
+
+          // Assert new client's session states are set.
+          readOnly = await DriverHelper.executeQuery(env.engine, newClient, "SELECT @@SESSION.transaction_read_only AS readonly");
+          catalog = await DriverHelper.executeQuery(env.engine, newClient, "SELECT DATABASE() AS catalog");
+          autoCommit = await DriverHelper.executeQuery(env.engine, newClient, "SELECT @@SESSION.autocommit AS autocommit");
+          transactionIsolation = await DriverHelper.executeQuery(env.engine, newClient, "SELECT @@SESSION.transaction_isolation AS level");
+          expect(readOnly[0][0].readonly).toEqual(1);
+          expect(catalog[0][0].catalog).toEqual("testSessionState");
+          expect(autoCommit[0][0].autocommit).toEqual(0);
+          expect(transactionIsolation[0][0].level).toEqual("SERIALIZABLE");
+
+          await client.setReadOnly(false);
+          await client.setAutoCommit(true);
+          await DriverHelper.executeQuery(env.engine, client, "DROP DATABASE IF EXISTS testSessionState");
+        } else if (driver === TestDriver.PG) {
+          // End any current transaction before we can create a new test database.
+          await DriverHelper.executeQuery(env.engine, client, "END TRANSACTION");
+          await DriverHelper.executeQuery(env.engine, client, "DROP DATABASE IF EXISTS testSessionState");
+          await DriverHelper.executeQuery(env.engine, client, "CREATE DATABASE testSessionState");
+          await client.setReadOnly(true);
+          await client.setSchema("testSessionState");
+          await client.setTransactionIsolation(TransactionIsolationLevel.TRANSACTION_SERIALIZABLE);
+
+          // Assert new client's session states are using server default values.
+          let readOnly = await DriverHelper.executeQuery(env.engine, newClient, "SHOW transaction_read_only");
+          let schema = await DriverHelper.executeQuery(env.engine, newClient, "SHOW search_path");
+          let transactionIsolation = await DriverHelper.executeQuery(env.engine, newClient, "SHOW TRANSACTION ISOLATION LEVEL");
+          expect(readOnly.rows[0]["transaction_read_only"]).toEqual("off");
+          expect(schema.rows[0]["search_path"]).not.toEqual("testSessionState");
+          expect(transactionIsolation.rows[0]["transaction_isolation"]).toEqual("read committed");
+
+          await client.getPluginService().setCurrentClient(newClient.targetClient);
+          expect(client.targetClient).not.toEqual(targetClient);
+          expect(client.targetClient).toEqual(newTargetClient);
+
+          // Assert new client's session states are set.
+          readOnly = await DriverHelper.executeQuery(env.engine, newClient, "SHOW transaction_read_only");
+          schema = await DriverHelper.executeQuery(env.engine, newClient, "SHOW search_path");
+          transactionIsolation = await DriverHelper.executeQuery(env.engine, newClient, "SHOW TRANSACTION ISOLATION LEVEL");
+          expect(readOnly.rows[0]["transaction_read_only"]).toEqual("on");
+          expect(schema.rows[0]["search_path"]).toEqual("testsessionstate");
+          expect(transactionIsolation.rows[0]["transaction_isolation"]).toEqual("serializable");
+
+          await client.setReadOnly(false);
+          await DriverHelper.executeQuery(env.engine, client, "DROP DATABASE IF EXISTS testSessionState");
+        }
+      } catch (e) {
+        await client.end();
+        await newClient.end();
+        throw e;
+      }
+    },
+    1320000
+  );
 });

@@ -21,6 +21,7 @@ import { FailoverRestriction } from "../plugins/failover/failover_restriction";
 import { ErrorHandler } from "../error_handler";
 import { SessionState } from "../session_state";
 import { TransactionIsolationLevel } from "../utils/transaction_isolation_level";
+import { HostRole } from "../host_role";
 
 export enum DatabaseType {
   MYSQL,
@@ -39,6 +40,7 @@ export interface DatabaseDialect {
   getSetSchemaQuery(schema: string): string;
   getDialectUpdateCandidates(): string[];
   getErrorHandler(): ErrorHandler;
+  getHostRole(targetClient: ClientWrapper): Promise<HostRole>;
   isDialect(targetClient: ClientWrapper): Promise<boolean>;
   getHostListProvider(props: Map<string, any>, originalUrl: string, hostListProviderService: HostListProviderService): HostListProvider;
   isClientValid(targetClient: ClientWrapper): Promise<boolean>;

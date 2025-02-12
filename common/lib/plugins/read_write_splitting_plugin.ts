@@ -222,7 +222,6 @@ export class ReadWriteSplittingPlugin extends AbstractConnectionPlugin implement
     if (hosts == null || hosts.length === 0) {
       logAndThrowError(Messages.get("ReadWriteSplittingPlugin.emptyHostList"));
     }
-
     const currentHost = this.pluginService.getCurrentHostInfo();
     if (currentHost == null) {
       logAndThrowError(Messages.get("ReadWriteSplittingPlugin.unavailableHostInfo"));
@@ -339,6 +338,11 @@ export class ReadWriteSplittingPlugin extends AbstractConnectionPlugin implement
     const currentClient = this.pluginService.getCurrentClient();
     if (currentHost !== null && currentHost?.role === HostRole.READER && currentClient) {
       return;
+    }
+
+    if (this._readerHostInfo && !hosts.some((hostInfo: HostInfo) => hostInfo.host === this._readerHostInfo?.host)) {
+      // The old reader cannot be used anymore because it is no longer in the list of allowed hosts.
+      await this.closeTargetClientIfIdle(this.readerTargetClient);
     }
 
     this._inReadWriteSplit = true;

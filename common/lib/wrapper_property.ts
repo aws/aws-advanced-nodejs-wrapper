@@ -387,6 +387,39 @@ export class WrapperProperties {
 
   static readonly PROFILE_NAME = new WrapperProperty<string>("profileName", "Driver configuration profile name", null);
 
+  static readonly CUSTOM_ENDPOINT_INFO_REFRESH_RATE = new WrapperProperty<number>(
+    "customEndpointInfoRefreshRateMs",
+    "Controls how frequently custom endpoint monitors fetch custom endpoint info, in milliseconds.",
+    10_000
+  );
+
+  static readonly WAIT_FOR_CUSTOM_ENDPOINT_INFO = new WrapperProperty<boolean>(
+    "waitForCustomEndpointInfo",
+    "Controls whether to wait for custom endpoint info to become available before connecting or executing a " +
+      "method. Waiting is only necessary if a connection to a given custom endpoint has not been opened or used " +
+      "recently. Note that disabling this may result in occasional connections to instances outside of the " +
+      "custom endpoint.",
+    true
+  );
+
+  static readonly WAIT_FOR_CUSTOM_ENDPOINT_INFO_TIMEOUT_MS = new WrapperProperty<number>(
+    "waitForCustomEndpointInfoTimeoutMs",
+    "Controls the maximum amount of time that the plugin will wait for custom endpoint info to be made available by the custom endpoint monitor, in milliseconds.",
+    10_000
+  );
+
+  static readonly CUSTOM_ENDPOINT_MONITOR_IDLE_EXPIRATION_MS = new WrapperProperty<number>(
+    "customEndpointMonitorExpirationMs",
+    "Controls how long a monitor should run without use before expiring and being removed, in milliseconds.",
+    900_000 // 15 min
+  );
+
+  static readonly CUSTOM_ENDPOINT_REGION = new WrapperProperty<string>(
+    "customEndpointRegion",
+    "The region of the cluster's custom endpoints. If not specified, the region will be parsed from the URL.",
+    null
+  );
+
   static removeWrapperProperties(props: Map<string, any>): Map<string, any> {
     const persistingProperties = [
       WrapperProperties.USER.name,
