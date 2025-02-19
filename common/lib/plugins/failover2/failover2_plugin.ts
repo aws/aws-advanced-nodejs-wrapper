@@ -242,7 +242,7 @@ export class Failover2Plugin extends AbstractConnectionPlugin implements CanRele
     } else {
       // "The active SQL connection has changed due to a connection failure. Please re-configure
       // session state if required."
-      throw new FailoverSuccessError(Messages.get("Failover.connectionChangedError"));
+      throw new FailoverSuccessError();
     }
   }
 
@@ -261,7 +261,7 @@ export class Failover2Plugin extends AbstractConnectionPlugin implements CanRele
           // Unable to establish SQL connection to an instance.
           this.failoverReaderFailedCounter.inc();
           logger.error(Messages.get("Failover2.unableToFetchTopology"));
-          throw new FailoverFailedError(Messages.get("Failover2.unableToFetchTopology"));
+          throw new FailoverFailedError();
         }
         try {
           const result: ReaderFailoverResult = await this.getReaderFailoverConnection(failoverEndTimeMs);
@@ -274,7 +274,7 @@ export class Failover2Plugin extends AbstractConnectionPlugin implements CanRele
         } catch (error) {
           this.failoverReaderFailedCounter.inc();
           logger.error(Messages.get("Failover.unableToConnectToReader"));
-          throw new FailoverFailedError(Messages.get("Failover.unableToConnectToReader"));
+          throw new FailoverFailedError();
         }
       });
     } finally {
@@ -396,7 +396,7 @@ export class Failover2Plugin extends AbstractConnectionPlugin implements CanRele
             logTopology(allowedHosts, "[Failover.newWriterNotAllowed] ")
           );
           logger.error(failoverErrorMessage);
-          throw new FailoverFailedError(failoverErrorMessage);
+          throw new FailoverFailedError();
         }
 
         if (writerCandidateHostInfo) {
@@ -489,12 +489,12 @@ export class Failover2Plugin extends AbstractConnectionPlugin implements CanRele
   private logAndThrowError(errorMessage: string) {
     logger.error(errorMessage);
     this.failoverWriterFailedCounter.inc();
-    throw new FailoverFailedError(errorMessage);
+    throw new FailoverFailedError();
   }
 
   async releaseResources(): Promise<void> {
     const hostListProvider: HostListProvider = this.pluginService.getHostListProvider();
-    if (!!this.pluginService.isBlockingHostListProvider(hostListProvider)) {
+    if (this.pluginService.isBlockingHostListProvider(hostListProvider)) {
       await hostListProvider.clearAll();
     }
   }

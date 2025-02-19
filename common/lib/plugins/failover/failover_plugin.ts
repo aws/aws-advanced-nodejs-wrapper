@@ -352,7 +352,7 @@ export class FailoverPlugin extends AbstractConnectionPlugin {
 
           if (!result || !result.isConnected || !result.newHost || !result.client) {
             // "Unable to establish SQL connection to reader instance"
-            throw new FailoverFailedError(Messages.get("Failover.unableToConnectToReader"));
+            throw new FailoverFailedError();
           }
 
           await this.pluginService.abortCurrentClient();
@@ -383,7 +383,7 @@ export class FailoverPlugin extends AbstractConnectionPlugin {
     } else {
       // "The active SQL connection has changed due to a connection failure. Please re-configure
       // session state if required."
-      throw new FailoverSuccessError(Messages.get("Failover.connectionChangedError"));
+      throw new FailoverSuccessError();
     }
   }
 
@@ -408,7 +408,7 @@ export class FailoverPlugin extends AbstractConnectionPlugin {
 
           if (!result || !result.isConnected || !result.client) {
             // "Unable to establish SQL connection to writer host"
-            throw new FailoverFailedError(Messages.get("Failover.unableToConnectToWriter"));
+            throw new FailoverFailedError();
           }
 
           // successfully re-connected to a writer host
@@ -427,7 +427,7 @@ export class FailoverPlugin extends AbstractConnectionPlugin {
             );
             logger.error(failoverErrorMessage);
             await this.pluginService.abortTargetClient(result.client);
-            throw new FailoverFailedError(failoverErrorMessage);
+            throw new FailoverFailedError();
           }
 
           await this.pluginService.abortCurrentClient();

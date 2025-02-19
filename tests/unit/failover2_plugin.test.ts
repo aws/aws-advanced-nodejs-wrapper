@@ -96,7 +96,7 @@ describe("reader failover handler", () => {
     when(spyPlugin.failoverReader()).thenResolve();
     plugin.failoverMode = FailoverMode.READER_OR_WRITER;
 
-    await expect(plugin.failover()).rejects.toThrow(new FailoverSuccessError(Messages.get("Failover.connectionChangedError")));
+    await expect(plugin.failover()).rejects.toThrow(new FailoverSuccessError());
 
     verify(spyPlugin.failoverReader()).once();
   });

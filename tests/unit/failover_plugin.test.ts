@@ -187,7 +187,7 @@ describe("reader failover handler", () => {
     when(spyPlugin.failoverReader(mockHostInfoInstance)).thenResolve();
     plugin.failoverMode = FailoverMode.READER_OR_WRITER;
 
-    await expect(plugin.failover(mockHostInfoInstance)).rejects.toThrow(new FailoverSuccessError(Messages.get("Failover.connectionChangedError")));
+    await expect(plugin.failover(mockHostInfoInstance)).rejects.toThrow(new FailoverSuccessError());
 
     verify(spyPlugin.failoverReader(mockHostInfoInstance)).once();
   });
