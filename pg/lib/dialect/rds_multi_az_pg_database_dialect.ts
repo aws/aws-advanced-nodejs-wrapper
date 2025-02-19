@@ -131,7 +131,13 @@ export class RdsMultiAZPgDatabaseDialect extends PgDatabaseDialect implements To
   }
 
   async getHostRole(client: ClientWrapper): Promise<HostRole> {
-    return (await this.executeTopologyRelatedQuery(client, RdsMultiAZPgDatabaseDialect.IS_READER_QUERY, RdsMultiAZPgDatabaseDialect.IS_READER_QUERY_COLUMN_NAME)) === false ? HostRole.WRITER : HostRole.READER;
+    return (await this.executeTopologyRelatedQuery(
+      client,
+      RdsMultiAZPgDatabaseDialect.IS_READER_QUERY,
+      RdsMultiAZPgDatabaseDialect.IS_READER_QUERY_COLUMN_NAME
+    )) === false
+      ? HostRole.WRITER
+      : HostRole.READER;
   }
 
   async getWriterId(targetClient: ClientWrapper): Promise<string> {
@@ -143,7 +149,7 @@ export class RdsMultiAZPgDatabaseDialect extends PgDatabaseDialect implements To
       );
       const currentConnection = await this.identifyConnection(targetClient);
 
-      return (currentConnection && currentConnection === writerHostId) ? currentConnection : null;
+      return currentConnection && currentConnection === writerHostId ? currentConnection : null;
     } catch (error: any) {
       throw new AwsWrapperError(Messages.get("RdsMultiAZPgDatabaseDialect.invalidQuery", error.message));
     }

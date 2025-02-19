@@ -86,3 +86,17 @@ await client.connect();
 
 > [!WARNING]
 > Connections with the Host Monitoring Connection Plugin may have cached resources used throughout multiple connections. To clean up any resources used by the plugins at the end of the application call `await PluginManager.releaseResources()`.
+
+> # Host Monitoring Plugin v2
+
+Host Monitoring Plugin v2, also known as `efm2`, is an alternative implementation of enhanced failure monitoring and it is functionally equal to the Host Monitoring Plugin described above. Both plugins share the same set of [configuration parameters](#enhanced-failure-monitoring-parameters). The `efm2` plugin is designed to be a drop-in replacement for the `efm` plugin.
+The `efm2` plugin can be used in any scenario where the `efm` plugin is mentioned. This plugin is enabled by default since [version 1.2.0](https://github.com/aws/aws-advanced-nodejs-wrapper/releases/tag/1.2.0) of the driver. The original EFM plugin can still be used by specifying `efm` in the `wrapperPlugins` parameter.
+
+> [!NOTE]\
+> Since these two plugins are separate plugins, users may decide to use them together with a single connection. While this should not have any negative side effects, it is not recommended. It is recommended to use either the `efm` plugin, or the `efm2` plugin where it's needed.
+
+The `efm2` plugin implements the following changes:
+
+- Split monitoring logic into two separate tasks to increase overall monitoring stability
+- Reviewed and redesigned stopping of idle monitoring tasks
+- Reviewed and simplified monitoring logic
