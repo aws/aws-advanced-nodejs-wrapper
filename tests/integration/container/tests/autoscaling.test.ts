@@ -72,7 +72,7 @@ async function initConfigWithFailover(host: string, port: number, provider: Inte
     database: env.databaseInfo.defaultDbName,
     password: env.databaseInfo.password,
     port: port,
-    plugins: "readWriteSplitting,failover",
+    plugins: "readWriteSplitting,failover,efm2",
     connectionProvider: provider,
     failoverTimeoutMs: 400000,
     enableTelemetry: true,

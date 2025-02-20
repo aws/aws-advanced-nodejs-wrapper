@@ -31,7 +31,7 @@ const client = new AwsMySQLClient({
   user: username,
   password: password,
   database: database,
-  plugins: "readWriteSplitting, failover, efm"
+  plugins: "readWriteSplitting, failover, efm2"
 });
 
 // Setup Step: Open connection and create tables - uncomment this section to create table and test values.

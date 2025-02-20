@@ -196,7 +196,7 @@ export class ClusterTopologyMonitorImpl implements ClusterTopologyMonitor {
   }
 
   private async openAnyClientAndUpdateTopology(): Promise<HostInfo[] | null> {
-    let writerVerifiedByThisThread = false;
+    let writerVerifiedByThisTask = false;
     if (!this.monitoringClient) {
       let client: ClientWrapper;
       try {
@@ -215,7 +215,7 @@ export class ClusterTopologyMonitorImpl implements ClusterTopologyMonitor {
             this.isVerifiedWriterConnection = true;
             this.writerHostInfo = this.initialHostInfo;
             logger.info(Messages.get("ClusterTopologyMonitor.writerMonitoringConnection", this.initialHostInfo.hostId));
-            writerVerifiedByThisThread = true;
+            writerVerifiedByThisTask = true;
           }
         } catch (error) {
           // Do nothing.
@@ -228,7 +228,7 @@ export class ClusterTopologyMonitorImpl implements ClusterTopologyMonitor {
     }
 
     const hosts: HostInfo[] = await this.fetchTopologyAndUpdateCache(this.monitoringClient);
-    if (writerVerifiedByThisThread) {
+    if (writerVerifiedByThisTask) {
       if (this.ignoreNewTopologyRequestsEndTimeMs === -1) {
         this.ignoreNewTopologyRequestsEndTimeMs = 0;
       } else {

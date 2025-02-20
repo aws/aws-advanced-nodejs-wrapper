@@ -30,7 +30,9 @@ import { AwsMySQLClient } from "../../../../mysql/lib";
 import { TransactionIsolationLevel } from "../../../../common/lib/utils/transaction_isolation_level";
 
 const itIf =
-  !features.includes(TestEnvironmentFeatures.PERFORMANCE) && !features.includes(TestEnvironmentFeatures.RUN_AUTOSCALING_TESTS_ONLY) ? it : it.skip;
+  !features.includes(TestEnvironmentFeatures.PERFORMANCE) && !features.includes(TestEnvironmentFeatures.RUN_AUTOSCALING_TESTS_ONLY)
+    ? it.skip
+    : it.skip;
 
 let client: any;
 

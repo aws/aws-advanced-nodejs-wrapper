@@ -73,7 +73,7 @@ describe("basic_connectivity", () => {
         database: env.databaseInfo.defaultDbName,
         password: env.databaseInfo.password,
         port: env.databaseInfo.clusterEndpointPort,
-        plugins: "failover,efm",
+        plugins: "failover,efm2",
         enableTelemetry: true,
         telemetryTracesBackend: "OTLP",
         telemetryMetricsBackend: "OTLP"
@@ -99,7 +99,7 @@ describe("basic_connectivity", () => {
         database: env.databaseInfo.defaultDbName,
         password: env.databaseInfo.password,
         port: env.databaseInfo.clusterEndpointPort,
-        plugins: "failover,efm",
+        plugins: "failover,efm2",
         enableTelemetry: true,
         telemetryTracesBackend: "OTLP",
         telemetryMetricsBackend: "OTLP"
@@ -125,7 +125,7 @@ describe("basic_connectivity", () => {
         database: env.databaseInfo.defaultDbName,
         password: env.databaseInfo.password,
         port: env.databaseInfo.clusterEndpointPort,
-        plugins: "failover,efm",
+        plugins: "failover,efm2",
         enableTelemetry: true,
         telemetryTracesBackend: "OTLP",
         telemetryMetricsBackend: "OTLP"
