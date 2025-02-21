@@ -14,6 +14,8 @@
   limitations under the License.
 */
 
+import { Messages } from "./messages";
+
 export class AwsWrapperError extends Error {
   constructor(message?: string, cause?: any) {
     super(message);
@@ -30,7 +32,19 @@ export class IllegalArgumentError extends AwsWrapperError {}
 
 export class FailoverError extends AwsWrapperError {}
 
-export class FailoverSuccessError extends FailoverError {}
+export class FailoverSuccessError extends FailoverError {
+  constructor(message?: string, cause?: any) {
+    if (message) {
+      super(message);
+      this.name = this.constructor.name;
+      this.cause = cause;
+    } else {
+      super(Messages.get("Failover.connectionChangedError"));
+      this.name = this.constructor.name;
+      this.cause = cause;
+    }
+  }
+}
 
 export class FailoverFailedError extends FailoverError {}
 
