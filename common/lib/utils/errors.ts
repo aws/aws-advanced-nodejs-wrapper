@@ -34,15 +34,7 @@ export class FailoverError extends AwsWrapperError {}
 
 export class FailoverSuccessError extends FailoverError {
   constructor(message?: string, cause?: any) {
-    if (message) {
-      super(message);
-      this.name = this.constructor.name;
-      this.cause = cause;
-    } else {
-      super(Messages.get("Failover.connectionChangedError"));
-      this.name = this.constructor.name;
-      this.cause = cause;
-    }
+    super(Messages.get("Failover.connectionChangedError"));
   }
 }
 
