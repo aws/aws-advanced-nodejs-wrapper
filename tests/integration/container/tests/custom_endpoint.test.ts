@@ -35,8 +35,9 @@ import { logger } from "../../../../common/logutils";
 import { ProxyHelper } from "./utils/proxy_helper";
 import { PluginManager } from "../../../../common/lib";
 import { TestDriver } from "./utils/test_driver";
+import { DatabaseEngineDeployment } from "./utils/database_engine_deployment";
 
-const itIf =
+let itIf =
   features.includes(TestEnvironmentFeatures.FAILOVER_SUPPORTED) &&
   !features.includes(TestEnvironmentFeatures.PERFORMANCE) &&
   !features.includes(TestEnvironmentFeatures.RUN_AUTOSCALING_TESTS_ONLY) &&
@@ -206,6 +207,11 @@ async function deleteEndpoint(rdsClient: RDSClient, endpointId: string): Promise
 describe("custom endpoint", () => {
   beforeAll(async () => {
     env = await TestEnvironment.getCurrent();
+    // Custom endpoint is not compatible with multi-az clusters
+    if (env.info.request.deployment === DatabaseEngineDeployment.RDS_MULTI_AZ_CLUSTER) {
+      itIf = it.skip;
+      return;
+    }
     const clusterId = env.auroraClusterName;
     const region = env.region;
     rdsClient = new RDSClient({ region: region });
