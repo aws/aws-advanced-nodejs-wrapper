@@ -35,14 +35,7 @@ import { logger } from "../../../../common/logutils";
 import { ProxyHelper } from "./utils/proxy_helper";
 import { PluginManager } from "../../../../common/lib";
 import { TestDriver } from "./utils/test_driver";
-
-const itIf =
-  features.includes(TestEnvironmentFeatures.FAILOVER_SUPPORTED) &&
-  !features.includes(TestEnvironmentFeatures.PERFORMANCE) &&
-  !features.includes(TestEnvironmentFeatures.RUN_AUTOSCALING_TESTS_ONLY) &&
-  instanceCount >= 3
-    ? it
-    : it.skip;
+import { DatabaseEngineDeployment } from "./utils/database_engine_deployment";
 
 const endpointId1 = `test-endpoint-1-${randomUUID()}`;
 const endpointId2 = `test-endpoint-2-${randomUUID()}`;
@@ -59,7 +52,13 @@ let client: any;
 let rdsClient: RDSClient;
 let initClientFunc: (props: any) => any;
 let currentWriter: string;
-
+let itIf =
+  features.includes(TestEnvironmentFeatures.FAILOVER_SUPPORTED) &&
+  !features.includes(TestEnvironmentFeatures.PERFORMANCE) &&
+  !features.includes(TestEnvironmentFeatures.RUN_AUTOSCALING_TESTS_ONLY) &&
+  instanceCount >= 3
+    ? it
+    : it.skip;
 let auroraTestUtility: AuroraTestUtility;
 
 async function initDefaultConfig(host: string, port: number, connectToProxy: boolean, failoverMode: string, usingFailover1: boolean): Promise<any> {
@@ -206,6 +205,12 @@ async function deleteEndpoint(rdsClient: RDSClient, endpointId: string): Promise
 describe("custom endpoint", () => {
   beforeAll(async () => {
     env = await TestEnvironment.getCurrent();
+    // custom endpoints does not run on multi-az clusters
+    if (env.info.request.deployment === DatabaseEngineDeployment.RDS_MULTI_AZ_CLUSTER) {
+      itIf = it.skip;
+      return;
+    }
+
     const clusterId = env.auroraClusterName;
     const region = env.region;
     rdsClient = new RDSClient({ region: region });
