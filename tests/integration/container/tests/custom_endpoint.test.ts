@@ -210,7 +210,6 @@ describe("custom endpoint", () => {
     // Custom endpoint is not compatible with multi-az clusters
     if (env.info.request.deployment === DatabaseEngineDeployment.RDS_MULTI_AZ_CLUSTER) {
       itIf = it.skip;
-      return;
     }
     const clusterId = env.auroraClusterName;
     const region = env.region;
