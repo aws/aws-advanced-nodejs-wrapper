@@ -19,7 +19,6 @@ import { HostInfo } from "../../host_info";
 import { AwsWrapperError } from "../../utils/errors";
 import { Monitor, MonitorImpl } from "./monitor";
 import { WrapperProperties } from "../../wrapper_property";
-import { SlidingExpirationCache } from "../../utils/sliding_expiration_cache";
 import { PluginService } from "../../plugin_service";
 import { Messages } from "../../utils/messages";
 import { TelemetryCounter } from "../../utils/telemetry/telemetry_counter";
