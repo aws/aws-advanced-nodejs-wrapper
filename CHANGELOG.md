@@ -10,25 +10,25 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 - Enhanced Failover Monitoring 2 Plugin ([PR #402](https://github.com/aws/aws-advanced-nodejs-wrapper/pull/369)).
 - Custom Endpoint Plugin ([PR #369](https://github.com/aws/aws-advanced-nodejs-wrapper/pull/369)).
-- Added handling for Multi-AZ clusters to Failover 2 ([PR #396](https://github.com/aws/aws-advanced-nodejs-wrapper/pull/396)).
-- Failover 2 Plugin for more aggressive failover response (now default failover plugin) ([PR #363](https://github.com/aws/aws-advanced-nodejs-wrapper/pull/363)).
-- Introduced benchmarks for the PluginManager.([PR #330](https://github.com/aws/aws-advanced-nodejs-wrapper/pull/330)).
-- Added documentation on session state, driver dialect, fastest response strategy, failover2, and maintenance ([PR #350](https://github.com/aws/aws-advanced-nodejs-wrapper/pull/350)), ([PR #351](https://github.com/aws/aws-advanced-nodejs-wrapper/pull/351)),  ([PR #362](https://github.com/aws/aws-advanced-nodejs-wrapper/pull/362)) ([PR #378](https://github.com/aws/aws-advanced-nodejs-wrapper/pull/378)) & ([PR #403](https://github.com/aws/aws-advanced-nodejs-wrapper/pull/403)) .
-
+- Handling for Multi-AZ clusters to Failover 2 ([PR #396](https://github.com/aws/aws-advanced-nodejs-wrapper/pull/396)).
+- Failover2 Plugin for more aggressive failover response ([PR #363](https://github.com/aws/aws-advanced-nodejs-wrapper/pull/363)).
+- Benchmarks for the PluginManager.([PR #330](https://github.com/aws/aws-advanced-nodejs-wrapper/pull/330)).
+- Documentation on session state, driver dialect, fastest response strategy, failover2, and maintenance ([PR #350](https://github.com/aws/aws-advanced-nodejs-wrapper/pull/350)), ([PR #351](https://github.com/aws/aws-advanced-nodejs-wrapper/pull/351)), ([PR #362](https://github.com/aws/aws-advanced-nodejs-wrapper/pull/362)) ([PR #378](https://github.com/aws/aws-advanced-nodejs-wrapper/pull/378)) & ([PR #403](https://github.com/aws/aws-advanced-nodejs-wrapper/pull/403)) .
 
 ### :crab: Changed
+
 - Changed setQueryTimeout for mysql2DriverDialect
 - More robust MySQL catalog usage detection([PR #366](https://github.com/aws/aws-advanced-nodejs-wrapper/pull/366)).
-- Changed connection tracker to update after reader failover to new connection ([PR #356](https://github.com/aws/aws-advanced-nodejs-wrapper/pull/356)) .
+- Changed connection tracker to update after reader failover to new connection ([PR #356](https://github.com/aws/aws-advanced-nodejs-wrapper/pull/356)).
 - Introduces benchmarks for the PluginManager. ([PR #348](https://github.com/aws/aws-advanced-nodejs-wrapper/pull/348)).
 - Improved documentation instructions for integration tests and running code samples ([PR #370](https://github.com/aws/aws-advanced-nodejs-wrapper/pull/370)) and ([PR #374](https://github.com/aws/aws-advanced-nodejs-wrapper/pull/374)).
 
 ### :bug: Fixed
+
 - setQueryTimeout for mysql2DriverDialect ([PR #393](https://github.com/aws/aws-advanced-nodejs-wrapper/pull/393)).
 - Retrieving keep alive settings ([PR #395](https://github.com/aws/aws-advanced-nodejs-wrapper/pull/395)).
 - Reader failover wait for complete batch ([PR #390](https://github.com/aws/aws-advanced-nodejs-wrapper/pull/390)).
 
- 
 ## [1.1.0] - 2024-12-12
 
 ### :magic_wand: Added
