@@ -50,7 +50,7 @@ export class MonitorServiceImpl implements MonitorService {
     async (monitor: Monitor) => {
       await monitor.releaseResources();
     },
-    "MonitorServiceImpl.monitors"
+    "efm/MonitorServiceImpl.monitors"
   );
   private readonly pluginService: PluginService;
   private cachedMonitorHostKeys: Set<string> | undefined;

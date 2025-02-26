@@ -20,6 +20,7 @@ import { DeveloperConnectionPlugin } from "../../common/lib/plugins/dev/develope
 import { RdsUtils } from "../../common/lib/utils/rds_utils";
 import { AwsPGClient } from "../../pg/lib";
 import { IamAuthenticationPlugin } from "../../common/lib/authentication/iam_authentication_plugin";
+import { Messages } from "../../common/lib/utils/messages";
 
 class DevPluginTest extends DeveloperConnectionPlugin {
   testMethod() {
@@ -59,7 +60,7 @@ describe("testGetPluginInstance", () => {
       testClient.getPluginInstance(IamAuthenticationPlugin);
       throw new Error("Retrieved plugin instance of wrong type.");
     } catch (error: any) {
-      expect(error.message).toEqual("Unable to retrieve plugin instance.");
+      expect(error.message).toEqual(Messages.get("PluginManager.unableToRetrievePlugin"));
     }
   });
 });

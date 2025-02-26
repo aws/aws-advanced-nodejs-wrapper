@@ -23,7 +23,6 @@ import { logger } from "../../logutils";
 export class SlidingExpirationCacheWithCleanupTask<K, V> extends SlidingExpirationCache<K, V> {
   private readonly _asyncItemDisposalFunc?: (item: V) => Promise<void>;
   private readonly cacheId: string;
-  private stopCleanupTask: boolean = false;
   private cleanupTask: Promise<void>;
   private interruptCleanupTask: () => void;
   private isInitialized: boolean = false;
@@ -40,17 +39,21 @@ export class SlidingExpirationCacheWithCleanupTask<K, V> extends SlidingExpirati
   }
 
   async clear(): Promise<void> {
-    logger.debug(Messages.get("SlidingExpirationCacheWithCleanupTask.clear", this.cacheId));
-    this.stopCleanupTask = true;
-    // If the cleanup task is currently sleeping this will interrupt it.
-    this.interruptCleanupTask();
-    await this.cleanupTask;
-    for (const [key, val] of this.map.entries()) {
-      if (val !== undefined && this._asyncItemDisposalFunc !== undefined) {
-        await this._asyncItemDisposalFunc(val.item);
+    if (this.isInitialized) {
+      this.isInitialized = false;
+      // If the cleanup task is currently sleeping this will interrupt it.
+      this.interruptCleanupTask();
+      await this.cleanupTask;
+      this.cleanupTask = null;
+      this.interruptCleanupTask = null;
+      for (const [_, val] of this.map.entries()) {
+        if (val !== undefined && this._asyncItemDisposalFunc !== undefined) {
+          await this._asyncItemDisposalFunc(val.item);
+        }
       }
     }
     this.map.clear();
+    logger.debug(Messages.get("SlidingExpirationCacheWithCleanupTask.clear", this.cacheId));
   }
 
   computeIfAbsent(key: K, mappingFunc: (key: K) => V, itemExpirationNanos: bigint): V | null {
@@ -81,7 +84,7 @@ export class SlidingExpirationCacheWithCleanupTask<K, V> extends SlidingExpirati
   async initCleanupTask(): Promise<void> {
     this.isInitialized = true;
     logger.debug(Messages.get("SlidingExpirationCacheWithCleanupTask.cleanUpTaskInitialized", this.cacheId));
-    while (!this.stopCleanupTask) {
+    while (this.isInitialized) {
       const [sleepPromise, abortSleepFunc] = sleepWithAbort(
         convertNanosToMs(this._cleanupIntervalNanos),
         Messages.get("SlidingExpirationCacheWithCleanupTask.cleanUpTaskInterrupted", this.cacheId)
