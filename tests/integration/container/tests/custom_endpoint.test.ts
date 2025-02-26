@@ -210,6 +210,7 @@ describe("custom endpoint", () => {
     // Custom endpoint is not compatible with multi-az clusters
     if (env.info.request.deployment === DatabaseEngineDeployment.RDS_MULTI_AZ_CLUSTER) {
       itIf = it.skip;
+      return;
     }
     const clusterId = env.auroraClusterName;
     const region = env.region;
@@ -231,6 +232,9 @@ describe("custom endpoint", () => {
   }, 1000000);
 
   afterAll(async () => {
+    if (env.info.request.deployment === DatabaseEngineDeployment.RDS_MULTI_AZ_CLUSTER) {
+      return;
+    }
     try {
       await deleteEndpoint(rdsClient, endpointId1);
       await deleteEndpoint(rdsClient, endpointId2);
@@ -240,6 +244,9 @@ describe("custom endpoint", () => {
   });
 
   beforeEach(async () => {
+    if (env.info.request.deployment === DatabaseEngineDeployment.RDS_MULTI_AZ_CLUSTER) {
+      return;
+    }
     await TestEnvironment.verifyClusterStatus();
     currentWriter = await auroraTestUtility.getClusterWriterInstanceId(env.info.auroraClusterName);
     logger.info(`Test started: ${expect.getState().currentTestName}`);
