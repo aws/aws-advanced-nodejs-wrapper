@@ -37,11 +37,14 @@ import { PluginManager } from "../../../../common/lib";
 import { TestDriver } from "./utils/test_driver";
 import { DatabaseEngineDeployment } from "./utils/database_engine_deployment";
 
+let isMultiAzCluster = false;
+
 let itIf =
   features.includes(TestEnvironmentFeatures.FAILOVER_SUPPORTED) &&
   !features.includes(TestEnvironmentFeatures.PERFORMANCE) &&
   !features.includes(TestEnvironmentFeatures.RUN_AUTOSCALING_TESTS_ONLY) &&
-  instanceCount >= 3
+  instanceCount >= 3 &&
+  !isMultiAzCluster
     ? it
     : it.skip;
 
@@ -209,6 +212,7 @@ describe("custom endpoint", () => {
     env = await TestEnvironment.getCurrent();
     // Custom endpoint is not compatible with multi-az clusters
     if (env.info.request.deployment === DatabaseEngineDeployment.RDS_MULTI_AZ_CLUSTER) {
+      isMultiAzCluster = true;
       itIf = it.skip;
       return;
     }
@@ -232,7 +236,7 @@ describe("custom endpoint", () => {
   }, 1000000);
 
   afterAll(async () => {
-    if (env.info.request.deployment === DatabaseEngineDeployment.RDS_MULTI_AZ_CLUSTER) {
+    if (isMultiAzCluster) {
       return;
     }
     try {
@@ -244,7 +248,7 @@ describe("custom endpoint", () => {
   });
 
   beforeEach(async () => {
-    if (env.info.request.deployment === DatabaseEngineDeployment.RDS_MULTI_AZ_CLUSTER) {
+    if (isMultiAzCluster) {
       return;
     }
     await TestEnvironment.verifyClusterStatus();
