@@ -21,7 +21,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - More robust MySQL catalog usage detection([PR #366](https://github.com/aws/aws-advanced-nodejs-wrapper/pull/366)).
 - Changed connection tracker to update after reader failover to new connection ([PR #356](https://github.com/aws/aws-advanced-nodejs-wrapper/pull/356)).
 - Introduces benchmarks for the PluginManager. ([PR #348](https://github.com/aws/aws-advanced-nodejs-wrapper/pull/348)).
-- Improved documentation instructions for integration tests and running code samples ([PR #370](https://github.com/aws/aws-advanced-nodejs-wrapper/pull/370)) and ([PR #374](https://github.com/aws/aws-advanced-nodejs-wrapper/pull/374)).
+- Improved documentation instructions for integration tests and running code samples ([PR #370](https://github.com/aws/aws-advanced-nodejs-wrapper/pull/370)) & ([PR #374](https://github.com/aws/aws-advanced-nodejs-wrapper/pull/374)).
 
 ### :bug: Fixed
 
