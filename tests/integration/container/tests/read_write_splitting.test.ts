@@ -547,6 +547,7 @@ describe("aurora read write splitting", () => {
         await auroraTestUtility.queryInstanceId(client);
       }).rejects.toThrow(FailoverFailedError);
       await ProxyHelper.enableAllConnectivity();
+      await client.end();
       await client.connect();
       await TestEnvironment.verifyClusterStatus();
 

@@ -26,6 +26,18 @@ export function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+export function sleepWithAbort(ms: number, message?: string) {
+  let abortSleep;
+  const promise = new Promise((resolve, reject) => {
+    const timeout = setTimeout(resolve, ms);
+    abortSleep = () => {
+      clearTimeout(timeout);
+      reject(new AwsWrapperError(message));
+    };
+  });
+  return [promise, abortSleep];
+}
+
 export function getTimeoutTask(timer: any, message: string, timeoutValue: number): Promise<void> {
   return new Promise((_resolve, reject) => {
     timer.timeoutId = setTimeout(() => {
@@ -55,6 +67,14 @@ export function logTopology(hosts: HostInfo[], msgPrefix: string) {
 
 export function getTimeInNanos() {
   return process.hrtime.bigint();
+}
+
+export function convertNanosToMs(nanos: bigint) {
+  return Number(nanos) / 1000000;
+}
+
+export function convertNanosToMinutes(nanos: bigint) {
+  return Number(nanos) / 60000000000;
 }
 
 export function maskProperties(props: Map<string, any>) {

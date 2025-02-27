@@ -53,7 +53,7 @@ const mockClientWrapper: ClientWrapper = new MySQLClientWrapper(
   mockTargetClient,
   builder.withHost("host").build(),
   new Map<string, any>(),
-  new MySQL2DriverDialect()
+  mockDriverDialect
 );
 
 const mockTargetClientB = { client: 456 };
@@ -61,7 +61,7 @@ const mockClientWrapperB: ClientWrapper = new MySQLClientWrapper(
   mockTargetClientB,
   builder.withHost("host").build(),
   new Map<string, any>(),
-  new MySQL2DriverDialect()
+  mockDriverDialect
 );
 
 describe("writer failover handler", () => {

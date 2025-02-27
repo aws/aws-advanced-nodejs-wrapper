@@ -15,7 +15,8 @@
 */
 
 import { SlidingExpirationCache } from "../../common/lib/utils/sliding_expiration_cache";
-import { sleep } from "../../common/lib/utils/utils";
+import { convertNanosToMs, sleep } from "../../common/lib/utils/utils";
+import { SlidingExpirationCacheWithCleanupTask } from "../../common/lib/utils/sliding_expiration_cache_with_cleanup_task";
 
 class DisposableItem {
   shouldDispose: boolean;
@@ -30,8 +31,22 @@ class DisposableItem {
   }
 }
 
+class AsyncDisposableItem {
+  shouldDispose: boolean;
+  disposed: boolean;
+  constructor(shouldDispose: boolean) {
+    this.shouldDispose = shouldDispose;
+    this.disposed = false;
+  }
+
+  async dispose(disposalTimeMs: number): Promise<void> {
+    await sleep(disposalTimeMs);
+    this.disposed = true;
+  }
+}
+
 describe("test_sliding_expiration_cache", () => {
-  it("test_compute_if_absent", async () => {
+  it("test compute if absent", async () => {
     const target = new SlidingExpirationCache(BigInt(50_000_000));
     const result1 = target.computeIfAbsent(1, () => "a", BigInt(1));
     const originalItemExpiration = target.map.get(1)!.expirationTimeNs;
@@ -48,7 +63,8 @@ describe("test_sliding_expiration_cache", () => {
     expect(result3).toEqual("b");
     expect(target.get(1)).toEqual("b");
   });
-  it("test_remove", async () => {
+
+  it("test remove", async () => {
     const target = new SlidingExpirationCache(
       BigInt(50_000_000),
       (item: DisposableItem) => item.shouldDispose,
@@ -85,7 +101,8 @@ describe("test_sliding_expiration_cache", () => {
     expect(target.get("nonExpiredItem")).toEqual(nonExpiredItem);
     expect(nonExpiredItem.disposed).toEqual(false);
   });
-  it("test_clear", async () => {
+
+  it("test clear", async () => {
     const target = new SlidingExpirationCache(
       BigInt(50_000_000),
       (item: DisposableItem) => item.shouldDispose,
@@ -102,6 +119,71 @@ describe("test_sliding_expiration_cache", () => {
     expect(target.get(2)).toEqual(item2);
 
     target.clear();
+
+    expect(target.size).toEqual(0);
+    expect(target.get(1)).toEqual(undefined);
+    expect(target.get(2)).toEqual(undefined);
+    expect(item1.disposed).toEqual(true);
+    expect(item2.disposed).toEqual(true);
+  });
+
+  it("test async cleanup thread", async () => {
+    const cleanupIntervalNanos = BigInt(300_000_000); // .3 seconds
+    const disposeMs = 1000;
+    const target = new SlidingExpirationCacheWithCleanupTask(
+      cleanupIntervalNanos,
+      (item: AsyncDisposableItem) => item.shouldDispose,
+      async (item) => await item.dispose(disposeMs),
+      "slidingExpirationCache.test"
+    );
+    const item1 = new AsyncDisposableItem(true);
+    const item2 = new AsyncDisposableItem(false);
+
+    target.computeIfAbsent(1, () => item1, BigInt(100_000_000)); // .1 seconds
+    target.computeIfAbsent(2, () => item2, BigInt(15_000_000_000));
+
+    expect(target.size).toEqual(2);
+    expect(target.get(1)).toEqual(item1);
+    expect(target.get(2)).toEqual(item2);
+
+    // Item should be removed by the cleanup task after cleanupIntervalNanos have passed.
+    await sleep(convertNanosToMs(cleanupIntervalNanos));
+
+    expect(target.size).toEqual(1);
+    expect(target.get(1)).toEqual(undefined);
+    expect(target.get(2)).toEqual(item2);
+
+    // Item will be cleaned up after disposalMs have passed.
+    await sleep(disposeMs);
+
+    expect(item1.disposed).toEqual(true);
+    expect(item2.disposed).toEqual(false);
+
+    await target.clear();
+
+    expect(target.size).toEqual(0);
+    expect(target.get(2)).toEqual(undefined);
+    expect(item2.disposed).toEqual(true);
+  });
+
+  it("test async clear", async () => {
+    const target = new SlidingExpirationCacheWithCleanupTask(
+      BigInt(50_000_000),
+      (item: AsyncDisposableItem) => item.shouldDispose,
+      async (item) => await item.dispose(1000),
+      "slidingExpirationCache.test"
+    );
+    const item1 = new AsyncDisposableItem(false);
+    const item2 = new AsyncDisposableItem(false);
+
+    target.computeIfAbsent(1, () => item1, BigInt(15_000_000_000));
+    target.computeIfAbsent(2, () => item2, BigInt(15_000_000_000));
+
+    expect(target.size).toEqual(2);
+    expect(target.get(1)).toEqual(item1);
+    expect(target.get(2)).toEqual(item2);
+
+    await target.clear();
 
     expect(target.size).toEqual(0);
     expect(target.get(1)).toEqual(undefined);
