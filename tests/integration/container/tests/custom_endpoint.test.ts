@@ -39,10 +39,12 @@ import { DatabaseEngineDeployment } from "./utils/database_engine_deployment";
 
 let isMultiAzCluster = false;
 
-let itIf =
+const itIf =
   features.includes(TestEnvironmentFeatures.FAILOVER_SUPPORTED) &&
   !features.includes(TestEnvironmentFeatures.PERFORMANCE) &&
-  !features.includes(TestEnvironmentFeatures.RUN_AUTOSCALING_TESTS_ONLY)
+  !features.includes(TestEnvironmentFeatures.RUN_AUTOSCALING_TESTS_ONLY) &&
+  instanceCount >= 3 &&
+  !isMultiAzCluster
     ? it
     : it.skip;
 
@@ -208,7 +210,7 @@ async function deleteEndpoint(rdsClient: RDSClient, endpointId: string): Promise
 describe("custom endpoint", () => {
   beforeAll(async () => {
     env = await TestEnvironment.getCurrent();
-    // Custom endpoint is not compatible with multi-az clusters
+    // Custom endpoint is not compatible with multi-az clusters.
     if (env.info.request.deployment === DatabaseEngineDeployment.RDS_MULTI_AZ_CLUSTER) {
       isMultiAzCluster = true;
       return;
@@ -271,9 +273,6 @@ describe("custom endpoint", () => {
   itIf.each([true, false])(
     "test custom endpoint failover - strict reader",
     async (usingFailover1: boolean) => {
-      if (isMultiAzCluster) {
-        return;
-      }
       endpointId3 = `test-endpoint-3-${randomUUID()}`;
       await createEndpoint(env.auroraClusterName, env.instances.slice(0, 2), endpointId3, "READER");
       endpointInfo3 = await waitUntilEndpointAvailable(endpointId3);
@@ -314,9 +313,6 @@ describe("custom endpoint", () => {
   itIf.each([true, false])(
     "test custom endpoint read write splitting with custom endpoint changes",
     async (usingFailover1: boolean) => {
-      if (isMultiAzCluster) {
-        return;
-      }
       const config = await initDefaultConfig(
         endpointInfo1.Endpoint,
         env.databaseInfo.instanceEndpointPort,
@@ -400,9 +396,6 @@ describe("custom endpoint", () => {
   itIf.each([true, false])(
     "test custom endpoint failover - strict writer",
     async (usingFailvoer1: boolean) => {
-      if (isMultiAzCluster) {
-        return;
-      }
       const config = await initDefaultConfig(endpointInfo2.Endpoint, env.databaseInfo.instanceEndpointPort, false, "strict-writer", usingFailvoer1);
       client = initClientFunc(config);
 
