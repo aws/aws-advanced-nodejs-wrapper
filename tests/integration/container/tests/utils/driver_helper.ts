@@ -44,6 +44,19 @@ export class DriverHelper {
     }
   }
 
+  static getSleepSql(engine: DatabaseEngine, deployment: DatabaseEngineDeployment): string {
+    switch (deployment) {
+      case DatabaseEngineDeployment.AURORA:
+        switch (engine) {
+          case DatabaseEngine.PG:
+            return "SELECT pg_sleep(10)";
+          case DatabaseEngine.MYSQL:
+            return "SELECT sleep(10)";
+          default:
+            throw new Error("invalid engine");
+        }
+    }
+  }
   static getInstanceIdSql(engine: DatabaseEngine, deployment: DatabaseEngineDeployment): string {
     switch (deployment) {
       case DatabaseEngineDeployment.AURORA:
@@ -79,6 +92,26 @@ export class DriverHelper {
         });
       case DatabaseEngine.MYSQL:
         result = await (client as AwsMySQLClient).query({ sql: sql });
+        return JSON.parse(JSON.stringify(result))[0][0]["id"];
+      default:
+        throw new Error("invalid engine");
+    }
+  }
+
+  static async executeInstanceQueryWithSleep(engine: DatabaseEngine, deployment: DatabaseEngineDeployment, client: AwsClient) {
+    const sql1 = DriverHelper.getSleepSql(engine, deployment);
+
+    const sql2 = DriverHelper.getInstanceIdSql(engine, deployment);
+    let result;
+    switch (engine) {
+      case DatabaseEngine.PG:
+        await (client as AwsPGClient).query(sql1);
+        return await (client as AwsPGClient).query(sql2).then((result) => {
+          return result.rows[0]["id"];
+        });
+      case DatabaseEngine.MYSQL:
+        await (client as AwsMySQLClient).query({ sql: sql1 });
+        result = await (client as AwsMySQLClient).query({ sql: sql2 });
         return JSON.parse(JSON.stringify(result))[0][0]["id"];
       default:
         throw new Error("invalid engine");

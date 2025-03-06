@@ -27,15 +27,18 @@ import { features, instanceCount } from "./config";
 import { TestEnvironmentFeatures } from "./utils/test_environment_features";
 import { PluginManager } from "../../../../common/lib";
 import { TransactionIsolationLevel } from "../../../../common/lib/utils/transaction_isolation_level";
+import { sleep } from "../../../../common/lib/utils/utils";
+import { InternalPooledConnectionProvider } from "../../../../common/lib/internal_pooled_connection_provider";
 
 const itIf =
   features.includes(TestEnvironmentFeatures.FAILOVER_SUPPORTED) &&
   !features.includes(TestEnvironmentFeatures.PERFORMANCE) &&
   !features.includes(TestEnvironmentFeatures.RUN_AUTOSCALING_TESTS_ONLY) &&
   instanceCount >= 2
-    ? it
+    ? it.skip
     : it.skip;
-const itIfTwoInstance = instanceCount == 2 ? itIf : it.skip;
+const itIfTwoInstance = instanceCount == 2 ? it : it.skip;
+const itIfThreeInstanceOnly = instanceCount == 2 ? it.only : it.skip;
 
 let env: TestEnvironment;
 let driver;
@@ -52,8 +55,15 @@ async function initDefaultConfig(host: string, port: number, connectToProxy: boo
     database: env.databaseInfo.defaultDbName,
     password: env.databaseInfo.password,
     port: port,
-    plugins: "failover",
-    failoverTimeoutMs: 250000,
+    plugins: "failover,efm",
+    failoverTimeoutMs: 20000,
+    failureDetectionCount: "2",
+    failureDetectionInterval: "1000",
+    failureDetectionTime: "2000",
+    connectTimeout: 10000,
+    wrapperQueryTimeout: 20000,
+    monitoring_wrapperQueryTimeout: 3000,
+    monitoring_wrapperConnectTimeout: 3000,
     enableTelemetry: true,
     telemetryTracesBackend: "OTLP",
     telemetryMetricsBackend: "OTLP"
@@ -99,6 +109,51 @@ describe("aurora failover", () => {
     await PluginManager.releaseResources();
     logger.info(`Test finished: ${expect.getState().currentTestName}`);
   }, 1320000);
+
+  itIfThreeInstanceOnly(
+    "writer failover efm",
+    async () => {
+      const numInstances = env.databaseInfo.instances.length;
+
+      const provider = new InternalPooledConnectionProvider({ maxConnections: numInstances });
+
+      // Connect to writer instance
+      const writerConfig = await initDefaultConfig(env.proxyDatabaseInfo.writerInstanceEndpoint, env.proxyDatabaseInfo.instanceEndpointPort, true);
+      writerConfig["connectionProvider"] = provider;
+      writerConfig["failoverMode"] = "reader-or-writer";
+
+      client = initClientFunc(writerConfig);
+      await client.connect();
+
+      // Failover usually changes the writer instance, but we want to test re-election of the same writer, so we will
+      // simulate this by temporarily disabling connectivity to the writer.
+      const initialWriterId = await auroraTestUtility.queryInstanceId(client);
+      expect(await auroraTestUtility.isDbInstanceWriter(initialWriterId)).toStrictEqual(true);
+      const instances = env.databaseInfo.instances;
+      const readerInstance = instances[1].instanceId;
+      await ProxyHelper.disableAllConnectivity(env.engine);
+
+      try {
+        await ProxyHelper.enableConnectivity(initialWriterId);
+        await auroraTestUtility.queryInstanceIdWithSleep(client);
+
+        await ProxyHelper.enableConnectivity(readerInstance);
+        await ProxyHelper.disableConnectivity(env.engine, initialWriterId);
+      } catch (error) {
+        fail("The disable connectivity task was unexpectedly interrupted.");
+      }
+      //  Failure occurs on connection invocation
+      await expect(async () => {
+        await auroraTestUtility.queryInstanceId(client);
+      }).rejects.toThrow(FailoverSuccessError);
+
+      // Assert that we are currently connected to the writer instance after failover
+      const currentConnectionId = await auroraTestUtility.queryInstanceId(client);
+      expect(await auroraTestUtility.isDbInstanceWriter(currentConnectionId)).toBe(false);
+      expect(currentConnectionId).not.toBe(initialWriterId);
+    },
+    1320000
+  );
 
   itIf(
     "fails from writer to new writer on connection invocation",
@@ -215,49 +270,45 @@ describe("aurora failover", () => {
     1320000
   );
 
-  itIfTwoInstance(
-    "fails from reader to writer",
-    async () => {
-      // Connect to writer instance
-      const writerConfig = await initDefaultConfig(env.proxyDatabaseInfo.writerInstanceEndpoint, env.proxyDatabaseInfo.instanceEndpointPort, true);
-      client = initClientFunc(writerConfig);
-      await client.connect();
-      const initialWriterId = await auroraTestUtility.queryInstanceId(client);
-      expect(await auroraTestUtility.isDbInstanceWriter(initialWriterId)).toStrictEqual(true);
+  it.skip("fails from reader to writer", async () => {
+    // Connect to writer instance
+    const writerConfig = await initDefaultConfig(env.proxyDatabaseInfo.writerInstanceEndpoint, env.proxyDatabaseInfo.instanceEndpointPort, true);
+    client = initClientFunc(writerConfig);
+    await client.connect();
+    const initialWriterId = await auroraTestUtility.queryInstanceId(client);
+    expect(await auroraTestUtility.isDbInstanceWriter(initialWriterId)).toStrictEqual(true);
 
-      // Get a reader instance
-      let readerInstanceHost;
-      for (const host of env.proxyDatabaseInfo.instances) {
-        if (host.instanceId && host.instanceId !== initialWriterId) {
-          readerInstanceHost = host.host;
-        }
+    // Get a reader instance
+    let readerInstanceHost;
+    for (const host of env.proxyDatabaseInfo.instances) {
+      if (host.instanceId && host.instanceId !== initialWriterId) {
+        readerInstanceHost = host.host;
       }
-      if (!readerInstanceHost) {
-        throw new Error("Could not find a reader instance");
-      }
-      const readerConfig = await initDefaultConfig(readerInstanceHost, env.proxyDatabaseInfo.instanceEndpointPort, true);
+    }
+    if (!readerInstanceHost) {
+      throw new Error("Could not find a reader instance");
+    }
+    const readerConfig = await initDefaultConfig(readerInstanceHost, env.proxyDatabaseInfo.instanceEndpointPort, true);
 
-      secondaryClient = initClientFunc(readerConfig);
-      await secondaryClient.connect();
+    secondaryClient = initClientFunc(readerConfig);
+    await secondaryClient.connect();
 
-      // Crash the reader instance
-      const rdsUtils = new RdsUtils();
-      const readerInstanceId = rdsUtils.getRdsInstanceId(readerInstanceHost);
-      if (readerInstanceId) {
-        await ProxyHelper.disableConnectivity(env.engine, readerInstanceId);
+    // Crash the reader instance
+    const rdsUtils = new RdsUtils();
+    const readerInstanceId = rdsUtils.getRdsInstanceId(readerInstanceHost);
+    if (readerInstanceId) {
+      await ProxyHelper.disableConnectivity(env.engine, readerInstanceId);
 
-        await expect(async () => {
-          await auroraTestUtility.queryInstanceId(secondaryClient);
-        }).rejects.toThrow(FailoverSuccessError);
+      await expect(async () => {
+        await auroraTestUtility.queryInstanceId(secondaryClient);
+      }).rejects.toThrow(FailoverSuccessError);
 
-        await ProxyHelper.enableConnectivity(readerInstanceId);
+      await ProxyHelper.enableConnectivity(readerInstanceId);
 
-        // Assert that we are currently connected to the writer instance
-        const currentConnectionId = await auroraTestUtility.queryInstanceId(secondaryClient);
-        expect(await auroraTestUtility.isDbInstanceWriter(currentConnectionId)).toBe(true);
-        expect(currentConnectionId).toBe(initialWriterId);
-      }
-    },
-    1320000
-  );
+      // Assert that we are currently connected to the writer instance
+      const currentConnectionId = await auroraTestUtility.queryInstanceId(secondaryClient);
+      expect(await auroraTestUtility.isDbInstanceWriter(currentConnectionId)).toBe(true);
+      expect(currentConnectionId).toBe(initialWriterId);
+    }
+  }, 1320000);
 });

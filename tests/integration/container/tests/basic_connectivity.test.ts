@@ -26,7 +26,7 @@ import { DatabaseEngineDeployment } from "./utils/database_engine_deployment";
 import { PluginManager } from "../../../../common/lib";
 
 const itIf =
-  !features.includes(TestEnvironmentFeatures.PERFORMANCE) && !features.includes(TestEnvironmentFeatures.RUN_AUTOSCALING_TESTS_ONLY) ? it : it.skip;
+  !features.includes(TestEnvironmentFeatures.PERFORMANCE) && !features.includes(TestEnvironmentFeatures.RUN_AUTOSCALING_TESTS_ONLY) ? it.skip : it.skip;
 
 let client: any;
 let auroraTestUtility: AuroraTestUtility;

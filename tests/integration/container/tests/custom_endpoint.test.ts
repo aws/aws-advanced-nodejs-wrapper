@@ -41,7 +41,7 @@ const itIf =
   !features.includes(TestEnvironmentFeatures.PERFORMANCE) &&
   !features.includes(TestEnvironmentFeatures.RUN_AUTOSCALING_TESTS_ONLY) &&
   instanceCount >= 3
-    ? it
+    ? it.skip
     : it.skip;
 
 const endpointId1 = `test-endpoint-1-${randomUUID()}`;

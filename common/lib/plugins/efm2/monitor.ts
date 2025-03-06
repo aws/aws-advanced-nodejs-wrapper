@@ -130,8 +130,10 @@ export class MonitorImpl implements Monitor {
             // Add all contexts to an active monitoring contexts queue.
             // Ignore disposed contexts.
             let monitorContextRef: WeakRef<MonitorConnectionContext> | undefined;
-            while ((monitorContextRef = queue.shift())) {
-              const monitorContext: MonitorConnectionContext = monitorContextRef.deref();
+
+            while ((monitorContextRef = queue?.shift()) != null) {
+
+              const monitorContext: MonitorConnectionContext = monitorContextRef?.deref() ?? null;
               if (monitorContext && monitorContext.isActive()) {
                 this.activeContexts.push(monitorContextRef);
               }
@@ -176,11 +178,13 @@ export class MonitorImpl implements Monitor {
 
           let monitorContextRef: WeakRef<MonitorConnectionContext> | undefined;
 
-          while ((monitorContextRef = this.activeContexts.shift())) {
+          while ((monitorContextRef = this.activeContexts?.shift()) != null) {
             if (this.isStopped()) {
               break;
             }
+
             const monitorContext: MonitorConnectionContext = monitorContextRef?.deref() ?? null;
+
             if (!monitorContext) {
               continue;
             }
@@ -188,8 +192,9 @@ export class MonitorImpl implements Monitor {
             if (this.hostUnhealthy) {
               // Kill connection
               monitorContext.setHostUnhealthy(true);
-              monitorContext.setInactive();
               const connectionToAbort = monitorContext.getClient();
+
+              monitorContext.setInactive();
               if (connectionToAbort != null) {
                 await this.endMonitoringClient();
                 this.abortedConnectionsCounter.inc();
@@ -278,7 +283,7 @@ export class MonitorImpl implements Monitor {
       const invalidHostDurationNano = statusCheckEndNano - this.invalidHostStartTimeNano;
       const maxInvalidHostDurationNano = this.failureDetectionIntervalNanos * Math.max(0, this.failureDetectionCount - 1);
 
-      if (invalidHostDurationNano >= maxInvalidHostDurationNano) {
+      if (this.failureCount >= this.failureDetectionCount || invalidHostDurationNano >= maxInvalidHostDurationNano) {
         logger.debug(Messages.get("MonitorConnectionContext.hostDead", this.hostInfo.host));
         this.hostUnhealthy = true;
         return Promise.resolve();
@@ -294,6 +299,8 @@ export class MonitorImpl implements Monitor {
     this.failureCount = 0;
     this.invalidHostStartTimeNano = 0;
     this.hostUnhealthy = false;
+    logger.debug(Messages.get("MonitorConnectionContext.hostAlive", this.hostInfo.host));
+
   }
 
   async releaseResources() {
@@ -310,6 +317,19 @@ export class MonitorImpl implements Monitor {
     if (this.monitoringClient) {
       await this.pluginService.abortTargetClient(this.monitoringClient);
       this.monitoringClient = null;
+    }
+  }
+
+  async abortConnection(clientToAbort): Promise<void> {
+    if (clientToAbort == null) {
+      return Promise.resolve();
+    }
+
+    try {
+      await this.pluginService.abortTargetClient(clientToAbort);
+    } catch (error: any) {
+      // ignore
+      logger.debug(Messages.get("MonitorConnectionContext.errorAbortingConnection", error.message));
     }
   }
 }
