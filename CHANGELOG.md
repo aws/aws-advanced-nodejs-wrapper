@@ -8,10 +8,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### :magic_wand: Added
 
-- ([Enhanced Failover Monitoring 2 Plugin](https://github.com/aws/aws-advanced-nodejs-wrapper/blob/main/docs/using-the-nodejs-wrapper/using-plugins/UsingTheHostMonitoringPlugin.md#host-monitoring-plugin-v2)).
-- ([Custom Endpoint Plugin](https://github.com/aws/aws-advanced-nodejs-wrapper/blob/main/docs/using-the-nodejs-wrapper/using-plugins/UsingTheCustomEndpointPlugin.md)).
-- ([Failover 2 Plugin](https://github.com/aws/aws-advanced-nodejs-wrapper/blob/main/docs/using-the-nodejs-wrapper/using-plugins/UsingTheFailover2Plugin.md).
-- Documentation on ([session state](https://github.com/aws/aws-advanced-nodejs-wrapper/blob/main/docs/using-the-nodejs-wrapper/SessionState.md)), ([driver dialects]()https://github.com/aws/aws-advanced-nodejs-wrapper/blob/main/docs/using-the-nodejs-wrapper/DriverDialects.md), ([fastest response strategy](https://github.com/aws/aws-advanced-nodejs-wrapper/blob/main/docs/using-the-nodejs-wrapper/using-plugins/UsingTheFastestResponseStrategyPlugin.md)), and ([maintenance](https://github.com/aws/aws-advanced-nodejs-wrapper/blob/main/MAINTENANCE.md)).
+- ([Enhanced Failover Monitoring 2 Plugin](./docs/using-the-nodejs-wrapper/using-plugins/UsingTheHostMonitoringPlugin.md#host-monitoring-plugin-v2)).
+- ([Custom Endpoint Plugin](./docs/using-the-nodejs-wrapper/using-plugins/UsingTheCustomEndpointPlugin.md)).
+- ([Failover 2 Plugin](./docs/using-the-nodejs-wrapper/using-plugins/UsingTheFailover2Plugin.md).
+- Documentation on ([session state](./docs/using-the-nodejs-wrapper/SessionState.md)), ([driver dialects](./docs/using-the-nodejs-wrapper/DriverDialects.md)), ([fastest response strategy](./docs/using-the-nodejs-wrapper/using-plugins/UsingTheFastestResponseStrategyPlugin.md)), and ([maintenance](./MAINTENANCE.md)).
 
 ### :crab: Changed
 
@@ -21,7 +21,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### :bug: Fixed
 
-- setQueryTimeout for mysql2DriverDialect ([PR #393](https://github.com/aws/aws-advanced-nodejs-wrapper/pull/393)).
+- setQueryTimeout for MySQL2DriverDialect ([PR #393](https://github.com/aws/aws-advanced-nodejs-wrapper/pull/393)).
 - Retrieving keep alive settings ([PR #395](https://github.com/aws/aws-advanced-nodejs-wrapper/pull/395)).
 - Reader failover wait for complete batch ([PR #390](https://github.com/aws/aws-advanced-nodejs-wrapper/pull/390)).
 
