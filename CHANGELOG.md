@@ -10,15 +10,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 - ([Enhanced Failover Monitoring 2 Plugin](https://github.com/aws/aws-advanced-nodejs-wrapper/blob/main/docs/using-the-nodejs-wrapper/using-plugins/UsingTheHostMonitoringPlugin.md#host-monitoring-plugin-v2)).
 - ([Custom Endpoint Plugin](https://github.com/aws/aws-advanced-nodejs-wrapper/blob/main/docs/using-the-nodejs-wrapper/using-plugins/UsingTheCustomEndpointPlugin.md)).
-- Handling for Multi-AZ clusters to Failover 2 ([PR #396](https://github.com/aws/aws-advanced-nodejs-wrapper/pull/396)).
 - ([Failover 2 Plugin](https://github.com/aws/aws-advanced-nodejs-wrapper/blob/main/docs/using-the-nodejs-wrapper/using-plugins/UsingTheFailover2Plugin.md).
-- Benchmarks for the PluginManager.([PR #330](https://github.com/aws/aws-advanced-nodejs-wrapper/pull/330)).
 - Documentation on ([session state](https://github.com/aws/aws-advanced-nodejs-wrapper/blob/main/docs/using-the-nodejs-wrapper/SessionState.md)), ([driver dialects]()https://github.com/aws/aws-advanced-nodejs-wrapper/blob/main/docs/using-the-nodejs-wrapper/DriverDialects.md), ([fastest response strategy](https://github.com/aws/aws-advanced-nodejs-wrapper/blob/main/docs/using-the-nodejs-wrapper/using-plugins/UsingTheFastestResponseStrategyPlugin.md)), and ([maintenance](https://github.com/aws/aws-advanced-nodejs-wrapper/blob/main/MAINTENANCE.md)).
 
 ### :crab: Changed
 
-- Changed setQueryTimeout for mysql2DriverDialect.
-- More robust MySQL catalog usage detection([PR #366](https://github.com/aws/aws-advanced-nodejs-wrapper/pull/366)).
+- More robust MySQL catalog usage detection ([PR #366](https://github.com/aws/aws-advanced-nodejs-wrapper/pull/366)).
 - Changed connection tracker to update after reader failover to new connection ([PR #356](https://github.com/aws/aws-advanced-nodejs-wrapper/pull/356)).
 - Improved documentation instructions for integration tests and running code samples ([PR #370](https://github.com/aws/aws-advanced-nodejs-wrapper/pull/370)) & ([PR #374](https://github.com/aws/aws-advanced-nodejs-wrapper/pull/374)).
 
