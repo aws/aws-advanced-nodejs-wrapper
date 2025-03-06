@@ -4,6 +4,28 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/#semantic-versioning-200).
 
+## [1.2.0] - 2025-03-07
+
+### :magic_wand: Added
+
+- ([Enhanced Failover Monitoring 2 Plugin](./docs/using-the-nodejs-wrapper/using-plugins/UsingTheHostMonitoringPlugin.md#host-monitoring-plugin-v2)).
+- ([Custom Endpoint Plugin](./docs/using-the-nodejs-wrapper/using-plugins/UsingTheCustomEndpointPlugin.md)).
+- ([Failover 2 Plugin](./docs/using-the-nodejs-wrapper/using-plugins/UsingTheFailover2Plugin.md).
+- Documentation on ([session state](./docs/using-the-nodejs-wrapper/SessionState.md)), ([driver dialects](./docs/using-the-nodejs-wrapper/DriverDialects.md)), ([fastest response strategy](./docs/using-the-nodejs-wrapper/using-plugins/UsingTheFastestResponseStrategyPlugin.md)), and ([maintenance](./MAINTENANCE.md)).
+
+### :crab: Changed
+
+- More robust MySQL catalog usage detection ([PR #366](https://github.com/aws/aws-advanced-nodejs-wrapper/pull/366)).
+- Changed connection tracker to update after reader failover to new connection ([PR #356](https://github.com/aws/aws-advanced-nodejs-wrapper/pull/356)).
+- Improved documentation instructions for integration tests and running code samples ([PR #370](https://github.com/aws/aws-advanced-nodejs-wrapper/pull/370)) & ([PR #374](https://github.com/aws/aws-advanced-nodejs-wrapper/pull/374)).
+
+### :bug: Fixed
+
+- setQueryTimeout for MySQL2DriverDialect ([PR #393](https://github.com/aws/aws-advanced-nodejs-wrapper/pull/393)).
+- Retrieving keep alive settings ([PR #395](https://github.com/aws/aws-advanced-nodejs-wrapper/pull/395)).
+- Reader failover wait for complete batch ([PR #390](https://github.com/aws/aws-advanced-nodejs-wrapper/pull/390)).
+
+
 ## [1.1.0] - 2024-12-12
 
 ### :magic_wand: Added
