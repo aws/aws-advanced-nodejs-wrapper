@@ -42,9 +42,7 @@ let isMultiAzCluster = false;
 let itIf =
   features.includes(TestEnvironmentFeatures.FAILOVER_SUPPORTED) &&
   !features.includes(TestEnvironmentFeatures.PERFORMANCE) &&
-  !features.includes(TestEnvironmentFeatures.RUN_AUTOSCALING_TESTS_ONLY) &&
-  instanceCount >= 3 &&
-  !isMultiAzCluster
+  !features.includes(TestEnvironmentFeatures.RUN_AUTOSCALING_TESTS_ONLY)
     ? it
     : it.skip;
 
@@ -213,7 +211,6 @@ describe("custom endpoint", () => {
     // Custom endpoint is not compatible with multi-az clusters
     if (env.info.request.deployment === DatabaseEngineDeployment.RDS_MULTI_AZ_CLUSTER) {
       isMultiAzCluster = true;
-      itIf = it.skip;
       return;
     }
     const clusterId = env.auroraClusterName;
@@ -257,6 +254,9 @@ describe("custom endpoint", () => {
   }, 1000000);
 
   afterEach(async () => {
+    if (isMultiAzCluster) {
+      return;
+    }
     if (client !== null) {
       try {
         await client.end();
@@ -271,6 +271,9 @@ describe("custom endpoint", () => {
   itIf.each([true, false])(
     "test custom endpoint failover - strict reader",
     async (usingFailover1: boolean) => {
+      if (isMultiAzCluster) {
+        return;
+      }
       endpointId3 = `test-endpoint-3-${randomUUID()}`;
       await createEndpoint(env.auroraClusterName, env.instances.slice(0, 2), endpointId3, "READER");
       endpointInfo3 = await waitUntilEndpointAvailable(endpointId3);
@@ -311,6 +314,9 @@ describe("custom endpoint", () => {
   itIf.each([true, false])(
     "test custom endpoint read write splitting with custom endpoint changes",
     async (usingFailover1: boolean) => {
+      if (isMultiAzCluster) {
+        return;
+      }
       const config = await initDefaultConfig(
         endpointInfo1.Endpoint,
         env.databaseInfo.instanceEndpointPort,
@@ -394,6 +400,9 @@ describe("custom endpoint", () => {
   itIf.each([true, false])(
     "test custom endpoint failover - strict writer",
     async (usingFailvoer1: boolean) => {
+      if (isMultiAzCluster) {
+        return;
+      }
       const config = await initDefaultConfig(endpointInfo2.Endpoint, env.databaseInfo.instanceEndpointPort, false, "strict-writer", usingFailvoer1);
       client = initClientFunc(config);
 
@@ -431,6 +440,9 @@ describe("custom endpoint", () => {
   itIf.each([true, false])(
     "test custom endpoint failover - reader or writer mode",
     async (usingFailover1: boolean) => {
+      if (isMultiAzCluster) {
+        return;
+      }
       const config = await initDefaultConfig(
         endpointInfo1.Endpoint,
         env.databaseInfo.instanceEndpointPort,
