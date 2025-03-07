@@ -37,16 +37,17 @@ import { PluginManager } from "../../../../common/lib";
 import { TestDriver } from "./utils/test_driver";
 import { DatabaseEngineDeployment } from "./utils/database_engine_deployment";
 
-let isMultiAzCluster = false;
 
 const itIf =
   features.includes(TestEnvironmentFeatures.FAILOVER_SUPPORTED) &&
   !features.includes(TestEnvironmentFeatures.PERFORMANCE) &&
   !features.includes(TestEnvironmentFeatures.RUN_AUTOSCALING_TESTS_ONLY) &&
-  instanceCount >= 3 &&
-  !isMultiAzCluster
+  instanceCount >= 3
     ? it
     : it.skip;
+
+// Custom endpoint is not compatible with multi-az clusters.
+const describeIf = !features.includes(TestEnvironmentFeatures.RDS_MULTI_AZ_CLUSTER_SUPPORTED) ? describe : describe.skip;
 
 const endpointId1 = `test-endpoint-1-${randomUUID()}`;
 const endpointId2 = `test-endpoint-2-${randomUUID()}`;
@@ -207,14 +208,9 @@ async function deleteEndpoint(rdsClient: RDSClient, endpointId: string): Promise
   }
 }
 
-describe("custom endpoint", () => {
+describeIf("custom endpoint", () => {
   beforeAll(async () => {
     env = await TestEnvironment.getCurrent();
-    // Custom endpoint is not compatible with multi-az clusters.
-    if (env.info.request.deployment === DatabaseEngineDeployment.RDS_MULTI_AZ_CLUSTER) {
-      isMultiAzCluster = true;
-      return;
-    }
     const clusterId = env.auroraClusterName;
     const region = env.region;
     rdsClient = new RDSClient({ region: region });
@@ -235,9 +231,6 @@ describe("custom endpoint", () => {
   }, 1000000);
 
   afterAll(async () => {
-    if (isMultiAzCluster) {
-      return;
-    }
     try {
       await deleteEndpoint(rdsClient, endpointId1);
       await deleteEndpoint(rdsClient, endpointId2);
@@ -247,18 +240,12 @@ describe("custom endpoint", () => {
   });
 
   beforeEach(async () => {
-    if (isMultiAzCluster) {
-      return;
-    }
     await TestEnvironment.verifyClusterStatus();
     currentWriter = await auroraTestUtility.getClusterWriterInstanceId(env.info.auroraClusterName);
     logger.info(`Test started: ${expect.getState().currentTestName}`);
   }, 1000000);
 
   afterEach(async () => {
-    if (isMultiAzCluster) {
-      return;
-    }
     if (client !== null) {
       try {
         await client.end();
@@ -433,9 +420,6 @@ describe("custom endpoint", () => {
   itIf.each([true, false])(
     "test custom endpoint failover - reader or writer mode",
     async (usingFailover1: boolean) => {
-      if (isMultiAzCluster) {
-        return;
-      }
       const config = await initDefaultConfig(
         endpointInfo1.Endpoint,
         env.databaseInfo.instanceEndpointPort,

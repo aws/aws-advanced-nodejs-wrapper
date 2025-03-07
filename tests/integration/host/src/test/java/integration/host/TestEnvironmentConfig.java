@@ -93,6 +93,7 @@ public class TestEnvironmentConfig implements AutoCloseable {
       case RDS_MULTI_AZ_CLUSTER:
         initDatabaseParams(env);
         createDbCluster(env);
+        request.getFeatures().add(TestEnvironmentFeatures.RDS_MULTI_AZ_CLUSTER_SUPPORTED)
 
         if (request.getFeatures().contains(TestEnvironmentFeatures.IAM)) {
           if (request.getDatabaseEngineDeployment() == DatabaseEngineDeployment.RDS_MULTI_AZ_CLUSTER) {
