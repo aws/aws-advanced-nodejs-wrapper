@@ -37,7 +37,7 @@ class CacheItem<V> {
 }
 
 export class SlidingExpirationCache<K, V> {
-  private _cleanupIntervalNanos: bigint = BigInt(10 * 60_000_000_000); // 10 minutes
+  protected _cleanupIntervalNanos: bigint = BigInt(10 * 60_000_000_000); // 10 minutes
   private readonly _shouldDisposeFunc?: (item: V) => boolean;
   private readonly _itemDisposalFunc?: (item: V) => void;
   map: Map<K, CacheItem<V>> = new Map<K, CacheItem<V>>();
@@ -116,7 +116,7 @@ export class SlidingExpirationCache<K, V> {
       return cacheItem;
     });
 
-    if (item != undefined && item != null && this._itemDisposalFunc != null) {
+    if (item != undefined && this._itemDisposalFunc != null) {
       this._itemDisposalFunc(item);
     }
   }
