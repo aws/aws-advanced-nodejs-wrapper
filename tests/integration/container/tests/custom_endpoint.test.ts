@@ -35,6 +35,8 @@ import { logger } from "../../../../common/logutils";
 import { ProxyHelper } from "./utils/proxy_helper";
 import { PluginManager } from "../../../../common/lib";
 import { TestDriver } from "./utils/test_driver";
+import { DatabaseEngineDeployment } from "./utils/database_engine_deployment";
+
 
 const itIf =
   features.includes(TestEnvironmentFeatures.FAILOVER_SUPPORTED) &&
@@ -43,6 +45,9 @@ const itIf =
   instanceCount >= 3
     ? it
     : it.skip;
+
+// Custom endpoint is not compatible with multi-az clusters.
+const describeIf = !features.includes(TestEnvironmentFeatures.RDS_MULTI_AZ_CLUSTER_SUPPORTED) ? describe : describe.skip;
 
 const endpointId1 = `test-endpoint-1-${randomUUID()}`;
 const endpointId2 = `test-endpoint-2-${randomUUID()}`;
@@ -203,7 +208,7 @@ async function deleteEndpoint(rdsClient: RDSClient, endpointId: string): Promise
   }
 }
 
-describe("custom endpoint", () => {
+describeIf("custom endpoint", () => {
   beforeAll(async () => {
     env = await TestEnvironment.getCurrent();
     const clusterId = env.auroraClusterName;
