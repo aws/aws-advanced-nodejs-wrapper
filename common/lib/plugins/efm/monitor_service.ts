@@ -19,9 +19,9 @@ import { HostInfo } from "../../host_info";
 import { AwsWrapperError, IllegalArgumentError } from "../../utils/errors";
 import { Monitor, MonitorImpl } from "./monitor";
 import { WrapperProperties } from "../../wrapper_property";
+import { SlidingExpirationCache } from "../../utils/sliding_expiration_cache";
 import { PluginService } from "../../plugin_service";
 import { Messages } from "../../utils/messages";
-import { SlidingExpirationCacheWithCleanupTask } from "../../utils/sliding_expiration_cache_with_cleanup_task";
 import { ClientWrapper } from "../../client_wrapper";
 
 export interface MonitorService {
@@ -44,13 +44,10 @@ export interface MonitorService {
 
 export class MonitorServiceImpl implements MonitorService {
   private static readonly CACHE_CLEANUP_NANOS = BigInt(60_000_000_000);
-  protected static readonly monitors: SlidingExpirationCacheWithCleanupTask<string, Monitor> = new SlidingExpirationCacheWithCleanupTask(
+  protected static readonly monitors: SlidingExpirationCache<string, Monitor> = new SlidingExpirationCache(
     MonitorServiceImpl.CACHE_CLEANUP_NANOS,
     undefined,
-    async (monitor: Monitor) => {
-      await monitor.releaseResources();
-    },
-    "efm/MonitorServiceImpl.monitors"
+    () => {}
   );
   private readonly pluginService: PluginService;
   private cachedMonitorHostKeys: Set<string> | undefined;
@@ -111,7 +108,7 @@ export class MonitorServiceImpl implements MonitorService {
   }
 
   stopMonitoringForAllConnections(hostKeys: Set<string>) {
-    let monitor: Monitor;
+    let monitor;
     for (const hostKey of hostKeys) {
       monitor = MonitorServiceImpl.monitors.get(hostKey);
       if (monitor) {
@@ -122,8 +119,8 @@ export class MonitorServiceImpl implements MonitorService {
   }
 
   async getMonitor(hostKeys: Set<string>, hostInfo: HostInfo, properties: Map<string, any>): Promise<Monitor | null> {
-    let monitor: Monitor;
-    let anyHostKey: string;
+    let monitor;
+    let anyHostKey;
     for (const hostKey of hostKeys) {
       monitor = MonitorServiceImpl.monitors.get(hostKey);
       anyHostKey = hostKey;
@@ -162,13 +159,16 @@ export class MonitorServiceImpl implements MonitorService {
   }
 
   async releaseResources() {
-    await MonitorServiceImpl.monitors.clear();
+    for (const [_key, monitor] of MonitorServiceImpl.monitors.entries) {
+      if (monitor.item) {
+        await monitor.item.releaseResources();
+      }
+    }
     this.cachedMonitorHostKeys = undefined;
     this.cachedMonitorRef = undefined;
   }
 
-  // Used for performance testing.
-  static async clearMonitors() {
-    await MonitorServiceImpl.monitors.clear();
+  static clearMonitors() {
+    MonitorServiceImpl.monitors.clear();
   }
 }

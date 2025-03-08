@@ -57,10 +57,6 @@ describe("monitor service impl test", () => {
     monitorService.monitorSupplier = () => new MonitorImplTest(instance(mockPluginService), instance(mockHostInfo), properties, 0);
   });
 
-  afterEach(async () => {
-    await monitorService.releaseResources();
-  });
-
   it("start monitoring", async () => {
     monitorService.monitorSupplier = () => instance(mockMonitorA);
 

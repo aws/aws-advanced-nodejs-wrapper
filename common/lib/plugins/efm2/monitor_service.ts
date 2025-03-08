@@ -19,13 +19,13 @@ import { HostInfo } from "../../host_info";
 import { AwsWrapperError } from "../../utils/errors";
 import { Monitor, MonitorImpl } from "./monitor";
 import { WrapperProperties } from "../../wrapper_property";
+import { SlidingExpirationCache } from "../../utils/sliding_expiration_cache";
 import { PluginService } from "../../plugin_service";
 import { Messages } from "../../utils/messages";
 import { TelemetryCounter } from "../../utils/telemetry/telemetry_counter";
 import { TelemetryFactory } from "../../utils/telemetry/telemetry_factory";
 import { ClientWrapper } from "../../client_wrapper";
 import { logger } from "../../../logutils";
-import { SlidingExpirationCacheWithCleanupTask } from "../../utils/sliding_expiration_cache_with_cleanup_task";
 
 export interface MonitorService {
   startMonitoring(
@@ -52,19 +52,18 @@ export interface MonitorService {
 export class MonitorServiceImpl implements MonitorService {
   private static readonly CACHE_CLEANUP_NANOS = BigInt(60_000_000_000);
 
-  protected static readonly monitors: SlidingExpirationCacheWithCleanupTask<string, Monitor> = new SlidingExpirationCacheWithCleanupTask(
+  protected static readonly monitors: SlidingExpirationCache<string, Monitor> = new SlidingExpirationCache(
     MonitorServiceImpl.CACHE_CLEANUP_NANOS,
     (monitor: Monitor) => monitor.canDispose(),
     async (monitor: Monitor) => {
       {
         try {
-          await monitor.releaseResources();
+          await monitor.endMonitoringClient();
         } catch (error) {
           // ignore
         }
       }
-    },
-    "efm2/MonitorServiceImpl.monitors"
+    }
   );
   private readonly pluginService: PluginService;
   private telemetryFactory: TelemetryFactory;
@@ -134,6 +133,7 @@ export class MonitorServiceImpl implements MonitorService {
     failureDetectionCount: number
   ): Promise<Monitor | null> {
     const monitorKey: string = `${failureDetectionTimeMillis.toString()} ${failureDetectionIntervalMillis.toString()} ${failureDetectionCount.toString()} ${hostInfo.host}`;
+
     const cacheExpirationNanos = BigInt(WrapperProperties.MONITOR_DISPOSAL_TIME_MS.get(properties) * 1_000_000);
     return MonitorServiceImpl.monitors.computeIfAbsent(
       monitorKey,
@@ -152,6 +152,15 @@ export class MonitorServiceImpl implements MonitorService {
   }
 
   async releaseResources() {
-    await MonitorServiceImpl.monitors.clear();
+    for (const [_key, monitor] of MonitorServiceImpl.monitors.entries) {
+      if (monitor.item) {
+        await monitor.item.releaseResources();
+      }
+    }
+    MonitorServiceImpl.clearMonitors();
+  }
+
+  static clearMonitors() {
+    MonitorServiceImpl.monitors.clear();
   }
 }

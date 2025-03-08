@@ -219,7 +219,7 @@ async function doMeasurePerformance(sleepDelayMillis: number, repeatTimes: numbe
       try {
         await ProxyHelper.enableAllConnectivity();
         await client.end();
-        await MonitorServiceImpl.clearMonitors();
+        MonitorServiceImpl.clearMonitors();
       } catch (error: any) {
         // ignore
       }

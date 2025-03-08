@@ -252,23 +252,16 @@ describe("reader failover handler", () => {
   });
 
   it("test get reader connection attempts timeout", async () => {
-    // Connection attempts time out before they can succeed.
-    // First connection attempt to return times out.
-    // Expected test result: failure to get reader.
-    let timeoutId2: any = -1;
-    let timeoutId3: any = -1;
-    const hosts = [host1, host2, host3]; // 2 connection attempts of host2 and host 3 (host1 is a writer and not attempted).
+    // connection attempts time out before they can succeed
+    // first connection attempt to return times out
+    // expected test result: failure to get reader
+    let timeoutId: any = -1;
+    const hosts = [host1, host2, host3]; // 2 connection attempts (writer not attempted)
 
     when(mockPluginService.getHosts()).thenReturn(hosts);
-    when(mockPluginService.forceConnect(host2, anything())).thenCall(async () => {
-      await new Promise((resolve) => {
-        timeoutId2 = setTimeout(resolve, 10000);
-      });
-      return;
-    });
-    when(mockPluginService.forceConnect(host3, anything())).thenCall(async () => {
-      await new Promise((resolve) => {
-        timeoutId3 = setTimeout(resolve, 10000);
+    when(mockPluginService.forceConnect(anything(), anything())).thenCall(async () => {
+      await new Promise((resolve, reject) => {
+        timeoutId = setTimeout(resolve, 10000);
       });
       return;
     });
@@ -286,8 +279,7 @@ describe("reader failover handler", () => {
     expect(result.isConnected).toBe(false);
     expect(result.client).toBe(null);
     expect(result.newHost).toBe(null);
-    clearTimeout(timeoutId2);
-    clearTimeout(timeoutId3);
+    clearTimeout(timeoutId);
   }, 10000);
 
   it("test get host tuples by priority", async () => {

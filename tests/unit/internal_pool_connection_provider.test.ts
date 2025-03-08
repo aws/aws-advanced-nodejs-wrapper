@@ -26,6 +26,7 @@ import { HostListProvider } from "../../common/lib/host_list_provider/host_list_
 import { WrapperProperties } from "../../common/lib/wrapper_property";
 import { InternalPooledConnectionProvider } from "../../common/lib/internal_pooled_connection_provider";
 import { AwsPoolConfig } from "../../common/lib/aws_pool_config";
+import { ConnectionProviderManager } from "../../common/lib/connection_provider_manager";
 import { RdsUtils } from "../../common/lib/utils/rds_utils";
 import { PoolKey } from "../../common/lib/utils/pool_key";
 import { InternalPoolMapping } from "../../common/lib/utils/internal_pool_mapping";
@@ -35,7 +36,6 @@ import { AwsMySQLClient } from "../../mysql/lib";
 import { MySQLDatabaseDialect } from "../../mysql/lib/dialect/mysql_database_dialect";
 import { MySQL2DriverDialect } from "../../mysql/lib/dialect/mysql2_driver_dialect";
 import { PoolClientWrapper } from "../../common/lib/pool_client_wrapper";
-import { SlidingExpirationCacheWithCleanupTask } from "../../common/lib/utils/sliding_expiration_cache_with_cleanup_task";
 
 const user1 = "user1";
 const user2 = "user2";
@@ -52,10 +52,9 @@ const readerHost1Connection = builder.withHost(readerUrl1Connection).withPort(54
 const readerHost2Connection = builder.withHost(readerUrl2Connection).withPort(5432).withRole(HostRole.READER).build();
 const writerHostNoConnection = builder.withHost(writerUrlNoConnections).withPort(5432).withRole(HostRole.WRITER).build();
 const testHostsList = [writerHostNoConnection, readerHost1Connection, readerHost2Connection];
-let providerSpy = null;
 
 function getTestPoolMap() {
-  const target: SlidingExpirationCacheWithCleanupTask<string, any> = new SlidingExpirationCacheWithCleanupTask(BigInt(10000000));
+  const target: SlidingExpirationCache<string, any> = new SlidingExpirationCache(BigInt(10000000));
   target.computeIfAbsent(
     new PoolKey(readerHost1Connection.url, user1).getPoolKeyString(),
     () => instance(internalPoolWithOneConnection),
@@ -103,7 +102,7 @@ describe("internal pool connection provider test", () => {
     props.clear();
   });
 
-  afterEach(async () => {
+  afterEach(() => {
     reset(mockReaderClient);
     reset(mockAwsMySQLClient);
     reset(mockHostInfo);
@@ -120,7 +119,7 @@ describe("internal pool connection provider test", () => {
     reset(mockRdsUtils);
     reset(mockHostListProvider);
 
-    await providerSpy.releaseResources();
+    InternalPooledConnectionProvider.clearDatabasePools();
   });
 
   it("test connect with default mapping", async () => {
@@ -143,7 +142,7 @@ describe("internal pool connection provider test", () => {
     const poolConfig: AwsPoolConfig = new AwsPoolConfig(config);
 
     const provider = spy(new InternalPooledConnectionProvider(poolConfig));
-    providerSpy = instance(provider);
+    const providerSpy = instance(provider);
     when(await provider.getPoolConnection(anything(), anything())).thenReturn(mockPoolClientWrapper);
 
     await providerSpy.connect(hostInfo, mockPluginServiceInstance, props);
@@ -182,7 +181,7 @@ describe("internal pool connection provider test", () => {
     const poolConfig: AwsPoolConfig = new AwsPoolConfig(config);
 
     const provider = spy(new InternalPooledConnectionProvider(poolConfig, myKeyFunc));
-    providerSpy = instance(provider);
+    const providerSpy = instance(provider);
     when(await provider.getPoolConnection(anything(), anything())).thenReturn(mockPoolClientWrapper);
 
     await providerSpy.connect(hostInfo, mockPluginServiceInstance, props);
@@ -197,7 +196,7 @@ describe("internal pool connection provider test", () => {
 
   it("test random strategy", async () => {
     const provider = spy(new InternalPooledConnectionProvider(mockPoolConfig));
-    providerSpy = instance(provider);
+    const providerSpy = instance(provider);
     providerSpy.setDatabasePools(getTestPoolMap());
     const selectedHost = providerSpy.getHostInfoByStrategy(testHostsList, HostRole.READER, "random", props);
     expect(selectedHost.host === readerUrl1Connection || selectedHost.host === readerUrl2Connection).toBeTruthy();
@@ -205,7 +204,7 @@ describe("internal pool connection provider test", () => {
 
   it("test least connection strategy", async () => {
     const provider = spy(new InternalPooledConnectionProvider(mockPoolConfig));
-    providerSpy = instance(provider);
+    const providerSpy = instance(provider);
     providerSpy.setDatabasePools(getTestPoolMap());
     when(internalPoolWithOneConnection.getActiveCount()).thenReturn(1);
 
@@ -228,7 +227,7 @@ describe("internal pool connection provider test", () => {
     when(mockDriverDialect.getAwsPoolClient(anything())).thenThrow(new Error("testError"));
 
     const provider = spy(new InternalPooledConnectionProvider(poolConfig));
-    providerSpy = instance(provider);
+    const providerSpy = instance(provider);
     when(await provider.getPoolConnection(anything(), anything())).thenReturn(mockPoolClientWrapper);
 
     await expect(providerSpy.connect(hostInfo, mockPluginServiceInstance, props)).rejects.toThrow("testError");
