@@ -5,6 +5,7 @@ on:
   push:
     branches:
       - main
+      - test/failover2-without-caching
     paths-ignore:
       - "**/*.md"
       - "**/*.jpg"
