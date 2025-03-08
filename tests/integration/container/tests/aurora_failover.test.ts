@@ -55,7 +55,7 @@ async function initDefaultConfig(host: string, port: number, connectToProxy: boo
     database: env.databaseInfo.defaultDbName,
     password: env.databaseInfo.password,
     port: port,
-    plugins: "failover,efm",
+    plugins: "failover,efm2",
     failoverTimeoutMs: 20000,
     failureDetectionCount: "2",
     failureDetectionInterval: "1000",

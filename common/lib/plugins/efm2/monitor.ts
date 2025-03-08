@@ -37,8 +37,6 @@ export interface Monitor {
 
   endMonitoringClient(): Promise<void>;
 
-  end(): Promise<void>;
-
   releaseResources(): Promise<void>;
 }
 
@@ -111,6 +109,7 @@ export class MonitorImpl implements Monitor {
       startMonitorTimeNano,
       () => new Array<WeakRef<MonitorConnectionContext>>()
     );
+    console.log("rrr");
     connectionQueue.push(new WeakRef<MonitorConnectionContext>(context));
   }
 
@@ -125,6 +124,8 @@ export class MonitorImpl implements Monitor {
         for (const [key, val] of MonitorImpl.newContexts.entries()) {
           if (key < currentTimeNanos) {
             const queue: Array<WeakRef<MonitorConnectionContext>> = val;
+            console.log("fff");
+
             processedKeys.push(key);
             // Each value of found entry is a queue of monitoring contexts awaiting active monitoring.
             // Add all contexts to an active monitoring contexts queue.
@@ -132,9 +133,10 @@ export class MonitorImpl implements Monitor {
             let monitorContextRef: WeakRef<MonitorConnectionContext> | undefined;
 
             while ((monitorContextRef = queue?.shift()) != null) {
-
               const monitorContext: MonitorConnectionContext = monitorContextRef?.deref() ?? null;
               if (monitorContext && monitorContext.isActive()) {
+                console.log("lll");
+
                 this.activeContexts.push(monitorContextRef);
               }
             }
@@ -196,16 +198,20 @@ export class MonitorImpl implements Monitor {
 
               monitorContext.setInactive();
               if (connectionToAbort != null) {
-                await this.endMonitoringClient();
+                await this.abortConnection(connectionToAbort);
                 this.abortedConnectionsCounter.inc();
               }
+              await this.endMonitoringClient();
             } else if (monitorContext && monitorContext.isActive()) {
+              console.log("mmm");
+
               tmpActiveContexts.push(monitorContextRef);
             }
           }
 
           // activeContexts is empty now and tmpActiveContexts contains all yet active contexts
           // Add active contexts back to the queue.
+          console.log("qqq");
           this.activeContexts.push(...tmpActiveContexts);
 
           const delayMillis = (this.failureDetectionIntervalNanos - (statusCheckEndTimeNanos - statusCheckStartTimeNanos)) / 1000000;
@@ -223,7 +229,10 @@ export class MonitorImpl implements Monitor {
     } catch (error: any) {
       logger.debug(Messages.get("MonitorImpl.errorDuringMonitoringStop", error.message));
     } finally {
-      await this.endMonitoringClient();
+      this.stopped = true;
+      if (this.monitoringClient != null) {
+        await this.endMonitoringClient();
+      }
       await sleep(3000);
     }
 
@@ -265,13 +274,6 @@ export class MonitorImpl implements Monitor {
     return this.stopped;
   }
 
-  async end(): Promise<void> {
-    this.stopped = true;
-    // Waiting for 30s gives a task enough time to exit monitoring loop and close database connection.
-    await sleep(30000);
-    logger.debug(Messages.get("MonitorImpl.stopped", this.hostInfo.host));
-  }
-
   updateHostHealthStatus(connectionValid: boolean, statusCheckStartNano: number, statusCheckEndNano: number): Promise<void> {
     if (!connectionValid) {
       this.failureCount++;
@@ -300,7 +302,6 @@ export class MonitorImpl implements Monitor {
     this.invalidHostStartTimeNano = 0;
     this.hostUnhealthy = false;
     logger.debug(Messages.get("MonitorConnectionContext.hostAlive", this.hostInfo.host));
-
   }
 
   async releaseResources() {
@@ -308,25 +309,26 @@ export class MonitorImpl implements Monitor {
     clearTimeout(this.delayMillisTimeoutId);
     clearTimeout(this.sleepWhenHostHealthyTimeoutId);
     this.activeContexts = null;
-    await this.endMonitoringClient();
-    // Allow time for monitor loop to close.
-    await sleep(500);
+    try {
+      await this.endMonitoringClient();
+    } catch (error) {
+      // ignore
+    }
   }
 
   async endMonitoringClient() {
     if (this.monitoringClient) {
       await this.pluginService.abortTargetClient(this.monitoringClient);
       this.monitoringClient = null;
+      this.stopped = true;
+      await sleep(10000);
     }
   }
 
-  async abortConnection(clientToAbort): Promise<void> {
-    if (clientToAbort == null) {
-      return Promise.resolve();
-    }
-
+  async abortConnection(clientToAbort: ClientWrapper): Promise<void> {
     try {
       await this.pluginService.abortTargetClient(clientToAbort);
+      console.log("Abort connection success");
     } catch (error: any) {
       // ignore
       logger.debug(Messages.get("MonitorConnectionContext.errorAbortingConnection", error.message));
