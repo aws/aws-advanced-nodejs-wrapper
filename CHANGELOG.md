@@ -8,9 +8,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### :magic_wand: Added
 
-- ([Enhanced Failover Monitoring 2 Plugin](./docs/using-the-nodejs-wrapper/using-plugins/UsingTheHostMonitoringPlugin.md#host-monitoring-plugin-v2)).
-- ([Custom Endpoint Plugin](./docs/using-the-nodejs-wrapper/using-plugins/UsingTheCustomEndpointPlugin.md)).
-- ([Failover 2 Plugin](./docs/using-the-nodejs-wrapper/using-plugins/UsingTheFailover2Plugin.md).
+- (Enhanced Failover Monitoring 2 Plugin. See [Using The Host Monitoring Plugin](./docs/using-the-nodejs-wrapper/using-plugins/UsingTheHostMonitoringPlugin.md#host-monitoring-plugin-v2)).
+- (Custom Endpoint Plugin. See [Using the Custom Endpoint Plugin](./docs/using-the-nodejs-wrapper/using-plugins/UsingTheCustomEndpointPlugin.md)).
+- (Failover 2 Plugin. See [Using the Failover 2 Plugin](./docs/using-the-nodejs-wrapper/using-plugins/UsingTheFailover2Plugin.md)).
 - Documentation on ([session state](./docs/using-the-nodejs-wrapper/SessionState.md)), ([driver dialects](./docs/using-the-nodejs-wrapper/DriverDialects.md)), ([fastest response strategy](./docs/using-the-nodejs-wrapper/using-plugins/UsingTheFastestResponseStrategyPlugin.md)), and ([maintenance](./MAINTENANCE.md)).
 
 ### :crab: Changed
@@ -21,9 +21,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### :bug: Fixed
 
-- setQueryTimeout for MySQL2DriverDialect ([PR #393](https://github.com/aws/aws-advanced-nodejs-wrapper/pull/393)).
+- Usage of setQueryTimeout for MySQL2DriverDialect ([PR #393](https://github.com/aws/aws-advanced-nodejs-wrapper/pull/393)).
 - Retrieving keep alive settings ([PR #395](https://github.com/aws/aws-advanced-nodejs-wrapper/pull/395)).
-- Reader failover wait for complete batch ([PR #390](https://github.com/aws/aws-advanced-nodejs-wrapper/pull/390)).
+- Reader failover to wait for complete batch ([PR #390](https://github.com/aws/aws-advanced-nodejs-wrapper/pull/390)).
 
 ## [1.1.0] - 2024-12-12
 
