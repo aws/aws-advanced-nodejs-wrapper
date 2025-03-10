@@ -101,32 +101,6 @@ describe("aurora failover2", () => {
   }, 1320000);
 
   itIf(
-    "fails from writer to new writer on connection invocation",
-    async () => {
-      const config = await initDefaultConfig(env.databaseInfo.writerInstanceEndpoint, env.databaseInfo.instanceEndpointPort, false);
-      client = initClientFunc(config);
-
-      await client.connect();
-
-      const initialWriterId = await auroraTestUtility.queryInstanceId(client);
-      expect(await auroraTestUtility.isDbInstanceWriter(initialWriterId)).toStrictEqual(true);
-
-      // Crash instance 1 and nominate a new writer.
-      await auroraTestUtility.failoverClusterAndWaitUntilWriterChanged();
-
-      await expect(async () => {
-        await auroraTestUtility.queryInstanceId(client);
-      }).rejects.toThrow(FailoverSuccessError);
-
-      // Assert that we are connected to the new writer after failover happens.
-      const currentConnectionId = await auroraTestUtility.queryInstanceId(client);
-      expect(await auroraTestUtility.isDbInstanceWriter(currentConnectionId)).toBe(true);
-      expect(currentConnectionId).not.toBe(initialWriterId);
-    },
-    1320000
-  );
-
-  itIf(
     "writer fails within transaction",
     async () => {
       const config = await initDefaultConfig(env.databaseInfo.writerInstanceEndpoint, env.databaseInfo.instanceEndpointPort, false);
@@ -168,6 +142,32 @@ describe("aurora failover2", () => {
       await DriverHelper.executeQuery(env.engine, client, "DROP TABLE IF EXISTS test3_3");
     },
     2000000
+  );
+
+  itIf(
+    "fails from writer to new writer on connection invocation",
+    async () => {
+      const config = await initDefaultConfig(env.databaseInfo.writerInstanceEndpoint, env.databaseInfo.instanceEndpointPort, false);
+      client = initClientFunc(config);
+
+      await client.connect();
+
+      const initialWriterId = await auroraTestUtility.queryInstanceId(client);
+      expect(await auroraTestUtility.isDbInstanceWriter(initialWriterId)).toStrictEqual(true);
+
+      // Crash instance 1 and nominate a new writer.
+      await auroraTestUtility.failoverClusterAndWaitUntilWriterChanged();
+
+      await expect(async () => {
+        await auroraTestUtility.queryInstanceId(client);
+      }).rejects.toThrow(FailoverSuccessError);
+
+      // Assert that we are connected to the new writer after failover happens.
+      const currentConnectionId = await auroraTestUtility.queryInstanceId(client);
+      expect(await auroraTestUtility.isDbInstanceWriter(currentConnectionId)).toBe(true);
+      expect(currentConnectionId).not.toBe(initialWriterId);
+    },
+    1320000
   );
 
   itIf(

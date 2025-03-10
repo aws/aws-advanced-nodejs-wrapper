@@ -38,7 +38,7 @@ export class RdsHostListProvider implements DynamicHostListProvider {
   private rdsUrlType: RdsUrlType;
   private initialHostList: HostInfo[];
   protected initialHost: HostInfo;
-  private refreshRateNano: number;
+  protected refreshRateNano: number;
   private suggestedClusterIdRefreshRateNano: number = 10 * 60 * 1_000_000_000; // 10 minutes
   private hostList?: HostInfo[];
   protected readonly connectionUrlParser: ConnectionUrlParser;
@@ -54,6 +54,7 @@ export class RdsHostListProvider implements DynamicHostListProvider {
   public clusterInstanceTemplate?: HostInfo;
 
   constructor(properties: Map<string, any>, originalUrl: string, hostListProviderService: HostListProviderService) {
+    logger.debug(logTopology(RdsHostListProvider.topologyCache.get(this.clusterId), "[Cache upon RdsHostListProvider creation] "))
     this.rdsHelper = new RdsUtils();
     this.hostListProviderService = hostListProviderService;
     this.connectionUrlParser = hostListProviderService.getConnectionUrlParser();
@@ -119,6 +120,7 @@ export class RdsHostListProvider implements DynamicHostListProvider {
     }
 
     this.isInitialized = true;
+    logger.debug(logTopology(RdsHostListProvider.topologyCache.get(this.clusterId), "[Cache upon RdsHostListProvider initialization] "))
   }
 
   async forceRefresh(): Promise<HostInfo[]>;

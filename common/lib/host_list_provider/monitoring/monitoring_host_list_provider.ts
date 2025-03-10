@@ -106,4 +106,8 @@ export class MonitoringRdsHostListProvider extends RdsHostListProvider implement
     }
     return monitor;
   }
+
+  updateTopologyCache(hosts: HostInfo[]) {
+    RdsHostListProvider.topologyCache.put(this.clusterId, hosts, this.refreshRateNano);
+  }
 }

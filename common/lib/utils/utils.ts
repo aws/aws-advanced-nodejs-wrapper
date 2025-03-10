@@ -59,7 +59,7 @@ export function shuffleList(list: any[]) {
 
 export function logTopology(hosts: HostInfo[], msgPrefix: string) {
   let msg = "<null>";
-  if (hosts.length !== 0) {
+  if (hosts !== null && hosts !== undefined && hosts.length !== 0) {
     msg = "\n " + hosts.join("\n ");
   }
   return `${msgPrefix}${Messages.get("Utils.topology", msg)}`;

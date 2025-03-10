@@ -44,6 +44,7 @@ import { getWriter, logTopology } from "./utils/utils";
 import { TelemetryFactory } from "./utils/telemetry/telemetry_factory";
 import { DriverDialect } from "./driver_dialect/driver_dialect";
 import { AllowedAndBlockedHosts } from "./AllowedAndBlockedHosts";
+import { RdsHostListProvider } from "./host_list_provider/rds_host_list_provider";
 
 export class PluginService implements ErrorHandler, HostListProviderService {
   private static readonly DEFAULT_HOST_AVAILABILITY_CACHE_EXPIRE_NANO = 5 * 60_000_000_000; // 5 minutes
@@ -206,6 +207,7 @@ export class PluginService implements ErrorHandler, HostListProviderService {
       if (updatedHostList) {
         if (updatedHostList !== this.hosts) {
           this.updateHostAvailability(updatedHostList);
+          hostListProvider.updateTopologyCache(updatedHostList);
           await this.setHostList(this.hosts, updatedHostList);
         }
         return true;

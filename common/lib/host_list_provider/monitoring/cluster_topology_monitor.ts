@@ -202,7 +202,7 @@ export class ClusterTopologyMonitorImpl implements ClusterTopologyMonitor {
       try {
         client = await this._pluginService.forceConnect(this.initialHostInfo, this._monitoringProperties);
       } catch {
-        logger.error(Messages.get("ClusterTopologyMonitor.unableToConnect", this.initialHostInfo.hostId));
+        logger.error(Messages.get("ClusterTopologyMonitor.unableToConnect", this.initialHostInfo.host ?? this.initialHostInfo.toString()));
         return null;
       }
 
