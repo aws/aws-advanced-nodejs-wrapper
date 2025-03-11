@@ -220,6 +220,11 @@ export class AuroraTestUtility {
     return await DriverHelper.executeInstanceQuery(testEnvironment.engine, testEnvironment.deployment, client);
   }
 
+  async queryInstanceIdWithSleep(client: AwsClient) {
+    const testEnvironment: TestEnvironment = await TestEnvironment.getCurrent();
+    return await DriverHelper.executeInstanceQueryWithSleep(testEnvironment.engine, testEnvironment.deployment, client);
+  }
+
   async isDbInstanceWriter(instanceId: string, clusterId?: string) {
     if (clusterId === undefined) {
       clusterId = (await TestEnvironment.getCurrent()).info.auroraClusterName;

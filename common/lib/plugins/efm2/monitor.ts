@@ -37,8 +37,6 @@ export interface Monitor {
 
   endMonitoringClient(): Promise<void>;
 
-  end(): Promise<void>;
-
   releaseResources(): Promise<void>;
 }
 
@@ -125,13 +123,15 @@ export class MonitorImpl implements Monitor {
         for (const [key, val] of MonitorImpl.newContexts.entries()) {
           if (key < currentTimeNanos) {
             const queue: Array<WeakRef<MonitorConnectionContext>> = val;
+
             processedKeys.push(key);
             // Each value of found entry is a queue of monitoring contexts awaiting active monitoring.
             // Add all contexts to an active monitoring contexts queue.
             // Ignore disposed contexts.
             let monitorContextRef: WeakRef<MonitorConnectionContext> | undefined;
-            while ((monitorContextRef = queue.shift())) {
-              const monitorContext: MonitorConnectionContext = monitorContextRef.deref();
+
+            while ((monitorContextRef = queue?.shift()) != null) {
+              const monitorContext: MonitorConnectionContext = monitorContextRef?.deref() ?? null;
               if (monitorContext && monitorContext.isActive()) {
                 this.activeContexts.push(monitorContextRef);
               }
@@ -176,11 +176,13 @@ export class MonitorImpl implements Monitor {
 
           let monitorContextRef: WeakRef<MonitorConnectionContext> | undefined;
 
-          while ((monitorContextRef = this.activeContexts.shift())) {
+          while ((monitorContextRef = this.activeContexts?.shift()) != null) {
             if (this.isStopped()) {
               break;
             }
+
             const monitorContext: MonitorConnectionContext = monitorContextRef?.deref() ?? null;
+
             if (!monitorContext) {
               continue;
             }
@@ -188,10 +190,12 @@ export class MonitorImpl implements Monitor {
             if (this.hostUnhealthy) {
               // Kill connection
               monitorContext.setHostUnhealthy(true);
+              const clientToAbort = monitorContext.getClient();
+
               monitorContext.setInactive();
-              const connectionToAbort = monitorContext.getClient();
-              if (connectionToAbort != null) {
-                await this.endMonitoringClient();
+              if (clientToAbort != null) {
+                await this.endMonitoringClient(clientToAbort);
+
                 this.abortedConnectionsCounter.inc();
               }
             } else if (monitorContext && monitorContext.isActive()) {
@@ -219,7 +223,6 @@ export class MonitorImpl implements Monitor {
       logger.debug(Messages.get("MonitorImpl.errorDuringMonitoringStop", error.message));
     } finally {
       await this.endMonitoringClient();
-      await sleep(3000);
     }
 
     logger.debug(Messages.get("MonitorImpl.stopMonitoring", this.hostInfo.host));
@@ -260,13 +263,6 @@ export class MonitorImpl implements Monitor {
     return this.stopped;
   }
 
-  async end(): Promise<void> {
-    this.stopped = true;
-    // Waiting for 30s gives a task enough time to exit monitoring loop and close database connection.
-    await sleep(30000);
-    logger.debug(Messages.get("MonitorImpl.stopped", this.hostInfo.host));
-  }
-
   updateHostHealthStatus(connectionValid: boolean, statusCheckStartNano: number, statusCheckEndNano: number): Promise<void> {
     if (!connectionValid) {
       this.failureCount++;
@@ -278,7 +274,7 @@ export class MonitorImpl implements Monitor {
       const invalidHostDurationNano = statusCheckEndNano - this.invalidHostStartTimeNano;
       const maxInvalidHostDurationNano = this.failureDetectionIntervalNanos * Math.max(0, this.failureDetectionCount - 1);
 
-      if (invalidHostDurationNano >= maxInvalidHostDurationNano) {
+      if (this.failureCount >= this.failureDetectionCount || invalidHostDurationNano >= maxInvalidHostDurationNano) {
         logger.debug(Messages.get("MonitorConnectionContext.hostDead", this.hostInfo.host));
         this.hostUnhealthy = true;
         return Promise.resolve();
@@ -306,10 +302,18 @@ export class MonitorImpl implements Monitor {
     await sleep(500);
   }
 
-  async endMonitoringClient() {
-    if (this.monitoringClient) {
-      await this.pluginService.abortTargetClient(this.monitoringClient);
-      this.monitoringClient = null;
+  async endMonitoringClient(clientToAbort?: ClientWrapper) {
+    try {
+      if (clientToAbort) {
+        await this.pluginService.abortTargetClient(clientToAbort);
+      } else if (this.monitoringClient) {
+        await this.pluginService.abortTargetClient(this.monitoringClient);
+        this.monitoringClient = null;
+      }
+      this.stopped = true;
+    } catch (error: any) {
+      // ignore
+      logger.debug(Messages.get("MonitorConnectionContext.errorAbortingConnection", error.message));
     }
   }
 }
