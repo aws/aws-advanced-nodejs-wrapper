@@ -203,6 +203,6 @@ export class HostMonitoringConnectionPlugin extends AbstractConnectionPlugin imp
   }
 
   async releaseResources(): Promise<void> {
-    return this.monitorService.releaseResources();
+    await this.monitorService.releaseResources();
   }
 }
