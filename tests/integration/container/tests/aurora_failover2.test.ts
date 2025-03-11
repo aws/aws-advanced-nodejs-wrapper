@@ -53,7 +53,6 @@ async function initDefaultConfig(host: string, port: number, connectToProxy: boo
     password: env.databaseInfo.password,
     port: port,
     plugins: "failover2",
-    failoverTimeoutMs: 250000,
     enableTelemetry: true,
     telemetryTracesBackend: "OTLP",
     telemetryMetricsBackend: "OTLP"

@@ -146,9 +146,8 @@ export class RdsMultiAZMySQLDatabaseDialect extends MySQLDatabaseDialect impleme
       if (!writerHostId) {
         const currentConnection = await this.identifyConnection(targetClient);
         return currentConnection ?? null;
-      } else {
-        return null;
       }
+      return writerHostId;
     } catch (error: any) {
       throw new AwsWrapperError(Messages.get("RdsMultiAZMySQLDatabaseDialect.invalidQuery", error.message));
     }

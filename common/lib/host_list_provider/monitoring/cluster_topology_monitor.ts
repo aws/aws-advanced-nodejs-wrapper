@@ -202,7 +202,7 @@ export class ClusterTopologyMonitorImpl implements ClusterTopologyMonitor {
       try {
         client = await this._pluginService.forceConnect(this.initialHostInfo, this._monitoringProperties);
       } catch {
-        logger.error(Messages.get("ClusterTopologyMonitor.unableToConnect", this.initialHostInfo.hostId));
+        // Unable to connect to host;
         return null;
       }
 
@@ -214,7 +214,7 @@ export class ClusterTopologyMonitorImpl implements ClusterTopologyMonitor {
           if (writerId) {
             this.isVerifiedWriterConnection = true;
             this.writerHostInfo = this.initialHostInfo;
-            logger.info(Messages.get("ClusterTopologyMonitor.writerMonitoringConnection", this.initialHostInfo.hostId));
+            logger.info(Messages.get("ClusterTopologyMonitor.writerMonitoringConnection", this.initialHostInfo.host));
             writerVerifiedByThisTask = true;
           }
         } catch (error) {
@@ -450,10 +450,18 @@ export class HostMonitor {
           }
 
           if (writerId) {
+            // First connection after failover may be stale.
+            if ((await this.monitor.pluginService.getHostRole(client)) !== HostRole.WRITER) {
+              logger.debug(Messages.get("HostMonitor.writerIsStale", writerId));
+              writerId = null;
+            }
+          }
+
+          if (writerId) {
             if (this.monitor.hostMonitorsWriterClient) {
               await this.monitor.closeConnection(client);
             } else {
-              logger.debug(Messages.get("HostMonitor.detectedWriter", writerId));
+              logger.debug(Messages.get("HostMonitor.detectedWriter", writerId, this.hostInfo.host));
               const updatedHosts: HostInfo[] = await this.monitor.fetchTopologyAndUpdateCache(client);
               if (updatedHosts && this.monitor.hostMonitorsWriterClient === null) {
                 this.monitor.hostMonitorsWriterClient = client;
