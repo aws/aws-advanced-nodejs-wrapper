@@ -27,8 +27,6 @@ import { features, instanceCount } from "./config";
 import { TestEnvironmentFeatures } from "./utils/test_environment_features";
 import { PluginManager } from "../../../../common/lib";
 import { TransactionIsolationLevel } from "../../../../common/lib/utils/transaction_isolation_level";
-import { sleep } from "../../../../common/lib/utils/utils";
-import { InternalPooledConnectionProvider } from "../../../../common/lib/internal_pooled_connection_provider";
 
 const itIf =
   features.includes(TestEnvironmentFeatures.FAILOVER_SUPPORTED) &&
