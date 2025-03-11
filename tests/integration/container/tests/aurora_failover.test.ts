@@ -142,7 +142,7 @@ describe("aurora failover", () => {
       } catch (error) {
         fail("The disable connectivity task was unexpectedly interrupted.");
       }
-      //  Failure occurs on connection invocation
+      //  Failure occurs on connection invocation.
       await expect(async () => {
         await auroraTestUtility.queryInstanceId(client);
       }).rejects.toThrow(FailoverSuccessError);
