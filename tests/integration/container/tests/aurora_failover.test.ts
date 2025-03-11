@@ -134,7 +134,7 @@ describe("aurora failover", () => {
       try {
         await ProxyHelper.enableConnectivity(initialWriterId);
 
-        // activates monitoring connection after monitoring_wrapperQueryTimeout time is reached
+        // Sleep query activates monitoring connection after monitoring_wrapperQueryTimeout time is reached.
         await auroraTestUtility.queryInstanceIdWithSleep(client);
 
         await ProxyHelper.enableConnectivity(readerInstance);
