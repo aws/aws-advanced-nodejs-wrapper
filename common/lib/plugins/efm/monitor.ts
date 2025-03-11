@@ -168,10 +168,8 @@ export class MonitorImpl implements Monitor {
               if (firstAddedMonitorContext == monitorContext) {
                 // This context is already processed by this loop.
                 // Add it to the array and exit this loop.
-                console.log("monitorContext AAA");
 
                 this.activeContexts?.push(monitorContext);
-                console.log("monitorContext BB");
                 break;
               }
 
@@ -184,10 +182,8 @@ export class MonitorImpl implements Monitor {
               );
 
               if (monitorContext.isActiveContext && !monitorContext.isHostUnhealthy) {
-                console.log("monitorContext CCC");
 
                 this.activeContexts?.push(monitorContext);
-                console.log("monitorContext DDD");
 
                 if (firstAddedMonitorContext == null) {
                   firstAddedMonitorContext = monitorContext;

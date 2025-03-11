@@ -109,7 +109,6 @@ export class MonitorImpl implements Monitor {
       startMonitorTimeNano,
       () => new Array<WeakRef<MonitorConnectionContext>>()
     );
-    console.log("rrr");
     connectionQueue.push(new WeakRef<MonitorConnectionContext>(context));
   }
 
@@ -124,7 +123,6 @@ export class MonitorImpl implements Monitor {
         for (const [key, val] of MonitorImpl.newContexts.entries()) {
           if (key < currentTimeNanos) {
             const queue: Array<WeakRef<MonitorConnectionContext>> = val;
-            console.log("fff");
 
             processedKeys.push(key);
             // Each value of found entry is a queue of monitoring contexts awaiting active monitoring.
@@ -135,7 +133,6 @@ export class MonitorImpl implements Monitor {
             while ((monitorContextRef = queue?.shift()) != null) {
               const monitorContext: MonitorConnectionContext = monitorContextRef?.deref() ?? null;
               if (monitorContext && monitorContext.isActive()) {
-                console.log("lll");
 
                 this.activeContexts.push(monitorContextRef);
               }
@@ -203,7 +200,6 @@ export class MonitorImpl implements Monitor {
               }
               await this.endMonitoringClient();
             } else if (monitorContext && monitorContext.isActive()) {
-              console.log("mmm");
 
               tmpActiveContexts.push(monitorContextRef);
             }
@@ -211,7 +207,6 @@ export class MonitorImpl implements Monitor {
 
           // activeContexts is empty now and tmpActiveContexts contains all yet active contexts
           // Add active contexts back to the queue.
-          console.log("qqq");
           this.activeContexts.push(...tmpActiveContexts);
 
           const delayMillis = (this.failureDetectionIntervalNanos - (statusCheckEndTimeNanos - statusCheckStartTimeNanos)) / 1000000;
@@ -301,7 +296,6 @@ export class MonitorImpl implements Monitor {
     this.failureCount = 0;
     this.invalidHostStartTimeNano = 0;
     this.hostUnhealthy = false;
-    logger.debug(Messages.get("MonitorConnectionContext.hostAlive", this.hostInfo.host));
   }
 
   async releaseResources() {
@@ -328,7 +322,6 @@ export class MonitorImpl implements Monitor {
   async abortConnection(clientToAbort: ClientWrapper): Promise<void> {
     try {
       await this.pluginService.abortTargetClient(clientToAbort);
-      console.log("Abort connection success");
     } catch (error: any) {
       // ignore
       logger.debug(Messages.get("MonitorConnectionContext.errorAbortingConnection", error.message));
