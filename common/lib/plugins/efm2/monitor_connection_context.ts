@@ -48,7 +48,7 @@ export class MonitorConnectionContext {
   }
 
   getClient(): ClientWrapper | null {
-    return this.clientToAbortRef.deref() ?? null;
+    return this.clientToAbortRef?.deref() ?? null;
   }
 
   isActive() {

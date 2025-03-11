@@ -123,16 +123,17 @@ export class MonitorImpl implements Monitor {
           let newMonitorContext: MonitorConnectionContext | undefined;
           let firstAddedNewMonitorContext: MonitorConnectionContext | null = null;
           const currentTimeNano: number = getCurrentTimeNano();
-
-          while ((newMonitorContext = this.newContexts.shift()) != null) {
+          while ((newMonitorContext = this.newContexts?.shift()) != null) {
             if (firstAddedNewMonitorContext === newMonitorContext) {
               this.newContexts.push(newMonitorContext);
+
               break;
             }
 
             if (newMonitorContext.isActiveContext) {
               if (newMonitorContext.expectedActiveMonitoringStartTimeNano > currentTimeNano) {
                 this.newContexts.push(newMonitorContext);
+
                 firstAddedNewMonitorContext = firstAddedNewMonitorContext ?? newMonitorContext;
               } else {
                 this.activeContexts.push(newMonitorContext);
@@ -152,7 +153,7 @@ export class MonitorImpl implements Monitor {
             let monitorContext: MonitorConnectionContext | undefined;
             let firstAddedMonitorContext: MonitorConnectionContext | null = null;
 
-            while ((monitorContext = this.activeContexts.shift()) != null) {
+            while ((monitorContext = this.activeContexts?.shift()) != null) {
               // If context is already invalid, just skip it.
               if (!monitorContext.isActiveContext) {
                 continue;
@@ -161,7 +162,8 @@ export class MonitorImpl implements Monitor {
               if (firstAddedMonitorContext == monitorContext) {
                 // This context is already processed by this loop.
                 // Add it to the array and exit this loop.
-                this.activeContexts.push(monitorContext);
+
+                this.activeContexts?.push(monitorContext);
                 break;
               }
 
@@ -174,18 +176,19 @@ export class MonitorImpl implements Monitor {
               );
 
               if (monitorContext.isActiveContext && !monitorContext.isHostUnhealthy) {
-                this.activeContexts.push(monitorContext);
+                this.activeContexts?.push(monitorContext);
+
                 if (firstAddedMonitorContext == null) {
                   firstAddedMonitorContext = monitorContext;
                 }
 
-                if (delayMillis == -1 || delayMillis > monitorContext.failureDetectionIntervalMillis) {
+                if (delayMillis === -1 || delayMillis > monitorContext.failureDetectionIntervalMillis) {
                   delayMillis = monitorContext.failureDetectionIntervalMillis;
                 }
               }
             }
 
-            if (delayMillis == -1) {
+            if (delayMillis === -1) {
               // No active contexts.
               delayMillis = this.SLEEP_WHEN_INACTIVE_MILLIS;
             } else {

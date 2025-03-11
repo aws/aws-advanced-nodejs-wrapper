@@ -85,8 +85,8 @@ export class OpenedConnectionTracker {
 
   private async invalidateConnections(connectionQueue: Array<WeakRef<ClientWrapper>>): Promise<void> {
     let clientRef: WeakRef<ClientWrapper> | undefined;
-    while ((clientRef = connectionQueue.shift())) {
-      const client = clientRef.deref();
+    while ((clientRef = connectionQueue?.shift()) != null) {
+      const client = clientRef?.deref() ?? null;
       if (!client) {
         continue;
       }
@@ -101,7 +101,7 @@ export class OpenedConnectionTracker {
     for (const queue of OpenedConnectionTracker.openedConnections.values()) {
       if (queue.length !== 0) {
         for (const connRef of queue) {
-          const conn = connRef.deref();
+          const conn = connRef?.deref() ?? null;
           if (conn) {
             hostList.push(`${conn.id} - ${conn.hostInfo.toString()}`);
           }
@@ -124,7 +124,7 @@ export class OpenedConnectionTracker {
     for (const [key, queue] of OpenedConnectionTracker.openedConnections) {
       OpenedConnectionTracker.openedConnections.set(
         key,
-        queue.filter((connWeakRef: WeakRef<ClientWrapper>) => connWeakRef.deref())
+        queue.filter((connWeakRef: WeakRef<ClientWrapper>) => connWeakRef?.deref() ?? null)
       );
     }
   }

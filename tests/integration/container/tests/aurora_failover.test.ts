@@ -36,6 +36,7 @@ const itIf =
     ? it
     : it.skip;
 const itIfTwoInstance = instanceCount == 2 ? itIf : it.skip;
+const itIfThreeInstance = instanceCount == 3 ? it : it.skip;
 
 let env: TestEnvironment;
 let driver;
@@ -62,6 +63,20 @@ async function initDefaultConfig(host: string, port: number, connectToProxy: boo
     config["clusterInstanceHostPattern"] = "?." + env.proxyDatabaseInfo.instanceEndpointSuffix;
   }
   config = DriverHelper.addDriverSpecificConfiguration(config, env.engine);
+  return config;
+}
+
+async function initConfigWithEFM2(host: string, port: number, connectToProxy: boolean): Promise<any> {
+  const config: any = await initDefaultConfig(host, port, connectToProxy);
+  config["plugins"] = "failover,efm2";
+  config["failoverTimeoutMs"] = 20000;
+  config["failureDetectionCount"] = 2;
+  config["failureDetectionInterval"] = 1000;
+  config["failureDetectionTime"] = 2000;
+  config["connectTimeout"] = 10000;
+  config["wrapperQueryTimeout"] = 20000;
+  config["monitoring_wrapperQueryTimeout"] = 3000;
+  config["monitoring_wrapperConnectTimeout"] = 3000;
   return config;
 }
 
@@ -99,6 +114,45 @@ describe("aurora failover", () => {
     await PluginManager.releaseResources();
     logger.info(`Test finished: ${expect.getState().currentTestName}`);
   }, 1320000);
+
+  itIfThreeInstance(
+    "writer failover efm",
+    async () => {
+      // Connect to writer instance.
+      const writerConfig = await initDefaultConfig(env.proxyDatabaseInfo.writerInstanceEndpoint, env.proxyDatabaseInfo.instanceEndpointPort, true);
+      writerConfig["failoverMode"] = "reader-or-writer";
+
+      client = initClientFunc(writerConfig);
+      await client.connect();
+
+      const initialWriterId = await auroraTestUtility.queryInstanceId(client);
+      expect(await auroraTestUtility.isDbInstanceWriter(initialWriterId)).toStrictEqual(true);
+      const instances = env.databaseInfo.instances;
+      const readerInstance = instances[1].instanceId;
+      await ProxyHelper.disableAllConnectivity(env.engine);
+
+      try {
+        await ProxyHelper.enableConnectivity(initialWriterId);
+
+        // Sleep query activates monitoring connection after monitoring_wrapperQueryTimeout time is reached.
+        await auroraTestUtility.queryInstanceIdWithSleep(client);
+
+        await ProxyHelper.enableConnectivity(readerInstance);
+        await ProxyHelper.disableConnectivity(env.engine, initialWriterId);
+      } catch (error) {
+        fail("The disable connectivity task was unexpectedly interrupted.");
+      }
+      //  Failure occurs on connection invocation.
+      await expect(async () => {
+        await auroraTestUtility.queryInstanceId(client);
+      }).rejects.toThrow(FailoverSuccessError);
+
+      const currentConnectionId = await auroraTestUtility.queryInstanceId(client);
+      expect(await auroraTestUtility.isDbInstanceWriter(currentConnectionId)).toBe(false);
+      expect(currentConnectionId).not.toBe(initialWriterId);
+    },
+    1320000
+  );
 
   itIf(
     "fails from writer to new writer on connection invocation",
