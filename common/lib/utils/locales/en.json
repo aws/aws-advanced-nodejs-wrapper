@@ -210,7 +210,6 @@
   "ConfigurationProfileBuilder.canNotUpdateKnownPreset": "Can't add or update a built-in preset configuration profile '%s'.",
   "AwsClient.configurationProfileNotFound": "Configuration profile '%s' not found.",
   "AwsClient.targetClientNotDefined": "AwsClient targetClient not defined.",
-  "Failover2.unableToConnect": "Unable to establish SQL connection to the instance.",
   "Failover2.failoverReaderNotConnectedToReader": "Unable to establish SQL connection to the instance '%s' as a reader.",
   "Failover2.failoverWriterConnectedToReader": "The new writer was identified to be '%s', but querying the instance for its role returned a reader.",
   "Failover2.unableToFetchTopology": "Unable to establish SQL connection and fetch topology.",
