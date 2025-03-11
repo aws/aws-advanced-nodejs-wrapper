@@ -193,8 +193,11 @@ export class MonitorImpl implements Monitor {
               const clientToAbort = monitorContext.getClient();
 
               monitorContext.setInactive();
-              await this.endMonitoringClient(clientToAbort);
-              this.abortedConnectionsCounter.inc();
+              if (clientToAbort != null) {
+                await this.endMonitoringClient(clientToAbort);
+
+                this.abortedConnectionsCounter.inc();
+              }
             } else if (monitorContext && monitorContext.isActive()) {
               tmpActiveContexts.push(monitorContextRef);
             }
