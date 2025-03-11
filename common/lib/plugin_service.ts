@@ -209,6 +209,7 @@ export class PluginService implements ErrorHandler, HostListProviderService {
           this.updateHostAvailability(updatedHostList);
           hostListProvider.updateTopologyCache(updatedHostList);
           await this.setHostList(this.hosts, updatedHostList);
+          logger.debug(logTopology(updatedHostList, "[From MonitoringHostListProvider] "));
         }
         return true;
       }

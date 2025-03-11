@@ -213,6 +213,7 @@
   "Failover2.failoverReaderNotConnectedToReader": "Unable to establish SQL connection to the instance '%s' as a reader.",
   "Failover2.failoverWriterConnectedToReader": "Unable to establish SQL connection to a writer instance.",
   "Failover2.unableToFetchTopology": "Unable to establish SQL connection and fetch topology.",
+  "Failover2.identifiedWriterCandidate": "Host monitors identified '%s' as a writer candidate for failover.",
   "Failover2.errorSelectingReaderHost": "An error occurred while attempting to select a reader host candidate: '%s'.",
   "Failover2.readerCandidateNull": "Reader candidate unable to be selected: '%s'.",
   "Failover2.strictReaderUnknownHostRole": "Unknown host role of reader candidate in strict reader failoverMode.",

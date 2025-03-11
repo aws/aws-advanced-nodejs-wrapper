@@ -384,6 +384,7 @@ export class Failover2Plugin extends AbstractConnectionPlugin implements CanRele
         }
 
         const hosts: HostInfo[] = this.pluginService.getAllHosts();
+        logger.debug(logTopology(hosts, "[From PluginService] "));
 
         let writerCandidateClient: ClientWrapper = null;
         const writerCandidateHostInfo: HostInfo = hosts.find((x) => x.role === HostRole.WRITER);
@@ -401,8 +402,11 @@ export class Failover2Plugin extends AbstractConnectionPlugin implements CanRele
 
         if (writerCandidateHostInfo) {
           try {
+            logger.debug(Messages.get("Failover2.identifiedWriterCandidate", writerCandidateHostInfo.getHostAndPort()));
             writerCandidateClient = await this.createConnectionForHost(writerCandidateHostInfo);
           } catch (err) {
+            logger.debug(`Writer candidate: ${writerCandidateHostInfo}`); // TODO: remove before commit. `
+            logger.debug(`Error thrown: ${err}`); // TODO: remove before commit.
             this.logAndThrowError("Failover.unableToConnectToWriter");
           }
         }

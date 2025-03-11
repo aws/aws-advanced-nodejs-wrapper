@@ -85,6 +85,8 @@ export class RdsMultiAZPgDatabaseDialect extends PgDatabaseDialect implements To
 
   private async executeTopologyRelatedQuery(targetClient: ClientWrapper, query: string, resultColumnName?: string): Promise<any> {
     const res = await targetClient.query(query);
+    // TODO: remove before commit.
+    logger.debug(`Raw query results: ${res}.`);
     const rows: any[] = res.rows;
     if (rows.length > 0) {
       return rows[0][resultColumnName ?? 0];
