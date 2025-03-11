@@ -124,23 +124,19 @@ export class MonitorImpl implements Monitor {
           let firstAddedNewMonitorContext: MonitorConnectionContext | null = null;
           const currentTimeNano: number = getCurrentTimeNano();
           while ((newMonitorContext = this.newContexts?.shift()) != null) {
-
             if (firstAddedNewMonitorContext === newMonitorContext) {
-
               this.newContexts.push(newMonitorContext);
 
               break;
             }
 
             if (newMonitorContext.isActiveContext) {
-
               if (newMonitorContext.expectedActiveMonitoringStartTimeNano > currentTimeNano) {
                 this.newContexts.push(newMonitorContext);
 
                 firstAddedNewMonitorContext = firstAddedNewMonitorContext ?? newMonitorContext;
               } else {
                 this.activeContexts.push(newMonitorContext);
-
               }
             }
           }
@@ -158,10 +154,8 @@ export class MonitorImpl implements Monitor {
             let firstAddedMonitorContext: MonitorConnectionContext | null = null;
 
             while ((monitorContext = this.activeContexts?.shift()) != null) {
-
               // If context is already invalid, just skip it.
               if (!monitorContext.isActiveContext) {
-
                 continue;
               }
 
@@ -182,7 +176,6 @@ export class MonitorImpl implements Monitor {
               );
 
               if (monitorContext.isActiveContext && !monitorContext.isHostUnhealthy) {
-
                 this.activeContexts?.push(monitorContext);
 
                 if (firstAddedMonitorContext == null) {

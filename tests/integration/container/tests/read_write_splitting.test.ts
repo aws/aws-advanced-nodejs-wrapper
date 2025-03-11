@@ -37,7 +37,7 @@ const itIf =
   features.includes(TestEnvironmentFeatures.IAM) &&
   !features.includes(TestEnvironmentFeatures.RUN_AUTOSCALING_TESTS_ONLY) &&
   instanceCount >= 2
-    ? it.skip
+    ? it
     : it.skip;
 const itIfMinThreeInstance = instanceCount >= 3 ? itIf : it.skip;
 const itIfMinFiveInstance = instanceCount >= 5 ? itIf : it.skip;

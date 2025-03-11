@@ -33,7 +33,7 @@ const itIf =
   features.includes(TestEnvironmentFeatures.PERFORMANCE) &&
   features.includes(TestEnvironmentFeatures.NETWORK_OUTAGES_ENABLED) &&
   !features.includes(TestEnvironmentFeatures.RUN_AUTOSCALING_TESTS_ONLY)
-    ? it.skip
+    ? it
     : it.skip;
 
 const REPEAT_TIMES: number = process.env.REPEAT_TIMES ? Number(process.env.REPEAT_TIMES) : 5;

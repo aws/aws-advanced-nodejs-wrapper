@@ -33,7 +33,7 @@ const itIf =
   !features.includes(TestEnvironmentFeatures.PERFORMANCE) &&
   !features.includes(TestEnvironmentFeatures.RUN_AUTOSCALING_TESTS_ONLY) &&
   features.includes(TestEnvironmentFeatures.IAM)
-    ? it.skip
+    ? it
     : it.skip;
 
 let env: TestEnvironment;

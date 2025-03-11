@@ -33,7 +33,7 @@ const itIf =
   !features.includes(TestEnvironmentFeatures.PERFORMANCE) &&
   !features.includes(TestEnvironmentFeatures.RUN_AUTOSCALING_TESTS_ONLY) &&
   instanceCount >= 2
-    ? it.skip
+    ? it
     : it.skip;
 const itIfTwoInstance = instanceCount == 2 ? itIf : it.skip;
 

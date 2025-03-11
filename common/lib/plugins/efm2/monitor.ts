@@ -133,7 +133,6 @@ export class MonitorImpl implements Monitor {
             while ((monitorContextRef = queue?.shift()) != null) {
               const monitorContext: MonitorConnectionContext = monitorContextRef?.deref() ?? null;
               if (monitorContext && monitorContext.isActive()) {
-
                 this.activeContexts.push(monitorContextRef);
               }
             }
@@ -200,7 +199,6 @@ export class MonitorImpl implements Monitor {
               }
               await this.endMonitoringClient();
             } else if (monitorContext && monitorContext.isActive()) {
-
               tmpActiveContexts.push(monitorContextRef);
             }
           }
