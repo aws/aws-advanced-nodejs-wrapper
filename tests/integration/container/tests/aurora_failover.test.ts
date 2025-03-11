@@ -120,20 +120,13 @@ describe("aurora failover", () => {
   itIfThreeInstance(
     "writer failover efm",
     async () => {
-      const numInstances = env.databaseInfo.instances.length;
-
-      const provider = new InternalPooledConnectionProvider({ maxConnections: numInstances });
-
       // Connect to writer instance
       const writerConfig = await initDefaultConfig(env.proxyDatabaseInfo.writerInstanceEndpoint, env.proxyDatabaseInfo.instanceEndpointPort, true);
-      writerConfig["connectionProvider"] = provider;
       writerConfig["failoverMode"] = "reader-or-writer";
 
       client = initClientFunc(writerConfig);
       await client.connect();
 
-      // Failover usually changes the writer instance, but we want to test re-election of the same writer, so we will
-      // simulate this by temporarily disabling connectivity to the writer.
       const initialWriterId = await auroraTestUtility.queryInstanceId(client);
       expect(await auroraTestUtility.isDbInstanceWriter(initialWriterId)).toStrictEqual(true);
       const instances = env.databaseInfo.instances;
@@ -142,6 +135,8 @@ describe("aurora failover", () => {
 
       try {
         await ProxyHelper.enableConnectivity(initialWriterId);
+
+        // activates monitoring connection after monitoring_wrapperQueryTimeout time is reached
         await auroraTestUtility.queryInstanceIdWithSleep(client);
 
         await ProxyHelper.enableConnectivity(readerInstance);
@@ -154,7 +149,6 @@ describe("aurora failover", () => {
         await auroraTestUtility.queryInstanceId(client);
       }).rejects.toThrow(FailoverSuccessError);
 
-      // Assert that we are currently connected to the writer instance after failover
       const currentConnectionId = await auroraTestUtility.queryInstanceId(client);
       expect(await auroraTestUtility.isDbInstanceWriter(currentConnectionId)).toBe(false);
       expect(currentConnectionId).not.toBe(initialWriterId);

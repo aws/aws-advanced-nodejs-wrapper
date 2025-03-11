@@ -222,10 +222,7 @@ export class MonitorImpl implements Monitor {
     } catch (error: any) {
       logger.debug(Messages.get("MonitorImpl.errorDuringMonitoringStop", error.message));
     } finally {
-      if (this.monitoringClient != null) {
-        await this.endMonitoringClient();
-      }
-      await sleep(3000);
+      await this.endMonitoringClient();
     }
 
     logger.debug(Messages.get("MonitorImpl.stopMonitoring", this.hostInfo.host));
@@ -300,11 +297,9 @@ export class MonitorImpl implements Monitor {
     clearTimeout(this.delayMillisTimeoutId);
     clearTimeout(this.sleepWhenHostHealthyTimeoutId);
     this.activeContexts = null;
-    try {
-      await this.endMonitoringClient();
-    } catch (error) {
-      // ignore
-    }
+    await this.endMonitoringClient();
+    // Allow time for monitor loop to close.
+    await sleep(500);
   }
 
   async endMonitoringClient(clientToAbort?: ClientWrapper) {
@@ -316,7 +311,6 @@ export class MonitorImpl implements Monitor {
         this.monitoringClient = null;
       }
       this.stopped = true;
-      await sleep(10000);
     } catch (error: any) {
       // ignore
       logger.debug(Messages.get("MonitorConnectionContext.errorAbortingConnection", error.message));
