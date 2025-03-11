@@ -118,7 +118,7 @@ describe("aurora failover", () => {
   itIfThreeInstance(
     "writer failover efm",
     async () => {
-      // Connect to writer instance
+      // Connect to writer instance.
       const writerConfig = await initDefaultConfig(env.proxyDatabaseInfo.writerInstanceEndpoint, env.proxyDatabaseInfo.instanceEndpointPort, true);
       writerConfig["failoverMode"] = "reader-or-writer";
 
