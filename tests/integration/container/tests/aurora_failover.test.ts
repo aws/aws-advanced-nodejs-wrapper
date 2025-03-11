@@ -38,7 +38,7 @@ const itIf =
     ? it
     : it.skip;
 const itIfTwoInstance = instanceCount == 2 ? itIf : it.skip;
-const itIfThreeInstanceOnly = instanceCount == 3 ? it : it.skip;
+const itIfThreeInstance = instanceCount == 3 ? it : it.skip;
 
 let env: TestEnvironment;
 let driver;
@@ -117,7 +117,7 @@ describe("aurora failover", () => {
     logger.info(`Test finished: ${expect.getState().currentTestName}`);
   }, 1320000);
 
-  itIfThreeInstanceOnly(
+  itIfThreeInstance(
     "writer failover efm",
     async () => {
       const numInstances = env.databaseInfo.instances.length;

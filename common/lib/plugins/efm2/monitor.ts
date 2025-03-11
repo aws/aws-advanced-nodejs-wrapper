@@ -190,14 +190,11 @@ export class MonitorImpl implements Monitor {
             if (this.hostUnhealthy) {
               // Kill connection
               monitorContext.setHostUnhealthy(true);
-              const connectionToAbort = monitorContext.getClient();
+              const clientToAbort = monitorContext.getClient();
 
               monitorContext.setInactive();
-              if (connectionToAbort != null) {
-                await this.abortConnection(connectionToAbort);
-                this.abortedConnectionsCounter.inc();
-              }
-              await this.endMonitoringClient();
+              await this.endMonitoringClient(clientToAbort);
+              this.abortedConnectionsCounter.inc();
             } else if (monitorContext && monitorContext.isActive()) {
               tmpActiveContexts.push(monitorContextRef);
             }
@@ -222,7 +219,6 @@ export class MonitorImpl implements Monitor {
     } catch (error: any) {
       logger.debug(Messages.get("MonitorImpl.errorDuringMonitoringStop", error.message));
     } finally {
-      this.stopped = true;
       if (this.monitoringClient != null) {
         await this.endMonitoringClient();
       }
@@ -308,18 +304,16 @@ export class MonitorImpl implements Monitor {
     }
   }
 
-  async endMonitoringClient() {
-    if (this.monitoringClient) {
-      await this.pluginService.abortTargetClient(this.monitoringClient);
-      this.monitoringClient = null;
+  async endMonitoringClient(clientToAbort?: ClientWrapper) {
+    try {
+      if (clientToAbort) {
+        await this.pluginService.abortTargetClient(clientToAbort);
+      } else if (this.monitoringClient) {
+        await this.pluginService.abortTargetClient(this.monitoringClient);
+        this.monitoringClient = null;
+      }
       this.stopped = true;
       await sleep(10000);
-    }
-  }
-
-  async abortConnection(clientToAbort: ClientWrapper): Promise<void> {
-    try {
-      await this.pluginService.abortTargetClient(clientToAbort);
     } catch (error: any) {
       // ignore
       logger.debug(Messages.get("MonitorConnectionContext.errorAbortingConnection", error.message));
