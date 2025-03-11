@@ -403,12 +403,12 @@ export class Failover2Plugin extends AbstractConnectionPlugin implements CanRele
           try {
             writerCandidateClient = await this.createConnectionForHost(writerCandidateHostInfo);
           } catch (err) {
-            this.logAndThrowError("Failover.unableToConnectToWriter");
+            this.logAndThrowError(Messages.get("Failover.unableToConnectToWriterDueToError", writerCandidateHostInfo.host, err.message));
           }
         }
 
         if (!writerCandidateClient) {
-          this.logAndThrowError("Failover.unableToConnectToWriter");
+          this.logAndThrowError(Messages.get("Failover.unableToConnectToWriter"));
         }
 
         if ((await this.pluginService.getHostRole(writerCandidateClient)) !== HostRole.WRITER) {
@@ -417,7 +417,7 @@ export class Failover2Plugin extends AbstractConnectionPlugin implements CanRele
           } catch (error) {
             // Do nothing.
           }
-          this.logAndThrowError(Messages.get("Failover2.failoverWriterConnectedToReader"));
+          this.logAndThrowError(Messages.get("Failover2.failoverWriterConnectedToReader", writerCandidateHostInfo.host));
         }
 
         await this.pluginService.abortCurrentClient();
