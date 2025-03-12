@@ -36,7 +36,8 @@ const itIf =
     ? it
     : it.skip;
 const itIfTwoInstance = instanceCount == 2 ? itIf : it.skip;
-const itIfThreeInstance = instanceCount == 3 ? it : it.skip;
+const itIfThreeInstanceAuroraCluster =
+  instanceCount == 3 && !features.includes(TestEnvironmentFeatures.RDS_MULTI_AZ_CLUSTER_SUPPORTED) ? it : it.skip;
 
 let env: TestEnvironment;
 let driver;
@@ -115,7 +116,7 @@ describe("aurora failover", () => {
     logger.info(`Test finished: ${expect.getState().currentTestName}`);
   }, 1320000);
 
-  itIfThreeInstance(
+  itIfThreeInstanceAuroraCluster(
     "writer failover efm",
     async () => {
       // Connect to writer instance.

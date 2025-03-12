@@ -282,7 +282,7 @@ export class ClusterTopologyMonitorImpl implements ClusterTopologyMonitor {
 
           if (this.hostMonitors.size === 0) {
             // Initialize host tasks.
-            logger.info(Messages.get("ClusterTopologyMonitor.startingHostMonitors"));
+            logger.debug(Messages.get("ClusterTopologyMonitor.startingHostMonitors"));
             this.hostMonitorsStop = false;
             if (this.hostMonitorsReaderClient !== null) {
               await this.closeConnection(this.hostMonitorsReaderClient);
