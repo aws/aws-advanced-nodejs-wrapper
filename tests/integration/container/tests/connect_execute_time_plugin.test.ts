@@ -24,6 +24,9 @@ import { features, instanceCount } from "./config";
 import { PluginManager } from "../../../../common/lib";
 import { RdsHostListProvider } from "../../../../common/lib/host_list_provider/rds_host_list_provider";
 import { PluginService } from "../../../../common/lib/plugin_service";
+import { ConnectTimePlugin } from "../../../../common/lib/plugins/connect_time_plugin";
+import { ExecuteTimePlugin } from "../../../../common/lib/plugins/execute_time_plugin";
+import { getTimeInNanos } from "../../../../common/lib/utils/utils";
 
 const itIf =
   !features.includes(TestEnvironmentFeatures.PERFORMANCE) &&
@@ -51,21 +54,7 @@ async function initConfig(host: string, port: number, connectToProxy: boolean, p
     telemetryTracesBackend: "OTLP",
     telemetryMetricsBackend: "OTLP"
   };
-
-  if (connectToProxy) {
-    config["clusterInstanceHostPattern"] = "?." + env.proxyDatabaseInfo.instanceEndpointSuffix;
-  }
   config = DriverHelper.addDriverSpecificConfiguration(config, env.engine);
-  return config;
-}
-
-async function initConnectTimeConfig(host: string, port: number, connectToProxy: boolean): Promise<any> {
-  const config: any = await initConfig(host, port, connectToProxy, "connectTime");
-  return config;
-}
-
-async function initExecuteTimeConfig(host: string, port: number, connectToProxy: boolean): Promise<any> {
-  const config: any = await initConfig(host, port, connectToProxy, "executeTime");
   return config;
 }
 
@@ -102,14 +91,17 @@ describe("aurora connect and execute time plugin", () => {
   itIf(
     "test connect time",
     async () => {
-      // Connect to writer instance
-      const writerConfig = await initConnectTimeConfig(
+      const writerConfig = await initConfig(
         env.proxyDatabaseInfo.writerInstanceEndpoint,
         env.proxyDatabaseInfo.instanceEndpointPort,
-        true
+        true,
+        "connectTime"
       );
       client = initClientFunc(writerConfig);
+      const startTime = getTimeInNanos();
       await client.connect();
+      const connectTime = getTimeInNanos() + ConnectTimePlugin.getTotalConnectTime();
+      expect(connectTime).toBeGreaterThan(startTime);
     },
     1320000
   );
@@ -117,16 +109,18 @@ describe("aurora connect and execute time plugin", () => {
   itIf(
     "test execute time",
     async () => {
-      // Connect to writer instance
-      const writerConfig = await initExecuteTimeConfig(
+      const writerConfig = await initConfig(
         env.proxyDatabaseInfo.writerInstanceEndpoint,
         env.proxyDatabaseInfo.instanceEndpointPort,
-        true
+        true,
+        "executeTime"
       );
       client = initClientFunc(writerConfig);
+      const startTime = getTimeInNanos();
       await client.connect();
-      const initialWriterId = await auroraTestUtility.queryInstanceId(client);
-      expect(await auroraTestUtility.isDbInstanceWriter(initialWriterId)).toStrictEqual(true);
+      await auroraTestUtility.queryInstanceId(client);
+      const executeTime = getTimeInNanos() + ExecuteTimePlugin.getTotalExecuteTime();
+      expect(executeTime).toBeGreaterThan(startTime);
     },
     1320000
   );

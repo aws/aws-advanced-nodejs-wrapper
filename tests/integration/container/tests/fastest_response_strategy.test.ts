@@ -55,7 +55,8 @@ async function initConfig(host: string, port: number, connectToProxy: boolean, p
     plugins: plugins,
     enableTelemetry: true,
     telemetryTracesBackend: "OTLP",
-    telemetryMetricsBackend: "OTLP"
+    telemetryMetricsBackend: "OTLP",
+    readerHostSelectorStrategy: "fastestResponse"
   };
 
   if (connectToProxy) {
@@ -66,15 +67,11 @@ async function initConfig(host: string, port: number, connectToProxy: boolean, p
 }
 
 async function initDefaultConfig(host: string, port: number, connectToProxy: boolean): Promise<any> {
-  const config: any = await initConfig(host, port, connectToProxy, "readWriteSplitting,fastestResponseStrategy");
-  config["readerHostSelectorStrategy"] = "fastestResponse";
-  config["failoverTimeoutMs"] = 400000;
-  return config;
+  return await initConfig(host, port, connectToProxy, "readWriteSplitting,fastestResponseStrategy");
 }
 
 async function initConfigWithFailover(host: string, port: number, connectToProxy: boolean): Promise<any> {
   const config: any = await initConfig(host, port, connectToProxy, "readWriteSplitting,failover,fastestResponseStrategy");
-  config["readerHostSelectorStrategy"] = "fastestResponse";
   config["failoverTimeoutMs"] = 400000;
   return config;
 }
@@ -163,7 +160,7 @@ describe("aurora fastest response strategy", () => {
 
       const currentId = await auroraTestUtility.queryInstanceId(client);
       expect(currentId).toStrictEqual(initialWriterId);
-      // connect using cached fastest connection
+      // Connect using cached fastest connection.
       await client.setReadOnly(true);
 
       const currentReaderId2 = await auroraTestUtility.queryInstanceId(client);
@@ -186,7 +183,7 @@ describe("aurora fastest response strategy", () => {
       await client.end();
       await secondaryClient.connect();
 
-      // connect using cached fastest connection
+      // Connect using cached fastest connection.
       await secondaryClient.setReadOnly(true);
       const currentReaderId1 = await auroraTestUtility.queryInstanceId(secondaryClient);
 
