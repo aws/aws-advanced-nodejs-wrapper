@@ -104,6 +104,14 @@ describe("aurora fastest response strategy", () => {
         // pass
       }
     }
+
+    if (secondaryClient !== null) {
+      try {
+        await secondaryClient.end();
+      } catch (error) {
+        // pass
+      }
+    }
     await PluginManager.releaseResources();
     logger.info(`Test finished: ${expect.getState().currentTestName}`);
   }, 1320000);
@@ -189,11 +197,6 @@ describe("aurora fastest response strategy", () => {
 
       expect(currentReaderId1).toStrictEqual(currentReaderId0);
       expect(client).not.toBe(secondaryClient);
-      try {
-        await secondaryClient.end();
-      } catch (error) {
-        // pass
-      }
     },
     1000000
   );
