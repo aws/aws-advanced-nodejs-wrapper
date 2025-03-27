@@ -79,7 +79,7 @@
     "generate-license-file": "^3.5.1",
     "http-cookie-agent": "^6.0.5",
     "jest-html-reporter": "^3.10.2",
-    "lint-staged": "^15.2.10",
+    "lint-staged": "^15.5.0",
     "mysql2": "^3.11.0",
     "node-fetch": "^3.3.2",
     "pg": "^8.13.1",
