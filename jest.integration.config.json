@@ -1,6 +1,6 @@
 {
   "moduleFileExtensions": ["ts", "js", "json"],
-  "testMatch": ["<rootDir>/tests/integration/container/tests/*.(spec|test).ts|tsx"],
+  "testMatch": ["<rootDir>/tests/integration/container/tests/secrets_manager*.(spec|test).ts|tsx"],
   "transform": {
     "^.+\\.ts$": [
       "ts-jest",
