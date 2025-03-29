@@ -98,12 +98,12 @@ describe("aurora connect and execute time plugin", () => {
         "connectTime"
       );
       client = initClientFunc(writerConfig);
-      const startTime = getTimeInNanos();
-      expect(ConnectTimePlugin.getTotalConnectTime()).toBe(0);
+      const startTime = Number(getTimeInNanos());
+      expect(Number(ConnectTimePlugin.getTotalConnectTime())).toBe(0);
       await client.connect();
       const connectTime = ConnectTimePlugin.getTotalConnectTime();
-      const elapsedTime = getTimeInNanos() - startTime;
-      expect(connectTime).toBeGreaterThan(0);
+      const elapsedTime = Number(getTimeInNanos()) - startTime;
+      expect(Number(connectTime)).toBeGreaterThan(0);
       expect(elapsedTime).toBeGreaterThan(connectTime);
     },
     1320000
@@ -120,11 +120,11 @@ describe("aurora connect and execute time plugin", () => {
       );
       client = initClientFunc(writerConfig);
       await client.connect();
-      const startTime = getTimeInNanos();
-      const executePluginStartTime = ExecuteTimePlugin.getTotalExecuteTime();
+      const startTime = Number(getTimeInNanos());
+      const executePluginStartTime = Number(ExecuteTimePlugin.getTotalExecuteTime());
       await auroraTestUtility.queryInstanceId(client);
-      const elapsedTime = getTimeInNanos() - startTime;
-      const executeTime = ExecuteTimePlugin.getTotalExecuteTime() - executePluginStartTime;
+      const elapsedTime = Number(getTimeInNanos()) - startTime;
+      const executeTime = Number(ExecuteTimePlugin.getTotalExecuteTime()) - executePluginStartTime;
       expect(executeTime).toBeGreaterThan(executePluginStartTime);
       expect(elapsedTime).toBeGreaterThan(executeTime);
     },
