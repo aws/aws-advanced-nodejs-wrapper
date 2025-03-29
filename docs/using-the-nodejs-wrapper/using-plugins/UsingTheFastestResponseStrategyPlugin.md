@@ -38,7 +38,7 @@ await client.connect();
 
 The Host Response Time Monitor measures the host response time in a separate monitoring task. If the monitoring task has not been called for a response time for 10 minutes, the task is stopped. When the topology changes, the new hosts will be added to monitoring.
 
-The host response time monitoring task creates new database connections. By default, it uses the same set of connection parameters provided for the main connection, but you can customize these connections with the `frt-` prefix, as in the following example:
+The host response time monitoring task creates new database connections. By default, it uses the same set of connection parameters provided for the main connection, but you can customize these connections with the `frt_` prefix, as in the following example:
 
 ```ts
 const client = new AwsMySQLClient({
