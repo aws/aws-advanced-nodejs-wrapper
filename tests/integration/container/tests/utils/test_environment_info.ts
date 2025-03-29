@@ -33,6 +33,7 @@ export class TestEnvironmentInfo {
   private readonly _metricsTelemetryInfo: TestTelemetryInfo;
   private readonly _databaseEngine: string;
   private readonly _databaseEngineVersion: string;
+  private readonly _secretId: string;
 
   constructor(testInfo: { [s: string]: any }) {
     this._request = new TestEnvironmentRequest(testInfo["request"]);
@@ -40,6 +41,8 @@ export class TestEnvironmentInfo {
     this._awsSecretAccessKey = String(testInfo["awsSecretAccessKey"]);
     this._awsSessionToken = String(testInfo["awsSessionToken"]);
     this._region = String(testInfo["region"]);
+    this._secretId = String(testInfo["secretId"]);
+
     this._auroraClusterName = String(testInfo["auroraClusterName"]);
     this._iamUserName = String(testInfo["iamUsername"]);
 
@@ -67,6 +70,10 @@ export class TestEnvironmentInfo {
 
   get awsSessionToken(): string {
     return this._awsSessionToken;
+  }
+
+  get secretId(): string {
+    return this._secretId;
   }
 
   get region(): string {

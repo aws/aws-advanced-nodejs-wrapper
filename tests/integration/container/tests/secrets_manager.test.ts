@@ -17,9 +17,6 @@
 import { TestEnvironment } from "./utils/test_environment";
 import { DriverHelper } from "./utils/driver_helper";
 import { AwsWrapperError } from "../../../../common/lib/utils/errors";
-import { promisify } from "util";
-import { lookup } from "dns";
-import { readFileSync } from "fs";
 import { AwsPGClient } from "../../../../pg/lib";
 import { AwsMySQLClient } from "../../../../mysql/lib";
 import { IamAuthenticationPlugin } from "../../../../common/lib/authentication/iam_authentication_plugin";
@@ -39,15 +36,14 @@ let env: TestEnvironment;
 let driver;
 let initClientFunc: (props: any) => any;
 
-
 async function initDefaultConfig(host: string): Promise<any> {
   env = await TestEnvironment.getCurrent();
 
   let props = {
     host: host,
     port: env.databaseInfo.instanceEndpointPort,
-    secretId: "atlas-mysql-test-secret",
     secretRegion: env.region,
+    secretId: env.secretId,
     plugins: "secretsManager"
   };
   props = DriverHelper.addDriverSpecificConfiguration(props, env.engine);
@@ -75,11 +71,11 @@ describe("aurora secrets manager", () => {
     driver = DriverHelper.getDriverForDatabaseEngine(env.engine);
     initClientFunc = DriverHelper.getClient(driver);
     IamAuthenticationPlugin.clearCache();
+    await TestEnvironment.verifyClusterStatus();
   });
 
   afterEach(async () => {
     await PluginManager.releaseResources();
-    await TestEnvironment.verifyClusterStatus();
     logger.info(`Test finished: ${expect.getState().currentTestName}`);
   }, 1320000);
 

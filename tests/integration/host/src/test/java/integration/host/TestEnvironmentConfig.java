@@ -230,6 +230,12 @@ public class TestEnvironmentConfig implements AutoCloseable {
             ? System.getenv("RDS_DB_REGION")
             : "us-east-1");
 
+    env.info.setSecretId(
+        !StringUtils.isNullOrEmpty(System.getenv("SECRET_ID"))
+            ? System.getenv("SECRET_ID")
+            : "");
+
+
     env.reuseAuroraDbCluster =
         !StringUtils.isNullOrEmpty(System.getenv("REUSE_RDS_CLUSTER"))
             && Boolean.parseBoolean(System.getenv("REUSE_RDS_CLUSTER"));
@@ -525,6 +531,8 @@ public class TestEnvironmentConfig implements AutoCloseable {
     env.info.getDatabaseInfo().setUsername(dbUsername);
     env.info.getDatabaseInfo().setPassword(dbPassword);
     env.info.getDatabaseInfo().setDefaultDbName(dbName);
+    env.info.getDatabaseInfo().setSecretId(secretId);
+
   }
 
   private static void initAwsCredentials(TestEnvironmentConfig env) {

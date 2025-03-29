@@ -45,6 +45,7 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_DEFAULT_REGION }}
 
+
       - name: Set up Temp AWS Credentials
         run: |
           creds=($(aws sts get-session-token \
@@ -59,6 +60,7 @@ jobs:
           echo "TEMP_AWS_SECRET_ACCESS_KEY=${creds[1]}" >> $GITHUB_ENV
           echo "TEMP_AWS_SESSION_TOKEN=${creds[2]}" >> $GITHUB_ENV
 
+
       - name: Run Integration Tests
         run: |
           ./gradlew --no-parallel --no-daemon test-aurora-${{ matrix.dbEngine }} --info
@@ -67,6 +69,7 @@ jobs:
           AWS_ACCESS_KEY_ID: ${{ env.TEMP_AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ env.TEMP_AWS_SECRET_ACCESS_KEY }}
           AWS_SESSION_TOKEN: ${{ env.TEMP_AWS_SESSION_TOKEN }}
+          SECRET_ID: ${{ secrets.SECRET_ID }}
           AURORA_MYSQL_DB_ENGINE_VERSION: "default"
           AURORA_PG_DB_ENGINE_VERSION: "default"
 
