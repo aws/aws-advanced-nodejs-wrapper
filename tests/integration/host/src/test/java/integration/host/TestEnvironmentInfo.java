@@ -100,6 +100,7 @@ public class TestEnvironmentInfo {
     this.region = region;
   }
 
+
   public void setRdsEndpoint(String rdsEndpoint) {
     this.rdsEndpoint = rdsEndpoint;
   }

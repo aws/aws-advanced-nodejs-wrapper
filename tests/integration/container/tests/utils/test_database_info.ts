@@ -49,6 +49,10 @@ export class TestDatabaseInfo {
     return this._username;
   }
 
+  get secretId(): string {
+    return this._secretId;
+  }
+
   get password(): string {
     return this._password;
   }

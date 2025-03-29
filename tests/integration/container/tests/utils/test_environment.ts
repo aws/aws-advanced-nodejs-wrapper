@@ -380,6 +380,10 @@ export class TestEnvironment {
     return this.info.region;
   }
 
+  get secretId(): string {
+    return this.info.secretId;
+  }
+
   get engine(): DatabaseEngine {
     return this.info.request.engine;
   }
