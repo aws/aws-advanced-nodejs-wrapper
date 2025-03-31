@@ -48,7 +48,7 @@
     "@opentelemetry/context-async-hooks": "^1.26.0",
     "@opentelemetry/exporter-metrics-otlp-grpc": "^0.53.0",
     "@opentelemetry/exporter-trace-otlp-grpc": "^0.53.0",
-    "@opentelemetry/id-generator-aws-xray": "^1.2.2",
+    "@opentelemetry/id-generator-aws-xray": "^2.0.0",
     "@opentelemetry/instrumentation-aws-sdk": "^0.50.0",
     "@opentelemetry/instrumentation-http": "^0.53.0",
     "@opentelemetry/propagator-aws-xray": "^1.26.0",
