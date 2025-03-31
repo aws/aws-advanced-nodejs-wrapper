@@ -73,7 +73,7 @@
     "cross-env": "^7.0.3",
     "entities": "^6.0.0",
     "eslint": "^8.57.1",
-    "eslint-config-prettier": "^9.1.0",
+    "eslint-config-prettier": "^10.1.1",
     "eslint-plugin-header": "^3.1.1",
     "eslint-plugin-prettier": "^5.2.1",
     "generate-license-file": "^3.5.1",
