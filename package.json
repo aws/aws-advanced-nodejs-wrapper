@@ -80,7 +80,7 @@
     "http-cookie-agent": "^6.0.5",
     "jest-html-reporter": "^3.10.2",
     "lint-staged": "^15.5.0",
-    "mysql2": "^3.11.0",
+    "mysql2": "^3.14.0",
     "node-fetch": "^3.3.2",
     "pg": "^8.13.1",
     "prettier": "^3.3.3",
