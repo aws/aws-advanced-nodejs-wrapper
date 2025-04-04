@@ -144,7 +144,6 @@ describe("aurora secrets manager", () => {
 
   afterEach(async () => {
     if (secretId != null) {
-      logger.debug("secretId delete");
       await deleteCommand();
     }
     secretId = null;
