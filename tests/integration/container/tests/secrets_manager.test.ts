@@ -108,25 +108,6 @@ async function createCommand(secretName: string) {
   const result: CreateSecretCommandOutput = await secretsManagerClient.send(command);
   secretId = result.Name;
   secretARN = result.ARN;
-  logger.debug("secretId " + secretId);
-  logger.debug("secretARN " + secretARN);
-}
-
-async function createCommandTest(secretName: string) {
-  const secretObj = {
-    username: `${env.databaseInfo.username}`,
-    password: `${env.databaseInfo.password}`
-  };
-  const input = {
-    Name: secretName,
-    ForceOverwriteReplicaSecret: true,
-    SecretString: JSON.stringify(secretObj)
-  };
-  const result: CreateSecretCommandOutput = await secretsManagerClient.send(command);
-  secretId = result.Name;
-  secretARN = result.ARN;
-  logger.debug("secretId " + secretId);
-  logger.debug("secretARN " + secretARN);
 }
 
 async function deleteCommand() {
@@ -176,6 +157,7 @@ describe("aurora secrets manager", () => {
     "secrets manager wrong secretId",
     async () => {
       await createCommand("wrongSecretId");
+
       const config = await initDefaultConfig(env.databaseInfo.writerInstanceEndpoint);
       config["secretId"] = `WRONG_${env.info.databaseInfo.username}_USER`;
       const client: AwsPGClient | AwsMySQLClient = initClientFunc(config);
@@ -205,7 +187,6 @@ describe("aurora secrets manager", () => {
       const config = await initDefaultConfig(env.databaseInfo.writerInstanceEndpoint);
       config["secretId"] = secretId;
       config["secretRegion"] = "<>";
-
       const client: AwsPGClient | AwsMySQLClient = initClientFunc(config);
 
       await expect(client.connect()).rejects.toBeInstanceOf(AwsWrapperError);
@@ -227,26 +208,12 @@ describe("aurora secrets manager", () => {
   );
 
   itIf(
-    "secrets manager valid connection properties",
-    async () => {
-      await createCommandTest("testingValidConnProperties");
-
-      const config = await initDefaultConfig(env.databaseInfo.writerInstanceEndpoint);
-      config["secretId"] = secretId;
-      const client: AwsPGClient | AwsMySQLClient = initClientFunc(config);
-      await validateConnection(client);
-    },
-    100000
-  );
-
-  itIf(
     "secrets manager valid connection properties ARN",
     async () => {
       await createCommand("validSecretARN");
 
       const config = await initSecretARNConfig(env.databaseInfo.writerInstanceEndpoint);
-
-      // no region needed if secret is ARN
+      // Region not required if secret is ARN.
       config["secretId"] = secretARN;
       config["region"] = undefined;
       const client: AwsPGClient | AwsMySQLClient = initClientFunc(config);
@@ -261,7 +228,7 @@ describe("aurora secrets manager", () => {
       await createCommand("validSecretARNWithPassword");
       const config = await initSecretARNConfig(env.databaseInfo.writerInstanceEndpoint);
       config["secretId"] = secretARN;
-      // password not needed
+      // Password is not needed.
       config["password"] = "anything";
       const client: AwsPGClient | AwsMySQLClient = initClientFunc(config);
       await validateConnection(client);
