@@ -67,7 +67,7 @@ async function initSecretARNConfig(host: string): Promise<any> {
     host: host,
     database: env.databaseInfo.defaultDbName,
     port: env.databaseInfo.instanceEndpointPort,
-    region: "us-east-1",
+    region: env.region,
     secretId: secretARN,
     plugins: "secretsManager"
   };
