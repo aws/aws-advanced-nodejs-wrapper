@@ -27,7 +27,6 @@ import { CreateSecretCommand, CreateSecretCommandOutput, DeleteSecretCommand, Se
 import { RDSClient } from "@aws-sdk/client-rds";
 import { AuroraTestUtility } from "./utils/aurora_test_utility";
 import { ProxyHelper } from "./utils/proxy_helper";
-import { instance } from "ts-mockito";
 
 const itIf =
   !features.includes(TestEnvironmentFeatures.PERFORMANCE) &&
