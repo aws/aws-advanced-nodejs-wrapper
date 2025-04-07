@@ -44,7 +44,7 @@ let secretARN: string;
 let secretsManagerClient: RDSClient;
 let auroraTestUtility: AuroraTestUtility;
 
-async function initDefaultConfig(host: string): Promise<any> {
+async function initConfig(host: string, secretId: string): Promise<any> {
   env = await TestEnvironment.getCurrent();
   let props = {
     host: host,
@@ -56,21 +56,6 @@ async function initDefaultConfig(host: string): Promise<any> {
   };
   props = DriverHelper.addDriverSpecificConfiguration(props, env.engine);
 
-  return props;
-}
-
-async function initSecretARNConfig(host: string): Promise<any> {
-  env = await TestEnvironment.getCurrent();
-
-  let props = {
-    host: host,
-    database: env.databaseInfo.defaultDbName,
-    port: env.databaseInfo.instanceEndpointPort,
-    region: env.region,
-    secretId: secretARN,
-    plugins: "secretsManager"
-  };
-  props = DriverHelper.addDriverSpecificConfiguration(props, env.engine);
   return props;
 }
 
@@ -156,8 +141,7 @@ describe("aurora secrets manager", () => {
     async () => {
       await createCommand("wrongSecretId");
 
-      const config = await initDefaultConfig(env.databaseInfo.writerInstanceEndpoint);
-      config["secretId"] = `WRONG_${env.info.databaseInfo.username}_USER`;
+      const config = await initConfig(env.databaseInfo.writerInstanceEndpoint, `WRONG_${env.info.databaseInfo.username}_USER`);
       const client: AwsPGClient | AwsMySQLClient = initClientFunc(config);
 
       await expect(client.connect()).rejects.toThrow();
@@ -168,8 +152,7 @@ describe("aurora secrets manager", () => {
   itIf(
     "secrets manager no secretId",
     async () => {
-      const config = await initDefaultConfig(env.databaseInfo.writerInstanceEndpoint);
-      config["secretId"] = undefined;
+      const config = await initConfig(env.databaseInfo.writerInstanceEndpoint, undefined);
       const client: AwsPGClient | AwsMySQLClient = initClientFunc(config);
 
       await expect(client.connect()).rejects.toBeInstanceOf(AwsWrapperError);
@@ -182,8 +165,7 @@ describe("aurora secrets manager", () => {
     async () => {
       await createCommand("invalidRegion");
 
-      const config = await initDefaultConfig(env.databaseInfo.writerInstanceEndpoint);
-      config["secretId"] = secretId;
+      const config = await initConfig(env.databaseInfo.writerInstanceEndpoint, secretId);
       config["secretRegion"] = "<>";
       const client: AwsPGClient | AwsMySQLClient = initClientFunc(config);
 
@@ -197,8 +179,7 @@ describe("aurora secrets manager", () => {
     async () => {
       await createCommand("validConnectionProperties");
 
-      const config = await initDefaultConfig(env.databaseInfo.writerInstanceEndpoint);
-      config["secretId"] = secretId;
+      const config = await initConfig(env.databaseInfo.writerInstanceEndpoint, secretId);
       const client: AwsPGClient | AwsMySQLClient = initClientFunc(config);
       await validateConnection(client);
     },
@@ -206,13 +187,12 @@ describe("aurora secrets manager", () => {
   );
 
   itIf(
-    "secrets manager valid connection properties ARN",
+    "secrets manager valid secret ARN",
     async () => {
       await createCommand("validSecretARN");
 
-      const config = await initSecretARNConfig(env.databaseInfo.writerInstanceEndpoint);
+      const config = await initConfig(env.databaseInfo.writerInstanceEndpoint, secretARN);
       // Region not required if secret is ARN.
-      config["secretId"] = secretARN;
       config["region"] = undefined;
       const client: AwsPGClient | AwsMySQLClient = initClientFunc(config);
       await validateConnection(client);
@@ -221,11 +201,10 @@ describe("aurora secrets manager", () => {
   );
 
   itIf(
-    "secrets manager valid connection properties ARN with password",
+    "secrets manager valid secret ARN with password",
     async () => {
       await createCommand("validSecretARNWithPassword");
-      const config = await initSecretARNConfig(env.databaseInfo.writerInstanceEndpoint);
-      config["secretId"] = secretARN;
+      const config = await initConfig(env.databaseInfo.writerInstanceEndpoint, secretARN);
       // Password is not needed.
       config["password"] = "anything";
       const client: AwsPGClient | AwsMySQLClient = initClientFunc(config);
