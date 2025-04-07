@@ -69,6 +69,10 @@ export class TestDatabaseInfo {
     return this._instances[0].instanceId;
   }
 
+  get readerInstanceId() {
+    return this._instances[1].instanceId;
+  }
+
   get clusterEndpoint(): string {
     return this._clusterEndpoint;
   }
