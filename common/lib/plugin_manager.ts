@@ -32,6 +32,7 @@ import { TelemetryTraceLevel } from "./utils/telemetry/telemetry_trace_level";
 import { ConnectionProvider } from "./connection_provider";
 import { ConnectionPluginFactory } from "./plugin_factory";
 import { ConfigurationProfile } from "./profile/configuration_profile";
+import { logger } from "../logutils";
 
 type PluginFunc<T> = (plugin: ConnectionPlugin, targetFunc: () => Promise<T>) => Promise<T>;
 
@@ -372,6 +373,10 @@ export class PluginManager {
 
   getPluginInstance<T>(iface: any): T {
     for (const p of this._plugins) {
+      logger.debug("p " + p);
+      logger.debug("plugins: " + this._plugins);
+      logger.debug("iface " + iface);
+
       if (p instanceof iface) {
         return p as T;
       }
