@@ -102,15 +102,13 @@ export class PluginManager {
         for (const p of this._plugins) {
           logger.debug(" plugins init: " + p);
         }
-
-        } else {
+      } else {
         this._plugins = await ConnectionPluginChainBuilder.getPlugins(
           this.pluginServiceManagerContainer.pluginService,
           this.props,
           this.connectionProviderManager,
           configurationProfile
         );
-
       }
     }
     for (const plugin of this._plugins) {
@@ -208,7 +206,6 @@ export class PluginManager {
     const chain = new PluginChain(methodFunc);
 
     for (let i = this._plugins.length - 1; i >= 0; i--) {
-
       const p = this._plugins[i];
       logger.debug("pipeline: " + p);
       if (p.getSubscribedMethods().has("*") || p.getSubscribedMethods().has(name)) {
@@ -247,7 +244,7 @@ export class PluginManager {
       throw new AwsWrapperError("pluginFunc not found.");
     }
     for (const plugin of this._plugins) {
-      logger.debug("skip " plugin);
+      logger.debug("skip " + plugin);
       if (plugin === skipNotificationForThisPlugin) {
         continue;
       }
@@ -298,7 +295,6 @@ export class PluginManager {
       }
 
       for (const plugin of this._plugins) {
-
         if (
           plugin.getSubscribedMethods().has(PluginManager.ALL_METHODS) ||
           plugin.getSubscribedMethods().has(PluginManager.ACCEPTS_STRATEGY_METHOD)
