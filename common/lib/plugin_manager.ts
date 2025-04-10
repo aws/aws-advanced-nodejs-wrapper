@@ -372,7 +372,8 @@ export class PluginManager {
   }
 
   getPluginInstance<T>(iface: any): T {
-    for (const p of this._plugins) {
+    logger.debug("plugins: ");
+    for (const p of PluginManager.PLUGINS) {
       logger.debug("p " + p);
       logger.debug("plugins: " + this._plugins);
       logger.debug("iface " + iface);
