@@ -87,7 +87,7 @@ export class DeveloperConnectionPlugin extends AbstractConnectionPlugin implemen
     this.nextError = null;
     this.nextMethodName = null;
 
-    logger.debug(`Raised an error ${throwable.name} while executing ${methodName}.`);
+    logger.debug(`Raised an error: ${throwable.name} while executing ${methodName}.`);
 
     throw throwable;
   }
@@ -117,7 +117,7 @@ export class DeveloperConnectionPlugin extends AbstractConnectionPlugin implemen
 
     ErrorSimulatorManager.nextError = null;
 
-    logger.debug(`Raised an error ${throwable.name} while opening a new connection.`);
+    logger.debug(`Raised an error: ${throwable.name} while opening a new connection.`);
 
     throw throwable;
   }

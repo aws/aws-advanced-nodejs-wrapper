@@ -54,4 +54,9 @@ const result = await client.query("select 1"); // that throws the error
 const anotherResult = await client.query("select 1"); // it goes normal with no error
 ```
 
-It's possible to use a callback functions to check call parameters and decide whether to return an error or not. Check `ErrorSimulatorManager.setCallback` and `ErrorSimulator.setCallback` for more details.
+It's possible to use a callback function to check call parameters and decide whether to return an error or not. Check `ErrorSimulatorManager.setCallback` and `ErrorSimulator.setCallback` for more details.
+
+#### Sample Code
+
+[PostgreSQL Developer Plugin Sample Code](../../../examples/aws_driver_example/aws_dev_postgresql_example.ts)<br>
+[MySQL Developer Plugin Sample Code](../../../examples/aws_driver_example/aws_dev_mysql_example.ts)<br>
