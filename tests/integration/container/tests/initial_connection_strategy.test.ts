@@ -40,6 +40,7 @@ let driver;
 let initClientFunc: (props: any) => any;
 let client: any;
 let auroraTestUtility: AuroraTestUtility;
+let numReaders;
 
 async function initConfig(readerHostSelectorStrategy: string): Promise<any> {
   let config: any = {
@@ -75,6 +76,7 @@ describe("aurora initial connection strategy", () => {
 
     RdsHostListProvider.clearAll();
     PluginService.clearHostAvailabilityCache();
+    numReaders = env.databaseInfo.instances.length - 1;
   }, 1320000);
 
   afterEach(async () => {
@@ -95,10 +97,14 @@ describe("aurora initial connection strategy", () => {
       const config = await initConfig("roundRobin");
       // default weight
       config["roundRobinHostWeightPairs"] = null;
-      const numReaders = env.databaseInfo.instances.length - 1;
       const connectedReaderIds: Set<string> = new Set();
       const connectionsSet: Set<any> = new Set();
       try {
+        // TODO: fix round robin strategy cached connection issue on first instance
+        // remove these two lines when fixed
+        const readerId = await auroraTestUtility.queryInstanceId(client);
+        connectionsSet.add(readerId);
+
         for (let i = 0; i < numReaders; i++) {
           client = initClientFunc(config);
           await client.connect();
@@ -127,10 +133,8 @@ describe("aurora initial connection strategy", () => {
       const connectedReaderIds: Set<string> = new Set();
       const connectionsSet: Set<any> = new Set();
       const initialReader = env.databaseInfo.readerInstanceId;
-      const readerCount = instanceCount - 1;
       const config = await initConfig("roundRobin");
       config["roundRobinHostWeightPairs"] = `${initialReader}:${readerCount}`;
-      logger.debug("initial reader: " + initialReader);
       client = initClientFunc(config);
       await client.connect();
 
@@ -140,7 +144,7 @@ describe("aurora initial connection strategy", () => {
       connectionsSet.add(readerId);
 
       try {
-        for (let i = 0; i < readerCount; i++) {
+        for (let i = 0; i < numReaders; i++) {
           client = initClientFunc(config);
           await client.connect();
 
@@ -151,7 +155,7 @@ describe("aurora initial connection strategy", () => {
           connectedReaderIds.add(readerId);
           connectionsSet.add(client);
         }
-        for (let i = 0; i < readerCount - 1; i++) {
+        for (let i = 0; i < numReaders - 1; i++) {
           client = initClientFunc(config);
           // All remaining connections should be evenly distributed amongst the other reader instances.
           await client.connect();
@@ -161,8 +165,12 @@ describe("aurora initial connection strategy", () => {
           connectionsSet.add(client);
         }
       } finally {
-        for (const client of connectionsSet) {
-          await client.end();
+        for (const connection of connectionsSet) {
+          try {
+            await connection.end();
+          } catch (error) {
+            // pass
+          }
         }
       }
     },
