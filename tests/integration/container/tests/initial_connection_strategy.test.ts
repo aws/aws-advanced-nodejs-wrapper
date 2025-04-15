@@ -24,7 +24,7 @@ import { features, instanceCount } from "./config";
 import { PluginManager } from "../../../../common/lib";
 import { RdsHostListProvider } from "../../../../common/lib/host_list_provider/rds_host_list_provider";
 import { PluginService } from "../../../../common/lib/plugin_service";
-import { AwsWrapperError, FailoverSuccessError } from "../../../../common/lib/utils/errors";
+import { AwsWrapperError } from "../../../../common/lib/utils/errors";
 
 const itIf =
   !features.includes(TestEnvironmentFeatures.PERFORMANCE) &&
@@ -40,7 +40,7 @@ let driver;
 let initClientFunc: (props: any) => any;
 let client: any;
 let auroraTestUtility: AuroraTestUtility;
-let numReaders;
+let numReaders: number;
 
 async function initConfig(readerHostSelectorStrategy: string): Promise<any> {
   let config: any = {
@@ -101,12 +101,14 @@ describe("aurora initial connection strategy", () => {
       const connectionsSet: Set<any> = new Set();
       try {
         // TODO: fix round robin strategy cached connection issue on first instance
-        // remove these two lines when fixed
+        // remove these lines when fixed
+        const client = initClientFunc(config);
+        await client.connect();
         const readerId = await auroraTestUtility.queryInstanceId(client);
         connectionsSet.add(readerId);
 
         for (let i = 0; i < numReaders; i++) {
-          client = initClientFunc(config);
+          const client = initClientFunc(config);
           await client.connect();
 
           const readerId = await auroraTestUtility.queryInstanceId(client);
@@ -134,18 +136,18 @@ describe("aurora initial connection strategy", () => {
       const connectionsSet: Set<any> = new Set();
       const initialReader = env.databaseInfo.readerInstanceId;
       const config = await initConfig("roundRobin");
-      config["roundRobinHostWeightPairs"] = `${initialReader}:${readerCount}`;
-      client = initClientFunc(config);
-      await client.connect();
+      config["roundRobinHostWeightPairs"] = `${initialReader}:${numReaders}`;
 
       // TODO: fix round robin strategy cached connection issue on first instance
-      // remove these two lines when fixed
+      // remove these lines when fixed
+      const client = initClientFunc(config);
+      await client.connect();
       const readerId = await auroraTestUtility.queryInstanceId(client);
       connectionsSet.add(readerId);
 
       try {
         for (let i = 0; i < numReaders; i++) {
-          client = initClientFunc(config);
+          const client = initClientFunc(config);
           await client.connect();
 
           const readerId = await auroraTestUtility.queryInstanceId(client);
@@ -156,7 +158,7 @@ describe("aurora initial connection strategy", () => {
           connectionsSet.add(client);
         }
         for (let i = 0; i < numReaders - 1; i++) {
-          client = initClientFunc(config);
+          const client = initClientFunc(config);
           // All remaining connections should be evenly distributed amongst the other reader instances.
           await client.connect();
 
@@ -183,7 +185,7 @@ describe("aurora initial connection strategy", () => {
       const config = await initConfig("random");
       client = initClientFunc(config);
       await client.connect();
-      const readerId = await auroraTestUtility.queryInstanceId(client);
+      await auroraTestUtility.queryInstanceId(client);
     },
     1000000
   );
