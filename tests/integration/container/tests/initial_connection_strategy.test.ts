@@ -152,10 +152,10 @@ describe("aurora initial connection strategy", () => {
 
           const readerId = await auroraTestUtility.queryInstanceId(client);
           // All connections should be made to the initial reader with high weight instance.
-          expect(connectedReaderIds).toContain(readerId);
-          expect(connectedReaderIds.size).toBe(1);
           connectedReaderIds.add(readerId);
           connectionsSet.add(client);
+          expect(connectedReaderIds).toContain(readerId);
+          expect(connectedReaderIds.size).toBe(1);
         }
         for (let i = 0; i < numReaders - 1; i++) {
           const client = initClientFunc(config);
