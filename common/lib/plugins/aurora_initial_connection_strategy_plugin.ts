@@ -191,16 +191,13 @@ export class AuroraInitialConnectionStrategyPlugin extends AbstractConnectionPlu
       readerCandidate = null;
 
       try {
+        readerCandidateClient = await connectFunc();
+        await this.pluginService.forceRefreshHostList(readerCandidateClient);
+        readerCandidate = await this.pluginService.identifyConnection(readerCandidateClient);
         readerCandidate = this.getReader(props);
         // convert into null if undefined
         readerCandidate = readerCandidate ?? null;
-
         if (readerCandidate === null || this.rdsUtils.isRdsClusterDns(readerCandidate.host)) {
-          // Reader is not found. It seems that topology is outdated.
-          readerCandidateClient = await connectFunc();
-          await this.pluginService.forceRefreshHostList(readerCandidateClient);
-          readerCandidate = await this.pluginService.identifyConnection(readerCandidateClient);
-
           if (readerCandidate) {
             if (readerCandidate.role !== HostRole.READER) {
               if (this.hasNoReaders()) {
@@ -223,7 +220,6 @@ export class AuroraInitialConnectionStrategyPlugin extends AbstractConnectionPlu
           } else {
             logger.debug("Reader candidate not found");
           }
-          return readerCandidateClient;
         }
         readerCandidateClient = await this.pluginService.connect(readerCandidate, props);
 
