@@ -39,7 +39,7 @@
     "@aws-sdk/client-sts": "^3.682.0",
     "@aws-sdk/client-xray": "^3.772.0",
     "@aws-sdk/credential-providers": "^3.685.0",
-    "@aws-sdk/rds-signer": "^3.685.0",
+    "@aws-sdk/rds-signer": "^3.799.0",
     "@babel/cli": "^7.27.0",
     "@babel/core": "^7.26.10",
     "@babel/node": "^7.26.0",
