@@ -99,7 +99,7 @@
     "async-mutex": "^0.5.0",
     "dotenv": "^16.4.5",
     "i18n": "^0.15.1",
-    "winston": "3.15.0"
+    "winston": "3.17.0"
   },
   "overrides": {
     "braces": "^3.0.3",
