@@ -32,7 +32,6 @@ import { TelemetryTraceLevel } from "./utils/telemetry/telemetry_trace_level";
 import { ConnectionProvider } from "./connection_provider";
 import { ConnectionPluginFactory } from "./plugin_factory";
 import { ConfigurationProfile } from "./profile/configuration_profile";
-import { logger } from "../logutils";
 
 type PluginFunc<T> = (plugin: ConnectionPlugin, targetFunc: () => Promise<T>) => Promise<T>;
 
@@ -277,13 +276,9 @@ export class PluginManager {
 
   acceptsStrategy(role: HostRole, strategy: string) {
     let chain: Set<ConnectionPlugin> = PluginManager.STRATEGY_PLUGIN_CHAIN_CACHE.get(this._plugins);
-
     if (!chain) {
       chain = new Set();
       let acceptsStrategy: boolean = false;
-      for (const p of this._plugins) {
-        logger.debug(" accepts : " + p);
-      }
 
       for (const plugin of this._plugins) {
         if (
@@ -306,7 +301,6 @@ export class PluginManager {
         }
       }
     }
-
     return false;
   }
 
@@ -376,7 +370,6 @@ export class PluginManager {
   }
 
   getPluginInstance<T>(iface: any): T {
-    logger.debug("plugins: ");
     for (const p of this._plugins) {
       if (p instanceof iface) {
         return p as T;
