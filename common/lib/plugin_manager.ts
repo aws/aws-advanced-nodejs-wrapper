@@ -99,9 +99,6 @@ export class PluginManager {
     if (this.pluginServiceManagerContainer.pluginService != null) {
       if (plugins) {
         this._plugins = plugins;
-        for (const p of this._plugins) {
-          logger.debug(" plugins init: " + p);
-        }
       } else {
         this._plugins = await ConnectionPluginChainBuilder.getPlugins(
           this.pluginServiceManagerContainer.pluginService,
@@ -112,7 +109,6 @@ export class PluginManager {
       }
     }
     for (const plugin of this._plugins) {
-      logger.debug("add: " + plugin);
       PluginManager.PLUGINS.add(plugin);
     }
   }
@@ -207,7 +203,6 @@ export class PluginManager {
 
     for (let i = this._plugins.length - 1; i >= 0; i--) {
       const p = this._plugins[i];
-      logger.debug("pipeline: " + p);
       if (p.getSubscribedMethods().has("*") || p.getSubscribedMethods().has(name)) {
         chain.addToHead(p);
       }
@@ -244,7 +239,6 @@ export class PluginManager {
       throw new AwsWrapperError("pluginFunc not found.");
     }
     for (const plugin of this._plugins) {
-      logger.debug("skip " + plugin);
       if (plugin === skipNotificationForThisPlugin) {
         continue;
       }
@@ -283,9 +277,6 @@ export class PluginManager {
 
   acceptsStrategy(role: HostRole, strategy: string) {
     let chain: Set<ConnectionPlugin> = PluginManager.STRATEGY_PLUGIN_CHAIN_CACHE.get(this._plugins);
-    for (const p of this._plugins) {
-      logger.debug(" plugins init: " + p);
-    }
 
     if (!chain) {
       chain = new Set();
@@ -320,10 +311,6 @@ export class PluginManager {
   }
 
   getHostInfoByStrategy(role: HostRole, strategy: string, hosts?: HostInfo[]): HostInfo {
-    for (const p of this._plugins) {
-      logger.debug(" plugins host info: " + p);
-    }
-
     let chain: Set<ConnectionPlugin> = PluginManager.STRATEGY_PLUGIN_CHAIN_CACHE.get(this._plugins);
     if (!chain) {
       chain = new Set();
@@ -391,10 +378,6 @@ export class PluginManager {
   getPluginInstance<T>(iface: any): T {
     logger.debug("plugins: ");
     for (const p of this._plugins) {
-      logger.debug("p " + p);
-      logger.debug("plugins: " + this._plugins);
-      logger.debug("iface " + iface);
-
       if (p instanceof iface) {
         return p as T;
       }
