@@ -301,6 +301,7 @@ export class PluginManager {
         }
       }
     }
+
     return false;
   }
 
