@@ -189,10 +189,10 @@ export class PluginManager {
     pluginFunc: PluginFunc<T>,
     methodFunc: () => Promise<T>
   ): Promise<T> {
-    let chain = PluginManager.PLUGIN_CHAIN_CACHE.get(JSON.stringify(methodName));
+    let chain = PluginManager.PLUGIN_CHAIN_CACHE.get(methodName);
     if (!chain) {
       chain = this.makeExecutePipeline(hostInfo, props, methodName, methodFunc);
-      PluginManager.PLUGIN_CHAIN_CACHE.set(JSON.stringify(methodName), chain);
+      PluginManager.PLUGIN_CHAIN_CACHE.set(methodName, chain);
     }
     return chain.execute(pluginFunc, methodFunc);
   }
