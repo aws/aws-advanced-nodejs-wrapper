@@ -54,16 +54,16 @@ class PluginChain<T> {
     return this;
   }
 
-  execute(pluginFunc: PluginFunc<T>): Promise<T> {
+  execute(pluginFunc: PluginFunc<T>, targetFunc: () => Promise<T>): Promise<T> {
     if (this.chain === undefined) {
       throw new AwsWrapperError(Messages.get("PluginManager.pipelineNone"));
     }
-    return this.chain(pluginFunc, this.targetFunc);
+    return this.chain(pluginFunc, targetFunc);
   }
 }
 
 export class PluginManager {
-  private static readonly PLUGIN_CHAIN_CACHE = new Map<string, PluginChain<any>>();
+  private static readonly PLUGIN_CHAIN_CACHE = new Map<[string, HostInfo], PluginChain<any>>();
   private static readonly STRATEGY_PLUGIN_CHAIN_CACHE = new Map<ConnectionPlugin[], Set<ConnectionPlugin>>();
   private static readonly ALL_METHODS: string = "*";
   private static readonly CONNECT_METHOD = "connect";
@@ -189,12 +189,12 @@ export class PluginManager {
     pluginFunc: PluginFunc<T>,
     methodFunc: () => Promise<T>
   ): Promise<T> {
-    let chain = PluginManager.PLUGIN_CHAIN_CACHE.get(JSON.stringify([methodName, hostInfo.host]));
+    let chain = PluginManager.PLUGIN_CHAIN_CACHE.get([methodName, hostInfo]);
     if (!chain) {
       chain = this.makeExecutePipeline(hostInfo, props, methodName, methodFunc);
-      PluginManager.PLUGIN_CHAIN_CACHE.set(JSON.stringify([methodName, hostInfo.host]), chain);
+      PluginManager.PLUGIN_CHAIN_CACHE.set([methodName, hostInfo], chain);
     }
-    return chain.execute(pluginFunc);
+    return chain.execute(pluginFunc, methodFunc);
   }
 
   makeExecutePipeline<T>(hostInfo: HostInfo, props: Map<string, any>, name: string, methodFunc: () => Promise<T>): PluginChain<T> {
