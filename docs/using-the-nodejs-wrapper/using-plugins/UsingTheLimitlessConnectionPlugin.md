@@ -64,3 +64,4 @@ To mitigate this, consider setting connection properties that can reduce the num
 ## Sample Code
 
 [Limitless Postgresql Example](../../../examples/aws_driver_example/aws_limitless_postgresql_example.ts)
+[Limitless MySQL Example](../../../examples/aws_driver_example/aws_limitless_mysql_example.ts)
