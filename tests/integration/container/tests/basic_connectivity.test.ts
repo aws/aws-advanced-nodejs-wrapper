@@ -74,6 +74,7 @@ describe("basic_connectivity", () => {
         password: env.databaseInfo.password,
         port: env.databaseInfo.clusterEndpointPort,
         plugins: "failover,efm2",
+        wrapperConnectTimeout: 120000,
         enableTelemetry: true,
         telemetryTracesBackend: "OTLP",
         telemetryMetricsBackend: "OTLP"
