@@ -55,7 +55,7 @@
     "@opentelemetry/resources": "^1.26.0",
     "@opentelemetry/sdk-metrics": "^1.26.0",
     "@opentelemetry/sdk-node": "^0.53.0",
-    "@opentelemetry/sdk-trace-base": "^1.26.0",
+    "@opentelemetry/sdk-trace-base": "^2.0.0",
     "@opentelemetry/semantic-conventions": "^1.27.0",
     "@types/i18n": "^0.13.12",
     "@types/jest": "^29.5.13",
