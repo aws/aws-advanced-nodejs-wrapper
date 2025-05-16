@@ -74,7 +74,7 @@ export function convertNanosToMs(nanos: bigint) {
 }
 
 export function convertNanosToMinutes(nanos: bigint) {
-  return Number(nanos) / 60000000000;
+  return Number(nanos) / 60_000_000_000;
 }
 
 export function maskProperties(props: Map<string, any>) {
