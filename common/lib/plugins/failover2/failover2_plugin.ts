@@ -42,7 +42,6 @@ import { CanReleaseResources } from "../../can_release_resources";
 import { ReaderFailoverResult } from "../failover/reader_failover_result";
 import { HostListProvider } from "../../host_list_provider/host_list_provider";
 import { logTopology } from "../../utils/utils";
-import { RdsHostListProvider } from "../../host_list_provider/rds_host_list_provider";
 
 export class Failover2Plugin extends AbstractConnectionPlugin implements CanReleaseResources {
   private static readonly TELEMETRY_WRITER_FAILOVER = "failover to writer instance";
