@@ -1,7 +1,7 @@
 {
   "moduleFileExtensions": ["ts", "js", "json"],
   "testMatch": [
-    "<rootDir>/tests/integration/container/tests/aurora_failover2*.(spec|test).ts|tsx",
+    "<rootDir>/tests/integration/container/tests/aurora_failover2.(spec|test).ts|tsx",
     "<rootDir>/tests/integration/container/tests/basic_connectivity.(spec|test).ts|tsx"
   ],
   "transform": {
