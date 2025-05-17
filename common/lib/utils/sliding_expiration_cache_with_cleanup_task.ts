@@ -116,6 +116,8 @@ export class SlidingExpirationCacheWithCleanupTask<K, V> extends SlidingExpirati
         logger.debug("start promise");
 
         await Promise.all(itemsToRemove);
+        logger.debug("complete promise");
+
       } catch (error) {
         // Ignore.
       }
