@@ -41,6 +41,7 @@ export class SlidingExpirationCacheWithCleanupTask<K, V> extends SlidingExpirati
   async clear(): Promise<void> {
     if (this.isInitialized) {
       this.isInitialized = false;
+      logger.debug("Cleared");
       // If the cleanup task is currently sleeping this will interrupt it.
       this.interruptCleanupTask();
       await this.cleanupTask;
@@ -84,9 +85,10 @@ export class SlidingExpirationCacheWithCleanupTask<K, V> extends SlidingExpirati
   async initCleanupTask(): Promise<void> {
     this.isInitialized = true;
     logger.debug(Messages.get("SlidingExpirationCacheWithCleanupTask.cleanUpTaskInitialized", this.cacheId));
+
     while (this.isInitialized) {
       const [sleepPromise, abortSleepFunc] = sleepWithAbort(
-        convertNanosToMs(this._cleanupIntervalNanos),
+        convertNanosToMs(BigInt(this._cleanupIntervalNanos)),
         Messages.get("SlidingExpirationCacheWithCleanupTask.cleanUpTaskInterrupted", this.cacheId)
       );
       this.interruptCleanupTask = abortSleepFunc;
@@ -104,12 +106,15 @@ export class SlidingExpirationCacheWithCleanupTask<K, V> extends SlidingExpirati
 
       const itemsToRemove = [];
       for (const [key, val] of this.map.entries()) {
-        if (val !== undefined && this._asyncItemDisposalFunc !== undefined && this.shouldCleanupItem(val)) {
+        if ((val !== undefined && this.shouldCleanupItem(val)) || this._asyncItemDisposalFunc !== undefined) {
           MapUtils.remove(this.map, key);
           itemsToRemove.push(this._asyncItemDisposalFunc(val.item));
         }
       }
+      this.isInitialized = false;
       try {
+        logger.debug("start promise");
+
         await Promise.all(itemsToRemove);
       } catch (error) {
         // Ignore.
