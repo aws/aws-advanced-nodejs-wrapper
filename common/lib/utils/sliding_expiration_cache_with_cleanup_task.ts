@@ -111,7 +111,9 @@ export class SlidingExpirationCacheWithCleanupTask<K, V> extends SlidingExpirati
           itemsToRemove.push(this._asyncItemDisposalFunc(val.item));
         }
       }
-      this.isInitialized = false;
+      if (this.map.size === 0) {
+        this.isInitialized = false;
+      }
       try {
         logger.debug("start promise");
 

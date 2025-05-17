@@ -32,8 +32,10 @@ export class MonitorConnectionContext {
    * @param clientToAbort A reference to the connection associated with this context that will be aborted.
    */
   constructor(clientToAbort: ClientWrapper) {
-    if (clientToAbort) {
+    try {
       this.clientToAbortRef = new WeakRef(clientToAbort);
+    } catch (error: any) {
+      // pass
     }
   }
 
