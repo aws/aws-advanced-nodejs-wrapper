@@ -47,7 +47,7 @@ export class HostResponseTimeServiceImpl implements HostResponseTimeService {
   private readonly telemetryFactory: TelemetryFactory;
   protected static monitoringHosts: SlidingExpirationCache<string, HostResponseTimeMonitor> = new SlidingExpirationCache(
     HostResponseTimeServiceImpl.CACHE_CLEANUP_NANOS,
-    undefined,
+    (monitor: HostResponseTimeMonitor) => true,
     async (monitor: HostResponseTimeMonitor) => {
       {
         try {
