@@ -54,7 +54,7 @@ export class MonitoringRdsHostListProvider extends RdsHostListProvider implement
     this.pluginService = pluginService;
   }
 
-  async clearAll(): Promise<void> {
+  async clearAllMonitors(): Promise<void> {
     RdsHostListProvider.clearAll();
     await MonitoringRdsHostListProvider.monitors.clear();
   }

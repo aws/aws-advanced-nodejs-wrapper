@@ -40,7 +40,7 @@ import { TelemetryTraceLevel } from "../../utils/telemetry/telemetry_trace_level
 import { HostRole } from "../../host_role";
 import { CanReleaseResources } from "../../can_release_resources";
 import { ReaderFailoverResult } from "../failover/reader_failover_result";
-import { HostListProvider } from "../../host_list_provider/host_list_provider";
+import { BlockingHostListProvider, HostListProvider } from "../../host_list_provider/host_list_provider";
 import { logTopology } from "../../utils/utils";
 
 export class Failover2Plugin extends AbstractConnectionPlugin implements CanReleaseResources {
@@ -495,7 +495,7 @@ export class Failover2Plugin extends AbstractConnectionPlugin implements CanRele
   async releaseResources(): Promise<void> {
     const hostListProvider: HostListProvider = this.pluginService.getHostListProvider();
     if (this.pluginService.isBlockingHostListProvider(hostListProvider)) {
-      await hostListProvider.clearAll();
+      await (hostListProvider as BlockingHostListProvider).clearAllMonitors();
     }
   }
 }
