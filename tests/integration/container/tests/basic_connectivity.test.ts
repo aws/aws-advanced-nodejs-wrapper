@@ -138,61 +138,69 @@ describe("basic_connectivity", () => {
     1320000
   );
 
-  it.skip("wrapper", async () => {
-    const env = await TestEnvironment.getCurrent();
-    const driver = DriverHelper.getDriverForDatabaseEngine(env.engine);
-    const initClientFunc = DriverHelper.getClient(driver);
+  itIf(
+    "wrapper",
+    async () => {
+      const env = await TestEnvironment.getCurrent();
+      const driver = DriverHelper.getDriverForDatabaseEngine(env.engine);
+      const initClientFunc = DriverHelper.getClient(driver);
 
-    let props = {
-      user: env.databaseInfo.username,
-      host: env.databaseInfo.instances[0].host,
-      database: env.databaseInfo.defaultDbName,
-      password: env.databaseInfo.password,
-      port: env.databaseInfo.instanceEndpointPort,
-      plugins: "",
-      enableTelemetry: true,
-      telemetryTracesBackend: "OTLP",
-      telemetryMetricsBackend: "OTLP"
-    };
-    props = DriverHelper.addDriverSpecificConfiguration(props, env.engine);
+      let props = {
+        user: env.databaseInfo.username,
+        host: env.databaseInfo.instances[0].host,
+        database: env.databaseInfo.defaultDbName,
+        password: env.databaseInfo.password,
+        port: env.databaseInfo.instanceEndpointPort,
+        plugins: "",
+        enableTelemetry: true,
+        telemetryTracesBackend: "OTLP",
+        telemetryMetricsBackend: "OTLP"
+      };
+      props = DriverHelper.addDriverSpecificConfiguration(props, env.engine);
 
-    client = initClientFunc(props);
-    await client.connect();
+      client = initClientFunc(props);
+      await client.connect();
 
-    const res = await DriverHelper.executeInstanceQuery(env.engine, env.deployment, client);
+      const res = await DriverHelper.executeInstanceQuery(env.engine, env.deployment, client);
 
-    expect(res).not.toBeNull();
-  }, 1320000);
+      expect(res).not.toBeNull();
+    },
+    1320000
+  );
 
-  it.skip("wrapper_proxy", async () => {
-    const env = await TestEnvironment.getCurrent();
-    const driver = DriverHelper.getDriverForDatabaseEngine(env.engine);
-    const initClientFunc = DriverHelper.getClient(driver);
+  itIf(
+    "wrapper_proxy",
+    async () => {
+      const env = await TestEnvironment.getCurrent();
+      const driver = DriverHelper.getDriverForDatabaseEngine(env.engine);
+      const initClientFunc = DriverHelper.getClient(driver);
 
-    let props = {
-      user: env.databaseInfo.username,
-      host: env.proxyDatabaseInfo.instances[0].host,
-      database: env.databaseInfo.defaultDbName,
-      password: env.databaseInfo.password,
-      port: env.proxyDatabaseInfo.instanceEndpointPort,
-      plugins: "",
-      clusterInstanceHostPattern: "?." + env.proxyDatabaseInfo.instanceEndpointSuffix,
-      enableTelemetry: true,
-      telemetryTracesBackend: "OTLP",
-      telemetryMetricsBackend: "OTLP"
-    };
-    props = DriverHelper.addDriverSpecificConfiguration(props, env.engine);
+      let props = {
+        user: env.databaseInfo.username,
+        host: env.proxyDatabaseInfo.instances[0].host,
+        database: env.databaseInfo.defaultDbName,
+        password: env.databaseInfo.password,
+        port: env.proxyDatabaseInfo.instanceEndpointPort,
+        plugins: "",
+        clusterInstanceHostPattern: "?." + env.proxyDatabaseInfo.instanceEndpointSuffix,
+        enableTelemetry: true,
+        telemetryTracesBackend: "OTLP",
+        telemetryMetricsBackend: "OTLP"
+      };
+      props = DriverHelper.addDriverSpecificConfiguration(props, env.engine);
 
-    client = initClientFunc(props);
+      client = initClientFunc(props);
 
-    await client.connect();
+      await client.connect();
 
-    await ProxyHelper.disableAllConnectivity(env.engine);
+      await ProxyHelper.disableAllConnectivity(env.engine);
 
-    await expect(async () => {
-      await auroraTestUtility.queryInstanceId(client);
-    }).rejects.toThrow();
+      await expect(async () => {
+        await auroraTestUtility.queryInstanceId(client);
+      }).rejects.toThrow();
 
-    await ProxyHelper.enableAllConnectivity();
-  }, 1320000);
+      await ProxyHelper.enableAllConnectivity();
+    },
+    1320000
+  );
 });
