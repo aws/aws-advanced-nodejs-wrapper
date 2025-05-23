@@ -37,9 +37,9 @@ const itIf =
     : it.skip;
 
 let env: TestEnvironment;
-let driver;
+let driver: any;
 let initClientFunc: (props: any) => any;
-
+let client: any;
 const sslCertificate = {
   ca: readFileSync("/app/global-bundle.pem").toString()
 };
@@ -67,18 +67,10 @@ async function initDefaultConfig(host: string): Promise<any> {
   return props;
 }
 
-async function validateConnection(client: AwsPGClient | AwsMySQLClient) {
-  try {
-    await client.connect();
-    const res = await DriverHelper.executeQuery(env.engine, client, "select 1");
-    expect(res).not.toBeNull();
-  } finally {
-    try {
-      await client.end();
-    } catch (error) {
-      // pass
-    }
-  }
+async function validateConnection() {
+  await client.connect();
+  const res = await DriverHelper.executeQuery(env.engine, client, "select 1");
+  expect(res).not.toBeNull();
 }
 
 describe("iam authentication", () => {
@@ -87,6 +79,7 @@ describe("iam authentication", () => {
     jest.useFakeTimers({
       doNotFake: ["nextTick"]
     });
+    client = null;
     env = await TestEnvironment.getCurrent();
     driver = DriverHelper.getDriverForDatabaseEngine(env.engine);
     initClientFunc = DriverHelper.getClient(driver);
@@ -94,6 +87,11 @@ describe("iam authentication", () => {
   });
 
   afterEach(async () => {
+    try {
+      await client.end();
+    } catch (error) {
+      // pass
+    }
     await PluginManager.releaseResources();
     await TestEnvironment.verifyClusterStatus();
     logger.info(`Test finished: ${expect.getState().currentTestName}`);
@@ -109,7 +107,7 @@ describe("iam authentication", () => {
     async () => {
       const config = await initDefaultConfig(env.databaseInfo.writerInstanceEndpoint);
       config["user"] = `WRONG_${env.info.databaseInfo.username}_USER`;
-      const client: AwsPGClient | AwsMySQLClient = initClientFunc(config);
+      client = initClientFunc(config);
 
       await expect(client.connect()).rejects.toThrow();
     },
@@ -121,7 +119,7 @@ describe("iam authentication", () => {
     async () => {
       const config = await initDefaultConfig(env.databaseInfo.writerInstanceEndpoint);
       config["user"] = undefined;
-      const client: AwsPGClient | AwsMySQLClient = initClientFunc(config);
+      client = initClientFunc(config);
 
       await expect(client.connect()).rejects.toBeInstanceOf(AwsWrapperError);
     },
@@ -133,7 +131,7 @@ describe("iam authentication", () => {
     async () => {
       const config = await initDefaultConfig(env.databaseInfo.writerInstanceEndpoint);
       config["iamHost"] = "<>";
-      const client: AwsPGClient | AwsMySQLClient = initClientFunc(config);
+      client = initClientFunc(config);
 
       await expect(client.connect()).rejects.toBeInstanceOf(AwsWrapperError);
     },
@@ -153,9 +151,9 @@ describe("iam authentication", () => {
           config["password"] = "anything";
           config["iamHost"] = instance.host;
 
-          const client: AwsPGClient | AwsMySQLClient = initClientFunc(config);
+          client = initClientFunc(config);
 
-          await validateConnection(client);
+          await validateConnection();
         } else {
           throw new AwsWrapperError("Host not found");
         }
@@ -169,8 +167,8 @@ describe("iam authentication", () => {
     async () => {
       const config = await initDefaultConfig(env.databaseInfo.writerInstanceEndpoint);
       config["password"] = "anything";
-      const client: AwsPGClient | AwsMySQLClient = initClientFunc(config);
-      await validateConnection(client);
+      client = initClientFunc(config);
+      await validateConnection();
     },
     100000
   );
@@ -180,8 +178,8 @@ describe("iam authentication", () => {
     async () => {
       const config = await initDefaultConfig(env.databaseInfo.writerInstanceEndpoint);
       config["password"] = undefined;
-      const client: AwsPGClient | AwsMySQLClient = initClientFunc(config);
-      await validateConnection(client);
+      client = initClientFunc(config);
+      await validateConnection();
     },
     100000
   );
