@@ -63,7 +63,6 @@ class PluginChain<T> {
 }
 
 export class PluginManager {
-  private static readonly PLUGIN_CHAIN_CACHE = new Map<[string, HostInfo], PluginChain<any>>();
   private static readonly STRATEGY_PLUGIN_CHAIN_CACHE = new Map<ConnectionPlugin[], Set<ConnectionPlugin>>();
   private static readonly ALL_METHODS: string = "*";
   private static readonly CONNECT_METHOD = "connect";
@@ -189,11 +188,7 @@ export class PluginManager {
     pluginFunc: PluginFunc<T>,
     methodFunc: () => Promise<T>
   ): Promise<T> {
-    let chain = PluginManager.PLUGIN_CHAIN_CACHE.get([methodName, hostInfo]);
-    if (!chain) {
-      chain = this.makeExecutePipeline(hostInfo, props, methodName, methodFunc);
-      PluginManager.PLUGIN_CHAIN_CACHE.set([methodName, hostInfo], chain);
-    }
+    const chain = this.makeExecutePipeline(hostInfo, props, methodName, methodFunc);
     return chain.execute(pluginFunc);
   }
 
