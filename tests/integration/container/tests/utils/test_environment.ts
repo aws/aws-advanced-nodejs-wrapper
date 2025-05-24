@@ -112,8 +112,8 @@ export class TestEnvironment {
                 user: info?.databaseInfo.username,
                 password: info?.databaseInfo.password,
                 database: info?.databaseInfo.defaultDbName,
-                query_timeout: 3000,
-                connectionTimeoutMillis: 3000
+                query_timeout: 60000,
+                connectionTimeoutMillis: 60000
               });
               await client.connect();
 
@@ -122,6 +122,7 @@ export class TestEnvironment {
               instanceIdSet.delete(instanceId);
             } catch (e: any) {
               // do nothing; let's continue checking
+              logger.debug("instanceid " + instanceId + " not found " + e.message);
             } finally {
               if (client) {
                 await client.end();
