@@ -112,19 +112,36 @@ export class TestEnvironment {
                 user: info?.databaseInfo.username,
                 password: info?.databaseInfo.password,
                 database: info?.databaseInfo.defaultDbName,
-                query_timeout: 3000,
-                connectionTimeoutMillis: 3000
+                query_timeout: 900000,
+                connectionTimeoutMillis: 900000
               });
+              logger.debug("startingConnection");
+              const startTimeConnect = Date.now();
               await client.connect();
+              const endTimeConnect = Date.now();
+
+              logger.debug("finishedConnectionafter: " + (endTimeConnect - startTimeConnect));
+
+              const startTimeQuery = Date.now();
 
               await client.query("select 1");
+              const endTimeQuery = Date.now();
+
+              logger.debug("finishedQueryafter: " + (endTimeQuery - startTimeQuery));
+
               logger.info("Instance " + instanceId + " is up.");
               instanceIdSet.delete(instanceId);
             } catch (e: any) {
               // do nothing; let's continue checking
+              logger.error("ERRORInstanceID " + e);
             } finally {
               if (client) {
-                await client.end();
+                try {
+                  await client.end();
+                } catch (e) {
+                  logger.error("end error " + e);
+                  // pass
+                }
               }
             }
             break;
