@@ -42,7 +42,7 @@
     "@aws-sdk/rds-signer": "^3.803.0",
     "@babel/cli": "^7.27.2",
     "@babel/core": "^7.26.10",
-    "@babel/node": "^7.26.0",
+    "@babel/node": "^7.27.1",
     "@opentelemetry/api": "^1.9.0",
     "@opentelemetry/api-metrics": "^0.33.0",
     "@opentelemetry/context-async-hooks": "^1.26.0",
