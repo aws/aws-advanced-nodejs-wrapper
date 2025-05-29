@@ -100,9 +100,8 @@ describe("aurora initial connection strategy", () => {
       const connectedReaderIds: Set<string> = new Set();
       const connectionsSet: Set<any> = new Set();
       try {
-        // TODO: fix round robin strategy cached connection issue on first instance
-        // remove these lines when fixed
-        const client = initClientFunc(config);
+        // first instance is not cached
+        client = initClientFunc(config);
         await client.connect();
         const readerId = await auroraTestUtility.queryInstanceId(client);
         connectionsSet.add(readerId);
@@ -138,9 +137,8 @@ describe("aurora initial connection strategy", () => {
       const config = await initConfig("roundRobin");
       config["roundRobinHostWeightPairs"] = `${initialReader}:${numReaders}`;
 
-      // TODO: fix round robin strategy cached connection issue on first instance
-      // remove these lines when fixed
-      const client = initClientFunc(config);
+      // first instance is not cached
+      client = initClientFunc(config);
       await client.connect();
       const readerId = await auroraTestUtility.queryInstanceId(client);
       connectionsSet.add(readerId);
