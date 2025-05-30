@@ -51,6 +51,7 @@ let secondaryClient: any;
 let auroraTestUtility: AuroraTestUtility;
 let provider: InternalPooledConnectionProvider | null;
 const sslCertificate = {
+  require: true,
   ca: readFileSync("/app/global-bundle.pem").toString()
 };
 
