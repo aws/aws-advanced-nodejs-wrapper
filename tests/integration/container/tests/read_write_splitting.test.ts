@@ -51,9 +51,7 @@ let secondaryClient: any;
 let auroraTestUtility: AuroraTestUtility;
 let provider: InternalPooledConnectionProvider | null;
 const sslCertificate = {
-  require: true,
-  rejectUnauthorized: true,
-  ca: readFileSync("/app/global-bundle.pem").toString()
+  require: false
 };
 
 async function initConfig(host: string, port: number, connectToProxy: boolean, plugins: string): Promise<any> {

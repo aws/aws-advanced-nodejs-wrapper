@@ -114,8 +114,7 @@ export class TestEnvironment {
                 password: info?.databaseInfo.password,
                 database: info?.databaseInfo.defaultDbName,
                 query_timeout: 60000,
-                connectionTimeoutMillis: 60000,
-                ssl: true
+                connectionTimeoutMillis: 60000
               });
               logger.debug("startingConnection");
               const startTimeConnect = Date.now();
