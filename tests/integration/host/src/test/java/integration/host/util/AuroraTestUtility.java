@@ -185,6 +185,8 @@ public class AuroraTestUtility {
         return createAuroraCluster();
       case RDS_MULTI_AZ_CLUSTER:
         return createMultiAzCluster();
+      case LIMITLESS:
+          return createLimitlessCluster();
       default:
         throw new UnsupportedOperationException(this.dbEngineDeployment.toString());
     }
@@ -516,6 +518,46 @@ public class AuroraTestUtility {
     deleteCluster();
   }
 
+   /**
+     * Destroys the limitless cluster. Removes IP from EC2 whitelist.
+     *
+     * @param clusterIdentifier Limitless cluster identifier to delete
+     * @param shardIdentifier   Limitless cluster shard identifier to delete
+     */
+    public void deleteLimitlessCluster(String clusterIdentifier, String shardIdentifier) {
+      int remainingAttempts = 5;
+
+      // Destroy the cluster's shard
+      while (--remainingAttempts > 0) {
+        try {
+          DeleteDbShardGroupResponse response = rdsClient.deleteDBShardGroup(
+              (builder -> builder.dbShardGroupIdentifier(shardIdentifier)));
+          if (response.sdkHttpResponse().isSuccessful()) {
+            break;
+          }
+          TimeUnit.SECONDS.sleep(30);
+        } catch (Exception ex) {
+          // ignore
+        }
+      }
+
+      // Then, destroy the cluster
+      remainingAttempts = 5;
+      while (--remainingAttempts > 0) {
+        try {
+          DeleteDbClusterResponse response = rdsClient.deleteDBCluster(
+              (builder -> builder.skipFinalSnapshot(true).dbClusterIdentifier(clusterIdentifier)));
+          if (response.sdkHttpResponse().isSuccessful()) {
+            break;
+          }
+          TimeUnit.SECONDS.sleep(30);
+
+        } catch (Exception ex) {
+          // ignore
+        }
+      }
+    }
+
   /**
    * Destroys all instances and clusters. Removes IP from EC2 whitelist.
    */
@@ -528,6 +570,9 @@ public class AuroraTestUtility {
       case RDS_MULTI_AZ_CLUSTER:
         this.deleteMultiAzCluster();
         break;
+      case LIMITLESS:
+          this.deleteLimitlessCluster();
+          break;
       default:
         throw new UnsupportedOperationException(this.dbEngineDeployment.toString());
     }
@@ -604,6 +649,77 @@ public class AuroraTestUtility {
     }
     return true;
   }
+
+  /**
+     * Creates RDS Cluster/Instances and waits until they are up, and proper IP whitelisting for
+     * databases.
+     *
+     * @param username          Master username for access to database
+     * @param password          Master password for access to database
+     * @param clusterIdentifier Database cluster identifier
+     * @param shardIdentifier   Database shard identifier
+     * @return An endpoint for one of the instances
+     * @throws InterruptedException when clusters have not started after 30 minutes
+     */
+    public AuroraClusterInfo createLimitlessCluster(String username, String password, String clusterIdentifier, String shardIdentifier)
+        throws InterruptedException {
+      if (StringUtils.isNullOrEmpty(AWS_RDS_MONITORING_ROLE_ARN)) {
+        throw new IllegalStateException("AWS_RDS_MONITORING_ROLE_ARN is not defined");
+      }
+
+      final Tag testRunnerTag = Tag.builder().key("env").value("test-runner").build();
+
+      // Create the limitless cluster
+      final CreateDbClusterRequest dbClusterRequest =
+          CreateDbClusterRequest.builder()
+              .clusterScalabilityType(ClusterScalabilityType.LIMITLESS)
+              .databaseName(null)
+              .dbClusterIdentifier(clusterIdentifier)
+              .enableCloudwatchLogsExports("postgresql")
+              .enableIAMDatabaseAuthentication(true)
+              .enablePerformanceInsights(true)
+              .engine(LIMITLESS)
+              .engineVersion(LIMITLESS_ENGINE_VERSION)
+              .masterUsername(username)
+              .masterUserPassword(password)
+              .monitoringInterval(5)
+              .monitoringRoleArn(AWS_RDS_MONITORING_ROLE_ARN)
+              .performanceInsightsRetentionPeriod(31)
+              .storageType("aurora-iopt1")
+              .tags(testRunnerTag)
+              .build();
+      rdsClient.createDBCluster(dbClusterRequest);
+
+      // Create the limitless shard
+      final CreateDbShardGroupRequest shardGroupRequest =
+          CreateDbShardGroupRequest.builder()
+              .dbClusterIdentifier(clusterIdentifier)
+              .dbShardGroupIdentifier(shardIdentifier)
+              .minACU(MIN_ACU)
+              .maxACU(MAX_ACU)
+              .publiclyAccessible(true)
+              .build();
+      rdsClient.createDBShardGroup(shardGroupRequest);
+
+      DescribeDbClustersRequest describeDbClustersRequest = DescribeDbClustersRequest.builder()
+          .dbClusterIdentifier(clusterIdentifier)
+          .build();
+      WaiterOverrideConfiguration waiterConfig = WaiterOverrideConfiguration.builder()
+          .maxAttempts(MAX_WAIT_RETRIES)
+          .waitTimeout(Duration.ofMinutes(MAX_WAIT_RETRIES))
+          .build();
+      final RdsWaiter waiter = rdsClient.waiter();
+      WaiterResponse<DescribeDbClustersResponse> waiterResponse = waiter.waitUntilDBClusterAvailable(describeDbClustersRequest, waiterConfig);
+
+      if (waiterResponse.matched().exception().isPresent()) {
+        deleteLimitlessCluster(clusterIdentifier, shardIdentifier);
+        throw new InterruptedException(
+            "Unable to start AWS RDS Cluster & Instances after waiting for 90 minutes");
+      }
+
+      return getClusterInfo(clusterIdentifier);
+    }
+
 
   public DBCluster getClusterInfo(final String clusterId) {
     final DescribeDbClustersRequest request =
@@ -729,10 +845,6 @@ public class AuroraTestUtility {
         DescribeDbEngineVersionsRequest.builder().engine(engine).build()
     );
     for (DBEngineVersion version : versions.dbEngineVersions()) {
-      if (version.engineVersion().contains("limitless")) {
-        // Skip limitless engine version until limitless support is complete.
-        continue;
-      }
       res.add(version.engineVersion());
     }
     return res;
