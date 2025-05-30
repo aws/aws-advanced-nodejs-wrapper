@@ -52,7 +52,7 @@ let auroraTestUtility: AuroraTestUtility;
 let provider: InternalPooledConnectionProvider | null;
 const sslCertificate = {
   require: true,
-  ca: readFileSync("/app/global-bundle.pem").toString()
+  ca: readFileSync("path/to/ssl/certificate.pem").toString()
 };
 
 async function initConfig(host: string, port: number, connectToProxy: boolean, plugins: string): Promise<any> {
