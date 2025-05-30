@@ -39,6 +39,7 @@ import { OTLPMetricExporter } from "@opentelemetry/exporter-metrics-otlp-grpc";
 import { logger } from "../../../../../common/logutils";
 import pkgPg from "pg";
 import { ConnectionOptions, createConnection } from "mysql2/promise";
+import { readFileSync } from "fs";
 
 export class TestEnvironment {
   private static env?: TestEnvironment;
@@ -112,8 +113,9 @@ export class TestEnvironment {
                 user: info?.databaseInfo.username,
                 password: info?.databaseInfo.password,
                 database: info?.databaseInfo.defaultDbName,
-                query_timeout: 900000,
-                connectionTimeoutMillis: 900000
+                query_timeout: 60000,
+                connectionTimeoutMillis: 60000,
+                ssl: true
               });
               logger.debug("startingConnection");
               const startTimeConnect = Date.now();
