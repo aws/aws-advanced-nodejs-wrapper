@@ -31,6 +31,7 @@ import { HostInfo } from "../../../../common/lib/host_info";
 import { PluginManager } from "../../../../common/lib";
 import { RdsHostListProvider } from "../../../../common/lib/host_list_provider/rds_host_list_provider";
 import { PluginService } from "../../../../common/lib/plugin_service";
+import { readFileSync } from "fs";
 
 const itIf =
   !features.includes(TestEnvironmentFeatures.PERFORMANCE) &&
@@ -49,6 +50,9 @@ let client: any;
 let secondaryClient: any;
 let auroraTestUtility: AuroraTestUtility;
 let provider: InternalPooledConnectionProvider | null;
+const sslCertificate = {
+  ca: readFileSync("/app/global-bundle.pem").toString()
+};
 
 async function initConfig(host: string, port: number, connectToProxy: boolean, plugins: string): Promise<any> {
   let config: any = {
@@ -60,7 +64,8 @@ async function initConfig(host: string, port: number, connectToProxy: boolean, p
     plugins: plugins,
     enableTelemetry: true,
     telemetryTracesBackend: "OTLP",
-    telemetryMetricsBackend: "OTLP"
+    telemetryMetricsBackend: "OTLP",
+    ssl: sslCertificate
   };
 
   if (connectToProxy) {
