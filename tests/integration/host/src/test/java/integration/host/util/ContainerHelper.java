@@ -338,6 +338,100 @@ public class ContainerHelper {
         .withNetwork(network);
   }
 
+    private void setupLimitlessTestContainer(final Network network) throws InterruptedException, UnknownHostException {
+      if (!StringUtils.isNullOrEmpty(ACCESS_KEY) && !StringUtils.isNullOrEmpty(SECRET_ACCESS_KEY)) {
+        // Comment out below to not create a new cluster & instances
+
+        if (StringUtils.isNullOrEmpty(dbClusterIdentifier)) {
+          dbClusterIdentifier = DEFAULT_LIMITLESS_PREFIX + "cluster-" + System.nanoTime();
+        }
+        if (StringUtils.isNullOrEmpty(dbShardGroupIdentifier)) {
+          dbShardGroupIdentifier = DEFAULT_LIMITLESS_PREFIX + "shard-" + System.nanoTime();
+        }
+
+        AuroraClusterInfo clusterInfo;
+
+        if (REUSE_CLUSTER && !dbClusterIdentifier.isEmpty()) {
+          clusterInfo = auroraUtil.getClusterInfo(dbClusterIdentifier);
+          secretsArn = System.getenv("SECRETS_ARN");
+        } else {
+          clusterInfo =
+                  auroraUtil.createLimitlessCluster(TEST_USERNAME, TEST_PASSWORD, dbClusterIdentifier, dbShardGroupIdentifier);
+
+          // Comment out getting public IP to not add & remove from EC2 whitelist
+          runnerIP = auroraUtil.getPublicIPAddress();
+          auroraUtil.ec2AuthorizeIP(runnerIP);
+
+          String secretValue = auroraUtil.createSecretValue(clusterInfo.getClusterEndpoint(), TEST_USERNAME, TEST_PASSWORD);
+          secretsArn = auroraUtil.createSecrets("AWS-PGSQL-ODBC-Tests-" + clusterInfo.getClusterEndpoint(), secretValue);
+        }
+
+        dbConnStrSuffix = clusterInfo.getClusterSuffix();
+        dbHostCluster = clusterInfo.getClusterEndpoint();
+        dbHostClusterRo = clusterInfo.getClusterROEndpoint();
+
+        postgresInstances = clusterInfo.getInstances();
+
+        proxyContainers = containerHelper.createProxyContainers(network, postgresInstances, PROXIED_DOMAIN_NAME_SUFFIX);
+        for (ToxiproxyContainer container : proxyContainers) {
+          container.start();
+        }
+        postgresProxyPort = containerHelper.createAuroraInstanceProxies(postgresInstances, proxyContainers, POSTGRES_PORT);
+
+        proxyContainers.add(containerHelper.createAndStartProxyContainer(
+            network,
+            "toxiproxy-instance-cluster",
+            dbHostCluster + PROXIED_DOMAIN_NAME_SUFFIX,
+            dbHostCluster,
+            POSTGRES_PORT,
+            postgresProxyPort)
+        );
+
+        proxyContainers.add(containerHelper.createAndStartProxyContainer(
+            network,
+            "toxiproxy-ro-instance-cluster",
+            dbHostClusterRo + PROXIED_DOMAIN_NAME_SUFFIX,
+            dbHostClusterRo,
+            POSTGRES_PORT,
+            postgresProxyPort)
+        );
+      }
+
+      testContainer
+        .withEnv("AWS_ACCESS_KEY_ID", ACCESS_KEY)
+        .withEnv("AWS_SECRET_ACCESS_KEY", SECRET_ACCESS_KEY)
+        .withEnv("AWS_SESSION_TOKEN", SESSION_TOKEN)
+        .withEnv("RDS_ENDPOINT", ENDPOINT == null ? "" : ENDPOINT)
+        .withEnv("RDS_REGION", REGION == null ? "us-east-2" : REGION)
+        .withEnv("TOXIPROXY_CLUSTER_NETWORK_ALIAS", "toxiproxy-instance-cluster")
+        .withEnv("TOXIPROXY_RO_CLUSTER_NETWORK_ALIAS", "toxiproxy-ro-instance-cluster")
+        .withEnv("PROXIED_DOMAIN_NAME_SUFFIX", PROXIED_DOMAIN_NAME_SUFFIX)
+        .withEnv("TEST_SERVER", dbHostCluster)
+        .withEnv("TEST_RO_SERVER", dbHostClusterRo)
+        .withEnv("TEST_DATABASE", DEFAULT_LIMITLESS_DATABASE)
+        .withEnv("DB_CONN_STR_SUFFIX", "." + dbConnStrSuffix)
+        .withEnv("PROXIED_CLUSTER_TEMPLATE", "?." + dbConnStrSuffix + PROXIED_DOMAIN_NAME_SUFFIX)
+        .withEnv("SECRETS_ARN", secretsArn);
+
+      // Add postgres instances & proxies to container env
+      for (int i = 0; i < postgresInstances.size(); i++) {
+        // Add instance
+        testContainer.addEnv(
+            "POSTGRES_INSTANCE_" + (i + 1) + "_URL",
+            postgresInstances.get(i));
+
+        // Add proxies
+        testContainer.addEnv(
+            "TOXIPROXY_INSTANCE_" + (i + 1) + "_NETWORK_ALIAS",
+            "toxiproxy-instance-" + (i + 1));
+      }
+      testContainer.addEnv("POSTGRES_PROXY_PORT", Integer.toString(postgresProxyPort));
+      testContainer.start();
+
+      System.out.println("Toxyproxy Instances port: " + postgresProxyPort);
+    }
+
+
   // This container supports traces and metrics to AWS CloudWatch/XRay
   public GenericContainer<?> createTelemetryOtlpContainer(
       Network network,

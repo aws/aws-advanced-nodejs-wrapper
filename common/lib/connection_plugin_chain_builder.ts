@@ -38,7 +38,7 @@ import { ConnectionProviderManager } from "./connection_provider_manager";
 import { DeveloperConnectionPluginFactory } from "./plugins/dev/developer_connection_plugin_factory";
 import { ConnectionPluginFactory } from "./plugin_factory";
 import { LimitlessConnectionPluginFactory } from "./plugins/limitless/limitless_connection_plugin_factory";
-import { FastestResponseStrategyPluginFactory } from "./plugins/strategy/fastest_response/fastest_respose_strategy_plugin_factory";
+import { FastestResponseStrategyPluginFactory } from "./plugins/strategy/fastest_response/fastest_response_strategy_plugin_factory";
 import { CustomEndpointPluginFactory } from "./plugins/custom_endpoint/custom_endpoint_plugin_factory";
 import { ConfigurationProfile } from "./profile/configuration_profile";
 import { HostMonitoring2PluginFactory } from "./plugins/efm2/host_monitoring2_plugin_factory";
