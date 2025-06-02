@@ -16,6 +16,8 @@
 
 import { TestInstanceInfo } from "./test_instance_info";
 import { DBInstance } from "@aws-sdk/client-rds/dist-types/models/models_0";
+import { instance } from "ts-mockito";
+import { logger } from "../../../../../common/logutils";
 
 export class TestDatabaseInfo {
   private readonly _username: string;
@@ -27,6 +29,8 @@ export class TestDatabaseInfo {
   private readonly _clusterReadOnlyEndpointPort: number;
   private readonly _instanceEndpointSuffix: string;
   private readonly _instanceEndpointPort: number;
+  private readonly _blueGreenDeploymentId: string;
+  private readonly _clusterParameterGroupName: string;
   private readonly _instances: TestInstanceInfo[] = [];
 
   constructor(databaseInfo: { [s: string]: any }) {
@@ -39,6 +43,8 @@ export class TestDatabaseInfo {
     this._clusterReadOnlyEndpointPort = Number(databaseInfo["clusterReadOnlyEndpointPort"]);
     this._instanceEndpointSuffix = String(databaseInfo["instanceEndpointSuffix"]);
     this._instanceEndpointPort = Number(databaseInfo["instanceEndpointPort"]);
+    this._blueGreenDeploymentId = String(databaseInfo["blueGreenDeploymentId"]);
+    this._clusterParameterGroupName = String(databaseInfo["clusterParameterGroupName"]);
 
     this._instances = Array.from(databaseInfo["instances"], (x: DBInstance) => {
       return new TestInstanceInfo(x);
@@ -99,6 +105,14 @@ export class TestDatabaseInfo {
 
   get instances(): TestInstanceInfo[] {
     return this._instances;
+  }
+
+  get blueGreenDeploymentId(): string {
+    return this._blueGreenDeploymentId;
+  }
+
+  get clusterParameterGroupName(): string {
+    return this._clusterParameterGroupName;
   }
 
   getInstance(instanceName: string): TestInstanceInfo {

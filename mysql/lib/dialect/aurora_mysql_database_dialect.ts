@@ -24,12 +24,11 @@ import { HostRole } from "../../../common/lib/host_role";
 import { ClientWrapper } from "../../../common/lib/client_wrapper";
 import { DatabaseDialectCodes } from "../../../common/lib/database_dialect/database_dialect_codes";
 import { WrapperProperties } from "../../../common/lib/wrapper_property";
-import {
-  MonitoringRdsHostListProvider
-} from "../../../common/lib/host_list_provider/monitoring/monitoring_host_list_provider";
+import { MonitoringRdsHostListProvider } from "../../../common/lib/host_list_provider/monitoring/monitoring_host_list_provider";
 import { PluginService } from "../../../common/lib/plugin_service";
+import { BlueGreenDialect, BlueGreenResult } from "../../../common/lib/database_dialect/blue_green_dialect";
 
-export class AuroraMySQLDatabaseDialect extends MySQLDatabaseDialect implements TopologyAwareDatabaseDialect {
+export class AuroraMySQLDatabaseDialect extends MySQLDatabaseDialect implements TopologyAwareDatabaseDialect, BlueGreenDialect {
   private static readonly TOPOLOGY_QUERY: string =
     "SELECT server_id, CASE WHEN SESSION_ID = 'MASTER_SESSION_ID' THEN TRUE ELSE FALSE END as is_writer, " +
     "cpu, REPLICA_LAG_IN_MILLISECONDS as 'lag', LAST_UPDATE_TIMESTAMP as last_update_timestamp " +
@@ -43,6 +42,10 @@ export class AuroraMySQLDatabaseDialect extends MySQLDatabaseDialect implements 
     "FROM information_schema.replica_host_status " +
     "WHERE SESSION_ID = 'MASTER_SESSION_ID' AND SERVER_ID = @@aurora_server_id";
   private static readonly AURORA_VERSION_QUERY = "SHOW VARIABLES LIKE 'aurora_version'";
+
+  private static readonly BG_STATUS_QUERY: string = "SELECT * FROM mysql.rds_topology";
+  private static readonly TOPOLOGY_TABLE_EXIST_QUERY: string =
+    "SELECT 1 AS tmp FROM information_schema.tables WHERE table_schema = 'mysql' AND table_name = 'rds_topology'";
 
   getHostListProvider(props: Map<string, any>, originalUrl: string, hostListProviderService: HostListProviderService): HostListProvider {
     if (WrapperProperties.PLUGINS.get(props).includes("failover2")) {
@@ -110,5 +113,27 @@ export class AuroraMySQLDatabaseDialect extends MySQLDatabaseDialect implements 
 
   getDialectUpdateCandidates(): string[] {
     return [DatabaseDialectCodes.RDS_MULTI_AZ_MYSQL];
+  }
+
+  async isBlueGreenStatusAvailable(clientWrapper: ClientWrapper): Promise<boolean> {
+    try {
+      const [rows] = await clientWrapper.query(AuroraMySQLDatabaseDialect.TOPOLOGY_TABLE_EXIST_QUERY);
+      return !!rows[0];
+    } catch {
+      return false;
+    }
+  }
+
+  async getBlueGreenStatus(clientWrapper: ClientWrapper): Promise<BlueGreenResult[] | null> {
+    try {
+      const results: BlueGreenResult[] = [];
+      const [rows] = await clientWrapper.query(AuroraMySQLDatabaseDialect.BG_STATUS_QUERY);
+      for (const row of rows) {
+        results.push(new BlueGreenResult(row.version, row.endpoint, row.port, row.role, row.status));
+      }
+      return results.length > 0 ? results : null;
+    } catch {
+      return null;
+    }
   }
 }

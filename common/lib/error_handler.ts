@@ -21,6 +21,8 @@ export interface ErrorHandler {
 
   isNetworkError(e: Error): boolean;
 
+  isSyntaxError(e: Error): boolean;
+
   /**
    * Checks whether there has been an unexpected error emitted and if the error is a type of login error.
    */

@@ -18,5 +18,6 @@ export enum DatabaseEngineDeployment {
   DOCKER = "DOCKER",
   RDS = "RDS",
   RDS_MULTI_AZ_CLUSTER = "RDS_MULTI_AZ_CLUSTER",
+  RDS_MULTI_AZ_INSTANCE = "RDS_MULTI_AZ_INSTANCE",
   AURORA = "AURORA"
 }

@@ -413,10 +413,32 @@ export class PluginManager {
     throw new AwsWrapperError(Messages.get("PluginManager.unableToRetrievePlugin"));
   }
 
+  isPluginInUse(plugin: any): boolean {
+    for (const p of this._plugins) {
+      if (p instanceof plugin) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   static registerPlugin(pluginCode: string, pluginFactory: typeof ConnectionPluginFactory) {
     ConnectionPluginChainBuilder.PLUGIN_FACTORIES.set(pluginCode, {
       factory: pluginFactory,
       weight: ConnectionPluginChainBuilder.WEIGHT_RELATIVE_TO_PRIOR_PLUGIN
     });
+  }
+
+  unwrapPlugin<T>(iface: new (...args: any[]) => T): T | null {
+    if (!this._plugins) {
+      return null;
+    }
+
+    for (const p of this._plugins) {
+      if (p instanceof iface) {
+        return p as any;
+      }
+    }
+    return null;
   }
 }

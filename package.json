@@ -96,6 +96,7 @@
   },
   "dependencies": {
     "@types/i18n": "^0.13.12",
+    "ascii-table": "^0.0.9",
     "async-mutex": "^0.5.0",
     "dotenv": "^16.4.5",
     "globals": "^16.1.0",

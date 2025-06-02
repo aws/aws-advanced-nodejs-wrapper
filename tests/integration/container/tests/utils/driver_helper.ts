@@ -20,6 +20,7 @@ import { AwsPGClient } from "../../../../../pg/lib";
 import { DatabaseEngine } from "./database_engine";
 import { AwsClient } from "../../../../../common/lib/aws_client";
 import { DatabaseEngineDeployment } from "./database_engine_deployment";
+import { readFileSync } from "fs";
 
 export class DriverHelper {
   static getClient(driver: TestDriver) {
@@ -141,15 +142,15 @@ export class DriverHelper {
   }
 
   static addDriverSpecificConfiguration(props: any, engine: DatabaseEngine, performance: boolean = false) {
-    if (engine === DatabaseEngine.PG && !performance) {
-      props["ssl"] = { rejectUnauthorized: false };
-    }
-
     props["wrapperConnectTimeout"] = 3000;
     props["wrapperQueryTimeout"] = 120000;
     props["monitoring_wrapperQueryTimeout"] = 3000;
     props["monitoring_wrapperConnectTimeout"] = 3000;
     props["failureDetectionTime"] = 1000;
+    props["ssl"] = {
+      rejectUnauthorized: false,
+      ca: readFileSync("/app/global-bundle.pem").toString()
+    };
     return props;
   }
 }

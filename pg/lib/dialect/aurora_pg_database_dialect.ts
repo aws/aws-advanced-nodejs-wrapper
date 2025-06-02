@@ -25,12 +25,12 @@ import { ClientWrapper } from "../../../common/lib/client_wrapper";
 import { DatabaseDialectCodes } from "../../../common/lib/database_dialect/database_dialect_codes";
 import { LimitlessDatabaseDialect } from "../../../common/lib/database_dialect/limitless_database_dialect";
 import { WrapperProperties } from "../../../common/lib/wrapper_property";
-import {
-  MonitoringRdsHostListProvider
-} from "../../../common/lib/host_list_provider/monitoring/monitoring_host_list_provider";
+import { MonitoringRdsHostListProvider } from "../../../common/lib/host_list_provider/monitoring/monitoring_host_list_provider";
 import { PluginService } from "../../../common/lib/plugin_service";
+import { BlueGreenDialect, BlueGreenResult } from "../../../common/lib/database_dialect/blue_green_dialect";
 
-export class AuroraPgDatabaseDialect extends PgDatabaseDialect implements TopologyAwareDatabaseDialect, LimitlessDatabaseDialect {
+export class AuroraPgDatabaseDialect extends PgDatabaseDialect implements TopologyAwareDatabaseDialect, LimitlessDatabaseDialect, BlueGreenDialect {
+  private static readonly VERSION = process.env.npm_package_version;
   private static readonly TOPOLOGY_QUERY: string =
     "SELECT server_id, CASE WHEN SESSION_ID = 'MASTER_SESSION_ID' THEN TRUE ELSE FALSE END AS is_writer, " +
     "CPU, COALESCE(REPLICA_LAG_IN_MSEC, 0) AS lag, LAST_UPDATE_TIMESTAMP " +
@@ -44,6 +44,10 @@ export class AuroraPgDatabaseDialect extends PgDatabaseDialect implements Topolo
   private static readonly IS_READER_QUERY: string = "SELECT pg_is_in_recovery() as is_reader";
   private static readonly IS_WRITER_QUERY: string =
     "SELECT server_id " + "FROM aurora_replica_status() " + "WHERE SESSION_ID = 'MASTER_SESSION_ID' AND SERVER_ID = aurora_db_instance_identifier()";
+
+  private static readonly BG_STATUS_QUERY: string = `SELECT * FROM get_blue_green_fast_switchover_metadata('aws_advanced_nodejs_wrapper-${AuroraPgDatabaseDialect.VERSION}')`;
+
+  private static readonly TOPOLOGY_TABLE_EXIST_QUERY: string = "SELECT 'get_blue_green_fast_switchover_metadata'::regproc";
 
   getHostListProvider(props: Map<string, any>, originalUrl: string, hostListProviderService: HostListProviderService): HostListProvider {
     if (WrapperProperties.PLUGINS.get(props).includes("failover2")) {
@@ -119,5 +123,27 @@ export class AuroraPgDatabaseDialect extends PgDatabaseDialect implements Topolo
 
   getLimitlessRoutersQuery(): string {
     return "select router_endpoint, load from aurora_limitless_router_endpoints()";
+  }
+
+  async isBlueGreenStatusAvailable(clientWrapper: ClientWrapper): Promise<boolean> {
+    try {
+      const result = await clientWrapper.query(AuroraPgDatabaseDialect.TOPOLOGY_TABLE_EXIST_QUERY);
+      return !!result.rows[0];
+    } catch {
+      return false;
+    }
+  }
+
+  async getBlueGreenStatus(clientWrapper: ClientWrapper): Promise<BlueGreenResult[] | null> {
+    try {
+      const results: BlueGreenResult[] = [];
+      const result = await clientWrapper.query(AuroraPgDatabaseDialect.BG_STATUS_QUERY);
+      for (const row of result.rows) {
+        results.push(new BlueGreenResult(row.version, row.endpoint, row.port, row.role, row.status));
+      }
+      return results.length > 0 ? results : null;
+    } catch {
+      return null;
+    }
   }
 }
