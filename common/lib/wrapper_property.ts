@@ -16,7 +16,6 @@
 
 import { ConnectionProvider } from "./connection_provider";
 import { DatabaseDialect } from "./database_dialect/database_dialect";
-import { Failover2Plugin } from "./plugins/failover2/failover2_plugin";
 import { ClusterTopologyMonitorImpl } from "./host_list_provider/monitoring/cluster_topology_monitor";
 
 export class WrapperProperty<T> {
@@ -420,6 +419,44 @@ export class WrapperProperties {
     null
   );
 
+  static readonly BG_CONNECT_TIMEOUT = new WrapperProperty<number>(
+    "bgConnectTimeoutMs",
+    "Connect timeout (in msec) during Blue/Green Deployment switchover.",
+    30000
+  );
+
+  static readonly BGD_ID = new WrapperProperty<string>("bgdId", "Blue/Green Deployment ID", "1");
+
+  static readonly BG_INTERVAL_BASELINE_MS = new WrapperProperty<number>(
+    "bgBaselineMs",
+    "Baseline Blue/Green Deployment status checking interval (in msec).",
+    60000
+  );
+
+  static readonly BG_INTERVAL_INCREASED_MS = new WrapperProperty<number>(
+    "bgIncreasedMs",
+    "Increased Blue/Green Deployment status checking interval (in msec).",
+    1000
+  );
+
+  static readonly BG_INTERVAL_HIGH_MS = new WrapperProperty<number>(
+    "bgHighMs",
+    "High Blue/Green Deployment status checking interval (in msec).",
+    100
+  );
+
+  static readonly BG_SWITCHOVER_TIMEOUT_MS = new WrapperProperty<number>(
+    "bgSwitchoverTimeoutMs",
+    "Blue/Green Deployment switchover timeout (in msec).",
+    180000 // 3min
+  );
+
+  static readonly BG_SUSPEND_NEW_BLUE_CONNECTIONS = new WrapperProperty<boolean>(
+    "bgSuspendNewBlueConnections",
+    "Enables Blue/Green Deployment switchover to suspend new blue connection requests while the switchover process is in progress.",
+    false
+  );
+
   static removeWrapperProperties(props: Map<string, any>): Map<string, any> {
     const persistingProperties = [
       WrapperProperties.USER.name,
@@ -432,10 +469,7 @@ export class WrapperProperties {
     const copy = new Map(props);
 
     for (const key of props.keys()) {
-      if (
-        !key.startsWith(WrapperProperties.MONITORING_PROPERTY_PREFIX) &&
-        !key.startsWith(ClusterTopologyMonitorImpl.MONITORING_PROPERTY_PREFIX)
-      ) {
+      if (!key.startsWith(WrapperProperties.MONITORING_PROPERTY_PREFIX) && !key.startsWith(ClusterTopologyMonitorImpl.MONITORING_PROPERTY_PREFIX)) {
         continue;
       }
 

@@ -17,9 +17,7 @@
 import { WrapperProperties } from "../../common/lib/wrapper_property";
 import { readFileSync } from "fs";
 import { anything, instance, mock, spy, when } from "ts-mockito";
-import {
-  AdfsCredentialsProviderFactory
-} from "../../common/lib/plugins/federated_auth/adfs_credentials_provider_factory";
+import { AdfsCredentialsProviderFactory } from "../../common/lib/plugins/federated_auth/adfs_credentials_provider_factory";
 import { PluginServiceImpl } from "../../common/lib/plugin_service";
 import { NullTelemetryFactory } from "../../common/lib/utils/telemetry/null_telemetry_factory";
 

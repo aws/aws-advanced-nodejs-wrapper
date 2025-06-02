@@ -15,11 +15,7 @@
 */
 
 import { SecretsManagerClient, SecretsManagerServiceException } from "@aws-sdk/client-secrets-manager";
-import {
-  AwsSecretsManagerPlugin,
-  Secret,
-  SecretCacheKey
-} from "../../common/lib/authentication/aws_secrets_manager_plugin";
+import { AwsSecretsManagerPlugin, Secret, SecretCacheKey } from "../../common/lib/authentication/aws_secrets_manager_plugin";
 import { AwsClient } from "../../common/lib/aws_client";
 import { SimpleHostAvailabilityStrategy } from "../../common/lib/host_availability/simple_host_availability_strategy";
 import { HostInfo } from "../../common/lib/host_info";

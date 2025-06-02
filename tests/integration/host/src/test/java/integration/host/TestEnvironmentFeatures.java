@@ -16,6 +16,8 @@
 
 package integration.host;
 
+import com.sun.glass.ui.Accessible;
+
 public enum TestEnvironmentFeatures {
   IAM,
   SECRETS_MANAGER,
@@ -29,5 +31,6 @@ public enum TestEnvironmentFeatures {
   SKIP_PG_DRIVER_TESTS,
   TELEMETRY_TRACES_ENABLED,
   TELEMETRY_METRICS_ENABLED,
-  RDS_MULTI_AZ_CLUSTER_SUPPORTED
+  RDS_MULTI_AZ_CLUSTER_SUPPORTED,
+  BLUE_GREEN_DEPLOYMENT;
 }

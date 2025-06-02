@@ -10,6 +10,7 @@ import java.util.concurrent.Future;
 import java.util.Set;
 import java.util.logging.Logger;
 import java.util.stream.Stream;
+
 import org.junit.jupiter.api.extension.Extension;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.api.extension.TestTemplateInvocationContext;
@@ -45,7 +46,9 @@ public class TestEnvironmentProvider implements TestTemplateInvocationContextPro
 
     final boolean excludeDocker = Boolean.parseBoolean(System.getProperty("exclude-docker", "false"));
     final boolean excludeAurora = Boolean.parseBoolean(System.getProperty("exclude-aurora", "false"));
-    final boolean excludeMultiAZ = Boolean.parseBoolean(System.getProperty("exclude-multi-az", "false"));
+    final boolean excludeMultiAZCluster = Boolean.parseBoolean(System.getProperty("exclude-multi-az-cluster", "false"));
+    final boolean excludeMultiAZInstance = Boolean.parseBoolean(System.getProperty("exclude-multi-az-instance", "false"));
+    final boolean excludeBg = Boolean.parseBoolean(System.getProperty("exclude-bg", "false"));
     final boolean excludePerformance =
         Boolean.parseBoolean(System.getProperty("exclude-performance", "false"));
     final boolean excludeMysqlEngine =
@@ -76,7 +79,10 @@ public class TestEnvironmentProvider implements TestTemplateInvocationContextPro
         // Not in use.
         continue;
       }
-      if (deployment == DatabaseEngineDeployment.RDS_MULTI_AZ_CLUSTER && excludeMultiAZ) {
+      if (deployment == DatabaseEngineDeployment.RDS_MULTI_AZ_CLUSTER && excludeMultiAZCluster) {
+        continue;
+      }
+      if (deployment == DatabaseEngineDeployment.RDS_MULTI_AZ_INSTANCE && excludeMultiAZInstance) {
         continue;
       }
       for (DatabaseEngine engine : DatabaseEngine.values()) {
@@ -113,32 +119,33 @@ public class TestEnvironmentProvider implements TestTemplateInvocationContextPro
             }
 
             resultContextList.add(
-              getEnvironment(
-                  new TestEnvironmentRequest(
-                      engine,
-                      instances,
-                      instances == DatabaseInstances.SINGLE_INSTANCE ? 1 : numOfInstances,
-                      deployment,
-                      TestEnvironmentFeatures.NETWORK_OUTAGES_ENABLED,
-                      TestEnvironmentFeatures.ABORT_CONNECTION_SUPPORTED,
-                      deployment == DatabaseEngineDeployment.DOCKER ? null : TestEnvironmentFeatures.AWS_CREDENTIALS_ENABLED,
-                      deployment == DatabaseEngineDeployment.DOCKER || excludeFailover
-                          ? null
-                          : TestEnvironmentFeatures.FAILOVER_SUPPORTED,
-                      deployment == DatabaseEngineDeployment.DOCKER
-                          || deployment == DatabaseEngineDeployment.RDS_MULTI_AZ_CLUSTER
-                          || excludeIam
-                          ? null
-                          : TestEnvironmentFeatures.IAM,
-                      excludeSecretsManager ? null : TestEnvironmentFeatures.SECRETS_MANAGER,
-                      excludePerformance ? null : TestEnvironmentFeatures.PERFORMANCE,
-                      excludeMysqlDriver ? TestEnvironmentFeatures.SKIP_MYSQL_DRIVER_TESTS : null,
-                      excludePgDriver ? TestEnvironmentFeatures.SKIP_PG_DRIVER_TESTS : null,
-                      testAutoscalingOnly ? TestEnvironmentFeatures.RUN_AUTOSCALING_TESTS_ONLY : null,
-                      excludeTracesTelemetry ? null : TestEnvironmentFeatures.TELEMETRY_TRACES_ENABLED,
-                      excludeMetricsTelemetry ? null : TestEnvironmentFeatures.TELEMETRY_METRICS_ENABLED,
-                      // AWS credentials are required for XRay telemetry
-                      excludeTracesTelemetry && excludeMetricsTelemetry ? null : TestEnvironmentFeatures.AWS_CREDENTIALS_ENABLED)));
+                getEnvironment(
+                    new TestEnvironmentRequest(
+                        engine,
+                        instances,
+                        instances == DatabaseInstances.SINGLE_INSTANCE ? 1 : numOfInstances,
+                        deployment,
+                        TestEnvironmentFeatures.NETWORK_OUTAGES_ENABLED,
+                        TestEnvironmentFeatures.ABORT_CONNECTION_SUPPORTED,
+                        deployment == DatabaseEngineDeployment.DOCKER ? null : TestEnvironmentFeatures.AWS_CREDENTIALS_ENABLED,
+                        deployment == DatabaseEngineDeployment.DOCKER || excludeFailover
+                            ? null
+                            : TestEnvironmentFeatures.FAILOVER_SUPPORTED,
+                        deployment == DatabaseEngineDeployment.DOCKER
+                            || deployment == DatabaseEngineDeployment.RDS_MULTI_AZ_CLUSTER
+                            || excludeIam
+                            ? null
+                            : TestEnvironmentFeatures.IAM,
+                        excludeSecretsManager ? null : TestEnvironmentFeatures.SECRETS_MANAGER,
+                        excludePerformance ? null : TestEnvironmentFeatures.PERFORMANCE,
+                        excludeMysqlDriver ? TestEnvironmentFeatures.SKIP_MYSQL_DRIVER_TESTS : null,
+                        excludePgDriver ? TestEnvironmentFeatures.SKIP_PG_DRIVER_TESTS : null,
+                        testAutoscalingOnly ? TestEnvironmentFeatures.RUN_AUTOSCALING_TESTS_ONLY : null,
+                        excludeBg ? null : TestEnvironmentFeatures.BLUE_GREEN_DEPLOYMENT,
+                        excludeTracesTelemetry ? null : TestEnvironmentFeatures.TELEMETRY_TRACES_ENABLED,
+                        excludeMetricsTelemetry ? null : TestEnvironmentFeatures.TELEMETRY_METRICS_ENABLED,
+                        // AWS credentials are required for XRay telemetry
+                        excludeTracesTelemetry && excludeMetricsTelemetry ? null : TestEnvironmentFeatures.AWS_CREDENTIALS_ENABLED)));
           }
         }
       }

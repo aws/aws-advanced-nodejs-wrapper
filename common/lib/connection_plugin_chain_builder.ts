@@ -33,19 +33,16 @@ import { ReadWriteSplittingPluginFactory } from "./plugins/read_write_splitting_
 import { OktaAuthPluginFactory } from "./plugins/federated_auth/okta_auth_plugin_factory";
 import { HostMonitoringPluginFactory } from "./plugins/efm/host_monitoring_plugin_factory";
 import { AuroraInitialConnectionStrategyFactory } from "./plugins/aurora_initial_connection_strategy_plugin_factory";
-import {
-  AuroraConnectionTrackerPluginFactory
-} from "./plugins/connection_tracker/aurora_connection_tracker_plugin_factory";
+import { AuroraConnectionTrackerPluginFactory } from "./plugins/connection_tracker/aurora_connection_tracker_plugin_factory";
 import { ConnectionProviderManager } from "./connection_provider_manager";
 import { DeveloperConnectionPluginFactory } from "./plugins/dev/developer_connection_plugin_factory";
 import { ConnectionPluginFactory } from "./plugin_factory";
 import { LimitlessConnectionPluginFactory } from "./plugins/limitless/limitless_connection_plugin_factory";
-import {
-  FastestResponseStrategyPluginFactory
-} from "./plugins/strategy/fastest_response/fastest_respose_strategy_plugin_factory";
+import { FastestResponseStrategyPluginFactory } from "./plugins/strategy/fastest_response/fastest_respose_strategy_plugin_factory";
 import { CustomEndpointPluginFactory } from "./plugins/custom_endpoint/custom_endpoint_plugin_factory";
 import { ConfigurationProfile } from "./profile/configuration_profile";
 import { HostMonitoring2PluginFactory } from "./plugins/efm2/host_monitoring2_plugin_factory";
+import { BlueGreenPluginFactory } from "./plugins/bluegreen/blue_green_plugin_factory";
 
 /*
   Type alias used for plugin factory sorting. It holds a reference to a plugin
@@ -64,6 +61,7 @@ export class ConnectionPluginChainBuilder {
     ["initialConnection", { factory: AuroraInitialConnectionStrategyFactory, weight: 390 }],
     ["auroraConnectionTracker", { factory: AuroraConnectionTrackerPluginFactory, weight: 400 }],
     ["staleDns", { factory: StaleDnsPluginFactory, weight: 500 }],
+    ["bg", { factory: BlueGreenPluginFactory, weight: 550 }],
     ["readWriteSplitting", { factory: ReadWriteSplittingPluginFactory, weight: 600 }],
     ["failover", { factory: FailoverPluginFactory, weight: 700 }],
     ["failover2", { factory: Failover2PluginFactory, weight: 710 }],
@@ -84,6 +82,7 @@ export class ConnectionPluginChainBuilder {
     [AuroraInitialConnectionStrategyFactory, 390],
     [AuroraConnectionTrackerPluginFactory, 400],
     [StaleDnsPluginFactory, 500],
+    [BlueGreenPluginFactory, 550],
     [ReadWriteSplittingPluginFactory, 600],
     [FailoverPluginFactory, 700],
     [Failover2PluginFactory, 710],

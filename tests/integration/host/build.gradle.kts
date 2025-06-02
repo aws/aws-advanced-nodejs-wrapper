@@ -14,33 +14,37 @@ repositories {
 
 dependencies {
     testImplementation("org.checkerframework:checker-qual:3.26.0")
-    testImplementation("org.junit.platform:junit-platform-commons:1.9.0")
-    testImplementation("org.junit.platform:junit-platform-engine:1.9.0")
-    testImplementation("org.junit.platform:junit-platform-launcher:1.9.0")
-    testImplementation("org.junit.platform:junit-platform-suite-engine:1.9.0")
-    testImplementation("org.junit.jupiter:junit-jupiter-api:5.9.1")
-    testImplementation("org.junit.jupiter:junit-jupiter-params:5.9.1")
+    testImplementation("org.junit.platform:junit-platform-commons:1.11.3")
+    testImplementation("org.junit.platform:junit-platform-engine:1.11.0")
+    testImplementation("org.junit.platform:junit-platform-launcher:1.11.3")
+    testImplementation("org.junit.platform:junit-platform-suite-engine:1.11.3")
+    testImplementation("org.junit.jupiter:junit-jupiter-api:5.11.3")
+    testImplementation("org.junit.jupiter:junit-jupiter-params:5.10.2")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine")
 
-    testImplementation("org.apache.commons:commons-dbcp2:2.9.0")
-    testImplementation("org.postgresql:postgresql:42.5.0")
-    testImplementation("mysql:mysql-connector-java:8.0.30")
-    testImplementation("org.mockito:mockito-inline:4.8.0")
-    testImplementation("software.amazon.awssdk:rds:2.20.49")
-    testImplementation("software.amazon.awssdk:ec2:2.20.61")
-    testImplementation("software.amazon.awssdk:secretsmanager:2.20.49")
-    testImplementation("org.testcontainers:testcontainers:1.17.4")
-    testImplementation("org.testcontainers:postgresql:1.17.5")
-    testImplementation("org.testcontainers:mysql:1.17.+")
-    testImplementation("org.testcontainers:junit-jupiter:1.17.4")
-    testImplementation("org.testcontainers:toxiproxy:1.20.3")
-    testImplementation("org.apache.poi:poi-ooxml:5.2.2")
-    testImplementation("org.slf4j:slf4j-simple:2.0.3")
-    testImplementation("com.fasterxml.jackson.core:jackson-databind:2.14.2")
-    testImplementation("com.amazonaws:aws-xray-recorder-sdk-core:2.14.0")
-    testImplementation("io.opentelemetry:opentelemetry-sdk:1.29.0")
-    testImplementation("io.opentelemetry:opentelemetry-sdk-metrics:1.29.0")
-    testImplementation("io.opentelemetry:opentelemetry-exporter-otlp:1.29.0")
+    testImplementation("org.apache.commons:commons-dbcp2:2.12.0")
+    testImplementation("org.postgresql:postgresql:42.7.4")
+    testImplementation("com.mysql:mysql-connector-j:9.1.0")
+    testImplementation("org.mockito:mockito-inline:4.11.0") // 4.11.0 is the last version compatible with Java 8
+    testImplementation("software.amazon.awssdk:ec2:2.29.34")
+    testImplementation("software.amazon.awssdk:rds:2.29.34")
+    testImplementation("software.amazon.awssdk:sts:2.29.34")
+
+    // Note: all org.testcontainers dependencies should have the same version
+    testImplementation("org.testcontainers:testcontainers:1.20.4")
+    testImplementation("org.testcontainers:mysql:1.20.4")
+    testImplementation("org.testcontainers:postgresql:1.20.4")
+    testImplementation("org.testcontainers:mariadb:1.20.4")
+    testImplementation("org.testcontainers:junit-jupiter:1.20.4")
+    testImplementation("org.testcontainers:toxiproxy:1.20.4")
+    testImplementation("org.apache.poi:poi-ooxml:5.3.0")
+    testImplementation("org.slf4j:slf4j-simple:2.0.13")
+    testImplementation("com.fasterxml.jackson.core:jackson-databind:2.17.1")
+    testImplementation("com.amazonaws:aws-xray-recorder-sdk-core:2.18.2")
+    testImplementation("io.opentelemetry:opentelemetry-sdk:1.42.1")
+    testImplementation("io.opentelemetry:opentelemetry-sdk-metrics:1.43.0")
+    testImplementation("io.opentelemetry:opentelemetry-exporter-otlp:1.44.1")
+    testImplementation("de.vandermeer:asciitable:0.3.2")
 }
 
 tasks.test {
@@ -87,7 +91,8 @@ tasks.register<Test>("test-aurora") {
     doFirst {
         systemProperty("exclude-docker", "true")
         systemProperty("exclude-performance", "true")
-        systemProperty("exclude-multi-az", "true")
+        systemProperty("exclude-multi-az-cluster", "true")
+        systemProperty("exclude-multi-az-instance", "true")
     }
 }
 
@@ -99,7 +104,9 @@ tasks.register<Test>("test-aurora-postgres") {
         systemProperty("exclude-performance", "true")
         systemProperty("exclude-mysql-driver", "true")
         systemProperty("exclude-mysql-engine", "true")
-        systemProperty("exclude-multi-az", "true")
+        systemProperty("exclude-multi-az-cluster", "true")
+        systemProperty("exclude-multi-az-instance", "true")
+        systemProperty("exclude-bg", "true")
     }
 }
 
@@ -112,7 +119,9 @@ tasks.register<Test>("test-aurora-mysql") {
         systemProperty("exclude-performance", "true")
         systemProperty("exclude-pg-driver", "true")
         systemProperty("exclude-pg-engine", "true")
-        systemProperty("exclude-multi-az", "true")
+        systemProperty("exclude-multi-az-cluster", "true")
+        systemProperty("exclude-multi-az-instance", "true")
+        systemProperty("exclude-bg", "true")
     }
 }
 
@@ -131,7 +140,9 @@ tasks.register<Test>("test-aurora-pg-performance") {
         systemProperty("exclude-docker", "true")
         systemProperty("exclude-mysql-driver", "true")
         systemProperty("exclude-mysql-engine", "true")
-        systemProperty("exclude-multi-az", "true")
+        systemProperty("exclude-multi-az-cluster", "true")
+        systemProperty("exclude-multi-az-instance", "true")
+        systemProperty("exclude-bg", "true")
     }
 }
 
@@ -142,7 +153,9 @@ tasks.register<Test>("test-aurora-mysql-performance") {
         systemProperty("exclude-docker", "true")
         systemProperty("exclude-pg-driver", "true")
         systemProperty("exclude-pg-engine", "true")
-        systemProperty("exclude-multi-az", "true")
+        systemProperty("exclude-multi-az-cluster", "true")
+        systemProperty("exclude-multi-az-instance", "true")
+        systemProperty("exclude-bg", "true")
     }
 }
 
@@ -156,6 +169,7 @@ tasks.register<Test>("test-multi-az-postgres") {
         systemProperty("exclude-mysql-driver", "true")
         systemProperty("exclude-mysql-engine", "true")
         systemProperty("exclude-aurora", "true")
+        systemProperty("exclude-bg", "true")
     }
 }
 
@@ -168,6 +182,7 @@ tasks.register<Test>("test-multi-az-mysql") {
         systemProperty("exclude-pg-driver", "true")
         systemProperty("exclude-pg-engine", "true")
         systemProperty("exclude-aurora", "true")
+        systemProperty("exclude-bg", "true")
     }
 }
 
@@ -177,7 +192,9 @@ tasks.register<Test>("test-autoscaling") {
     doFirst {
         systemProperty("exclude-docker", "true")
         systemProperty("exclude-performance", "true")
-        systemProperty("exclude-multi-az", "true")
+        systemProperty("exclude-multi-az-cluster", "true")
+        systemProperty("exclude-multi-az-instance", "true")
+        systemProperty("exclude-bg", "true")
         systemProperty("test-autoscaling", "true")
     }
 }
@@ -188,7 +205,9 @@ tasks.register<Test>("test-autoscaling-mysql") {
     doFirst {
         systemProperty("exclude-docker", "true")
         systemProperty("exclude-performance", "true")
-        systemProperty("exclude-multi-az", "true")
+        systemProperty("exclude-multi-az-cluster", "true")
+        systemProperty("exclude-multi-az-instance", "true")
+        systemProperty("exclude-bg", "true")
         systemProperty("exclude-pg-driver", "true")
         systemProperty("exclude-pg-engine", "true")
         systemProperty("test-autoscaling", "true")
@@ -201,10 +220,66 @@ tasks.register<Test>("test-autoscaling-postgres") {
     doFirst {
         systemProperty("exclude-docker", "true")
         systemProperty("exclude-performance", "true")
-        systemProperty("exclude-multi-az", "true")
+        systemProperty("exclude-multi-az-cluster", "true")
+        systemProperty("exclude-multi-az-instance", "true")
+        systemProperty("exclude-bg", "true")
         systemProperty("exclude-mysql-driver", "true")
         systemProperty("exclude-mysql-engine", "true")
         systemProperty("test-autoscaling", "true")
+    }
+}
+
+tasks.register<Test>("test-bgd-mysql-aurora") {
+    group = "verification"
+    filter.includeTestsMatching("integration.host.TestRunner.runTests")
+    doFirst {
+        systemProperty("exclude-docker", "true")
+        systemProperty("exclude-pg-driver", "true")
+        systemProperty("exclude-pg-engine", "true")
+        systemProperty("exclude-performance", "true")
+        systemProperty("exclude-multi-az-cluster", "true")
+        systemProperty("exclude-multi-az-instance", "true")
+    }
+}
+
+tasks.register<Test>("test-bgd-mysql-multiaz") {
+    group = "verification"
+    filter.includeTestsMatching("integration.host.TestRunner.runTests")
+    doFirst {
+        systemProperty("exclude-docker", "true")
+        systemProperty("exclude-pg-driver", "true")
+        systemProperty("exclude-pg-engine", "true")
+        systemProperty("exclude-performance", "true")
+        systemProperty("exclude-aurora", "true")
+        systemProperty("exclude-multi-az-cluster", "true")
+        systemProperty("exclude-multi-az-instance", "false")
+    }
+}
+
+tasks.register<Test>("test-bgd-pg-aurora") {
+    group = "verification"
+    filter.includeTestsMatching("integration.host.TestRunner.runTests")
+    doFirst {
+        systemProperty("exclude-docker", "true")
+        systemProperty("exclude-mysql-driver", "true")
+        systemProperty("exclude-mysql-engine", "true")
+        systemProperty("exclude-performance", "true")
+        systemProperty("exclude-multi-az-cluster", "true")
+        systemProperty("exclude-multi-az-instance", "true")
+    }
+}
+
+tasks.register<Test>("test-bgd-pg-multiaz") {
+    group = "verification"
+    filter.includeTestsMatching("integration.host.TestRunner.runTests")
+    doFirst {
+        systemProperty("exclude-docker", "true")
+        systemProperty("exclude-mysql-driver", "true")
+        systemProperty("exclude-mysql-engine", "true")
+        systemProperty("exclude-performance", "true")
+        systemProperty("exclude-aurora", "true")
+        systemProperty("exclude-multi-az-cluster", "true")
+        systemProperty("exclude-multi-az-instance", "false")
     }
 }
 
@@ -224,7 +299,9 @@ tasks.register<Test>("debug-docker") {
     doFirst {
         systemProperty("exclude-aurora", "true")
         systemProperty("exclude-performance", "true")
-        systemProperty("exclude-multi-az", "true")
+        systemProperty("exclude-multi-az-cluster", "true")
+        systemProperty("exclude-multi-az-instance", "true")
+        systemProperty("exclude-bg", "true")
     }
 }
 
@@ -234,7 +311,9 @@ tasks.register<Test>("debug-aurora") {
     doFirst {
         systemProperty("exclude-docker", "true")
         systemProperty("exclude-performance", "true")
-        systemProperty("exclude-multi-az", "true")
+        systemProperty("exclude-multi-az-cluster", "true")
+        systemProperty("exclude-multi-az-instance", "true")
+        systemProperty("exclude-bg", "true")
     }
 }
 
@@ -246,7 +325,9 @@ tasks.register<Test>("debug-aurora-pg") {
         systemProperty("exclude-performance", "true")
         systemProperty("exclude-mysql-driver", "true")
         systemProperty("exclude-mysql-engine", "true")
-        systemProperty("exclude-multi-az", "true")
+        systemProperty("exclude-multi-az-cluster", "true")
+        systemProperty("exclude-multi-az-instance", "true")
+        systemProperty("exclude-bg", "true")
     }
 }
 
@@ -258,7 +339,9 @@ tasks.register<Test>("debug-aurora-mysql") {
         systemProperty("exclude-performance", "true")
         systemProperty("exclude-pg-driver", "true")
         systemProperty("exclude-pg-engine", "true")
-        systemProperty("exclude-multi-az", "true")
+        systemProperty("exclude-multi-az-cluster", "true")
+        systemProperty("exclude-multi-az-instance", "true")
+        systemProperty("exclude-bg", "true")
     }
 }
 
@@ -269,7 +352,9 @@ tasks.register<Test>("debug-aurora-pg-performance") {
         systemProperty("exclude-docker", "true")
         systemProperty("exclude-mysql-driver", "true")
         systemProperty("exclude-mysql-engine", "true")
-        systemProperty("exclude-multi-az", "true")
+        systemProperty("exclude-multi-az-cluster", "true")
+        systemProperty("exclude-multi-az-instance", "true")
+        systemProperty("exclude-bg", "true")
     }
 }
 
@@ -280,7 +365,9 @@ tasks.register<Test>("debug-aurora-mysql-performance") {
         systemProperty("exclude-docker", "true")
         systemProperty("exclude-pg-driver", "true")
         systemProperty("exclude-pg-engine", "true")
-        systemProperty("exclude-multi-az", "true")
+        systemProperty("exclude-multi-az-cluster", "true")
+        systemProperty("exclude-multi-az-instance", "true")
+        systemProperty("exclude-bg", "true")
     }
 }
 
@@ -293,6 +380,7 @@ tasks.register<Test>("debug-multi-az-mysql") {
         systemProperty("exclude-pg-driver", "true")
         systemProperty("exclude-pg-engine", "true")
         systemProperty("exclude-aurora", "true")
+        systemProperty("exclude-bg", "true")
     }
 }
 
@@ -305,6 +393,7 @@ tasks.register<Test>("debug-multi-az-postgres") {
         systemProperty("exclude-mysql-driver", "true")
         systemProperty("exclude-mysql-engine", "true")
         systemProperty("exclude-aurora", "true")
+        systemProperty("exclude-bg", "true")
     }
 }
 
@@ -314,7 +403,24 @@ tasks.register<Test>("debug-autoscaling") {
     doFirst {
         systemProperty("exclude-docker", "true")
         systemProperty("exclude-performance", "true")
-        systemProperty("exclude-multi-az", "true")
+        systemProperty("exclude-multi-az-cluster", "true")
+        systemProperty("exclude-multi-az-instance", "true")
+        systemProperty("exclude-bg", "true")
         systemProperty("test-autoscaling", "true")
+        systemProperty("test-bg", "true")
     }
 }
+
+tasks.register<Test>("debug-bgd-mysql-aurora") {
+    group = "verification"
+    filter.includeTestsMatching("integration.host.TestRunner.debugTests")
+    doFirst {
+        systemProperty("exclude-docker", "true")
+        systemProperty("exclude-pg-driver", "true")
+        systemProperty("exclude-pg-engine", "true")
+        systemProperty("exclude-performance", "true")
+        systemProperty("exclude-multi-az-cluster", "true")
+        systemProperty("exclude-multi-az-instance", "true")
+    }
+}
+

@@ -23,7 +23,7 @@ dotenv.config();
 
 const logLevel = process.env.LOG_LEVEL;
 
-enum levels {
+export enum levels {
   error,
   warn,
   help,

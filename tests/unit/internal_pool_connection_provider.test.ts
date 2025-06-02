@@ -34,9 +34,7 @@ import { AwsMySQLClient } from "../../mysql/lib";
 import { MySQLDatabaseDialect } from "../../mysql/lib/dialect/mysql_database_dialect";
 import { MySQL2DriverDialect } from "../../mysql/lib/dialect/mysql2_driver_dialect";
 import { PoolClientWrapper } from "../../common/lib/pool_client_wrapper";
-import {
-  SlidingExpirationCacheWithCleanupTask
-} from "../../common/lib/utils/sliding_expiration_cache_with_cleanup_task";
+import { SlidingExpirationCacheWithCleanupTask } from "../../common/lib/utils/sliding_expiration_cache_with_cleanup_task";
 
 const user1 = "user1";
 const user2 = "user2";

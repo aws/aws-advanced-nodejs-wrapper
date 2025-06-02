@@ -22,6 +22,8 @@ import { ClientWrapper } from "../../common/lib/client_wrapper";
 export class MySQLErrorHandler implements ErrorHandler {
   private static readonly SQLSTATE_ACCESS_ERROR = "28000";
   private unexpectedError: Error | null = null;
+  protected static readonly SYNTAX_ERROR_CODE = ["42000", "42S02"];
+  protected static readonly SYNTAX_ERROR_MESSAGE = "You have an error in your SQL syntax";
 
   protected noOpListener(error: any) {
     // Ignore the received error.
@@ -51,6 +53,18 @@ export class MySQLErrorHandler implements ErrorHandler {
       e.message.includes("connect ETIMEDOUT") ||
       e.message.includes("connect ECONNREFUSED")
     );
+  }
+
+  isSyntaxError(e: Error): boolean {
+    if (Object.prototype.hasOwnProperty.call(e, "code")) {
+      // @ts-ignore
+      for (const code of MySQLErrorHandler.SYNTAX_ERROR_CODE) {
+        if (e["code"] === code) {
+          return true;
+        }
+      }
+    }
+    return e.message.includes(MySQLErrorHandler.SYNTAX_ERROR_MESSAGE);
   }
 
   hasLoginError(): boolean {
