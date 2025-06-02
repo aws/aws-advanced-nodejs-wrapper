@@ -15,7 +15,7 @@
 */
 
 import { HostInfo } from "../../common/lib/host_info";
-import { PluginService } from "../../common/lib/plugin_service";
+import { PluginServiceImpl } from "../../common/lib/plugin_service";
 import { ClusterAwareReaderFailoverHandler } from "../../common/lib/plugins/failover/reader_failover_handler";
 import { HostAvailability } from "../../common/lib/host_availability/host_availability";
 import { HostRole } from "../../common/lib/host_role";
@@ -39,7 +39,7 @@ const mockDatabaseDialect = mock(PgDatabaseDialect);
 const mockDriverDialect = mock(NodePostgresDriverDialect);
 const mockClientWrapper: ClientWrapper = mock(PgClientWrapper);
 
-const mockPluginService = mock(PluginService);
+const mockPluginService = mock(PluginServiceImpl);
 
 describe("reader failover handler", () => {
   beforeEach(() => {

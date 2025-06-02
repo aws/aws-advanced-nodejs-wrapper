@@ -17,7 +17,7 @@
 import { anything, capture, instance, mock, verify, when } from "ts-mockito";
 import { NullTelemetryFactory } from "../../common/lib/utils/telemetry/null_telemetry_factory";
 import { RDSClient } from "@aws-sdk/client-rds";
-import { PluginService } from "../../common/lib/plugin_service";
+import { PluginServiceImpl } from "../../common/lib/plugin_service";
 import { CustomEndpointMonitorImpl } from "../../common/lib/plugins/custom_endpoint/custom_endpoint_monitor_impl";
 import { HostInfoBuilder } from "../../common/lib/host_info_builder";
 import { SimpleHostAvailabilityStrategy } from "../../common/lib/host_availability/simple_host_availability_strategy";
@@ -96,7 +96,7 @@ const rdsSendResult2 = {
 const mockRdsClient = mock(RDSClient);
 when(mockRdsClient.send(anything())).thenResolve(rdsSendResult2).thenResolve(rdsSendResult1);
 const mockRdsClientFunc = () => instance(mockRdsClient);
-const mockPluginService = mock(PluginService);
+const mockPluginService = mock(PluginServiceImpl);
 when(mockPluginService.getTelemetryFactory()).thenReturn(new NullTelemetryFactory());
 
 const props = new Map();

@@ -15,7 +15,7 @@
 */
 
 import { anything, instance, mock, spy, verify, when } from "ts-mockito";
-import { PluginService } from "../../common/lib/plugin_service";
+import { PluginServiceImpl } from "../../common/lib/plugin_service";
 import { CredentialsProviderFactory } from "../../common/lib/plugins/federated_auth/credentials_provider_factory";
 import { IamAuthUtils, TokenInfo } from "../../common/lib/utils/iam_auth_utils";
 import { HostInfo } from "../../common/lib/host_info";
@@ -36,7 +36,7 @@ const region = "us-east-2";
 const testToken = "someTestToken";
 const testTokenInfo = new TokenInfo(testToken, Date.now() + 300000);
 
-const mockPluginService = mock(PluginService);
+const mockPluginService = mock(PluginServiceImpl);
 const mockDialect = mock<DatabaseDialect>();
 const mockDialectInstance = instance(mockDialect);
 const testCredentials = {

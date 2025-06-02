@@ -14,7 +14,7 @@
   limitations under the License.
 */
 
-import { PluginService } from "../../common/lib/plugin_service";
+import { PluginServiceImpl } from "../../common/lib/plugin_service";
 import { instance, mock } from "ts-mockito";
 import { DeveloperConnectionPlugin } from "../../common/lib/plugins/dev/developer_connection_plugin";
 import { RdsUtils } from "../../common/lib/utils/rds_utils";
@@ -34,7 +34,7 @@ class TestClient extends AwsPGClient {
   }
 }
 
-const mockPluginService = mock(PluginService);
+const mockPluginService = mock(PluginServiceImpl);
 const mockRdsUtils = mock(RdsUtils);
 const properties: Map<string, any> = new Map();
 

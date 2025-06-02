@@ -18,7 +18,7 @@ import { AwsClient } from "../../common/lib/aws_client";
 import { HostInfo } from "../../common/lib/host_info";
 import { HostInfoBuilder } from "../../common/lib/host_info_builder";
 import { HostRole } from "../../common/lib/host_role";
-import { PluginService } from "../../common/lib/plugin_service";
+import { PluginServiceImpl } from "../../common/lib/plugin_service";
 import { AwsWrapperError, FailoverSuccessError } from "../../common/lib/utils/errors";
 import { AwsMySQLClient } from "../../mysql/lib";
 import { anything, instance, mock, reset, spy, verify, when } from "ts-mockito";
@@ -51,7 +51,7 @@ const readerHost2 = builder.withHost("instance2").withRole(HostRole.READER).buil
 
 const defaultHosts = [writerHost, readerHost1, readerHost2];
 const singleReaderTopology = [writerHost, readerHost1];
-const mockPluginService: PluginService = mock(PluginService);
+const mockPluginService: PluginServiceImpl = mock(PluginServiceImpl);
 const mockReaderClient: AwsClient = mock(AwsMySQLClient);
 const mockWriterClient: AwsClient = mock(AwsMySQLClient);
 const mockNewWriterClient: AwsClient = mock(AwsMySQLClient);

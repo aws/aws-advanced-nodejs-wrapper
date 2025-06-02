@@ -16,7 +16,7 @@
 
 import { anything, instance, mock, reset, spy, when } from "ts-mockito";
 import { SessionStateServiceImpl } from "../../common/lib/session_state_service_impl";
-import { PluginService } from "../../common/lib/plugin_service";
+import { PluginServiceImpl } from "../../common/lib/plugin_service";
 import { AwsPGClient } from "../../pg/lib";
 import { SessionStateService } from "../../common/lib/session_state_service";
 import { AwsClient } from "../../common/lib/aws_client";
@@ -30,7 +30,7 @@ import { PgDatabaseDialect } from "../../pg/lib/dialect/pg_database_dialect";
 import { MySQL2DriverDialect } from "../../mysql/lib/dialect/mysql2_driver_dialect";
 
 const hostInfoBuilder = new HostInfoBuilder({ hostAvailabilityStrategy: new SimpleHostAvailabilityStrategy() });
-const mockPluginService = mock(PluginService);
+const mockPluginService = mock(PluginServiceImpl);
 let awsPGClient: AwsClient;
 let mockAwsPGClient: AwsClient;
 let awsMySQLClient: AwsClient;

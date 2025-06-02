@@ -23,7 +23,7 @@ import { TestEnvironmentFeatures } from "./utils/test_environment_features";
 import { features, instanceCount } from "./config";
 import { PluginManager } from "../../../../common/lib";
 import { RdsHostListProvider } from "../../../../common/lib/host_list_provider/rds_host_list_provider";
-import { PluginService } from "../../../../common/lib/plugin_service";
+import { PluginServiceImpl } from "../../../../common/lib/plugin_service";
 import { AwsWrapperError } from "../../../../common/lib/utils/errors";
 
 const itIf =
@@ -75,7 +75,7 @@ describe("aurora initial connection strategy", () => {
     await TestEnvironment.verifyAllInstancesUp();
 
     RdsHostListProvider.clearAll();
-    PluginService.clearHostAvailabilityCache();
+    PluginServiceImpl.clearHostAvailabilityCache();
     numReaders = env.databaseInfo.instances.length - 1;
   }, 1320000);
 

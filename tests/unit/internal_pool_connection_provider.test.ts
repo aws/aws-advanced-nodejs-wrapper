@@ -18,7 +18,7 @@ import { AwsClient } from "../../common/lib/aws_client";
 import { HostInfo } from "../../common/lib/host_info";
 import { HostInfoBuilder } from "../../common/lib/host_info_builder";
 import { HostRole } from "../../common/lib/host_role";
-import { PluginService } from "../../common/lib/plugin_service";
+import { PluginServiceImpl } from "../../common/lib/plugin_service";
 import { anything, instance, mock, reset, spy, when } from "ts-mockito";
 import { HostListProviderService } from "../../common/lib/host_list_provider_service";
 import { SimpleHostAvailabilityStrategy } from "../../common/lib/host_availability/simple_host_availability_strategy";
@@ -76,7 +76,7 @@ function getTestPoolMap() {
   return target;
 }
 const defaultHosts = [writerHost, readerHost1, readerHost2];
-const mockPluginService: PluginService = mock(PluginService);
+const mockPluginService: PluginServiceImpl = mock(PluginServiceImpl);
 const mockReaderClient: AwsClient = mock(AwsMySQLClient);
 const mockWriterClient: AwsClient = mock(AwsMySQLClient);
 const mockAwsMySQLClient: AwsClient = mock(AwsMySQLClient);

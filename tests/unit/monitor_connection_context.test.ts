@@ -17,10 +17,10 @@
 import { instance, mock, spy, verify } from "ts-mockito";
 import { MonitorConnectionContext } from "../../common/lib/plugins/efm/monitor_connection_context";
 import { MonitorImpl } from "../../common/lib/plugins/efm/monitor";
-import { PluginService } from "../../common/lib/plugin_service";
+import { PluginServiceImpl } from "../../common/lib/plugin_service";
 import { NullTelemetryFactory } from "../../common/lib/utils/telemetry/null_telemetry_factory";
 
-const mockPluginService: PluginService = mock(PluginService);
+const mockPluginService: PluginServiceImpl = mock(PluginServiceImpl);
 const mockMonitor = mock(MonitorImpl);
 const mockTargetClient = {
   end() {

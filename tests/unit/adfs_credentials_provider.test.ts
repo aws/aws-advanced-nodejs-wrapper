@@ -20,11 +20,11 @@ import { anything, instance, mock, spy, when } from "ts-mockito";
 import {
   AdfsCredentialsProviderFactory
 } from "../../common/lib/plugins/federated_auth/adfs_credentials_provider_factory";
-import { PluginService } from "../../common/lib/plugin_service";
+import { PluginServiceImpl } from "../../common/lib/plugin_service";
 import { NullTelemetryFactory } from "../../common/lib/utils/telemetry/null_telemetry_factory";
 
 const props = new Map<string, any>();
-const mockPluginService = mock(PluginService);
+const mockPluginService = mock(PluginServiceImpl);
 const telemetryFactory = new NullTelemetryFactory();
 
 const signInPageHtml = "tests/unit/resources/federated_auth/adfs-sign-in-page.html";
