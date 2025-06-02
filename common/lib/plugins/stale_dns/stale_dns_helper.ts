@@ -21,7 +21,7 @@ import { HostRole } from "../../host_role";
 import { PluginService } from "../../plugin_service";
 import { Messages } from "../../utils/messages";
 import { RdsUtils } from "../../utils/rds_utils";
-import { LookupAddress, lookup } from "dns";
+import { lookup, LookupAddress } from "dns";
 import { promisify } from "util";
 import { AwsWrapperError } from "../../utils/errors";
 import { HostChangeOptions } from "../../host_change_options";

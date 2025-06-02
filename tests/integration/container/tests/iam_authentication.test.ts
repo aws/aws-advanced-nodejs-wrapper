@@ -20,8 +20,6 @@ import { AwsWrapperError } from "../../../../common/lib/utils/errors";
 import { promisify } from "util";
 import { lookup } from "dns";
 import { readFileSync } from "fs";
-import { AwsPGClient } from "../../../../pg/lib";
-import { AwsMySQLClient } from "../../../../mysql/lib";
 import { IamAuthenticationPlugin } from "../../../../common/lib/authentication/iam_authentication_plugin";
 import { logger } from "../../../../common/logutils";
 import { TestEnvironmentFeatures } from "./utils/test_environment_features";

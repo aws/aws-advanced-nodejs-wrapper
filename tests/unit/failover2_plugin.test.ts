@@ -23,7 +23,12 @@ import { RdsHostListProvider } from "../../common/lib/host_list_provider/rds_hos
 import { HostRole } from "../../common/lib/host_role";
 import { PluginService } from "../../common/lib/plugin_service";
 import { FailoverMode } from "../../common/lib/plugins/failover/failover_mode";
-import { AwsWrapperError, FailoverFailedError, FailoverSuccessError, TransactionResolutionUnknownError } from "../../common/lib/utils/errors";
+import {
+  AwsWrapperError,
+  FailoverFailedError,
+  FailoverSuccessError,
+  TransactionResolutionUnknownError
+} from "../../common/lib/utils/errors";
 import { RdsUrlType } from "../../common/lib/utils/rds_url_type";
 import { RdsUtils } from "../../common/lib/utils/rds_utils";
 import { WrapperProperties } from "../../common/lib/wrapper_property";

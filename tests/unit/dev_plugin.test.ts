@@ -17,7 +17,7 @@
 import { PluginService } from "../../common/lib/plugin_service";
 import { HostInfo } from "../../common/lib/host_info";
 import { WrapperProperties } from "../../common/lib/wrapper_property";
-import { anything, instance, mock, spy, when } from "ts-mockito";
+import { anything, instance, mock, when } from "ts-mockito";
 import { DeveloperConnectionPlugin } from "../../common/lib/plugins/dev/developer_connection_plugin";
 import { RdsUtils } from "../../common/lib/utils/rds_utils";
 import { ErrorSimulatorMethodCallback } from "../../common/lib/plugins/dev/error_simulator_method_callback";

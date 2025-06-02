@@ -22,8 +22,6 @@ import { HostListProvider } from "./host_list_provider/host_list_provider";
 import { PluginManager } from "./plugin_manager";
 
 import pkgStream from "stream";
-const { EventEmitter } = pkgStream;
-
 import { DriverConnectionProvider } from "./driver_connection_provider";
 import { ClientWrapper } from "./client_wrapper";
 import { ConnectionProviderManager } from "./connection_provider_manager";
@@ -36,6 +34,8 @@ import { ConfigurationProfile } from "./profile/configuration_profile";
 import { AwsWrapperError } from "./utils/errors";
 import { Messages } from "./utils/messages";
 import { TransactionIsolationLevel } from "./utils/transaction_isolation_level";
+
+const { EventEmitter } = pkgStream;
 
 export abstract class AwsClient extends EventEmitter {
   private _defaultPort: number = -1;

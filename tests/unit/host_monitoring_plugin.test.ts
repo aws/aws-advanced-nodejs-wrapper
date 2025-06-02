@@ -28,7 +28,6 @@ import { RdsUrlType } from "../../common/lib/utils/rds_url_type";
 import { HostInfo } from "../../common/lib/host_info";
 import { HostChangeOptions } from "../../common/lib/host_change_options";
 import { OldConnectionSuggestionAction } from "../../common/lib/old_connection_suggestion_action";
-import { ClientWrapper } from "../../common/lib/client_wrapper";
 import { HostAvailability } from "../../common/lib/host_availability/host_availability";
 import { Messages } from "../../common/lib/utils/messages";
 import { AwsPGClient } from "../../pg/lib";

@@ -19,7 +19,7 @@ import { SimpleHostAvailabilityStrategy } from "../../common/lib/host_availabili
 import { RoundRobinHostSelector } from "../../common/lib/round_robin_host_selector";
 import { HostRole } from "../../common/lib/host_role";
 import { AwsWrapperError } from "../../common/lib/utils/errors";
-import { WrapperProperties, WrapperProperty } from "../../common/lib/wrapper_property";
+import { WrapperProperties } from "../../common/lib/wrapper_property";
 
 const TEST_PORT = 1234;
 

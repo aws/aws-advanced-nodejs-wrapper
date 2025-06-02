@@ -29,13 +29,14 @@ import { AwsPoolConfig } from "../../common/lib/aws_pool_config";
 import { RdsUtils } from "../../common/lib/utils/rds_utils";
 import { PoolKey } from "../../common/lib/utils/pool_key";
 import { InternalPoolMapping } from "../../common/lib/utils/internal_pool_mapping";
-import { SlidingExpirationCache } from "../../common/lib/utils/sliding_expiration_cache";
 import { AwsMysqlPoolClient } from "../../mysql/lib/mysql_pool_client";
 import { AwsMySQLClient } from "../../mysql/lib";
 import { MySQLDatabaseDialect } from "../../mysql/lib/dialect/mysql_database_dialect";
 import { MySQL2DriverDialect } from "../../mysql/lib/dialect/mysql2_driver_dialect";
 import { PoolClientWrapper } from "../../common/lib/pool_client_wrapper";
-import { SlidingExpirationCacheWithCleanupTask } from "../../common/lib/utils/sliding_expiration_cache_with_cleanup_task";
+import {
+  SlidingExpirationCacheWithCleanupTask
+} from "../../common/lib/utils/sliding_expiration_cache_with_cleanup_task";
 
 const user1 = "user1";
 const user2 = "user2";

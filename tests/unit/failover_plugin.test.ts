@@ -28,7 +28,12 @@ import { ClusterAwareReaderFailoverHandler } from "../../common/lib/plugins/fail
 import { ReaderFailoverResult } from "../../common/lib/plugins/failover/reader_failover_result";
 import { ClusterAwareWriterFailoverHandler } from "../../common/lib/plugins/failover/writer_failover_handler";
 import { WriterFailoverResult } from "../../common/lib/plugins/failover/writer_failover_result";
-import { AwsWrapperError, FailoverFailedError, FailoverSuccessError, TransactionResolutionUnknownError } from "../../common/lib/utils/errors";
+import {
+  AwsWrapperError,
+  FailoverFailedError,
+  FailoverSuccessError,
+  TransactionResolutionUnknownError
+} from "../../common/lib/utils/errors";
 import { RdsUrlType } from "../../common/lib/utils/rds_url_type";
 import { RdsUtils } from "../../common/lib/utils/rds_utils";
 import { WrapperProperties } from "../../common/lib/wrapper_property";

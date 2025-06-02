@@ -26,7 +26,6 @@ import { InternalPooledConnectionProvider } from "../../../../common/lib/interna
 import { PluginManager } from "../../../../common/lib";
 import { RdsHostListProvider } from "../../../../common/lib/host_list_provider/rds_host_list_provider";
 import { PluginService } from "../../../../common/lib/plugin_service";
-import { AwsPoolConfig } from "../../../../common/lib/aws_pool_config";
 
 const itIf =
   !features.includes(TestEnvironmentFeatures.PERFORMANCE) &&

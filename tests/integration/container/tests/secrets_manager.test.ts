@@ -23,7 +23,12 @@ import { logger } from "../../../../common/logutils";
 import { TestEnvironmentFeatures } from "./utils/test_environment_features";
 import { features, instanceCount } from "./config";
 import { PluginManager } from "../../../../common/lib";
-import { CreateSecretCommand, CreateSecretCommandOutput, DeleteSecretCommand, SecretsManagerClient } from "@aws-sdk/client-secrets-manager";
+import {
+  CreateSecretCommand,
+  CreateSecretCommandOutput,
+  DeleteSecretCommand,
+  SecretsManagerClient
+} from "@aws-sdk/client-secrets-manager";
 import { RDSClient } from "@aws-sdk/client-rds";
 import { AuroraTestUtility } from "./utils/aurora_test_utility";
 import { ProxyHelper } from "./utils/proxy_helper";
