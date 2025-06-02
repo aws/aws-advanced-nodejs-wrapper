@@ -33,7 +33,6 @@ import { WrapperProperties } from "../../common/lib/wrapper_property";
 import { ClientWrapper } from "../../common/lib/client_wrapper";
 import { InternalPooledConnectionProvider } from "../../common/lib/internal_pooled_connection_provider";
 import { AwsPoolConfig } from "../../common/lib/aws_pool_config";
-import { ConnectionProviderManager } from "../../common/lib/connection_provider_manager";
 import { InternalPoolMapping } from "../../common/lib/utils/internal_pool_mapping";
 import { DriverDialect } from "../../common/lib/driver_dialect/driver_dialect";
 import { MySQL2DriverDialect } from "../../mysql/lib/dialect/mysql2_driver_dialect";

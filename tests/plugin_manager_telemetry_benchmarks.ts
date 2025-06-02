@@ -14,7 +14,7 @@
   limitations under the License.
 */
 
-import { add, cycle, suite, save, complete, configure } from "benny";
+import { add, complete, configure, cycle, save, suite } from "benny";
 import { ConnectionPlugin, PluginManager } from "../common/lib";
 import { PluginServiceManagerContainer } from "../common/lib/plugin_service_manager_container";
 import { instance, mock, when } from "ts-mockito";

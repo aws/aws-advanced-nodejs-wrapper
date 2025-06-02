@@ -14,7 +14,7 @@
   limitations under the License.
 */
 
-import { anything, capture, instance, mock, spy, verify, when } from "ts-mockito";
+import { anything, capture, instance, mock, verify, when } from "ts-mockito";
 import { NullTelemetryFactory } from "../../common/lib/utils/telemetry/null_telemetry_factory";
 import { RDSClient } from "@aws-sdk/client-rds";
 import { PluginService } from "../../common/lib/plugin_service";

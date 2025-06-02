@@ -14,7 +14,10 @@
   limitations under the License.
 */
 
-import { AwsCredentialIdentityProvider, AwsCredentialIdentity } from "@smithy/types/dist-types/identity/awsCredentialIdentity";
+import {
+  AwsCredentialIdentity,
+  AwsCredentialIdentityProvider
+} from "@smithy/types/dist-types/identity/awsCredentialIdentity";
 
 export interface CredentialsProviderFactory {
   getAwsCredentialsProvider(host: string, region: string, props: Map<string, any>): Promise<AwsCredentialIdentity | AwsCredentialIdentityProvider>;

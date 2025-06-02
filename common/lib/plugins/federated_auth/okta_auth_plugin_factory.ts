@@ -17,7 +17,6 @@
 import { ConnectionPluginFactory } from "../../plugin_factory";
 import { PluginService } from "../../plugin_service";
 import { ConnectionPlugin } from "../../connection_plugin";
-import { logger } from "../../../logutils";
 import { AwsWrapperError } from "../../utils/errors";
 import { Messages } from "../../utils/messages";
 

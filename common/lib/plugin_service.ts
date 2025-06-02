@@ -19,7 +19,7 @@ import { ErrorHandler } from "./error_handler";
 import { HostInfo } from "./host_info";
 import { AwsClient } from "./aws_client";
 import { HostListProviderService } from "./host_list_provider_service";
-import { HostListProvider, BlockingHostListProvider } from "./host_list_provider/host_list_provider";
+import { BlockingHostListProvider, HostListProvider } from "./host_list_provider/host_list_provider";
 import { ConnectionUrlParser } from "./utils/connection_url_parser";
 import { DatabaseDialect, DatabaseType } from "./database_dialect/database_dialect";
 import { HostInfoBuilder } from "./host_info_builder";

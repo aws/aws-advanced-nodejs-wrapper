@@ -25,7 +25,9 @@ import { ClientWrapper } from "../../../common/lib/client_wrapper";
 import { DatabaseDialectCodes } from "../../../common/lib/database_dialect/database_dialect_codes";
 import { LimitlessDatabaseDialect } from "../../../common/lib/database_dialect/limitless_database_dialect";
 import { WrapperProperties } from "../../../common/lib/wrapper_property";
-import { MonitoringRdsHostListProvider } from "../../../common/lib/host_list_provider/monitoring/monitoring_host_list_provider";
+import {
+  MonitoringRdsHostListProvider
+} from "../../../common/lib/host_list_provider/monitoring/monitoring_host_list_provider";
 import { PluginService } from "../../../common/lib/plugin_service";
 
 export class AuroraPgDatabaseDialect extends PgDatabaseDialect implements TopologyAwareDatabaseDialect, LimitlessDatabaseDialect {
