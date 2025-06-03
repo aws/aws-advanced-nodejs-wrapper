@@ -14,7 +14,7 @@
   limitations under the License.
 */
 
-import { PluginService } from "../../common/lib/plugin_service";
+import { PluginServiceImpl } from "../../common/lib/plugin_service";
 import { anything, instance, mock, reset, spy, verify, when } from "ts-mockito";
 import { HostListProviderService } from "../../common/lib/host_list_provider_service";
 import { HostInfo } from "../../common/lib/host_info";
@@ -29,7 +29,7 @@ import { NullTelemetryFactory } from "../../common/lib/utils/telemetry/null_tele
 import { MySQLClientWrapper } from "../../common/lib/mysql_client_wrapper";
 import { jest } from "@jest/globals";
 
-const mockPluginService: PluginService = mock(PluginService);
+const mockPluginService: PluginServiceImpl = mock(PluginServiceImpl);
 const mockHostListProviderService = mock<HostListProviderService>();
 const props: Map<string, any> = new Map();
 

@@ -45,7 +45,95 @@ import { TelemetryFactory } from "./utils/telemetry/telemetry_factory";
 import { DriverDialect } from "./driver_dialect/driver_dialect";
 import { AllowedAndBlockedHosts } from "./AllowedAndBlockedHosts";
 
-export class PluginService implements ErrorHandler, HostListProviderService {
+export interface PluginService extends ErrorHandler {
+  isInTransaction(): boolean;
+
+  setInTransaction(inTransaction: boolean): void;
+
+  getHostListProvider(): HostListProvider | null;
+
+  getInitialConnectionHostInfo(): HostInfo | null;
+
+  setHostListProvider(hostListProvider: HostListProvider): void;
+
+  setInitialConnectionHostInfo(initialConnectionHostInfo: HostInfo): void;
+
+  getHostInfoByStrategy(role: HostRole, strategy: string, hosts?: HostInfo[]): HostInfo | undefined;
+
+  getCurrentHostInfo(): HostInfo | null;
+
+  setCurrentHostInfo(value: HostInfo): void;
+
+  getCurrentClient(): AwsClient;
+
+  getConnectionUrlParser(): ConnectionUrlParser;
+
+  getProperties(): Map<string, any>;
+
+  getDialect(): DatabaseDialect;
+
+  getDriverDialect(): DriverDialect;
+
+  getHostInfoBuilder(): HostInfoBuilder;
+
+  isStaticHostListProvider(): boolean;
+
+  acceptsStrategy(role: HostRole, strategy: string): boolean;
+
+  forceRefreshHostList(): Promise<void>;
+
+  forceRefreshHostList(targetClient: ClientWrapper): Promise<void>;
+
+  forceRefreshHostList(targetClient?: ClientWrapper): Promise<void>;
+
+  forceMonitoringRefresh(shouldVerifyWriter: boolean, timeoutMs: number): Promise<boolean>;
+
+  refreshHostList(): Promise<void>;
+
+  refreshHostList(targetClient: ClientWrapper): Promise<void>;
+
+  refreshHostList(targetClient?: ClientWrapper): Promise<void>;
+
+  getAllHosts(): HostInfo[];
+
+  getHosts(): HostInfo[];
+
+  setAvailability(hostAliases: Set<string>, availability: HostAvailability): void;
+
+  updateConfigWithProperties(props: Map<string, any>): void;
+
+  fillAliases(targetClient: ClientWrapper, hostInfo: HostInfo): Promise<void>;
+
+  identifyConnection(targetClient: ClientWrapper): Promise<HostInfo | null>;
+
+  connect(hostInfo: HostInfo, props: Map<string, any>): Promise<ClientWrapper>;
+
+  forceConnect(hostInfo: HostInfo, props: Map<string, any>): Promise<ClientWrapper>;
+
+  setCurrentClient(newClient: ClientWrapper, hostInfo: HostInfo): Promise<Set<HostChangeOptions>>;
+
+  isClientValid(targetClient: ClientWrapper): Promise<boolean>;
+
+  abortCurrentClient(): Promise<void>;
+
+  abortTargetClient(targetClient: ClientWrapper | undefined | null): Promise<void>;
+
+  getSessionStateService(): SessionStateService;
+
+  updateState(sql: string): Promise<void>;
+
+  updateInTransaction(sql: string): void;
+
+  updateDialect(targetClient: ClientWrapper): Promise<void>;
+
+  getHostRole(client: any): Promise<HostRole> | undefined;
+
+  getTelemetryFactory(): TelemetryFactory;
+
+  setAllowedAndBlockedHosts(allowedAndBlockedHosts: AllowedAndBlockedHosts): void;
+}
+
+export class PluginServiceImpl implements PluginService, HostListProviderService {
   private static readonly DEFAULT_HOST_AVAILABILITY_CACHE_EXPIRE_NANO = 5 * 60_000_000_000; // 5 minutes
   private readonly _currentClient: AwsClient;
   private _currentHostInfo?: HostInfo;
@@ -154,6 +242,10 @@ export class PluginService implements ErrorHandler, HostListProviderService {
     this._currentHostInfo = value;
   }
 
+  getProperties(): Map<string, any> {
+    return this.props;
+  }
+
   getCurrentClient(): AwsClient {
     return this._currentClient;
   }
@@ -234,7 +326,7 @@ export class PluginService implements ErrorHandler, HostListProviderService {
 
   private updateHostAvailability(hosts: HostInfo[]) {
     hosts.forEach((host) => {
-      const availability = PluginService.hostAvailabilityExpiringCache.get(host.url);
+      const availability = PluginServiceImpl.hostAvailabilityExpiringCache.get(host.url);
       if (availability != null) {
         host.availability = availability;
       }
@@ -352,7 +444,7 @@ export class PluginService implements ErrorHandler, HostListProviderService {
     const changes = new Map<string, Set<HostChangeOptions>>();
     for (const host of hostsToChange) {
       const currentAvailability = host.getAvailability();
-      PluginService.hostAvailabilityExpiringCache.put(host.url, availability, PluginService.DEFAULT_HOST_AVAILABILITY_CACHE_EXPIRE_NANO);
+      PluginServiceImpl.hostAvailabilityExpiringCache.put(host.url, availability, PluginServiceImpl.DEFAULT_HOST_AVAILABILITY_CACHE_EXPIRE_NANO);
       if (currentAvailability !== availability) {
         let hostChanges = new Set<HostChangeOptions>();
         if (availability === HostAvailability.AVAILABLE) {
@@ -606,6 +698,6 @@ export class PluginService implements ErrorHandler, HostListProviderService {
   }
 
   static clearHostAvailabilityCache(): void {
-    PluginService.hostAvailabilityExpiringCache.clear();
+    PluginServiceImpl.hostAvailabilityExpiringCache.clear();
   }
 }

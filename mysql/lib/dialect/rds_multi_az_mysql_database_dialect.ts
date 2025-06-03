@@ -56,7 +56,7 @@ export class RdsMultiAZMySQLDatabaseDialect extends MySQLDatabaseDialect impleme
 
   getHostListProvider(props: Map<string, any>, originalUrl: string, hostListProviderService: HostListProviderService): HostListProvider {
     if (WrapperProperties.PLUGINS.get(props).includes("failover2")) {
-      return new MonitoringRdsHostListProvider(props, originalUrl, hostListProviderService, <PluginService>hostListProviderService);
+      return new MonitoringRdsHostListProvider(props, originalUrl, hostListProviderService, <PluginService>(<unknown>hostListProviderService));
     }
     return new RdsHostListProvider(props, originalUrl, hostListProviderService);
   }

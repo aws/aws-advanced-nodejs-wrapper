@@ -14,7 +14,7 @@
   limitations under the License.
 */
 
-import { PluginService } from "../../common/lib/plugin_service";
+import { PluginServiceImpl } from "../../common/lib/plugin_service";
 import { IamAuthenticationPlugin } from "../../common/lib/authentication/iam_authentication_plugin";
 import { HostInfoBuilder } from "../../common/lib/host_info_builder";
 import { SimpleHostAvailabilityStrategy } from "../../common/lib/host_availability/simple_host_availability_strategy";
@@ -58,7 +58,7 @@ const MYSQL_HOST_INFO: HostInfo = new HostInfoBuilder({
 
 const props = new Map<string, any>();
 
-const mockPluginService: PluginService = mock(PluginService);
+const mockPluginService: PluginServiceImpl = mock(PluginServiceImpl);
 const mockClient: AwsClient = mock(AwsClient);
 const spyIamAuthUtils = spy(IamAuthUtils);
 

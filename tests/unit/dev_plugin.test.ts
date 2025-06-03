@@ -14,7 +14,7 @@
   limitations under the License.
 */
 
-import { PluginService } from "../../common/lib/plugin_service";
+import { PluginServiceImpl } from "../../common/lib/plugin_service";
 import { HostInfo } from "../../common/lib/host_info";
 import { WrapperProperties } from "../../common/lib/wrapper_property";
 import { anything, instance, mock, when } from "ts-mockito";
@@ -41,7 +41,7 @@ class ErrorSimulatorMethodCallbackImpl implements ErrorSimulatorMethodCallback {
 const defaultPort = 1234;
 const hostInfo = new HostInfo("pg.testdb.us-east-2.rds.amazonaws.com", defaultPort);
 
-const mockPluginService = mock(PluginService);
+const mockPluginService = mock(PluginServiceImpl);
 const mockRdsUtils = mock(RdsUtils);
 
 const properties: Map<string, any> = new Map();

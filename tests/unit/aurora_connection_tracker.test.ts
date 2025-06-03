@@ -18,7 +18,7 @@ import { FailoverError } from "../../common/lib/utils/errors";
 import { HostInfoBuilder } from "../../common/lib/host_info_builder";
 import { HostRole } from "../../common/lib/host_role";
 import { SimpleHostAvailabilityStrategy } from "../../common/lib/host_availability/simple_host_availability_strategy";
-import { PluginService } from "../../common/lib/plugin_service";
+import { PluginServiceImpl } from "../../common/lib/plugin_service";
 import { anything, instance, mock, reset, verify, when } from "ts-mockito";
 import {
   AuroraConnectionTrackerPlugin
@@ -36,7 +36,7 @@ import { MySQL2DriverDialect } from "../../mysql/lib/dialect/mysql2_driver_diale
 const props = new Map<string, any>();
 const SQL_ARGS = ["sql"];
 
-const mockPluginService = mock(PluginService);
+const mockPluginService = mock(PluginServiceImpl);
 const mockSqlFunc = jest.fn(() => {
   return Promise.resolve("0");
 });
