@@ -39,6 +39,7 @@ import { OTLPMetricExporter } from "@opentelemetry/exporter-metrics-otlp-grpc";
 import { logger } from "../../../../../common/logutils";
 import pkgPg from "pg";
 import { ConnectionOptions, createConnection } from "mysql2/promise";
+import { readFileSync } from "fs";
 
 export class TestEnvironment {
   private static env?: TestEnvironment;
@@ -113,7 +114,10 @@ export class TestEnvironment {
                 password: info?.databaseInfo.password,
                 database: info?.databaseInfo.defaultDbName,
                 query_timeout: 3000,
-                connectionTimeoutMillis: 3000
+                connectionTimeoutMillis: 3000,
+                ssl: {
+                  ca: readFileSync("/app/global-bundle.pem").toString()
+                }
               });
               await client.connect();
 
