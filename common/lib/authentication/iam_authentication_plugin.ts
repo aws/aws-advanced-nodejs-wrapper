@@ -21,7 +21,7 @@ import { AwsWrapperError } from "../utils/errors";
 import { HostInfo } from "../host_info";
 import { AwsCredentialsManager } from "./aws_credentials_manager";
 import { AbstractConnectionPlugin } from "../abstract_connection_plugin";
-import { WrapperProperties, WrapperProperty } from "../wrapper_property";
+import { WrapperProperties } from "../wrapper_property";
 import { IamAuthUtils, TokenInfo } from "../utils/iam_auth_utils";
 import { ClientWrapper } from "../client_wrapper";
 import { RegionUtils } from "../utils/region_utils";

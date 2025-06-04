@@ -16,7 +16,7 @@
 
 import { AwsPGClient } from "../../pg/lib";
 import { PluginManager } from "../../common/lib";
-import { PluginService } from "../../common/lib/plugin_service";
+import { PluginServiceImpl } from "../../common/lib/plugin_service";
 import { TelemetryFactory } from "../../common/lib/utils/telemetry/telemetry_factory";
 
 export class TestConnectionWrapper extends AwsPGClient {

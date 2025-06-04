@@ -14,14 +14,14 @@
   limitations under the License.
 */
 
-import { add, cycle, suite, save, complete, configure } from "benny";
+import { add, complete, configure, cycle, save, suite } from "benny";
 import { ConnectionPlugin, PluginManager } from "../common/lib";
 import { PluginServiceManagerContainer } from "../common/lib/plugin_service_manager_container";
 import { instance, mock, when } from "ts-mockito";
 import { ConnectionProvider } from "../common/lib/connection_provider";
 import { HostInfoBuilder } from "../common/lib/host_info_builder";
 import { SimpleHostAvailabilityStrategy } from "../common/lib/host_availability/simple_host_availability_strategy";
-import { PluginService } from "../common/lib/plugin_service";
+import { PluginService, PluginServiceImpl } from "../common/lib/plugin_service";
 import { HostListProviderService } from "../common/lib/host_list_provider_service";
 import { HostChangeOptions } from "../common/lib/host_change_options";
 import { WrapperProperties } from "../common/lib/wrapper_property";
@@ -37,7 +37,7 @@ import { AwsPGClient } from "../pg/lib";
 
 const mockConnectionProvider = mock<ConnectionProvider>();
 const mockHostListProviderService = mock<HostListProviderService>();
-const mockPluginService = mock(PluginService);
+const mockPluginService = mock(PluginServiceImpl);
 const mockClient = mock(AwsPGClient);
 const telemetryFactory = new NullTelemetryFactory();
 when(mockPluginService.getTelemetryFactory()).thenReturn(telemetryFactory);

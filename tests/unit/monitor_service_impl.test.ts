@@ -17,7 +17,7 @@
 import { anything, capture, instance, mock, reset, verify, when } from "ts-mockito";
 import { MonitorImpl } from "../../common/lib/plugins/efm/monitor";
 import { MonitorServiceImpl } from "../../common/lib/plugins/efm/monitor_service";
-import { PluginService } from "../../common/lib/plugin_service";
+import { PluginServiceImpl } from "../../common/lib/plugin_service";
 import { HostInfo } from "../../common/lib/host_info";
 import { HostInfoBuilder } from "../../common/lib/host_info_builder";
 import { SimpleHostAvailabilityStrategy } from "../../common/lib/host_availability/simple_host_availability_strategy";
@@ -33,7 +33,7 @@ class MonitorImplTest extends MonitorImpl {
   }
 }
 
-const mockPluginService = mock(PluginService);
+const mockPluginService = mock(PluginServiceImpl);
 const mockMonitorA = mock(MonitorImpl);
 const mockMonitorB = mock(MonitorImpl);
 const mockHostInfo = mock(HostInfo);

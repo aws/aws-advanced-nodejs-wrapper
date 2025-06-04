@@ -17,7 +17,12 @@
 import { TestEnvironment } from "./utils/test_environment";
 import { DriverHelper } from "./utils/driver_helper";
 import { AuroraTestUtility } from "./utils/aurora_test_utility";
-import { AwsWrapperError, FailoverFailedError, FailoverSuccessError, TransactionResolutionUnknownError } from "../../../../common/lib/utils/errors";
+import {
+  AwsWrapperError,
+  FailoverFailedError,
+  FailoverSuccessError,
+  TransactionResolutionUnknownError
+} from "../../../../common/lib/utils/errors";
 import { DatabaseEngine } from "./utils/database_engine";
 import { QueryResult } from "pg";
 import { ProxyHelper } from "./utils/proxy_helper";
@@ -30,7 +35,7 @@ import { InternalPoolMapping } from "../../../../common/lib/utils/internal_pool_
 import { HostInfo } from "../../../../common/lib/host_info";
 import { PluginManager } from "../../../../common/lib";
 import { RdsHostListProvider } from "../../../../common/lib/host_list_provider/rds_host_list_provider";
-import { PluginService } from "../../../../common/lib/plugin_service";
+import { PluginServiceImpl } from "../../../../common/lib/plugin_service";
 
 const itIf =
   !features.includes(TestEnvironmentFeatures.PERFORMANCE) &&
@@ -103,7 +108,7 @@ describe("aurora read write splitting", () => {
     await TestEnvironment.verifyAllInstancesUp();
 
     RdsHostListProvider.clearAll();
-    PluginService.clearHostAvailabilityCache();
+    PluginServiceImpl.clearHostAvailabilityCache();
   }, 1320000);
 
   afterEach(async () => {

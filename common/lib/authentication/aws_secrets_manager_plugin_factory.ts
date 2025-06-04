@@ -19,7 +19,6 @@ import { PluginService } from "../plugin_service";
 import { ConnectionPlugin } from "../connection_plugin";
 import { AwsWrapperError } from "../utils/errors";
 import { Messages } from "../utils/messages";
-import { logger } from "../../logutils";
 
 export class AwsSecretsManagerPluginFactory extends ConnectionPluginFactory {
   private static awsSecretsManagerPlugin: any;

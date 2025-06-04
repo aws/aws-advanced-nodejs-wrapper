@@ -14,13 +14,17 @@
   limitations under the License.
 */
 
-import { SecretsManagerServiceException, SecretsManagerClient } from "@aws-sdk/client-secrets-manager";
-import { AwsSecretsManagerPlugin, Secret, SecretCacheKey } from "../../common/lib/authentication/aws_secrets_manager_plugin";
+import { SecretsManagerClient, SecretsManagerServiceException } from "@aws-sdk/client-secrets-manager";
+import {
+  AwsSecretsManagerPlugin,
+  Secret,
+  SecretCacheKey
+} from "../../common/lib/authentication/aws_secrets_manager_plugin";
 import { AwsClient } from "../../common/lib/aws_client";
 import { SimpleHostAvailabilityStrategy } from "../../common/lib/host_availability/simple_host_availability_strategy";
 import { HostInfo } from "../../common/lib/host_info";
 import { HostInfoBuilder } from "../../common/lib/host_info_builder";
-import { PluginService } from "../../common/lib/plugin_service";
+import { PluginServiceImpl } from "../../common/lib/plugin_service";
 import { AwsWrapperError } from "../../common/lib/utils/errors";
 import { Messages } from "../../common/lib/utils/messages";
 import { WrapperProperties } from "../../common/lib/wrapper_property";
@@ -55,7 +59,7 @@ const VALID_SECRET_RESPONSE = {
   $metadata: {}
 };
 
-const mockPluginService: PluginService = mock(PluginService);
+const mockPluginService: PluginServiceImpl = mock(PluginServiceImpl);
 const mockClient: AwsClient = mock(AwsClient);
 const mockSecretsManagerClient: SecretsManagerClient = mock(SecretsManagerClient);
 const MYSQL_AUTH_ERROR = new Error("Access denied for user ''@'' (using password: NO)");

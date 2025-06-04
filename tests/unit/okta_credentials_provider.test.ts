@@ -17,8 +17,10 @@
 import { instance, mock, spy, when } from "ts-mockito";
 import { WrapperProperties } from "../../common/lib/wrapper_property";
 import { readFileSync } from "fs";
-import { OktaCredentialsProviderFactory } from "../../common/lib/plugins/federated_auth/okta_credentials_provider_factory";
-import { PluginService } from "../../common/lib/plugin_service";
+import {
+  OktaCredentialsProviderFactory
+} from "../../common/lib/plugins/federated_auth/okta_credentials_provider_factory";
+import { PluginServiceImpl } from "../../common/lib/plugin_service";
 import { NullTelemetryFactory } from "../../common/lib/utils/telemetry/null_telemetry_factory";
 import { jest } from "@jest/globals";
 import axios, { AxiosResponse } from "axios";
@@ -50,7 +52,7 @@ const getResponse: AxiosResponse = {
   headers: undefined
 };
 
-const mockPluginService = mock(PluginService);
+const mockPluginService = mock(PluginServiceImpl);
 
 describe("oktaCredentialsProviderTest", () => {
   let props: Map<string, any>;

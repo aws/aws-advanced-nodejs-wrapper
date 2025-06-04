@@ -16,7 +16,7 @@
 
 import { MonitorImpl } from "../../common/lib/plugins/efm/monitor";
 import { anything, instance, mock, reset, spy, verify, when } from "ts-mockito";
-import { PluginService } from "../../common/lib/plugin_service";
+import { PluginServiceImpl } from "../../common/lib/plugin_service";
 import { HostInfo } from "../../common/lib/host_info";
 import { AwsClient } from "../../common/lib/aws_client";
 import { MonitorConnectionContext } from "../../common/lib/plugins/efm/monitor_connection_context";
@@ -35,7 +35,7 @@ class MonitorImplTest extends MonitorImpl {
   }
 }
 
-const mockPluginService = mock(PluginService);
+const mockPluginService = mock(PluginServiceImpl);
 const mockHostInfo = mock(HostInfo);
 const mockClient = mock(AwsClient);
 const mockClientWrapper: ClientWrapper = new MySQLClientWrapper(undefined, mock(HostInfo), new Map<string, any>());

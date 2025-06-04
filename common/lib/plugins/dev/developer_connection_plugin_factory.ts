@@ -20,7 +20,6 @@ import { ConnectionPlugin } from "../../connection_plugin";
 import { RdsUtils } from "../../utils/rds_utils";
 import { Messages } from "../../utils/messages";
 import { AwsWrapperError } from "../../utils/errors";
-import { logger } from "../../../logutils";
 
 export class DeveloperConnectionPluginFactory extends ConnectionPluginFactory {
   private static developerPlugin: any;

@@ -20,7 +20,7 @@ import { PluginManager } from "../../common/lib";
 import { PluginServiceManagerContainer } from "../../common/lib/plugin_service_manager_container";
 import { DefaultPlugin } from "../../common/lib/plugins/default_plugin";
 import { instance, mock } from "ts-mockito";
-import { PluginService } from "../../common/lib/plugin_service";
+import { PluginServiceImpl } from "../../common/lib/plugin_service";
 import { DriverConnectionProvider } from "../../common/lib/driver_connection_provider";
 import { ConnectionProviderManager } from "../../common/lib/connection_provider_manager";
 import { NullTelemetryFactory } from "../../common/lib/utils/telemetry/null_telemetry_factory";
@@ -47,7 +47,7 @@ const container: PluginServiceManagerContainer = new PluginServiceManagerContain
 const props: Map<string, any> = mock(Map<string, any>);
 const hostListChanges: Map<string, Set<HostChangeOptions>> = mock(Map<string, Set<HostChangeOptions>>);
 const connectionChanges: Set<HostChangeOptions> = mock(Set<HostChangeOptions>);
-const mockPluginService = mock(PluginService);
+const mockPluginService = mock(PluginServiceImpl);
 
 describe("notificationPipelineTest", () => {
   let pluginManager: PluginManager;

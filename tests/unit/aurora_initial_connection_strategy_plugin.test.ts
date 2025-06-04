@@ -14,8 +14,10 @@
   limitations under the License.
 */
 
-import { AuroraInitialConnectionStrategyPlugin } from "../../common/lib/plugins/aurora_initial_connection_strategy_plugin";
-import { PluginService } from "../../common/lib/plugin_service";
+import {
+  AuroraInitialConnectionStrategyPlugin
+} from "../../common/lib/plugins/aurora_initial_connection_strategy_plugin";
+import { PluginServiceImpl } from "../../common/lib/plugin_service";
 import { anything, instance, mock, reset, spy, verify, when } from "ts-mockito";
 import { WrapperProperties } from "../../common/lib/wrapper_property";
 import { HostInfoBuilder } from "../../common/lib/host_info_builder";
@@ -32,7 +34,7 @@ import { jest } from "@jest/globals";
 import { PgClientWrapper } from "../../common/lib/pg_client_wrapper";
 import { MySQL2DriverDialect } from "../../mysql/lib/dialect/mysql2_driver_dialect";
 
-const mockPluginService = mock(PluginService);
+const mockPluginService = mock(PluginServiceImpl);
 const mockHostListProviderService = mock<HostListProviderService>();
 const mockRdsUtils = mock(RdsUtils);
 const mockReaderHostInfo = mock(HostInfo);

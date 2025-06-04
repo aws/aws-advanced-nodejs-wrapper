@@ -22,7 +22,7 @@ import { RdsMySQLDatabaseDialect } from "../../mysql/lib/dialect/rds_mysql_datab
 import { RdsPgDatabaseDialect } from "../../pg/lib/dialect/rds_pg_database_dialect";
 import { DatabaseDialect, DatabaseType } from "../../common/lib/database_dialect/database_dialect";
 import { DatabaseDialectCodes } from "../../common/lib/database_dialect/database_dialect_codes";
-import { PluginService } from "../../common/lib/plugin_service";
+import { PluginServiceImpl } from "../../common/lib/plugin_service";
 import { PluginServiceManagerContainer } from "../../common/lib/plugin_service_manager_container";
 import { AwsPGClient } from "../../pg/lib";
 import { WrapperProperties } from "../../common/lib/wrapper_property";
@@ -272,7 +272,7 @@ describe("test database dialects", () => {
     }).build();
 
     const mockClientWrapper: ClientWrapper = new PgClientWrapper(mockTargetClient, currentHostInfo, new Map<string, any>());
-    const pluginService = new PluginService(
+    const pluginService = new PluginServiceImpl(
       pluginServiceManagerContainer,
       mockClient,
       databaseType,

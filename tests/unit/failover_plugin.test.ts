@@ -21,14 +21,19 @@ import { HostInfo } from "../../common/lib/host_info";
 import { HostInfoBuilder } from "../../common/lib/host_info_builder";
 import { RdsHostListProvider } from "../../common/lib/host_list_provider/rds_host_list_provider";
 import { HostRole } from "../../common/lib/host_role";
-import { PluginService } from "../../common/lib/plugin_service";
+import { PluginServiceImpl } from "../../common/lib/plugin_service";
 import { FailoverMode } from "../../common/lib/plugins/failover/failover_mode";
 import { FailoverPlugin } from "../../common/lib/plugins/failover/failover_plugin";
 import { ClusterAwareReaderFailoverHandler } from "../../common/lib/plugins/failover/reader_failover_handler";
 import { ReaderFailoverResult } from "../../common/lib/plugins/failover/reader_failover_result";
 import { ClusterAwareWriterFailoverHandler } from "../../common/lib/plugins/failover/writer_failover_handler";
 import { WriterFailoverResult } from "../../common/lib/plugins/failover/writer_failover_result";
-import { AwsWrapperError, FailoverFailedError, FailoverSuccessError, TransactionResolutionUnknownError } from "../../common/lib/utils/errors";
+import {
+  AwsWrapperError,
+  FailoverFailedError,
+  FailoverSuccessError,
+  TransactionResolutionUnknownError
+} from "../../common/lib/utils/errors";
 import { RdsUrlType } from "../../common/lib/utils/rds_url_type";
 import { RdsUtils } from "../../common/lib/utils/rds_utils";
 import { WrapperProperties } from "../../common/lib/wrapper_property";
@@ -42,7 +47,7 @@ import { MySQL2DriverDialect } from "../../mysql/lib/dialect/mysql2_driver_diale
 
 const builder = new HostInfoBuilder({ hostAvailabilityStrategy: new SimpleHostAvailabilityStrategy() });
 
-const mockPluginService: PluginService = mock(PluginService);
+const mockPluginService: PluginServiceImpl = mock(PluginServiceImpl);
 const mockAwsClient: AwsClient = mock(AwsClient);
 const mockMySQLClient: AwsClient = mock(AwsMySQLClient);
 const mockHostInfo: HostInfo = mock(HostInfo);
