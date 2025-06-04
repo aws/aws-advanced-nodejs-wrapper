@@ -494,7 +494,7 @@ export class Failover2Plugin extends AbstractConnectionPlugin implements CanRele
 
   async releaseResources(): Promise<void> {
     const hostListProvider: HostListProvider = this.pluginService.getHostListProvider();
-    if (this.pluginService.isBlockingHostListProvider(hostListProvider)) {
+    if (this.hostListProviderService.isBlockingHostListProvider(hostListProvider)) {
       await (hostListProvider as BlockingHostListProvider).clearAll();
     }
   }

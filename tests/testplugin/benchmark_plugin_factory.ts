@@ -15,7 +15,7 @@
 */
 
 import { ConnectionPluginFactory } from "../../common/lib/plugin_factory";
-import { PluginService } from "../../common/lib/plugin_service";
+import { PluginServiceImpl } from "../../common/lib/plugin_service";
 import { ConnectionPlugin } from "../../common/lib";
 import { AwsWrapperError } from "../../common/lib/utils/errors";
 import { Messages } from "../../common/lib/utils/messages";

@@ -16,7 +16,7 @@
 
 import { HostInfo } from "../../common/lib/host_info";
 import { FederatedAuthPlugin } from "../../common/lib/plugins/federated_auth/federated_auth_plugin";
-import { PluginService } from "../../common/lib/plugin_service";
+import { PluginServiceImpl } from "../../common/lib/plugin_service";
 import { IamAuthUtils, TokenInfo } from "../../common/lib/utils/iam_auth_utils";
 import { WrapperProperties } from "../../common/lib/wrapper_property";
 import { anything, instance, mock, spy, verify, when } from "ts-mockito";
@@ -42,7 +42,7 @@ const testTokenInfo = new TokenInfo(testToken, Date.now() + expirationFiveMinute
 
 const mockDialect = mock<DatabaseDialect>();
 const mockDialectInstance = instance(mockDialect);
-const mockPluginService = mock(PluginService);
+const mockPluginService = mock(PluginServiceImpl);
 const mockCredentialsProviderFactory = mock<CredentialsProviderFactory>();
 const spyIamUtils = spy(IamAuthUtils);
 const testCredentials = {

@@ -17,7 +17,9 @@
 import { DatabaseDialect, DatabaseType } from "../../../common/lib/database_dialect/database_dialect";
 import { HostListProviderService } from "../../../common/lib/host_list_provider_service";
 import { HostListProvider } from "../../../common/lib/host_list_provider/host_list_provider";
-import { ConnectionStringHostListProvider } from "../../../common/lib/host_list_provider/connection_string_host_list_provider";
+import {
+  ConnectionStringHostListProvider
+} from "../../../common/lib/host_list_provider/connection_string_host_list_provider";
 import { AwsWrapperError, UnsupportedMethodError } from "../../../common/lib/utils/errors";
 import { DatabaseDialectCodes } from "../../../common/lib/database_dialect/database_dialect_codes";
 import { TransactionIsolationLevel } from "../../../common/lib/utils/transaction_isolation_level";

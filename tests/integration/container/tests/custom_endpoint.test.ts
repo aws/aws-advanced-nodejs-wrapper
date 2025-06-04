@@ -35,7 +35,6 @@ import { logger } from "../../../../common/logutils";
 import { ProxyHelper } from "./utils/proxy_helper";
 import { PluginManager } from "../../../../common/lib";
 import { TestDriver } from "./utils/test_driver";
-import { DatabaseEngineDeployment } from "./utils/database_engine_deployment";
 
 const itIf =
   features.includes(TestEnvironmentFeatures.FAILOVER_SUPPORTED) &&

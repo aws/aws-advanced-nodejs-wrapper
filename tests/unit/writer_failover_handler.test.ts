@@ -16,11 +16,11 @@
 
 import { SimpleHostAvailabilityStrategy } from "../../common/lib/host_availability/simple_host_availability_strategy";
 import { HostInfoBuilder } from "../../common/lib/host_info_builder";
-import { PluginService } from "../../common/lib/plugin_service";
+import { PluginServiceImpl } from "../../common/lib/plugin_service";
 import { AwsWrapperError } from "../../common/lib/utils/errors";
 import { ClusterAwareReaderFailoverHandler } from "../../common/lib/plugins/failover/reader_failover_handler";
 import { ClusterAwareWriterFailoverHandler } from "../../common/lib/plugins/failover/writer_failover_handler";
-import { mock, instance, when, anything, verify, reset } from "ts-mockito";
+import { anything, instance, mock, reset, verify, when } from "ts-mockito";
 import { HostAvailability } from "../../common/lib/host_availability/host_availability";
 import { ReaderFailoverResult } from "../../common/lib/plugins/failover/reader_failover_result";
 import { AwsPGClient } from "../../pg/lib";
@@ -44,7 +44,7 @@ const properties = new Map<string, any>();
 
 const mockClient = mock(AwsPGClient); // Using AwsPGClient in order to have abstract method implementations.
 const mockClientInstance = instance(mockClient);
-const mockPluginService = mock(PluginService);
+const mockPluginService = mock(PluginServiceImpl);
 const mockReaderFailover = mock(ClusterAwareReaderFailoverHandler);
 const mockDriverDialect: DriverDialect = mock(MySQL2DriverDialect);
 

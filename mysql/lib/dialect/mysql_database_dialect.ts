@@ -17,7 +17,9 @@
 import { DatabaseDialect, DatabaseType } from "../../../common/lib/database_dialect/database_dialect";
 import { HostListProviderService } from "../../../common/lib/host_list_provider_service";
 import { HostListProvider } from "../../../common/lib/host_list_provider/host_list_provider";
-import { ConnectionStringHostListProvider } from "../../../common/lib/host_list_provider/connection_string_host_list_provider";
+import {
+  ConnectionStringHostListProvider
+} from "../../../common/lib/host_list_provider/connection_string_host_list_provider";
 import { AwsWrapperError, UnsupportedMethodError } from "../../../common/lib/utils/errors";
 import { DatabaseDialectCodes } from "../../../common/lib/database_dialect/database_dialect_codes";
 import { TransactionIsolationLevel } from "../../../common/lib/utils/transaction_isolation_level";
@@ -26,7 +28,6 @@ import { ClientUtils } from "../../../common/lib/utils/client_utils";
 import { FailoverRestriction } from "../../../common/lib/plugins/failover/failover_restriction";
 import { ErrorHandler } from "../../../common/lib/error_handler";
 import { MySQLErrorHandler } from "../mysql_error_handler";
-import { SessionState } from "../../../common/lib/session_state";
 import { Messages } from "../../../common/lib/utils/messages";
 import { HostRole } from "../../../common/lib/host_role";
 

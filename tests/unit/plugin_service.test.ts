@@ -14,7 +14,7 @@
   limitations under the License.
 */
 
-import { PluginService } from "../../common/lib/plugin_service";
+import { PluginServiceImpl } from "../../common/lib/plugin_service";
 import { PluginServiceManagerContainer } from "../../common/lib/plugin_service_manager_container";
 import { mock } from "ts-mockito";
 import { AwsClient } from "../../common/lib/aws_client";
@@ -45,7 +45,7 @@ const host3 = createHost("host-3");
 const host4 = createHost("host-4");
 const allHosts = [host1, host2, host3, host4];
 
-class TestPluginService extends PluginService {
+class TestPluginService extends PluginServiceImpl {
   setHosts(hosts: HostInfo[]) {
     this.hosts = hosts;
   }

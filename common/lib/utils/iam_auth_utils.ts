@@ -21,7 +21,10 @@ import { AwsWrapperError } from "./errors";
 import { Messages } from "./messages";
 import { RdsUtils } from "./rds_utils";
 import { Signer } from "@aws-sdk/rds-signer";
-import { AwsCredentialIdentityProvider, AwsCredentialIdentity } from "@smithy/types/dist-types/identity/awsCredentialIdentity";
+import {
+  AwsCredentialIdentity,
+  AwsCredentialIdentityProvider
+} from "@smithy/types/dist-types/identity/awsCredentialIdentity";
 import { PluginService } from "../plugin_service";
 import { TelemetryTraceLevel } from "./telemetry/telemetry_trace_level";
 

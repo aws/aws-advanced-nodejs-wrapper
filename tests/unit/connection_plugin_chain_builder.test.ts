@@ -17,7 +17,7 @@
 import { WrapperProperties } from "../../common/lib/wrapper_property";
 import { instance, mock, when } from "ts-mockito";
 import { ConnectionPluginChainBuilder } from "../../common/lib/connection_plugin_chain_builder";
-import { PluginService } from "../../common/lib/plugin_service";
+import { PluginServiceImpl } from "../../common/lib/plugin_service";
 import { ConnectionProvider } from "../../common/lib/connection_provider";
 import { DriverConnectionProvider } from "../../common/lib/driver_connection_provider";
 import { FailoverPlugin } from "../../common/lib/plugins/failover/failover_plugin";
@@ -32,7 +32,7 @@ import { AbstractConnectionPlugin } from "../../common/lib/abstract_connection_p
 import { ConnectionPluginFactory } from "../../common/lib/plugin_factory";
 import { PluginManager } from "../../common/lib";
 
-const mockPluginService: PluginService = mock(PluginService);
+const mockPluginService: PluginServiceImpl = mock(PluginServiceImpl);
 const mockPluginServiceInstance: PluginService = instance(mockPluginService);
 const mockDefaultConnProvider: ConnectionProvider = mock(DriverConnectionProvider);
 const mockEffectiveConnProvider: ConnectionProvider = mock(DriverConnectionProvider);

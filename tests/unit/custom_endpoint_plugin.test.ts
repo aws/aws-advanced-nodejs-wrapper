@@ -19,14 +19,14 @@ import { anything, instance, mock, spy, verify, when } from "ts-mockito";
 import { NullTelemetryFactory } from "../../common/lib/utils/telemetry/null_telemetry_factory";
 import { RDSClient } from "@aws-sdk/client-rds";
 import { CustomEndpointPlugin } from "../../common/lib/plugins/custom_endpoint/custom_endpoint_plugin";
-import { PluginService } from "../../common/lib/plugin_service";
+import { PluginServiceImpl } from "../../common/lib/plugin_service";
 import { CustomEndpointMonitorImpl } from "../../common/lib/plugins/custom_endpoint/custom_endpoint_monitor_impl";
 import { HostInfoBuilder } from "../../common/lib/host_info_builder";
 import { SimpleHostAvailabilityStrategy } from "../../common/lib/host_availability/simple_host_availability_strategy";
 import { AwsWrapperError } from "../../common/lib/utils/errors";
 
 const mockRdsClientFunc = () => instance(mock(RDSClient));
-const mockPluginService = mock(PluginService);
+const mockPluginService = mock(PluginServiceImpl);
 when(mockPluginService.getTelemetryFactory()).thenReturn(new NullTelemetryFactory());
 const mockMonitor = mock(CustomEndpointMonitorImpl);
 

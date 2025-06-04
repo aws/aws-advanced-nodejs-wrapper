@@ -16,7 +16,7 @@
 
 import { RdsHostListProvider } from "../../common/lib/host_list_provider/rds_host_list_provider";
 import { anything, instance, mock, reset, spy, verify, when } from "ts-mockito";
-import { PluginService } from "../../common/lib/plugin_service";
+import { PluginService, PluginServiceImpl } from "../../common/lib/plugin_service";
 import { AwsClient } from "../../common/lib/aws_client";
 import { HostInfo } from "../../common/lib/host_info";
 import { HostInfoBuilder } from "../../common/lib/host_info_builder";
@@ -33,7 +33,7 @@ import { PgClientWrapper } from "../../common/lib/pg_client_wrapper";
 
 const mockClient: AwsClient = mock(AwsPGClient);
 const mockDialect: AuroraPgDatabaseDialect = mock(AuroraPgDatabaseDialect);
-const mockPluginService: PluginService = mock(PluginService);
+const mockPluginService: PluginServiceImpl = mock(PluginServiceImpl);
 const connectionUrlParser: ConnectionUrlParser = new PgConnectionUrlParser();
 
 const hosts: HostInfo[] = [

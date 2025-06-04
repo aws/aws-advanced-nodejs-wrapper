@@ -15,7 +15,7 @@
 */
 
 import { TelemetryContext } from "./telemetry_context";
-import { context, SpanStatusCode, trace, Span as APISpan, Tracer, createContextKey } from "@opentelemetry/api";
+import { context, createContextKey, Span as APISpan, SpanStatusCode, trace, Tracer } from "@opentelemetry/api";
 import { TelemetryTraceLevel } from "./telemetry_trace_level";
 import { TelemetryConst } from "./telemetry_const";
 import { api } from "@opentelemetry/sdk-node";

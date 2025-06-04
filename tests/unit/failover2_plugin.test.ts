@@ -21,9 +21,14 @@ import { HostInfo } from "../../common/lib/host_info";
 import { HostInfoBuilder } from "../../common/lib/host_info_builder";
 import { RdsHostListProvider } from "../../common/lib/host_list_provider/rds_host_list_provider";
 import { HostRole } from "../../common/lib/host_role";
-import { PluginService } from "../../common/lib/plugin_service";
+import { PluginServiceImpl } from "../../common/lib/plugin_service";
 import { FailoverMode } from "../../common/lib/plugins/failover/failover_mode";
-import { AwsWrapperError, FailoverFailedError, FailoverSuccessError, TransactionResolutionUnknownError } from "../../common/lib/utils/errors";
+import {
+  AwsWrapperError,
+  FailoverFailedError,
+  FailoverSuccessError,
+  TransactionResolutionUnknownError
+} from "../../common/lib/utils/errors";
 import { RdsUrlType } from "../../common/lib/utils/rds_url_type";
 import { RdsUtils } from "../../common/lib/utils/rds_utils";
 import { WrapperProperties } from "../../common/lib/wrapper_property";
@@ -38,7 +43,7 @@ import { Failover2Plugin } from "../../common/lib/plugins/failover2/failover2_pl
 
 const builder = new HostInfoBuilder({ hostAvailabilityStrategy: new SimpleHostAvailabilityStrategy() });
 
-const mockPluginService: PluginService = mock(PluginService);
+const mockPluginService: PluginServiceImpl = mock(PluginServiceImpl);
 const mockAwsClient: AwsClient = mock(AwsClient);
 const mockMySQLClient: AwsClient = mock(AwsMySQLClient);
 const mockHostInfo: HostInfo = mock(HostInfo);

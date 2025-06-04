@@ -29,7 +29,9 @@ import { ErrorHandler } from "../../../common/lib/error_handler";
 import { MultiAzPgErrorHandler } from "../multi_az_pg_error_handler";
 import { WrapperProperties } from "../../../common/lib/wrapper_property";
 import { PluginService } from "../../../common/lib/plugin_service";
-import { MonitoringRdsHostListProvider } from "../../../common/lib/host_list_provider/monitoring/monitoring_host_list_provider";
+import {
+  MonitoringRdsHostListProvider
+} from "../../../common/lib/host_list_provider/monitoring/monitoring_host_list_provider";
 
 export class RdsMultiAZPgDatabaseDialect extends PgDatabaseDialect implements TopologyAwareDatabaseDialect {
   constructor() {
@@ -59,7 +61,7 @@ export class RdsMultiAZPgDatabaseDialect extends PgDatabaseDialect implements To
 
   getHostListProvider(props: Map<string, any>, originalUrl: string, hostListProviderService: HostListProviderService): HostListProvider {
     if (WrapperProperties.PLUGINS.get(props).includes("failover2")) {
-      return new MonitoringRdsHostListProvider(props, originalUrl, hostListProviderService, <PluginService>hostListProviderService);
+      return new MonitoringRdsHostListProvider(props, originalUrl, hostListProviderService, <PluginService>(<unknown>hostListProviderService));
     }
     return new RdsHostListProvider(props, originalUrl, hostListProviderService);
   }

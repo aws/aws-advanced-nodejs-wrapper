@@ -18,7 +18,7 @@ import { AwsClient } from "../../common/lib/aws_client";
 import { HostInfo } from "../../common/lib/host_info";
 import { HostInfoBuilder } from "../../common/lib/host_info_builder";
 import { HostRole } from "../../common/lib/host_role";
-import { PluginService } from "../../common/lib/plugin_service";
+import { PluginServiceImpl } from "../../common/lib/plugin_service";
 import { AwsWrapperError, FailoverSuccessError } from "../../common/lib/utils/errors";
 import { AwsMySQLClient } from "../../mysql/lib";
 import { anything, instance, mock, reset, spy, verify, when } from "ts-mockito";
@@ -33,7 +33,6 @@ import { WrapperProperties } from "../../common/lib/wrapper_property";
 import { ClientWrapper } from "../../common/lib/client_wrapper";
 import { InternalPooledConnectionProvider } from "../../common/lib/internal_pooled_connection_provider";
 import { AwsPoolConfig } from "../../common/lib/aws_pool_config";
-import { ConnectionProviderManager } from "../../common/lib/connection_provider_manager";
 import { InternalPoolMapping } from "../../common/lib/utils/internal_pool_mapping";
 import { DriverDialect } from "../../common/lib/driver_dialect/driver_dialect";
 import { MySQL2DriverDialect } from "../../mysql/lib/dialect/mysql2_driver_dialect";
@@ -52,7 +51,7 @@ const readerHost2 = builder.withHost("instance2").withRole(HostRole.READER).buil
 
 const defaultHosts = [writerHost, readerHost1, readerHost2];
 const singleReaderTopology = [writerHost, readerHost1];
-const mockPluginService: PluginService = mock(PluginService);
+const mockPluginService: PluginServiceImpl = mock(PluginServiceImpl);
 const mockReaderClient: AwsClient = mock(AwsMySQLClient);
 const mockWriterClient: AwsClient = mock(AwsMySQLClient);
 const mockNewWriterClient: AwsClient = mock(AwsMySQLClient);
