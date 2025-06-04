@@ -119,25 +119,14 @@ export class TestEnvironment {
                   ca: readFileSync("/app/global-bundle.pem").toString()
                 }
               });
-              logger.debug("startingConnection");
-              const startTimeConnect = Date.now();
               await client.connect();
-              const endTimeConnect = Date.now();
-
-              logger.debug("finishedConnectionafter: " + (endTimeConnect - startTimeConnect));
-
-              const startTimeQuery = Date.now();
 
               await client.query("select 1");
-              const endTimeQuery = Date.now();
-
-              logger.debug("finishedQueryafter: " + (endTimeQuery - startTimeQuery));
 
               logger.info("Instance " + instanceId + " is up.");
               instanceIdSet.delete(instanceId);
             } catch (e: any) {
               // do nothing; let's continue checking
-              logger.error("ERRORInstanceID " + e);
             } finally {
               if (client) {
                 try {
