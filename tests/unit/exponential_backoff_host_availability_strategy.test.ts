@@ -14,7 +14,9 @@
   limitations under the License.
 */
 
-import { ExponentialBackoffHostAvailabilityStrategy } from "../../common/lib/host_availability/exponential_backoff_host_availability_strategy";
+import {
+  ExponentialBackoffHostAvailabilityStrategy
+} from "../../common/lib/host_availability/exponential_backoff_host_availability_strategy";
 import { HostAvailability } from "../../common/lib/host_availability/host_availability";
 import { sleep } from "../../common/lib/utils/utils";
 import { WrapperProperties } from "../../common/lib/wrapper_property";

@@ -18,7 +18,7 @@ import { AwsClient } from "../../common/lib/aws_client";
 import { HostInfo } from "../../common/lib/host_info";
 import { HostInfoBuilder } from "../../common/lib/host_info_builder";
 import { HostRole } from "../../common/lib/host_role";
-import { PluginService } from "../../common/lib/plugin_service";
+import { PluginServiceImpl } from "../../common/lib/plugin_service";
 import { anything, instance, mock, reset, spy, when } from "ts-mockito";
 import { HostListProviderService } from "../../common/lib/host_list_provider_service";
 import { SimpleHostAvailabilityStrategy } from "../../common/lib/host_availability/simple_host_availability_strategy";
@@ -29,13 +29,14 @@ import { AwsPoolConfig } from "../../common/lib/aws_pool_config";
 import { RdsUtils } from "../../common/lib/utils/rds_utils";
 import { PoolKey } from "../../common/lib/utils/pool_key";
 import { InternalPoolMapping } from "../../common/lib/utils/internal_pool_mapping";
-import { SlidingExpirationCache } from "../../common/lib/utils/sliding_expiration_cache";
 import { AwsMysqlPoolClient } from "../../mysql/lib/mysql_pool_client";
 import { AwsMySQLClient } from "../../mysql/lib";
 import { MySQLDatabaseDialect } from "../../mysql/lib/dialect/mysql_database_dialect";
 import { MySQL2DriverDialect } from "../../mysql/lib/dialect/mysql2_driver_dialect";
 import { PoolClientWrapper } from "../../common/lib/pool_client_wrapper";
-import { SlidingExpirationCacheWithCleanupTask } from "../../common/lib/utils/sliding_expiration_cache_with_cleanup_task";
+import {
+  SlidingExpirationCacheWithCleanupTask
+} from "../../common/lib/utils/sliding_expiration_cache_with_cleanup_task";
 
 const user1 = "user1";
 const user2 = "user2";
@@ -75,7 +76,7 @@ function getTestPoolMap() {
   return target;
 }
 const defaultHosts = [writerHost, readerHost1, readerHost2];
-const mockPluginService: PluginService = mock(PluginService);
+const mockPluginService: PluginServiceImpl = mock(PluginServiceImpl);
 const mockReaderClient: AwsClient = mock(AwsMySQLClient);
 const mockWriterClient: AwsClient = mock(AwsMySQLClient);
 const mockAwsMySQLClient: AwsClient = mock(AwsMySQLClient);

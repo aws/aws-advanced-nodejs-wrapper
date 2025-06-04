@@ -16,7 +16,7 @@
 
 import { anything, instance, mock, when } from "ts-mockito";
 import { ConnectionProvider } from "../common/lib/connection_provider";
-import { PluginService } from "../common/lib/plugin_service";
+import { PluginServiceImpl } from "../common/lib/plugin_service";
 import { PluginServiceManagerContainer } from "../common/lib/plugin_service_manager_container";
 import { WrapperProperties } from "../common/lib/wrapper_property";
 import { PluginManager } from "../common/lib";
@@ -32,7 +32,7 @@ import { NodePostgresDriverDialect } from "../pg/lib/dialect/node_postgres_drive
 import { DriverDialect } from "../common/lib/driver_dialect/driver_dialect";
 
 const mockConnectionProvider = mock<ConnectionProvider>();
-const mockPluginService = mock(PluginService);
+const mockPluginService = mock(PluginServiceImpl);
 const mockClient = mock(AwsPGClient);
 
 const hostInfo = new HostInfoBuilder({ hostAvailabilityStrategy: new SimpleHostAvailabilityStrategy() }).withHost("host").build();

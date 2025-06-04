@@ -24,7 +24,6 @@ import { getCurrentTimeNano, sleep } from "../../utils/utils";
 import { TelemetryFactory } from "../../utils/telemetry/telemetry_factory";
 import { TelemetryCounter } from "../../utils/telemetry/telemetry_counter";
 import { TelemetryTraceLevel } from "../../utils/telemetry/telemetry_trace_level";
-import { HostResponseTimeMonitor } from "../strategy/fastest_response/host_response_time_monitor";
 import { WrapperProperties } from "../../wrapper_property";
 
 export interface Monitor {

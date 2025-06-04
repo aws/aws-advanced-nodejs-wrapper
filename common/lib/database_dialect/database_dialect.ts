@@ -19,7 +19,6 @@ import { HostListProviderService } from "../host_list_provider_service";
 import { ClientWrapper } from "../client_wrapper";
 import { FailoverRestriction } from "../plugins/failover/failover_restriction";
 import { ErrorHandler } from "../error_handler";
-import { SessionState } from "../session_state";
 import { TransactionIsolationLevel } from "../utils/transaction_isolation_level";
 import { HostRole } from "../host_role";
 

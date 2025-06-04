@@ -15,15 +15,13 @@
 */
 
 import { PluginServiceManagerContainer } from "./plugin_service_manager_container";
-import { PluginService } from "./plugin_service";
+import { PluginService, PluginServiceImpl } from "./plugin_service";
 import { DatabaseDialect, DatabaseType } from "./database_dialect/database_dialect";
 import { ConnectionUrlParser } from "./utils/connection_url_parser";
 import { HostListProvider } from "./host_list_provider/host_list_provider";
 import { PluginManager } from "./plugin_manager";
 
 import pkgStream from "stream";
-const { EventEmitter } = pkgStream;
-
 import { DriverConnectionProvider } from "./driver_connection_provider";
 import { ClientWrapper } from "./client_wrapper";
 import { ConnectionProviderManager } from "./connection_provider_manager";
@@ -36,6 +34,9 @@ import { ConfigurationProfile } from "./profile/configuration_profile";
 import { AwsWrapperError } from "./utils/errors";
 import { Messages } from "./utils/messages";
 import { TransactionIsolationLevel } from "./utils/transaction_isolation_level";
+import { HostListProviderService } from "./host_list_provider_service";
+
+const { EventEmitter } = pkgStream;
 
 export abstract class AwsClient extends EventEmitter {
   private _defaultPort: number = -1;
@@ -98,7 +99,7 @@ export abstract class AwsClient extends EventEmitter {
 
     this.telemetryFactory = new DefaultTelemetryFactory(this.properties);
     const container = new PluginServiceManagerContainer();
-    this.pluginService = new PluginService(
+    this.pluginService = new PluginServiceImpl(
       container,
       this,
       dbType,
@@ -123,12 +124,12 @@ export abstract class AwsClient extends EventEmitter {
     await this.setup();
     const hostListProvider: HostListProvider = this.pluginService
       .getDialect()
-      .getHostListProvider(this.properties, this.properties.get("host"), this.pluginService);
+      .getHostListProvider(this.properties, this.properties.get("host"), <HostListProviderService>(<unknown>this.pluginService));
     this.pluginService.setHostListProvider(hostListProvider);
     await this.pluginService.refreshHostList();
     const initialHostInfo = this.pluginService.getInitialConnectionHostInfo();
     if (initialHostInfo != null) {
-      await this.pluginManager.initHostProvider(initialHostInfo, this.properties, this.pluginService);
+      await this.pluginManager.initHostProvider(initialHostInfo, this.properties, <HostListProviderService>(<unknown>this.pluginService));
       await this.pluginService.refreshHostList();
     }
   }
