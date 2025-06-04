@@ -119,19 +119,7 @@ export class ReadWriteSplittingPlugin extends AbstractConnectionPlugin implement
       const message: string = Messages.get("ReadWriteSplittingPlugin.unsupportedHostSelectorStrategy", this.readerSelectorStrategy);
       logAndThrowError(message);
     }
-    return await this.connectInternal(isInitialConnection, connectFunc);
-  }
 
-  forceConnect(
-    hostInfo: HostInfo,
-    props: Map<string, any>,
-    isInitialConnection: boolean,
-    forceConnectFunc: () => Promise<ClientWrapper>
-  ): Promise<ClientWrapper> {
-    return this.connectInternal(isInitialConnection, forceConnectFunc);
-  }
-
-  private async connectInternal(isInitialConnection: boolean, connectFunc: () => Promise<ClientWrapper>): Promise<ClientWrapper> {
     const result = await connectFunc();
     if (!isInitialConnection || this._hostListProviderService?.isStaticHostListProvider()) {
       return result;
@@ -198,7 +186,7 @@ export class ReadWriteSplittingPlugin extends AbstractConnectionPlugin implement
     try {
       const copyProps = new Map<string, any>(props);
       WrapperProperties.ENABLE_CLUSTER_AWARE_FAILOVER.set(copyProps, false);
-      const targetClient = await this.pluginService.connect(writerHost, copyProps);
+      const targetClient = await this.pluginService.connect(writerHost, copyProps, this);
       this.isWriterClientFromInternalPool = targetClient instanceof PoolClientWrapper;
       this.setWriterClient(targetClient, writerHost);
       await this.switchCurrentTargetClientTo(this.writerTargetClient, writerHost);
@@ -292,7 +280,7 @@ export class ReadWriteSplittingPlugin extends AbstractConnectionPlugin implement
         try {
           const copyProps = new Map<string, any>(props);
           WrapperProperties.ENABLE_CLUSTER_AWARE_FAILOVER.set(copyProps, false);
-          targetClient = await this.pluginService.connect(host, copyProps);
+          targetClient = await this.pluginService.connect(host, copyProps, this);
           this.isReaderClientFromInternalPool = targetClient instanceof PoolClientWrapper;
           readerHost = host;
           break;

@@ -21,7 +21,7 @@ import { HostInfo } from "../../common/lib/host_info";
 import { HostInfoBuilder } from "../../common/lib/host_info_builder";
 import { RdsHostListProvider } from "../../common/lib/host_list_provider/rds_host_list_provider";
 import { HostRole } from "../../common/lib/host_role";
-import { PluginServiceImpl } from "../../common/lib/plugin_service";
+import { PluginService, PluginServiceImpl } from "../../common/lib/plugin_service";
 import { FailoverMode } from "../../common/lib/plugins/failover/failover_mode";
 import {
   AwsWrapperError,
@@ -115,7 +115,7 @@ describe("reader failover handler", () => {
     when(mockPluginService.getHosts()).thenReturn(hosts);
     when(mockPluginService.getHostInfoByStrategy(HostRole.READER, anything(), anything())).thenReturn(mockHostInfo);
     when(mockPluginService.forceMonitoringRefresh(false, anything())).thenResolve(true);
-    when(mockPluginService.connect(anything(), anything())).thenResolve(mockClientWrapper);
+    when(mockPluginService.connect(anything(), anything(), anything())).thenResolve(mockClientWrapper);
     when(mockPluginService.getHostRole(mockClientWrapper)).thenResolve(HostRole.READER);
     when(mockPluginService.getHostInfoBuilder()).thenReturn(builder);
 
@@ -140,7 +140,7 @@ describe("reader failover handler", () => {
     when(mockPluginService.getHosts()).thenReturn(hosts);
     when(mockPluginService.getAllHosts()).thenReturn(hosts);
     when(mockPluginService.forceMonitoringRefresh(true, anything())).thenResolve(true);
-    when(mockPluginService.connect(mockHostInfo, anything())).thenReject(test);
+    when(mockPluginService.connect(mockHostInfo, anything(), anything())).thenReject(test);
 
     const mockHostInfoInstance = instance(mockHostInfo);
     const mockPluginServiceInstance = instance(mockPluginService);
@@ -219,7 +219,7 @@ describe("reader failover handler", () => {
     when(mockPluginService.getHosts()).thenReturn(hosts);
     when(mockPluginService.getAllHosts()).thenReturn(hosts);
     when(mockPluginService.forceMonitoringRefresh(true, anything())).thenResolve(true);
-    when(mockPluginService.connect(hostInfo, anything())).thenResolve(mockClientWrapper);
+    when(mockPluginService.connect(hostInfo, anything(), anything())).thenResolve(mockClientWrapper);
     when(mockPluginService.getHostRole(mockClientWrapper)).thenResolve(HostRole.WRITER);
 
     const mockPluginServiceInstance = instance(mockPluginService);

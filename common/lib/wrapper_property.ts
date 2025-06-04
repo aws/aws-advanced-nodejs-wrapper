@@ -434,8 +434,7 @@ export class WrapperProperties {
     for (const key of props.keys()) {
       if (
         !key.startsWith(WrapperProperties.MONITORING_PROPERTY_PREFIX) &&
-        !key.startsWith(ClusterTopologyMonitorImpl.MONITORING_PROPERTY_PREFIX) &&
-        key !== Failover2Plugin.INTERNAL_CONNECT_PROPERTY_NAME
+        !key.startsWith(ClusterTopologyMonitorImpl.MONITORING_PROPERTY_PREFIX)
       ) {
         continue;
       }

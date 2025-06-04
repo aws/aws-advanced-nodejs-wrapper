@@ -110,7 +110,7 @@ describe("Aurora initial connection strategy plugin", () => {
   it("test writer - resolves to reader", async () => {
     when(mockRdsUtils.identifyRdsType(anything())).thenReturn(RdsUrlType.RDS_WRITER_CLUSTER);
     when(mockPluginService.getAllHosts()).thenReturn([hostInfoBuilder.withRole(HostRole.WRITER).build()]);
-    when(mockPluginService.connect(anything(), anything())).thenResolve(instance(readerClient));
+    when(mockPluginService.connect(anything(), anything(), anything())).thenResolve(instance(readerClient));
 
     expect(await plugin.connect(hostInfo, props, true, mockFunc)).toBe(undefined);
   });
@@ -119,7 +119,7 @@ describe("Aurora initial connection strategy plugin", () => {
     when(mockRdsUtils.identifyRdsType(anything())).thenReturn(RdsUrlType.RDS_WRITER_CLUSTER);
     when(mockPluginService.getAllHosts()).thenReturn([hostInfoBuilder.withRole(HostRole.WRITER).build()]);
     when(mockPluginService.getHostRole(writerClient)).thenReturn(Promise.resolve(HostRole.WRITER));
-    when(mockPluginService.connect(anything(), anything())).thenResolve(writerClient);
+    when(mockPluginService.connect(anything(), anything(), anything())).thenResolve(writerClient);
 
     expect(await plugin.connect(hostInfo, props, true, mockFunc)).toBe(writerClient);
     verify(mockPluginService.forceRefreshHostList(writerClient)).never();
@@ -135,7 +135,7 @@ describe("Aurora initial connection strategy plugin", () => {
   it("test reader - resolves to reader", async () => {
     when(mockRdsUtils.identifyRdsType(anything())).thenReturn(RdsUrlType.RDS_READER_CLUSTER);
     when(mockPluginService.getHosts()).thenReturn([hostInfoBuilder.withRole(HostRole.READER).build()]);
-    when(mockPluginService.connect(anything(), anything())).thenResolve(readerClient);
+    when(mockPluginService.connect(anything(), anything(), anything())).thenResolve(readerClient);
     when(mockPluginService.acceptsStrategy(anything(), anything())).thenReturn(true);
     when(mockPluginService.getHostRole(readerClient)).thenReturn(Promise.resolve(HostRole.READER));
     when(mockPluginService.getHostInfoByStrategy(anything(), anything())).thenReturn(instance(mockReaderHostInfo));
@@ -147,7 +147,7 @@ describe("Aurora initial connection strategy plugin", () => {
   it("test reader - resolves to writer", async () => {
     when(mockRdsUtils.identifyRdsType(anything())).thenReturn(RdsUrlType.RDS_READER_CLUSTER);
     when(mockPluginService.getHosts()).thenReturn([hostInfoBuilder.withRole(HostRole.READER).build()]);
-    when(mockPluginService.connect(anything(), anything())).thenResolve(writerClient);
+    when(mockPluginService.connect(anything(), anything(), anything())).thenResolve(writerClient);
     when(mockPluginService.acceptsStrategy(anything(), anything())).thenReturn(true);
 
     expect(await plugin.connect(hostInfo, props, true, mockFuncUndefined)).toBe(undefined);
@@ -158,7 +158,7 @@ describe("Aurora initial connection strategy plugin", () => {
     when(mockPluginService.getAllHosts())
       .thenReturn([hostInfoBuilder.withRole(HostRole.READER).build()])
       .thenReturn([hostInfoBuilder.withRole(HostRole.WRITER).build()]);
-    when(mockPluginService.connect(anything(), anything())).thenResolve(writerClient);
+    when(mockPluginService.connect(anything(), anything(), anything())).thenResolve(writerClient);
     when(mockPluginService.acceptsStrategy(anything(), anything())).thenReturn(true);
     when(mockPluginService.getHostRole(writerClient)).thenReturn(Promise.resolve(HostRole.WRITER));
     when(mockPluginService.getHostInfoByStrategy(anything(), anything())).thenReturn(instance(mockReaderHostInfo));

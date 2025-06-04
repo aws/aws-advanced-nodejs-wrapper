@@ -30,7 +30,7 @@ import { logger } from "../../logutils";
 import { ClientWrapper } from "../client_wrapper";
 
 export class AuroraInitialConnectionStrategyPlugin extends AbstractConnectionPlugin {
-  private static readonly subscribedMethods = new Set<string>(["initHostProvider", "connect", "forceConnect"]);
+  private static readonly subscribedMethods = new Set<string>(["initHostProvider", "connect"]);
   private pluginService: PluginService;
   private hostListProviderService?: HostListProviderService;
   private rdsUtils = new RdsUtils();
@@ -58,24 +58,6 @@ export class AuroraInitialConnectionStrategyPlugin extends AbstractConnectionPlu
   }
 
   async connect(
-    hostInfo: HostInfo,
-    props: Map<string, any>,
-    isInitialConnection: boolean,
-    connectFunc: () => Promise<ClientWrapper>
-  ): Promise<ClientWrapper> {
-    return this.connectInternal(hostInfo, props, isInitialConnection, connectFunc);
-  }
-
-  async forceConnect(
-    hostInfo: HostInfo,
-    props: Map<string, any>,
-    isInitialConnection: boolean,
-    forceConnectFunc: () => Promise<ClientWrapper>
-  ): Promise<ClientWrapper> {
-    return this.connectInternal(hostInfo, props, isInitialConnection, forceConnectFunc);
-  }
-
-  async connectInternal(
     hostInfo: HostInfo,
     props: Map<string, any>,
     isInitialConnection: boolean,
@@ -148,7 +130,7 @@ export class AuroraInitialConnectionStrategyPlugin extends AbstractConnectionPlu
           }
           return writerCandidateClient;
         }
-        writerCandidateClient = await this.pluginService.connect(writerCandidate, props);
+        writerCandidateClient = await this.pluginService.connect(writerCandidate, props, this);
 
         if ((await this.pluginService.getHostRole(writerCandidateClient)) !== HostRole.WRITER) {
           // If the new connection resolves to a reader instance, this means the topology is outdated.
@@ -225,7 +207,7 @@ export class AuroraInitialConnectionStrategyPlugin extends AbstractConnectionPlu
           }
           return readerCandidateClient;
         }
-        readerCandidateClient = await this.pluginService.connect(readerCandidate, props);
+        readerCandidateClient = await this.pluginService.connect(readerCandidate, props, this);
 
         if ((await this.pluginService.getHostRole(readerCandidateClient)) !== HostRole.READER) {
           // If the new connection resolves to a writer instance, this means the topology is outdated.

@@ -16,6 +16,7 @@
 
 import { HostInfo } from "../../host_info";
 import { ClientWrapper } from "../../client_wrapper";
+import { ConnectionPlugin } from "../../connection_plugin";
 
 export class LimitlessConnectionContext {
   private readonly hostInfo: HostInfo;
@@ -23,19 +24,22 @@ export class LimitlessConnectionContext {
   private connection: ClientWrapper | null;
   private readonly connectFunc: () => Promise<ClientWrapper>;
   private routers: HostInfo[] | null;
+  private plugin: ConnectionPlugin;
 
   constructor(
     hostInfo: HostInfo,
     props: Map<string, any>,
     connection: ClientWrapper | null,
     connectFunc: () => Promise<ClientWrapper>,
-    routers: HostInfo[] | null
+    routers: HostInfo[] | null,
+    plugin: ConnectionPlugin
   ) {
     this.hostInfo = hostInfo;
     this.props = props;
     this.connection = connection;
     this.connectFunc = connectFunc;
     this.routers = routers;
+    this.plugin = plugin;
   }
 
   public getHostInfo(): HostInfo {
@@ -64,5 +68,9 @@ export class LimitlessConnectionContext {
 
   public setRouters(routers: HostInfo[]) {
     this.routers = routers;
+  }
+
+  public getPlugin(): ConnectionPlugin {
+    return this.plugin;
   }
 }
