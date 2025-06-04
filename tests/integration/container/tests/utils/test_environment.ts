@@ -115,7 +115,9 @@ export class TestEnvironment {
                 database: info?.databaseInfo.defaultDbName,
                 query_timeout: 60000,
                 connectionTimeoutMillis: 60000,
-                ssl: true
+                ssl: {
+                  ca: readFileSync("/app/global-bundle.pem").toString()
+                }
               });
               logger.debug("startingConnection");
               const startTimeConnect = Date.now();
