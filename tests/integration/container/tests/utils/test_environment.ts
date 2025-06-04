@@ -113,8 +113,8 @@ export class TestEnvironment {
                 user: info?.databaseInfo.username,
                 password: info?.databaseInfo.password,
                 database: info?.databaseInfo.defaultDbName,
-                query_timeout: 60000,
-                connectionTimeoutMillis: 60000,
+                query_timeout: 3000,
+                connectionTimeoutMillis: 3000,
                 ssl: {
                   ca: readFileSync("/app/global-bundle.pem").toString()
                 }
@@ -122,19 +122,13 @@ export class TestEnvironment {
               await client.connect();
 
               await client.query("select 1");
-
               logger.info("Instance " + instanceId + " is up.");
               instanceIdSet.delete(instanceId);
             } catch (e: any) {
               // do nothing; let's continue checking
             } finally {
               if (client) {
-                try {
-                  await client.end();
-                } catch (e) {
-                  logger.error("end error " + e);
-                  // pass
-                }
+                await client.end();
               }
             }
             break;

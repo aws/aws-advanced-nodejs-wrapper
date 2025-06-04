@@ -50,11 +50,6 @@ let client: any;
 let secondaryClient: any;
 let auroraTestUtility: AuroraTestUtility;
 let provider: InternalPooledConnectionProvider | null;
-const sslCertificate = {
-  require: true,
-  rejectUnauthorized: false,
-  ca: readFileSync("/app/global-bundle.pem").toString()
-};
 
 async function initConfig(host: string, port: number, connectToProxy: boolean, plugins: string): Promise<any> {
   let config: any = {
@@ -66,8 +61,7 @@ async function initConfig(host: string, port: number, connectToProxy: boolean, p
     plugins: plugins,
     enableTelemetry: true,
     telemetryTracesBackend: "OTLP",
-    telemetryMetricsBackend: "OTLP",
-    ssl: sslCertificate
+    telemetryMetricsBackend: "OTLP"
   };
 
   if (connectToProxy) {
