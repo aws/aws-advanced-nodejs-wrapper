@@ -117,7 +117,7 @@ export class LimitlessRouterServiceImpl implements LimitlessRouterService {
     }
 
     try {
-      context.setConnection(await this.pluginService.connect(selectedHostSpec, context.getProperties()));
+      context.setConnection(await this.pluginService.connect(selectedHostSpec, context.getProperties(), context.getPlugin()));
     } catch (e) {
       logger.debug(Messages.get("LimitlessRouterServiceImpl.failedToConnectToHost", selectedHostSpec.host));
       selectedHostSpec.setAvailability(HostAvailability.NOT_AVAILABLE);
@@ -179,7 +179,7 @@ export class LimitlessRouterServiceImpl implements LimitlessRouterService {
       }
 
       try {
-        context.setConnection(await this.pluginService.connect(selectedHostSpec, context.getProperties()));
+        context.setConnection(await this.pluginService.connect(selectedHostSpec, context.getProperties(), context.getPlugin()));
         if (context.getConnection()) {
           return;
         }

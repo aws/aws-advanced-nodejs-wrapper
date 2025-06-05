@@ -53,7 +53,7 @@ export class AwsMySQLClient extends AwsClient {
       if (hostInfo == null) {
         throw new AwsWrapperError(Messages.get("HostInfo.noHostParameter"));
       }
-      const result: ClientWrapper = await this.pluginManager.connect(hostInfo, this.properties, true);
+      const result: ClientWrapper = await this.pluginManager.connect(hostInfo, this.properties, true, null);
       if (isDialectTopologyAware(this.pluginService.getDialect())) {
         try {
           const role = await this.pluginService.getHostRole(result);

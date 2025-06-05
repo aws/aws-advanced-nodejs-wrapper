@@ -52,7 +52,6 @@ export class FailoverPlugin extends AbstractConnectionPlugin {
   private static readonly subscribedMethods: Set<string> = new Set([
     "initHostProvider",
     "connect",
-    "forceConnect",
     "query",
     "notifyConnectionChanged",
     "notifyHostListChanged"
@@ -242,34 +241,6 @@ export class FailoverPlugin extends AbstractConnectionPlugin {
   }
 
   override async connect(
-    hostInfo: HostInfo,
-    props: Map<string, any>,
-    isInitialConnection: boolean,
-    connectFunc: () => Promise<ClientWrapper>
-  ): Promise<ClientWrapper> {
-    try {
-      return await this.connectInternal(hostInfo, props, isInitialConnection, connectFunc);
-    } catch (e: any) {
-      logger.debug(`Connect to ${hostInfo.host} failed with message: ${e.message}`);
-      throw e;
-    }
-  }
-
-  override async forceConnect(
-    hostInfo: HostInfo,
-    props: Map<string, any>,
-    isInitialConnection: boolean,
-    forceConnectFunc: () => Promise<ClientWrapper>
-  ): Promise<ClientWrapper> {
-    try {
-      return await this.connectInternal(hostInfo, props, isInitialConnection, forceConnectFunc);
-    } catch (e: any) {
-      logger.debug(`Force connect to ${hostInfo.host} failed with message: ${e.message}`);
-      throw e;
-    }
-  }
-
-  async connectInternal(
     hostInfo: HostInfo,
     props: Map<string, any>,
     isInitialConnection: boolean,

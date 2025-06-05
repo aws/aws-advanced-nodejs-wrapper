@@ -44,6 +44,7 @@ import { getWriter, logTopology } from "./utils/utils";
 import { TelemetryFactory } from "./utils/telemetry/telemetry_factory";
 import { DriverDialect } from "./driver_dialect/driver_dialect";
 import { AllowedAndBlockedHosts } from "./AllowedAndBlockedHosts";
+import { ConnectionPlugin } from "./connection_plugin";
 
 export interface PluginService extends ErrorHandler {
   isInTransaction(): boolean;
@@ -108,7 +109,15 @@ export interface PluginService extends ErrorHandler {
 
   connect(hostInfo: HostInfo, props: Map<string, any>): Promise<ClientWrapper>;
 
+  connect(hostInfo: HostInfo, props: Map<string, any>, pluginToSkip: ConnectionPlugin | null): Promise<ClientWrapper>;
+
+  connect(hostInfo: HostInfo, props: Map<string, any>, pluginToSkip?: ConnectionPlugin | null): Promise<ClientWrapper>;
+
   forceConnect(hostInfo: HostInfo, props: Map<string, any>): Promise<ClientWrapper>;
+
+  forceConnect(hostInfo: HostInfo, props: Map<string, any>, pluginToSkip: ConnectionPlugin | null): Promise<ClientWrapper>;
+
+  forceConnect(hostInfo: HostInfo, props: Map<string, any>, pluginToSkip?: ConnectionPlugin | null): Promise<ClientWrapper>;
 
   setCurrentClient(newClient: ClientWrapper, hostInfo: HostInfo): Promise<Set<HostChangeOptions>>;
 
@@ -495,12 +504,16 @@ export class PluginServiceImpl implements PluginService, HostListProviderService
     return provider.identifyConnection(targetClient, this.dialect);
   }
 
-  connect(hostInfo: HostInfo, props: Map<string, any>): Promise<ClientWrapper> {
-    return this.pluginServiceManagerContainer.pluginManager!.connect(hostInfo, props, false);
+  connect(hostInfo: HostInfo, props: Map<string, any>): Promise<ClientWrapper>;
+  connect(hostInfo: HostInfo, props: Map<string, any>, pluginToSkip: ConnectionPlugin): Promise<ClientWrapper>;
+  connect(hostInfo: HostInfo, props: Map<string, any>, pluginToSkip?: ConnectionPlugin): Promise<ClientWrapper> {
+    return this.pluginServiceManagerContainer.pluginManager!.connect(hostInfo, props, false, pluginToSkip);
   }
 
-  forceConnect(hostInfo: HostInfo, props: Map<string, any>): Promise<ClientWrapper> {
-    return this.pluginServiceManagerContainer.pluginManager!.forceConnect(hostInfo, props, false);
+  forceConnect(hostInfo: HostInfo, props: Map<string, any>): Promise<ClientWrapper>;
+  forceConnect(hostInfo: HostInfo, props: Map<string, any>, pluginToSkip: ConnectionPlugin): Promise<ClientWrapper>;
+  forceConnect(hostInfo: HostInfo, props: Map<string, any>, pluginToSkip?: ConnectionPlugin): Promise<ClientWrapper> {
+    return this.pluginServiceManagerContainer.pluginManager!.forceConnect(hostInfo, props, false, pluginToSkip);
   }
 
   async setCurrentClient(newClient: ClientWrapper, hostInfo: HostInfo): Promise<Set<HostChangeOptions>> {

@@ -37,28 +37,32 @@ type PluginFunc<T> = (plugin: ConnectionPlugin, targetFunc: () => Promise<T>) =>
 
 class PluginChain<T> {
   private readonly targetFunc: () => Promise<T>;
-  private chain?: (pluginFunc: PluginFunc<T>, targetFunc: () => Promise<T>) => Promise<T>;
+  private chain?: (pluginFunc: PluginFunc<T>, targetFunc: () => Promise<T>, pluginToSkip: ConnectionPlugin | null) => Promise<T>;
 
   constructor(targetFunc: () => Promise<T>) {
     this.targetFunc = targetFunc;
   }
 
-  addToHead(plugin: ConnectionPlugin) {
+  addToHead(plugin: ConnectionPlugin, pluginToSkip: ConnectionPlugin | null) {
     if (this.chain === undefined) {
-      this.chain = (pluginFunc, targetFunc) => pluginFunc(plugin, targetFunc);
+      this.chain = (pluginFunc, targetFunc, pluginToSkip) => pluginFunc(plugin, targetFunc);
     } else {
       const pipelineSoFar = this.chain;
       // @ts-ignore
-      this.chain = (pluginFunc, targetFunc) => pluginFunc(plugin, () => pipelineSoFar(pluginFunc, targetFunc));
+      if (plugin !== pluginToSkip) {
+        this.chain = (pluginFunc, targetFunc, pluginToSkip) => {
+          return pluginFunc(plugin, () => pipelineSoFar(pluginFunc, targetFunc, pluginToSkip));
+        };
+      }
     }
     return this;
   }
 
-  execute(pluginFunc: PluginFunc<T>): Promise<T> {
+  execute(pluginFunc: PluginFunc<T>, pluginToSkip: ConnectionPlugin | null): Promise<T> {
     if (this.chain === undefined) {
       throw new AwsWrapperError(Messages.get("PluginManager.pipelineNone"));
     }
-    return this.chain(pluginFunc, this.targetFunc);
+    return this.chain(pluginFunc, this.targetFunc, pluginToSkip);
   }
 }
 
@@ -133,7 +137,8 @@ export class PluginManager {
           props,
           methodName,
           (plugin, nextPluginFunc) => this.runMethodFuncWithTelemetry(() => plugin.execute(methodName, nextPluginFunc, options), plugin.name),
-          methodFunc
+          methodFunc,
+          null
         );
       });
     } finally {
@@ -141,7 +146,19 @@ export class PluginManager {
     }
   }
 
-  async connect(hostInfo: HostInfo | null, props: Map<string, any>, isInitialConnection: boolean): Promise<ClientWrapper> {
+  async connect(hostInfo: HostInfo | null, props: Map<string, any>, isInitialConnection: boolean): Promise<ClientWrapper>;
+  async connect(
+    hostInfo: HostInfo | null,
+    props: Map<string, any>,
+    isInitialConnection: boolean,
+    pluginToSkip: ConnectionPlugin | null
+  ): Promise<ClientWrapper>;
+  async connect(
+    hostInfo: HostInfo | null,
+    props: Map<string, any>,
+    isInitialConnection: boolean,
+    pluginToSkip?: ConnectionPlugin | null
+  ): Promise<ClientWrapper> {
     if (hostInfo == null) {
       throw new AwsWrapperError(Messages.get("HostInfo.noHostParameter"));
     }
@@ -156,12 +173,25 @@ export class PluginManager {
           this.runMethodFuncWithTelemetry(() => plugin.connect(hostInfo, props, isInitialConnection, nextPluginFunc), plugin.name),
         async () => {
           throw new AwsWrapperError("Shouldn't be called.");
-        }
+        },
+        pluginToSkip
       );
     });
   }
 
-  async forceConnect(hostInfo: HostInfo | null, props: Map<string, any>, isInitialConnection: boolean): Promise<ClientWrapper> {
+  async forceConnect(hostInfo: HostInfo | null, props: Map<string, any>, isInitialConnection: boolean): Promise<ClientWrapper>;
+  async forceConnect(
+    hostInfo: HostInfo | null,
+    props: Map<string, any>,
+    isInitialConnection: boolean,
+    pluginToSkip: ConnectionPlugin | null
+  ): Promise<ClientWrapper>;
+  async forceConnect(
+    hostInfo: HostInfo | null,
+    props: Map<string, any>,
+    isInitialConnection: boolean,
+    pluginToSkip?: ConnectionPlugin | null
+  ): Promise<ClientWrapper> {
     if (hostInfo == null) {
       throw new AwsWrapperError(Messages.get("HostInfo.noHostParameter"));
     }
@@ -176,7 +206,8 @@ export class PluginManager {
           this.runMethodFuncWithTelemetry(() => plugin.forceConnect(hostInfo, props, isInitialConnection, nextPluginFunc), plugin.name),
         async () => {
           throw new AwsWrapperError("Shouldn't be called.");
-        }
+        },
+        pluginToSkip
       );
     });
   }
@@ -186,19 +217,26 @@ export class PluginManager {
     props: Map<string, any>,
     methodName: string,
     pluginFunc: PluginFunc<T>,
-    methodFunc: () => Promise<T>
+    methodFunc: () => Promise<T>,
+    pluginToSkip: ConnectionPlugin | null
   ): Promise<T> {
-    const chain = this.makeExecutePipeline(hostInfo, props, methodName, methodFunc);
-    return chain.execute(pluginFunc);
+    const chain = this.makeExecutePipeline(hostInfo, props, methodName, methodFunc, pluginToSkip);
+    return chain.execute(pluginFunc, pluginToSkip);
   }
 
-  makeExecutePipeline<T>(hostInfo: HostInfo, props: Map<string, any>, name: string, methodFunc: () => Promise<T>): PluginChain<T> {
+  makeExecutePipeline<T>(
+    hostInfo: HostInfo,
+    props: Map<string, any>,
+    name: string,
+    methodFunc: () => Promise<T>,
+    pluginToSkip: ConnectionPlugin | null
+  ): PluginChain<T> {
     const chain = new PluginChain(methodFunc);
 
     for (let i = this._plugins.length - 1; i >= 0; i--) {
       const p = this._plugins[i];
       if (p.getSubscribedMethods().has("*") || p.getSubscribedMethods().has(name)) {
-        chain.addToHead(p);
+        chain.addToHead(p, pluginToSkip);
       }
     }
 
@@ -219,7 +257,8 @@ export class PluginManager {
           ),
         () => {
           throw new AwsWrapperError("Shouldn't be called");
-        }
+        },
+        null
       );
     });
   }

@@ -52,25 +52,12 @@ export class HostMonitoring2ConnectionPlugin extends AbstractConnectionPlugin im
     return new Set<string>(["*"]);
   }
 
-  connect(
+  async connect(
     hostInfo: HostInfo,
     props: Map<string, any>,
     isInitialConnection: boolean,
     connectFunc: () => Promise<ClientWrapper>
   ): Promise<ClientWrapper> {
-    return this.connectInternal(hostInfo, connectFunc);
-  }
-
-  forceConnect(
-    hostInfo: HostInfo,
-    props: Map<string, any>,
-    isInitialConnection: boolean,
-    forceConnectFunc: () => Promise<ClientWrapper>
-  ): Promise<ClientWrapper> {
-    return this.connectInternal(hostInfo, forceConnectFunc);
-  }
-
-  private async connectInternal(hostInfo: HostInfo, connectFunc: () => Promise<ClientWrapper>): Promise<ClientWrapper> {
     const targetClient = await connectFunc();
     if (targetClient != null) {
       const type: RdsUrlType = this.rdsUtils.identifyRdsType(hostInfo.host);

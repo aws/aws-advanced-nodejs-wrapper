@@ -48,7 +48,6 @@ export class Failover2Plugin extends AbstractConnectionPlugin implements CanRele
   private static readonly TELEMETRY_READER_FAILOVER = "failover to reader";
   private static readonly METHOD_END = "end";
   private static readonly SUBSCRIBED_METHODS: Set<string> = new Set(["initHostProvider", "connect", "query"]);
-  static readonly INTERNAL_CONNECT_PROPERTY_NAME: string = "monitoring_76c06979-49c4-4c86-9600-a63605b83f50";
   private readonly _staleDnsHelper: StaleDnsHelper;
   private readonly _properties: Map<string, any>;
   private readonly pluginService: PluginService;
@@ -132,8 +131,6 @@ export class Failover2Plugin extends AbstractConnectionPlugin implements CanRele
     connectFunc: () => Promise<ClientWrapper>
   ): Promise<ClientWrapper> {
     if (
-      // Call was initiated by Failover2 Plugin, does not require additional processing.
-      props.has(Failover2Plugin.INTERNAL_CONNECT_PROPERTY_NAME) ||
       // Failover is not enabled, does not require additional processing.
       !this.enableFailoverSetting ||
       !WrapperProperties.ENABLE_CLUSTER_AWARE_FAILOVER.get(props)
@@ -434,10 +431,8 @@ export class Failover2Plugin extends AbstractConnectionPlugin implements CanRele
 
   private async createConnectionForHost(hostInfo: HostInfo): Promise<ClientWrapper> {
     const copyProps = new Map<string, any>(this._properties);
-    // Signal to connect that this is an internal call and does not require additional processing.
-    copyProps.set(Failover2Plugin.INTERNAL_CONNECT_PROPERTY_NAME, true);
     copyProps.set(WrapperProperties.HOST.name, hostInfo.host);
-    return await this.pluginService.connect(hostInfo, copyProps);
+    return await this.pluginService.connect(hostInfo, copyProps, this);
   }
 
   async invalidateCurrentClient() {

@@ -110,7 +110,7 @@ describe("reader write splitting test", () => {
     when(mockPluginService.getCurrentClient()).thenReturn(instance(mockWriterClient));
     when(await mockWriterClient.isValid()).thenReturn(true);
     when(mockPluginService.getCurrentHostInfo()).thenReturn(writerHost);
-    when(mockPluginService.connect(anything(), anything())).thenResolve(mockReaderWrapper);
+    when(mockPluginService.connect(anything(), anything(), anything())).thenResolve(mockReaderWrapper);
 
     const target = new ReadWriteSplittingPlugin(
       mockPluginServiceInstance,
@@ -134,7 +134,7 @@ describe("reader write splitting test", () => {
     when(mockPluginService.getCurrentClient()).thenReturn(instance(mockReaderClient));
     when(await mockReaderClient.isValid()).thenReturn(true);
     when(mockPluginService.getCurrentHostInfo()).thenReturn(readerHost1);
-    when(mockPluginService.connect(anything(), anything())).thenResolve(mockWriterWrapper);
+    when(mockPluginService.connect(anything(), anything(), anything())).thenResolve(mockWriterWrapper);
 
     const target = new ReadWriteSplittingPlugin(
       mockPluginServiceInstance,
@@ -158,7 +158,7 @@ describe("reader write splitting test", () => {
     when(mockPluginService.getCurrentClient()).thenReturn(instance(mockReaderClient));
     when(await mockReaderClient.isValid()).thenReturn(true);
     when(mockPluginService.getCurrentHostInfo()).thenReturn(readerHost1);
-    when(mockPluginService.connect(anything(), anything())).thenResolve(mockReaderWrapper);
+    when(mockPluginService.connect(anything(), anything(), anything())).thenResolve(mockReaderWrapper);
 
     const target = new ReadWriteSplittingPlugin(
       mockPluginServiceInstance,
@@ -182,7 +182,7 @@ describe("reader write splitting test", () => {
     when(mockPluginService.getCurrentClient()).thenReturn(instance(mockWriterClient));
     when(await mockWriterClient.isValid()).thenReturn(true);
     when(mockPluginService.getCurrentHostInfo()).thenReturn(writerHost);
-    when(mockPluginService.connect(anything(), anything())).thenResolve(mockReaderWrapper);
+    when(mockPluginService.connect(anything(), anything(), anything())).thenResolve(mockReaderWrapper);
 
     const target = new ReadWriteSplittingPlugin(
       mockPluginServiceInstance,
@@ -208,7 +208,7 @@ describe("reader write splitting test", () => {
     when(mockWriterClient.targetClient).thenReturn(mockWriterWrapper);
     when(mockWriterClient.targetClient && (await mockPluginService.isClientValid(mockWriterClient.targetClient))).thenReturn(true);
     when(mockPluginService.getCurrentHostInfo()).thenReturn(writerHost);
-    when(mockPluginService.connect(anything(), anything())).thenReturn(Promise.resolve(mockWriterWrapper));
+    when(mockPluginService.connect(anything(), anything(), anything())).thenReturn(Promise.resolve(mockWriterWrapper));
 
     const target = new ReadWriteSplittingPlugin(
       mockPluginServiceInstance,
@@ -410,7 +410,7 @@ describe("reader write splitting test", () => {
     when(await mockWriterClient.isValid()).thenReturn(true);
     when(mockPluginService.getCurrentHostInfo()).thenReturn(writerHost).thenReturn(writerHost).thenReturn(readerHost1);
     when(mockDriverDialect.connect(anything(), anything())).thenReturn(Promise.resolve(poolClientWrapper));
-    when(mockPluginService.connect(anything(), anything())).thenResolve(poolClientWrapper);
+    when(mockPluginService.connect(anything(), anything(), anything())).thenResolve(poolClientWrapper);
     const config: AwsPoolConfig = new AwsPoolConfig({
       idleTimeoutMillis: 7000,
       maxConnections: 10,
@@ -443,9 +443,9 @@ describe("reader write splitting test", () => {
       .thenReturn(readerHost1)
       .thenReturn(writerHost);
     when(mockDriverDialect.connect(anything(), anything())).thenReturn(Promise.resolve(poolClientWrapper));
-    when(mockPluginService.connect(writerHost, anything())).thenResolve(poolClientWrapper);
-    when(mockPluginService.connect(readerHost1, anything())).thenResolve(poolClientWrapper);
-    when(mockPluginService.connect(readerHost2, anything())).thenResolve(poolClientWrapper);
+    when(mockPluginService.connect(writerHost, anything(), anything())).thenResolve(poolClientWrapper);
+    when(mockPluginService.connect(readerHost1, anything(), anything())).thenResolve(poolClientWrapper);
+    when(mockPluginService.connect(readerHost2, anything(), anything())).thenResolve(poolClientWrapper);
 
     const config: AwsPoolConfig = new AwsPoolConfig({
       idleTimeoutMillis: 7000,

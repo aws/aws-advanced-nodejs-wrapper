@@ -25,7 +25,7 @@ import { ClientWrapper } from "../../client_wrapper";
 import { Messages } from "../../utils/messages";
 
 export class StaleDnsPlugin extends AbstractConnectionPlugin {
-  private static readonly subscribedMethods: Set<string> = new Set<string>(["initHostProvider", "connect", "forceConnect", "notifyHostListChanged"]);
+  private static readonly subscribedMethods: Set<string> = new Set<string>(["initHostProvider", "connect", "notifyHostListChanged"]);
   private pluginService: PluginService;
   private staleDnsHelper: StaleDnsHelper;
   private hostListProviderService?: HostListProviderService;
@@ -41,18 +41,6 @@ export class StaleDnsPlugin extends AbstractConnectionPlugin {
   }
 
   override async connect(
-    hostInfo: HostInfo,
-    properties: Map<string, any>,
-    isInitialConnection: boolean,
-    connectFunc: () => Promise<ClientWrapper>
-  ): Promise<ClientWrapper> {
-    if (!this.hostListProviderService) {
-      throw new AwsWrapperError(Messages.get("HostListProviderService.notFound"));
-    }
-    return await this.staleDnsHelper.getVerifiedConnection(hostInfo.host, isInitialConnection, this.hostListProviderService, properties, connectFunc);
-  }
-
-  override async forceConnect(
     hostInfo: HostInfo,
     properties: Map<string, any>,
     isInitialConnection: boolean,

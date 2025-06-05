@@ -28,7 +28,7 @@ import { HostRole } from "../../host_role";
 import { OpenedConnectionTracker } from "./opened_connection_tracker";
 
 export class AuroraConnectionTrackerPlugin extends AbstractConnectionPlugin implements CanReleaseResources {
-  private static readonly subscribedMethods = new Set<string>(["notifyHostListChanged"].concat(SubscribedMethodHelper.NETWORK_BOUND_METHODS));
+  private static readonly subscribedMethods = new Set<string>(["notifyHostListChanged", "connect", "query", "rollback"]);
 
   private readonly pluginService: PluginService;
   private readonly rdsUtils: RdsUtils;
@@ -55,19 +55,6 @@ export class AuroraConnectionTrackerPlugin extends AbstractConnectionPlugin impl
     isInitialConnection: boolean,
     connectFunc: () => Promise<ClientWrapper>
   ): Promise<ClientWrapper> {
-    return this.connectInternal(hostInfo, connectFunc);
-  }
-
-  override async forceConnect(
-    hostInfo: HostInfo,
-    props: Map<string, any>,
-    isInitialConnection: boolean,
-    forceConnectFunc: () => Promise<ClientWrapper>
-  ): Promise<ClientWrapper> {
-    return this.connectInternal(hostInfo, forceConnectFunc);
-  }
-
-  async connectInternal(hostInfo: HostInfo, connectFunc: () => Promise<ClientWrapper>): Promise<ClientWrapper> {
     const targetClient = await connectFunc();
 
     if (targetClient) {

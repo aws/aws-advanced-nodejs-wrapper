@@ -26,7 +26,6 @@ import { LimitlessHelper } from "./limitless_helper";
 
 export class LimitlessConnectionPlugin extends AbstractConnectionPlugin {
   private static readonly subscribedMethods: Set<string> = new Set(["connect"]);
-  private static readonly internalConnectPropertyName: string = "784dd5c2-a77b-4c9f-a0a9-b4ea37395e6c";
   private readonly properties: Map<string, any>;
   private readonly pluginService: PluginService;
   private limitlessRouterService: LimitlessRouterService;
@@ -42,22 +41,7 @@ export class LimitlessConnectionPlugin extends AbstractConnectionPlugin {
     return LimitlessConnectionPlugin.subscribedMethods;
   }
 
-  connect(
-    hostInfo: HostInfo,
-    props: Map<string, any>,
-    isInitialConnection: boolean,
-    connectFunc: () => Promise<ClientWrapper>
-  ): Promise<ClientWrapper> {
-    if (props.get(LimitlessConnectionPlugin.internalConnectPropertyName)) {
-      return connectFunc();
-    }
-
-    const copyProps = new Map<string, any>(props);
-    copyProps.set(LimitlessConnectionPlugin.internalConnectPropertyName, true);
-    return this.connectInternal(hostInfo, copyProps, isInitialConnection, connectFunc);
-  }
-
-  private async connectInternal(
+  async connect(
     hostInfo: HostInfo,
     props: Map<string, any>,
     isInitialConnection: boolean,
@@ -77,7 +61,7 @@ export class LimitlessConnectionPlugin extends AbstractConnectionPlugin {
       this.limitlessRouterService.startMonitor(hostInfo, props);
     }
 
-    const context = new LimitlessConnectionContext(hostInfo, props, conn, connectFunc, null);
+    const context = new LimitlessConnectionContext(hostInfo, props, conn, connectFunc, null, this);
     await this.limitlessRouterService.establishConnection(context);
 
     if (context.getConnection() != null) {
