@@ -33,7 +33,7 @@ export class RejectConnectRouting extends BaseConnectRouting {
     connectFunc: () => Promise<ClientWrapper>,
     pluginService: PluginService
   ): Promise<ClientWrapper> {
-    logger.debug(Messages.get("bgd.inProgressCantConnect"));
-    throw new AwsWrapperError(Messages.get("bgd.inProgressCantConnect"));
+    logger.debug(Messages.get("Bgd.inProgressCantConnect"));
+    throw new AwsWrapperError(Messages.get("Bgd.inProgressCantConnect"));
   }
 }

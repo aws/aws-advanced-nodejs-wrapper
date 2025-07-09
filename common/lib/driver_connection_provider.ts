@@ -27,7 +27,6 @@ import { promisify } from "util";
 import { lookup } from "dns";
 import { PluginService } from "./plugin_service";
 import { logger } from "../logutils";
-import { maskProperties } from "./utils/utils";
 import { ClientWrapper } from "./client_wrapper";
 import { RoundRobinHostSelector } from "./round_robin_host_selector";
 import { DriverDialect } from "./driver_dialect/driver_dialect";
@@ -88,14 +87,7 @@ export class DriverConnectionProvider implements ConnectionProvider {
       const fixedHost: string = this.rdsUtils.removeGreenInstancePrefix(hostInfo.host);
       resultProps.set(WrapperProperties.HOST.name, fixedHost);
 
-      logger.info(
-        "Connecting to " +
-          fixedHost +
-          " after correcting the hostname from " +
-          originalHost +
-          "\nwith properties: \n" +
-          JSON.stringify(Object.fromEntries(maskProperties(resultProps)))
-      );
+      logger.info("Connecting to " + fixedHost + " after correcting the hostname from " + originalHost);
 
       resultTargetClient = driverDialect.connect(hostInfo, resultProps);
     }

@@ -80,7 +80,7 @@ export class BlueGreenStatusMonitor {
   // Track all endpoints in startTopology and check whether all their IP addresses have changed.
   protected allStartTopologyIpChanged: boolean = false;
 
-  // Track all endpoints in startTopology and check whether they are removed (i.e. could not be resolved ayt DNS).
+  // Track all endpoints in startTopology and check whether they are removed (i.e. DNS could not be resolved).
   protected allStartTopologyEndpointsRemoved: boolean = false;
   protected allTopologyChanged: boolean = false;
   protected currentPhase: BlueGreenPhase | null = BlueGreenPhase.NOT_CREATED;
@@ -114,7 +114,7 @@ export class BlueGreenStatusMonitor {
 
     const dialect: DatabaseDialect = this.pluginService.getDialect();
     if (!BlueGreenStatusMonitor.implementsBlueGreenDialect(dialect)) {
-      throw new AwsWrapperError(Messages.get("bgd.unsupportedDialect", bgdId, dialect.getDialectName()));
+      throw new AwsWrapperError(Messages.get("Bgd.unsupportedDialect", bgdId, dialect.getDialectName()));
     }
     this.blueGreenDialect = <BlueGreenDialect>(<unknown>this.pluginService.getDialect());
 
@@ -137,7 +137,7 @@ export class BlueGreenStatusMonitor {
         this.updateIpAddressFlags();
 
         if (this.currentPhase !== null && (oldPhase === null || oldPhase !== this.currentPhase)) {
-          logger.debug(Messages.get("bgd.statusChanged", this.role.name, this.currentPhase.name));
+          logger.debug(Messages.get("Bgd.statusChanged", this.role.name, this.currentPhase.name));
         }
 
         if (this.onBlueGreenStatusChangeFunc !== null) {
@@ -168,11 +168,10 @@ export class BlueGreenStatusMonitor {
         }
       }
     } catch (e: any) {
-      logger.debug(Messages.get("bgd.monitoringUnhandledException", this.role.name, JSON.stringify(e)));
-      return;
+      logger.debug(Messages.get("Bgd.monitoringUnhandledError", this.role.name, JSON.stringify(e)));
     } finally {
       await this.closeConnection();
-      logger.debug(Messages.get("bgd.monitoringCompleted", this.role.name));
+      logger.debug(Messages.get("Bgd.`monitoringCompleted`", this.role.name));
     }
   }
 
@@ -200,8 +199,8 @@ export class BlueGreenStatusMonitor {
     this.collectedIpAddresses = collectIpAddresses;
   }
 
-  setCollectTopology(collectTopology: boolean): void {
-    this.collectedTopology = collectTopology;
+  setCollectedTopology(collectedTopology: boolean): void {
+    this.collectedTopology = collectedTopology;
   }
 
   setUseIpAddress(useIpAddresses: boolean): void {
@@ -221,18 +220,19 @@ export class BlueGreenStatusMonitor {
   protected async collectHostIpAddresses(): Promise<void> {
     this.currentIpAddressesByHostMap.clear();
 
-    if (this.hostNames !== null) {
-      for (const host of this.hostNames) {
-        if (this.currentIpAddressesByHostMap.has(host)) {
-          continue;
-        }
-        this.currentIpAddressesByHostMap.set(host, await this.getIpAddress(host));
-      }
+    if (this.hostNames === null) {
+      return;
+    }
 
-      if (this.collectedIpAddresses) {
-        this.startIpAddressesByHostMap.clear();
-        this.startIpAddressesByHostMap = new Map([...this.startIpAddressesByHostMap, ...this.currentIpAddressesByHostMap]);
+    for (const host of this.hostNames) {
+      if (this.currentIpAddressesByHostMap.has(host)) {
+        continue;
       }
+      this.currentIpAddressesByHostMap.set(host, await this.getIpAddress(host));
+    }
+    if (this.collectedIpAddresses) {
+      this.startIpAddressesByHostMap.clear();
+      this.startIpAddressesByHostMap = new Map([...this.startIpAddressesByHostMap, ...this.currentIpAddressesByHostMap]);
     }
   }
 
@@ -245,7 +245,7 @@ export class BlueGreenStatusMonitor {
     }
 
     if (!this.collectedIpAddresses) {
-      // All hosts in startTopology should resolve to different IP address.
+      // Check whether all hosts in startTopology resolve to new IP addresses.
       this.allStartTopologyIpChanged =
         this.startTopology.length > 0 &&
         this.startTopology.every((x) => {
@@ -257,8 +257,8 @@ export class BlueGreenStatusMonitor {
         });
     }
 
-    // All hosts in startTopology should have no IP address. That means that host endpoint
-    // couldn't be resolved since DNS entry doesn't exist anymore.
+    // Check whether all hosts in startTopology no longer have IP addresses. This indicates that the startTopology
+    // hosts can no longer be resolved because their DNS entries no longer exist.
     this.allStartTopologyEndpointsRemoved =
       this.startTopology.length > 0 &&
       this.startTopology.every((x) => {
@@ -270,8 +270,7 @@ export class BlueGreenStatusMonitor {
       });
 
     if (!this.collectedTopology) {
-      // All hosts in currentTopology should have no same host in startTopology.
-      // All hosts in currentTopology should have changed.
+      // Check whether all hosts in currentTopology do not exist in startTopology
       const startTopologyNodes: Set<string> = !this.startTopology ? new Set<string>() : new Set(this.startTopology.map((hostSpec) => hostSpec.host));
 
       const currentTopologyCopy = this.currentTopology;
@@ -339,7 +338,7 @@ export class BlueGreenStatusMonitor {
       if (!(await this.blueGreenDialect.isBlueGreenStatusAvailable(client))) {
         if (await this.pluginService.isClientValid(client)) {
           this.currentPhase = BlueGreenPhase.NOT_CREATED;
-          logger.debug(Messages.get("bgd.statusNotAvailable", this.role.name, BlueGreenPhase.NOT_CREATED.name));
+          logger.debug(Messages.get("Bgd.statusNotAvailable", this.role.name, BlueGreenPhase.NOT_CREATED.name));
         } else {
           this.clientWrapper = null;
           this.currentPhase = null;
@@ -356,7 +355,7 @@ export class BlueGreenStatusMonitor {
           if (!BlueGreenStatusMonitor.knownVersions.has(version)) {
             const versionCopy: string = version;
             version = BlueGreenStatusMonitor.latestKnownVersion;
-            logger.warn(Messages.get("bgd.unknownVersion", versionCopy));
+            logger.warn(Messages.get("Bgd.unknownVersion", versionCopy));
           }
           const role: BlueGreenRole = BlueGreenRole.parseRole(result.role, version);
           const phase: BlueGreenPhase = BlueGreenPhase.parsePhase(result.status, version);
@@ -391,7 +390,7 @@ export class BlueGreenStatusMonitor {
           // Old1 cluster/instance has been separated and no longer receives
           // updates from related green cluster/instance.
           if (this.role !== BlueGreenRole.SOURCE) {
-            logger.warn(Messages.get("bgd.noEntriesInStatusTable", this.role.name));
+            logger.warn(Messages.get("Bgd.noEntriesInStatusTable", this.role.name));
           }
           this.currentPhase = null;
         }
@@ -423,7 +422,7 @@ export class BlueGreenStatusMonitor {
         } else {
           // We're already connected to a correct node.
           this.connectionHostInfoCorrect = true;
-          this.panicMode = true;
+          this.panicMode = false;
         }
       }
 
@@ -435,15 +434,19 @@ export class BlueGreenStatusMonitor {
     } catch (e: any) {
       if (this.pluginService.isSyntaxError(e)) {
         this.currentPhase = BlueGreenPhase.NOT_CREATED;
-        logger.warn(Messages.get("bgd.error", this.role.name, BlueGreenPhase.NOT_CREATED.name, e.message));
+        logger.warn(Messages.get("Bgd.error", this.role.name, BlueGreenPhase.NOT_CREATED.name, e.message));
       }
-      if (!(await this.isConnectionClosed(client))) {
-        // It's normal to get connection closed during BGD switchover.
-        // If connection isn't closed but there's an exception then let's log it.
-        logger.debug(Messages.get("bgd.unhandledException", this.role.name, e.message));
+      if (this.pluginService.isNetworkError(e)) {
+        if (!(await this.isConnectionClosed(client))) {
+          // It's normal to get connection closed during BGD switchover.
+          // If connection isn't closed but there's an error then let's log it.
+          logger.debug(Messages.get("Bgd.unhandledNetworkError", this.role.name, e.message));
+        }
+        await this.closeConnection();
+        this.panicMode = true;
+      } else {
+        logger.debug(Messages.get("Bgd.unhandledError", this.role.name, e.message));
       }
-      await this.closeConnection();
-      this.panicMode = true;
     }
   }
 
@@ -460,6 +463,9 @@ export class BlueGreenStatusMonitor {
   }
 
   protected async openConnectionAsync(): Promise<void> {
+    this.clientWrapper = null;
+    this.panicMode = true;
+
     if (this.connectionHostInfo === null) {
       this.connectionHostInfo = this.initialHostInfo;
       this.connectedIpAddress = null;
@@ -476,19 +482,19 @@ export class BlueGreenStatusMonitor {
 
         WrapperProperties.IAM_HOST.set(connectWithIpProperties, this.connectionHostInfo.host);
 
-        logger.debug(Messages.get("bgd.openingConnectionWithIp", this.role.name, connectionWithIpHostInfo.host));
+        logger.debug(Messages.get("Bgd.openingConnectionWithIp", this.role.name, connectionWithIpHostInfo.host));
 
         this.clientWrapper = await this.pluginService.forceConnect(connectionWithIpHostInfo, connectWithIpProperties);
-        logger.debug(Messages.get("bgd.openedConnectionWithIp", this.role.name, connectionWithIpHostInfo.host));
+        logger.debug(Messages.get("Bgd.openedConnectionWithIp", this.role.name, connectionWithIpHostInfo.host));
       } else {
         const finalConnectionHostInfoCopy: HostInfo = connectionHostInfoCopy;
-        logger.debug(Messages.get("bgd.openingConnection", this.role.name, finalConnectionHostInfoCopy.host));
+        logger.debug(Messages.get("Bgd.openingConnection", this.role.name, finalConnectionHostInfoCopy.host));
 
         connectedIpAddressCopy = await this.getIpAddress(connectionHostInfoCopy.host);
         this.clientWrapper = await this.pluginService.forceConnect(connectionHostInfoCopy, this.props);
         this.connectedIpAddress = connectedIpAddressCopy;
 
-        logger.debug(Messages.get("bgd.openedConnection", this.role.name, finalConnectionHostInfoCopy.host));
+        logger.debug(Messages.get("Bgd.openedConnection", this.role.name, finalConnectionHostInfoCopy.host));
       }
       this.panicMode = false;
     } catch (error: any) {
@@ -510,7 +516,7 @@ export class BlueGreenStatusMonitor {
 
     WrapperProperties.CLUSTER_ID.set(hostListProperties, `${this.bgdId}::${this.role.name}::${BlueGreenStatusMonitor.BG_CLUSTER_ID}`);
 
-    logger.debug(Messages.get("bgd.createHostListProvider", `${this.role.name}`, WrapperProperties.CLUSTER_ID.get(hostListProperties)));
+    logger.debug(Messages.get("Bgd.createHostListProvider", `${this.role.name}`, WrapperProperties.CLUSTER_ID.get(hostListProperties)));
 
     const connectionHostInfoCopy: HostInfo = this.connectionHostInfo;
     if (connectionHostInfoCopy) {
@@ -518,7 +524,7 @@ export class BlueGreenStatusMonitor {
         .getDialect()
         .getHostListProvider(hostListProperties, connectionHostInfoCopy.host, this.pluginService as unknown as HostListProviderService);
     } else {
-      logger.warn(Messages.get("bgd.hostInfoNull"));
+      logger.warn(Messages.get("Bgd.hostInfoNull"));
     }
   }
 }

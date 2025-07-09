@@ -26,12 +26,13 @@ import { ConnectRouting } from "./routing/connect_routing";
 import { IamAuthenticationPlugin } from "../../authentication/iam_authentication_plugin";
 import { BlueGreenRole } from "./blue_green_role";
 import { ExecuteRouting } from "./routing/execute_routing";
+import { CanReleaseResources } from "../../can_release_resources";
 
 export interface BlueGreenProviderSupplier {
   create(pluginService: PluginService, props: Map<string, any>, bgdId: string): BlueGreenStatusProvider;
 }
 
-export class BlueGreenPlugin extends AbstractConnectionPlugin {
+export class BlueGreenPlugin extends AbstractConnectionPlugin implements CanReleaseResources {
   private static readonly SUBSCRIBED_METHODS: Set<string> = new Set([
     // We should NOT subscribe to "forceConnect" pipeline since it's used by
     // BG monitoring, and we don't want to intercept/block those monitoring connections.
@@ -112,6 +113,10 @@ export class BlueGreenPlugin extends AbstractConnectionPlugin {
         client = await routing.apply(this, hostInfo, props, isInitialConnection, connectFunc, this.pluginService);
         if (!client) {
           this.bgStatus = this.pluginService.getStatus<BlueGreenStatus>(BlueGreenStatus, this.bgdId);
+          if (! this.bgStatus) {
+            this.endTimeNano = getTimeInNanos();
+            return this.regularOpenConnection(connectFunc, isInitialConnection);
+          }
           routing = this.bgStatus.connectRouting.filter((routing: ConnectRouting) => routing.isMatch(hostInfo, hostRole))[0];
         }
       }
@@ -147,6 +152,7 @@ export class BlueGreenPlugin extends AbstractConnectionPlugin {
       this.bgStatus = this.pluginService.getStatus<BlueGreenStatus>(BlueGreenStatus, this.bgdId);
 
       if (!this.bgStatus) {
+        this.endTimeNano = getTimeInNanos();
         return await methodFunc();
       }
 
@@ -191,7 +197,7 @@ export class BlueGreenPlugin extends AbstractConnectionPlugin {
     }
   }
 
-  protected async regularOpenConnection(connectFunc: () => Promise<ClientWrapper>, isInitialConnection: boolean) {
+  protected async regularOpenConnection(connectFunc: () => Promise<ClientWrapper>, isInitialConnection: boolean): Promise<ClientWrapper> {
     const client: ClientWrapper = await connectFunc();
     if (isInitialConnection) {
       // Provider should be initialized after connection is open and a dialect is properly identified.
@@ -220,5 +226,11 @@ export class BlueGreenPlugin extends AbstractConnectionPlugin {
   private resetRoutingTimeNano() {
     this.startTimeNano = BigInt(0);
     this.endTimeNano = BigInt(0);
+  }
+
+  releaseResources(): Promise<void> {
+    const provider: BlueGreenStatusProvider = BlueGreenPlugin.provider.get(this.bgdId);
+    provider.clearResources();
+    return Promise.resolve();
   }
 }

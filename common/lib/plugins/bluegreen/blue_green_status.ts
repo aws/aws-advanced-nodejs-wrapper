@@ -72,12 +72,11 @@ export class BlueGreenStatus {
 
   toString(): string {
     const roleByHostMap = Array.from(this._roleByHost.entries())
-      .map(([key, value]) => `${key} -> ${value.name}`)
-      .join("\n   ");
+      .map(([key, value]) => `\t${key} -> ${value.name}`)
+      .join("\n");
 
-    const connectRoutingStr = this._unmodifiableConnectRouting.map((x) => x.toString()).join("\n   ");
-
-    const executeRoutingStr = this._unmodifiableExecuteRouting.map((x) => x.toString()).join("\n   ");
+    const connectRoutingStr = this._unmodifiableConnectRouting.map((x) => x.toString()).join("\n");
+    const executeRoutingStr = this._unmodifiableExecuteRouting.map((x) => x.toString()).join("\n");
 
     return `${this.constructor.name} [
          bgdId: '${this.bgdId}',

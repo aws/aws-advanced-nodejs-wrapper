@@ -38,9 +38,12 @@ import { SubstituteConnectRouting } from "./routing/substitute_connect_routing";
 import { SuspendConnectRouting } from "./routing/suspend_connect_routing";
 import { ExecuteRouting } from "./routing/execute_routing";
 import { SuspendExecuteRouting } from "./routing/suspend_execute_routing";
-import { SuspendUntilCorrespondingHostFoundConnectRouting } from "./routing/suspend_until_corresponding_host_found_connect_routing";
+import {
+  SuspendUntilCorrespondingHostFoundConnectRouting
+} from "./routing/suspend_until_corresponding_host_found_connect_routing";
 import { RejectConnectRouting } from "./routing/reject_connect_routing";
 import { getValueHash } from "./blue_green_utils";
+import _ from "lodash";
 
 export class BlueGreenStatusProvider {
   private static readonly MONITORING_PROPERTY_PREFIX = "blue-green-monitoring-";
@@ -49,13 +52,12 @@ export class BlueGreenStatusProvider {
 
   protected readonly hostInfoBuilder: HostInfoBuilder = new HostInfoBuilder({ hostAvailabilityStrategy: new SimpleHostAvailabilityStrategy() });
   protected readonly monitors: BlueGreenStatusMonitor[] = [null, null];
-  protected interimStatusHashes: number[] = [0, 0];
   protected lastContextHash: number = 0;
   protected interimStatuses: BlueGreenInterimStatus[] = [null, null];
   protected hostIpAddresses: Map<string, string> = new Map();
 
   // The second parameter of Pair is null when no corresponding host is found.
-  protected readonly correspondingHosts: Map<string, Pair<HostInfo, HostInfo>> = new Map();
+  protected readonly correspondingHosts: Map<string, Pair<HostInfo, HostInfo | null>> = new Map();
 
   // all known host names; host with no port
   protected readonly roleByHost: Map<string, BlueGreenRole> = new Map();
@@ -98,7 +100,7 @@ export class BlueGreenStatusProvider {
     if (this.isBlueGreenDialect(dialect)) {
       this.initMonitoring();
     } else {
-      logger.warn(Messages.get("bgd.unsupportedDialect", this.bgdId, dialect.getDialectName()));
+      logger.warn(Messages.get("Bgd.unsupportedDialect", this.bgdId, dialect.getDialectName()));
     }
   }
 
@@ -152,25 +154,29 @@ export class BlueGreenStatusProvider {
 
   protected async prepareStatus(role: BlueGreenRole, interimStatus: BlueGreenInterimStatus): Promise<void> {
     // Detect changes
-    const statusHash: number = !interimStatus ? 0 : interimStatus.getCustomHashCode();
     const contextHash: number = this.getContextHash();
-    if (this.interimStatusHashes[role.value] === statusHash && this.lastContextHash === contextHash) {
+
+    const storedStatus = this.interimStatuses[role.value];
+
+    if (_.isEqual(storedStatus, interimStatus) && this.lastContextHash === contextHash) {
       // no changes detected
+      logger.debug(`no changes detected for role: ${role.name}`);
       return;
     }
 
     // There are some changes detected. Let's update summary status.
-    logger.debug(Messages.get("bgd.interimStatus", this.bgdId, role.name, interimStatus.toString()));
+    logger.debug(Messages.get("Bgd.interimStatus", this.bgdId, role.name, interimStatus.toString()));
 
     this.updatePhase(role, interimStatus);
 
     // Store interimStatus and corresponding hash
     this.interimStatuses[role.value] = interimStatus;
-    this.interimStatusHashes[role.value] = statusHash;
     this.lastContextHash = contextHash;
 
     // Update map of IP addresses.
-    this.hostIpAddresses = interimStatus.startIpAddressesByHostMap;
+    for (const [host, ip] of interimStatus.startIpAddressesByHostMap) {
+      this.hostIpAddresses.set(host, ip);
+    }
 
     // Update roleByHost based on provided host names.
     interimStatus.hostNames.forEach((x) => this.roleByHost.set(x.toLowerCase(), role));
@@ -194,7 +200,7 @@ export class BlueGreenStatusProvider {
 
     if (latestInterimPhase && interimStatus.blueGreenPhase && interimStatus.blueGreenPhase.phase < latestInterimPhase.phase) {
       this.rollback = true;
-      logger.debug(Messages.get("bgd.rollback", this.bgdId));
+      logger.debug(Messages.get("Bgd.rollback", this.bgdId));
     }
 
     if (!interimStatus.blueGreenPhase) {
@@ -265,21 +271,21 @@ export class BlueGreenStatusProvider {
       const greenHosts: Set<string> = this.interimStatuses[BlueGreenRole.TARGET.value].hostNames;
 
       // Find corresponding cluster hosts
-      const blueClusterReaderHost: string | null =
+      const blueClusterHost: string | null =
         Array.from(blueHosts)
           .filter((host) => this.rdsUtils.isWriterClusterDns(host))
           .at(0) || null;
 
-      const greenClusterReaderHost: string | null =
+      const greenClusterHost: string | null =
         Array.from(greenHosts)
           .filter((host) => this.rdsUtils.isWriterClusterDns(host))
           .at(0) || null;
 
-      if (blueClusterReaderHost !== null && greenClusterReaderHost !== null) {
-        if (!this.correspondingHosts.has(blueClusterReaderHost)) {
+      if (blueClusterHost !== null && greenClusterHost !== null) {
+        if (!this.correspondingHosts.has(blueClusterHost)) {
           this.correspondingHosts.set(
-            blueClusterReaderHost,
-            new Pair(this.hostInfoBuilder.withHost(blueClusterReaderHost).build(), this.hostInfoBuilder.withHost(greenClusterReaderHost).build())
+            blueClusterHost,
+            new Pair(this.hostInfoBuilder.withHost(blueClusterHost).build(), this.hostInfoBuilder.withHost(greenClusterHost).build())
           );
         }
       }
@@ -346,7 +352,7 @@ export class BlueGreenStatusProvider {
         this.summaryStatus = this.getStatusOfCompleted();
         break;
       default:
-        throw new AwsWrapperError(Messages.get("bgd.unknownPhase", this.bgdId, this.latestStatusPhase.name));
+        throw new AwsWrapperError(Messages.get("Bgd.unknownPhase", this.bgdId, this.latestStatusPhase.name));
     }
   }
 
@@ -356,7 +362,7 @@ export class BlueGreenStatusProvider {
         for (const monitor of this.monitors) {
           monitor.setIntervalRate(BlueGreenIntervalRate.BASELINE);
           monitor.setCollectIpAddresses(false);
-          monitor.setCollectTopology(false);
+          monitor.setCollectedTopology(false);
           monitor.setUseIpAddress(false);
         }
         break;
@@ -365,7 +371,7 @@ export class BlueGreenStatusProvider {
         for (const monitor of this.monitors) {
           monitor.setIntervalRate(BlueGreenIntervalRate.INCREASED);
           monitor.setCollectIpAddresses(true);
-          monitor.setCollectTopology(true);
+          monitor.setCollectedTopology(true);
           monitor.setUseIpAddress(false);
           if (this.rollback) {
             monitor.resetCollectedData();
@@ -379,7 +385,7 @@ export class BlueGreenStatusProvider {
         this.monitors.forEach((monitor) => {
           monitor.setIntervalRate(BlueGreenIntervalRate.HIGH);
           monitor.setCollectIpAddresses(false);
-          monitor.setCollectTopology(false);
+          monitor.setCollectedTopology(false);
           monitor.setUseIpAddress(true);
         });
         break;
@@ -388,7 +394,7 @@ export class BlueGreenStatusProvider {
         this.monitors.forEach((monitor) => {
           monitor.setIntervalRate(BlueGreenIntervalRate.BASELINE);
           monitor.setCollectIpAddresses(false);
-          monitor.setCollectTopology(false);
+          monitor.setCollectedTopology(false);
           monitor.setUseIpAddress(false);
           monitor.resetCollectedData();
         });
@@ -400,25 +406,25 @@ export class BlueGreenStatusProvider {
         break;
 
       default:
-        throw new AwsWrapperError(Messages.get("bgd.unknownPhase", this.bgdId, this.summaryStatus.currentPhase.name));
+        throw new AwsWrapperError(Messages.get("Bgd.unknownPhase", this.bgdId, this.summaryStatus.currentPhase.name));
     }
   }
 
   protected updateDnsFlags(role: BlueGreenRole, interimStatus: BlueGreenInterimStatus): void {
     if (role === BlueGreenRole.SOURCE && !this.blueDnsUpdateCompleted && interimStatus.allStartTopologyIpChanged) {
-      logger.debug(Messages.get("bgd.blueDnsCompleted", this.bgdId));
+      logger.debug(Messages.get("Bgd.blueDnsCompleted", this.bgdId));
       this.blueDnsUpdateCompleted = true;
       this.storeBlueDnsUpdateTime();
     }
 
     if (role === BlueGreenRole.TARGET && !this.greenDnsRemoved && interimStatus.allStartTopologyEndpointsRemoved) {
-      logger.debug(Messages.get("bgd.greenDnsRemoved", this.bgdId));
+      logger.debug(Messages.get("Bgd.greenDnsRemoved", this.bgdId));
       this.greenDnsRemoved = true;
       this.storeGreenDnsRemoveTime();
     }
 
     if (role === BlueGreenRole.TARGET && !this.greenTopologyChanged && interimStatus.allTopologyChanged) {
-      logger.debug(Messages.get("bgd.greenTopologyChanged", this.bgdId));
+      logger.debug(Messages.get("Bgd.greenTopologyChanged", this.bgdId));
       this.greenTopologyChanged = true;
       this.storeGreenTopologyChangeTime();
     }
@@ -456,7 +462,7 @@ export class BlueGreenStatusProvider {
     // We want to limit switchover duration to DEFAULT_POST_STATUS_DURATION_NANO.
 
     if (this.isSwitchoverTimerExpired()) {
-      logger.debug(Messages.get("bgd.switchoverTimeout"));
+      logger.debug(Messages.get("Bgd.switchoverTimeout"));
       if (this.rollback) {
         return this.getStatusOfCreated();
       }
@@ -502,7 +508,7 @@ export class BlueGreenStatusProvider {
   protected getStatusOfInProgress(): BlueGreenStatus {
     // We want to limit switchover duration to DEFAULT_POST_STATUS_DURATION_NANO.
     if (this.isSwitchoverTimerExpired()) {
-      logger.debug(Messages.get("bgd.switchoverTimeout"));
+      logger.debug(Messages.get("Bgd.switchoverTimeout"));
       if (this.rollback) {
         return this.getStatusOfCreated();
       }
@@ -511,7 +517,6 @@ export class BlueGreenStatusProvider {
 
     let connectRouting: ConnectRouting[];
     if (this.suspendNewBlueConnectionsWhenInProgress) {
-      // All blue and green connect calls should be suspended.
       connectRouting = [];
       connectRouting.push(new SuspendConnectRouting(null, BlueGreenRole.SOURCE, this.bgdId));
     } else {
@@ -601,7 +606,7 @@ export class BlueGreenStatusProvider {
   protected getStatusOfPost(): BlueGreenStatus {
     // We want to limit switchover duration to DEFAULT_POST_STATUS_DURATION_NANO.
     if (this.isSwitchoverTimerExpired()) {
-      logger.debug(Messages.get("bgd.switchoverTimeout"));
+      logger.debug(Messages.get("Bgd.switchoverTimeout"));
       if (this.rollback) {
         return this.getStatusOfCreated();
       }
@@ -642,7 +647,7 @@ export class BlueGreenStatusProvider {
           const greenIp = this.hostIpAddresses.get(greenHostInfo.host);
           const greenHostInfoWithIp = !greenIp ? greenHostInfo : this.hostInfoBuilder.copyFrom(greenHostInfo).withHost(greenIp).build();
 
-          // Check whether green host is already been connected with blue (no-prefixes) IAM host name.
+          // Check whether green host has already been connected with blue (no-prefixes) IAM host name.
           const iamHosts: HostInfo[] = this.isAlreadySuccessfullyConnected(greenHost, blueHost)
             ? // Green host has already changed its name, and it's not a new blue host (no prefixes).
               [blueHostInfo]
@@ -658,6 +663,19 @@ export class BlueGreenStatusProvider {
               isBlueHostInstance ? { notify: (iamHost: string) => this.registerIamHost(greenHost, iamHost) } : null
             )
           );
+
+          const interimStatus: BlueGreenInterimStatus = this.interimStatuses[role.value];
+          if (interimStatus != null) {
+            connectRouting.push(
+              new SubstituteConnectRouting(
+                this.getHostAndPort(blueHost, interimStatus.port),
+                role,
+                greenHostInfoWithIp,
+                iamHosts,
+                isBlueHostInstance ? { notify: (iamHost: string) => this.registerIamHost(greenHost, iamHost) } : null
+              )
+            );
+          }
         }
       });
 
@@ -671,7 +689,7 @@ export class BlueGreenStatusProvider {
     // We want to limit switchover duration to DEFAULT_POST_STATUS_DURATION_NANO.
 
     if (this.isSwitchoverTimerExpired()) {
-      logger.debug(Messages.get("bgd.switchoverTimeout"));
+      logger.debug(Messages.get("Bgd.switchoverTimeout"));
       if (this.rollback) {
         return this.getStatusOfCreated();
       }
@@ -692,7 +710,7 @@ export class BlueGreenStatusProvider {
     if (differentHostNames) {
       if (!this.isAlreadySuccessfullyConnected(connectHost, iamHost)) {
         this.greenHostChangeNameTimes.set(connectHost, BigInt(Date.now()));
-        logger.debug(Messages.get("bgd.greenHostChangedName", connectHost, iamHost));
+        logger.debug(Messages.get("Bgd.greenHostChangedName", connectHost, iamHost));
       }
     }
 
@@ -810,7 +828,7 @@ export class BlueGreenStatusProvider {
     );
 
     if (switchoverCompleted && hasActiveSwitchoverPhases) {
-      logger.debug(Messages.get("bgd.resetContext"));
+      logger.debug(Messages.get("Bgd.resetContext"));
       this.rollback = false;
       this.summaryStatus = null;
       this.latestStatusPhase = BlueGreenPhase.NOT_CREATED;
@@ -820,7 +838,6 @@ export class BlueGreenStatusProvider {
       this.greenTopologyChanged = false;
       this.allGreenHostsChangedName = false;
       this.postStatusEndTimeNano = BigInt(0);
-      this.interimStatusHashes = [0, 0];
       this.lastContextHash = 0;
       this.interimStatuses = [null, null];
       this.hostIpAddresses.clear();
@@ -881,6 +898,12 @@ export class BlueGreenStatusProvider {
        greenDnsRemoved: ${this.greenDnsRemoved}
        greenHostChangedName: ${this.allGreenHostsChangedName}
        greenTopologyChanged: ${this.greenTopologyChanged}`);
+  }
+
+  clearResources() {
+    this.monitors.forEach((monitor) => {
+      monitor.setStop(true);
+    });
   }
 }
 

@@ -63,7 +63,7 @@ export class SubstituteConnectRouting extends BaseConnectRouting {
     }
 
     if (!this.iamHosts || this.iamHosts.length === 0) {
-      throw new AwsWrapperError(Messages.get("bgd.requireIamHost"));
+      throw new AwsWrapperError(Messages.get("Bgd.requireIamHost"));
     }
 
     for (const iamHost of this.iamHosts) {
@@ -98,14 +98,12 @@ export class SubstituteConnectRouting extends BaseConnectRouting {
         // do nothing
         // try with another IAM host
       }
-      throw new AwsWrapperError(Messages.get("bgd.inProgressCantOpenConnection", this.substituteHost.getHostAndPort()));
     }
-
-    return Promise.resolve(undefined);
+    throw new AwsWrapperError(Messages.get("Bgd.inProgressCantOpenConnection", this.substituteHost.getHostAndPort()));
   }
 
   toString(): string {
-    return `${this.constructor.name} [${this.hostAndPort ?? "<null>"}, ${this.role?.toString() ?? "<null>"}, substitute: ${this.substituteHost?.getHostAndPort() ?? "<null>"}, iamHosts: ${
+    return `${this.constructor.name} [${this.hostAndPort ?? "<null>"}, ${this.role?.name ?? "<null>"}, substitute: ${this.substituteHost?.getHostAndPort() ?? "<null>"}, iamHosts: ${
       this.iamHosts?.map((host) => host.getHostAndPort()).join(", ") ?? "<null>"
     }]`;
   }

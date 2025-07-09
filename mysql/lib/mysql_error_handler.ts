@@ -22,7 +22,7 @@ import { ClientWrapper } from "../../common/lib/client_wrapper";
 export class MySQLErrorHandler implements ErrorHandler {
   private static readonly SQLSTATE_ACCESS_ERROR = "28000";
   private unexpectedError: Error | null = null;
-  protected static readonly SYNTAX_ERROR_CODE = ["42000", "42S02"];
+  protected static readonly SYNTAX_ERROR_CODES = ["42000", "42S02"];
   protected static readonly SYNTAX_ERROR_MESSAGE = "You have an error in your SQL syntax";
 
   protected noOpListener(error: any) {
@@ -58,7 +58,7 @@ export class MySQLErrorHandler implements ErrorHandler {
   isSyntaxError(e: Error): boolean {
     if (Object.prototype.hasOwnProperty.call(e, "code")) {
       // @ts-ignore
-      for (const code of MySQLErrorHandler.SYNTAX_ERROR_CODE) {
+      for (const code of MySQLErrorHandler.SYNTAX_ERROR_CODES) {
         if (e["code"] === code) {
           return true;
         }

@@ -25,7 +25,7 @@ import { TelemetryFactory } from "../../../utils/telemetry/telemetry_factory";
 import { TelemetryContext } from "../../../utils/telemetry/telemetry_context";
 import { TelemetryTraceLevel } from "../../../utils/telemetry/telemetry_trace_level";
 import { BlueGreenStatus } from "../blue_green_status";
-import { convertMsToNanos, getTimeInNanos } from "../../../utils/utils";
+import { convertMsToNanos, convertNanosToMs, getTimeInNanos } from "../../../utils/utils";
 import { WrapperProperties } from "../../../wrapper_property";
 import { BlueGreenPhase } from "../blue_green_phase";
 import { TimeoutError } from "@opentelemetry/sdk-metrics";
@@ -50,7 +50,7 @@ export class SuspendConnectRouting extends BaseConnectRouting {
     connectFunc: () => Promise<ClientWrapper>,
     pluginService: PluginService
   ): Promise<ClientWrapper> {
-    logger.debug(Messages.get("bgd.inProgressHoldConnect"));
+    logger.debug(Messages.get("Bgd.inProgressSuspendConnect"));
 
     const telemetryFactory: TelemetryFactory = pluginService.getTelemetryFactory();
     const telemetryContext: TelemetryContext = telemetryFactory.openTelemetryContext(
@@ -60,20 +60,21 @@ export class SuspendConnectRouting extends BaseConnectRouting {
 
     return await telemetryContext.start(async () => {
       let bgStatus: BlueGreenStatus = pluginService.getStatus<BlueGreenStatus>(BlueGreenStatus, this.bgdId);
-      const timeoutNanos: bigint = convertMsToNanos(WrapperProperties.BG_CONNECT_TIMEOUT.get(properties));
-      const holdStartTime: bigint = getTimeInNanos();
+      const timeoutNanos: bigint = convertMsToNanos(WrapperProperties.BG_CONNECT_TIMEOUT_MS.get(properties));
+      const suspendStartTime: bigint = getTimeInNanos();
       const endTime: bigint = getTimeInNanos() + timeoutNanos;
 
-      while (getTimeInNanos() <= endTime && !bgStatus && bgStatus.currentPhase === BlueGreenPhase.IN_PROGRESS) {
+      while (getTimeInNanos() <= endTime && bgStatus != null && bgStatus.currentPhase === BlueGreenPhase.IN_PROGRESS) {
         await this.delay(SuspendConnectRouting.SLEEP_TIME_MS, bgStatus, pluginService, this.bgdId);
 
         bgStatus = pluginService.getStatus<BlueGreenStatus>(BlueGreenStatus, this.bgdId);
       }
 
-      if (!bgStatus && bgStatus.currentPhase === BlueGreenPhase.IN_PROGRESS) {
-        throw new TimeoutError(Messages.get("bgd.inProgressTryConnectLater", `${WrapperProperties.BG_CONNECT_TIMEOUT.get(properties)}`));
+      if (bgStatus != null && bgStatus.currentPhase === BlueGreenPhase.IN_PROGRESS) {
+        throw new TimeoutError(Messages.get("Bgd.inProgressTryConnectLater", `${WrapperProperties.BG_CONNECT_TIMEOUT_MS.get(properties)}`));
       }
 
+      logger.debug(Messages.get("Bgd.switchoverCompleteContinueWithConnect", `${convertNanosToMs(getTimeInNanos() - suspendStartTime)}`));
       return Promise.resolve();
     });
   }

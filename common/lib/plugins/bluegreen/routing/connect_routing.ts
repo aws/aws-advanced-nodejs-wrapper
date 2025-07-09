@@ -31,4 +31,6 @@ export interface ConnectRouting {
     connectFunc: () => Promise<ClientWrapper>,
     pluginService: PluginService
   ): Promise<ClientWrapper>;
+
+  toString(): string;
 }

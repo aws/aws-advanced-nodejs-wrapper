@@ -17,6 +17,7 @@
 import { ConnectionProvider } from "./connection_provider";
 import { DatabaseDialect } from "./database_dialect/database_dialect";
 import { ClusterTopologyMonitorImpl } from "./host_list_provider/monitoring/cluster_topology_monitor";
+import { BlueGreenStatusProvider } from "./plugins/bluegreen/blue_green_status_provider";
 
 export class WrapperProperty<T> {
   name: string;
@@ -419,9 +420,9 @@ export class WrapperProperties {
     null
   );
 
-  static readonly BG_CONNECT_TIMEOUT = new WrapperProperty<number>(
+  static readonly BG_CONNECT_TIMEOUT_MS = new WrapperProperty<number>(
     "bgConnectTimeoutMs",
-    "Connect timeout (in msec) during Blue/Green Deployment switchover.",
+    "Connect timeout in milliseconds during Blue/Green Deployment switchover.",
     30000
   );
 
@@ -429,25 +430,25 @@ export class WrapperProperties {
 
   static readonly BG_INTERVAL_BASELINE_MS = new WrapperProperty<number>(
     "bgBaselineMs",
-    "Baseline Blue/Green Deployment status checking interval (in msec).",
+    "Baseline Blue/Green Deployment status checking interval in milliseconds.",
     60000
   );
 
   static readonly BG_INTERVAL_INCREASED_MS = new WrapperProperty<number>(
     "bgIncreasedMs",
-    "Increased Blue/Green Deployment status checking interval (in msec).",
+    "Increased Blue/Green Deployment status checking interval in milliseconds.",
     1000
   );
 
   static readonly BG_INTERVAL_HIGH_MS = new WrapperProperty<number>(
     "bgHighMs",
-    "High Blue/Green Deployment status checking interval (in msec).",
+    "High Blue/Green Deployment status checking interval in milliseconds.",
     100
   );
 
   static readonly BG_SWITCHOVER_TIMEOUT_MS = new WrapperProperty<number>(
     "bgSwitchoverTimeoutMs",
-    "Blue/Green Deployment switchover timeout (in msec).",
+    "Blue/Green Deployment switchover timeout in milliseconds.",
     180000 // 3min
   );
 

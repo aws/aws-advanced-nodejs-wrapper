@@ -29,4 +29,6 @@ export interface ExecuteRouting {
     properties: Map<string, any>,
     pluginService: PluginService
   ): Promise<T>;
+
+  toString(): string;
 }
