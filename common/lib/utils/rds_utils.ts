@@ -319,7 +319,7 @@ export class RdsUtils {
   }
 
   public isGreenInstance(host: string) {
-    return host && host.match(RdsUtils.BG_GREEN_HOST_PATTERN);
+    return host && RdsUtils.BG_GREEN_HOST_PATTERN.test(host);
   }
 
   public isOldInstance(host: string): boolean {
@@ -327,7 +327,10 @@ export class RdsUtils {
   }
 
   public isNotOldInstance(host: string): boolean {
-    return !host || !RdsUtils.BG_OLD_HOST_PATTERN.test(host);
+    if (!host) {
+      return true;
+    }
+    return !RdsUtils.BG_OLD_HOST_PATTERN.test(host);
   }
 
   // Verify that provided host is a blue host name and contains neither green prefix nor old prefix.

@@ -407,7 +407,6 @@ tasks.register<Test>("debug-autoscaling") {
         systemProperty("exclude-multi-az-instance", "true")
         systemProperty("exclude-bg", "true")
         systemProperty("test-autoscaling", "true")
-        systemProperty("test-bg", "true")
     }
 }
 

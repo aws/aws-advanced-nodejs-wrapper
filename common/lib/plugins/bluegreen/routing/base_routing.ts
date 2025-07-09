@@ -44,6 +44,6 @@ export abstract class BaseRouting {
   }
 
   toString(): string {
-    return `${this.constructor.name} [${this.hostAndPort ?? "<null>"}, ${this.role.name ?? "<null>"}]`;
+    return `${this.constructor.name} [${this.hostAndPort ?? "<null>"}, ${this.role?.name ?? "<null>"}]`;
   }
 }

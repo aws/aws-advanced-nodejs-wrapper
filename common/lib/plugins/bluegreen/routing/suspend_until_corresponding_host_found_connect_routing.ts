@@ -50,7 +50,7 @@ export class SuspendUntilCorrespondingHostFoundConnectRouting extends BaseConnec
     connectFunc: () => Promise<ClientWrapper>,
     pluginService: PluginService
   ): Promise<ClientWrapper> {
-    logger.debug(Messages.get("bgd.waitConnectUntilCorrespondingHostFound", hostInfo.host));
+    logger.debug(Messages.get("Bgd.waitConnectUntilCorrespondingHostFound", hostInfo.host));
 
     const telemetryFactory: TelemetryFactory = pluginService.getTelemetryFactory();
     const telemetryContext: TelemetryContext = telemetryFactory.openTelemetryContext(
@@ -62,13 +62,13 @@ export class SuspendUntilCorrespondingHostFoundConnectRouting extends BaseConnec
       let bgStatus: BlueGreenStatus = pluginService.getStatus<BlueGreenStatus>(BlueGreenStatus, this.bgdId);
       let correspondingPair: Pair<HostInfo, HostInfo> = bgStatus?.correspondingHosts.get(hostInfo.host);
 
-      const timeoutNanos: bigint = convertMsToNanos(WrapperProperties.BG_CONNECT_TIMEOUT.get(properties));
-      const holdStartTime: bigint = getTimeInNanos();
+      const timeoutNanos: bigint = convertMsToNanos(WrapperProperties.BG_CONNECT_TIMEOUT_MS.get(properties));
+      const suspendStartTime: bigint = getTimeInNanos();
       const endTime: bigint = getTimeInNanos() + timeoutNanos;
 
       while (
         getTimeInNanos() <= endTime &&
-        !bgStatus &&
+        bgStatus != null &&
         bgStatus.currentPhase !== BlueGreenPhase.COMPLETED &&
         (!correspondingPair || !correspondingPair.right)
       ) {
@@ -78,14 +78,17 @@ export class SuspendUntilCorrespondingHostFoundConnectRouting extends BaseConnec
         correspondingPair = bgStatus?.correspondingHosts.get(hostInfo.host);
       }
 
-      if (!bgStatus && bgStatus.currentPhase !== BlueGreenPhase.COMPLETED) {
-        logger.debug(Messages.get("bgd.completedContinueWithConnect", `${convertNanosToMs(getTimeInNanos() - holdStartTime)}`));
+      if (!bgStatus || bgStatus.currentPhase !== BlueGreenPhase.COMPLETED) {
+        logger.debug(Messages.get("Bgd.completedContinueWithConnect", `${convertNanosToMs(getTimeInNanos() - suspendStartTime)}`));
       } else if (getTimeInNanos() > endTime) {
         throw new TimeoutError(
-          Messages.get("bgd.correspondingHosNotFoundTryConnectLater", hostInfo.host, `${WrapperProperties.BG_CONNECT_TIMEOUT.get(properties)}`)
+          Messages.get("Bgd.correspondingHostNotFoundTryConnectLater", hostInfo.host, `${WrapperProperties.BG_CONNECT_TIMEOUT_MS.get(properties)}`)
         );
       }
 
+      logger.debug(
+        Messages.get("Bgd.correspondingHostFoundContinueWithConnect", hostInfo.host, `${convertNanosToMs(getTimeInNanos() - suspendStartTime)}`)
+      );
       // returning no connection so the next routing can handle it
       return Promise.resolve();
     });

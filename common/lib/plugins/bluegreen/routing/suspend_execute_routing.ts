@@ -48,7 +48,7 @@ export class SuspendExecuteRouting extends BaseExecuteRouting {
     properties: Map<string, any>,
     pluginService: PluginService
   ): Promise<T> {
-    logger.debug(Messages.get("bgd.inProgressSuspendMethod", methodName));
+    logger.debug(Messages.get("Bgd.inProgressSuspendMethod", methodName));
 
     const telemetryFactory: TelemetryFactory = pluginService.getTelemetryFactory();
     const telemetryContext: TelemetryContext = telemetryFactory.openTelemetryContext(
@@ -58,21 +58,21 @@ export class SuspendExecuteRouting extends BaseExecuteRouting {
 
     return await telemetryContext.start(async () => {
       let bgStatus: BlueGreenStatus = pluginService.getStatus<BlueGreenStatus>(BlueGreenStatus, this.bgdId);
-      const timeoutNanos: bigint = convertMsToNanos(WrapperProperties.BG_CONNECT_TIMEOUT.get(properties));
-      const holdStartTime: bigint = getTimeInNanos();
+      const timeoutNanos: bigint = convertMsToNanos(WrapperProperties.BG_CONNECT_TIMEOUT_MS.get(properties));
+      const suspendStartTime: bigint = getTimeInNanos();
       const endTime: bigint = getTimeInNanos() + timeoutNanos;
 
-      while (getTimeInNanos() <= endTime && !bgStatus && bgStatus.currentPhase === BlueGreenPhase.IN_PROGRESS) {
+      while (getTimeInNanos() <= endTime && bgStatus != null && bgStatus.currentPhase === BlueGreenPhase.IN_PROGRESS) {
         await this.delay(SuspendExecuteRouting.SLEEP_TIME_MS, bgStatus, pluginService, this.bgdId);
 
         bgStatus = pluginService.getStatus<BlueGreenStatus>(BlueGreenStatus, this.bgdId);
       }
 
-      if (!bgStatus && bgStatus.currentPhase === BlueGreenPhase.IN_PROGRESS) {
-        throw new TimeoutError(Messages.get("bgd.inProgressTryConnectLater", `${WrapperProperties.BG_CONNECT_TIMEOUT.get(properties)}`));
+      if (bgStatus != null && bgStatus.currentPhase === BlueGreenPhase.IN_PROGRESS) {
+        throw new TimeoutError(Messages.get("Bgd.stillInProgressTryMethodLater", `${WrapperProperties.BG_CONNECT_TIMEOUT_MS.get(properties)}`));
       }
 
-      logger.debug(Messages.get("bgd.switchoverCompletedContinueWithMethod", methodName, `${convertNanosToMs(getTimeInNanos() - holdStartTime)}`));
+      logger.debug(Messages.get("Bgd.switchoverCompletedContinueWithMethod", methodName, `${convertNanosToMs(getTimeInNanos() - suspendStartTime)}`));
 
       return Promise.resolve();
     });

@@ -105,7 +105,7 @@ export class AuroraTestUtility {
     logger.info(`Instance ${instanceId} status: ${status.toLowerCase()}`);
   }
 
-  async getAuroraInstanceIds(engine: DatabaseEngine, deployment: DatabaseEngineDeployment, client: any) {
+  async getRdsInstanceIds(engine: DatabaseEngine, deployment: DatabaseEngineDeployment, client: any) {
     let retrieveTopologySql: string;
     switch (deployment) {
       case DatabaseEngineDeployment.AURORA:
@@ -445,15 +445,6 @@ export class AuroraTestUtility {
     return instances.length;
   }
 
-  async getClusterInfo(): Promise<DBCluster | null> {
-    const command = new DescribeDBClustersCommand();
-    const clusters: DBCluster[] | undefined = (await this.client.send(command)).DBClusters;
-    if (!clusters) {
-      return null;
-    }
-    return clusters[0];
-  }
-
   async getClusterByArn(clusterArn: string): Promise<DBCluster | null> {
     const command = new DescribeDBClustersCommand({
       DBClusterIdentifier: clusterArn
@@ -463,15 +454,6 @@ export class AuroraTestUtility {
       return null;
     }
     return clusters[0];
-  }
-
-  async getRdsInstanceInfo(): Promise<DBInstance | null> {
-    const command = new DescribeDBInstancesCommand();
-    const instances: DBInstance[] | undefined = (await this.client.send(command)).DBInstances;
-    if (!instances) {
-      return null;
-    }
-    return instances[0];
   }
 
   async getRdsInstanceInfoByArn(instanceArn: string): Promise<DBInstance | null> {

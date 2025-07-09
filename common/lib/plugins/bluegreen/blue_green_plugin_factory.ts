@@ -30,7 +30,7 @@ export class BlueGreenPluginFactory extends ConnectionPluginFactory {
       }
       return new BlueGreenPluginFactory.blueGreenPlugin.BlueGreenPlugin(pluginService, props);
     } catch (error: any) {
-      throw new AwsWrapperError(Messages.get("ConnectionPluginChainBuilder.errorImportingPlugin", error.message, "BlueGreenConnectionPluginFactory"));
+      throw new AwsWrapperError(Messages.get("ConnectionPluginChainBuilder.errorImportingPlugin", error.message, "BlueGreenPluginFactory"));
     }
   }
 }

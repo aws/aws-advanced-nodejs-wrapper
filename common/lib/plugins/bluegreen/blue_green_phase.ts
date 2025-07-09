@@ -53,7 +53,7 @@ export class BlueGreenPhase {
     const phase = this.blueGreenStatusMapping[value.toUpperCase()];
 
     if (!phase) {
-      throw new AwsWrapperError(Messages.get("bgd.unknownStatus", value));
+      throw new AwsWrapperError(Messages.get("Bgd.unknownStatus", value));
     }
     return phase;
   }

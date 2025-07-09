@@ -170,7 +170,7 @@ export class PluginServiceImpl implements PluginService, HostListProviderService
   readonly props: Map<string, any>;
   private allowedAndBlockedHosts: AllowedAndBlockedHosts | null = null;
   protected static readonly statusesExpiringCache: CacheMap<string, any> = new CacheMap();
-  protected static readonly DEFAULT_STATUS_CACHE_EXPIRE_NANO: number = 60_000_000_000; // 60 minutes
+  protected static readonly DEFAULT_STATUS_CACHE_EXPIRE_NANO: number = 3_600_000_000_000; // 60 minutes
 
   constructor(
     container: PluginServiceManagerContainer,

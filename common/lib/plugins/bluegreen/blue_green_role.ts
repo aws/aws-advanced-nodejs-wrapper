@@ -44,18 +44,18 @@ export class BlueGreenRole {
   public static parseRole(value: string, version: string): BlueGreenRole {
     if (version === "1.0") {
       if (!value?.trim()) {
-        throw new AwsWrapperError(Messages.get("bgd.unknownRole", value));
+        throw new AwsWrapperError(Messages.get("Bgd.unknownRole", value));
       }
 
       const role = BlueGreenRole.blueGreenRoleMapping_1_0.get(value.toUpperCase());
 
       if (role == null) {
-        throw new AwsWrapperError(Messages.get("bgd.unknownRole", value));
+        throw new AwsWrapperError(Messages.get("Bgd.unknownRole", value));
       }
 
       return role;
     }
 
-    throw new AwsWrapperError(Messages.get("bgd.unknownVersion", version));
+    throw new AwsWrapperError(Messages.get("Bgd.unknownVersion", version));
   }
 }

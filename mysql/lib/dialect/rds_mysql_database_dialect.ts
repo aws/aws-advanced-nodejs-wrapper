@@ -58,8 +58,13 @@ export class RdsMySQLDatabaseDialect extends MySQLDatabaseDialect implements Blu
     return this.dialectName;
   }
 
-  isBlueGreenStatusAvailable(clientWrapper: ClientWrapper): Promise<boolean> {
-    return Promise.resolve(false);
+  async isBlueGreenStatusAvailable(clientWrapper: ClientWrapper): Promise<boolean> {
+    try {
+      const [rows] = await clientWrapper.query(RdsMySQLDatabaseDialect.TOPOLOGY_TABLE_EXIST_QUERY);
+      return !!rows[0];
+    } catch {
+      return false;
+    }
   }
 
   async getBlueGreenStatus(clientWrapper: ClientWrapper): Promise<BlueGreenResult[] | null> {

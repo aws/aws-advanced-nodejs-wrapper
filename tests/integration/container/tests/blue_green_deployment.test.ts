@@ -73,7 +73,7 @@ let initClientFunc: (props: any) => any;
 const results: Map<string, BlueGreenResults> = new Map();
 let unhandledErrors: Error[] = [];
 
-class AtomicBoolean {
+class BooleanContainer {
   private value: boolean;
 
   constructor(initialValue: boolean = false) {
@@ -184,7 +184,7 @@ async function getBlueGreenEndpoints(blueGreenId: string): Promise<string[]> {
       }
 
       const instanceIdClient = await openConnectionWithRetry(initDefaultConfig(info.clusterEndpoint, info.clusterEndpointPort, info.defaultDbName));
-      const instanceIds: string[] = await auroraUtil.getAuroraInstanceIds(request.engine, request.deployment, instanceIdClient);
+      const instanceIds: string[] = await auroraUtil.getRdsInstanceIds(request.engine, request.deployment, instanceIdClient);
       if (instanceIds.length < 1) {
         throw new Error("Can't find green cluster instances.");
       }
@@ -329,7 +329,7 @@ describe("blue green", () => {
 
     const startTimeNano: bigint = process.hrtime.bigint();
 
-    const stop = new AtomicBoolean(false);
+    const stop = new BooleanContainer(false);
     const promises: Promise<void>[] = [];
     let promiseCount: number = 0;
     let promiseFinishCount: number = 0;
@@ -463,7 +463,7 @@ async function getDirectTopologyMonitoringPromise(
   host: string,
   port: number,
   dbName: string,
-  stop: AtomicBoolean,
+  stop: BooleanContainer,
   results: BlueGreenResults
 ) {
   let query: string;
@@ -547,7 +547,7 @@ async function getDirectTopologyMonitoringPromise(
 
 async function closeConnection(client: AwsClient) {
   try {
-    if (client != null && !(await client.isValid())) {
+    if (client != null && (await client.isValid())) {
       await client.end();
     }
   } catch (e: any) {
@@ -562,7 +562,7 @@ async function getDirectBlueConnectivityMonitoringPromise(
   host: string,
   port: number,
   dbName: string,
-  stop: AtomicBoolean,
+  stop: BooleanContainer,
   results: BlueGreenResults
 ) {
   const dbConfig = await initDefaultConfig(host, port, dbName);
@@ -602,7 +602,7 @@ async function getDirectBlueIdleConnectivityMonitoringPromise(
   host: string,
   port: number,
   dbName: string,
-  stop: AtomicBoolean,
+  stop: BooleanContainer,
   results: BlueGreenResults
 ) {
   const dbConfig = await initDefaultConfig(host, port, dbName);
@@ -610,28 +610,28 @@ async function getDirectBlueIdleConnectivityMonitoringPromise(
   try {
     client = await openConnectionWithRetry(dbConfig);
 
-    logger.debug(`[DirectBlueConnectivity @ ${hostId}] connection opened.`);
+    logger.debug(`[DirectBlueIdleConnectivity @ ${hostId}] connection opened.`);
 
     await sleep(300_000);
 
-    logger.debug(`[DirectBlueConnectivity @ ${hostId}] Starting connectivity monitoring.`);
+    logger.debug(`[DirectBlueIdleConnectivity @ ${hostId}] Starting connectivity monitoring.`);
 
     while (!stop.get()) {
       try {
         await client.query("SELECT 1");
         await sleep(1000);
       } catch (e: any) {
-        logger.debug(`[DirectBlueConnectivity @ ${hostId} error: ${e.message}`);
+        logger.debug(`[DirectBlueIdleConnectivity @ ${hostId} error: ${e.message}`);
         results.directBlueLostConnectionTime = process.hrtime.bigint();
         break;
       }
     }
   } catch (e: any) {
     unhandledErrors.push(e);
-    logger.debug(`[DirectBlueConnectivity @ ${hostId}] unhandled error: ${e.message}`);
+    logger.debug(`[DirectBlueIdleConnectivity @ ${hostId}] unhandled error: ${e.message}`);
   } finally {
     await closeConnection(client);
-    logger.debug(`[DirectBlueConnectivity @ ${hostId}] promise is completed.`);
+    logger.debug(`[DirectBlueIdleConnectivity @ ${hostId}] promise is completed.`);
   }
 }
 
@@ -642,10 +642,10 @@ async function getWrapperBlueIdleConnectivityMonitoringPromise(
   host: string,
   port: number,
   dbName: string,
-  stop: AtomicBoolean,
+  stop: BooleanContainer,
   results: BlueGreenResults
 ) {
-  const dbConfig = await initDefaultConfig(host, port, dbName);
+  const dbConfig = await initWrapperConfig(host, port, dbName);
 
   try {
     client = await openConnectionWithRetry(dbConfig);
@@ -686,7 +686,7 @@ async function getWrapperBlueExecutingConnectivityMonitoringPromise(
   host: string,
   port: number,
   dbName: string,
-  stop: AtomicBoolean,
+  stop: BooleanContainer,
   results: BlueGreenResults
 ) {
   const dbConfig = await initWrapperConfig(host, port, dbName);
@@ -704,6 +704,7 @@ async function getWrapperBlueExecutingConnectivityMonitoringPromise(
 
   try {
     client = initClientFunc(dbConfig);
+    await client.connect();
 
     logger.debug(`[WrapperBlueExecute @ ${hostId}] connection opened.`);
 
@@ -748,7 +749,7 @@ async function getWrapperBlueNewConnectionMonitoringPromise(
   host: string,
   port: number,
   dbName: string,
-  stop: AtomicBoolean,
+  stop: BooleanContainer,
   results: BlueGreenResults
 ) {
   const dbConfig = await initWrapperConfig(host, port, dbName);
@@ -763,7 +764,8 @@ async function getWrapperBlueNewConnectionMonitoringPromise(
       const startTime = process.hrtime.bigint();
       let endTime;
       try {
-        client = await openConnectionWithRetry(dbConfig);
+        client = initClientFunc(dbConfig);
+        await client.connect();
         endTime = process.hrtime.bigint();
         results.blueWrapperExecuteTimes.push(new TimeHolder(startTime, endTime, bgPlugin.getHoldTimeNano()));
       } catch (e: any) {
@@ -784,7 +786,7 @@ async function getWrapperBlueNewConnectionMonitoringPromise(
   }
 }
 
-async function getBlueDnsMonitoringPromise(hostId: string, host: string, stop: AtomicBoolean, results: BlueGreenResults) {
+async function getBlueDnsMonitoringPromise(hostId: string, host: string, stop: BooleanContainer, results: BlueGreenResults) {
   await sleep(300_000);
 
   try {
@@ -813,7 +815,7 @@ async function getWrapperGreenConnectivityMonitoringPromise(
   host: string,
   port: number,
   dbName: string,
-  stop: AtomicBoolean,
+  stop: BooleanContainer,
   results: BlueGreenResults
 ) {
   const dbConfig = await initWrapperConfig(host, port, dbName);
@@ -856,7 +858,7 @@ async function getWrapperGreenConnectivityMonitoringPromise(
   }
 }
 
-async function getGreenDnsMonitoringPromise(hostId: string, host: string, stop: AtomicBoolean, results: BlueGreenResults) {
+async function getGreenDnsMonitoringPromise(hostId: string, host: string, stop: BooleanContainer, results: BlueGreenResults) {
   const ip: string = (await promisify(lookup)(host, {})).address;
   logger.debug(`[GreenDNS @ ${hostId}] ${host} -> ${ip}`);
   try {
@@ -887,7 +889,7 @@ async function getGreenIamConnectivityMonitoringPromise(
   connectHost: string,
   port: number,
   dbName: string,
-  stop: AtomicBoolean,
+  stop: BooleanContainer,
   results: BlueGreenResults,
   timeHolders: TimeHolder[],
   notifyOnFirstError: boolean,
@@ -911,7 +913,6 @@ async function getGreenIamConnectivityMonitoringPromise(
 
       const token: string = await signer.getAuthToken();
 
-      const startTime: bigint = process.hrtime.bigint();
       let endTime: bigint;
       logger.warn(`greenHostConnectIp: ${greenHostConnectIp}`);
       let config: any = {
@@ -924,16 +925,18 @@ async function getGreenIamConnectivityMonitoringPromise(
       };
       config = DriverHelper.addDriverSpecificConfiguration(config, env.engine);
 
+      const startTime: bigint = process.hrtime.bigint();
       try {
-        await openConnectionWithRetry(config);
+        const client = initClientFunc(config);
+        await client.connect();
         endTime = process.hrtime.bigint();
         timeHolders.push(new TimeHolder(startTime, endTime));
         if (exitOnFirstSuccess) {
           if (results.greenHostChangeNameTime === BigInt(0)) {
             results.greenHostChangeNameTime = process.hrtime.bigint();
-            logger.debug(`[DirectGreenIamIp${prefix} @ ${hostId}`);
-            return;
           }
+          logger.debug(`[DirectGreenIamIp${prefix} @ ${hostId}] Successfully connected. Exiting.`);
+          return;
         }
       } catch (error: any) {
         logger.debug(`[DirectGreenIamIp${prefix} @ ${hostId}] error: ${error.message}`);

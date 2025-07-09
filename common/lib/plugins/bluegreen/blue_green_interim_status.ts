@@ -61,20 +61,20 @@ export class BlueGreenInterimStatus {
   public toString(): string {
     const currentIpMap = Array.from(this.currentIpAddressesByHostMap.entries())
       .map(([key, value]) => `${key} -> ${value}`)
-      .join("\n   ");
+      .join("\n\t");
 
     const startIpMap = Array.from(this.startIpAddressesByHostMap.entries())
       .map(([key, value]) => `${key} -> ${value}`)
-      .join("\n   ");
+      .join("\n\t");
 
-    const allHostNamesStr = Array.from(this.hostNames).join("\n   ");
+    const allHostNamesStr = Array.from(this.hostNames).join("\n\t");
     const startTopologyStr = logTopology(this.startTopology, "");
     const currentTopologyStr = logTopology(this.currentTopology, "");
 
     return `${this.constructor.name} [
-     phase ${this.blueGreenPhase ?? "<null>"}, 
-     version '${this.version}', 
-     port ${this.port}, 
+     phase: ${this.blueGreenPhase.name ?? "<null>"}, 
+     version: '${this.version}', 
+     port: ${this.port}, 
      hostNames:
        ${!allHostNamesStr ? "-" : allHostNamesStr} 
      Start ${!startTopologyStr ? "-" : startTopologyStr} 
@@ -87,58 +87,5 @@ export class BlueGreenInterimStatus {
      allStartTopologyEndpointsRemoved: ${this.allStartTopologyEndpointsRemoved} 
      allTopologyChanged: ${this.allTopologyChanged} 
     ]`;
-  }
-
-  getCustomHashCode(): number {
-    let result = getValueHash(1, this.blueGreenPhase?.toString() || "");
-    result = getValueHash(result, this.version || "");
-    result = getValueHash(result, this.port.toString());
-    result = getValueHash(result, this.allStartTopologyIpChanged.toString());
-    result = getValueHash(result, this.allStartTopologyEndpointsRemoved.toString());
-    result = getValueHash(result, this.allTopologyChanged.toString());
-
-    result = getValueHash(result, this.hostNames == null ? "" : Array.from(this.hostNames).sort().join(","));
-
-    result = getValueHash(
-      result,
-      this.startTopology == null
-        ? ""
-        : this.startTopology
-            .map((x) => x.getHostAndPort() + x.role)
-            .sort()
-            .join(",")
-    );
-
-    result = getValueHash(
-      result,
-      this.currentTopology == null
-        ? ""
-        : this.currentTopology
-            .map((x) => x.getHostAndPort() + x.role)
-            .sort()
-            .join(",")
-    );
-
-    result = getValueHash(
-      result,
-      this.startIpAddressesByHostMap == null
-        ? ""
-        : Array.from(this.startIpAddressesByHostMap.entries())
-            .map(([key, value]) => key + value)
-            .sort()
-            .join(",")
-    );
-
-    result = getValueHash(
-      result,
-      this.currentIpAddressesByHostMap == null
-        ? ""
-        : Array.from(this.currentIpAddressesByHostMap.entries())
-            .map(([key, value]) => key + value)
-            .sort()
-            .join(",")
-    );
-
-    return result;
   }
 }
