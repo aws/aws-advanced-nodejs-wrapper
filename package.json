@@ -59,7 +59,7 @@
     "@opentelemetry/semantic-conventions": "^1.27.0",
     "@types/i18n": "^0.13.12",
     "@types/jest": "^29.5.13",
-    "@types/node": "^22.10.7",
+    "@types/node": "^24.0.13",
     "@types/node-fetch": "^2.6.11",
     "@types/pg": "^8.15.2",
     "@types/tough-cookie": "^4.0.5",
