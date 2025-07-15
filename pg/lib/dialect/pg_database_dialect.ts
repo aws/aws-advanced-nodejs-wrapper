@@ -174,7 +174,7 @@ export class PgDatabaseDialect implements DatabaseDialect {
 
   doesStatementSetTransactionIsolation(statement: string): TransactionIsolationLevel | undefined {
     if (statement.toLowerCase().includes("set session characteristics as transaction isolation level read uncommitted")) {
-      return TransactionIsolationLevel.TRANSACTION_READ_COMMITTED;
+      return TransactionIsolationLevel.TRANSACTION_READ_UNCOMMITTED;
     }
 
     if (statement.toLowerCase().includes("set session characteristics as transaction isolation level read committed")) {
