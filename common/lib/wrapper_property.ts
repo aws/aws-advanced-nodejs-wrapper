@@ -458,6 +458,22 @@ export class WrapperProperties {
     false
   );
 
+  private static readonly PREFIXES = [
+    WrapperProperties.MONITORING_PROPERTY_PREFIX,
+    ClusterTopologyMonitorImpl.MONITORING_PROPERTY_PREFIX,
+    BlueGreenStatusProvider.MONITORING_PROPERTY_PREFIX
+  ];
+
+  private static startsWithPrefix(key: string) {
+    for (const prefix in WrapperProperties.PREFIXES) {
+      if (key.startsWith(prefix)) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
   static removeWrapperProperties(props: Map<string, any>): Map<string, any> {
     const persistingProperties = [
       WrapperProperties.USER.name,
@@ -470,7 +486,7 @@ export class WrapperProperties {
     const copy = new Map(props);
 
     for (const key of props.keys()) {
-      if (!key.startsWith(WrapperProperties.MONITORING_PROPERTY_PREFIX) && !key.startsWith(ClusterTopologyMonitorImpl.MONITORING_PROPERTY_PREFIX)) {
+      if (!WrapperProperties.startsWithPrefix(key)) {
         continue;
       }
 
