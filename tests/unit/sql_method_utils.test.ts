@@ -159,7 +159,7 @@ describe("test sql method utils", () => {
     [[" select 1 "], undefined, "pg"],
     [[" select /* COMMENT */ 1 "], undefined, "pg"],
     [[" /* COMMENT */ select /* COMMENT */ 1 "], undefined, "mysql"],
-    [[" set session characteristics as transaction isolation level read uncommitted "], TransactionIsolationLevel.TRANSACTION_READ_COMMITTED, "pg"],
+    [[" set session characteristics as transaction isolation level read uncommitted "], TransactionIsolationLevel.TRANSACTION_READ_UNCOMMITTED, "pg"],
     [[" set session characteristics as transaction isolation level read committed "], TransactionIsolationLevel.TRANSACTION_READ_COMMITTED, "pg"],
     [[" set session characteristics as transaction isolation level repeatable read "], TransactionIsolationLevel.TRANSACTION_REPEATABLE_READ, "pg"],
     [[" set session characteristics as transaction isolation level serializable "], TransactionIsolationLevel.TRANSACTION_SERIALIZABLE, "pg"],
