@@ -46,7 +46,7 @@ import { getValueHash } from "./blue_green_utils";
 import _ from "lodash";
 
 export class BlueGreenStatusProvider {
-  private static readonly MONITORING_PROPERTY_PREFIX = "blue_green_monitoring_";
+  static readonly MONITORING_PROPERTY_PREFIX = "blue_green_monitoring_";
   private static readonly DEFAULT_CONNECT_TIMEOUT_MS = 10_000; // 10 seconds
   private static readonly DEFAULT_QUERY_TIMEOUT_MS = 10_000; // 10 seconds
 
