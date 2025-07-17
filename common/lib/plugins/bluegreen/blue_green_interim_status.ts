@@ -72,7 +72,7 @@ export class BlueGreenInterimStatus {
     const currentTopologyStr = logTopology(this.currentTopology, "");
 
     return `${this.constructor.name} [
-     phase: ${this.blueGreenPhase.name ?? "<null>"}, 
+     phase: ${this.blueGreenPhase?.name ?? "<null>"}, 
      version: '${this.version}', 
      port: ${this.port}, 
      hostNames:

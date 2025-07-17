@@ -46,7 +46,7 @@ import { getValueHash } from "./blue_green_utils";
 import _ from "lodash";
 
 export class BlueGreenStatusProvider {
-  private static readonly MONITORING_PROPERTY_PREFIX = "blue-green-monitoring-";
+  private static readonly MONITORING_PROPERTY_PREFIX = "blue_green_monitoring_";
   private static readonly DEFAULT_CONNECT_TIMEOUT_MS = 10_000; // 10 seconds
   private static readonly DEFAULT_QUERY_TIMEOUT_MS = 10_000; // 10 seconds
 
@@ -290,23 +290,42 @@ export class BlueGreenStatusProvider {
         }
       }
 
+      // Find corresponding cluster reader hosts
+      const blueClusterReaderHost: string | null =
+        Array.from(blueHosts)
+          .filter((host) => this.rdsUtils.isReaderClusterDns(host))
+          .at(0) || null;
+
+      const greenClusterReaderHost: string | null =
+        Array.from(greenHosts)
+          .filter((host) => this.rdsUtils.isReaderClusterDns(host))
+          .at(0) || null;
+
+      if (blueClusterReaderHost !== null && greenClusterReaderHost !== null) {
+        if (!this.correspondingHosts.has(blueClusterReaderHost)) {
+          this.correspondingHosts.set(
+            blueClusterReaderHost,
+            new Pair(this.hostInfoBuilder.withHost(blueClusterReaderHost).build(), this.hostInfoBuilder.withHost(greenClusterReaderHost).build())
+          );
+        }
+      }
+
       Array.from(blueHosts)
         .filter((host) => this.rdsUtils.isRdsCustomClusterDns(host))
         .forEach((blueHost) => {
           const customClusterName: string | null = this.rdsUtils.getRdsClusterId(blueHost);
           if (customClusterName !== null) {
-            const custom: string[] = Array.from(greenHosts).filter((host) => {
+            const greenHost: string | undefined = Array.from(greenHosts).find((host) => {
               return (
                 this.rdsUtils.isRdsCustomClusterDns(host) &&
                 customClusterName === this.rdsUtils.removeGreenInstancePrefix(this.rdsUtils.getRdsClusterId(host))
               );
             });
-            if (custom.length > 0) {
-              const host = custom[0];
+            if (greenHost) {
               if (!this.correspondingHosts.has(blueHost)) {
                 this.correspondingHosts.set(
                   blueHost,
-                  new Pair(this.hostInfoBuilder.withHost(host).build(), this.hostInfoBuilder.withHost(host).build())
+                  new Pair(this.hostInfoBuilder.withHost(blueHost).build(), this.hostInfoBuilder.withHost(greenHost).build())
                 );
               }
             }
@@ -746,28 +765,28 @@ export class BlueGreenStatusProvider {
       return;
     }
 
-    const key = `${phase.name} ${this.rollback ? " (rollback)" : ""}`;
+    const key = `${phase.name}${this.rollback ? " (rollback)" : ""}`;
     if (!this.phaseTimeNanos.has(key)) {
       this.phaseTimeNanos.set(key, new PhaseTimeInfo(new Date(), getTimeInNanos(), phase));
     }
   }
 
   protected storeBlueDnsUpdateTime(): void {
-    const key = `Blue DNS updated ${this.rollback ? " (rollback)" : ""}`;
+    const key = `Blue DNS updated${this.rollback ? " (rollback)" : ""}`;
     if (!this.phaseTimeNanos.has(key)) {
       this.phaseTimeNanos.set(key, new PhaseTimeInfo(new Date(), getTimeInNanos(), null));
     }
   }
 
   protected storeGreenDnsRemoveTime(): void {
-    const key = `Green DNS removed ${this.rollback ? " (rollback)" : ""}`;
+    const key = `Green DNS removed${this.rollback ? " (rollback)" : ""}`;
     if (!this.phaseTimeNanos.has(key)) {
       this.phaseTimeNanos.set(key, new PhaseTimeInfo(new Date(), getTimeInNanos(), null));
     }
   }
 
   protected storeGreenHostChangeNameTime(): void {
-    const key = `Green host certificates changed ${this.rollback ? " (rollback)" : ""}`;
+    const key = `Green host certificates changed${this.rollback ? " (rollback)" : ""}`;
     if (!this.phaseTimeNanos.has(key)) {
       this.phaseTimeNanos.set(key, new PhaseTimeInfo(new Date(), getTimeInNanos(), null));
     }
@@ -793,9 +812,9 @@ export class BlueGreenStatusProvider {
       return;
     }
 
-    const timeZero = this.rollback
-      ? this.phaseTimeNanos.get(BlueGreenPhase.PREPARATION.name)
-      : this.phaseTimeNanos.get(BlueGreenPhase.IN_PROGRESS.name);
+    const timeZeroPhase: BlueGreenPhase = this.rollback ? BlueGreenPhase.PREPARATION : BlueGreenPhase.IN_PROGRESS;
+    const timeZeroKey: string = `${timeZeroPhase.name}${this.rollback ? " (rollback)" : ""}`;
+    const timeZero = this.phaseTimeNanos.get(timeZeroKey);
     const divider = "----------------------------------------------------------------------------------\n";
 
     const logMessage =
