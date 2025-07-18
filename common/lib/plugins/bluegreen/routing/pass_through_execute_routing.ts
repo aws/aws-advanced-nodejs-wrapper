@@ -17,17 +17,18 @@
 import { PluginService } from "../../../plugin_service";
 import { BaseExecuteRouting } from "./base_execute_routing";
 import { ConnectionPlugin } from "../../../connection_plugin";
+import { RoutingResultHolder } from "./execute_routing";
 
 // Normally execute database call.
 export class PassThroughExecuteRouting extends BaseExecuteRouting {
-  apply<T>(
+  async apply<T>(
     plugin: ConnectionPlugin,
     methodName: string,
     methodFunc: () => Promise<T>,
     methodArgs: any,
     properties: Map<string, any>,
     pluginService: PluginService
-  ): Promise<T> {
-    return methodFunc();
+  ): Promise<RoutingResultHolder<T>> {
+    return new RoutingResultHolder(await methodFunc());
   }
 }

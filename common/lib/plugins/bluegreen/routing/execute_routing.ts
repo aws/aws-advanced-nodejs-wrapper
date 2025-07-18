@@ -19,6 +19,31 @@ import { HostInfo } from "../../../host_info";
 import { BlueGreenRole } from "../blue_green_role";
 import { ConnectionPlugin } from "../../../connection_plugin";
 
+class EmptyResult {}
+
+export class RoutingResultHolder<T> {
+  private static EMPTY_VAL: EmptyResult = {};
+  private static EMPTY = new RoutingResultHolder(RoutingResultHolder.EMPTY_VAL);
+
+  private readonly val: T;
+
+  constructor(val: T) {
+    this.val = val;
+  }
+
+  get(): T {
+    return this.val;
+  }
+
+  isPresent(): boolean {
+    return this.val !== RoutingResultHolder.EMPTY_VAL;
+  }
+
+  static empty() {
+    return RoutingResultHolder.EMPTY;
+  }
+}
+
 export interface ExecuteRouting {
   isMatch(hostInfo: HostInfo, hostRole: BlueGreenRole): boolean;
   apply<T>(
@@ -28,7 +53,7 @@ export interface ExecuteRouting {
     methodArgs: any,
     properties: Map<string, any>,
     pluginService: PluginService
-  ): Promise<T>;
+  ): Promise<RoutingResultHolder<T>>;
 
   toString(): string;
 }

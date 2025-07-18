@@ -31,8 +31,7 @@ export interface IamSuccessfulConnectFunc {
 }
 
 export class SubstituteConnectRouting extends BaseConnectRouting {
-  protected static readonly RDS_UTILS: RdsUtils = new RdsUtils();
-
+  protected readonly rdsUtils: RdsUtils;
   protected readonly substituteHost: HostInfo;
   protected readonly iamHosts: HostInfo[];
   protected readonly iamSuccessfulConnectNotify: IamSuccessfulConnectFunc;
@@ -48,6 +47,7 @@ export class SubstituteConnectRouting extends BaseConnectRouting {
     this.substituteHost = substituteHost;
     this.iamHosts = iamHosts;
     this.iamSuccessfulConnectNotify = iamSuccessfulConnectNotify;
+    this.rdsUtils = new RdsUtils();
   }
 
   async apply(
@@ -58,7 +58,7 @@ export class SubstituteConnectRouting extends BaseConnectRouting {
     connectFunc: () => Promise<ClientWrapper>,
     pluginService: PluginService
   ): Promise<ClientWrapper> {
-    if (!SubstituteConnectRouting.RDS_UTILS.isIP(this.substituteHost.host)) {
+    if (!this.rdsUtils.isIP(this.substituteHost.host)) {
       return pluginService.connect(this.substituteHost, properties, plugin);
     }
 

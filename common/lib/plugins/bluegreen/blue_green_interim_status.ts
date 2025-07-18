@@ -17,7 +17,6 @@
 import { BlueGreenPhase } from "./blue_green_phase";
 import { HostInfo } from "../../host_info";
 import { logTopology } from "../../utils/utils";
-import { getValueHash } from "./blue_green_utils";
 
 export class BlueGreenInterimStatus {
   public blueGreenPhase: BlueGreenPhase;

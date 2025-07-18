@@ -171,7 +171,7 @@ export class BlueGreenStatusMonitor {
       logger.debug(Messages.get("Bgd.monitoringUnhandledError", this.role.name, JSON.stringify(e)));
     } finally {
       await this.closeConnection();
-      logger.debug(Messages.get("Bgd.`monitoringCompleted`", this.role.name));
+      logger.debug(Messages.get("Bgd.monitoringCompleted", this.role.name));
     }
   }
 
@@ -232,7 +232,7 @@ export class BlueGreenStatusMonitor {
     }
     if (this.collectedIpAddresses) {
       this.startIpAddressesByHostMap.clear();
-      this.startIpAddressesByHostMap = new Map([...this.startIpAddressesByHostMap, ...this.currentIpAddressesByHostMap]);
+      this.startIpAddressesByHostMap = new Map([...this.currentIpAddressesByHostMap]);
     }
   }
 
