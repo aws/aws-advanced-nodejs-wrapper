@@ -108,6 +108,7 @@ export class RdsUtils {
   private static readonly IP_V6 = /^[0-9a-fA-F]{1,4}(:[0-9a-fA-F]{1,4}){7}$/i;
   private static readonly IP_V6_COMPRESSED = /^(([0-9A-Fa-f]{1,4}(:[0-9A-Fa-f]{1,4}){0,5})?)::(([0-9A-Fa-f]{1,4}(:[0-9A-Fa-f]{1,4}){0,5})?)$/i;
   private static readonly BG_GREEN_HOST_PATTERN = /.*(?<prefix>-green-[0-9a-z]{6})\..*/i;
+  private static readonly BG_OLD_HOST_PATTERN = /.*(?<prefix>-old1)\..*/i;
 
   static readonly DNS_GROUP = "dns";
   static readonly INSTANCE_GROUP = "instance";
@@ -153,6 +154,22 @@ export class RdsUtils {
     return dnsGroup && dnsGroup.startsWith("proxy-");
   }
 
+  getRdsClusterId(host: string): string | null {
+    const matcher = this.cacheMatcher(
+      host,
+      RdsUtils.AURORA_DNS_PATTERN,
+      RdsUtils.AURORA_CHINA_DNS_PATTERN,
+      RdsUtils.AURORA_OLD_CHINA_DNS_PATTERN,
+      RdsUtils.AURORA_GOV_DNS_PATTERN
+    );
+
+    if (this.getRegexGroup(matcher, RdsUtils.DNS_GROUP) !== null) {
+      return this.getRegexGroup(matcher, RdsUtils.INSTANCE_GROUP);
+    }
+
+    return null;
+  }
+
   public getRdsInstanceId(host: string): string | null {
     if (!host) {
       return null;
@@ -165,7 +182,7 @@ export class RdsUtils {
       RdsUtils.AURORA_OLD_CHINA_DNS_PATTERN,
       RdsUtils.AURORA_GOV_DNS_PATTERN
     );
-    if (this.getRegexGroup(matcher, RdsUtils.DNS_GROUP) !== null) {
+    if (this.getRegexGroup(matcher, RdsUtils.DNS_GROUP) === null) {
       return this.getRegexGroup(matcher, RdsUtils.INSTANCE_GROUP);
     }
 
@@ -260,6 +277,10 @@ export class RdsUtils {
     return null;
   }
 
+  public isIP(ip: string) {
+    return this.isIPv4(ip) || this.isIPv6(ip);
+  }
+
   public isIPv4(ip: string) {
     return ip.match(RdsUtils.IP_V4);
   }
@@ -298,7 +319,23 @@ export class RdsUtils {
   }
 
   public isGreenInstance(host: string) {
-    return host && host.match(RdsUtils.BG_GREEN_HOST_PATTERN);
+    return host && RdsUtils.BG_GREEN_HOST_PATTERN.test(host);
+  }
+
+  public isOldInstance(host: string): boolean {
+    return !!host && RdsUtils.BG_OLD_HOST_PATTERN.test(host);
+  }
+
+  public isNotOldInstance(host: string): boolean {
+    if (!host) {
+      return true;
+    }
+    return !RdsUtils.BG_OLD_HOST_PATTERN.test(host);
+  }
+
+  // Verify that provided host is a blue host name and contains neither green prefix nor old prefix.
+  public isNotGreenAndOldPrefixInstance(host: string): boolean {
+    return !!host && !RdsUtils.BG_GREEN_HOST_PATTERN.test(host) && !RdsUtils.BG_OLD_HOST_PATTERN.test(host);
   }
 
   public removeGreenInstancePrefix(host: string): string {

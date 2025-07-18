@@ -209,7 +209,7 @@ async function deleteEndpoint(rdsClient: RDSClient, endpointId: string): Promise
 describeIf("custom endpoint", () => {
   beforeAll(async () => {
     env = await TestEnvironment.getCurrent();
-    const clusterId = env.auroraClusterName;
+    const clusterId = env.rdsDbName;
     const region = env.region;
     rdsClient = new RDSClient({ region: region });
 
@@ -239,7 +239,7 @@ describeIf("custom endpoint", () => {
 
   beforeEach(async () => {
     await TestEnvironment.verifyClusterStatus();
-    currentWriter = await auroraTestUtility.getClusterWriterInstanceId(env.info.auroraClusterName);
+    currentWriter = await auroraTestUtility.getClusterWriterInstanceId(env.info.rdsDbName);
     logger.info(`Test started: ${expect.getState().currentTestName}`);
   }, 1000000);
 
@@ -259,7 +259,7 @@ describeIf("custom endpoint", () => {
     "test custom endpoint failover - strict reader",
     async (usingFailover1: boolean) => {
       endpointId3 = `test-endpoint-3-${randomUUID()}`;
-      await createEndpoint(env.auroraClusterName, env.instances.slice(0, 2), endpointId3, "READER");
+      await createEndpoint(env.rdsDbName, env.instances.slice(0, 2), endpointId3, "READER");
       endpointInfo3 = await waitUntilEndpointAvailable(endpointId3);
 
       const config = await initDefaultConfig(endpointInfo3.Endpoint, env.databaseInfo.instanceEndpointPort, false, "strict-reader", usingFailover1);
@@ -275,7 +275,7 @@ describeIf("custom endpoint", () => {
       // Use failover API to break connection.
       await auroraTestUtility.failoverClusterAndWaitUntilWriterChanged(
         currentWriter,
-        env.info.auroraClusterName,
+        env.info.rdsDbName,
         instanceId === instance1 ? instance1 : instance2
       );
 
@@ -287,7 +287,7 @@ describeIf("custom endpoint", () => {
       const newInstanceId: string = await auroraTestUtility.queryInstanceId(client);
       expect(newEndpointMembers.includes(newInstanceId)).toBeTruthy();
 
-      const newWriter = await auroraTestUtility.getClusterWriterInstanceId(env.info.auroraClusterName);
+      const newWriter = await auroraTestUtility.getClusterWriterInstanceId(env.info.rdsDbName);
       expect(newInstanceId).not.toBe(newWriter);
 
       await deleteEndpoint(rdsClient, endpointId3);
@@ -399,7 +399,7 @@ describeIf("custom endpoint", () => {
       }
 
       // Use failover API to break connection.
-      await auroraTestUtility.failoverClusterAndWaitUntilWriterChanged(currentWriter, env.info.auroraClusterName, nextWriter);
+      await auroraTestUtility.failoverClusterAndWaitUntilWriterChanged(currentWriter, env.info.rdsDbName, nextWriter);
 
       await expect(auroraTestUtility.queryInstanceId(client)).rejects.toThrow(FailoverSuccessError);
 
@@ -409,7 +409,7 @@ describeIf("custom endpoint", () => {
       const newInstanceId: string = await auroraTestUtility.queryInstanceId(client);
       expect(newEndpointMembers.includes(newInstanceId)).toBeTruthy();
 
-      const newWriter = await auroraTestUtility.getClusterWriterInstanceId(env.info.auroraClusterName);
+      const newWriter = await auroraTestUtility.getClusterWriterInstanceId(env.info.rdsDbName);
       expect(newInstanceId).toBe(newWriter);
     },
     1000000
@@ -441,7 +441,7 @@ describeIf("custom endpoint", () => {
       } else {
         nextWriter = instanceId === instance1 ? instance1 : instance2;
       }
-      await auroraTestUtility.failoverClusterAndWaitUntilWriterChanged(currentWriter, env.info.auroraClusterName, nextWriter);
+      await auroraTestUtility.failoverClusterAndWaitUntilWriterChanged(currentWriter, env.info.rdsDbName, nextWriter);
 
       await expect(auroraTestUtility.queryInstanceId(client)).rejects.toThrow(FailoverSuccessError);
 

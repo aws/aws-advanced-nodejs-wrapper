@@ -18,9 +18,12 @@ import { ErrorHandler } from "../../common/lib/error_handler";
 import { ClientWrapper } from "../../common/lib/client_wrapper";
 import { logger } from "../../common/logutils";
 import { Messages } from "../../common/lib/utils/messages";
+import { error } from "winston";
 
 export abstract class AbstractPgErrorHandler implements ErrorHandler {
   protected unexpectedError: Error | null = null;
+  protected static readonly SYNTAX_ERROR_CODE = "42601";
+  protected static readonly SYNTAX_ERROR_MESSAGE = "syntax error";
 
   abstract getNetworkErrors(): string[];
 
@@ -58,6 +61,14 @@ export abstract class AbstractPgErrorHandler implements ErrorHandler {
       }
     }
     return false;
+  }
+
+  isSyntaxError(e: Error): boolean {
+    if (Object.prototype.hasOwnProperty.call(e, "code")) {
+      // @ts-ignore
+      return AbstractPgErrorHandler.SYNTAX_ERROR_CODE === e["code"];
+    }
+    return e.message.includes(AbstractPgErrorHandler.SYNTAX_ERROR_MESSAGE);
   }
 
   hasLoginError(): boolean {

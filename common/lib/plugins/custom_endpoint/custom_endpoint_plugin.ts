@@ -101,7 +101,7 @@ export class CustomEndpointPlugin extends AbstractConnectionPlugin implements Ca
     this.customEndpointHostInfo = hostInfo;
     logger.debug(Messages.get("CustomEndpointPlugin.connectionRequestToCustomEndpoint", hostInfo.host));
 
-    this.customEndpointId = CustomEndpointPlugin.rdsUtils.getRdsInstanceId(hostInfo.host);
+    this.customEndpointId = CustomEndpointPlugin.rdsUtils.getRdsClusterId(hostInfo.host);
     if (!this.customEndpointId) {
       throw new AwsWrapperError(Messages.get("CustomEndpointPlugin.errorParsingEndpointIdentifier", this.customEndpointHostInfo.host));
     }

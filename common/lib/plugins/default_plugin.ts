@@ -126,10 +126,6 @@ export class DefaultPlugin extends AbstractConnectionPlugin {
       throw new AwsWrapperError(Messages.get("DefaultConnectionPlugin.noHostsAvailable"));
     }
 
-    return this.connectionProviderManager.getHostInfoByStrategy(
-      hosts,
-      role,
-      strategy,
-      this.pluginService.getProperties());
+    return this.connectionProviderManager.getHostInfoByStrategy(hosts, role, strategy, this.pluginService.getProperties());
   }
 }

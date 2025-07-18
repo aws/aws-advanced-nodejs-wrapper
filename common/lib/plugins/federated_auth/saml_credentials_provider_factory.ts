@@ -19,10 +19,7 @@ import { AssumeRoleWithSAMLCommand, STSClient } from "@aws-sdk/client-sts";
 import { WrapperProperties } from "../../wrapper_property";
 
 import { AwsWrapperError } from "../../utils/errors";
-import {
-  AwsCredentialIdentity,
-  AwsCredentialIdentityProvider
-} from "@smithy/types/dist-types/identity/awsCredentialIdentity";
+import { AwsCredentialIdentity, AwsCredentialIdentityProvider } from "@smithy/types/dist-types/identity/awsCredentialIdentity";
 import { decode } from "entities";
 
 export abstract class SamlCredentialsProviderFactory implements CredentialsProviderFactory {

@@ -28,9 +28,7 @@ import { RdsHostListProvider } from "../../../common/lib/host_list_provider/rds_
 import { FailoverRestriction } from "../../../common/lib/plugins/failover/failover_restriction";
 import { WrapperProperties } from "../../../common/lib/wrapper_property";
 import { PluginService } from "../../../common/lib/plugin_service";
-import {
-  MonitoringRdsHostListProvider
-} from "../../../common/lib/host_list_provider/monitoring/monitoring_host_list_provider";
+import { MonitoringRdsHostListProvider } from "../../../common/lib/host_list_provider/monitoring/monitoring_host_list_provider";
 
 export class RdsMultiAZMySQLDatabaseDialect extends MySQLDatabaseDialect implements TopologyAwareDatabaseDialect {
   private static readonly TOPOLOGY_QUERY: string = "SELECT id, endpoint, port FROM mysql.rds_topology";
@@ -45,13 +43,31 @@ export class RdsMultiAZMySQLDatabaseDialect extends MySQLDatabaseDialect impleme
   private static readonly IS_READER_QUERY_COLUMN_NAME: string = "is_reader";
 
   async isDialect(targetClient: ClientWrapper): Promise<boolean> {
-    const res = await targetClient.query(RdsMultiAZMySQLDatabaseDialect.TOPOLOGY_TABLE_EXIST_QUERY).catch(() => false);
+    let res = await targetClient.query(RdsMultiAZMySQLDatabaseDialect.TOPOLOGY_TABLE_EXIST_QUERY).catch(() => false);
 
     if (!res) {
       return false;
     }
 
-    return !!(await targetClient.query(RdsMultiAZMySQLDatabaseDialect.TOPOLOGY_QUERY).catch(() => false));
+    res = await targetClient.query(RdsMultiAZMySQLDatabaseDialect.TOPOLOGY_QUERY).catch(() => false);
+    if (!res) {
+      return false;
+    }
+
+    return await targetClient
+      .query("SHOW VARIABLES LIKE 'report_host'")
+      .then((res) => {
+        // | Variable\_name | Value |
+        // | :--- | :--- |
+        // | report\_host | 0.0.0.0 |
+
+        if (!res) {
+          return false;
+        }
+
+        return !!res[0][0]["Value"];
+      })
+      .catch(() => false);
   }
 
   getHostListProvider(props: Map<string, any>, originalUrl: string, hostListProviderService: HostListProviderService): HostListProvider {
