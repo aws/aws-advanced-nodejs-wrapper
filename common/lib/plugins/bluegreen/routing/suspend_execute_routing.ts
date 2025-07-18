@@ -28,6 +28,7 @@ import { WrapperProperties } from "../../../wrapper_property";
 import { BlueGreenPhase } from "../blue_green_phase";
 import { TimeoutError } from "@opentelemetry/sdk-metrics";
 import { ConnectionPlugin } from "../../../connection_plugin";
+import { RoutingResultHolder } from "./execute_routing";
 
 export class SuspendExecuteRouting extends BaseExecuteRouting {
   protected static readonly TELEMETRY_SWITCHOVER: string = "Blue/Green switchover";
@@ -47,7 +48,7 @@ export class SuspendExecuteRouting extends BaseExecuteRouting {
     methodArgs: any,
     properties: Map<string, any>,
     pluginService: PluginService
-  ): Promise<T> {
+  ): Promise<RoutingResultHolder<T>> {
     logger.debug(Messages.get("Bgd.inProgressSuspendMethod", methodName));
 
     const telemetryFactory: TelemetryFactory = pluginService.getTelemetryFactory();
@@ -74,7 +75,7 @@ export class SuspendExecuteRouting extends BaseExecuteRouting {
 
       logger.debug(Messages.get("Bgd.switchoverCompletedContinueWithMethod", methodName, `${convertNanosToMs(getTimeInNanos() - suspendStartTime)}`));
 
-      return Promise.resolve();
+      return Promise.resolve(RoutingResultHolder.empty());
     });
   }
 }

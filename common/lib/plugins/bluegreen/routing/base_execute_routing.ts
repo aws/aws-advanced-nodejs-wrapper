@@ -18,7 +18,7 @@ import { BaseRouting } from "./base_routing";
 import { BlueGreenRole } from "../blue_green_role";
 import { HostInfo } from "../../../host_info";
 import { PluginService } from "../../../plugin_service";
-import { ExecuteRouting } from "./execute_routing";
+import { ExecuteRouting, RoutingResultHolder } from "./execute_routing";
 import { ConnectionPlugin } from "../../../connection_plugin";
 
 export abstract class BaseExecuteRouting extends BaseRouting implements ExecuteRouting {
@@ -36,5 +36,5 @@ export abstract class BaseExecuteRouting extends BaseRouting implements ExecuteR
     methodArgs: any,
     properties: Map<string, any>,
     pluginService: PluginService
-  ): Promise<T>;
+  ): Promise<RoutingResultHolder<T>>;
 }

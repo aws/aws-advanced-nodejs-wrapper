@@ -41,8 +41,8 @@ dependencies {
     testImplementation("org.slf4j:slf4j-simple:2.0.13")
     testImplementation("com.fasterxml.jackson.core:jackson-databind:2.17.1")
     testImplementation("com.amazonaws:aws-xray-recorder-sdk-core:2.18.2")
-    testImplementation("io.opentelemetry:opentelemetry-sdk:1.42.1")
-    testImplementation("io.opentelemetry:opentelemetry-sdk-metrics:1.43.0")
+    testImplementation("io.opentelemetry:opentelemetry-sdk:1.44.1")
+    testImplementation("io.opentelemetry:opentelemetry-sdk-metrics:1.44.1")
     testImplementation("io.opentelemetry:opentelemetry-exporter-otlp:1.44.1")
     testImplementation("de.vandermeer:asciitable:0.3.2")
 }

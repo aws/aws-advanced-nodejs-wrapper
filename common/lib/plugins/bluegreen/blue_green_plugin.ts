@@ -25,7 +25,7 @@ import { getTimeInNanos } from "../../utils/utils";
 import { ConnectRouting } from "./routing/connect_routing";
 import { IamAuthenticationPlugin } from "../../authentication/iam_authentication_plugin";
 import { BlueGreenRole } from "./blue_green_role";
-import { ExecuteRouting } from "./routing/execute_routing";
+import { ExecuteRouting, RoutingResultHolder } from "./routing/execute_routing";
 import { CanReleaseResources } from "../../can_release_resources";
 
 export interface BlueGreenProviderSupplier {
@@ -111,14 +111,15 @@ export class BlueGreenPlugin extends AbstractConnectionPlugin implements CanRele
       this.startTimeNano = getTimeInNanos();
       while (routing && !client) {
         client = await routing.apply(this, hostInfo, props, isInitialConnection, connectFunc, this.pluginService);
-        if (!client) {
-          this.bgStatus = this.pluginService.getStatus<BlueGreenStatus>(BlueGreenStatus, this.bgdId);
-          if (! this.bgStatus) {
-            this.endTimeNano = getTimeInNanos();
-            return this.regularOpenConnection(connectFunc, isInitialConnection);
-          }
-          routing = this.bgStatus.connectRouting.filter((routing: ConnectRouting) => routing.isMatch(hostInfo, hostRole))[0];
+        if (client) {
+          break;
         }
+        this.bgStatus = this.pluginService.getStatus<BlueGreenStatus>(BlueGreenStatus, this.bgdId);
+        if (!this.bgStatus) {
+          this.endTimeNano = getTimeInNanos();
+          return this.regularOpenConnection(connectFunc, isInitialConnection);
+        }
+        routing = this.bgStatus.connectRouting.filter((routing: ConnectRouting) => routing.isMatch(hostInfo, hostRole))[0];
       }
 
       this.endTimeNano = getTimeInNanos();
@@ -164,7 +165,7 @@ export class BlueGreenPlugin extends AbstractConnectionPlugin implements CanRele
         return await methodFunc();
       }
 
-      let result: T | null = null;
+      let result: RoutingResultHolder<T> | null = null;
       let routing: ExecuteRouting | undefined = this.bgStatus.executeRouting.filter((routing: ExecuteRouting) =>
         routing.isMatch(currentHostInfo, hostRole)
       )[0];
@@ -175,18 +176,22 @@ export class BlueGreenPlugin extends AbstractConnectionPlugin implements CanRele
 
       this.startTimeNano = getTimeInNanos();
 
-      while (routing && !result) {
+      while (routing && result && !result.isPresent()) {
         result = await routing.apply(this, methodName, methodFunc, methodArgs, this.properties, this.pluginService);
-        if (!result) {
+        if (!result.isPresent()) {
           this.bgStatus = this.pluginService.getStatus<BlueGreenStatus>(BlueGreenStatus, this.bgdId);
+          if (!this.bgStatus) {
+            this.endTimeNano = getTimeInNanos();
+            return await methodFunc();
+          }
           routing = this.bgStatus.executeRouting.filter((routing: ExecuteRouting) => routing.isMatch(currentHostInfo, hostRole))[0];
         }
       }
 
       this.endTimeNano = getTimeInNanos();
 
-      if (!result) {
-        return result;
+      if (result.isPresent()) {
+        return result.get();
       }
 
       return await methodFunc();

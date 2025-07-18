@@ -194,9 +194,8 @@ export class BlueGreenStatusProvider {
   }
 
   protected updatePhase(role: BlueGreenRole, interimStatus: BlueGreenInterimStatus): void {
-    const latestInterimPhase: BlueGreenPhase = !this.interimStatuses[role.value]
-      ? BlueGreenPhase.NOT_CREATED
-      : this.interimStatuses[role.value].blueGreenPhase;
+    const status: BlueGreenInterimStatus = this.interimStatuses[role.value];
+    const latestInterimPhase: BlueGreenPhase = !status ? BlueGreenPhase.NOT_CREATED : status.blueGreenPhase;
 
     if (latestInterimPhase && interimStatus.blueGreenPhase && interimStatus.blueGreenPhase.phase < latestInterimPhase.phase) {
       this.rollback = true;
@@ -228,47 +227,41 @@ export class BlueGreenStatusProvider {
   protected updateCorrespondingHosts(): void {
     this.correspondingHosts.clear();
 
-    if (
-      this.interimStatuses[BlueGreenRole.SOURCE.value] &&
-      this.interimStatuses[BlueGreenRole.SOURCE.value].startTopology &&
-      this.interimStatuses[BlueGreenRole.SOURCE.value].startTopology.length > 0 &&
-      this.interimStatuses[BlueGreenRole.TARGET.value] &&
-      this.interimStatuses[BlueGreenRole.TARGET.value].startTopology &&
-      this.interimStatuses[BlueGreenRole.TARGET.value].startTopology.length > 0
-    ) {
+    const sourceInterimStatus: BlueGreenInterimStatus | null = this.interimStatuses[BlueGreenRole.SOURCE.value];
+    const targetInterimStatus: BlueGreenInterimStatus | null = this.interimStatuses[BlueGreenRole.TARGET.value];
+    if (sourceInterimStatus?.startTopology?.length > 0 && targetInterimStatus?.startTopology?.length > 0) {
       const blueWriterHostInfo: HostInfo = this.getWriterHost(BlueGreenRole.SOURCE);
       const greenWriterHostInfo: HostInfo = this.getWriterHost(BlueGreenRole.TARGET);
-      const sortedBlueReaderHostInfos: HostInfo[] = this.getReaderHosts(BlueGreenRole.SOURCE);
-      const sortedGreenReaderHostInfos: HostInfo[] = this.getReaderHosts(BlueGreenRole.TARGET);
+      const sortedBlueReaderHostInfos: HostInfo[] | null = this.getReaderHosts(BlueGreenRole.SOURCE);
+      const sortedGreenReaderHostInfos: HostInfo[] | null = this.getReaderHosts(BlueGreenRole.TARGET);
 
       if (blueWriterHostInfo) {
         // greenWriterHostInfo can be null but that will be handled properly by corresponding routing.
         this.correspondingHosts.set(blueWriterHostInfo.host, new Pair(blueWriterHostInfo, greenWriterHostInfo));
       }
 
-      if (sortedGreenReaderHostInfos.length > 0) {
-        let greenIndex: number = 0;
-        sortedBlueReaderHostInfos.forEach((blueWriterHostInfo) => {
-          this.correspondingHosts.set(blueWriterHostInfo.host, new Pair(blueWriterHostInfo, sortedGreenReaderHostInfos.at(greenIndex++)));
-          greenIndex %= sortedGreenReaderHostInfos.length;
-        });
-      } else {
-        sortedBlueReaderHostInfos.forEach((blueWriterHostInfo) => {
-          this.correspondingHosts.set(blueWriterHostInfo.host, new Pair(blueWriterHostInfo, greenWriterHostInfo));
-        });
+      if (sortedBlueReaderHostInfos?.length > 0) {
+        if (sortedGreenReaderHostInfos?.length > 0) {
+          let greenIndex: number = 0;
+          sortedBlueReaderHostInfos.forEach((blueHostInfo) => {
+            this.correspondingHosts.set(blueHostInfo.host, new Pair(blueHostInfo, sortedGreenReaderHostInfos.at(greenIndex++)));
+            greenIndex %= sortedGreenReaderHostInfos.length;
+          });
+        } else {
+          sortedBlueReaderHostInfos.forEach((blueHostInfo) => {
+            this.correspondingHosts.set(blueHostInfo.host, new Pair(blueHostInfo, greenWriterHostInfo));
+          });
+        }
       }
     }
-
     if (
-      this.interimStatuses[BlueGreenRole.SOURCE.value] &&
-      this.interimStatuses[BlueGreenRole.SOURCE.value].startTopology &&
-      this.interimStatuses[BlueGreenRole.SOURCE.value].hostNames.size > 0 &&
-      this.interimStatuses[BlueGreenRole.TARGET.value] &&
-      this.interimStatuses[BlueGreenRole.TARGET.value].startTopology &&
-      this.interimStatuses[BlueGreenRole.TARGET.value].hostNames.size > 0
+      sourceInterimStatus?.startTopology &&
+      sourceInterimStatus?.hostNames?.size > 0 &&
+      targetInterimStatus?.startTopology &&
+      targetInterimStatus?.hostNames?.size > 0
     ) {
-      const blueHosts: Set<string> = this.interimStatuses[BlueGreenRole.SOURCE.value].hostNames;
-      const greenHosts: Set<string> = this.interimStatuses[BlueGreenRole.TARGET.value].hostNames;
+      const blueHosts: Set<string> = sourceInterimStatus.hostNames;
+      const greenHosts: Set<string> = targetInterimStatus.hostNames;
 
       // Find corresponding cluster hosts
       const blueClusterHost: string | null =
@@ -335,10 +328,13 @@ export class BlueGreenStatusProvider {
   }
 
   protected getWriterHost(role: BlueGreenRole): HostInfo | null {
-    return this.interimStatuses[role.value].startTopology.find((x) => x.role === HostRole.WRITER) || null;
+    return this.interimStatuses[role.value]?.startTopology.find((x) => x.role === HostRole.WRITER) || null;
   }
 
-  protected getReaderHosts(role: BlueGreenRole): HostInfo[] {
+  protected getReaderHosts(role: BlueGreenRole): HostInfo[] | null {
+    if (!this.interimStatuses[role.value]) {
+      return null;
+    }
     return Array.from(this.interimStatuses[role.value].startTopology)
       .filter((x) => x.role !== HostRole.WRITER)
       .sort();
@@ -648,30 +644,31 @@ export class BlueGreenStatusProvider {
       .forEach(([host, role]) => {
         const blueHost: string = host;
         const isBlueHostInstance: boolean = this.rdsUtils.isRdsInstance(blueHost);
-        const blueHostInfo: HostInfo = this.correspondingHosts.get(host).left;
-        const greenHostInfo: HostInfo = this.correspondingHosts.get(host).right;
+        const pair: Pair<HostInfo, HostInfo | null> | undefined = this.correspondingHosts?.get(host);
+        const blueHostInfo: HostInfo | undefined = pair?.left;
+        const greenHostInfo: HostInfo | undefined = pair?.right;
 
         if (!greenHostInfo) {
           // A corresponding host is not found. We need to suspend this call.
           connectRouting.push(new SuspendUntilCorrespondingHostFoundConnectRouting(blueHost, role, this.bgdId));
-          connectRouting.push(
-            new SuspendUntilCorrespondingHostFoundConnectRouting(
-              this.getHostAndPort(blueHost, this.interimStatuses[role.value].port),
-              role,
-              this.bgdId
-            )
-          );
+          const status: BlueGreenInterimStatus = this.interimStatuses[role.value];
+          if (status) {
+            connectRouting.push(new SuspendUntilCorrespondingHostFoundConnectRouting(this.getHostAndPort(blueHost, status.port), role, this.bgdId));
+          }
         } else {
           const greenHost: string = greenHostInfo.host;
           const greenIp = this.hostIpAddresses.get(greenHostInfo.host);
           const greenHostInfoWithIp = !greenIp ? greenHostInfo : this.hostInfoBuilder.copyFrom(greenHostInfo).withHost(greenIp).build();
 
           // Check whether green host has already been connected with blue (no-prefixes) IAM host name.
-          const iamHosts: HostInfo[] = this.isAlreadySuccessfullyConnected(greenHost, blueHost)
-            ? // Green host has already changed its name, and it's not a new blue host (no prefixes).
-              [blueHostInfo]
-            : // Green host isn't yet changed its name, so we need to try both possible IAM host options.
-              [greenHostInfo, blueHostInfo];
+          let iamHosts: HostInfo[];
+          if (this.isAlreadySuccessfullyConnected(greenHost, blueHost)) {
+            // Green host has already changed its name, and it's not a new blue host (no prefixes).
+            iamHosts = blueHostInfo == null ? null : [blueHostInfo];
+          } else {
+            // Green host isn't yet changed its name, so we need to try both possible IAM host options.
+            iamHosts = blueHostInfo == null ? [greenHostInfo] : [greenHostInfo, blueHostInfo];
+          }
 
           connectRouting.push(
             new SubstituteConnectRouting(
@@ -828,7 +825,7 @@ export class BlueGreenStatusProvider {
         .map(
           ([key, value]) =>
             `${value.timestamp.toISOString().padStart(28)} ${
-              timeZero ? Number(value.timestampNano - timeZero.timestampNano) / 1_000_000 + " ms" : "".padStart(18)
+              timeZero ? (Number(value.timestampNano - timeZero.timestampNano) / 1_000_000 + " ms").padStart(18) : "".padStart(18)
             } ${key.padStart(31)}`
         )
         .join("\n") +

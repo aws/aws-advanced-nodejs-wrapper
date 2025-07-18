@@ -1362,6 +1362,9 @@ public class TestEnvironmentConfig implements AutoCloseable {
   }
 
   private void deleteCustomClusterParameterGroup(String groupName) {
+    if (this.reuseDb) {
+      return;
+    }
     try {
       this.auroraUtil.deleteCustomClusterParameterGroup(groupName);
     } catch (Exception ex) {

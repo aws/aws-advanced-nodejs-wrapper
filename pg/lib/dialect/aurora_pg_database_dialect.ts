@@ -135,15 +135,11 @@ export class AuroraPgDatabaseDialect extends PgDatabaseDialect implements Topolo
   }
 
   async getBlueGreenStatus(clientWrapper: ClientWrapper): Promise<BlueGreenResult[] | null> {
-    try {
-      const results: BlueGreenResult[] = [];
-      const result = await clientWrapper.query(AuroraPgDatabaseDialect.BG_STATUS_QUERY);
-      for (const row of result.rows) {
-        results.push(new BlueGreenResult(row.version, row.endpoint, row.port, row.role, row.status));
-      }
-      return results.length > 0 ? results : null;
-    } catch {
-      return null;
+    const results: BlueGreenResult[] = [];
+    const result = await clientWrapper.query(AuroraPgDatabaseDialect.BG_STATUS_QUERY);
+    for (const row of result.rows) {
+      results.push(new BlueGreenResult(row.version, row.endpoint, row.port, row.role, row.status));
     }
+    return results.length > 0 ? results : null;
   }
 }
