@@ -78,7 +78,7 @@ export class SuspendUntilCorrespondingHostFoundConnectRouting extends BaseConnec
         correspondingPair = bgStatus?.correspondingHosts.get(hostInfo.host);
       }
 
-      if (!bgStatus || bgStatus.currentPhase !== BlueGreenPhase.COMPLETED) {
+      if (!bgStatus || bgStatus.currentPhase === BlueGreenPhase.COMPLETED) {
         logger.debug(Messages.get("Bgd.completedContinueWithConnect", `${convertNanosToMs(getTimeInNanos() - suspendStartTime)}`));
       } else if (getTimeInNanos() > endTime) {
         throw new TimeoutError(

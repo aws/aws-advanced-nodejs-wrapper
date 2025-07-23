@@ -77,10 +77,10 @@ export class BlueGreenInterimStatus {
      port: ${this.port}, 
      hostNames:
        ${!allHostNamesStr ? "-" : allHostNamesStr} 
-     Start ${!startTopologyStr ? "-" : startTopologyStr} 
+     startTopology: ${!startTopologyStr ? "-" : startTopologyStr} 
      start IP map:
        ${!startIpMap ? "-" : startIpMap} 
-     Current ${!currentTopologyStr ? "-" : currentTopologyStr} 
+     currentTopology: ${!currentTopologyStr ? "-" : currentTopologyStr} 
      current IP map:
        ${!currentIpMap ? "-" : currentIpMap} 
      allStartTopologyIpChanged: ${this.allStartTopologyIpChanged} 

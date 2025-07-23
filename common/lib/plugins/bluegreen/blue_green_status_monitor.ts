@@ -195,8 +195,8 @@ export class BlueGreenStatusMonitor {
     this.intervalRate = blueGreenIntervalRate;
   }
 
-  setCollectIpAddresses(collectIpAddresses: boolean): void {
-    this.collectedIpAddresses = collectIpAddresses;
+  setCollectedIpAddresses(collectedIpAddresses: boolean): void {
+    this.collectedIpAddresses = collectedIpAddresses;
   }
 
   setCollectedTopology(collectedTopology: boolean): void {
@@ -231,7 +231,6 @@ export class BlueGreenStatusMonitor {
       this.currentIpAddressesByHostMap.set(host, await this.getIpAddress(host));
     }
     if (this.collectedIpAddresses) {
-      this.startIpAddressesByHostMap.clear();
       this.startIpAddressesByHostMap = new Map([...this.currentIpAddressesByHostMap]);
     }
   }
@@ -342,7 +341,7 @@ export class BlueGreenStatusMonitor {
           logger.debug(Messages.get("Bgd.statusNotAvailable", this.role.name, BlueGreenPhase.NOT_CREATED.name));
         } else {
           this.clientWrapper = null;
-          // this.currentPhase = null;
+          this.currentPhase = null;
           this.panicMode = true;
         }
         return;

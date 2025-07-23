@@ -331,8 +331,6 @@ describe("blue green", () => {
 
     const stop = new BooleanContainer(false);
     const promises: Promise<void>[] = [];
-    let promiseCount: number = 0;
-    let promiseFinishCount: number = 0;
 
     const instance: TestInstanceInfo = instances[0];
     const dbName: string = info.defaultDbName;
@@ -347,54 +345,35 @@ describe("blue green", () => {
       if (rdsUtil.isNotGreenAndOldPrefixInstance(host)) {
         // Direct topology monitoring
         promises.push(getDirectTopologyMonitoringPromise(hostId, host, instance.port, dbName, stop, results.get(hostId)));
-        promiseCount++;
-        promiseFinishCount++;
 
         // Direct blue connectivity monitoring
         promises.push(getDirectBlueConnectivityMonitoringPromise(hostId, host, instance.port, dbName, stop, results.get(hostId)));
-        promiseCount++;
-        promiseFinishCount++;
 
         // Direct blue idle connectivity monitoring
         promises.push(getDirectBlueIdleConnectivityMonitoringPromise(hostId, host, instance.port, dbName, stop, results.get(hostId)));
-        promiseCount++;
-        promiseFinishCount++;
 
         // Wrapper blue idle connectivity monitoring
         promises.push(getWrapperBlueIdleConnectivityMonitoringPromise(hostId, host, instance.port, dbName, stop, results.get(hostId)));
-        promiseCount++;
-        promiseFinishCount++;
 
         // Wrapper blue executing connectivity monitoring
         promises.push(getWrapperBlueExecutingConnectivityMonitoringPromise(hostId, host, instance.port, dbName, stop, results.get(hostId)));
-        promiseCount++;
-        promiseFinishCount++;
 
         // Wrapper blue new connection monitoring
         promises.push(getWrapperBlueNewConnectionMonitoringPromise(hostId, host, instance.port, dbName, stop, results.get(hostId)));
-        promiseCount++;
 
         // Blue DNS monitoring
         promises.push(getBlueDnsMonitoringPromise(hostId, host, stop, results.get(hostId)));
-        promiseCount++;
-        promiseFinishCount++;
       }
 
       if (rdsUtil.isGreenInstance(host)) {
         // Direct topology monitoring
         promises.push(getDirectTopologyMonitoringPromise(hostId, host, instance.port, dbName, stop, results.get(hostId)));
-        promiseCount++;
-        promiseFinishCount++;
 
         // Wrapper green connectivity monitoring
         promises.push(getWrapperGreenConnectivityMonitoringPromise(hostId, host, instance.port, dbName, stop, results.get(hostId)));
-        promiseCount++;
-        promiseFinishCount++;
 
         // Green DNS monitoring
         promises.push(getGreenDnsMonitoringPromise(hostId, host, stop, results.get(hostId)));
-        promiseCount++;
-        promiseFinishCount++;
 
         if (iamEnabled) {
           promises.push(
@@ -413,9 +392,6 @@ describe("blue green", () => {
             )
           );
 
-          promiseCount++;
-          promiseFinishCount++;
-
           promises.push(
             getGreenIamConnectivityMonitoringPromise(
               hostId,
@@ -431,16 +407,11 @@ describe("blue green", () => {
               false
             )
           );
-
-          promiseCount++;
-          promiseFinishCount++;
         }
       }
     }
 
     promises.push(getBlueGreenSwitchoverTriggerPromise(info.blueGreenDeploymentId, results));
-    promiseCount++;
-    promiseFinishCount++;
 
     results.forEach((value, key) => (value.startTime = startTimeNano));
 
@@ -453,8 +424,12 @@ describe("blue green", () => {
 
     if (unhandledErrors.length > 0) {
       logUnhandledErrors();
+      await PluginManager.releaseResources();
       fail("There are unhandled errors.");
     }
+
+    stop.set(true);
+    await PluginManager.releaseResources();
   });
 });
 
@@ -576,7 +551,7 @@ async function getDirectBlueConnectivityMonitoringPromise(
 
     logger.debug(`[DirectBlueConnectivity @ ${hostId}] Starting connectivity monitoring.`);
 
-    while (!stop) {
+    while (!stop.get()) {
       try {
         await client.query("SELECT 1");
         await sleep(1000);
@@ -902,7 +877,7 @@ async function getGreenIamConnectivityMonitoringPromise(
 
     logger.debug(`[DirectGreenIamIp${prefix} @ ${hostId}] Starting connectivity monitoring ${iamTokenHost}.`);
 
-    while (!stop) {
+    while (!stop.get()) {
       const signer = new Signer({
         hostname: iamTokenHost,
         port: port,

@@ -253,12 +253,7 @@ export class BlueGreenStatusProvider {
         }
       }
     }
-    if (
-      sourceInterimStatus?.startTopology &&
-      sourceInterimStatus?.hostNames?.size > 0 &&
-      targetInterimStatus?.startTopology &&
-      targetInterimStatus?.hostNames?.size > 0
-    ) {
+    if (sourceInterimStatus?.hostNames?.size > 0 && targetInterimStatus?.hostNames?.size > 0) {
       const blueHosts: Set<string> = sourceInterimStatus.hostNames;
       const greenHosts: Set<string> = targetInterimStatus.hostNames;
 
@@ -375,7 +370,7 @@ export class BlueGreenStatusProvider {
       case BlueGreenPhase.NOT_CREATED:
         for (const monitor of this.monitors) {
           monitor.setIntervalRate(BlueGreenIntervalRate.BASELINE);
-          monitor.setCollectIpAddresses(false);
+          monitor.setCollectedIpAddresses(false);
           monitor.setCollectedTopology(false);
           monitor.setUseIpAddress(false);
         }
@@ -384,7 +379,7 @@ export class BlueGreenStatusProvider {
       case BlueGreenPhase.CREATED:
         for (const monitor of this.monitors) {
           monitor.setIntervalRate(BlueGreenIntervalRate.INCREASED);
-          monitor.setCollectIpAddresses(true);
+          monitor.setCollectedIpAddresses(true);
           monitor.setCollectedTopology(true);
           monitor.setUseIpAddress(false);
           if (this.rollback) {
@@ -398,7 +393,7 @@ export class BlueGreenStatusProvider {
       case BlueGreenPhase.POST:
         this.monitors.forEach((monitor) => {
           monitor.setIntervalRate(BlueGreenIntervalRate.HIGH);
-          monitor.setCollectIpAddresses(false);
+          monitor.setCollectedIpAddresses(false);
           monitor.setCollectedTopology(false);
           monitor.setUseIpAddress(true);
         });
@@ -407,7 +402,7 @@ export class BlueGreenStatusProvider {
       case BlueGreenPhase.COMPLETED:
         this.monitors.forEach((monitor) => {
           monitor.setIntervalRate(BlueGreenIntervalRate.BASELINE);
-          monitor.setCollectIpAddresses(false);
+          monitor.setCollectedIpAddresses(false);
           monitor.setCollectedTopology(false);
           monitor.setUseIpAddress(false);
           monitor.resetCollectedData();
@@ -473,8 +468,6 @@ export class BlueGreenStatusProvider {
    * Execute database calls: default behaviour; no action
    */
   protected getStatusOfPreparation(): BlueGreenStatus {
-    // We want to limit switchover duration to DEFAULT_POST_STATUS_DURATION_NANO.
-
     if (this.isSwitchoverTimerExpired()) {
       logger.debug(Messages.get("Bgd.switchoverTimeout"));
       if (this.rollback) {
@@ -498,15 +491,10 @@ export class BlueGreenStatusProvider {
 
         connectRouting.push(new SubstituteConnectRouting(host, role, substituteHostSpecWithIp, [hostSpec], null));
 
-        connectRouting.push(
-          new SubstituteConnectRouting(
-            this.getHostAndPort(host, this.interimStatuses[role.value].port),
-            role,
-            substituteHostSpecWithIp,
-            [hostSpec],
-            null
-          )
-        );
+        const status = this.interimStatuses[role.value];
+        if (status) {
+          connectRouting.push(new SubstituteConnectRouting(this.getHostAndPort(host, status.port), role, substituteHostSpecWithIp, [hostSpec], null));
+        }
       });
 
     return connectRouting;
@@ -520,7 +508,6 @@ export class BlueGreenStatusProvider {
    * Execute database calls: suspend
    */
   protected getStatusOfInProgress(): BlueGreenStatus {
-    // We want to limit switchover duration to DEFAULT_POST_STATUS_DURATION_NANO.
     if (this.isSwitchoverTimerExpired()) {
       logger.debug(Messages.get("Bgd.switchoverTimeout"));
       if (this.rollback) {
@@ -618,7 +605,6 @@ export class BlueGreenStatusProvider {
   }
 
   protected getStatusOfPost(): BlueGreenStatus {
-    // We want to limit switchover duration to DEFAULT_POST_STATUS_DURATION_NANO.
     if (this.isSwitchoverTimerExpired()) {
       logger.debug(Messages.get("Bgd.switchoverTimeout"));
       if (this.rollback) {
@@ -701,8 +687,6 @@ export class BlueGreenStatusProvider {
   }
 
   protected getStatusOfCompleted(): BlueGreenStatus {
-    // We want to limit switchover duration to DEFAULT_POST_STATUS_DURATION_NANO.
-
     if (this.isSwitchoverTimerExpired()) {
       logger.debug(Messages.get("Bgd.switchoverTimeout"));
       if (this.rollback) {
