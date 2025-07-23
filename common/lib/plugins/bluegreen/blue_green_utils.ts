@@ -14,19 +14,19 @@
   limitations under the License.
 */
 
-export function getValueHash(currentHash: number, val: string): number {
-  return currentHash * 31 + getHashCode(val);
+export function getValueHash(currentHash: bigint, val: string): bigint {
+  return currentHash * 31n + getHashCode(val);
 }
 
-export function getHashCode(str: string): number {
-  let hash = 0;
+export function getHashCode(str: string): bigint {
+  let hash = 0n;
   if (str.length === 0) {
     return hash;
   }
 
   for (let i = 0; i < str.length; i++) {
-    const char = str.charCodeAt(i);
-    hash = 31 * hash + char;
+    const char = BigInt(str.charCodeAt(i));
+    hash = 31n * hash + char;
   }
 
   return hash;

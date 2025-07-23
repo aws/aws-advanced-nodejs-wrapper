@@ -43,7 +43,6 @@ import {
 } from "./routing/suspend_until_corresponding_host_found_connect_routing";
 import { RejectConnectRouting } from "./routing/reject_connect_routing";
 import { getValueHash } from "./blue_green_utils";
-import _ from "lodash";
 
 export class BlueGreenStatusProvider {
   static readonly MONITORING_PROPERTY_PREFIX = "blue_green_monitoring_";
@@ -52,7 +51,8 @@ export class BlueGreenStatusProvider {
 
   protected readonly hostInfoBuilder: HostInfoBuilder = new HostInfoBuilder({ hostAvailabilityStrategy: new SimpleHostAvailabilityStrategy() });
   protected readonly monitors: BlueGreenStatusMonitor[] = [null, null];
-  protected lastContextHash: number = 0;
+  protected lastContextHash: bigint = 0n;
+  protected interimStatusHashes: bigint[] = [0n, 0n];
   protected interimStatuses: BlueGreenInterimStatus[] = [null, null];
   protected hostIpAddresses: Map<string, string> = new Map();
 
@@ -71,7 +71,7 @@ export class BlueGreenStatusProvider {
   protected greenDnsRemoved: boolean = false;
   protected greenTopologyChanged: boolean = false;
   protected allGreenHostsChangedName: boolean = false;
-  protected postStatusEndTimeNano: bigint = BigInt(0);
+  protected postStatusEndTimeNano: bigint = 0n;
 
   // Status check interval time in millis for each BlueGreenIntervalRate.
   protected readonly statusCheckIntervalMap: Map<BlueGreenIntervalRate, bigint> = new Map();
@@ -154,14 +154,12 @@ export class BlueGreenStatusProvider {
 
   protected async prepareStatus(role: BlueGreenRole, interimStatus: BlueGreenInterimStatus): Promise<void> {
     // Detect changes
-    const contextHash: number = this.getContextHash();
+    const statusHash: bigint = interimStatus.getCustomHashCode();
+    const contextHash: bigint = this.getContextHash();
+    const storedStatus = this.interimStatusHashes[role.value];
 
-    const storedStatus = this.interimStatuses[role.value];
-
-    if (_.isEqual(storedStatus, interimStatus) && this.lastContextHash === contextHash) {
+    if (storedStatus === statusHash && this.lastContextHash === contextHash) {
       // no changes detected
-      logger.debug(`no changes detected for role: ${role.name}`);
-      return;
     }
 
     // There are some changes detected. Let's update summary status.
@@ -171,6 +169,7 @@ export class BlueGreenStatusProvider {
 
     // Store interimStatus and corresponding hash
     this.interimStatuses[role.value] = interimStatus;
+    this.interimStatusHashes[role.value] = statusHash;
     this.lastContextHash = contextHash;
 
     // Update map of IP addresses.
@@ -445,8 +444,8 @@ export class BlueGreenStatusProvider {
     }
   }
 
-  protected getContextHash(): number {
-    let result = getValueHash(1, this.allGreenHostsChangedName.toString());
+  protected getContextHash(): bigint {
+    let result = getValueHash(1n, this.allGreenHostsChangedName.toString());
     result = getValueHash(result, this.iamHostSuccessfulConnects.size.toString());
     return result;
   }
@@ -790,7 +789,7 @@ export class BlueGreenStatusProvider {
   }
 
   protected storeGreenTopologyChangeTime(): void {
-    const key = `Green topology changed ${this.rollback ? " (rollback)" : ""}`;
+    const key = `Green topology changed${this.rollback ? " (rollback)" : ""}`;
     if (!this.phaseTimeNanos.has(key)) {
       this.phaseTimeNanos.set(key, new PhaseTimeInfo(new Date(), getTimeInNanos(), null));
     }
@@ -853,9 +852,10 @@ export class BlueGreenStatusProvider {
       this.greenDnsRemoved = false;
       this.greenTopologyChanged = false;
       this.allGreenHostsChangedName = false;
-      this.postStatusEndTimeNano = BigInt(0);
-      this.lastContextHash = 0;
+      this.postStatusEndTimeNano = 0n;
+      this.lastContextHash = 0n;
       this.interimStatuses = [null, null];
+      this.interimStatusHashes = [0n, 0n];
       this.hostIpAddresses.clear();
       this.correspondingHosts.clear();
       this.roleByHost.clear();
@@ -865,13 +865,13 @@ export class BlueGreenStatusProvider {
   }
 
   protected startSwitchoverTimer(): void {
-    if (this.postStatusEndTimeNano === BigInt(0)) {
+    if (this.postStatusEndTimeNano === 0n) {
       this.postStatusEndTimeNano = getTimeInNanos() + this.switchoverTimeoutNanos;
     }
   }
 
   protected isSwitchoverTimerExpired(): boolean {
-    return this.postStatusEndTimeNano > 0 && getTimeInNanos() >= this.postStatusEndTimeNano;
+    return this.postStatusEndTimeNano >= 0n && getTimeInNanos() >= this.postStatusEndTimeNano;
   }
 
   protected logCurrentContext(): void {

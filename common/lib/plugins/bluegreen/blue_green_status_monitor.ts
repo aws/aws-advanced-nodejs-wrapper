@@ -332,6 +332,7 @@ export class BlueGreenStatusMonitor {
     const client: ClientWrapper = this.clientWrapper;
     try {
       if (await this.isConnectionClosed(client)) {
+        this.panicMode = true;
         return;
       }
 
@@ -341,7 +342,7 @@ export class BlueGreenStatusMonitor {
           logger.debug(Messages.get("Bgd.statusNotAvailable", this.role.name, BlueGreenPhase.NOT_CREATED.name));
         } else {
           this.clientWrapper = null;
-          this.currentPhase = null;
+          // this.currentPhase = null;
           this.panicMode = true;
         }
         return;
@@ -436,17 +437,13 @@ export class BlueGreenStatusMonitor {
         this.currentPhase = BlueGreenPhase.NOT_CREATED;
         logger.warn(Messages.get("Bgd.error", this.role.name, BlueGreenPhase.NOT_CREATED.name, e.message));
       }
-      if (this.pluginService.isNetworkError(e)) {
-        if (!(await this.isConnectionClosed(client))) {
-          // It's normal to get connection closed during BGD switchover.
-          // If connection isn't closed but there's an error then let's log it.
-          logger.debug(Messages.get("Bgd.unhandledNetworkError", this.role.name, e.message));
-        }
-        await this.closeConnection();
-        this.panicMode = true;
-      } else {
+      if (!(await this.isConnectionClosed(client))) {
+        // It's normal to get connection closed during BGD switchover.
+        // If connection isn't closed but there's an error then let's log it.
         logger.debug(Messages.get("Bgd.unhandledError", this.role.name, e.message));
       }
+      await this.closeConnection();
+      this.panicMode = true;
     }
   }
 

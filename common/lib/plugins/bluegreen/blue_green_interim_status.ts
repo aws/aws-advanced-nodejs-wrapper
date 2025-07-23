@@ -17,6 +17,7 @@
 import { BlueGreenPhase } from "./blue_green_phase";
 import { HostInfo } from "../../host_info";
 import { logTopology } from "../../utils/utils";
+import { getValueHash } from "./blue_green_utils";
 
 export class BlueGreenInterimStatus {
   public blueGreenPhase: BlueGreenPhase;
@@ -86,5 +87,58 @@ export class BlueGreenInterimStatus {
      allStartTopologyEndpointsRemoved: ${this.allStartTopologyEndpointsRemoved} 
      allTopologyChanged: ${this.allTopologyChanged} 
     ]`;
+  }
+
+  getCustomHashCode(): bigint {
+    let result: bigint = getValueHash(1n, this.blueGreenPhase?.name || "");
+    result = getValueHash(result, this.version || "");
+    result = getValueHash(result, this.port.toString());
+    result = getValueHash(result, this.allStartTopologyIpChanged.toString());
+    result = getValueHash(result, this.allStartTopologyEndpointsRemoved.toString());
+    result = getValueHash(result, this.allTopologyChanged.toString());
+
+    result = getValueHash(result, this.hostNames == null ? "" : Array.from(this.hostNames).sort().join(","));
+
+    result = getValueHash(
+      result,
+      this.startTopology == null
+        ? ""
+        : this.startTopology
+            .map((x) => x.getHostAndPort() + x.role)
+            .sort()
+            .join(",")
+    );
+
+    result = getValueHash(
+      result,
+      this.currentTopology == null
+        ? ""
+        : this.currentTopology
+            .map((x) => x.getHostAndPort() + x.role)
+            .sort()
+            .join(",")
+    );
+
+    result = getValueHash(
+      result,
+      this.startIpAddressesByHostMap == null
+        ? ""
+        : Array.from(this.startIpAddressesByHostMap.entries())
+            .map(([key, value]) => key + value)
+            .sort()
+            .join(",")
+    );
+
+    result = getValueHash(
+      result,
+      this.currentIpAddressesByHostMap == null
+        ? ""
+        : Array.from(this.currentIpAddressesByHostMap.entries())
+            .map(([key, value]) => key + value)
+            .sort()
+            .join(",")
+    );
+
+    return result;
   }
 }

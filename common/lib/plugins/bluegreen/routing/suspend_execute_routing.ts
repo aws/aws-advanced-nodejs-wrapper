@@ -75,7 +75,7 @@ export class SuspendExecuteRouting extends BaseExecuteRouting {
 
       logger.debug(Messages.get("Bgd.switchoverCompletedContinueWithMethod", methodName, `${convertNanosToMs(getTimeInNanos() - suspendStartTime)}`));
 
-      return Promise.resolve(RoutingResultHolder.empty());
+      return RoutingResultHolder.empty();
     });
   }
 }

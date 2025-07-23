@@ -178,7 +178,7 @@ export class BlueGreenPlugin extends AbstractConnectionPlugin implements CanRele
 
       while (routing && result && !result.isPresent()) {
         result = await routing.apply(this, methodName, methodFunc, methodArgs, this.properties, this.pluginService);
-        if (!result.isPresent()) {
+        if (!result?.isPresent()) {
           this.bgStatus = this.pluginService.getStatus<BlueGreenStatus>(BlueGreenStatus, this.bgdId);
           if (!this.bgStatus) {
             this.endTimeNano = getTimeInNanos();
@@ -190,7 +190,7 @@ export class BlueGreenPlugin extends AbstractConnectionPlugin implements CanRele
 
       this.endTimeNano = getTimeInNanos();
 
-      if (result.isPresent()) {
+      if (result?.isPresent()) {
         return result.get();
       }
 
