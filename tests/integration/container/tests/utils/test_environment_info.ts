@@ -25,7 +25,7 @@ export class TestEnvironmentInfo {
   private readonly _awsSecretAccessKey: string;
   private readonly _awsSessionToken: string;
   private readonly _region: string;
-  private readonly _auroraClusterName: string;
+  private readonly _rdsDbName: string;
   private readonly _iamUserName: string;
   private readonly _databaseInfo: TestDatabaseInfo;
   private readonly _proxyDatabaseInfo: TestProxyDatabaseInfo;
@@ -33,6 +33,7 @@ export class TestEnvironmentInfo {
   private readonly _metricsTelemetryInfo: TestTelemetryInfo;
   private readonly _databaseEngine: string;
   private readonly _databaseEngineVersion: string;
+  private readonly _rdsEndpoint: string;
 
   constructor(testInfo: { [s: string]: any }) {
     this._request = new TestEnvironmentRequest(testInfo["request"]);
@@ -40,7 +41,8 @@ export class TestEnvironmentInfo {
     this._awsSecretAccessKey = String(testInfo["awsSecretAccessKey"]);
     this._awsSessionToken = String(testInfo["awsSessionToken"]);
     this._region = String(testInfo["region"]);
-    this._auroraClusterName = String(testInfo["auroraClusterName"]);
+    this._rdsEndpoint = String(testInfo["rdsEndpoint"]);
+    this._rdsDbName = String(testInfo["rdsDbName"]);
     this._iamUserName = String(testInfo["iamUsername"]);
 
     this._databaseInfo = new TestDatabaseInfo(testInfo["databaseInfo"]);
@@ -73,8 +75,12 @@ export class TestEnvironmentInfo {
     return this._region;
   }
 
-  get auroraClusterName(): string {
-    return this._auroraClusterName;
+  get rdsEndpoint(): string {
+    return this._rdsEndpoint;
+  }
+
+  get rdsDbName(): string {
+    return this._rdsDbName;
   }
 
   get databaseEngineVersion(): string {

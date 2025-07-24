@@ -20,9 +20,7 @@ import { HostRole } from "../../common/lib/host_role";
 import { SimpleHostAvailabilityStrategy } from "../../common/lib/host_availability/simple_host_availability_strategy";
 import { PluginServiceImpl } from "../../common/lib/plugin_service";
 import { anything, instance, mock, reset, verify, when } from "ts-mockito";
-import {
-  AuroraConnectionTrackerPlugin
-} from "../../common/lib/plugins/connection_tracker/aurora_connection_tracker_plugin";
+import { AuroraConnectionTrackerPlugin } from "../../common/lib/plugins/connection_tracker/aurora_connection_tracker_plugin";
 import { OpenedConnectionTracker } from "../../common/lib/plugins/connection_tracker/opened_connection_tracker";
 import { RdsUtils } from "../../common/lib/utils/rds_utils";
 import { RdsUrlType } from "../../common/lib/utils/rds_url_type";

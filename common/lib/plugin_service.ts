@@ -140,6 +140,16 @@ export interface PluginService extends ErrorHandler {
   getTelemetryFactory(): TelemetryFactory;
 
   setAllowedAndBlockedHosts(allowedAndBlockedHosts: AllowedAndBlockedHosts): void;
+
+  setStatus<T>(clazz: any, status: T | null, clusterBound: boolean): void;
+
+  setStatus<T>(clazz: any, status: T | null, key: string): void;
+
+  getStatus<T>(clazz: any, clusterBound: boolean): T;
+
+  getStatus<T>(clazz: any, key: string): T;
+
+  isPluginInUse(plugin: any): boolean;
 }
 
 export class PluginServiceImpl implements PluginService, HostListProviderService {
@@ -159,6 +169,8 @@ export class PluginServiceImpl implements PluginService, HostListProviderService
   protected static readonly hostAvailabilityExpiringCache: CacheMap<string, HostAvailability> = new CacheMap<string, HostAvailability>();
   readonly props: Map<string, any>;
   private allowedAndBlockedHosts: AllowedAndBlockedHosts | null = null;
+  protected static readonly statusesExpiringCache: CacheMap<string, any> = new CacheMap();
+  protected static readonly DEFAULT_STATUS_CACHE_EXPIRE_NANO: number = 3_600_000_000_000; // 60 minutes
 
   constructor(
     container: PluginServiceManagerContainer,
@@ -686,6 +698,10 @@ export class PluginServiceImpl implements PluginService, HostListProviderService
     return this.getDialect().getErrorHandler().isNetworkError(e);
   }
 
+  isSyntaxError(e: Error): boolean {
+    return this.getDialect().getErrorHandler().isSyntaxError(e);
+  }
+
   hasLoginError(): boolean {
     return this.getDialect().getErrorHandler().hasLoginError();
   }
@@ -712,5 +728,54 @@ export class PluginServiceImpl implements PluginService, HostListProviderService
 
   static clearHostAvailabilityCache(): void {
     PluginServiceImpl.hostAvailabilityExpiringCache.clear();
+  }
+
+  getStatus<T>(clazz: any, clusterBound: boolean): T;
+  getStatus<T>(clazz: any, key: string): T;
+  getStatus<T>(clazz: any, clusterBound: boolean | string): T {
+    if (typeof clusterBound === "string") {
+      return <T>PluginServiceImpl.statusesExpiringCache.get(this.getStatusCacheKey(clazz, clusterBound));
+    }
+    let clusterId: string = null;
+    if (clusterBound) {
+      try {
+        clusterId = this._hostListProvider.getClusterId();
+      } catch (e) {
+        // Do nothing
+      }
+    }
+    return this.getStatus(clazz, clusterId);
+  }
+
+  protected getStatusCacheKey<T>(clazz: T, key: string): string {
+    return `${!key ? "" : key.trim().toLowerCase()}::${clazz.toString()}`;
+  }
+
+  setStatus<T>(clazz: any, status: T | null, clusterBound: boolean): void;
+  setStatus<T>(clazz: any, status: T | null, key: string): void;
+  setStatus<T>(clazz: any, status: T, clusterBound: boolean | string): void {
+    if (typeof clusterBound === "string") {
+      const cacheKey: string = this.getStatusCacheKey(clazz, clusterBound);
+      if (!status) {
+        PluginServiceImpl.statusesExpiringCache.delete(cacheKey);
+      } else {
+        PluginServiceImpl.statusesExpiringCache.put(cacheKey, status, PluginServiceImpl.DEFAULT_STATUS_CACHE_EXPIRE_NANO);
+      }
+      return;
+    }
+
+    let clusterId: string | null = null;
+    if (clusterBound) {
+      try {
+        clusterId = this._hostListProvider.getClusterId();
+      } catch (e) {
+        // Do nothing
+      }
+    }
+    this.setStatus(clazz, status, clusterId);
+  }
+
+  isPluginInUse(plugin: any) {
+    return this.pluginServiceManagerContainer.pluginManager!.isPluginInUse(plugin);
   }
 }

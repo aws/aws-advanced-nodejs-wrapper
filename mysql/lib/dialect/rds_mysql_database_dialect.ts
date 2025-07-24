@@ -17,10 +17,16 @@
 import { MySQLDatabaseDialect } from "./mysql_database_dialect";
 import { DatabaseDialectCodes } from "../../../common/lib/database_dialect/database_dialect_codes";
 import { ClientWrapper } from "../../../common/lib/client_wrapper";
+import { BlueGreenDialect, BlueGreenResult } from "../../../common/lib/database_dialect/blue_green_dialect";
 
-export class RdsMySQLDatabaseDialect extends MySQLDatabaseDialect {
+export class RdsMySQLDatabaseDialect extends MySQLDatabaseDialect implements BlueGreenDialect {
+  private static readonly BG_STATUS_QUERY: string = "SELECT * FROM mysql.rds_topology";
+
+  private static readonly TOPOLOGY_TABLE_EXIST_QUERY: string =
+    "SELECT 1 AS tmp FROM information_schema.tables WHERE" + " table_schema = 'mysql' AND table_name = 'rds_topology'";
+
   getDialectUpdateCandidates(): string[] {
-    return [DatabaseDialectCodes.RDS_MULTI_AZ_MYSQL, DatabaseDialectCodes.AURORA_MYSQL];
+    return [DatabaseDialectCodes.AURORA_MYSQL, DatabaseDialectCodes.RDS_MULTI_AZ_MYSQL];
   }
 
   async isDialect(targetClient: ClientWrapper): Promise<boolean> {
@@ -50,5 +56,23 @@ export class RdsMySQLDatabaseDialect extends MySQLDatabaseDialect {
 
   getDialectName(): string {
     return this.dialectName;
+  }
+
+  async isBlueGreenStatusAvailable(clientWrapper: ClientWrapper): Promise<boolean> {
+    try {
+      const [rows] = await clientWrapper.query(RdsMySQLDatabaseDialect.TOPOLOGY_TABLE_EXIST_QUERY);
+      return !!rows[0];
+    } catch {
+      return false;
+    }
+  }
+
+  async getBlueGreenStatus(clientWrapper: ClientWrapper): Promise<BlueGreenResult[] | null> {
+    const results: BlueGreenResult[] = [];
+    const [rows] = await clientWrapper.query(RdsMySQLDatabaseDialect.BG_STATUS_QUERY);
+    for (const row of rows) {
+      results.push(new BlueGreenResult(row.version, row.endpoint, row.port, row.role, row.status));
+    }
+    return results.length > 0 ? results : null;
   }
 }

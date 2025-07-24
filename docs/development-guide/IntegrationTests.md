@@ -16,10 +16,15 @@ Before running the integration tests for the AWS Advanced NodeJS Wrapper, you mu
 
   - RDS permissions.
   - EC2 permissions so integration tests can add the current IP address in the Aurora cluster's EC2 security group.
-  - For more information, see: [Setting Up for Amazon RDS User Guide](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/CHAP_SettingUp.html).
+  - For more information,
+    see: [Setting Up for Amazon RDS User Guide](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/CHAP_SettingUp.html).
 
-- An available Aurora PostgreSQL or MySQL DB cluster is required if you're running the tests against an existing DB cluster. The `REUSE_RDS_CLUSTER` [environment variable](#environment-variables-for-running-against-an-existing-aurora-cluster) is required to run tests against an existing cluster.
-- An IAM user or role with permissions to AWS X-Ray and Amazon CloudWatch is required to visualize the telemetry data in the AWS Console. For more details, see: [Telemetry](../using-the-nodejs-wrapper/Telemetry.md).
+- An available Aurora PostgreSQL or MySQL DB cluster is required if you're running the tests against an existing DB
+  cluster. The
+  `REUSE_RDS_DB` [environment variable](#environment-variables-for-running-against-an-existing-aurora-cluster) is
+  required to run tests against an existing cluster.
+- An IAM user or role with permissions to AWS X-Ray and Amazon CloudWatch is required to visualize the telemetry data in
+  the AWS Console. For more details, see: [Telemetry](../using-the-nodejs-wrapper/Telemetry.md).
 
 ### Aurora Integration Tests
 
@@ -33,14 +38,24 @@ Both approaches will incur costs.
 PostgreSQL and MySQL tests are currently supported.
 
 > [!TIP]
-> If you are not running against an existing cluster (`REUSE_RDS_CLUSTER` is `false`), the test will automatically create and delete the test resources. However, if the tests fail, the test resources may not be fully cleaned up. After running the integration tests, ensure all test resources are cleaned up.
+> If you are not running against an existing cluster (`REUSE_RDS_DB` is `false`), the test will automatically create and
+> delete the test resources. However, if the tests fail, the test resources may not be fully cleaned up. After running the
+> integration tests, ensure all test resources are cleaned up.
 
 #### Environment Variables
 
-If the environment variable `REUSE_RDS_CLUSTER` is set to true, the integration tests will use the existing cluster defined by your environment variables. Otherwise, the integration tests will create a new Aurora cluster and then delete it automatically when the tests are done. Note that you will need a valid Docker environment to run any of the integration tests because they are run using a Docker environment as a host. The appropriate Docker containers will be created automatically when you run the tests, so you will not need to execute any Docker commands manually. If an environment variable listed in the tables below is not provided by the user, it may use a default value.
+If the environment variable `REUSE_RDS_DB` is set to true, the integration tests will use the existing cluster defined
+by your environment variables. Otherwise, the integration tests will create a new Aurora cluster and then delete it
+automatically when the tests are done. Note that you will need a valid Docker environment to run any of the integration
+tests because they are run using a Docker environment as a host. The appropriate Docker containers will be created
+automatically when you run the tests, so you will not need to execute any Docker commands manually. If an environment
+variable listed in the tables below is not provided by the user, it may use a default value.
 
 > [!NOTE]
-> If you are running tests against an existing cluster, the tests will only run against the Aurora database engine of that cluster. For example, if you specify a MySQL cluster using the environment variables, only the MySQL tests will be run even if you pick test-all-aurora as the task. To run against Postgres instead, you will need to change your environment variables.
+> If you are running tests against an existing cluster, the tests will only run against the Aurora database engine of
+> that cluster. For example, if you specify a MySQL cluster using the environment variables, only the MySQL tests will be
+> run even if you pick test-all-aurora as the task. To run against Postgres instead, you will need to change your
+> environment variables.
 
 ##### Environment Variables for Running Against a New Aurora Cluster
 
@@ -77,7 +92,7 @@ If the environment variable `REUSE_RDS_CLUSTER` is set to true, the integration 
 | `AWS_ACCESS_KEY_ID`       | An AWS access key associated with an IAM user or role with RDS permissions.                                                                                                                                                      | `ASIAIOSFODNN7EXAMPLE`                       |
 | `AWS_SECRET_ACCESS_KEY`   | The secret key associated with the provided AWS_ACCESS_KEY_ID.                                                                                                                                                                   | `wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY`   |
 | `AWS_SESSION_TOKEN`       | AWS Session Token for CLI, SDK, & API access. This value is only required when using MFA credentials. See: [temporary AWS credentials](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_temp_use-resources.html). | `AQoDYXdzEJr...<remainder of session token>` |
-| `REUSE_RDS_CLUSTER`       | Must be set to true to use a specified existing cluster for tests. If you would like to have the tests create a cluster, see [here](#environment-variables-for-running-against-a-new-aurora-cluster).                            | `true`                                       | `false`                      |
+| `REUSE_RDS_DB`            | Must be set to true to use a specified existing cluster for tests. If you would like to have the tests create a cluster, see [here](#environment-variables-for-running-against-a-new-aurora-cluster).                            | `true`                                       | `false`                      |
 | `RDS_DB_REGION`           | The database region.                                                                                                                                                                                                             | `us-east-1`                                  | `us-east-1`                  |
 
 ###### (Optional) Additional Environment Variables
@@ -93,7 +108,8 @@ PostgreSQL and MySQL tests are currently supported.
 
 ### Available Integration Test Tasks
 
-The following are the currently available integration test tasks. Each task may run a different subset of integration tests:
+The following are the currently available integration test tasks. Each task may run a different subset of integration
+tests:
 
 #### Standard Integration Test Tasks
 
@@ -116,9 +132,11 @@ The following are the currently available integration test tasks. Each task may 
 ### Running the Integration Tests
 
 1. Ensure all [prerequisites](#prerequisites) have been installed. Docker Desktop must be running.
-2. If you are running any Aurora integration tests, ensure the [Aurora Test Requirements](#aurora-test-requirements) have been met.
+2. If you are running any Aurora integration tests, ensure the [Aurora Test Requirements](#aurora-test-requirements)
+   have been met.
 3. Set up [environment variables](#environment-variables).
-4. Run one of the available [integration test tasks](#available-integration-test-tasks). For example, to run all integration tests, you can use the following commands:
+4. Run one of the available [integration test tasks](#available-integration-test-tasks). For example, to run all
+   integration tests, you can use the following commands:
 
 macOS:
 
@@ -140,4 +158,9 @@ Linux:
 
 Test results can be found in `tests/integration/host/build/test-results/test-all-environments/`.
 
-[^1]: The cluster domain suffix can be determined by checking the endpoint of an existing cluster in the desired region, or by temporarily creating a database to check the endpoint. For example, given the database endpoint `db-identifier.cluster-XYZ.us-east-2.rds.amazonaws.com`, the domain suffix would be `XYZ.us-east-2.rds.amazonaws.com`. See [here](https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/Aurora.Endpoints.Cluster.html) for more information on Amazon Aurora cluster endpoints.
+[^1]:
+    The cluster domain suffix can be determined by checking the endpoint of an existing cluster in the desired region,
+    or by temporarily creating a database to check the endpoint. For example, given the database endpoint
+    `db-identifier.cluster-XYZ.us-east-2.rds.amazonaws.com`, the domain suffix would be `XYZ.us-east-2.rds.amazonaws.com`.
+    See [here](https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/Aurora.Endpoints.Cluster.html) for more
+    information on Amazon Aurora cluster endpoints.

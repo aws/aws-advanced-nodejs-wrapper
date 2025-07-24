@@ -2,7 +2,7 @@
 
 - [Getting Started](./GettingStarted.md)
 - [Using the AWS Advanced NodeJS Wrapper](./using-the-nodejs-wrapper/UsingTheNodejsWrapper.md)
-  - [Logging](/docs/using-the-nodejs-wrapper/UsingTheNodejsWrapper.md#logging)
+  - [Logging](../docs/using-the-nodejs-wrapper/UsingTheNodejsWrapper.md#logging)
   - [Telemetry](../docs/using-the-nodejs-wrapper/Telemetry.md)
   - [Database Dialects](../docs/using-the-nodejs-wrapper/DatabaseDialects.md)
   - [Plugins](./using-the-nodejs-wrapper/UsingTheNodejsWrapper.md#plugins)
@@ -16,6 +16,7 @@
     - [Aurora Initial Connection Strategy Plugin](./using-the-nodejs-wrapper/using-plugins/UsingTheAuroraInitialConnectionStrategyPlugin.md)
     - [AWS Secrets Manager Plugin](./using-the-nodejs-wrapper/using-plugins/UsingTheAwsSecretsManagerPlugin.md)
     - [Aurora Connection Tracker Plugin](./using-the-nodejs-wrapper/using-plugins/UsingTheAuroraConnectionTrackerPlugin.md)
+    - [Blue/Green Deployment Plugin](./using-the-nodejs-wrapper/using-plugins/UsingTheBlueGreenPlugin.md)
   - [Host Availability Strategy](./using-the-nodejs-wrapper/HostAvailabilityStrategy.md)
   - [Reader Selection Strategies](./using-the-nodejs-wrapper/ReaderSelectionStrategies.md)
 - Examples

@@ -58,8 +58,9 @@ const MYSQL_QUERY = "SHOW VARIABLES LIKE 'version_comment'";
 const RDS_MYSQL_QUERY = "SHOW VARIABLES LIKE 'version_comment'";
 const AURORA_MYSQL_QUERY = "SHOW VARIABLES LIKE 'aurora_version'";
 const TAZ_MYSQL_QUERIES: string[] = [
-  "SELECT 1 AS tmp FROM information_schema.tables WHERE" + " table_schema = 'mysql' AND table_name = 'rds_topology'",
-  "SELECT id, endpoint, port FROM mysql.rds_topology"
+  "SELECT 1 AS tmp FROM information_schema.tables WHERE table_schema = 'mysql' AND table_name = 'rds_topology'",
+  "SELECT id, endpoint, port FROM mysql.rds_topology",
+  "SHOW VARIABLES LIKE 'report_host'"
 ];
 const PG_QUERY = "SELECT 1 FROM pg_proc LIMIT 1";
 const RDS_PG_QUERY =
@@ -68,7 +69,8 @@ const RDS_PG_QUERY =
 const AURORA_PG_QUERY = "SELECT (setting LIKE '%aurora_stat_utils%') AS aurora_stat_utils FROM pg_settings WHERE name='rds.extensions'";
 const TAZ_PG_QUERIES: string[] = [
   "SELECT 1 AS tmp FROM information_schema.routines WHERE routine_schema='rds_tools' AND routine_name='multi_az_db_cluster_source_dbi_resource_id'",
-  "SELECT multi_az_db_cluster_source_dbi_resource_id FROM rds_tools.multi_az_db_cluster_source_dbi_resource_id()"
+  "SELECT multi_az_db_cluster_source_dbi_resource_id FROM rds_tools.multi_az_db_cluster_source_dbi_resource_id()",
+  "SELECT 'rds_tools.show_topology'::regproc"
 ];
 
 const mysqlResult = [

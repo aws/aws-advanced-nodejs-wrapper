@@ -15,16 +15,21 @@
 */
 
 import {
+  BlueGreenDeployment,
   CreateDBInstanceCommand,
+  DBCluster,
   DBInstanceAlreadyExistsFault,
   DBInstanceNotFoundFault,
   DeleteDBInstanceCommand,
+  DescribeBlueGreenDeploymentsCommand,
   DescribeDBClustersCommand,
   DescribeDBInstancesCommand,
   FailoverDBClusterCommand,
   InvalidDBInstanceStateFault,
   RDSClient,
-  RebootDBInstanceCommand
+  RebootDBInstanceCommand,
+  SwitchoverBlueGreenDeploymentCommand,
+  SwitchoverBlueGreenDeploymentResponse
 } from "@aws-sdk/client-rds";
 import { TestEnvironment } from "./test_environment";
 import * as dns from "dns";
@@ -35,14 +40,22 @@ import { sleep } from "../../../../../common/lib/utils/utils";
 import { logger } from "../../../../../common/logutils";
 import { TestInstanceInfo } from "./test_instance_info";
 import { TestEnvironmentInfo } from "./test_environment_info";
+import { DatabaseEngine } from "./database_engine";
+import { DatabaseEngineDeployment } from "./database_engine_deployment";
 
 const instanceClass: string = "db.r5.large";
 
 export class AuroraTestUtility {
   private client: RDSClient;
 
-  constructor(region: string = "us-east-1") {
-    this.client = new RDSClient({ region: region });
+  constructor(region: string = "us-east-1", endpoint: string = null) {
+    this.client =
+      endpoint === null
+        ? new RDSClient({ region: region })
+        : new RDSClient({
+            region: region,
+            endpoint: endpoint
+          });
   }
 
   async getDbInstance(instanceId: string): Promise<DBInstance | null> {
@@ -92,6 +105,86 @@ export class AuroraTestUtility {
     logger.info(`Instance ${instanceId} status: ${status.toLowerCase()}`);
   }
 
+  async getRdsInstanceIds(engine: DatabaseEngine, deployment: DatabaseEngineDeployment, client: any) {
+    let retrieveTopologySql: string;
+    switch (deployment) {
+      case DatabaseEngineDeployment.AURORA:
+        switch (engine) {
+          case DatabaseEngine.MYSQL:
+            retrieveTopologySql =
+              "SELECT SERVER_ID, SESSION_ID FROM information_schema.replica_host_status ORDER BY IF(SESSION_ID = 'MASTER_SESSION_ID', 0, 1)";
+            break;
+          case DatabaseEngine.PG:
+            retrieveTopologySql =
+              "SELECT SERVER_ID, SESSION_ID FROM aurora_replica_status() ORDER BY CASE WHEN SESSION_ID = 'MASTER_SESSION_ID' THEN 0 ELSE 1 END";
+            break;
+          default:
+            throw new Error(`Unsupported database engine: ${engine}`);
+        }
+        break;
+      case DatabaseEngineDeployment.RDS_MULTI_AZ_CLUSTER:
+        switch (engine) {
+          case DatabaseEngine.MYSQL: {
+            const replicaWriterId: string = await this.getMultiAzMysqlReplicaWriterInstanceId(client);
+            retrieveTopologySql = `SELECT SUBSTRING_INDEX(endpoint, '.', 1) as SERVER_ID
+                                   FROM mysql.rds_topology
+                                   ORDER BY CASE WHEN id = ${replicaWriterId == null ? "@@server_id" : `'${replicaWriterId}'`} THEN 0 ELSE 1 END,
+                                            SUBSTRING_INDEX(endpoint, '.', 1)`;
+            break;
+          }
+          case DatabaseEngine.PG:
+            retrieveTopologySql =
+              "SELECT SUBSTRING(endpoint FROM 0 FOR POSITION('.' IN endpoint)) as SERVER_ID FROM rds_tools.show_topology() ORDER BY CASE WHEN id = (SELECT MAX(multi_az_db_cluster_source_dbi_resource_id) FROM rds_tools.multi_az_db_cluster_source_dbi_resource_id()) THEN 0 ELSE 1 END, endpoint";
+
+            break;
+          default:
+            throw new Error(`Unsupported database engine: ${engine}`);
+        }
+        break;
+      case DatabaseEngineDeployment.RDS_MULTI_AZ_INSTANCE:
+        switch (engine) {
+          case DatabaseEngine.MYSQL:
+            retrieveTopologySql = "SELECT SUBSTRING_INDEX(endpoint, '.', 1) as SERVER_ID FROM mysql.rds_topology";
+            break;
+          case DatabaseEngine.PG:
+            retrieveTopologySql = "SELECT SUBSTRING(endpoint FROM 0 FOR POSITION('.' IN endpoint)) as SERVER_ID" + " FROM rds_tools.show_topology()";
+
+            break;
+          default:
+            throw new Error(`Unsupported database engine: ${engine}`);
+        }
+        break;
+      default:
+        throw new Error(`Unsupported database engine deployment: ${deployment}`);
+    }
+
+    const auroraInstances: string[] = [];
+    const result = await client.query(retrieveTopologySql);
+    switch (engine) {
+      case DatabaseEngine.MYSQL:
+        for (const row of result[0]) {
+          auroraInstances.push(row.SERVER_ID);
+        }
+        break;
+      case DatabaseEngine.PG:
+        for (const row of result.rows) {
+          auroraInstances.push(row.server_id);
+        }
+        break;
+      default:
+        throw new Error(`Unsupported database engine: ${engine}`);
+    }
+    return auroraInstances;
+  }
+
+  private async getMultiAzMysqlReplicaWriterInstanceId(client: any): Promise<string | null> {
+    const result = await client.query("SHOW REPLICA STATUS");
+    if (result.length > 0) {
+      return result[0].Source_Server_id;
+    }
+    return null;
+  }
+
   async waitUntilClusterHasDesiredStatus(clusterId: string, desiredStatus: string = "available") {
     let clusterInfo = await this.getDbCluster(clusterId);
     if (clusterInfo === null) {
@@ -136,7 +229,7 @@ export class AuroraTestUtility {
 
   async failoverClusterAndWaitUntilWriterChanged(initialWriter?: string, clusterId?: string, targetWriterId?: string) {
     if (this.isNullOrUndefined(clusterId)) {
-      clusterId = (await TestEnvironment.getCurrent()).info.auroraClusterName;
+      clusterId = (await TestEnvironment.getCurrent()).info.rdsDbName;
     }
 
     if (this.isNullOrUndefined(initialWriter)) {
@@ -169,7 +262,7 @@ export class AuroraTestUtility {
   async failoverClusterToTarget(clusterId?: string, targetInstanceId?: string): Promise<void> {
     const info = (await TestEnvironment.getCurrent()).info;
     if (clusterId == null) {
-      clusterId = info.auroraClusterName;
+      clusterId = info.rdsDbName;
     }
 
     await this.waitUntilClusterHasDesiredStatus(clusterId);
@@ -227,7 +320,7 @@ export class AuroraTestUtility {
 
   async isDbInstanceWriter(instanceId: string, clusterId?: string) {
     if (clusterId === undefined) {
-      clusterId = (await TestEnvironment.getCurrent()).info.auroraClusterName;
+      clusterId = (await TestEnvironment.getCurrent()).info.rdsDbName;
     }
     const clusterInfo = await this.getDbCluster(clusterId);
     if (clusterInfo === null || clusterInfo.DBClusterMembers === undefined) {
@@ -245,7 +338,7 @@ export class AuroraTestUtility {
 
   async getClusterWriterInstanceId(clusterId?: string) {
     if (clusterId === undefined) {
-      clusterId = (await TestEnvironment.getCurrent()).info.auroraClusterName;
+      clusterId = (await TestEnvironment.getCurrent()).info.rdsDbName;
     }
 
     const clusterInfo = await this.getDbCluster(clusterId);
@@ -270,7 +363,7 @@ export class AuroraTestUtility {
     const info: TestEnvironmentInfo = (await TestEnvironment.getCurrent()).info;
     const command = new CreateDBInstanceCommand({
       DBInstanceIdentifier: instanceId,
-      DBClusterIdentifier: info.auroraClusterName,
+      DBClusterIdentifier: info.rdsDbName,
       DBInstanceClass: instanceClass,
       PubliclyAccessible: true,
       Engine: info.databaseEngine,
@@ -350,5 +443,53 @@ export class AuroraTestUtility {
       return 0;
     }
     return instances.length;
+  }
+
+  async getClusterByArn(clusterArn: string): Promise<DBCluster | null> {
+    const command = new DescribeDBClustersCommand({
+      DBClusterIdentifier: clusterArn
+    });
+    const clusters: DBCluster[] | undefined = (await this.client.send(command)).DBClusters;
+    if (!clusters) {
+      return null;
+    }
+    return clusters[0];
+  }
+
+  async getRdsInstanceInfoByArn(instanceArn: string): Promise<DBInstance | null> {
+    const command = new DescribeDBInstancesCommand({
+      DBInstanceIdentifier: instanceArn
+    });
+    const instances: DBInstance[] | undefined = (await this.client.send(command)).DBInstances;
+    if (!instances) {
+      return null;
+    }
+    return instances[0];
+  }
+
+  async getBlueGreenDeployment(blueGreenId: string): Promise<BlueGreenDeployment | null> {
+    const command = new DescribeBlueGreenDeploymentsCommand({
+      BlueGreenDeploymentIdentifier: blueGreenId
+    });
+    try {
+      const blueGreenDeployments = (await this.client.send(command)).BlueGreenDeployments;
+      if (blueGreenDeployments === undefined || blueGreenDeployments.length === 0) {
+        return null;
+      }
+
+      return blueGreenDeployments[0];
+    } catch {
+      return null;
+    }
+  }
+
+  async switchoverBlueGreenDeployment(blueGreenId: string) {
+    const command = new SwitchoverBlueGreenDeploymentCommand({
+      BlueGreenDeploymentIdentifier: blueGreenId
+    });
+    const response: SwitchoverBlueGreenDeploymentResponse = await this.client.send(command);
+    if (response.BlueGreenDeployment !== undefined) {
+      logger.debug("switchoverBlueGreenDeployment request is sent.");
+    }
   }
 }

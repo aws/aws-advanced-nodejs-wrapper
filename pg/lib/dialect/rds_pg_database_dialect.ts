@@ -17,11 +17,18 @@
 import { PgDatabaseDialect } from "./pg_database_dialect";
 import { DatabaseDialectCodes } from "../../../common/lib/database_dialect/database_dialect_codes";
 import { ClientWrapper } from "../../../common/lib/client_wrapper";
+import { BlueGreenDialect, BlueGreenResult } from "../../../common/lib/database_dialect/blue_green_dialect";
 
-export class RdsPgDatabaseDialect extends PgDatabaseDialect {
+export class RdsPgDatabaseDialect extends PgDatabaseDialect implements BlueGreenDialect {
+  private static readonly VERSION = process.env.npm_package_version;
+
   private static readonly EXTENSIONS_SQL: string =
     "SELECT (setting LIKE '%rds_tools%') AS rds_tools, (setting LIKE '%aurora_stat_utils%') AS aurora_stat_utils " +
     "FROM pg_settings WHERE name='rds.extensions'";
+
+  private static readonly BG_STATUS_QUERY: string = `SELECT * FROM rds_tools.show_topology('aws_advanced_nodejs_wrapper-${RdsPgDatabaseDialect.VERSION}')`;
+
+  private static readonly TOPOLOGY_TABLE_EXIST_QUERY: string = "SELECT 'rds_tools.show_topology'::regproc";
 
   getDialectUpdateCandidates(): string[] {
     return [DatabaseDialectCodes.RDS_MULTI_AZ_PG, DatabaseDialectCodes.AURORA_PG];
@@ -46,5 +53,23 @@ export class RdsPgDatabaseDialect extends PgDatabaseDialect {
 
   getDialectName(): string {
     return this.dialectName;
+  }
+
+  async isBlueGreenStatusAvailable(clientWrapper: ClientWrapper): Promise<boolean> {
+    try {
+      const result = await clientWrapper.query(RdsPgDatabaseDialect.TOPOLOGY_TABLE_EXIST_QUERY);
+      return !!result.rows[0];
+    } catch {
+      return false;
+    }
+  }
+
+  async getBlueGreenStatus(clientWrapper: ClientWrapper): Promise<BlueGreenResult[] | null> {
+    const results: BlueGreenResult[] = [];
+    const result = await clientWrapper.query(RdsPgDatabaseDialect.BG_STATUS_QUERY);
+    for (const row of result.rows) {
+      results.push(new BlueGreenResult(row.version, row.endpoint, row.port, row.role, row.status));
+    }
+    return results.length > 0 ? results : null;
   }
 }

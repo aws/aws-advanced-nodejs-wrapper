@@ -59,7 +59,7 @@ export class TestEnvironment {
     return TestEnvironment.env;
   }
 
-  static async verifyClusterStatus() {
+  static async verifyClusterStatus(auroraUtility?: AuroraTestUtility) {
     const info = TestEnvironment.env?.info;
     if (info?.request.deployment === DatabaseEngineDeployment.AURORA || info?.request.deployment === DatabaseEngineDeployment.RDS_MULTI_AZ_CLUSTER) {
       let remainingTries = 3;
@@ -67,10 +67,12 @@ export class TestEnvironment {
 
       while (remainingTries-- > 0 && !success) {
         try {
-          const auroraUtility = new AuroraTestUtility(info.region);
-          await auroraUtility.waitUntilClusterHasDesiredStatus(info.auroraClusterName);
-          info.databaseInfo.moveInstanceFirst(await auroraUtility.getClusterWriterInstanceId(info.auroraClusterName));
-          info.proxyDatabaseInfo.moveInstanceFirst(await auroraUtility.getClusterWriterInstanceId(info.auroraClusterName));
+          if (auroraUtility === undefined) {
+            auroraUtility = new AuroraTestUtility(info.region);
+          }
+          await auroraUtility.waitUntilClusterHasDesiredStatus(info.rdsDbName);
+          info.databaseInfo.moveInstanceFirst(await auroraUtility.getClusterWriterInstanceId(info.rdsDbName));
+          info.proxyDatabaseInfo.moveInstanceFirst(await auroraUtility.getClusterWriterInstanceId(info.rdsDbName));
           success = true;
         } catch (error: any) {
           switch (info?.request.deployment) {
@@ -87,7 +89,7 @@ export class TestEnvironment {
       }
 
       if (!success) {
-        fail(`Cluster ${info.auroraClusterName} is not healthy`);
+        fail(`Cluster ${info.rdsDbName} is not healthy`);
       }
     }
   }
@@ -169,7 +171,7 @@ export class TestEnvironment {
   static async verifyAllInstancesHasRightState(...allowedStatuses: string[]) {
     const info = TestEnvironment.env?.info;
     const auroraUtility = new AuroraTestUtility(info?.region);
-    if (!info?.auroraClusterName) {
+    if (!info?.rdsDbName) {
       fail(`Invalid cluster`);
     }
     const instanceIds: (string | undefined)[] | undefined = info?.databaseInfo.instances.map((instance) => instance.instanceId);
@@ -181,16 +183,16 @@ export class TestEnvironment {
   static async rebootAllClusterInstances() {
     const info = TestEnvironment.env?.info;
     const auroraUtility = new AuroraTestUtility(info?.region);
-    if (!info?.auroraClusterName) {
+    if (!info?.rdsDbName) {
       fail(`Invalid cluster`);
     }
-    await auroraUtility.waitUntilClusterHasDesiredStatus(info.auroraClusterName!);
+    await auroraUtility.waitUntilClusterHasDesiredStatus(info.rdsDbName!);
 
     const instanceIds: (string | undefined)[] | undefined = info?.databaseInfo.instances.map((instance) => instance.instanceId);
     for (const instance of instanceIds) {
       await auroraUtility.rebootInstance(instance);
     }
-    await auroraUtility.waitUntilClusterHasDesiredStatus(info.auroraClusterName!);
+    await auroraUtility.waitUntilClusterHasDesiredStatus(info.rdsDbName!);
     for (const instance of instanceIds) {
       await auroraUtility.waitUntilInstanceHasRightState(instance, "available");
     }
@@ -199,10 +201,10 @@ export class TestEnvironment {
   static async rebootCluster() {
     const info = TestEnvironment.env?.info;
     const auroraUtility = new AuroraTestUtility(info?.region);
-    if (!info?.auroraClusterName) {
+    if (!info?.rdsDbName) {
       fail(`Invalid cluster`);
     }
-    await auroraUtility.waitUntilClusterHasDesiredStatus(info.auroraClusterName!);
+    await auroraUtility.waitUntilClusterHasDesiredStatus(info.rdsDbName!);
 
     const instanceIds: (string | undefined)[] | undefined = info?.databaseInfo.instances.map((instance) => instance.instanceId);
     for (const instance of instanceIds) {
@@ -302,7 +304,7 @@ export class TestEnvironment {
         environment.proxies[instance.instanceId] = new ProxyInfo(proxies[environment.instances[i].url], host, proxyControlPort);
       }
 
-      if (environment.proxyDatabaseInfo.clusterEndpoint !== undefined) {
+      if (environment.proxyDatabaseInfo.clusterEndpoint != null && environment.proxyDatabaseInfo.clusterEndpoint !== "null") {
         const client = new Toxiproxy(TestEnvironment.createProxyUrl(environment.proxyDatabaseInfo.clusterEndpoint, proxyControlPort));
         const proxy = await client.get(`${environment.databaseInfo.clusterEndpoint}:${environment.databaseInfo.clusterEndpointPort}`);
 
@@ -315,7 +317,7 @@ export class TestEnvironment {
         }
       }
 
-      if (environment.proxyDatabaseInfo.clusterReadOnlyEndpoint !== undefined) {
+      if (environment.proxyDatabaseInfo.clusterReadOnlyEndpoint != null && environment.proxyDatabaseInfo.clusterReadOnlyEndpoint !== "null") {
         const client = new Toxiproxy(TestEnvironment.createProxyUrl(environment.proxyDatabaseInfo.clusterReadOnlyEndpoint, proxyControlPort));
         const proxy = await client.get(`${environment.databaseInfo.clusterReadOnlyEndpoint}:${environment.databaseInfo.clusterReadOnlyEndpointPort}`);
 
@@ -384,6 +386,10 @@ export class TestEnvironment {
     return this.info.region;
   }
 
+  get rdsEndpoint(): string {
+    return this.info.rdsEndpoint;
+  }
+
   get engine(): DatabaseEngine {
     return this.info.request.engine;
   }
@@ -392,8 +398,8 @@ export class TestEnvironment {
     return this.info.request.deployment;
   }
 
-  get auroraClusterName(): string {
-    return this.info.auroraClusterName;
+  get rdsDbName(): string {
+    return this.info.rdsDbName;
   }
 
   private static createProxyUrl(host: string, port: number) {

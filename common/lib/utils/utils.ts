@@ -73,6 +73,10 @@ export function convertNanosToMs(nanos: bigint) {
   return Number(nanos) / 1000000;
 }
 
+export function convertMsToNanos(millis: number): bigint {
+  return BigInt(millis * 1000000);
+}
+
 export function convertNanosToMinutes(nanos: bigint) {
   return Number(nanos) / 60_000_000_000;
 }
@@ -107,4 +111,22 @@ export function equalsIgnoreCase(value1: string | null, value2: string | null): 
 
 export function isDialectTopologyAware(dialect: any): dialect is TopologyAwareDatabaseDialect {
   return dialect;
+}
+
+export class Pair<K, V> {
+  private readonly _left: K;
+  private readonly _right: V;
+
+  constructor(value1: K, value2: V) {
+    this._left = value1;
+    this._right = value2;
+  }
+
+  get left(): K {
+    return this._left;
+  }
+
+  get right(): V {
+    return this._right;
+  }
 }

@@ -177,6 +177,10 @@ export abstract class AwsClient extends EventEmitter {
 
   abstract rollback(): Promise<any>;
 
+  unwrapPlugin<T>(iface: new (...args: any[]) => T): T | null {
+    return this.pluginManager.unwrapPlugin(iface);
+  }
+
   async isValid(): Promise<boolean> {
     if (!this.targetClient) {
       return Promise.resolve(false);
