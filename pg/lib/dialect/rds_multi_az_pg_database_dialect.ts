@@ -54,7 +54,12 @@ export class RdsMultiAZPgDatabaseDialect extends PgDatabaseDialect implements To
       return false;
     }
 
-    return !!(await targetClient.query(RdsMultiAZPgDatabaseDialect.FETCH_WRITER_HOST_QUERY).catch(() => false));
+    try {
+      const res = await targetClient.query(RdsMultiAZPgDatabaseDialect.FETCH_WRITER_HOST_QUERY);
+      return res.rows[0][RdsMultiAZPgDatabaseDialect.FETCH_WRITER_HOST_QUERY_COLUMN_NAME] != null;
+    } catch (e: any) {
+      return false;
+    }
   }
 
   getHostListProvider(props: Map<string, any>, originalUrl: string, hostListProviderService: HostListProviderService): HostListProvider {

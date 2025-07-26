@@ -109,7 +109,7 @@ const tazMySQLResult = [
     },
     {
       Variable_name: "port",
-      Value: "3306s"
+      Value: "3306"
     }
   ]
 ];
