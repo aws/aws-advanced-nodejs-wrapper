@@ -70,6 +70,7 @@ If your database version does **not** support this table, the driver will automa
 AWS Advanced NodeJS Wrapper **versions earlier than 1.3.0** are not compatible with [AWS Blue/Green Deployments](https://docs.aws.amazon.com/whitepapers/latest/overview-deployment-options/bluegreen-deployments.html) and do not officially support them. However, the combination of the AWS Advanced NodeJS Wrapper and the Failover Plugin has been validated for use with clusters that employ Blue/Green Deployments for these versions. While general basic connectivity to both Blue and Green clusters is always in place, some failover cases are not fully supported.
 
 The limitations for versions earlier than 1.3.0 are:
+
 - After a Blue/Green switchover, the wrapper may not be able to properly detect the new topology and handle failover, as there are discrepancies between the metadata and the available endpoints.
 - The specific version requirements for Aurora MySQL versus Aurora PostgreSQL may vary, as the internal systems used by the wrapper can differ[^1].
 
