@@ -29,8 +29,8 @@ import { WrapperProperties } from "../../common/lib/wrapper_property";
 import { HostInfoBuilder } from "../../common/lib/host_info_builder";
 import { SimpleHostAvailabilityStrategy } from "../../common/lib/host_availability/simple_host_availability_strategy";
 import { ClientWrapper } from "../../common/lib/client_wrapper";
-import { RdsMultiAZMySQLDatabaseDialect } from "../../mysql/lib/dialect/rds_multi_az_mysql_database_dialect";
-import { RdsMultiAZPgDatabaseDialect } from "../../pg/lib/dialect/rds_multi_az_pg_database_dialect";
+import { RdsMultiAZClusterMySQLDatabaseDialect } from "../../mysql/lib/dialect/rds_multi_az_mysql_database_dialect";
+import { RdsMultiAZClusterPgDatabaseDialect } from "../../pg/lib/dialect/rds_multi_az_pg_database_dialect";
 import { DatabaseDialectManager } from "../../common/lib/database_dialect/database_dialect_manager";
 import { NodePostgresDriverDialect } from "../../pg/lib/dialect/node_postgres_driver_dialect";
 import { mock } from "ts-mockito";
@@ -44,14 +44,14 @@ const mysqlDialects: Map<DatabaseDialectCodes, DatabaseDialect> = new Map([
   [DatabaseDialectCodes.MYSQL, new MySQLDatabaseDialect()],
   [DatabaseDialectCodes.RDS_MYSQL, new RdsMySQLDatabaseDialect()],
   [DatabaseDialectCodes.AURORA_MYSQL, new AuroraMySQLDatabaseDialect()],
-  [DatabaseDialectCodes.RDS_MULTI_AZ_MYSQL, new RdsMultiAZMySQLDatabaseDialect()]
+  [DatabaseDialectCodes.RDS_MULTI_AZ_MYSQL, new RdsMultiAZClusterMySQLDatabaseDialect()]
 ]);
 
 const pgDialects: Map<DatabaseDialectCodes, DatabaseDialect> = new Map([
   [DatabaseDialectCodes.PG, new PgDatabaseDialect()],
   [DatabaseDialectCodes.RDS_PG, new RdsPgDatabaseDialect()],
   [DatabaseDialectCodes.AURORA_PG, new AuroraPgDatabaseDialect()],
-  [DatabaseDialectCodes.RDS_MULTI_AZ_PG, new RdsMultiAZPgDatabaseDialect()]
+  [DatabaseDialectCodes.RDS_MULTI_AZ_PG, new RdsMultiAZClusterPgDatabaseDialect()]
 ]);
 
 const MYSQL_QUERY = "SHOW VARIABLES LIKE 'version_comment'";
