@@ -69,6 +69,7 @@ export class DriverHelper {
           default:
             throw new Error("invalid engine");
         }
+      case DatabaseEngineDeployment.RDS_MULTI_AZ_INSTANCE:
       case DatabaseEngineDeployment.RDS_MULTI_AZ_CLUSTER:
         switch (engine) {
           case DatabaseEngine.PG:
