@@ -23,7 +23,7 @@ import { DatabaseDialectCodes } from "../../common/lib/database_dialect/database
 import { MySQLDatabaseDialect } from "../../mysql/lib/dialect/mysql_database_dialect";
 import { RdsMySQLDatabaseDialect } from "../../mysql/lib/dialect/rds_mysql_database_dialect";
 import { AuroraMySQLDatabaseDialect } from "../../mysql/lib/dialect/aurora_mysql_database_dialect";
-import { RdsMultiAZMySQLDatabaseDialect } from "../../mysql/lib/dialect/rds_multi_az_mysql_database_dialect";
+import { RdsMultiAZClusterMySQLDatabaseDialect } from "../../mysql/lib/dialect/rds_multi_az_mysql_database_dialect";
 import { MySQL2DriverDialect } from "../../mysql/lib/dialect/mysql2_driver_dialect";
 import { AllowedAndBlockedHosts } from "../../common/lib/AllowedAndBlockedHosts";
 import { HostInfoBuilder } from "../../common/lib/host_info_builder";
@@ -55,7 +55,7 @@ const knownDialectsByCode: Map<string, DatabaseDialect> = new Map([
   [DatabaseDialectCodes.MYSQL, new MySQLDatabaseDialect()],
   [DatabaseDialectCodes.RDS_MYSQL, new RdsMySQLDatabaseDialect()],
   [DatabaseDialectCodes.AURORA_MYSQL, new AuroraMySQLDatabaseDialect()],
-  [DatabaseDialectCodes.RDS_MULTI_AZ_MYSQL, new RdsMultiAZMySQLDatabaseDialect()]
+  [DatabaseDialectCodes.RDS_MULTI_AZ_MYSQL, new RdsMultiAZClusterMySQLDatabaseDialect()]
 ]);
 
 const mockAwsClient: AwsClient = mock(AwsClient);

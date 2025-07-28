@@ -31,12 +31,12 @@ import { WrapperProperties } from "../../../common/lib/wrapper_property";
 import { PluginService } from "../../../common/lib/plugin_service";
 import { MonitoringRdsHostListProvider } from "../../../common/lib/host_list_provider/monitoring/monitoring_host_list_provider";
 
-export class RdsMultiAZPgDatabaseDialect extends PgDatabaseDialect implements TopologyAwareDatabaseDialect {
+export class RdsMultiAZClusterPgDatabaseDialect extends PgDatabaseDialect implements TopologyAwareDatabaseDialect {
   constructor() {
     super();
   }
   private static readonly VERSION = process.env.npm_package_version;
-  private static readonly TOPOLOGY_QUERY: string = `SELECT id, endpoint, port FROM rds_tools.show_topology('aws_advanced_nodejs_wrapper-"${RdsMultiAZPgDatabaseDialect.VERSION}"')`;
+  private static readonly TOPOLOGY_QUERY: string = `SELECT id, endpoint, port FROM rds_tools.show_topology('aws_advanced_nodejs_wrapper-"${RdsMultiAZClusterPgDatabaseDialect.VERSION}"')`;
   private static readonly WRITER_HOST_FUNC_EXIST_QUERY: string =
     "SELECT 1 AS tmp FROM information_schema.routines WHERE routine_schema='rds_tools' AND routine_name='multi_az_db_cluster_source_dbi_resource_id'";
   private static readonly FETCH_WRITER_HOST_QUERY: string =
@@ -48,13 +48,18 @@ export class RdsMultiAZPgDatabaseDialect extends PgDatabaseDialect implements To
   private static readonly IS_READER_QUERY_COLUMN_NAME: string = "is_reader";
 
   async isDialect(targetClient: ClientWrapper): Promise<boolean> {
-    const res = await targetClient.query(RdsMultiAZPgDatabaseDialect.WRITER_HOST_FUNC_EXIST_QUERY).catch(() => false);
+    const res = await targetClient.query(RdsMultiAZClusterPgDatabaseDialect.WRITER_HOST_FUNC_EXIST_QUERY).catch(() => false);
 
     if (!res) {
       return false;
     }
 
-    return !!(await targetClient.query(RdsMultiAZPgDatabaseDialect.FETCH_WRITER_HOST_QUERY).catch(() => false));
+    try {
+      const res = await targetClient.query(RdsMultiAZClusterPgDatabaseDialect.FETCH_WRITER_HOST_QUERY);
+      return res.rows[0][RdsMultiAZClusterPgDatabaseDialect.FETCH_WRITER_HOST_QUERY_COLUMN_NAME] != null;
+    } catch (e: any) {
+      return false;
+    }
   }
 
   getHostListProvider(props: Map<string, any>, originalUrl: string, hostListProviderService: HostListProviderService): HostListProvider {
@@ -68,14 +73,14 @@ export class RdsMultiAZPgDatabaseDialect extends PgDatabaseDialect implements To
     try {
       let writerHostId: string = await this.executeTopologyRelatedQuery(
         targetClient,
-        RdsMultiAZPgDatabaseDialect.FETCH_WRITER_HOST_QUERY,
-        RdsMultiAZPgDatabaseDialect.FETCH_WRITER_HOST_QUERY_COLUMN_NAME
+        RdsMultiAZClusterPgDatabaseDialect.FETCH_WRITER_HOST_QUERY,
+        RdsMultiAZClusterPgDatabaseDialect.FETCH_WRITER_HOST_QUERY_COLUMN_NAME
       );
       if (!writerHostId) {
         writerHostId = await this.identifyConnection(targetClient);
       }
 
-      const res = await targetClient.query(RdsMultiAZPgDatabaseDialect.TOPOLOGY_QUERY);
+      const res = await targetClient.query(RdsMultiAZClusterPgDatabaseDialect.TOPOLOGY_QUERY);
       const rows: any[] = res.rows;
       return this.processTopologyQueryResults(hostListProvider, writerHostId, rows);
     } catch (error: any) {
@@ -133,8 +138,8 @@ export class RdsMultiAZPgDatabaseDialect extends PgDatabaseDialect implements To
   async getHostRole(client: ClientWrapper): Promise<HostRole> {
     return (await this.executeTopologyRelatedQuery(
       client,
-      RdsMultiAZPgDatabaseDialect.IS_READER_QUERY,
-      RdsMultiAZPgDatabaseDialect.IS_READER_QUERY_COLUMN_NAME
+      RdsMultiAZClusterPgDatabaseDialect.IS_READER_QUERY,
+      RdsMultiAZClusterPgDatabaseDialect.IS_READER_QUERY_COLUMN_NAME
     )) === false
       ? HostRole.WRITER
       : HostRole.READER;
@@ -144,8 +149,8 @@ export class RdsMultiAZPgDatabaseDialect extends PgDatabaseDialect implements To
     try {
       const writerHostId: string = await this.executeTopologyRelatedQuery(
         targetClient,
-        RdsMultiAZPgDatabaseDialect.FETCH_WRITER_HOST_QUERY,
-        RdsMultiAZPgDatabaseDialect.FETCH_WRITER_HOST_QUERY_COLUMN_NAME
+        RdsMultiAZClusterPgDatabaseDialect.FETCH_WRITER_HOST_QUERY,
+        RdsMultiAZClusterPgDatabaseDialect.FETCH_WRITER_HOST_QUERY_COLUMN_NAME
       );
       const currentConnection = await this.identifyConnection(targetClient);
 
@@ -162,8 +167,8 @@ export class RdsMultiAZPgDatabaseDialect extends PgDatabaseDialect implements To
   async identifyConnection(client: ClientWrapper): Promise<string> {
     return await this.executeTopologyRelatedQuery(
       client,
-      RdsMultiAZPgDatabaseDialect.HOST_ID_QUERY,
-      RdsMultiAZPgDatabaseDialect.HOST_ID_QUERY_COLUMN_NAME
+      RdsMultiAZClusterPgDatabaseDialect.HOST_ID_QUERY,
+      RdsMultiAZClusterPgDatabaseDialect.HOST_ID_QUERY_COLUMN_NAME
     );
   }
 

@@ -30,7 +30,7 @@ import { WrapperProperties } from "../../../common/lib/wrapper_property";
 import { PluginService } from "../../../common/lib/plugin_service";
 import { MonitoringRdsHostListProvider } from "../../../common/lib/host_list_provider/monitoring/monitoring_host_list_provider";
 
-export class RdsMultiAZMySQLDatabaseDialect extends MySQLDatabaseDialect implements TopologyAwareDatabaseDialect {
+export class RdsMultiAZClusterMySQLDatabaseDialect extends MySQLDatabaseDialect implements TopologyAwareDatabaseDialect {
   private static readonly TOPOLOGY_QUERY: string = "SELECT id, endpoint, port FROM mysql.rds_topology";
   private static readonly TOPOLOGY_TABLE_EXIST_QUERY: string =
     "SELECT 1 AS tmp FROM information_schema.tables WHERE" + " table_schema = 'mysql' AND table_name = 'rds_topology'";
@@ -43,13 +43,13 @@ export class RdsMultiAZMySQLDatabaseDialect extends MySQLDatabaseDialect impleme
   private static readonly IS_READER_QUERY_COLUMN_NAME: string = "is_reader";
 
   async isDialect(targetClient: ClientWrapper): Promise<boolean> {
-    let res = await targetClient.query(RdsMultiAZMySQLDatabaseDialect.TOPOLOGY_TABLE_EXIST_QUERY).catch(() => false);
+    let res = await targetClient.query(RdsMultiAZClusterMySQLDatabaseDialect.TOPOLOGY_TABLE_EXIST_QUERY).catch(() => false);
 
     if (!res) {
       return false;
     }
 
-    res = await targetClient.query(RdsMultiAZMySQLDatabaseDialect.TOPOLOGY_QUERY).catch(() => false);
+    res = await targetClient.query(RdsMultiAZClusterMySQLDatabaseDialect.TOPOLOGY_QUERY).catch(() => false);
     if (!res) {
       return false;
     }
@@ -81,14 +81,14 @@ export class RdsMultiAZMySQLDatabaseDialect extends MySQLDatabaseDialect impleme
     try {
       let writerHostId: string = await this.executeTopologyRelatedQuery(
         targetClient,
-        RdsMultiAZMySQLDatabaseDialect.FETCH_WRITER_HOST_QUERY,
-        RdsMultiAZMySQLDatabaseDialect.FETCH_WRITER_HOST_QUERY_COLUMN_NAME
+        RdsMultiAZClusterMySQLDatabaseDialect.FETCH_WRITER_HOST_QUERY,
+        RdsMultiAZClusterMySQLDatabaseDialect.FETCH_WRITER_HOST_QUERY_COLUMN_NAME
       );
       if (!writerHostId) {
         writerHostId = await this.identifyConnection(targetClient);
       }
 
-      const res = await targetClient.query(RdsMultiAZMySQLDatabaseDialect.TOPOLOGY_QUERY);
+      const res = await targetClient.query(RdsMultiAZClusterMySQLDatabaseDialect.TOPOLOGY_QUERY);
       const rows: any[] = res[0];
       return this.processTopologyQueryResults(hostListProvider, writerHostId, rows);
     } catch (error: any) {
@@ -146,8 +146,8 @@ export class RdsMultiAZMySQLDatabaseDialect extends MySQLDatabaseDialect impleme
   async getHostRole(client: ClientWrapper): Promise<HostRole> {
     return (await this.executeTopologyRelatedQuery(
       client,
-      RdsMultiAZMySQLDatabaseDialect.IS_READER_QUERY,
-      RdsMultiAZMySQLDatabaseDialect.IS_READER_QUERY_COLUMN_NAME
+      RdsMultiAZClusterMySQLDatabaseDialect.IS_READER_QUERY,
+      RdsMultiAZClusterMySQLDatabaseDialect.IS_READER_QUERY_COLUMN_NAME
     )) == "0"
       ? HostRole.WRITER
       : HostRole.READER;
@@ -157,8 +157,8 @@ export class RdsMultiAZMySQLDatabaseDialect extends MySQLDatabaseDialect impleme
     try {
       const writerHostId: string = await this.executeTopologyRelatedQuery(
         targetClient,
-        RdsMultiAZMySQLDatabaseDialect.FETCH_WRITER_HOST_QUERY,
-        RdsMultiAZMySQLDatabaseDialect.FETCH_WRITER_HOST_QUERY_COLUMN_NAME
+        RdsMultiAZClusterMySQLDatabaseDialect.FETCH_WRITER_HOST_QUERY,
+        RdsMultiAZClusterMySQLDatabaseDialect.FETCH_WRITER_HOST_QUERY_COLUMN_NAME
       );
       // The above query returns the writer host id if it is a reader, nothing if the writer.
       if (!writerHostId) {
@@ -174,8 +174,8 @@ export class RdsMultiAZMySQLDatabaseDialect extends MySQLDatabaseDialect impleme
   async identifyConnection(client: ClientWrapper): Promise<string> {
     return await this.executeTopologyRelatedQuery(
       client,
-      RdsMultiAZMySQLDatabaseDialect.HOST_ID_QUERY,
-      RdsMultiAZMySQLDatabaseDialect.HOST_ID_QUERY_COLUMN_NAME
+      RdsMultiAZClusterMySQLDatabaseDialect.HOST_ID_QUERY,
+      RdsMultiAZClusterMySQLDatabaseDialect.HOST_ID_QUERY_COLUMN_NAME
     );
   }
 

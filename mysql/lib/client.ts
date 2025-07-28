@@ -28,7 +28,7 @@ import { AwsWrapperError, UnsupportedMethodError } from "../../common/lib/utils/
 import { Messages } from "../../common/lib/utils/messages";
 import { ClientWrapper } from "../../common/lib/client_wrapper";
 import { ClientUtils } from "../../common/lib/utils/client_utils";
-import { RdsMultiAZMySQLDatabaseDialect } from "./dialect/rds_multi_az_mysql_database_dialect";
+import { RdsMultiAZClusterMySQLDatabaseDialect } from "./dialect/rds_multi_az_mysql_database_dialect";
 import { TelemetryTraceLevel } from "../../common/lib/utils/telemetry/telemetry_trace_level";
 import { MySQL2DriverDialect } from "./dialect/mysql2_driver_dialect";
 import { isDialectTopologyAware } from "../../common/lib/utils/utils";
@@ -38,7 +38,7 @@ export class AwsMySQLClient extends AwsClient {
     [DatabaseDialectCodes.MYSQL, new MySQLDatabaseDialect()],
     [DatabaseDialectCodes.RDS_MYSQL, new RdsMySQLDatabaseDialect()],
     [DatabaseDialectCodes.AURORA_MYSQL, new AuroraMySQLDatabaseDialect()],
-    [DatabaseDialectCodes.RDS_MULTI_AZ_MYSQL, new RdsMultiAZMySQLDatabaseDialect()]
+    [DatabaseDialectCodes.RDS_MULTI_AZ_MYSQL, new RdsMultiAZClusterMySQLDatabaseDialect()]
   ]);
 
   constructor(config: any) {
