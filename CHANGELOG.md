@@ -4,6 +4,22 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/#semantic-versioning-200).
 
+## [1.3.0] - 2025-07-28
+
+### :magic_wand: Added
+
+- [Blue/Green deployment support](https://github.com/aws/aws-advanced-nodejs-wrapper/blob/main/docs/using-the-nodejs-wrapper/using-plugins/UsingTheBlueGreenPlugin.md#bluegreen-deployment-plugin).
+- More extensive integration tests for existing plugins.
+
+### :crab: Changed
+
+- Improve the force connect pipeline ([PR #480](https://github.com/aws/aws-advanced-nodejs-wrapper/pull/480)).
+
+### :bug: Fixed
+
+- Incorrect caching in the plugin chain, reducing performance overhead ([PR #464](https://github.com/aws/aws-advanced-nodejs-wrapper/pull/464)).
+- Incorrect transaction level tracked in session states ([PR #504](https://github.com/aws/aws-advanced-nodejs-wrapper/pull/504)).
+
 ## [1.2.0] - 2025-03-12
 
 ### :magic_wand: Added
@@ -53,4 +69,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 The Amazon Web Services (AWS) Advanced NodeJS Wrapper allows an application to take advantage of the features of clustered Aurora databases.
 
-[0.0.1]: https://github.com/awslabs/aws-advanced-nodejs-wrapper/releases/tag/0.0.1
+[1.3.0]: https://github.com/aws/aws-advanced-nodejs-wrapper/compare/1.2.0...1.3.0
+[1.2.0]: https://github.com/aws/aws-advanced-nodejs-wrapper/compare/1.1.0...1.2.0
+[1.1.0]: https://github.com/aws/aws-advanced-nodejs-wrapper/compare/1.0.0...1.1.0
+[1.0.0]: https://github.com/aws/aws-advanced-nodejs-wrapper/releases/tag/1.0.0
