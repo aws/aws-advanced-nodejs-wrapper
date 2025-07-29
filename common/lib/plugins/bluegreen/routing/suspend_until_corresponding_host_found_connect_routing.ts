@@ -29,7 +29,7 @@ import { BlueGreenStatus } from "../blue_green_status";
 import { convertMsToNanos, convertNanosToMs, getTimeInNanos, Pair } from "../../../utils/utils";
 import { WrapperProperties } from "../../../wrapper_property";
 import { BlueGreenPhase } from "../blue_green_phase";
-import { TimeoutError } from "@opentelemetry/sdk-metrics";
+import { AwsWrapperError } from "../../../utils/errors";
 
 export class SuspendUntilCorrespondingHostFoundConnectRouting extends BaseConnectRouting {
   protected static readonly TELEMETRY_SWITCHOVER: string = "Blue/Green switchover";
@@ -81,7 +81,7 @@ export class SuspendUntilCorrespondingHostFoundConnectRouting extends BaseConnec
       if (!bgStatus || bgStatus.currentPhase === BlueGreenPhase.COMPLETED) {
         logger.debug(Messages.get("Bgd.completedContinueWithConnect", `${convertNanosToMs(getTimeInNanos() - suspendStartTime)}`));
       } else if (getTimeInNanos() > endTime) {
-        throw new TimeoutError(
+        throw new AwsWrapperError(
           Messages.get("Bgd.correspondingHostNotFoundTryConnectLater", hostInfo.host, `${WrapperProperties.BG_CONNECT_TIMEOUT_MS.get(properties)}`)
         );
       }
