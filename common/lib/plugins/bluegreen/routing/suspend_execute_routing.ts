@@ -26,9 +26,9 @@ import { BlueGreenStatus } from "../blue_green_status";
 import { convertMsToNanos, convertNanosToMs, getTimeInNanos } from "../../../utils/utils";
 import { WrapperProperties } from "../../../wrapper_property";
 import { BlueGreenPhase } from "../blue_green_phase";
-import { TimeoutError } from "@opentelemetry/sdk-metrics";
 import { ConnectionPlugin } from "../../../connection_plugin";
 import { RoutingResultHolder } from "./execute_routing";
+import { AwsWrapperError } from "../../../utils/errors";
 
 export class SuspendExecuteRouting extends BaseExecuteRouting {
   protected static readonly TELEMETRY_SWITCHOVER: string = "Blue/Green switchover";
@@ -70,7 +70,7 @@ export class SuspendExecuteRouting extends BaseExecuteRouting {
       }
 
       if (bgStatus != null && bgStatus.currentPhase === BlueGreenPhase.IN_PROGRESS) {
-        throw new TimeoutError(Messages.get("Bgd.stillInProgressTryMethodLater", `${WrapperProperties.BG_CONNECT_TIMEOUT_MS.get(properties)}`));
+        throw new AwsWrapperError(Messages.get("Bgd.stillInProgressTryMethodLater", `${WrapperProperties.BG_CONNECT_TIMEOUT_MS.get(properties)}`));
       }
 
       logger.debug(Messages.get("Bgd.switchoverCompletedContinueWithMethod", methodName, `${convertNanosToMs(getTimeInNanos() - suspendStartTime)}`));
