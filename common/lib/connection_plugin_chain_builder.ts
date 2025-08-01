@@ -22,6 +22,7 @@ import { Messages } from "./utils/messages";
 import { logger } from "../logutils";
 import { DefaultPlugin } from "./plugins/default_plugin";
 import { IamAuthenticationPluginFactory } from "./authentication/iam_authentication_plugin_factory";
+import { DsqlIamAuthenticationPluginFactory } from "./authentication/dsql_iam_authentication_plugin_factory";
 import { ExecuteTimePluginFactory } from "./plugins/execute_time_plugin_factory";
 import { ConnectTimePluginFactory } from "./plugins/connect_time_plugin_factory";
 import { AwsSecretsManagerPluginFactory } from "./authentication/aws_secrets_manager_plugin_factory";
@@ -70,6 +71,7 @@ export class ConnectionPluginChainBuilder {
     ["fastestResponseStrategy", { factory: FastestResponseStrategyPluginFactory, weight: 900 }],
     ["limitless", { factory: LimitlessConnectionPluginFactory, weight: 950 }],
     ["iam", { factory: IamAuthenticationPluginFactory, weight: 1000 }],
+    ["iamDsql", { factory: DsqlIamAuthenticationPluginFactory, weight: 1010 }],
     ["secretsManager", { factory: AwsSecretsManagerPluginFactory, weight: 1100 }],
     ["federatedAuth", { factory: FederatedAuthPluginFactory, weight: 1200 }],
     ["okta", { factory: OktaAuthPluginFactory, weight: 1300 }],
@@ -90,6 +92,7 @@ export class ConnectionPluginChainBuilder {
     [HostMonitoring2PluginFactory, 810],
     [LimitlessConnectionPluginFactory, 950],
     [IamAuthenticationPluginFactory, 1000],
+    [DsqlIamAuthenticationPluginFactory, 1010],
     [AwsSecretsManagerPluginFactory, 1100],
     [FederatedAuthPluginFactory, 1200],
     [OktaAuthPluginFactory, 1300],

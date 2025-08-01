@@ -28,18 +28,21 @@ import { AwsWrapperError } from "../../utils/errors";
 import { ClientWrapper } from "../../client_wrapper";
 import { TelemetryCounter } from "../../utils/telemetry/telemetry_counter";
 import { RegionUtils } from "../../utils/region_utils";
+import { TokenUtils } from "../../utils/token_utils";
 
 export class OktaAuthPlugin extends AbstractConnectionPlugin {
   protected static readonly tokenCache = new Map<string, TokenInfo>();
   private static readonly subscribedMethods = new Set<string>(["connect", "forceConnect"]);
   protected pluginService: PluginService;
   protected rdsUtils = new RdsUtils();
+  private readonly tokenUtils: TokenUtils;
   private readonly credentialsProviderFactory: CredentialsProviderFactory;
   private readonly fetchTokenCounter: TelemetryCounter;
 
-  constructor(pluginService: PluginService, credentialsProviderFactory: CredentialsProviderFactory) {
+  constructor(pluginService: PluginService, credentialsProviderFactory: CredentialsProviderFactory, tokenUtils: TokenUtils) {
     super();
     this.pluginService = pluginService;
+    this.tokenUtils = tokenUtils;
     this.credentialsProviderFactory = credentialsProviderFactory;
     this.fetchTokenCounter = this.pluginService.getTelemetryFactory().createCounter("oktaAuth.fetchToken.count");
   }
@@ -111,7 +114,7 @@ export class OktaAuthPlugin extends AbstractConnectionPlugin {
     const tokenExpiry = Date.now() + tokenExpirationSec * 1000;
     const port = IamAuthUtils.getIamPort(props, hostInfo, this.pluginService.getDialect().getDefaultPort());
     this.fetchTokenCounter.inc();
-    const token = await IamAuthUtils.generateAuthenticationToken(
+    const token = await this.tokenUtils.generateAuthenticationToken(
       iamHost,
       port,
       region,

@@ -19,17 +19,17 @@ import { PluginService } from "../plugin_service";
 import { ConnectionPlugin } from "../connection_plugin";
 import { AwsWrapperError } from "../utils/errors";
 import { Messages } from "../utils/messages";
-import { RdsTokenUtils } from "../utils/rds_token_utils";
+import { DSQLTokenUtils } from "../utils/dsql_token_utils";
 
-export class IamAuthenticationPluginFactory extends ConnectionPluginFactory {
+export class DsqlIamAuthenticationPluginFactory extends ConnectionPluginFactory {
   private static iamAuthenticationPlugin: any;
 
   async getInstance(pluginService: PluginService, properties: object): Promise<ConnectionPlugin> {
     try {
-      if (!IamAuthenticationPluginFactory.iamAuthenticationPlugin) {
-        IamAuthenticationPluginFactory.iamAuthenticationPlugin = await import("./iam_authentication_plugin");
+      if (!DsqlIamAuthenticationPluginFactory.iamAuthenticationPlugin) {
+        DsqlIamAuthenticationPluginFactory.iamAuthenticationPlugin = await import("./iam_authentication_plugin");
       }
-      return new IamAuthenticationPluginFactory.iamAuthenticationPlugin.IamAuthenticationPlugin(pluginService, new RdsTokenUtils());
+      return new DsqlIamAuthenticationPluginFactory.iamAuthenticationPlugin.IamAuthenticationPlugin(pluginService, new DSQLTokenUtils());
     } catch (error: any) {
       throw new AwsWrapperError(Messages.get("ConnectionPluginChainBuilder.errorImportingPlugin", error.message, "IamAuthenticationPlugin"));
     }

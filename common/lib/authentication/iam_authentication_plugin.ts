@@ -25,17 +25,20 @@ import { WrapperProperties } from "../wrapper_property";
 import { IamAuthUtils, TokenInfo } from "../utils/iam_auth_utils";
 import { ClientWrapper } from "../client_wrapper";
 import { RegionUtils } from "../utils/region_utils";
+import { TokenUtils } from "../utils/token_utils";
 
 export class IamAuthenticationPlugin extends AbstractConnectionPlugin {
   private static readonly SUBSCRIBED_METHODS = new Set<string>(["connect", "forceConnect"]);
   protected static readonly tokenCache = new Map<string, TokenInfo>();
   private readonly telemetryFactory;
   private readonly fetchTokenCounter;
+  private readonly tokenUtils: TokenUtils;
   private pluginService: PluginService;
 
-  constructor(pluginService: PluginService) {
+  constructor(pluginService: PluginService, tokenUtils: TokenUtils) {
     super();
     this.pluginService = pluginService;
+    this.tokenUtils = tokenUtils;
     this.telemetryFactory = this.pluginService.getTelemetryFactory();
     this.fetchTokenCounter = this.telemetryFactory.createCounter("iam.fetchTokenCount");
   }
@@ -90,7 +93,7 @@ export class IamAuthenticationPlugin extends AbstractConnectionPlugin {
       WrapperProperties.PASSWORD.set(props, tokenInfo.token);
     } else {
       const tokenExpiry: number = Date.now() + tokenExpirationSec * 1000;
-      const token = await IamAuthUtils.generateAuthenticationToken(
+      const token = await this.tokenUtils.generateAuthenticationToken(
         host,
         port,
         region,
@@ -117,7 +120,7 @@ export class IamAuthenticationPlugin extends AbstractConnectionPlugin {
       // Try to generate a new token and try to connect again
 
       const tokenExpiry: number = Date.now() + tokenExpirationSec * 1000;
-      const token = await IamAuthUtils.generateAuthenticationToken(
+      const token = await this.tokenUtils.generateAuthenticationToken(
         host,
         port,
         region,

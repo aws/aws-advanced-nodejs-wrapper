@@ -19,6 +19,7 @@ import { PluginService } from "../../plugin_service";
 import { ConnectionPlugin } from "../../connection_plugin";
 import { AwsWrapperError } from "../../utils/errors";
 import { Messages } from "../../utils/messages";
+import { RdsTokenUtils } from "../../utils/rds_token_utils";
 
 export class FederatedAuthPluginFactory extends ConnectionPluginFactory {
   private static federatedAuthPlugin: any;
@@ -35,7 +36,7 @@ export class FederatedAuthPluginFactory extends ConnectionPluginFactory {
       }
 
       const adfsCredentialsProviderFactory = new FederatedAuthPluginFactory.adfsCredentialsProvider.AdfsCredentialsProviderFactory(pluginService);
-      return new FederatedAuthPluginFactory.federatedAuthPlugin.FederatedAuthPlugin(pluginService, adfsCredentialsProviderFactory);
+      return new FederatedAuthPluginFactory.federatedAuthPlugin.FederatedAuthPlugin(pluginService, adfsCredentialsProviderFactory, new RdsTokenUtils());
     } catch (error: any) {
       throw new AwsWrapperError(Messages.get("ConnectionPluginChainBuilder.errorImportingPlugin", error.message, "FederatedAuthPlugin"));
     }
