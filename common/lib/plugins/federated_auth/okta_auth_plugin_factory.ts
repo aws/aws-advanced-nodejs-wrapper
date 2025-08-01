@@ -19,6 +19,7 @@ import { PluginService } from "../../plugin_service";
 import { ConnectionPlugin } from "../../connection_plugin";
 import { AwsWrapperError } from "../../utils/errors";
 import { Messages } from "../../utils/messages";
+import { RdsTokenUtils } from "../../utils/rds_token_utils";
 
 export class OktaAuthPluginFactory extends ConnectionPluginFactory {
   private static oktaAuthPlugin: any;
@@ -34,7 +35,7 @@ export class OktaAuthPluginFactory extends ConnectionPluginFactory {
       }
 
       const oktaCredentialsProviderFactory = new OktaAuthPluginFactory.oktaCredentialsProviderFactory.OktaCredentialsProviderFactory(pluginService);
-      return new OktaAuthPluginFactory.oktaAuthPlugin.OktaAuthPlugin(pluginService, oktaCredentialsProviderFactory);
+      return new OktaAuthPluginFactory.oktaAuthPlugin.OktaAuthPlugin(pluginService, oktaCredentialsProviderFactory, new RdsTokenUtils());
     } catch (error: any) {
       throw new AwsWrapperError(Messages.get("ConnectionPluginChainBuilder.errorImportingPlugin", error.message, "OktaAuthPlugin"));
     }
