@@ -96,4 +96,8 @@ export class NodePostgresDriverDialect implements DriverDialect {
       props.set(NodePostgresDriverDialect.KEEP_ALIVE_INITIAL_DELAY_MILLIS_PROPERTY_NAME, keepAliveInitialDelayMillis);
     }
   }
+
+  getQueryFromMethodArg(methodArg: any): string {
+    return typeof methodArg === "string" ? methodArg : methodArg.text;
+  }
 }

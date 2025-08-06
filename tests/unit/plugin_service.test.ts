@@ -25,7 +25,7 @@ import { RdsMySQLDatabaseDialect } from "../../mysql/lib/dialect/rds_mysql_datab
 import { AuroraMySQLDatabaseDialect } from "../../mysql/lib/dialect/aurora_mysql_database_dialect";
 import { RdsMultiAZClusterMySQLDatabaseDialect } from "../../mysql/lib/dialect/rds_multi_az_mysql_database_dialect";
 import { MySQL2DriverDialect } from "../../mysql/lib/dialect/mysql2_driver_dialect";
-import { AllowedAndBlockedHosts } from "../../common/lib/AllowedAndBlockedHosts";
+import { AllowedAndBlockedHosts } from "../../common/lib/allowed_and_blocked_hosts";
 import { HostInfoBuilder } from "../../common/lib/host_info_builder";
 import { SimpleHostAvailabilityStrategy } from "../../common/lib/host_availability/simple_host_availability_strategy";
 import { HostInfo } from "../../common/lib/host_info";

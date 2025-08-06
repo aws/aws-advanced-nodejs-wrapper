@@ -15,6 +15,35 @@
 */
 
 export class SubscribedMethodHelper {
-  static readonly NETWORK_BOUND_METHODS: string[] = ["connect", "forceConnect", "query", "rollback"];
-  static readonly METHODS_REQUIRING_UPDATED_TOPOLOGY: string[] = ["connect", "forceConnect", "query"];
+  static readonly NETWORK_BOUND_METHODS: string[] = [
+    "connect",
+    "forceConnect",
+    "query",
+    // MySQL-specific
+    "execute",
+    "rollback",
+    "beginTransaction",
+    "commit",
+    "changeUser",
+    "pause",
+    "resume",
+    "prepare",
+    "unprepare"
+  ];
+
+  static readonly METHODS_REQUIRING_UPDATED_TOPOLOGY: string[] = [
+    "connect",
+    "forceConnect",
+    "query",
+    // MySQL-specific
+    "beginTransaction",
+    "commit",
+    "changeUser",
+    "pause",
+    "resume",
+    "execute",
+    "rollback",
+    "prepare",
+    "unprepare"
+  ];
 }

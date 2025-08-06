@@ -43,7 +43,7 @@ import { DatabaseDialectCodes } from "./database_dialect/database_dialect_codes"
 import { getWriter, logTopology } from "./utils/utils";
 import { TelemetryFactory } from "./utils/telemetry/telemetry_factory";
 import { DriverDialect } from "./driver_dialect/driver_dialect";
-import { AllowedAndBlockedHosts } from "./AllowedAndBlockedHosts";
+import { AllowedAndBlockedHosts } from "./allowed_and_blocked_hosts";
 import { ConnectionPlugin } from "./connection_plugin";
 
 export interface PluginService extends ErrorHandler {

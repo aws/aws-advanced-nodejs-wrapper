@@ -84,4 +84,8 @@ export class MySQL2DriverDialect implements DriverDialect {
       throw new UnsupportedMethodError("Keep alive configuration is not supported for MySQL2.");
     }
   }
+
+  getQueryFromMethodArg(methodArg: any): string {
+    return typeof methodArg === "string" ? methodArg : methodArg.sql;
+  }
 }

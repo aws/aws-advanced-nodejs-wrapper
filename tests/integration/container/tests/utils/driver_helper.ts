@@ -58,6 +58,7 @@ export class DriverHelper {
         }
     }
   }
+
   static getInstanceIdSql(engine: DatabaseEngine, deployment: DatabaseEngineDeployment): string {
     switch (deployment) {
       case DatabaseEngineDeployment.AURORA:
@@ -91,9 +92,10 @@ export class DriverHelper {
         return await (client as AwsPGClient).query(sql).then((result) => {
           return result.rows[0]["id"];
         });
-      case DatabaseEngine.MYSQL:
-        result = await (client as AwsMySQLClient).query({ sql: sql });
-        return JSON.parse(JSON.stringify(result))[0][0]["id"];
+      case DatabaseEngine.MYSQL: {
+        const [res, _] = await (client as AwsMySQLClient).query({ sql: sql });
+        return res[0]["id"];
+      }
       default:
         throw new Error("invalid engine");
     }

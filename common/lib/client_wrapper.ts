@@ -22,7 +22,9 @@ export interface ClientWrapper {
   readonly properties: Map<string, any>;
   readonly id: string;
 
+  // Internal method, executes wrapper-specific queries like the topology query.
   query(sql: string): Promise<any>;
+  query(config: any, values?: any, callback?: any): Promise<any>;
 
   end(): Promise<void>;
 

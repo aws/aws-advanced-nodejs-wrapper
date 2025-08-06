@@ -86,8 +86,9 @@ describe("reader write splitting test", () => {
     when(mockPluginService.getHosts()).thenReturn(defaultHosts);
     when(mockPluginService.isInTransaction()).thenReturn(false);
     when(mockPluginService.getDialect()).thenReturn(mockDialect);
-    when(mockPluginService.getDriverDialect()).thenReturn(mockDriverDialect);
     when(mockDriverDialect.connect(anything(), anything())).thenReturn(Promise.resolve(mockReaderWrapper));
+    when(mockDriverDialect.getQueryFromMethodArg("test")).thenReturn("test");
+    when(mockPluginService.getDriverDialect()).thenReturn(instance(mockDriverDialect));
     properties.clear();
   });
 

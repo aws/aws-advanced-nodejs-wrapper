@@ -142,7 +142,7 @@ export class ReadWriteSplittingPlugin extends AbstractConnectionPlugin implement
   }
 
   override async execute<T>(methodName: string, executeFunc: () => Promise<T>, methodArgs: any): Promise<T> {
-    const statement = methodArgs.sql ?? methodArgs;
+    const statement = SqlMethodUtils.parseMethodArgs(methodArgs, this.pluginService.getDriverDialect());
     const statements = SqlMethodUtils.parseMultiStatementQueries(statement);
 
     const updateReadOnly: boolean | undefined = SqlMethodUtils.doesSetReadOnly(statements, this.pluginService.getDialect());

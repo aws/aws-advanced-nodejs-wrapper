@@ -464,14 +464,8 @@ export class WrapperProperties {
     BlueGreenStatusProvider.MONITORING_PROPERTY_PREFIX
   ];
 
-  private static startsWithPrefix(key: string) {
-    for (const prefix in WrapperProperties.PREFIXES) {
-      if (key.startsWith(prefix)) {
-        return true;
-      }
-    }
-
-    return false;
+  private static startsWithPrefix(key: string): boolean {
+    return WrapperProperties.PREFIXES.some((prefix) => key.startsWith(prefix));
   }
 
   static removeWrapperProperties(props: Map<string, any>): Map<string, any> {

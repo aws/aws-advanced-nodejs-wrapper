@@ -22,7 +22,6 @@ import { HostListProvider } from "./host_list_provider/host_list_provider";
 import { PluginManager } from "./plugin_manager";
 
 import pkgStream from "stream";
-import { DriverConnectionProvider } from "./driver_connection_provider";
 import { ClientWrapper } from "./client_wrapper";
 import { ConnectionProviderManager } from "./connection_provider_manager";
 import { DefaultTelemetryFactory } from "./utils/telemetry/default_telemetry_factory";
@@ -35,10 +34,12 @@ import { AwsWrapperError } from "./utils/errors";
 import { Messages } from "./utils/messages";
 import { TransactionIsolationLevel } from "./utils/transaction_isolation_level";
 import { HostListProviderService } from "./host_list_provider_service";
+import { SessionStateClient } from "./session_state_client";
+import { ConnectionProvider } from "./connection_provider";
 
 const { EventEmitter } = pkgStream;
 
-export abstract class AwsClient extends EventEmitter {
+export abstract class AwsClient extends EventEmitter implements SessionStateClient {
   private _defaultPort: number = -1;
   protected telemetryFactory: TelemetryFactory;
   protected pluginManager: PluginManager;
@@ -55,7 +56,8 @@ export abstract class AwsClient extends EventEmitter {
     dbType: DatabaseType,
     knownDialectsByCode: Map<string, DatabaseDialect>,
     parser: ConnectionUrlParser,
-    driverDialect: DriverDialect
+    driverDialect: DriverDialect,
+    connectionProvider: ConnectionProvider
   ) {
     super();
     this.config = config;
@@ -110,7 +112,7 @@ export abstract class AwsClient extends EventEmitter {
     this.pluginManager = new PluginManager(
       container,
       this.properties,
-      new ConnectionProviderManager(new DriverConnectionProvider(), WrapperProperties.CONNECTION_PROVIDER.get(this.properties)),
+      new ConnectionProviderManager(connectionProvider, WrapperProperties.CONNECTION_PROVIDER.get(this.properties)),
       this.telemetryFactory
     );
   }

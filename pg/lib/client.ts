@@ -14,7 +14,7 @@
   limitations under the License.
 */
 
-import { QueryResult } from "pg";
+import { QueryArrayConfig, QueryArrayResult, QueryConfig, QueryResult } from "pg";
 import { AwsClient } from "../../common/lib/aws_client";
 import { PgConnectionUrlParser } from "./pg_connection_url_parser";
 import { DatabaseDialect, DatabaseType } from "../../common/lib/database_dialect/database_dialect";
@@ -31,8 +31,11 @@ import { TelemetryTraceLevel } from "../../common/lib/utils/telemetry/telemetry_
 import { NodePostgresDriverDialect } from "./dialect/node_postgres_driver_dialect";
 import { TransactionIsolationLevel } from "../../common/lib/utils/transaction_isolation_level";
 import { isDialectTopologyAware } from "../../common/lib/utils/utils";
+import { PGClient } from "./pg_client";
+import { ConnectionProvider } from "../../common/lib/connection_provider";
+import { DriverConnectionProvider } from "../../common/lib/driver_connection_provider";
 
-export class AwsPGClient extends AwsClient {
+class BaseClient extends AwsClient implements PGClient {
   private static readonly knownDialectsByCode: Map<string, DatabaseDialect> = new Map([
     [DatabaseDialectCodes.PG, new PgDatabaseDialect()],
     [DatabaseDialectCodes.RDS_PG, new RdsPgDatabaseDialect()],
@@ -40,52 +43,18 @@ export class AwsPGClient extends AwsClient {
     [DatabaseDialectCodes.RDS_MULTI_AZ_PG, new RdsMultiAZClusterPgDatabaseDialect()]
   ]);
 
-  constructor(config: any) {
-    super(config, DatabaseType.POSTGRES, AwsPGClient.knownDialectsByCode, new PgConnectionUrlParser(), new NodePostgresDriverDialect());
+  constructor(config: any, connectionProvider?: ConnectionProvider) {
+    super(
+      config,
+      DatabaseType.POSTGRES,
+      BaseClient.knownDialectsByCode,
+      new PgConnectionUrlParser(),
+      new NodePostgresDriverDialect(),
+      connectionProvider ?? new DriverConnectionProvider()
+    );
   }
 
-  async connect(): Promise<void> {
-    await this.internalConnect();
-    const context = this.telemetryFactory.openTelemetryContext("AwsClient.connect", TelemetryTraceLevel.TOP_LEVEL);
-    return await context.start(async () => {
-      const hostInfo = this.pluginService.getCurrentHostInfo();
-      if (hostInfo == null) {
-        throw new AwsWrapperError(Messages.get("HostInfo.noHostParameter"));
-      }
-      const result: ClientWrapper = await this.pluginManager.connect(hostInfo, this.properties, true, null);
-      if (isDialectTopologyAware(this.pluginService.getDialect())) {
-        try {
-          const role = await this.pluginService.getHostRole(result);
-          // The current host role may be incorrect, use the created client to confirm the host role.
-          if (role !== result.hostInfo.role) {
-            result.hostInfo.role = role;
-            this.pluginService.setCurrentHostInfo(result.hostInfo);
-            this.pluginService.setInitialConnectionHostInfo(result.hostInfo);
-          }
-        } catch (error) {
-          // Ignore
-        }
-      }
-      await this.pluginService.setCurrentClient(result, result.hostInfo);
-      await this.internalPostConnect();
-    });
-  }
-
-  async query(text: string): Promise<QueryResult> {
-    const context = this.telemetryFactory.openTelemetryContext("awsClient.query", TelemetryTraceLevel.TOP_LEVEL);
-    return await context.start(async () => {
-      return await this.pluginManager.execute(
-        this.pluginService.getCurrentHostInfo(),
-        this.properties,
-        "query",
-        async () => {
-          await this.pluginService.updateState(text);
-          return this.targetClient?.query(text);
-        },
-        text
-      );
-    });
-  }
+  // AWS Client Implementation
 
   private async queryWithoutUpdate(text: string): Promise<QueryResult> {
     return this.pluginManager.execute(
@@ -209,5 +178,136 @@ export class AwsPGClient extends AwsClient {
       },
       null
     );
+  }
+
+  // PG Client Implementation
+
+  async connect(): Promise<void> {
+    await this.internalConnect();
+    const context = this.telemetryFactory.openTelemetryContext("AwsClient.connect", TelemetryTraceLevel.TOP_LEVEL);
+    return await context.start(async () => {
+      const hostInfo = this.pluginService.getCurrentHostInfo();
+      if (hostInfo == null) {
+        throw new AwsWrapperError(Messages.get("HostInfo.noHostParameter"));
+      }
+      const result: ClientWrapper = await this.pluginManager.connect(hostInfo, this.properties, true, null);
+      if (isDialectTopologyAware(this.pluginService.getDialect())) {
+        try {
+          const role = await this.pluginService.getHostRole(result);
+          // The current host role may be incorrect, use the created client to confirm the host role.
+          if (role !== result.hostInfo.role) {
+            result.hostInfo.role = role;
+            this.pluginService.setCurrentHostInfo(result.hostInfo);
+            this.pluginService.setInitialConnectionHostInfo(result.hostInfo);
+          }
+        } catch (error) {
+          // Ignore
+        }
+      }
+      await this.pluginService.setCurrentClient(result, result.hostInfo);
+      await this.internalPostConnect();
+    });
+  }
+
+  query(text: string): Promise<QueryResult>;
+  query(text: string, values: any[]): Promise<QueryResult>;
+  query(config: QueryConfig): Promise<QueryResult>;
+  async query(config: string | QueryConfig | QueryArrayConfig, values?: any[]): Promise<QueryResult | QueryArrayResult> {
+    // config can be a string or a query config object
+    const context = this.telemetryFactory.openTelemetryContext("awsClient.query", TelemetryTraceLevel.TOP_LEVEL);
+    return await context.start(async () => {
+      return await this.pluginManager.execute(
+        this.pluginService.getCurrentHostInfo(),
+        this.properties,
+        "query",
+        async () => {
+          const sql = typeof config === "string" ? config : config.text;
+          await this.pluginService.updateState(sql);
+          return this.targetClient?.query(config, values);
+        },
+        [config, values]
+      );
+    });
+  }
+
+  copyFrom(queryText: string): Promise<NodeJS.WritableStream> {
+    return this.pluginManager.execute(
+      this.pluginService.getCurrentHostInfo(),
+      this.properties,
+      "copyFrom",
+      async () => {
+        if (!this.targetClient) {
+          throw new AwsWrapperError("targetClient is undefined, this code should not be reachable");
+        }
+        return await this.targetClient.client.copyFrom(queryText);
+      },
+      queryText
+    );
+  }
+
+  copyTo(queryText: string): Promise<NodeJS.ReadableStream> {
+    return this.pluginManager.execute(
+      this.pluginService.getCurrentHostInfo(),
+      this.properties,
+      "copyTo",
+      async () => {
+        if (!this.targetClient) {
+          throw new AwsWrapperError("targetClient is undefined, this code should not be reachable");
+        }
+        return await this.targetClient.client.copyTo(queryText);
+      },
+      queryText
+    );
+  }
+
+  escapeIdentifier(str: string): Promise<string> {
+    return this.pluginManager.execute(
+      this.pluginService.getCurrentHostInfo(),
+      this.properties,
+      "escapeIdentifier",
+      async () => {
+        if (!this.targetClient) {
+          throw new AwsWrapperError("targetClient is undefined, this code should not be reachable");
+        }
+        return await this.targetClient.client.escapeIdentifier(str);
+      },
+      str
+    );
+  }
+
+  escapeLiteral(str: string): Promise<string> {
+    return this.pluginManager.execute(
+      this.pluginService.getCurrentHostInfo(),
+      this.properties,
+      "escapeLiteral",
+      async () => {
+        if (!this.targetClient) {
+          throw new AwsWrapperError("targetClient is undefined, this code should not be reachable");
+        }
+        return await this.targetClient.client.escapeLiteral(str);
+      },
+      str
+    );
+  }
+
+  prepare(name: string, text: string, nParams?: number): Promise<void> {
+    return this.pluginManager.execute(
+      this.pluginService.getCurrentHostInfo(),
+      this.properties,
+      "prepare",
+      async () => {
+        if (!this.targetClient) {
+          throw new AwsWrapperError("targetClient is undefined, this code should not be reachable");
+        }
+        return await this.targetClient.client.prepare(name, text, nParams);
+      },
+      [name, text, nParams]
+    );
+  }
+}
+
+export class AwsPGClient extends BaseClient {
+  constructor(config: any) {
+    super(config, new DriverConnectionProvider());
   }
 }

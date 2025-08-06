@@ -5,6 +5,7 @@ on:
   push:
     branches:
       - main
+      - fix/parameterized-queries
     paths-ignore:
       - "**/*.md"
       - "**/*.jpg"
