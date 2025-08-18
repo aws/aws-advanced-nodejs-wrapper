@@ -29,7 +29,7 @@ import { AwsPoolConfig } from "../../common/lib/aws_pool_config";
 import { RdsUtils } from "../../common/lib/utils/rds_utils";
 import { PoolKey } from "../../common/lib/utils/pool_key";
 import { InternalPoolMapping } from "../../common/lib/utils/internal_pool_mapping";
-import { AwsMysqlPoolClient } from "../../mysql/lib/mysql_pool_client";
+import { AwsMysqlInternalPoolClient } from "../../mysql/lib/icp/mysql_internal_pool_client";
 import { AwsMySQLClient } from "../../mysql/lib";
 import { MySQLDatabaseDialect } from "../../mysql/lib/dialect/mysql_database_dialect";
 import { MySQL2DriverDialect } from "../../mysql/lib/dialect/mysql2_driver_dialect";
@@ -38,7 +38,7 @@ import { SlidingExpirationCacheWithCleanupTask } from "../../common/lib/utils/sl
 
 const user1 = "user1";
 const user2 = "user2";
-const internalPoolWithOneConnection = mock(AwsMysqlPoolClient);
+const internalPoolWithOneConnection = mock(AwsMysqlInternalPoolClient);
 const props: Map<string, any> = new Map();
 const builder = new HostInfoBuilder({ hostAvailabilityStrategy: new SimpleHostAvailabilityStrategy() });
 const writerHost = builder.withHost("writer-host").withRole(HostRole.WRITER).build();
@@ -86,7 +86,7 @@ const mockClosedWriterClient: AwsClient = mock(AwsMySQLClient);
 const mockDialect: MySQLDatabaseDialect = mock(MySQLDatabaseDialect);
 const mockDriverDialect: MySQL2DriverDialect = mock(MySQL2DriverDialect);
 const mockPoolClientWrapper = mock(PoolClientWrapper);
-const mockAwsPoolClient = mock(AwsMysqlPoolClient);
+const mockAwsPoolClient = mock(AwsMysqlInternalPoolClient);
 const mockRdsUtils = mock(RdsUtils);
 const mockPoolConfig = mock(AwsPoolConfig);
 const mockDialectInstance = instance(mockDialect);

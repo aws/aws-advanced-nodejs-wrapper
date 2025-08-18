@@ -149,16 +149,34 @@ describe("parameterized_queries", () => {
   );
 
   itIfPG(
-    "pg parameterized query with QueryConfig",
+    "pg parameterized query with config",
     async () => {
       client = await createConnection();
 
-      const result = await client.query({
+      // Test QueryConfig
+      let result = await client.query({
         text: "SELECT $1::int as value, $2::text as name",
         values: [123, "param_test"]
       });
       expect(result.rows[0].value).toBe(123);
       expect(result.rows[0].name).toBe("param_test");
+
+      // Test QueryArrayConfig
+      result = await client.query({
+        text: "SELECT name, age FROM users WHERE id = $1",
+        values: [1],
+        rowMode: "array"
+      });
+
+      expect(result.rows[0].value).toBe(123);
+      expect(result.rows[0].name).toBe("param_test");
+
+      // 5. Named parameters using QueryConfig
+      result = await client.query({
+        name: "fetch-user",
+        text: "SELECT * FROM users WHERE id = $1",
+        values: [1]
+      });
     },
     60000
   );

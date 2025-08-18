@@ -332,7 +332,7 @@ export class PluginServiceImpl implements PluginService, HostListProviderService
   }
 
   isBlockingHostListProvider(arg: any): arg is BlockingHostListProvider {
-    return arg;
+    return arg != null && typeof arg.clearAll === "function" && typeof arg.forceMonitoringRefresh === "function";
   }
 
   async refreshHostList(): Promise<void>;

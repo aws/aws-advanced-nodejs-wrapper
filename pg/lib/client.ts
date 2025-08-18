@@ -14,7 +14,15 @@
   limitations under the License.
 */
 
-import { QueryArrayConfig, QueryArrayResult, QueryConfig, QueryResult } from "pg";
+import {
+  QueryArrayConfig,
+  QueryArrayResult,
+  QueryConfig,
+  QueryConfigValues,
+  QueryResult,
+  QueryResultRow,
+  Submittable
+} from "pg";
 import { AwsClient } from "../../common/lib/aws_client";
 import { PgConnectionUrlParser } from "./pg_connection_url_parser";
 import { DatabaseDialect, DatabaseType } from "../../common/lib/database_dialect/database_dialect";
@@ -22,7 +30,7 @@ import { DatabaseDialectCodes } from "../../common/lib/database_dialect/database
 import { RdsPgDatabaseDialect } from "./dialect/rds_pg_database_dialect";
 import { PgDatabaseDialect } from "./dialect/pg_database_dialect";
 import { AuroraPgDatabaseDialect } from "./dialect/aurora_pg_database_dialect";
-import { AwsWrapperError, UnsupportedMethodError } from "../../common/lib/utils/errors";
+import { AwsWrapperError, FailoverSuccessError, UnsupportedMethodError } from "../../common/lib/utils/errors";
 import { Messages } from "../../common/lib/utils/messages";
 import { ClientWrapper } from "../../common/lib/client_wrapper";
 import { RdsMultiAZClusterPgDatabaseDialect } from "./dialect/rds_multi_az_pg_database_dialect";
@@ -31,11 +39,13 @@ import { TelemetryTraceLevel } from "../../common/lib/utils/telemetry/telemetry_
 import { NodePostgresDriverDialect } from "./dialect/node_postgres_driver_dialect";
 import { TransactionIsolationLevel } from "../../common/lib/utils/transaction_isolation_level";
 import { isDialectTopologyAware } from "../../common/lib/utils/utils";
-import { PGClient } from "./pg_client";
+import { PGClient, PGPool } from "./pg_client";
 import { ConnectionProvider } from "../../common/lib/connection_provider";
 import { DriverConnectionProvider } from "../../common/lib/driver_connection_provider";
+import { InternalPooledConnectionProvider } from "../../common/lib/internal_pooled_connection_provider";
+import { AwsPoolConfig } from "../../common/lib/aws_pool_config";
 
-class BaseClient extends AwsClient implements PGClient {
+class BaseAwsPgClient extends AwsClient implements PGClient {
   private static readonly knownDialectsByCode: Map<string, DatabaseDialect> = new Map([
     [DatabaseDialectCodes.PG, new PgDatabaseDialect()],
     [DatabaseDialectCodes.RDS_PG, new RdsPgDatabaseDialect()],
@@ -47,7 +57,7 @@ class BaseClient extends AwsClient implements PGClient {
     super(
       config,
       DatabaseType.POSTGRES,
-      BaseClient.knownDialectsByCode,
+      BaseAwsPgClient.knownDialectsByCode,
       new PgConnectionUrlParser(),
       new NodePostgresDriverDialect(),
       connectionProvider ?? new DriverConnectionProvider()
@@ -158,6 +168,7 @@ class BaseClient extends AwsClient implements PGClient {
       () => {
         const res = this.targetClient!.end();
         this.targetClient = null;
+        this.isConnected = false;
         return res;
       },
       null
@@ -209,10 +220,20 @@ class BaseClient extends AwsClient implements PGClient {
     });
   }
 
-  query(text: string): Promise<QueryResult>;
-  query(text: string, values: any[]): Promise<QueryResult>;
-  query(config: QueryConfig): Promise<QueryResult>;
-  async query(config: string | QueryConfig | QueryArrayConfig, values?: any[]): Promise<QueryResult | QueryArrayResult> {
+  query(text: string): Promise<any>;
+
+  query(text: string, values: any[]): Promise<any>;
+
+  query<T extends Submittable>(queryStream: T): T;
+
+  query<R extends any[] = any[], I = any[]>(queryConfig: QueryArrayConfig<I>, values?: QueryConfigValues<I>): Promise<QueryArrayResult<R>>;
+
+  query<R extends QueryResultRow = any, I = any>(queryConfig: QueryConfig<I>): Promise<QueryResult<R>>;
+
+  async query<R extends QueryResultRow = any, I = any[]>(
+    queryTextOrConfig: string | QueryConfig<I>,
+    values?: QueryConfigValues<I>
+  ): Promise<QueryResult<R>> {
     // config can be a string or a query config object
     const context = this.telemetryFactory.openTelemetryContext("awsClient.query", TelemetryTraceLevel.TOP_LEVEL);
     return await context.start(async () => {
@@ -221,11 +242,11 @@ class BaseClient extends AwsClient implements PGClient {
         this.properties,
         "query",
         async () => {
-          const sql = typeof config === "string" ? config : config.text;
+          const sql = typeof queryTextOrConfig === "string" ? queryTextOrConfig : queryTextOrConfig.text;
           await this.pluginService.updateState(sql);
-          return this.targetClient?.query(config, values);
+          return values !== undefined ? this.targetClient?.query(queryTextOrConfig, values) : this.targetClient?.query(queryTextOrConfig);
         },
-        [config, values]
+        [queryTextOrConfig, values]
       );
     });
   }
@@ -306,8 +327,65 @@ class BaseClient extends AwsClient implements PGClient {
   }
 }
 
-export class AwsPGClient extends BaseClient {
+export class AwsPGClient extends BaseAwsPgClient {
   constructor(config: any) {
     super(config, new DriverConnectionProvider());
+  }
+}
+
+class AwsPGPooledConnection extends BaseAwsPgClient {
+  constructor(config: any, provider: ConnectionProvider) {
+    super(config, provider);
+  }
+}
+
+export type { AwsPGPooledConnection };
+
+export class AwsPGPool implements PGPool {
+  private readonly connectionProvider: InternalPooledConnectionProvider;
+  private readonly config;
+  private readonly poolConfig;
+
+  constructor(config: any, poolConfig?: AwsPoolConfig) {
+    this.connectionProvider = new InternalPooledConnectionProvider(poolConfig);
+    this.config = config;
+    this.poolConfig = poolConfig;
+  }
+
+  async connect(): Promise<AwsPGClient> {
+    const awsPGClient: AwsPGPooledConnection = new AwsPGPooledConnection(this.config, this.connectionProvider);
+    await awsPGClient.connect();
+    return Promise.resolve(awsPGClient);
+  }
+
+  async end(): Promise<void> {
+    await this.connectionProvider.releaseResources();
+  }
+
+  query(text: string): Promise<any>;
+
+  query(text: string, values: any[]): Promise<any>;
+
+  query<T extends Submittable>(queryStream: T): T;
+
+  query<R extends any[] = any[], I = any[]>(queryConfig: QueryArrayConfig<I>, values?: QueryConfigValues<I>): Promise<QueryArrayResult<R>>;
+
+  query<R extends QueryResultRow = any, I = any>(queryConfig: QueryConfig<I>): Promise<QueryResult<R>>;
+
+  async query<R extends QueryResultRow = any, I = any[]>(
+    queryTextOrConfig: string | QueryConfig<I>,
+    values?: QueryConfigValues<I>
+  ): Promise<QueryResult<R>> {
+    const awsPGClient: AwsPGPooledConnection = new AwsPGPooledConnection(this.config, this.connectionProvider);
+    try {
+      await awsPGClient.connect();
+      return awsPGClient.query(queryTextOrConfig as any, values);
+    } catch (error: any) {
+      if (!(error instanceof FailoverSuccessError)) {
+        // Release pooled connection.
+        await awsPGClient.end();
+      }
+      throw error;
+    }
   }
 }

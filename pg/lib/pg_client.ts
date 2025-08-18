@@ -14,7 +14,16 @@
   limitations under the License.
 */
 
-import { QueryArrayConfig, QueryArrayResult, QueryConfig, QueryResult } from "pg";
+import {
+  QueryArrayConfig,
+  QueryArrayResult,
+  QueryConfig,
+  QueryConfigValues,
+  QueryResult,
+  QueryResultRow,
+  Submittable
+} from "pg";
+import { AwsPGPooledConnection } from "./client";
 
 export interface PGClient {
   connect(): Promise<void>;
@@ -22,16 +31,20 @@ export interface PGClient {
   end(): Promise<void>;
 
   // Query methods
-  query(text: string): Promise<QueryResult>;
+  query(text: string): Promise<any>;
 
-  query(text: string, values: any[]): Promise<QueryResult>;
+  query(text: string, values: any[]): Promise<any>;
 
-  query(config: QueryConfig): Promise<QueryResult>;
+  query<T extends Submittable>(queryStream: T): T;
 
-  // Array mode queries
-  query(config: QueryArrayConfig): Promise<QueryArrayResult>;
+  query<R extends any[] = any[], I = any[]>(queryConfig: QueryArrayConfig<I>, values?: QueryConfigValues<I>): Promise<QueryArrayResult<R>>;
 
-  query(config: string | QueryConfig | QueryArrayConfig, values?: any[]): Promise<QueryResult | QueryArrayResult>;
+  query<R extends QueryResultRow = any, I = any>(queryConfig: QueryConfig<I>): Promise<QueryResult<R>>;
+
+  query<R extends QueryResultRow = any, I = any[]>(
+    queryTextOrConfig: string | QueryConfig<I>,
+    values?: QueryConfigValues<I>
+  ): Promise<QueryResult<R>>;
 
   // Copy methods
   copyFrom(queryText: string): Promise<NodeJS.WritableStream>;
@@ -45,4 +58,22 @@ export interface PGClient {
   escapeIdentifier(str: string): Promise<string>;
 
   escapeLiteral(str: string): Promise<string>;
+}
+
+export interface PGPool {
+  connect(): Promise<AwsPGPooledConnection>;
+
+  end(): Promise<void>;
+
+  end(callback: () => void): void;
+
+  query<T extends Submittable>(queryStream: T): T;
+
+  query<R extends any[] = any[], I = any[]>(queryConfig: QueryArrayConfig<I>, values?: QueryConfigValues<I>): Promise<QueryArrayResult<R>>;
+
+  query<R extends QueryResultRow = any, I = any[]>(queryConfig: QueryConfig<I>): Promise<QueryResult<R>>;
+
+  query(text: string): Promise<any>;
+
+  query(text: string, values: any[]): Promise<any>;
 }

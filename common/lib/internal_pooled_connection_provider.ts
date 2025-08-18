@@ -33,7 +33,7 @@ import { HostSelector } from "./host_selector";
 import { RandomHostSelector } from "./random_host_selector";
 import { InternalPoolMapping } from "./utils/internal_pool_mapping";
 import { RoundRobinHostSelector } from "./round_robin_host_selector";
-import { AwsPoolClient } from "./aws_pool_client";
+import { AwsInternalPoolClient } from "./aws_pool_client";
 import { AwsPoolConfig } from "./aws_pool_config";
 import { LeastConnectionsHostSelector } from "./least_connections_host_selector";
 import { PoolClientWrapper } from "./pool_client_wrapper";
@@ -59,7 +59,7 @@ export class InternalPooledConnectionProvider implements PooledConnectionProvide
   private readonly _poolMapping?: InternalPoolMapping;
   private readonly _poolConfig?: AwsPoolConfig;
   targetClient?: ClientWrapper;
-  internalPool: AwsPoolClient | undefined;
+  internalPool: AwsInternalPoolClient | undefined;
 
   private static poolExpirationCheckNanos: bigint = InternalPooledConnectionProvider.POOL_EXPIRATION_NANOS; // 30 minutes
 

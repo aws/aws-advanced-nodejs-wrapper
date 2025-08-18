@@ -36,6 +36,7 @@ import { TransactionIsolationLevel } from "./utils/transaction_isolation_level";
 import { HostListProviderService } from "./host_list_provider_service";
 import { SessionStateClient } from "./session_state_client";
 import { ConnectionProvider } from "./connection_provider";
+import { DriverConnectionProvider } from "./driver_connection_provider";
 
 const { EventEmitter } = pkgStream;
 
@@ -57,7 +58,7 @@ export abstract class AwsClient extends EventEmitter implements SessionStateClie
     knownDialectsByCode: Map<string, DatabaseDialect>,
     parser: ConnectionUrlParser,
     driverDialect: DriverDialect,
-    connectionProvider: ConnectionProvider
+    connectionProvider?: ConnectionProvider
   ) {
     super();
     this.config = config;
@@ -112,7 +113,7 @@ export abstract class AwsClient extends EventEmitter implements SessionStateClie
     this.pluginManager = new PluginManager(
       container,
       this.properties,
-      new ConnectionProviderManager(connectionProvider, WrapperProperties.CONNECTION_PROVIDER.get(this.properties)),
+      new ConnectionProviderManager(connectionProvider ?? new DriverConnectionProvider(), WrapperProperties.CONNECTION_PROVIDER.get(this.properties)),
       this.telemetryFactory
     );
   }

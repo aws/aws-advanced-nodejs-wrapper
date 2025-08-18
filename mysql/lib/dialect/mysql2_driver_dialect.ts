@@ -19,8 +19,8 @@ import { ClientWrapper } from "../../../common/lib/client_wrapper";
 import { createConnection, PoolOptions } from "mysql2/promise";
 import { WrapperProperties } from "../../../common/lib/wrapper_property";
 import { AwsPoolConfig } from "../../../common/lib/aws_pool_config";
-import { AwsPoolClient } from "../../../common/lib/aws_pool_client";
-import { AwsMysqlPoolClient } from "../mysql_pool_client";
+import { AwsInternalPoolClient } from "../../../common/lib/aws_pool_client";
+import { AwsMysqlInternalPoolClient } from "../icp/mysql_internal_pool_client";
 import { MySQLClientWrapper } from "../../../common/lib/mysql_client_wrapper";
 import { HostInfo } from "../../../common/lib/host_info";
 import { UnsupportedMethodError } from "../../../common/lib/utils/errors";
@@ -57,8 +57,8 @@ export class MySQL2DriverDialect implements DriverDialect {
     return finalPoolConfig;
   }
 
-  getAwsPoolClient(props: PoolOptions): AwsPoolClient {
-    return new AwsMysqlPoolClient(props);
+  getAwsPoolClient(props: PoolOptions): AwsInternalPoolClient {
+    return new AwsMysqlInternalPoolClient(props);
   }
 
   setConnectTimeout(props: Map<string, any>, wrapperConnectTimeout?: any) {

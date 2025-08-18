@@ -17,6 +17,7 @@
 import { ConnectionProvider } from "./connection_provider";
 import { HostRole } from "./host_role";
 import { HostInfo } from "./host_info";
+import { CanReleaseResources } from "./can_release_resources";
 
 export class ConnectionProviderManager {
   private readonly defaultProvider: ConnectionProvider;
@@ -63,5 +64,19 @@ export class ConnectionProviderManager {
 
   getDefaultConnectionProvider(): ConnectionProvider {
     return this.defaultProvider;
+  }
+
+  private static implementsCanReleaseResources(provider: any): provider is CanReleaseResources {
+    return provider.releaseResources !== undefined;
+  }
+
+  async releaseResources(): Promise<void> {
+    if (this.effectiveProvider && ConnectionProviderManager.implementsCanReleaseResources(this.effectiveProvider)) {
+      await this.effectiveProvider.releaseResources();
+    }
+
+    if (ConnectionProviderManager.implementsCanReleaseResources(this.defaultProvider)) {
+      await this.defaultProvider.releaseResources();
+    }
   }
 }

@@ -16,6 +16,7 @@
 
 import { ErrorPacketParams, OkPacketParams, Query, QueryOptions, QueryResult } from "mysql2";
 import { ConnectionOptions, Prepare, PrepareStatementInfo } from "mysql2/promise";
+import { AwsMySQLClient, AwsMySQLPooledConnection } from "./client";
 
 export interface MySQLClient {
   // Methods supported by MySQL2's PromiseConnection
@@ -25,6 +26,8 @@ export interface MySQLClient {
 
   connect(): Promise<void>;
 
+  destroy(): Promise<void>;
+
   commit(): Promise<void>;
 
   changeUser(options: ConnectionOptions): Promise<void>;
@@ -32,8 +35,6 @@ export interface MySQLClient {
   end(): Promise<void>;
 
   end(options: any): Promise<void>;
-
-  destroy(): Promise<void>;
 
   pause(): Promise<void>;
 
@@ -84,4 +85,22 @@ export interface MySQLClient {
   execute<T extends QueryResult>(options: QueryOptions): Promise<Query>;
 
   execute<T extends QueryResult>(options: string | QueryOptions, values: any): Promise<Query>;
+}
+
+export interface MySQLPoolClient {
+  getConnection(): Promise<AwsMySQLPooledConnection>;
+
+  releaseConnection(connection: AwsMySQLPooledConnection): Promise<void>;
+
+  end(): Promise<void>;
+
+  query<T extends QueryResult>(sql: string): Promise<Query>;
+
+  query<T extends QueryResult>(sql: string, values: any): Promise<Query>;
+
+  query<T extends QueryResult>(options: QueryOptions): Promise<Query>;
+
+  query<T extends QueryResult>(options: QueryOptions, values: any): Promise<Query>;
+
+  query<T extends QueryResult>(options: string | QueryOptions, values: any): Promise<Query>;
 }
