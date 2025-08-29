@@ -80,6 +80,12 @@ export class InternalPooledConnectionProvider implements PooledConnectionProvide
   }
 
   async connect(hostInfo: HostInfo, pluginService: PluginService, props: Map<string, any>): Promise<ClientWrapper> {
+    const resultProps = new Map(props);
+    resultProps.set(WrapperProperties.HOST.name, hostInfo.host);
+    if (hostInfo.isPortSpecified()) {
+      resultProps.set(WrapperProperties.PORT.name, hostInfo.port);
+    }
+
     let connectionHostInfo: HostInfo = hostInfo;
     if (
       WrapperProperties.ENABLE_GREEN_HOST_REPLACEMENT.get(props) &&
@@ -96,6 +102,7 @@ export class InternalPooledConnectionProvider implements PooledConnectionProvide
         // Green instance DNS doesn't exist
 
         const fixedHost: string = this.rdsUtil.removeGreenInstancePrefix(hostInfo.host);
+        resultProps.set(WrapperProperties.HOST.name, fixedHost);
         connectionHostInfo = new HostInfoBuilder({
           hostAvailabilityStrategy: hostInfo.hostAvailabilityStrategy
         })
@@ -106,9 +113,9 @@ export class InternalPooledConnectionProvider implements PooledConnectionProvide
     }
 
     const dialect = pluginService.getDriverDialect();
-    const preparedConfig = dialect.preparePoolClientProperties(props, this._poolConfig);
+    const preparedConfig = dialect.preparePoolClientProperties(resultProps, this._poolConfig);
     this.internalPool = InternalPooledConnectionProvider.databasePools.computeIfAbsent(
-      new PoolKey(connectionHostInfo.url, this.getPoolKey(connectionHostInfo, props)).getPoolKeyString(),
+      new PoolKey(connectionHostInfo.url, this.getPoolKey(connectionHostInfo, resultProps)).getPoolKeyString(),
       () => dialect.getAwsPoolClient(preparedConfig),
       InternalPooledConnectionProvider.poolExpirationCheckNanos
     );
@@ -123,6 +130,13 @@ export class InternalPooledConnectionProvider implements PooledConnectionProvide
   }
 
   async releaseResources() {
+    if (this.internalPool) {
+      try {
+        await this.internalPool.releaseResources();
+      } catch (error) {
+        // ignore
+      }
+    }
     await InternalPooledConnectionProvider.databasePools.clear();
   }
 

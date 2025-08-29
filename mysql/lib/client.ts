@@ -92,7 +92,10 @@ class BaseAwsMySQLClient extends AwsClient implements MySQLClient {
       this.properties,
       "query",
       async () => {
-        return await ClientUtils.queryWithTimeout(this.targetClient?.client?.query(options), this.properties);
+        if (!this.targetClient) {
+          throw new AwsWrapperError("targetClient is undefined, this code should not be reachable");
+        }
+        return await ClientUtils.queryWithTimeout(this.targetClient.client?.query(options), this.properties);
       },
       options
     );
@@ -505,9 +508,13 @@ class BaseAwsMySQLClient extends AwsClient implements MySQLClient {
         this.properties,
         "query",
         async () => {
+          if (!this.targetClient) {
+            throw new AwsWrapperError("targetClient is undefined, this code should not be reachable");
+          }
+
           // Handle parameterized queries
-          await this.updateState(this.targetClient?.client, options, values);
-          return await ClientUtils.queryWithTimeout(this.targetClient?.client?.query(options, values), this.properties);
+          await this.updateState(this.targetClient.client, options, values);
+          return await ClientUtils.queryWithTimeout(this.targetClient.client?.query(options, values), this.properties);
         },
         [options, values]
       );
@@ -530,9 +537,13 @@ class BaseAwsMySQLClient extends AwsClient implements MySQLClient {
         this.properties,
         "execute",
         async () => {
+          if (!this.targetClient) {
+            throw new AwsWrapperError("targetClient is undefined, this code should not be reachable");
+          }
+
           // Handle parameterized queries
-          await this.updateState(this.targetClient?.client, options, values);
-          return await ClientUtils.queryWithTimeout(this.targetClient?.client?.execute(options, values), this.properties);
+          await this.updateState(this.targetClient.client, options, values);
+          return await ClientUtils.queryWithTimeout(this.targetClient.client.execute(options, values), this.properties);
         },
         [options, values]
       );
@@ -580,7 +591,8 @@ export class AwsMySQLPool implements MySQLPoolClient {
   }
 
   async getConnection(): Promise<AwsMySQLPooledConnection> {
-    const client: AwsMySQLPooledConnection = new AwsMySQLPooledConnection(this.config, this.connectionProvider);
+    const client = new AwsMySQLPooledConnection(this.config, this.connectionProvider);
+    await client.connect();
     return client;
   }
 
@@ -593,16 +605,16 @@ export class AwsMySQLPool implements MySQLPoolClient {
   query<T extends QueryResult>(options: QueryOptions): Promise<Query>;
   query<T extends QueryResult>(options: QueryOptions, values: any): Promise<Query>;
   async query(options: string | QueryOptions, values?: any): Promise<Query> {
-    const client: AwsMySQLPooledConnection = new AwsMySQLPooledConnection(this.config, this.connectionProvider);
+    const awsMySQLPooledConnection: AwsMySQLPooledConnection = new AwsMySQLPooledConnection(this.config, this.connectionProvider);
     try {
-      await client.connect();
-      const res = await client.query(options as any, values);
-      await client.end();
+      await awsMySQLPooledConnection.connect();
+      const res = await awsMySQLPooledConnection.query(options as any, values);
+      await awsMySQLPooledConnection.end();
       return res;
     } catch (error: any) {
       if (!(error instanceof FailoverSuccessError)) {
         // Release pooled connection.
-        await client.end();
+        await awsMySQLPooledConnection.end();
       }
       throw error;
     }
