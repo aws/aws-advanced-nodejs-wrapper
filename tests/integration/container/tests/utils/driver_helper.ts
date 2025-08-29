@@ -15,8 +15,8 @@
 */
 
 import { TestDriver } from "./test_driver";
-import { AwsMySQLClient, AwsMySQLPool } from "../../../../../mysql/lib";
-import { AwsPGClient, AwsPGPool } from "../../../../../pg/lib";
+import { AwsMySQLClient, AwsMySQLPoolClient } from "../../../../../mysql/lib";
+import { AwsPGClient, AwsPgPoolClient } from "../../../../../pg/lib";
 import { DatabaseEngine } from "./database_engine";
 import { AwsClient } from "../../../../../common/lib/aws_client";
 import { DatabaseEngineDeployment } from "./database_engine_deployment";
@@ -38,9 +38,9 @@ export class DriverHelper {
   static getPoolClient(driver: TestDriver) {
     switch (driver) {
       case TestDriver.MYSQL:
-        return (options: any, poolConfig: AwsPoolConfig) => new AwsMySQLPool(options, poolConfig);
+        return (options: any, poolConfig: AwsPoolConfig) => new AwsMySQLPoolClient(options, poolConfig);
       case TestDriver.PG:
-        return (options: any, poolConfig: AwsPoolConfig) => new AwsPGPool(options, poolConfig);
+        return (options: any, poolConfig: AwsPoolConfig) => new AwsPgPoolClient(options, poolConfig);
       default:
         throw new Error("invalid driver");
     }

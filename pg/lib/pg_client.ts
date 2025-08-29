@@ -60,7 +60,7 @@ export interface PGClient {
   escapeLiteral(str: string): Promise<string>;
 }
 
-export interface PGPool {
+export interface PGPoolClient {
   connect(): Promise<AwsPGPooledConnection>;
 
   end(): Promise<void>;

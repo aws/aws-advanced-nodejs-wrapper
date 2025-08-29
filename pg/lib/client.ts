@@ -39,7 +39,7 @@ import { TelemetryTraceLevel } from "../../common/lib/utils/telemetry/telemetry_
 import { NodePostgresDriverDialect } from "./dialect/node_postgres_driver_dialect";
 import { TransactionIsolationLevel } from "../../common/lib/utils/transaction_isolation_level";
 import { isDialectTopologyAware } from "../../common/lib/utils/utils";
-import { PGClient, PGPool } from "./pg_client";
+import { PGClient, PGPoolClient } from "./pg_client";
 import { ConnectionProvider } from "../../common/lib/connection_provider";
 import { DriverConnectionProvider } from "../../common/lib/driver_connection_provider";
 import { InternalPooledConnectionProvider } from "../../common/lib/internal_pooled_connection_provider";
@@ -195,7 +195,7 @@ class BaseAwsPgClient extends AwsClient implements PGClient {
 
   async connect(): Promise<void> {
     await this.internalConnect();
-    const context = this.telemetryFactory.openTelemetryContext("AwsClient.connect", TelemetryTraceLevel.TOP_LEVEL);
+    const context = this.telemetryFactory.openTelemetryContext("awsClient.connect", TelemetryTraceLevel.TOP_LEVEL);
     return await context.start(async () => {
       const hostInfo = this.pluginService.getCurrentHostInfo();
       if (hostInfo == null) {
@@ -235,16 +235,20 @@ class BaseAwsPgClient extends AwsClient implements PGClient {
     values?: QueryConfigValues<I>
   ): Promise<QueryResult<R>> {
     // config can be a string or a query config object
+    const host = this.pluginService.getCurrentHostInfo();
     const context = this.telemetryFactory.openTelemetryContext("awsClient.query", TelemetryTraceLevel.TOP_LEVEL);
     return await context.start(async () => {
       return await this.pluginManager.execute(
-        this.pluginService.getCurrentHostInfo(),
+        host,
         this.properties,
         "query",
         async () => {
+          if (!this.targetClient) {
+            throw new AwsWrapperError("targetClient is undefined, this code should not be reachable");
+          }
           const sql = typeof queryTextOrConfig === "string" ? queryTextOrConfig : queryTextOrConfig.text;
           await this.pluginService.updateState(sql);
-          return values !== undefined ? this.targetClient?.query(queryTextOrConfig, values) : this.targetClient?.query(queryTextOrConfig);
+          return values !== undefined ? this.targetClient.query(queryTextOrConfig, values) : this.targetClient.query(queryTextOrConfig);
         },
         [queryTextOrConfig, values]
       );
@@ -337,11 +341,27 @@ class AwsPGPooledConnection extends BaseAwsPgClient {
   constructor(config: any, provider: ConnectionProvider) {
     super(config, provider);
   }
+
+  async release(): Promise<void> {
+    return this.pluginManager.execute(
+      this.pluginService.getCurrentHostInfo(),
+      this.properties,
+      "release",
+      async () => {
+        if (!this.targetClient) {
+          throw new AwsWrapperError("targetClient is undefined, this code should not be reachable");
+        }
+        this.pluginService.removeErrorListener(this.targetClient);
+        return await this.targetClient.client.release();
+      },
+      null
+    );
+  }
 }
 
 export type { AwsPGPooledConnection };
 
-export class AwsPGPool implements PGPool {
+export class AwsPgPoolClient implements PGPoolClient {
   private readonly connectionProvider: InternalPooledConnectionProvider;
   private readonly config;
   private readonly poolConfig;
@@ -352,10 +372,10 @@ export class AwsPGPool implements PGPool {
     this.poolConfig = poolConfig;
   }
 
-  async connect(): Promise<AwsPGClient> {
-    const awsPGClient: AwsPGPooledConnection = new AwsPGPooledConnection(this.config, this.connectionProvider);
-    await awsPGClient.connect();
-    return Promise.resolve(awsPGClient);
+  async connect(): Promise<AwsPGPooledConnection> {
+    const awsPGPooledConnection: AwsPGPooledConnection = new AwsPGPooledConnection(this.config, this.connectionProvider);
+    await awsPGPooledConnection.connect();
+    return awsPGPooledConnection;
   }
 
   async end(): Promise<void> {
@@ -376,14 +396,16 @@ export class AwsPGPool implements PGPool {
     queryTextOrConfig: string | QueryConfig<I>,
     values?: QueryConfigValues<I>
   ): Promise<QueryResult<R>> {
-    const awsPGClient: AwsPGPooledConnection = new AwsPGPooledConnection(this.config, this.connectionProvider);
+    const awsPGPooledConnection: AwsPGPooledConnection = new AwsPGPooledConnection(this.config, this.connectionProvider);
     try {
-      await awsPGClient.connect();
-      return awsPGClient.query(queryTextOrConfig as any, values);
+      await awsPGPooledConnection.connect();
+      const res = await awsPGPooledConnection.query(queryTextOrConfig as any, values);
+      await awsPGPooledConnection.end();
+      return res;
     } catch (error: any) {
       if (!(error instanceof FailoverSuccessError)) {
         // Release pooled connection.
-        await awsPGClient.end();
+        await awsPGPooledConnection.end();
       }
       throw error;
     }

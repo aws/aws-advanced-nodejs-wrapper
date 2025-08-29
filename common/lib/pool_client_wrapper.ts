@@ -16,7 +16,7 @@
 
 import { ClientWrapper } from "./client_wrapper";
 import { HostInfo } from "./host_info";
-import { logger, uniqueId } from "../logutils";
+import { uniqueId } from "../logutils";
 import { ClientUtils } from "./utils/client_utils";
 import { SessionState } from "./session_state";
 
@@ -32,7 +32,6 @@ export class PoolClientWrapper implements ClientWrapper {
     this.hostInfo = hostInfo;
     this.properties = properties;
     this.id = uniqueId("PoolClient_");
-    logger.info(`created ::: ${this.id}`);
   }
 
   abort(): Promise<void> {
@@ -41,7 +40,6 @@ export class PoolClientWrapper implements ClientWrapper {
 
   query(sql: string): Promise<any>;
   query(config: any, values?: any): Promise<any> {
-    logger.info(`queried with ::: ${this.id}`);
     return this.client?.query(config, values);
   }
 
@@ -51,7 +49,6 @@ export class PoolClientWrapper implements ClientWrapper {
 
   async end(): Promise<void> {
     try {
-      logger.info(`releasing ::: ${this.id}`);
       return this.client?.release();
     } catch (error: any) {
       // Ignore

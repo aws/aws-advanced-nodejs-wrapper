@@ -20,6 +20,10 @@ import { logger } from "../../../../common/logutils";
 import { TestEnvironmentFeatures } from "./utils/test_environment_features";
 import { features } from "./config";
 import { PluginManager } from "../../../../common/lib";
+import { AwsPgPoolClient } from "../../../../pg/lib";
+import { AwsMySQLPoolClient } from "../../../../mysql/lib";
+import { AwsPoolConfig } from "../../../../common/lib/aws_pool_config";
+import { InternalPooledConnectionProvider } from "../../../../common/lib/internal_pooled_connection_provider";
 
 const itIf =
   !features.includes(TestEnvironmentFeatures.PERFORMANCE) && !features.includes(TestEnvironmentFeatures.RUN_AUTOSCALING_TESTS_ONLY) ? it : it.skip;
@@ -44,6 +48,82 @@ async function createConnection(plugins: string = "failover"): Promise<any> {
   const newClient = DriverHelper.getClient(driver)(configuredProps);
   await newClient.connect();
   return newClient;
+}
+
+async function createAwsPGPool(plugins: string = "failover"): Promise<AwsPgPoolClient> {
+  const env = await TestEnvironment.getCurrent();
+  const props = {
+    user: env.databaseInfo.username,
+    host: env.databaseInfo.instances[0].host,
+    database: env.databaseInfo.defaultDbName,
+    password: env.databaseInfo.password,
+    port: env.databaseInfo.instanceEndpointPort,
+    plugins
+  };
+  const poolConfig = new AwsPoolConfig({
+    maxConnections: 10,
+    maxIdleConnections: 3,
+    idleTimeoutMillis: 300000
+  });
+  return new AwsPgPoolClient(props, poolConfig);
+}
+
+async function createAwsPGPoolWithICP(plugins: string = "failover"): Promise<AwsPgPoolClient> {
+  const env = await TestEnvironment.getCurrent();
+  const poolConfig = new AwsPoolConfig({
+    maxConnections: 10,
+    maxIdleConnections: 3,
+    idleTimeoutMillis: 300000
+  });
+  const provider = new InternalPooledConnectionProvider(poolConfig);
+  const props = {
+    user: env.databaseInfo.username,
+    host: env.databaseInfo.instances[0].host,
+    database: env.databaseInfo.defaultDbName,
+    password: env.databaseInfo.password,
+    port: env.databaseInfo.instanceEndpointPort,
+    plugins,
+    provider: provider
+  };
+  return new AwsPgPoolClient(props, poolConfig);
+}
+
+async function createAwsMySQLPool(plugins: string = "failover"): Promise<AwsMySQLPoolClient> {
+  const env = await TestEnvironment.getCurrent();
+  const props = {
+    user: env.databaseInfo.username,
+    host: env.databaseInfo.writerInstanceEndpoint,
+    database: env.databaseInfo.defaultDbName,
+    password: env.databaseInfo.password,
+    port: env.databaseInfo.instanceEndpointPort,
+    plugins
+  };
+  const poolConfig = new AwsPoolConfig({
+    maxConnections: 10,
+    maxIdleConnections: 3,
+    idleTimeoutMillis: 300000
+  });
+  return new AwsMySQLPoolClient(props, poolConfig);
+}
+
+async function createAwsMySQLPoolWithICP(plugins: string = "failover"): Promise<AwsMySQLPoolClient> {
+  const env = await TestEnvironment.getCurrent();
+  const poolConfig = new AwsPoolConfig({
+    maxConnections: 10,
+    maxIdleConnections: 3,
+    idleTimeoutMillis: 300000
+  });
+  const provider = new InternalPooledConnectionProvider(poolConfig);
+  const props = {
+    user: env.databaseInfo.username,
+    host: env.databaseInfo.writerInstanceEndpoint,
+    database: env.databaseInfo.defaultDbName,
+    password: env.databaseInfo.password,
+    port: env.databaseInfo.instanceEndpointPort,
+    plugins,
+    provider: provider
+  };
+  return new AwsMySQLPoolClient(props, poolConfig);
 }
 
 beforeEach(async () => {
@@ -163,21 +243,146 @@ describe("parameterized_queries", () => {
 
       // Test QueryArrayConfig
       result = await client.query({
-        text: "SELECT name, age FROM users WHERE id = $1",
-        values: [1],
+        text: "SELECT $1::int as id, $2::text as status",
+        values: [1, "active"],
         rowMode: "array"
       });
 
-      expect(result.rows[0].value).toBe(123);
-      expect(result.rows[0].name).toBe("param_test");
-
-      // 5. Named parameters using QueryConfig
       result = await client.query({
-        name: "fetch-user",
-        text: "SELECT * FROM users WHERE id = $1",
-        values: [1]
+        name: "fetch-data",
+        text: "SELECT $1::int as id, $2::text as name",
+        values: [1, "test"]
       });
     },
     60000
   );
+
+  // AwsPGPool tests
+  const pgPoolFactories = [
+    { name: "AwsPGPool", factory: createAwsPGPool },
+    { name: "AwsPGPoolWithICP", factory: createAwsPGPoolWithICP }
+  ];
+
+  pgPoolFactories.forEach(({ name, factory }) => {
+    describe(`${name} parameterized queries`, () => {
+      itIfPG(
+        "pg pool parameterized query with values array",
+        async () => {
+          client = await factory();
+          const result = await client.query("SELECT $1::int as value, $2::text as name", [42, "test"]);
+          expect(result.rows[0].value).toBe(42);
+          expect(result.rows[0].name).toBe("test");
+        },
+        60000
+      );
+
+      itIfPG(
+        "pg pool parameterized query with QueryConfig",
+        async () => {
+          client = await factory();
+          const result = await client.query({
+            text: "SELECT $1::int as value, $2::text as name",
+            values: [123, "param_test"]
+          });
+          expect(result.rows[0].value).toBe(123);
+          expect(result.rows[0].name).toBe("param_test");
+        },
+        60000
+      );
+
+      itIfPG(
+        "pg pool parameterized query with QueryArrayConfig",
+        async () => {
+          client = await factory();
+          const result = await client.query({
+            text: "SELECT $1::int as id, $2::text as status",
+            values: [1, "active"],
+            rowMode: "array"
+          });
+          expect(result.rows[0][0]).toBe(1);
+          expect(result.rows[0][1]).toBe("active");
+        },
+        60000
+      );
+
+      itIfPG(
+        "pg pool named parameterized query",
+        async () => {
+          client = await factory();
+          const result = await client.query({
+            name: "fetch-data",
+            text: "SELECT $1::int as id, $2::text as name",
+            values: [1, "test"]
+          });
+          expect(result.rows[0].id).toBe(1);
+          expect(result.rows[0].name).toBe("test");
+        },
+        60000
+      );
+    });
+  });
+
+  // AwsMySQLPool tests
+  const mysqlPoolFactories = [
+    { name: "AwsMySQLPool", factory: createAwsMySQLPool },
+    { name: "AwsMySQLPoolWithICP", factory: createAwsMySQLPoolWithICP }
+  ];
+
+  mysqlPoolFactories.forEach(({ name, factory }) => {
+    describe(`${name} parameterized queries`, () => {
+      itIfMySQL(
+        "mysql pool parameterized query with values array",
+        async () => {
+          client = await factory();
+          const [result] = await client.query("SELECT ? as value, ? as name", [42, "test"]);
+          expect(result[0].value).toBe(42);
+          expect(result[0].name).toBe("test");
+        },
+        60000
+      );
+
+      itIfMySQL(
+        "mysql pool parameterized query with QueryOptions",
+        async () => {
+          client = await factory();
+          const [result] = await client.query({
+            sql: "SELECT ? as value, ? as name",
+            values: [123, "param_test"]
+          });
+          expect(result[0].value).toBe(123);
+          expect(result[0].name).toBe("param_test");
+        },
+        60000
+      );
+
+      itIfMySQL(
+        "mysql pool query with timeout",
+        async () => {
+          client = await factory();
+          const [result] = await client.query({
+            sql: "SELECT ? as value",
+            values: [999],
+            timeout: 5000
+          });
+          expect(result[0].value).toBe(999);
+        },
+        60000
+      );
+
+      itIfMySQL(
+        "mysql pool multiple parameterized queries",
+        async () => {
+          client = await factory();
+
+          const [result1] = await client.query("SELECT ? as value", [100]);
+          expect(result1[0].value).toBe(100);
+
+          const [result2] = await client.query("SELECT ? as value, ? as name", [200, "second"]);
+          expect(result2[0].value).toBe(200);
+          expect(result2[0].name).toBe("second");
+        },
+        60000
+      );
+    });
+  });
 });

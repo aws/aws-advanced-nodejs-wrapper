@@ -16,7 +16,7 @@
 
 import { ClientWrapper } from "./client_wrapper";
 import { HostInfo } from "./host_info";
-import { logger, uniqueId } from "../logutils";
+import { uniqueId } from "../logutils";
 
 /*
 This an internal wrapper class for a target community driver client created by the NodePostgresPgDriverDialect.

@@ -722,6 +722,10 @@ export class PluginServiceImpl implements PluginService, HostListProviderService
     this.getDialect().getErrorHandler().attachNoOpErrorListener(clientWrapper);
   }
 
+  removeErrorListener(clientWrapper: ClientWrapper | undefined): void {
+    this.getDialect().getErrorHandler().removeErrorListener(clientWrapper);
+  }
+
   setAllowedAndBlockedHosts(allowedAndBlockedHosts: AllowedAndBlockedHosts) {
     this.allowedAndBlockedHosts = allowedAndBlockedHosts;
   }

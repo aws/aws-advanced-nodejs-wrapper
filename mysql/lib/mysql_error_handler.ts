@@ -95,4 +95,12 @@ export class MySQLErrorHandler implements ErrorHandler {
     clientWrapper.client.removeListener("error", this.trackingListener);
     clientWrapper.client.on("error", this.noOpListener);
   }
+
+  removeErrorListener(clientWrapper: ClientWrapper | undefined): void {
+    if (!clientWrapper || !clientWrapper.client) {
+      return;
+    }
+
+    clientWrapper.client.removeListener("error", this.trackingListener);
+  }
 }

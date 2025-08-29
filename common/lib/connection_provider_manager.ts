@@ -18,14 +18,17 @@ import { ConnectionProvider } from "./connection_provider";
 import { HostRole } from "./host_role";
 import { HostInfo } from "./host_info";
 import { CanReleaseResources } from "./can_release_resources";
+import { DriverConnectionProvider } from "./driver_connection_provider";
 
 export class ConnectionProviderManager {
+  private readonly forceConnectProvider: ConnectionProvider;
   private readonly defaultProvider: ConnectionProvider;
   private readonly effectiveProvider: ConnectionProvider | null;
 
   constructor(defaultProvider: ConnectionProvider, effectiveProvider: ConnectionProvider | null) {
     this.defaultProvider = defaultProvider;
     this.effectiveProvider = effectiveProvider;
+    this.forceConnectProvider = new DriverConnectionProvider();
   }
 
   getConnectionProvider(hostInfo: HostInfo | null, props: Map<string, any>): ConnectionProvider {
@@ -64,6 +67,10 @@ export class ConnectionProviderManager {
 
   getDefaultConnectionProvider(): ConnectionProvider {
     return this.defaultProvider;
+  }
+
+  getForceConnectionProvider(): ConnectionProvider {
+    return this.forceConnectProvider;
   }
 
   private static implementsCanReleaseResources(provider: any): provider is CanReleaseResources {

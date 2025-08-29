@@ -386,9 +386,16 @@ export class PluginManager {
 
     for (const plugin of PluginManager.PLUGINS) {
       if (PluginManager.implementsCanReleaseResources(plugin)) {
-        await plugin.releaseResources();
+        try {
+          await plugin.releaseResources();
+        } catch (error) {
+          // Do nothing
+        }
       }
     }
+
+    PluginManager.STRATEGY_PLUGIN_CHAIN_CACHE.clear();
+
     PluginManager.PLUGINS = new Set();
   }
 
