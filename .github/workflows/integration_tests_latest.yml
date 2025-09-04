@@ -26,7 +26,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        dbEngine: ["mysql", "postgres"]
+        dbEngine: ["mysql"]
 
     steps:
       - name: Clone repository

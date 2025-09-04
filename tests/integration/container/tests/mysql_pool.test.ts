@@ -185,6 +185,8 @@ describe("mysql pool integration tests", () => {
           }
 
           await client.end();
+          await PluginManager.releaseResources();
+          logger.debug(`Test cleaned up.`);
         },
         1320000
       );
@@ -220,6 +222,9 @@ describe("mysql pool integration tests", () => {
         expect(currentConnectionId).not.toBe(initialWriterId);
 
         await client.end();
+        await PluginManager.releaseResources();
+
+        logger.debug(`Test cleaned up.`);
       });
 
       itIfMySQL(
