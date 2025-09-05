@@ -130,14 +130,21 @@ export class InternalPooledConnectionProvider implements PooledConnectionProvide
   }
 
   async releaseResources() {
+    logger.debug(`[DEBUG-ICP] Starting InternalPooledConnectionProvider.releaseResources() - has internalPool: ${!!this.internalPool}`);
     if (this.internalPool) {
       try {
+        logger.debug("[DEBUG-ICP] Releasing internal pool resources");
         await this.internalPool.releaseResources();
+        logger.debug("[DEBUG-ICP] Internal pool resources released successfully");
       } catch (error) {
+        logger.debug(`[DEBUG-ICP] Error releasing internal pool resources: ${error.message}`);
         // ignore
       }
     }
+    logger.debug(`[DEBUG-ICP] Clearing database pools cache - size before: ${InternalPooledConnectionProvider.databasePools.size}`);
     await InternalPooledConnectionProvider.databasePools.clear();
+    logger.debug(`[DEBUG-ICP] Database pools cache cleared - size after: ${InternalPooledConnectionProvider.databasePools.size}`);
+    logger.debug("[DEBUG-ICP] InternalPooledConnectionProvider.releaseResources() completed");
   }
 
   getHostInfoByStrategy(hosts: HostInfo[], role: HostRole, strategy: string, props?: Map<string, any>): HostInfo {

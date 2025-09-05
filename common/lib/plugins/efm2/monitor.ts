@@ -27,6 +27,7 @@ import { TelemetryTraceLevel } from "../../utils/telemetry/telemetry_trace_level
 import { HostAvailability } from "../../host_availability/host_availability";
 import { MapUtils } from "../../utils/map_utils";
 import { WrapperProperties } from "../../wrapper_property";
+import { AwsWrapperError } from "../../utils/errors";
 
 export interface Monitor {
   startMonitoring(context: MonitorConnectionContext): void;
@@ -62,6 +63,22 @@ export class MonitorImpl implements Monitor {
   private readonly abortedConnectionsCounter: TelemetryCounter;
   private delayMillisTimeoutId: any;
   private sleepWhenHostHealthyTimeoutId: any;
+  private monitorPromises: Promise<void>[] = [];
+
+  private static readonly DELAY_ABORTED_MSG = "delay aborted";
+
+  private abortController: AbortController = new AbortController();
+
+  private async abortableDelay(ms: number): Promise<void> {
+    return new Promise((resolve, reject) => {
+      const timeoutId = setTimeout(resolve, ms);
+
+      this.abortController.signal.addEventListener("abortDelay", () => {
+        clearTimeout(timeoutId);
+        reject(new AwsWrapperError(MonitorImpl.DELAY_ABORTED_MSG));
+      });
+    });
+  }
 
   constructor(
     pluginService: PluginService,
@@ -89,8 +106,13 @@ export class MonitorImpl implements Monitor {
 
     this.telemetryFactory.createGauge(`efm2.hostHealthy.${hostId}`, () => (this.hostUnhealthy ? 0 : 1));
 
-    Promise.race([this.newContextRun(), this.run()]).finally(() => {
+    const newContextPromise = this.newContextRun();
+    const runPromise = this.run();
+    this.monitorPromises = [newContextPromise, runPromise];
+
+    Promise.allSettled(this.monitorPromises).finally(() => {
       this.stopped = true;
+      logger.debug(`[DEBUG-EFM2] ${this.hostInfo.host} - Both monitor promises completed, stopped: ${this.stopped}`);
     });
   }
 
@@ -151,15 +173,17 @@ export class MonitorImpl implements Monitor {
   }
 
   async run(): Promise<void> {
+    logger.debug(`[DEBUG-EFM2] ${this.hostInfo.host} - Starting monitor run loop`);
     logger.debug(Messages.get("MonitorImpl.startMonitoring", this.hostInfo.host));
 
     try {
       while (!this.isStopped()) {
+        logger.debug(
+          `[DEBUG-EFM2] ${this.hostInfo.host} - Monitor loop iteration - stopped: ${this.stopped}, activeContexts: ${this.activeContexts?.length || 0}`
+        );
         try {
           if (this.activeContexts.length === 0 && !this.hostUnhealthy) {
-            await new Promise((resolve) => {
-              this.delayMillisTimeoutId = setTimeout(resolve, MonitorImpl.TASK_SLEEP_MILLIS);
-            });
+            await this.abortableDelay(MonitorImpl.TASK_SLEEP_MILLIS);
             continue;
           }
 
@@ -208,23 +232,22 @@ export class MonitorImpl implements Monitor {
           this.activeContexts.push(...tmpActiveContexts);
 
           const delayMillis = (this.failureDetectionIntervalNanos - (statusCheckEndTimeNanos - statusCheckStartTimeNanos)) / 1000000;
-
-          await new Promise((resolve) => {
-            this.delayMillisTimeoutId = setTimeout(
-              resolve,
-              delayMillis < MonitorImpl.TASK_SLEEP_MILLIS ? MonitorImpl.TASK_SLEEP_MILLIS : delayMillis
-            );
-          });
+          await this.abortableDelay(delayMillis < MonitorImpl.TASK_SLEEP_MILLIS ? MonitorImpl.TASK_SLEEP_MILLIS : delayMillis);
         } catch (error: any) {
+          if (error instanceof AwsWrapperError && error.message === MonitorImpl.DELAY_ABORTED_MSG) {
+            break;
+          }
           logger.debug(Messages.get("MonitorImpl.errorDuringMonitoringContinue", error.message));
         }
       }
     } catch (error: any) {
       logger.debug(Messages.get("MonitorImpl.errorDuringMonitoringStop", error.message));
     } finally {
+      logger.debug(`[DEBUG-EFM2] ${this.hostInfo.host} - Monitor run loop ending - stopped: ${this.stopped}`);
       await this.endMonitoringClient();
     }
 
+    logger.debug(`[DEBUG-EFM2] ${this.hostInfo.host} - Monitor run loop ended`);
     logger.debug(Messages.get("MonitorImpl.stopMonitoring", this.hostInfo.host));
   }
 
@@ -293,13 +316,32 @@ export class MonitorImpl implements Monitor {
   }
 
   async releaseResources() {
-    this.stopped = true;
+    logger.debug(
+      `[DEBUG-EFM2] ${this.hostInfo.host} - Starting releaseResources() - stopped: ${this.stopped}, activeContexts: ${this.activeContexts?.length || 0}`
+    );
+    this.abortController.abort();
     clearTimeout(this.delayMillisTimeoutId);
     clearTimeout(this.sleepWhenHostHealthyTimeoutId);
+    this.stopped = true;
+    logger.debug(`[DEBUG-EFM2] ${this.hostInfo.host} - Cleared timeouts, setting activeContexts to null`);
     this.activeContexts = null;
     await this.endMonitoringClient();
-    // Allow time for monitor loop to close.
-    await sleep(500);
+
+    if (this.monitorPromises && this.monitorPromises.length > 0) {
+      logger.debug(`[DEBUG-EFM2] ${this.hostInfo.host} - Waiting for ${this.monitorPromises.length} monitor promises to complete`);
+      try {
+        await Promise.allSettled(this.monitorPromises);
+        logger.debug(`[DEBUG-EFM2] ${this.hostInfo.host} - All monitor promises completed`);
+      } catch (error) {
+        logger.debug(`[DEBUG-EFM2] ${this.hostInfo.host} - Error waiting for monitor promises: ${error.message}`);
+      }
+      this.monitorPromises = [];
+    }
+    logger.debug(`[DEBUG-EFM2] Clearing static newContexts map - size before: ${MonitorImpl.newContexts.size}`);
+    MonitorImpl.newContexts.clear();
+    logger.debug(`[DEBUG-EFM2] Static newContexts map cleared - size after: ${MonitorImpl.newContexts.size}`);
+
+    logger.debug(`[DEBUG-EFM2] ${this.hostInfo.host} - releaseResources() completed`);
   }
 
   async endMonitoringClient(clientToAbort?: ClientWrapper) {

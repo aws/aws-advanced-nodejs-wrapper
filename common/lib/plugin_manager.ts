@@ -32,6 +32,7 @@ import { TelemetryTraceLevel } from "./utils/telemetry/telemetry_trace_level";
 import { ConnectionProvider } from "./connection_provider";
 import { ConnectionPluginFactory } from "./plugin_factory";
 import { ConfigurationProfile } from "./profile/configuration_profile";
+import { logger } from "../logutils";
 
 type PluginFunc<T> = (plugin: ConnectionPlugin, targetFunc: () => Promise<T>) => Promise<T>;
 
@@ -381,15 +382,28 @@ export class PluginManager {
   }
 
   static async releaseResources() {
-    // This step allows all connection plugins a chance to clean up any dangling resources or
-    // perform any last tasks before shutting down.
+    logger.debug(`[DEBUG-PLUGIN] Starting PluginManager.releaseResources() - ${PluginManager.PLUGINS.size} plugins to release`);
 
     for (const plugin of PluginManager.PLUGINS) {
       if (PluginManager.implementsCanReleaseResources(plugin)) {
-        await plugin.releaseResources();
+        logger.debug(`[DEBUG-PLUGIN] Releasing resources for plugin: ${plugin.constructor.name}`);
+        try {
+          await plugin.releaseResources();
+          logger.debug(`[DEBUG-PLUGIN] Successfully released resources for plugin: ${plugin.constructor.name}`);
+        } catch (error) {
+          logger.debug(`[DEBUG-PLUGIN] Error releasing resources for plugin ${plugin.constructor.name}: ${error.message}`);
+        }
+      } else {
+        logger.debug(`[DEBUG-PLUGIN] Plugin ${plugin.constructor.name} does not implement CanReleaseResources`);
       }
     }
+    
+    logger.debug(`[DEBUG-PLUGIN] Clearing static caches`);
+    PluginManager.STRATEGY_PLUGIN_CHAIN_CACHE.clear();
+    
+    logger.debug(`[DEBUG-PLUGIN] Clearing PLUGINS set - size before: ${PluginManager.PLUGINS.size}`);
     PluginManager.PLUGINS = new Set();
+    logger.debug(`[DEBUG-PLUGIN] PluginManager.releaseResources() completed - PLUGINS size after: ${PluginManager.PLUGINS.size}`);
   }
 
   getConnectionProvider(hostInfo: HostInfo | null, props: Map<string, any>): ConnectionProvider {

@@ -111,15 +111,31 @@ export class ClusterTopologyMonitorImpl implements ClusterTopologyMonitor {
   }
 
   async close(): Promise<void> {
+    logger.debug(
+      `[DEBUG-MONITOR] ${this.clusterId} - Starting close() - untrackedPromises: ${this.untrackedPromises.length}, hostMonitors: ${this.hostMonitors.size}`
+    );
     this.stopMonitoring = true;
     this.hostMonitorsStop = true;
     this.requestToUpdateTopology = true;
-    await Promise.all(this.untrackedPromises);
+
+    logger.debug(`[DEBUG-MONITOR] ${this.clusterId} - Set stop flags, waiting for ${this.untrackedPromises.length} untracked promises`);
+
+    if (this.untrackedPromises.length > 0) {
+      const results = await Promise.allSettled(this.untrackedPromises);
+      const rejectedCount = results.filter((r) => r.status === "rejected").length;
+      if (rejectedCount > 0) {
+        logger.debug(`[DEBUG-MONITOR] ${this.clusterId} - ${rejectedCount} promises rejected during cleanup`);
+      }
+    }
+
+    logger.debug(`[DEBUG-MONITOR] ${this.clusterId} - All untracked promises completed, closing connections`);
     await this.closeConnection(this.monitoringClient);
     await this.closeConnection(this.hostMonitorsWriterClient);
     await this.closeConnection(this.hostMonitorsReaderClient);
+    logger.debug(`[DEBUG-MONITOR] ${this.clusterId} - All connections closed, clearing resources`);
     this.untrackedPromises = [];
     this.hostMonitors.clear();
+    logger.debug(`[DEBUG-MONITOR] ${this.clusterId} - Close completed`);
   }
 
   async forceMonitoringRefresh(shouldVerifyWriter: boolean, timeoutMs: number): Promise<HostInfo[] | null> {
@@ -274,9 +290,11 @@ export class ClusterTopologyMonitorImpl implements ClusterTopologyMonitor {
   }
 
   async run(): Promise<void> {
+    logger.debug(`[DEBUG-MONITOR] ${this.clusterId} - Starting monitoring run loop`);
     logger.debug(Messages.get("ClusterTopologyMonitor.startMonitoring"));
     try {
       while (!this.stopMonitoring) {
+        logger.debug(`[DEBUG-MONITOR] ${this.clusterId} - Monitor loop iteration - stopMonitoring: ${this.stopMonitoring}`);
         if (this.isInPanicMode()) {
           // Panic Mode: high refresh rate in effect.
 
@@ -306,7 +324,9 @@ export class ClusterTopologyMonitorImpl implements ClusterTopologyMonitor {
               for (const hostInfo of hosts) {
                 if (!this.hostMonitors.has(hostInfo.host)) {
                   const hostMonitor = new HostMonitor(this, hostInfo, this.writerHostInfo);
-                  const hostRun = hostMonitor.run();
+                  const hostRun = hostMonitor.run().catch((error) => {
+                    logger.debug(`[DEBUG-MONITOR] ${this.clusterId} - Host monitor error for ${hostInfo.host}: ${error.message}`);
+                  });
                   this.hostMonitors.set(hostInfo.host, hostMonitor);
                   this.untrackedPromises.push(hostRun);
                 }
@@ -345,7 +365,9 @@ export class ClusterTopologyMonitorImpl implements ClusterTopologyMonitor {
                 for (const hostInfo of hosts) {
                   if (!this.hostMonitors.has(hostInfo.host)) {
                     const hostMonitor = new HostMonitor(this, hostInfo, this.writerHostInfo);
-                    const hostRun = hostMonitor.run();
+                    const hostRun = hostMonitor.run().catch((error) => {
+                      logger.debug(`[DEBUG-MONITOR] ${this.clusterId} - Host monitor error for ${hostInfo.host}: ${error.message}`);
+                    });
                     this.hostMonitors.set(hostInfo.host, hostMonitor);
                     this.untrackedPromises.push(hostRun);
                   }
@@ -386,8 +408,10 @@ export class ClusterTopologyMonitorImpl implements ClusterTopologyMonitor {
     } catch (error) {
       logger.error(Messages.get("ClusterTopologyMonitor.errorDuringMonitoring", error?.message));
     } finally {
+      logger.debug(`[DEBUG-MONITOR] ${this.clusterId} - Monitor run loop ending - stopMonitoring: ${this.stopMonitoring}`);
       this.stopMonitoring = true;
       await this.updateMonitoringClient(null);
+      logger.debug(`[DEBUG-MONITOR] ${this.clusterId} - Monitor run loop ended`);
       logger.debug(Messages.get("ClusterTopologyMonitor.endMonitoring"));
     }
   }

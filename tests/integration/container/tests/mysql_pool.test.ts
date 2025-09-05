@@ -90,22 +90,38 @@ beforeEach(async () => {
 }, 1320000);
 
 afterEach(async () => {
+  logger.debug(`[DEBUG-TEST] Starting afterEach cleanup for: ${expect.getState().currentTestName}`);
   if (client != null) {
     try {
+      logger.debug("[DEBUG-TEST] Ending client connection");
       await client.end();
+      logger.debug("[DEBUG-TEST] Client ended successfully");
     } catch (error) {
+      logger.debug(`[DEBUG-TEST] Error ending client: ${error.message}`);
       // pass
     }
   }
   if (provider != null) {
     try {
+      logger.debug("[DEBUG-TEST] Releasing provider resources");
       await provider.releaseResources();
+      logger.debug("[DEBUG-TEST] Provider resources released successfully");
     } catch (error) {
+      logger.debug(`[DEBUG-TEST] Error releasing provider resources: ${error.message}`);
       // pass
     }
   }
+  logger.debug("[DEBUG-TEST] Releasing PluginManager resources");
   await PluginManager.releaseResources();
+  logger.debug("[DEBUG-TEST] PluginManager resources released successfully");
+  
+  if (global.gc) {
+    logger.debug("[DEBUG-TEST] Running garbage collection");
+    global.gc();
+  }
+  
   logger.info(`Test finished: ${expect.getState().currentTestName}`);
+  logger.debug(`[DEBUG-TEST] afterEach cleanup completed for: ${expect.getState().currentTestName}`);
 }, 1320000);
 
 const poolFactories = [
@@ -184,8 +200,12 @@ describe("mysql pool integration tests", () => {
             await client.releaseConnection(poolClient);
           }
 
+          logger.debug("[DEBUG-TEST2] Ending client connection");
           await client.end();
+          logger.debug("[DEBUG-TEST2] Client ended successfully");
+          logger.debug("[DEBUG-TEST2] Releasing PluginManager resources");
           await PluginManager.releaseResources();
+          logger.debug("[DEBUG-TEST2] Released PluginManager resources");
           logger.debug(`Test cleaned up.`);
         },
         1320000
