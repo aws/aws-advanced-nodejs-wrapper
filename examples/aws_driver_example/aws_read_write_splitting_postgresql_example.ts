@@ -53,7 +53,7 @@ try {
 
   // Example query
   const result = await queryWithFailoverHandling(client, "UPDATE bank_test SET account_balance=account_balance - 100 WHERE name='Jane Doe'");
-  console.log(result);
+  console.log("Updated rows:", result.rowCount); // Updated rows: 1
 
   // Internally switch to a reader connection.
   await client.setReadOnly(true);

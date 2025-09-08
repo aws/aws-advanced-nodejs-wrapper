@@ -32,6 +32,9 @@ const client = new AwsPgClient({
 await client.connect();
 ```
 
+The AwsMySQLClient and the AwsPgClient return a single connection. These clients follows the same **promise-based** API supported by MySQL2 and Node-Postgres. To learn more about the supported interfaces, see [UsingTheAwsClients](./UsingTheAwsClients.md).
+This wrapper also supports Connection Pool. To learn more about it, see [UsingTheConnectionPool](./UsingTheConnectionPool.md).
+
 ## Logging
 
 To enable logging when using the AWS Advanced NodeJS Wrapper, use the `LOG_LEVEL` environment variable. The log level can be set to one of the following values: `silent`, `error`, `warn`, `notice`, `http`, `timing`, `info`, `verbose`, or `silly`.

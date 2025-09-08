@@ -36,8 +36,8 @@ const client = new AwsMySQLClient({
 // Attempt connection
 try {
   await client.connect();
-  const result = await client.query({ sql: "select 1" });
-  console.log(result);
+  const [rows] = await client.query({ sql: "select 1" });
+  console.log(rows[0]); // { "1": 1 }
 } finally {
   await client.end();
 }

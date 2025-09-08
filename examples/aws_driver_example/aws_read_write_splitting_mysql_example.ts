@@ -52,8 +52,8 @@ try {
   await setInitialSessionSettings(client);
 
   // Example query
-  const result = await queryWithFailoverHandling(client, "UPDATE bank_test SET account_balance=account_balance - 100 WHERE name='Jane Doe'");
-  console.log(result);
+  const [rows] = await queryWithFailoverHandling(client, "UPDATE bank_test SET account_balance=account_balance - 100 WHERE name='Jane Doe'");
+  console.log("Updated rows:", rows.affectedRows); // Updated rows: 1
 
   // Internally switch to a reader connection.
   await client.setReadOnly(true);

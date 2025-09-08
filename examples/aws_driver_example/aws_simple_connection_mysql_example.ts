@@ -32,8 +32,8 @@ const client = new AwsMySQLClient({
 // Attempt connection.
 try {
   await client.connect();
-  const result = await client.query({ sql: "SELECT @@aurora_server_id" });
-  console.log(result);
+  const [rows] = await client.query({ sql: "SELECT @@aurora_server_id" });
+  console.log(rows[0]); // { "@@aurora_server_id": "server-id" }
 } finally {
   await client.end();
 }

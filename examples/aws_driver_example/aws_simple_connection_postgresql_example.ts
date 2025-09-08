@@ -35,7 +35,7 @@ const client = new AwsPGClient({
 try {
   await client.connect();
   const result = await client.query("select aurora_db_instance_identifier()");
-  console.log(result);
+  console.log(result.rows[0]); // { aurora_db_instance_identifier: "instance-id" }
 } finally {
   await client.end();
 }
