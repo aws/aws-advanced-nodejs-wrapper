@@ -30,7 +30,12 @@ import { DatabaseDialectCodes } from "../../common/lib/database_dialect/database
 import { RdsPgDatabaseDialect } from "./dialect/rds_pg_database_dialect";
 import { PgDatabaseDialect } from "./dialect/pg_database_dialect";
 import { AuroraPgDatabaseDialect } from "./dialect/aurora_pg_database_dialect";
-import { AwsWrapperError, FailoverSuccessError, UnsupportedMethodError } from "../../common/lib/utils/errors";
+import {
+  AwsWrapperError,
+  FailoverSuccessError,
+  UndefinedClientError,
+  UnsupportedMethodError
+} from "../../common/lib/utils/errors";
 import { Messages } from "../../common/lib/utils/messages";
 import { ClientWrapper } from "../../common/lib/client_wrapper";
 import { RdsMultiAZClusterPgDatabaseDialect } from "./dialect/rds_multi_az_pg_database_dialect";
@@ -244,7 +249,7 @@ class BaseAwsPgClient extends AwsClient implements PGClient {
         "query",
         async () => {
           if (!this.targetClient) {
-            throw new AwsWrapperError("targetClient is undefined, this code should not be reachable");
+            throw new UndefinedClientError();
           }
           const sql = typeof queryTextOrConfig === "string" ? queryTextOrConfig : queryTextOrConfig.text;
           await this.pluginService.updateState(sql);
@@ -262,7 +267,7 @@ class BaseAwsPgClient extends AwsClient implements PGClient {
       "copyFrom",
       async () => {
         if (!this.targetClient) {
-          throw new AwsWrapperError("targetClient is undefined, this code should not be reachable");
+          throw new UndefinedClientError();
         }
         return await this.targetClient.client.copyFrom(queryText);
       },
@@ -277,7 +282,7 @@ class BaseAwsPgClient extends AwsClient implements PGClient {
       "copyTo",
       async () => {
         if (!this.targetClient) {
-          throw new AwsWrapperError("targetClient is undefined, this code should not be reachable");
+          throw new UndefinedClientError();
         }
         return await this.targetClient.client.copyTo(queryText);
       },
@@ -292,7 +297,7 @@ class BaseAwsPgClient extends AwsClient implements PGClient {
       "escapeIdentifier",
       async () => {
         if (!this.targetClient) {
-          throw new AwsWrapperError("targetClient is undefined, this code should not be reachable");
+          throw new UndefinedClientError();
         }
         return await this.targetClient.client.escapeIdentifier(str);
       },
@@ -307,7 +312,7 @@ class BaseAwsPgClient extends AwsClient implements PGClient {
       "escapeLiteral",
       async () => {
         if (!this.targetClient) {
-          throw new AwsWrapperError("targetClient is undefined, this code should not be reachable");
+          throw new UndefinedClientError();
         }
         return await this.targetClient.client.escapeLiteral(str);
       },
@@ -322,7 +327,7 @@ class BaseAwsPgClient extends AwsClient implements PGClient {
       "prepare",
       async () => {
         if (!this.targetClient) {
-          throw new AwsWrapperError("targetClient is undefined, this code should not be reachable");
+          throw new UndefinedClientError();
         }
         return await this.targetClient.client.prepare(name, text, nParams);
       },
@@ -349,7 +354,7 @@ class AwsPGPooledConnection extends BaseAwsPgClient {
       "release",
       async () => {
         if (!this.targetClient) {
-          throw new AwsWrapperError("targetClient is undefined, this code should not be reachable");
+          throw new UndefinedClientError();
         }
         this.pluginService.removeErrorListener(this.targetClient);
         return await this.targetClient.client.release();

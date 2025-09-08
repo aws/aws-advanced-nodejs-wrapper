@@ -24,7 +24,7 @@ import { MySQLDatabaseDialect } from "./dialect/mysql_database_dialect";
 import { AuroraMySQLDatabaseDialect } from "./dialect/aurora_mysql_database_dialect";
 import { RdsMySQLDatabaseDialect } from "./dialect/rds_mysql_database_dialect";
 import { TransactionIsolationLevel } from "../../common/lib/utils/transaction_isolation_level";
-import { AwsWrapperError, FailoverSuccessError, UnsupportedMethodError } from "../../common/lib/utils/errors";
+import { AwsWrapperError, FailoverSuccessError, UndefinedClientError, UnsupportedMethodError } from "../../common/lib/utils/errors";
 import { Messages } from "../../common/lib/utils/messages";
 import { ClientWrapper } from "../../common/lib/client_wrapper";
 import { ClientUtils } from "../../common/lib/utils/client_utils";
@@ -93,7 +93,7 @@ class BaseAwsMySQLClient extends AwsClient implements MySQLClient {
       "query",
       async () => {
         if (!this.targetClient) {
-          throw new AwsWrapperError("targetClient is undefined, this code should not be reachable");
+          throw new UndefinedClientError();
         }
         return await ClientUtils.queryWithTimeout(this.targetClient.client?.query(options), this.properties);
       },
@@ -510,7 +510,7 @@ class BaseAwsMySQLClient extends AwsClient implements MySQLClient {
         "query",
         async () => {
           if (!this.targetClient) {
-            throw new AwsWrapperError("targetClient is undefined, this code should not be reachable");
+            throw new UndefinedClientError();
           }
 
           // Handle parameterized queries
@@ -539,7 +539,7 @@ class BaseAwsMySQLClient extends AwsClient implements MySQLClient {
         "execute",
         async () => {
           if (!this.targetClient) {
-            throw new AwsWrapperError("targetClient is undefined, this code should not be reachable");
+            throw new UndefinedClientError();
           }
 
           // Handle parameterized queries

@@ -5,7 +5,6 @@ on:
   push:
     branches:
       - main
-      - feat/cp
     paths-ignore:
       - "**/*.md"
       - "**/*.jpg"

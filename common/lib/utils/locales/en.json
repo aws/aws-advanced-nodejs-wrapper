@@ -7,6 +7,7 @@
   "ConnectionPluginChainBuilder.errorImportingPlugin": "The plugin could not be imported due to error '%s'. Please ensure the required dependencies have been installed. Plugin: '%s'",
   "ClientUtils.queryTaskTimeout": "Client query task timed out, if a network error did not occur, please review the usage of the 'wrapperQueryTimeout' connection parameter.",
   "ClientUtils.connectTimeout": "Client connect timed out.",
+  "Client.undefinedTargetClient": "targetClient is undefined, this code should not be reachable.",
   "DatabaseDialectManager.unknownDialectCode": "Unknown dialect code: '%s'.",
   "DatabaseDialectManager.getDialectError": "Was not able to get a database dialect.",
   "DatabaseDialectManager.wrongCustomDialect": "Provided custom database dialect should implement DatabaseDialect.",
