@@ -30,6 +30,7 @@ export class AwsPoolConfig {
    */
   readonly minConnections?: number | undefined;
   readonly allowExitOnIdle?: boolean | undefined;
+  readonly maxLifetimeSeconds?: number | undefined;
 
   constructor(props?: any) {
     this.maxConnections = props.maxConnections ?? 10;
@@ -39,5 +40,6 @@ export class AwsPoolConfig {
     this.queueLimit = props.queueLimit ?? 0;
     this.minConnections = props.minConnections ?? 0;
     this.allowExitOnIdle = props.allowExitOnIdle ?? false;
+    this.maxLifetimeSeconds = props.maxLifetimeSeconds ?? 0;
   }
 }

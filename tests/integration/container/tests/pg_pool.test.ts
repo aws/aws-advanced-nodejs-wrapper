@@ -93,14 +93,14 @@ afterEach(async () => {
       await client.end();
       await PluginManager.releaseResources();
     } catch (error) {
-      // pass
+      // Do nothing
     }
   }
   if (provider != null) {
     try {
       await provider.releaseResources();
     } catch (error) {
-      // pass
+      // Do nothing
     }
   }
   await PluginManager.releaseResources();
@@ -126,7 +126,6 @@ describe("pg pool integration tests", () => {
           connectionIds.add(result.rows[0].connection_id);
         });
         expect(connectionIds.size).toBe(10);
-        await client.end();
       });
 
       itIfPG("sequential execution", async () => {
@@ -143,7 +142,6 @@ describe("pg pool integration tests", () => {
           expect(result.rows[0].query_id).toBe(index + 1);
         });
         expect(connectionIds.size).toBeLessThanOrEqual(10);
-        await client.end();
       });
 
       itIfPGTwoInstances("failover writer during multi-statement transaction", async () => {
@@ -173,7 +171,6 @@ describe("pg pool integration tests", () => {
         } finally {
           await poolClient.release();
         }
-        await client.end();
       });
 
       itIfPGTwoInstances("failover writer during idle", async () => {
@@ -205,7 +202,6 @@ describe("pg pool integration tests", () => {
         const currentConnectionId = await auroraTestUtility.queryInstanceId(client);
         expect(await auroraTestUtility.isDbInstanceWriter(currentConnectionId)).toBe(true);
         expect(currentConnectionId).not.toBe(initialWriterId);
-        await client.end();
       });
 
       itIfPG(
@@ -251,7 +247,6 @@ describe("pg pool integration tests", () => {
               await poolClient.release();
             }
           }
-          await client.end();
         },
         1320000
       );
@@ -302,7 +297,6 @@ describe("pg pool integration tests", () => {
               await poolClient.release();
             }
           }
-          await client.end();
         },
         1320000
       );

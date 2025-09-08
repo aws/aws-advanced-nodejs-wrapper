@@ -94,22 +94,17 @@ afterEach(async () => {
   if (client != null) {
     try {
       await client.end();
+      await PluginManager.releaseResources();
     } catch (error) {
-      // pass
+      // Do nothing
     }
   }
   if (provider != null) {
     try {
       await provider.releaseResources();
     } catch (error) {
-      // pass
+      // Do nothing
     }
-  }
-
-  await PluginManager.releaseResources();
-
-  if (global.gc) {
-    global.gc();
   }
 
   logger.info(`Test finished: ${expect.getState().currentTestName}`);
@@ -190,12 +185,6 @@ describe("mysql pool integration tests", () => {
           } finally {
             await client.releaseConnection(poolClient);
           }
-
-          await client.end();
-
-          await PluginManager.releaseResources();
-
-          logger.debug(`Test cleaned up.`);
         },
         1320000
       );
@@ -229,11 +218,6 @@ describe("mysql pool integration tests", () => {
         const currentConnectionId = await auroraTestUtility.queryInstanceId(client);
         expect(await auroraTestUtility.isDbInstanceWriter(currentConnectionId)).toBe(true);
         expect(currentConnectionId).not.toBe(initialWriterId);
-
-        await client.end();
-        await PluginManager.releaseResources();
-
-        logger.debug(`Test cleaned up.`);
       });
 
       itIfMySQL(
@@ -279,8 +263,6 @@ describe("mysql pool integration tests", () => {
               await client.releaseConnection(poolClient);
             }
           }
-
-          await client.end();
         },
         1320000
       );
@@ -331,7 +313,6 @@ describe("mysql pool integration tests", () => {
               await client.releaseConnection(poolClient);
             }
           }
-          await client.end();
         },
         1320000
       );
