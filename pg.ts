@@ -14,25 +14,23 @@
   limitations under the License.
 */
 
-export * from "./connection_plugin";
-export * from "./plugin_manager";
-
-export { AwsPoolConfig } from "./aws_pool_config";
-export { HostInfo } from "./host_info";
-export { HostRole } from "./host_role";
-export type { ConnectionProvider } from "./connection_provider";
-export { InternalPooledConnectionProvider } from "./internal_pooled_connection_provider";
-export type { InternalPoolMapping } from "./utils/internal_pool_mapping";
+export { AwsPGClient, AwsPgPoolClient } from "./pg/lib/index";
+export type { AwsPGPooledConnection } from "./pg/lib/index";
 
 export {
+  AwsPoolConfig,
+  HostInfo,
+  HostRole,
+  InternalPooledConnectionProvider,
   AwsWrapperError,
   FailoverFailedError,
   FailoverSuccessError,
   TransactionResolutionUnknownError,
-  UnsupportedMethodError
-} from "./utils/errors";
+  UnsupportedMethodError,
+  TransactionIsolationLevel,
+  HostAvailability
+} from "./common/lib";
 
-export { TransactionIsolationLevel } from "./utils/transaction_isolation_level";
+export type { ConnectionProvider, InternalPoolMapping, HostAvailabilityStrategy } from "./common/lib";
 
-export { HostAvailability } from "./host_availability/host_availability";
-export type { HostAvailabilityStrategy } from "./host_availability/host_availability_strategy";
+export { logger } from "./common/logutils";
