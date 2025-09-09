@@ -16,7 +16,7 @@
 
 import { ClientWrapper } from "../client_wrapper";
 import { AwsPoolConfig } from "../aws_pool_config";
-import { AwsPoolClient } from "../aws_pool_client";
+import { AwsInternalPoolClient } from "../aws_pool_client";
 import { HostInfo } from "../host_info";
 
 export interface DriverDialect {
@@ -26,11 +26,13 @@ export interface DriverDialect {
 
   preparePoolClientProperties(props: Map<string, any>, poolConfig: AwsPoolConfig | undefined): any;
 
-  getAwsPoolClient(props: any): AwsPoolClient;
+  getAwsPoolClient(props: any): AwsInternalPoolClient;
 
   setConnectTimeout(props: Map<string, any>, wrapperConnectTimeout?: any): void;
 
   setQueryTimeout(props: Map<string, any>, sql?: any, wrapperConnectTimeout?: any): void;
 
   setKeepAliveProperties(props: Map<string, any>, keepAliveProps: any): void;
+
+  getQueryFromMethodArg(methodArg: any): string;
 }

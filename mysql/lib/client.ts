@@ -14,9 +14,9 @@
   limitations under the License.
 */
 
-import { QueryOptions } from "mysql2";
 import { AwsClient } from "../../common/lib/aws_client";
-import { Query } from "mysql2/promise";
+import { ErrorPacketParams, OkPacketParams, Query, QueryOptions, QueryResult } from "mysql2";
+import { ConnectionOptions, Prepare, PrepareStatementInfo } from "mysql2/promise";
 import { MySQLConnectionUrlParser } from "./mysql_connection_url_parser";
 import { DatabaseDialect, DatabaseType } from "../../common/lib/database_dialect/database_dialect";
 import { DatabaseDialectCodes } from "../../common/lib/database_dialect/database_dialect_codes";
@@ -24,7 +24,7 @@ import { MySQLDatabaseDialect } from "./dialect/mysql_database_dialect";
 import { AuroraMySQLDatabaseDialect } from "./dialect/aurora_mysql_database_dialect";
 import { RdsMySQLDatabaseDialect } from "./dialect/rds_mysql_database_dialect";
 import { TransactionIsolationLevel } from "../../common/lib/utils/transaction_isolation_level";
-import { AwsWrapperError, UnsupportedMethodError } from "../../common/lib/utils/errors";
+import { AwsWrapperError, FailoverSuccessError, UndefinedClientError, UnsupportedMethodError } from "../../common/lib/utils/errors";
 import { Messages } from "../../common/lib/utils/messages";
 import { ClientWrapper } from "../../common/lib/client_wrapper";
 import { ClientUtils } from "../../common/lib/utils/client_utils";
@@ -32,8 +32,13 @@ import { RdsMultiAZClusterMySQLDatabaseDialect } from "./dialect/rds_multi_az_my
 import { TelemetryTraceLevel } from "../../common/lib/utils/telemetry/telemetry_trace_level";
 import { MySQL2DriverDialect } from "./dialect/mysql2_driver_dialect";
 import { isDialectTopologyAware } from "../../common/lib/utils/utils";
+import { MySQLClient, MySQLPoolClient } from "./mysql_client";
+import { ConnectionProvider } from "../../common/lib/connection_provider";
+import { DriverConnectionProvider } from "../../common/lib/driver_connection_provider";
+import { InternalPooledConnectionProvider } from "../../common/lib/internal_pooled_connection_provider";
+import { AwsPoolConfig } from "../../common/lib/aws_pool_config";
 
-export class AwsMySQLClient extends AwsClient {
+class BaseAwsMySQLClient extends AwsClient implements MySQLClient {
   private static readonly knownDialectsByCode: Map<string, DatabaseDialect> = new Map([
     [DatabaseDialectCodes.MYSQL, new MySQLDatabaseDialect()],
     [DatabaseDialectCodes.RDS_MYSQL, new RdsMySQLDatabaseDialect()],
@@ -41,8 +46,15 @@ export class AwsMySQLClient extends AwsClient {
     [DatabaseDialectCodes.RDS_MULTI_AZ_MYSQL, new RdsMultiAZClusterMySQLDatabaseDialect()]
   ]);
 
-  constructor(config: any) {
-    super(config, DatabaseType.MYSQL, AwsMySQLClient.knownDialectsByCode, new MySQLConnectionUrlParser(), new MySQL2DriverDialect());
+  constructor(config: any, connectionProvider?: ConnectionProvider) {
+    super(
+      config,
+      DatabaseType.MYSQL,
+      BaseAwsMySQLClient.knownDialectsByCode,
+      new MySQLConnectionUrlParser(),
+      new MySQL2DriverDialect(),
+      connectionProvider ?? new DriverConnectionProvider()
+    );
   }
 
   async connect(): Promise<void> {
@@ -72,28 +84,7 @@ export class AwsMySQLClient extends AwsClient {
     });
   }
 
-  async query(options: QueryOptions, callback?: any): Promise<Query> {
-    if (!this.isConnected) {
-      await this.connect(); // client.connect is not required for MySQL clients
-      this.isConnected = true;
-    }
-    const host = this.pluginService.getCurrentHostInfo();
-    const context = this.telemetryFactory.openTelemetryContext("awsClient.query", TelemetryTraceLevel.TOP_LEVEL);
-    return await context.start(async () => {
-      return await this.pluginManager.execute(
-        host,
-        this.properties,
-        "query",
-        async () => {
-          await this.pluginService.updateState(options.sql);
-          return await ClientUtils.queryWithTimeout(this.targetClient?.client?.query(options, callback), this.properties);
-        },
-        options
-      );
-    });
-  }
-
-  private async queryWithoutUpdate(options: QueryOptions, callback?: any): Promise<Query> {
+  private async queryWithoutUpdate(options: QueryOptions): Promise<Query> {
     const host = this.pluginService.getCurrentHostInfo();
 
     return this.pluginManager.execute(
@@ -101,7 +92,10 @@ export class AwsMySQLClient extends AwsClient {
       this.properties,
       "query",
       async () => {
-        return await ClientUtils.queryWithTimeout(this.targetClient?.client?.query(options, callback), this.properties);
+        if (!this.targetClient) {
+          throw new UndefinedClientError();
+        }
+        return await ClientUtils.queryWithTimeout(this.targetClient.client?.query(options), this.properties);
       },
       options
     );
@@ -198,8 +192,10 @@ export class AwsMySQLClient extends AwsClient {
       this.properties,
       "end",
       () => {
-        const res = ClientUtils.queryWithTimeout(this.targetClient!.end(), this.properties);
+        this.pluginService.removeErrorListener(this.targetClient);
+        const res = ClientUtils.queryWithTimeout(this.targetClient.end(), this.properties);
         this.targetClient = null;
+        this.isConnected = false;
         return res;
       },
       null
@@ -220,5 +216,408 @@ export class AwsMySQLClient extends AwsClient {
       },
       null
     );
+  }
+
+  async beginTransaction(): Promise<void> {
+    await this.pluginManager.execute(
+      this.pluginService.getCurrentHostInfo(),
+      this.properties,
+      "beginTransaction",
+      async () => {
+        if (this.targetClient) {
+          this.pluginService.updateInTransaction("START TRANSACTION");
+          return await this.targetClient.client.beginTransaction();
+        }
+        return null;
+      },
+      null
+    );
+  }
+
+  async commit(): Promise<void> {
+    await this.pluginManager.execute(
+      this.pluginService.getCurrentHostInfo(),
+      this.properties,
+      "commit",
+      async () => {
+        if (this.targetClient) {
+          this.pluginService.updateInTransaction("COMMIT");
+          return await this.targetClient.client.commit();
+        }
+        return null;
+      },
+      null
+    );
+  }
+
+  async changeUser(options: ConnectionOptions): Promise<void> {
+    await this.pluginManager.execute(
+      this.pluginService.getCurrentHostInfo(),
+      this.properties,
+      "changeUser",
+      async () => {
+        if (this.targetClient) {
+          return await this.targetClient.client.changeUser(options);
+        }
+        return null;
+      },
+      options
+    );
+  }
+
+  async destroy(): Promise<void> {
+    await this.pluginManager.execute(
+      this.pluginService.getCurrentHostInfo(),
+      this.properties,
+      "destroy",
+      async () => {
+        if (this.targetClient) {
+          return await this.targetClient.client.destroy();
+        }
+        return null;
+      },
+      null
+    );
+  }
+
+  async pause(): Promise<void> {
+    await this.pluginManager.execute(
+      this.pluginService.getCurrentHostInfo(),
+      this.properties,
+      "pause",
+      async () => {
+        if (this.targetClient) {
+          return await this.targetClient.client.pause();
+        }
+        return null;
+      },
+      null
+    );
+  }
+
+  async resume(): Promise<void> {
+    await this.pluginManager.execute(
+      this.pluginService.getCurrentHostInfo(),
+      this.properties,
+      "resume",
+      async () => {
+        if (this.targetClient) {
+          return await this.targetClient.client.resume();
+        }
+        return null;
+      },
+      null
+    );
+  }
+
+  async escape(value: any): Promise<string> {
+    return await this.pluginManager.execute(
+      this.pluginService.getCurrentHostInfo(),
+      this.properties,
+      "escape",
+      async () => {
+        if (this.targetClient) {
+          return await this.targetClient.client.escape(value);
+        }
+        return null;
+      },
+      value
+    );
+  }
+
+  escapeId(value: string): Promise<string>;
+  escapeId(values: string[]): Promise<string>;
+  async escapeId(values: unknown): Promise<string> {
+    return await this.pluginManager.execute(
+      this.pluginService.getCurrentHostInfo(),
+      this.properties,
+      "escapeId",
+      async () => {
+        if (this.targetClient) {
+          return await this.targetClient.client.escapeId(values);
+        }
+        return null;
+      },
+      values
+    );
+  }
+
+  async format(sql: string, values?: any | any[] | { [param: string]: any }): Promise<string> {
+    return await this.pluginManager.execute(
+      this.pluginService.getCurrentHostInfo(),
+      this.properties,
+      "format",
+      async () => {
+        if (this.targetClient) {
+          return await this.targetClient.client.format(sql, values);
+        }
+        return null;
+      },
+      [sql, values]
+    );
+  }
+
+  async prepare(sql: string): Promise<Prepare> {
+    return await this.pluginManager.execute(
+      this.pluginService.getCurrentHostInfo(),
+      this.properties,
+      "prepare",
+      async () => {
+        if (this.targetClient) {
+          return await this.targetClient.client.prepare(sql);
+        }
+        return null;
+      },
+      sql
+    );
+  }
+
+  async unprepare(sql: string): Promise<PrepareStatementInfo> {
+    return await this.pluginManager.execute(
+      this.pluginService.getCurrentHostInfo(),
+      this.properties,
+      "unprepare",
+      async () => {
+        if (this.targetClient) {
+          return await this.targetClient.client.unprepare(sql);
+        }
+        return null;
+      },
+      sql
+    );
+  }
+
+  async serverHandshake(args: any): Promise<any> {
+    return await this.pluginManager.execute(
+      this.pluginService.getCurrentHostInfo(),
+      this.properties,
+      "serverHandshake",
+      async () => {
+        if (this.targetClient) {
+          return await this.targetClient.client.serverHandshake(args);
+        }
+        return null;
+      },
+      args
+    );
+  }
+
+  async ping(): Promise<void> {
+    return await this.pluginManager.execute(
+      this.pluginService.getCurrentHostInfo(),
+      this.properties,
+      "ping",
+      async () => {
+        if (this.targetClient) {
+          return await this.targetClient.client.ping();
+        }
+        return null;
+      },
+      null
+    );
+  }
+
+  async writeOk(args?: OkPacketParams): Promise<void> {
+    return await this.pluginManager.execute(
+      this.pluginService.getCurrentHostInfo(),
+      this.properties,
+      "writeOk",
+      async () => {
+        if (this.targetClient) {
+          return await this.targetClient.client.writeOk(args);
+        }
+        return null;
+      },
+      args
+    );
+  }
+
+  async writeError(args?: ErrorPacketParams): Promise<void> {
+    return await this.pluginManager.execute(
+      this.pluginService.getCurrentHostInfo(),
+      this.properties,
+      "writeError",
+      async () => {
+        if (this.targetClient) {
+          return await this.targetClient.client.writeError(args);
+        }
+        return null;
+      },
+      args
+    );
+  }
+
+  async writeEof(warnings?: number, statusFlags?: number): Promise<void> {
+    return await this.pluginManager.execute(
+      this.pluginService.getCurrentHostInfo(),
+      this.properties,
+      "writeEof",
+      async () => {
+        if (this.targetClient) {
+          return await this.targetClient.client.writeEof(warnings, statusFlags);
+        }
+        return null;
+      },
+      [warnings, statusFlags]
+    );
+  }
+
+  async writeTextResult(rows?: Array<any>, columns?: Array<any>): Promise<void> {
+    return await this.pluginManager.execute(
+      this.pluginService.getCurrentHostInfo(),
+      this.properties,
+      "writeTextResult",
+      async () => {
+        if (this.targetClient) {
+          return await this.targetClient.client.writeTextResult(rows, columns);
+        }
+        return null;
+      },
+      [rows, columns]
+    );
+  }
+
+  async writePacket(packet: any): Promise<void> {
+    return await this.pluginManager.execute(
+      this.pluginService.getCurrentHostInfo(),
+      this.properties,
+      "writePacket",
+      async () => {
+        if (this.targetClient) {
+          return await this.targetClient.client.writePacket(packet);
+        }
+        return null;
+      },
+      packet
+    );
+  }
+
+  query<T extends QueryResult>(sql: string): Promise<Query>;
+  query<T extends QueryResult>(sql: string, values: any): Promise<Query>;
+  query<T extends QueryResult>(options: QueryOptions): Promise<Query>;
+  query<T extends QueryResult>(options: QueryOptions, values: any): Promise<Query>;
+  async query(options: string | QueryOptions, values?: any): Promise<Query> {
+    if (!this.isConnected) {
+      await this.connect(); // client.connect is not required for MySQL clients
+      this.isConnected = true;
+    }
+    const host = this.pluginService.getCurrentHostInfo();
+    const context = this.telemetryFactory.openTelemetryContext("awsClient.query", TelemetryTraceLevel.TOP_LEVEL);
+    return await context.start(async () => {
+      return await this.pluginManager.execute(
+        host,
+        this.properties,
+        "query",
+        async () => {
+          if (!this.targetClient) {
+            throw new UndefinedClientError();
+          }
+
+          // Handle parameterized queries
+          await this.updateState(this.targetClient.client, options, values);
+          return await ClientUtils.queryWithTimeout(this.targetClient.client?.query(options, values), this.properties);
+        },
+        [options, values]
+      );
+    });
+  }
+
+  execute<T extends QueryResult>(sql: string): Promise<Query>;
+  execute<T extends QueryResult>(sql: string, values: any): Promise<Query>;
+  execute<T extends QueryResult>(options: QueryOptions): Promise<Query>;
+  async execute(options: string | QueryOptions, values?: any): Promise<Query> {
+    if (!this.isConnected) {
+      await this.connect(); // client.connect is not required for MySQL clients
+      this.isConnected = true;
+    }
+    const host = this.pluginService.getCurrentHostInfo();
+    const context = this.telemetryFactory.openTelemetryContext("awsClient.execute", TelemetryTraceLevel.TOP_LEVEL);
+    return await context.start(async () => {
+      return await this.pluginManager.execute(
+        host,
+        this.properties,
+        "execute",
+        async () => {
+          if (!this.targetClient) {
+            throw new UndefinedClientError();
+          }
+
+          // Handle parameterized queries
+          await this.updateState(this.targetClient.client, options, values);
+          return await ClientUtils.queryWithTimeout(this.targetClient.client.execute(options, values), this.properties);
+        },
+        [options, values]
+      );
+    });
+  }
+
+  private async updateState(client: any, options: string | QueryOptions, values?: any): Promise<any> {
+    let sql: string;
+    if (typeof options === "string") {
+      sql = client.format(options, values);
+    } else {
+      sql = client.format(options.sql, options.values);
+    }
+    await this.pluginService.updateState(sql);
+  }
+}
+
+export class AwsMySQLClient extends BaseAwsMySQLClient {
+  constructor(config: any) {
+    super(config, new DriverConnectionProvider());
+  }
+}
+
+class AwsMySQLPooledConnection extends BaseAwsMySQLClient {
+  constructor(config: any, provider: ConnectionProvider) {
+    super(config, provider);
+  }
+}
+
+export type { AwsMySQLPooledConnection };
+
+export class AwsMySQLPoolClient implements MySQLPoolClient {
+  private readonly connectionProvider: InternalPooledConnectionProvider;
+  private readonly config;
+  private readonly poolConfig;
+
+  constructor(config: any, poolConfig?: AwsPoolConfig) {
+    this.connectionProvider = new InternalPooledConnectionProvider(poolConfig);
+    this.config = config;
+    this.poolConfig = poolConfig;
+  }
+
+  async end(): Promise<void> {
+    await this.connectionProvider.releaseResources();
+  }
+
+  async getConnection(): Promise<AwsMySQLPooledConnection> {
+    const client = new AwsMySQLPooledConnection(this.config, this.connectionProvider);
+    await client.connect();
+    return client;
+  }
+
+  releaseConnection(connection: AwsMySQLPooledConnection): Promise<void> {
+    return connection.end();
+  }
+
+  query<T extends QueryResult>(sql: string): Promise<Query>;
+  query<T extends QueryResult>(sql: string, values: any): Promise<Query>;
+  query<T extends QueryResult>(options: QueryOptions): Promise<Query>;
+  query<T extends QueryResult>(options: QueryOptions, values: any): Promise<Query>;
+  async query(options: string | QueryOptions, values?: any): Promise<Query> {
+    const awsMySQLPooledConnection: AwsMySQLPooledConnection = new AwsMySQLPooledConnection(this.config, this.connectionProvider);
+    try {
+      await awsMySQLPooledConnection.connect();
+      const res = await awsMySQLPooledConnection.query(options as any, values);
+      await awsMySQLPooledConnection.end();
+      return res;
+    } catch (error: any) {
+      if (!(error instanceof FailoverSuccessError)) {
+        // Release pooled connection.
+        await awsMySQLPooledConnection.end();
+      }
+      throw error;
+    }
   }
 }

@@ -16,6 +16,7 @@
 
 import { DatabaseDialect } from "../database_dialect/database_dialect";
 import { TransactionIsolationLevel } from "./transaction_isolation_level";
+import { DriverDialect } from "../driver_dialect/driver_dialect";
 
 export class SqlMethodUtils {
   static doesOpenTransaction(sql: string) {
@@ -128,5 +129,18 @@ export class SqlMethodUtils {
     }
 
     return sql.split(";");
+  }
+
+  static parseMethodArgs(methodArgs: any, driverDialect: DriverDialect) {
+    // MethodArgs may be an array, where the first element could be either a string, a MySQL2 Query Object, or a Node-Postgres config object.
+    if (!methodArgs) {
+      return methodArgs;
+    }
+    if (!Array.isArray(methodArgs)) {
+      return driverDialect.getQueryFromMethodArg(methodArgs);
+    }
+
+    const statement = methodArgs[0];
+    return driverDialect.getQueryFromMethodArg(statement);
   }
 }

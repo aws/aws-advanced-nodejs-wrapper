@@ -14,7 +14,7 @@
   limitations under the License.
 */
 
-export interface AwsPoolClient {
+export interface AwsInternalPoolClient {
   connect(): Promise<any>;
 
   end(): Promise<any>;

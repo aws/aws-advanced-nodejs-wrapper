@@ -18,6 +18,8 @@ import { SqlMethodUtils } from "../../common/lib/utils/sql_method_utils";
 import { MySQLDatabaseDialect } from "../../mysql/lib/dialect/mysql_database_dialect";
 import { PgDatabaseDialect } from "../../pg/lib/dialect/pg_database_dialect";
 import { TransactionIsolationLevel } from "../../common/lib/utils/transaction_isolation_level";
+import { NodePostgresDriverDialect } from "../../pg/lib/dialect/node_postgres_driver_dialect";
+import { MySQL2DriverDialect } from "../../mysql/lib/dialect/mysql2_driver_dialect";
 
 describe("test sql method utils", () => {
   it.each([
@@ -189,5 +191,43 @@ describe("test sql method utils", () => {
         expect(SqlMethodUtils.doesSetTransactionIsolation(sql, new PgDatabaseDialect())).toBe(expectedResult);
         break;
     }
+  });
+
+  it.each([
+    [null, null],
+    ["select 1", "select 1"],
+    ["select now()", "select now()"],
+    [["select $1::text as name", ["test"]], "select $1::text as name"],
+    [
+      [
+        "SELECT $1",
+        [1],
+        function (_, res) {
+          console.log(res.rows[0].name);
+        }
+      ],
+      "SELECT $1"
+    ]
+  ])("test parse PG method args", (methodArgs: any, expectedResult: string) => {
+    expect(SqlMethodUtils.parseMethodArgs(methodArgs, new NodePostgresDriverDialect())).toBe(expectedResult);
+  });
+
+  it.each([
+    [null, null],
+    ["select foo from bar", "select foo from bar"],
+    ["select now()", "select now()"],
+    [["select ?+? as sum", [2, 2]], "select ?+? as sum"],
+    [
+      [
+        "select :x + :x as z",
+        { x: 1 },
+        (err, rows) => {
+          // query select 1 + 1 as z
+        }
+      ],
+      "select :x + :x as z"
+    ]
+  ])("test parse MySQL method args", (methodArgs: any, expectedResult: string) => {
+    expect(SqlMethodUtils.parseMethodArgs(methodArgs, new MySQL2DriverDialect())).toBe(expectedResult);
   });
 });

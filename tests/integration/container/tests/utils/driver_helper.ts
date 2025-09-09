@@ -15,12 +15,13 @@
 */
 
 import { TestDriver } from "./test_driver";
-import { AwsMySQLClient } from "../../../../../mysql/lib";
-import { AwsPGClient } from "../../../../../pg/lib";
+import { AwsMySQLClient, AwsMySQLPoolClient } from "../../../../../mysql/lib";
+import { AwsPGClient, AwsPgPoolClient } from "../../../../../pg/lib";
 import { DatabaseEngine } from "./database_engine";
 import { AwsClient } from "../../../../../common/lib/aws_client";
 import { DatabaseEngineDeployment } from "./database_engine_deployment";
 import { readFileSync } from "fs";
+import { AwsPoolConfig } from "../../../../../common/lib/aws_pool_config";
 
 export class DriverHelper {
   static getClient(driver: TestDriver) {
@@ -29,6 +30,17 @@ export class DriverHelper {
         return (options: any) => new AwsMySQLClient(options);
       case TestDriver.PG:
         return (options: any) => new AwsPGClient(options);
+      default:
+        throw new Error("invalid driver");
+    }
+  }
+
+  static getPoolClient(driver: TestDriver) {
+    switch (driver) {
+      case TestDriver.MYSQL:
+        return (options: any, poolConfig: AwsPoolConfig) => new AwsMySQLPoolClient(options, poolConfig);
+      case TestDriver.PG:
+        return (options: any, poolConfig: AwsPoolConfig) => new AwsPgPoolClient(options, poolConfig);
       default:
         throw new Error("invalid driver");
     }
@@ -58,6 +70,7 @@ export class DriverHelper {
         }
     }
   }
+
   static getInstanceIdSql(engine: DatabaseEngine, deployment: DatabaseEngineDeployment): string {
     switch (deployment) {
       case DatabaseEngineDeployment.AURORA:
@@ -91,9 +104,10 @@ export class DriverHelper {
         return await (client as AwsPGClient).query(sql).then((result) => {
           return result.rows[0]["id"];
         });
-      case DatabaseEngine.MYSQL:
-        result = await (client as AwsMySQLClient).query({ sql: sql });
-        return JSON.parse(JSON.stringify(result))[0][0]["id"];
+      case DatabaseEngine.MYSQL: {
+        const [res, _] = await (client as AwsMySQLClient).query({ sql: sql });
+        return res[0]["id"];
+      }
       default:
         throw new Error("invalid engine");
     }

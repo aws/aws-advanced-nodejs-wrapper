@@ -21,8 +21,8 @@ import pkgPg from "pg";
 
 import { WrapperProperties } from "../../../common/lib/wrapper_property";
 import { AwsPoolConfig } from "../../../common/lib/aws_pool_config";
-import { AwsPoolClient } from "../../../common/lib/aws_pool_client";
-import { AwsPgPoolClient } from "../pg_pool_client";
+import { AwsInternalPoolClient } from "../../../common/lib/aws_pool_client";
+import { AwsPgInternalPoolClient } from "../icp/pg_internal_pool_client";
 import { PgClientWrapper } from "../../../common/lib/pg_client_wrapper";
 import { HostInfo } from "../../../common/lib/host_info";
 
@@ -55,12 +55,13 @@ export class NodePostgresDriverDialect implements DriverDialect {
     finalPoolConfig.max = poolConfig?.maxConnections;
     finalPoolConfig.idleTimeoutMillis = poolConfig?.idleTimeoutMillis;
     finalPoolConfig.allowExitOnIdle = poolConfig?.allowExitOnIdle;
+    finalPoolConfig.maxLifetimeSeconds = poolConfig?.maxLifetimeSeconds;
 
     return finalPoolConfig;
   }
 
-  getAwsPoolClient(props: pkgPg.PoolConfig): AwsPoolClient {
-    return new AwsPgPoolClient(props);
+  getAwsPoolClient(props: pkgPg.PoolConfig): AwsInternalPoolClient {
+    return new AwsPgInternalPoolClient(props);
   }
 
   setConnectTimeout(props: Map<string, any>, wrapperConnectTimeout?: any) {
@@ -95,5 +96,9 @@ export class NodePostgresDriverDialect implements DriverDialect {
     if (keepAliveInitialDelayMillis !== undefined) {
       props.set(NodePostgresDriverDialect.KEEP_ALIVE_INITIAL_DELAY_MILLIS_PROPERTY_NAME, keepAliveInitialDelayMillis);
     }
+  }
+
+  getQueryFromMethodArg(methodArg: any): string {
+    return typeof methodArg === "string" ? methodArg : methodArg.text;
   }
 }

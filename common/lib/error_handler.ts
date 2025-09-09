@@ -47,4 +47,10 @@ export interface ErrorHandler {
    * @param clientWrapper a wrapper containing the target community client.
    */
   attachNoOpErrorListener(clientWrapper: ClientWrapper | undefined): void;
+
+  /**
+   * Remove an error event listener from a ClientWrapper.
+   * @param clientWrapper a wrapper containing the target community client.
+   */
+  removeErrorListener(clientWrapper: ClientWrapper | undefined): void;
 }

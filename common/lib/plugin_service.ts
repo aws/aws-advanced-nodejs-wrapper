@@ -43,7 +43,7 @@ import { DatabaseDialectCodes } from "./database_dialect/database_dialect_codes"
 import { getWriter, logTopology } from "./utils/utils";
 import { TelemetryFactory } from "./utils/telemetry/telemetry_factory";
 import { DriverDialect } from "./driver_dialect/driver_dialect";
-import { AllowedAndBlockedHosts } from "./AllowedAndBlockedHosts";
+import { AllowedAndBlockedHosts } from "./allowed_and_blocked_hosts";
 import { ConnectionPlugin } from "./connection_plugin";
 
 export interface PluginService extends ErrorHandler {
@@ -332,7 +332,7 @@ export class PluginServiceImpl implements PluginService, HostListProviderService
   }
 
   isBlockingHostListProvider(arg: any): arg is BlockingHostListProvider {
-    return arg;
+    return arg != null && typeof arg.clearAll === "function" && typeof arg.forceMonitoringRefresh === "function";
   }
 
   async refreshHostList(): Promise<void>;
@@ -720,6 +720,10 @@ export class PluginServiceImpl implements PluginService, HostListProviderService
 
   attachNoOpErrorListener(clientWrapper: ClientWrapper | undefined): void {
     this.getDialect().getErrorHandler().attachNoOpErrorListener(clientWrapper);
+  }
+
+  removeErrorListener(clientWrapper: ClientWrapper | undefined): void {
+    this.getDialect().getErrorHandler().removeErrorListener(clientWrapper);
   }
 
   setAllowedAndBlockedHosts(allowedAndBlockedHosts: AllowedAndBlockedHosts) {

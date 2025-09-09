@@ -24,6 +24,12 @@ export class AwsWrapperError extends Error {
   }
 }
 
+export class UndefinedClientError extends AwsWrapperError {
+  constructor() {
+    super(Messages.get("Client.undefinedTargetClient"));
+  }
+}
+
 export class UnsupportedStrategyError extends AwsWrapperError {}
 
 export class UnsupportedMethodError extends AwsWrapperError {}

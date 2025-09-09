@@ -1,12 +1,12 @@
 /*
   Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
- 
+
   Licensed under the Apache License, Version 2.0 (the "License").
   You may not use this file except in compliance with the License.
   You may obtain a copy of the License at
- 
+
   http://www.apache.org/licenses/LICENSE-2.0
- 
+
   Unless required by applicable law or agreed to in writing, software
   distributed under the License is distributed on an "AS IS" BASIS,
   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -14,17 +14,24 @@
   limitations under the License.
 */
 
-import pkgPg from "pg";
+import { createPool, PoolOptions } from "mysql2/promise";
+import { AwsInternalPoolClient } from "../../../common/lib/aws_pool_client";
+import { Messages } from "../../../common/lib/utils/messages";
+import { AwsWrapperError } from "../../../common/lib/utils/errors";
 
-import { AwsPoolClient } from "../../common/lib/aws_pool_client";
-import { Messages } from "../../common/lib/utils/messages";
-import { AwsWrapperError } from "../../common/lib/utils/errors";
+export class AwsMysqlInternalPoolClient implements AwsInternalPoolClient {
+  targetPool: any;
 
-export class AwsPgPoolClient implements AwsPoolClient {
-  targetPool: pkgPg.Pool;
+  constructor(props: PoolOptions) {
+    this.targetPool = createPool(props);
+  }
 
-  constructor(props: pkgPg.PoolConfig) {
-    this.targetPool = new pkgPg.Pool(props);
+  async connect(): Promise<any> {
+    try {
+      return await this.targetPool.getConnection();
+    } catch (error: any) {
+      throw new AwsWrapperError(Messages.get("InternalPooledConnectionProvider.pooledConnectionFailed", error.message));
+    }
   }
 
   async end(): Promise<any> {
@@ -35,20 +42,12 @@ export class AwsPgPoolClient implements AwsPoolClient {
     }
   }
 
-  async connect(): Promise<any> {
-    try {
-      return await this.targetPool.connect();
-    } catch (error: any) {
-      throw new AwsWrapperError(Messages.get("InternalPooledConnectionProvider.pooledConnectionFailed", error.message));
-    }
-  }
-
   getIdleCount(): number {
-    return this.targetPool.idleCount;
+    return this.targetPool.pool._freeConnections.length;
   }
 
   getTotalCount(): number {
-    return this.targetPool.totalCount;
+    return this.targetPool.pool._allConnections.length;
   }
 
   getActiveCount(): number {

@@ -38,8 +38,9 @@ export class PoolClientWrapper implements ClientWrapper {
     return this.end();
   }
 
-  query(sql: string): Promise<any> {
-    return this.client?.query(sql);
+  query(sql: string): Promise<any>;
+  query(config: any, values?: any): Promise<any> {
+    return this.client?.query(config, values);
   }
 
   async queryWithTimeout(sql: string): Promise<any> {

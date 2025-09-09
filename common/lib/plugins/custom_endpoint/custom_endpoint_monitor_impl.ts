@@ -20,7 +20,7 @@ import { PluginService } from "../../plugin_service";
 import { TelemetryCounter } from "../../utils/telemetry/telemetry_counter";
 import { logger } from "../../../logutils";
 import { CustomEndpointInfo } from "./custom_endpoint_info";
-import { AllowedAndBlockedHosts } from "../../AllowedAndBlockedHosts";
+import { AllowedAndBlockedHosts } from "../../allowed_and_blocked_hosts";
 import { CacheMap } from "../../utils/cache_map";
 import { MemberListType } from "./member_list_type";
 import { Messages } from "../../utils/messages";

@@ -51,7 +51,7 @@ export class DefaultPlugin extends AbstractConnectionPlugin {
     isInitialConnection: boolean,
     forceConnectFunc: () => Promise<ClientWrapper>
   ): Promise<ClientWrapper> {
-    return await this.connectInternal(hostInfo, props, this.connectionProviderManager.getDefaultConnectionProvider());
+    return await this.connectInternal(hostInfo, props, this.connectionProviderManager.getForceConnectionProvider());
   }
 
   override initHostProvider(
@@ -104,7 +104,6 @@ export class DefaultPlugin extends AbstractConnectionPlugin {
   override notifyHostListChanged(changes: Map<string, Set<HostChangeOptions>>): Promise<void> {
     return Promise.resolve();
   }
-
   override acceptsStrategy(role: HostRole, strategy: string): boolean {
     if (role === HostRole.UNKNOWN) {
       // Users must request either a writer or a reader role.
