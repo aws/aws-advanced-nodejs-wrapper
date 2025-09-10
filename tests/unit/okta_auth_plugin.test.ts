@@ -18,7 +18,7 @@ import { anything, instance, mock, spy, verify, when } from "ts-mockito";
 import { PluginServiceImpl } from "../../common/lib/plugin_service";
 import { CredentialsProviderFactory } from "../../common/lib/plugins/federated_auth/credentials_provider_factory";
 import { IamAuthUtils, TokenInfo } from "../../common/lib/utils/iam_auth_utils";
-import { HostInfo } from "../../common/lib/host_info";
+import { HostInfo } from "../../common/lib";
 import { WrapperProperties } from "../../common/lib/wrapper_property";
 import { DatabaseDialect } from "../../common/lib/database_dialect/database_dialect";
 

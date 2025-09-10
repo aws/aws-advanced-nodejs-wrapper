@@ -34,21 +34,21 @@ import {
   AwsWrapperError,
   FailoverSuccessError,
   UndefinedClientError,
-  UnsupportedMethodError
-} from "../../common/lib/utils/errors";
+  UnsupportedMethodError,
+  ConnectionProvider,
+  HostInfo,
+  TransactionIsolationLevel,
+  InternalPooledConnectionProvider,
+  AwsPoolConfig
+} from "../../common/lib";
 import { Messages } from "../../common/lib/utils/messages";
 import { ClientWrapper } from "../../common/lib/client_wrapper";
 import { RdsMultiAZClusterPgDatabaseDialect } from "./dialect/rds_multi_az_pg_database_dialect";
-import { HostInfo } from "../../common/lib/host_info";
 import { TelemetryTraceLevel } from "../../common/lib/utils/telemetry/telemetry_trace_level";
 import { NodePostgresDriverDialect } from "./dialect/node_postgres_driver_dialect";
-import { TransactionIsolationLevel } from "../../common/lib/utils/transaction_isolation_level";
 import { isDialectTopologyAware } from "../../common/lib/utils/utils";
 import { PGClient, PGPoolClient } from "./pg_client";
-import { ConnectionProvider } from "../../common/lib/connection_provider";
 import { DriverConnectionProvider } from "../../common/lib/driver_connection_provider";
-import { InternalPooledConnectionProvider } from "../../common/lib/internal_pooled_connection_provider";
-import { AwsPoolConfig } from "../../common/lib/aws_pool_config";
 
 class BaseAwsPgClient extends AwsClient implements PGClient {
   private static readonly knownDialectsByCode: Map<string, DatabaseDialect> = new Map([

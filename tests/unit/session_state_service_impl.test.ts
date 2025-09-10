@@ -23,7 +23,7 @@ import { AwsClient } from "../../common/lib/aws_client";
 import { AwsMySQLClient } from "../../mysql/lib";
 import { PgClientWrapper } from "../../common/lib/pg_client_wrapper";
 import { MySQLClientWrapper } from "../../common/lib/mysql_client_wrapper";
-import { HostInfoBuilder } from "../../common/lib/host_info_builder";
+import { HostInfoBuilder } from "../../common/lib";
 import { SimpleHostAvailabilityStrategy } from "../../common/lib/host_availability/simple_host_availability_strategy";
 import { MySQLDatabaseDialect } from "../../mysql/lib/dialect/mysql_database_dialect";
 import { PgDatabaseDialect } from "../../pg/lib/dialect/pg_database_dialect";

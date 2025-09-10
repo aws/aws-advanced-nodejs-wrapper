@@ -15,14 +15,12 @@
 */
 
 import { anything, instance, mock, when } from "ts-mockito";
-import { ConnectionProvider } from "../common/lib/connection_provider";
+import { ConnectionProvider, HostInfoBuilder, PluginManager } from "../common/lib";
 import { PluginServiceImpl } from "../common/lib/plugin_service";
 import { PluginServiceManagerContainer } from "../common/lib/plugin_service_manager_container";
 import { WrapperProperties } from "../common/lib/wrapper_property";
-import { PluginManager } from "../common/lib";
 import { add, complete, configure, cycle, save, suite } from "benny";
 import { TestConnectionWrapper } from "./testplugin/test_connection_wrapper";
-import { HostInfoBuilder } from "../common/lib/host_info_builder";
 import { SimpleHostAvailabilityStrategy } from "../common/lib/host_availability/simple_host_availability_strategy";
 import { AwsPGClient } from "../pg/lib";
 import { NullTelemetryFactory } from "../common/lib/utils/telemetry/null_telemetry_factory";

@@ -14,11 +14,9 @@
   limitations under the License.
 */
 
-import { AwsMySQLClient } from "../../mysql/lib";
-import { ConnectionProviderManager } from "../../common/lib/connection_provider_manager";
-import { InternalPooledConnectionProvider } from "../../common/lib/internal_pooled_connection_provider";
+import { AwsMySQLClient } from "../../mysql";
+import { InternalPooledConnectionProvider, PluginManager } from "../../index";
 import { logger } from "../../common/logutils";
-import { PluginManager } from "../../common/lib";
 
 const mysqlHost = "db-identifier.XYZ.us-east-2.rds.amazonaws.com";
 const username = "john_smith";

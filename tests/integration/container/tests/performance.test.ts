@@ -21,12 +21,11 @@ import { ProxyHelper } from "./utils/proxy_helper";
 import { AuroraTestUtility } from "./utils/aurora_test_utility";
 import { TestEnvironmentFeatures } from "./utils/test_environment_features";
 import { anything } from "ts-mockito";
-import { WrapperProperties } from "../../../../common/lib/wrapper_property";
+import { WrapperProperties, PluginManager } from "../../../../index";
 import { features } from "./config";
-import { MonitorServiceImpl } from "../../../../common/lib/plugins/efm/monitor_service";
 import { PerfStat } from "./utils/perf_stat";
 import { PerfTestUtility } from "./utils/perf_util";
-import { PluginManager } from "../../../../common/lib";
+import { MonitorServiceImpl } from "../../../../common/lib/plugins/efm/monitor_service";
 
 const itIf =
   features.includes(TestEnvironmentFeatures.FAILOVER_SUPPORTED) &&

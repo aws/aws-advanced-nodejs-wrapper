@@ -14,7 +14,7 @@
   limitations under the License.
 */
 
-import { AwsMySQLClient } from "../../mysql/lib";
+import { AwsMySQLClient } from "../../mysql";
 
 const mysqlHost = "db-identifier.XYZ.us-east-2.rds.amazonaws.com";
 const username = "john_smith";

@@ -15,13 +15,11 @@
 */
 
 import { add, complete, configure, cycle, save, suite } from "benny";
-import { ConnectionPlugin, PluginManager } from "../common/lib";
+import { ConnectionPlugin, ConnectionProvider, HostInfoBuilder, PluginManager } from "../common/lib";
 import { PluginServiceManagerContainer } from "../common/lib/plugin_service_manager_container";
 import { instance, mock, when } from "ts-mockito";
-import { ConnectionProvider } from "../common/lib/connection_provider";
-import { HostInfoBuilder } from "../common/lib/host_info_builder";
 import { SimpleHostAvailabilityStrategy } from "../common/lib/host_availability/simple_host_availability_strategy";
-import { PluginServiceImpl } from "../common/lib/plugin_service";
+import { PluginService, PluginServiceImpl } from "../common/lib/plugin_service";
 import { HostListProviderService } from "../common/lib/host_list_provider_service";
 import { HostChangeOptions } from "../common/lib/host_change_options";
 import { WrapperProperties } from "../common/lib/wrapper_property";
@@ -108,7 +106,7 @@ async function initPluginManagerWithPlugins(numPlugins: number, pluginService, p
   }
   plugins.push(new DefaultPlugin(pluginService, new ConnectionProviderManager(instance(mockConnectionProvider), null)));
   const configurationProfile = ConfigurationProfileBuilder.get().withName("benchmark").withPluginsFactories(factories).build();
-  pluginManager.init(configurationProfile, plugins);
+  await pluginManager.init(configurationProfile, plugins);
   return pluginManager;
 }
 

@@ -23,7 +23,7 @@ import { DatabaseEngine } from "./utils/database_engine";
 import { TestEnvironmentFeatures } from "./utils/test_environment_features";
 import { features } from "./config";
 import { DatabaseEngineDeployment } from "./utils/database_engine_deployment";
-import { PluginManager } from "../../../../common/lib";
+import { PluginManager } from "../../../../index";
 
 const itIf =
   !features.includes(TestEnvironmentFeatures.PERFORMANCE) && !features.includes(TestEnvironmentFeatures.RUN_AUTOSCALING_TESTS_ONLY) ? it : it.skip;

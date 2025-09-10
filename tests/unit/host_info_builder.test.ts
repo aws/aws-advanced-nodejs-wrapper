@@ -14,12 +14,8 @@
   limitations under the License.
 */
 
-import { HostInfo } from "../../common/lib/host_info";
-import { HostAvailability } from "../../common/lib/host_availability/host_availability";
-import { HostRole } from "../../common/lib/host_role";
-import { HostAvailabilityStrategy } from "../../common/lib/host_availability/host_availability_strategy";
+import { HostAvailability, HostAvailabilityStrategy, HostInfo, HostInfoBuilder, HostRole } from "../../common/lib";
 import { SimpleHostAvailabilityStrategy } from "../../common/lib/host_availability/simple_host_availability_strategy";
-import { HostInfoBuilder } from "../../common/lib/host_info_builder";
 
 const defaultPort = HostInfo.NO_PORT;
 const defaultHostAvailability = HostAvailability.AVAILABLE;

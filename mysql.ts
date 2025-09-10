@@ -29,12 +29,12 @@ export {
   UnsupportedMethodError,
   TransactionIsolationLevel,
   HostAvailability
-} from "./common/lib";
+} from "./common";
 
 export type {
   ConnectionProvider,
   InternalPoolMapping,
   HostAvailabilityStrategy
-} from "./common/lib";
+} from "./common";
 
 export { logger } from "./common/logutils";

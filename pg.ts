@@ -16,21 +16,3 @@
 
 export { AwsPGClient, AwsPgPoolClient } from "./pg/lib/index";
 export type { AwsPGPooledConnection } from "./pg/lib/index";
-
-export {
-  AwsPoolConfig,
-  HostInfo,
-  HostRole,
-  InternalPooledConnectionProvider,
-  AwsWrapperError,
-  FailoverFailedError,
-  FailoverSuccessError,
-  TransactionResolutionUnknownError,
-  UnsupportedMethodError,
-  TransactionIsolationLevel,
-  HostAvailability
-} from "./common/lib";
-
-export type { ConnectionProvider, InternalPoolMapping, HostAvailabilityStrategy } from "./common/lib";
-
-export { logger } from "./common/logutils";

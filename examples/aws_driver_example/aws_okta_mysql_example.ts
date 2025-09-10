@@ -15,7 +15,7 @@
 */
 
 import { readFileSync } from "fs";
-import { AwsMySQLClient } from "../../mysql/lib";
+import { AwsMySQLClient } from "../../mysql";
 
 const mysqlHost = "db-identifier.XYZ.us-east-2.rds.amazonaws.com";
 const idpEndpoint = "123456789.okta.com";

@@ -15,21 +15,18 @@
 */
 
 import { anything, instance, mock, when } from "ts-mockito";
-import { ConnectionProvider } from "../common/lib/connection_provider";
-import { PluginServiceImpl } from "../common/lib/plugin_service";
-import { PluginServiceManagerContainer } from "../common/lib/plugin_service_manager_container";
-import { WrapperProperties } from "../common/lib/wrapper_property";
-import { PluginManager } from "../common/lib";
+import { ConnectionProvider, DriverDialect, PluginManager, WrapperProperties } from "../index";
 import { add, complete, configure, cycle, save, suite } from "benny";
 import { TestConnectionWrapper } from "./testplugin/test_connection_wrapper";
-import { HostInfoBuilder } from "../common/lib/host_info_builder";
-import { SimpleHostAvailabilityStrategy } from "../common/lib/host_availability/simple_host_availability_strategy";
-import { AwsPGClient } from "../pg/lib";
-import { NullTelemetryFactory } from "../common/lib/utils/telemetry/null_telemetry_factory";
-import { ConnectionProviderManager } from "../common/lib/connection_provider_manager";
-import { PgClientWrapper } from "../common/lib/pg_client_wrapper";
+import { AwsPGClient } from "../pg";
 import { NodePostgresDriverDialect } from "../pg/lib/dialect/node_postgres_driver_dialect";
-import { DriverDialect } from "../common/lib/driver_dialect/driver_dialect";
+import { PluginServiceImpl } from "../common/lib/plugin_service";
+import { SimpleHostAvailabilityStrategy } from "../common/lib/host_availability/simple_host_availability_strategy";
+import { HostInfoBuilder } from "../common/lib";
+import { PgClientWrapper } from "../common/lib/pg_client_wrapper";
+import { NullTelemetryFactory } from "../common/lib/utils/telemetry/null_telemetry_factory";
+import { PluginServiceManagerContainer } from "../common/lib/plugin_service_manager_container";
+import { ConnectionProviderManager } from "../common/lib/connection_provider_manager";
 
 const mockConnectionProvider = mock<ConnectionProvider>();
 const mockPluginService = mock(PluginServiceImpl);

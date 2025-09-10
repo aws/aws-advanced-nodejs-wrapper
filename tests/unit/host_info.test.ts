@@ -15,10 +15,7 @@
 */
 
 import { anything, instance, mock, verify } from "ts-mockito";
-import { HostAvailabilityStrategy } from "../../common/lib/host_availability/host_availability_strategy";
-import { HostInfo } from "../../common/lib/host_info";
-import { HostInfoBuilder } from "../../common/lib/host_info_builder";
-import { HostAvailability } from "../../common/lib/host_availability/host_availability";
+import { HostAvailability, HostAvailabilityStrategy, HostInfo, HostInfoBuilder } from "../../common/lib";
 
 const mockStrategy = mock<HostAvailabilityStrategy>();
 let hostInfo: HostInfo;

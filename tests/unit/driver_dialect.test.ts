@@ -16,8 +16,7 @@
 
 import { mock } from "ts-mockito";
 import { MySQL2DriverDialect } from "../../mysql/lib/dialect/mysql2_driver_dialect";
-import { HostInfo } from "../../common/lib/host_info";
-import { UnsupportedMethodError } from "../../common/lib/utils/errors";
+import { HostInfo, UnsupportedMethodError } from "../../common/lib";
 import { NodePostgresDriverDialect } from "../../pg/lib/dialect/node_postgres_driver_dialect";
 
 const mockHostInfo: HostInfo = mock(HostInfo);

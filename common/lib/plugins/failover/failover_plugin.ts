@@ -16,24 +16,24 @@
 
 import { AbstractConnectionPlugin } from "../../abstract_connection_plugin";
 import { logger } from "../../../logutils";
-import { HostInfo } from "../../host_info";
-import { OldConnectionSuggestionAction } from "../../old_connection_suggestion_action";
+import {
+  HostInfo,
+  AwsWrapperError,
+  FailoverFailedError,
+  FailoverSuccessError,
+  TransactionResolutionUnknownError,
+  UnavailableHostError,
+  HostRole,
+  HostAvailability
+} from "../../";
 import { PluginService } from "../../plugin_service";
+import { OldConnectionSuggestionAction } from "../../old_connection_suggestion_action";
 import { HostListProviderService } from "../../host_list_provider_service";
 import { ClusterAwareReaderFailoverHandler } from "./reader_failover_handler";
 import { SubscribedMethodHelper } from "../../utils/subscribed_method_helper";
 import { HostChangeOptions } from "../../host_change_options";
 import { ClusterAwareWriterFailoverHandler } from "./writer_failover_handler";
-import {
-  AwsWrapperError,
-  FailoverFailedError,
-  FailoverSuccessError,
-  TransactionResolutionUnknownError,
-  UnavailableHostError
-} from "../../utils/errors";
 import { FailoverMode, failoverModeFromValue } from "./failover_mode";
-import { HostRole } from "../../host_role";
-import { HostAvailability } from "../../host_availability/host_availability";
 import { StaleDnsHelper } from "../stale_dns/stale_dns_helper";
 import { WrapperProperties } from "../../wrapper_property";
 import { RdsUrlType } from "../../utils/rds_url_type";

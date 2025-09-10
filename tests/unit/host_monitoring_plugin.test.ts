@@ -23,15 +23,14 @@ import { RdsUtils } from "../../common/lib/utils/rds_utils";
 import { MonitorServiceImpl } from "../../common/lib/plugins/efm/monitor_service";
 import { PluginServiceImpl } from "../../common/lib/plugin_service";
 import { MonitorConnectionContext } from "../../common/lib/plugins/efm/monitor_connection_context";
-import { AwsWrapperError } from "../../common/lib/utils/errors";
+import { AwsWrapperError, HostAvailability, HostInfo } from "../../common/lib";
 import { RdsUrlType } from "../../common/lib/utils/rds_url_type";
-import { HostInfo } from "../../common/lib/host_info";
 import { HostChangeOptions } from "../../common/lib/host_change_options";
 import { OldConnectionSuggestionAction } from "../../common/lib/old_connection_suggestion_action";
-import { HostAvailability } from "../../common/lib/host_availability/host_availability";
 import { Messages } from "../../common/lib/utils/messages";
 import { AwsPGClient } from "../../pg/lib";
 import { MySQLClientWrapper } from "../../common/lib/mysql_client_wrapper";
+import { MySQL2DriverDialect } from "../../mysql/lib/dialect/mysql2_driver_dialect";
 
 const FAILURE_DETECTION_TIME = 10;
 const FAILURE_DETECTION_INTERVAL = 100;
@@ -57,7 +56,7 @@ function incrementQueryCounter() {
   return Promise.resolve();
 }
 
-const mockClientWrapper = new MySQLClientWrapper(undefined, mock(HostInfo), new Map<string, any>());
+const mockClientWrapper = new MySQLClientWrapper(undefined, mock(HostInfo), new Map<string, any>(), new MySQL2DriverDialect());
 
 function initDefaultMockReturns() {
   when(mockDialect.getHostAliasQuery()).thenReturn("any");

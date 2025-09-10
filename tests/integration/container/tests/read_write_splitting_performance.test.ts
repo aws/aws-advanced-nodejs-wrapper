@@ -21,11 +21,13 @@ import { TestEnvironmentFeatures } from "./utils/test_environment_features";
 import { features, instanceCount } from "./config";
 import { PerfStat } from "./utils/perf_stat";
 import { PerfTestUtility } from "./utils/perf_util";
-import { ConnectTimePlugin } from "../../../../common/lib/plugins/connect_time_plugin";
-import { ExecuteTimePlugin } from "../../../../common/lib/plugins/execute_time_plugin";
+import {
+  ConnectTimePlugin,
+  ExecuteTimePlugin,
+  InternalPooledConnectionProvider,
+  PluginManager
+} from "../../../../index";
 import { TestDriver } from "./utils/test_driver";
-import { InternalPooledConnectionProvider } from "../../../../common/lib/internal_pooled_connection_provider";
-import { PluginManager } from "../../../../common/lib";
 
 const itIf =
   features.includes(TestEnvironmentFeatures.FAILOVER_SUPPORTED) &&

@@ -15,7 +15,7 @@
 */
 
 import { readFileSync } from "fs";
-import { AwsPGClient } from "../../pg/lib";
+import { AwsPGClient } from "../../pg";
 
 const postgresHost = "db-identifier.shardgrp-XYZ.us-east-2.rds.amazonaws.com";
 const username = "user";

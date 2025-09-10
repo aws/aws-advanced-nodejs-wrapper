@@ -14,11 +14,7 @@
   limitations under the License.
 */
 
-import { ConnectionPluginFactory } from "../../common/lib/plugin_factory";
-import { PluginServiceImpl } from "../../common/lib/plugin_service";
-import { ConnectionPlugin } from "../../common/lib";
-import { AwsWrapperError } from "../../common/lib/utils/errors";
-import { Messages } from "../../common/lib/utils/messages";
+import { ConnectionPluginFactory, PluginServiceImpl, ConnectionPlugin, AwsWrapperError, Messages } from "../../index";
 import { BenchmarkPlugin } from "./benchmark_plugin";
 
 export class BenchmarkPluginFactory extends ConnectionPluginFactory {

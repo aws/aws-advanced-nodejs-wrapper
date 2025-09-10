@@ -30,12 +30,10 @@ import { DriverDialect } from "./driver_dialect/driver_dialect";
 import { WrapperProperties } from "./wrapper_property";
 import { DriverConfigurationProfiles } from "./profile/driver_configuration_profiles";
 import { ConfigurationProfile } from "./profile/configuration_profile";
-import { AwsWrapperError } from "./utils/errors";
+import { AwsWrapperError, TransactionIsolationLevel, ConnectionProvider } from "./";
 import { Messages } from "./utils/messages";
-import { TransactionIsolationLevel } from "./utils/transaction_isolation_level";
 import { HostListProviderService } from "./host_list_provider_service";
 import { SessionStateClient } from "./session_state_client";
-import { ConnectionProvider } from "./connection_provider";
 import { DriverConnectionProvider } from "./driver_connection_provider";
 
 const { EventEmitter } = pkgStream;

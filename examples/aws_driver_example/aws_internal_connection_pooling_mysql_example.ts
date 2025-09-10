@@ -14,15 +14,18 @@
   limitations under the License.
 */
 
-import { AwsMySQLClient } from "../../mysql/lib";
-import { FailoverFailedError, FailoverSuccessError, TransactionResolutionUnknownError } from "../../common/lib/utils/errors";
-import { InternalPoolMapping } from "../../common/lib/utils/internal_pool_mapping";
-import { HostInfo } from "../../common/lib/host_info";
-import { WrapperProperties } from "../../common/lib/wrapper_property";
-import { InternalPooledConnectionProvider } from "../../common/lib/internal_pooled_connection_provider";
-import { ConnectionProviderManager } from "../../common/lib/connection_provider_manager";
-import { AwsPoolConfig } from "../../common/lib/aws_pool_config";
-import { PluginManager } from "../../common/lib";
+import { AwsMySQLClient } from "../../mysql";
+import {
+  AwsPoolConfig,
+  FailoverFailedError,
+  FailoverSuccessError,
+  HostInfo,
+  InternalPooledConnectionProvider,
+  InternalPoolMapping,
+  PluginManager,
+  TransactionResolutionUnknownError,
+  WrapperProperties
+} from "../../index";
 
 const mysqlHost = "db-identifier.XYZ.us-east-2.rds.amazonaws.com";
 const username = "john_smith";

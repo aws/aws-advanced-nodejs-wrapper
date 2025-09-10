@@ -14,7 +14,7 @@
   limitations under the License.
 */
 
-import { HostInfo } from "../../common/lib/host_info";
+import { HostInfo, HostRole } from "../../common/lib";
 import { FederatedAuthPlugin } from "../../common/lib/plugins/federated_auth/federated_auth_plugin";
 import { PluginServiceImpl } from "../../common/lib/plugin_service";
 import { IamAuthUtils, TokenInfo } from "../../common/lib/utils/iam_auth_utils";
@@ -22,8 +22,6 @@ import { WrapperProperties } from "../../common/lib/wrapper_property";
 import { anything, instance, mock, spy, verify, when } from "ts-mockito";
 import { CredentialsProviderFactory } from "../../common/lib/plugins/federated_auth/credentials_provider_factory";
 import { DatabaseDialect } from "../../common/lib/database_dialect/database_dialect";
-
-import { HostRole } from "../../common/lib/host_role";
 import { NullTelemetryFactory } from "../../common/lib/utils/telemetry/null_telemetry_factory";
 import { jest } from "@jest/globals";
 import { PgClientWrapper } from "../../common/lib/pg_client_wrapper";

@@ -19,7 +19,7 @@ import { WriterFailoverResult } from "./writer_failover_result";
 import { ClusterAwareReaderFailoverHandler } from "./reader_failover_handler";
 import { PluginService } from "../../plugin_service";
 import { HostAvailability } from "../../host_availability/host_availability";
-import { AwsWrapperError } from "../../utils/errors";
+import { AwsWrapperError } from "../../";
 import { getWriter, logTopology, maskProperties } from "../../utils/utils";
 import { ReaderFailoverResult } from "./reader_failover_result";
 import { Messages } from "../../utils/messages";

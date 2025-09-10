@@ -17,11 +17,11 @@
 import { anything, capture, instance, mock, reset, verify, when } from "ts-mockito";
 import { MonitorImpl } from "../../common/lib/plugins/efm/monitor";
 import { MonitorServiceImpl } from "../../common/lib/plugins/efm/monitor_service";
-import { PluginServiceImpl } from "../../common/lib/plugin_service";
-import { HostInfo } from "../../common/lib/host_info";
-import { HostInfoBuilder } from "../../common/lib/host_info_builder";
+import { PluginService, PluginServiceImpl } from "../../common/lib/plugin_service";
+import { HostInfo, HostInfoBuilder } from "../../common/lib";
 import { SimpleHostAvailabilityStrategy } from "../../common/lib/host_availability/simple_host_availability_strategy";
 import { NullTelemetryFactory } from "../../common/lib/utils/telemetry/null_telemetry_factory";
+import { MySQLClientWrapper } from "../../common/lib/mysql_client_wrapper";
 
 class MonitorImplTest extends MonitorImpl {
   constructor(pluginService: PluginService, hostInfo: HostInfo, properties: Map<string, any>, monitorDisposalTimeMillis: number) {
@@ -37,7 +37,7 @@ const mockPluginService = mock(PluginServiceImpl);
 const mockMonitorA = mock(MonitorImpl);
 const mockMonitorB = mock(MonitorImpl);
 const mockHostInfo = mock(HostInfo);
-const mockTargetClient = {};
+const mockClientWrapper = mock(MySQLClientWrapper);
 
 const FAILURE_DETECTION_TIME_MILLIS = 10;
 const FAILURE_DETECTION_INTERVAL_MILLIS = 100;
@@ -65,7 +65,7 @@ describe("monitor service impl test", () => {
     monitorService.monitorSupplier = () => instance(mockMonitorA);
 
     await monitorService.startMonitoring(
-      mockTargetClient,
+      mockClientWrapper,
       NODE_KEYS,
       instance(mockHostInfo),
       new Map(),
@@ -85,7 +85,7 @@ describe("monitor service impl test", () => {
 
     for (let i = 0; i < runs; i++) {
       await monitorService.startMonitoring(
-        mockTargetClient,
+        mockClientWrapper,
         NODE_KEYS,
         instance(mockHostInfo),
         new Map(),
@@ -103,7 +103,7 @@ describe("monitor service impl test", () => {
     monitorService.monitorSupplier = () => instance(mockMonitorA);
 
     const context = await monitorService.startMonitoring(
-      mockTargetClient,
+      mockClientWrapper,
       NODE_KEYS,
       instance(mockHostInfo),
       new Map(),
@@ -122,7 +122,7 @@ describe("monitor service impl test", () => {
     monitorService.monitorSupplier = () => instance(mockMonitorA);
 
     const context = await monitorService.startMonitoring(
-      mockTargetClient,
+      mockClientWrapper,
       NODE_KEYS,
       instance(mockHostInfo),
       new Map(),

@@ -19,6 +19,7 @@ import { MonitorConnectionContext } from "../../common/lib/plugins/efm/monitor_c
 import { MonitorImpl } from "../../common/lib/plugins/efm/monitor";
 import { PluginServiceImpl } from "../../common/lib/plugin_service";
 import { NullTelemetryFactory } from "../../common/lib/utils/telemetry/null_telemetry_factory";
+import { MySQLClientWrapper } from "../../common/lib/mysql_client_wrapper";
 
 const mockPluginService: PluginServiceImpl = mock(PluginServiceImpl);
 const mockMonitor = mock(MonitorImpl);
@@ -27,6 +28,7 @@ const mockTargetClient = {
     throw new Error("close");
   }
 };
+const mockClientWrapper = mock(MySQLClientWrapper);
 
 const FAILURE_DETECTION_TIME_MILLIS = 10;
 const FAILURE_DETECTION_INTERVAL_MILLIS = 100;
@@ -111,7 +113,7 @@ describe("monitor connection context test", () => {
   it("abort client ignores error", async () => {
     context = new MonitorConnectionContext(
       instance(mockMonitor),
-      mockTargetClient,
+      mockClientWrapper,
       FAILURE_DETECTION_TIME_MILLIS,
       FAILURE_DETECTION_INTERVAL_MILLIS,
       FAILURE_DETECTION_COUNT,

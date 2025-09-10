@@ -17,8 +17,8 @@
 import { WrapperProperties } from "../../common/lib/wrapper_property";
 import { instance, mock, when } from "ts-mockito";
 import { ConnectionPluginChainBuilder } from "../../common/lib/connection_plugin_chain_builder";
-import { PluginServiceImpl } from "../../common/lib/plugin_service";
-import { ConnectionProvider } from "../../common/lib/connection_provider";
+import { PluginService, PluginServiceImpl } from "../../common/lib/plugin_service";
+import { ConnectionProvider, PluginManager } from "../../common/lib";
 import { DriverConnectionProvider } from "../../common/lib/driver_connection_provider";
 import { FailoverPlugin } from "../../common/lib/plugins/failover/failover_plugin";
 import { IamAuthenticationPlugin } from "../../common/lib/authentication/iam_authentication_plugin";
@@ -30,7 +30,6 @@ import { ConnectionProviderManager } from "../../common/lib/connection_provider_
 import { NullTelemetryFactory } from "../../common/lib/utils/telemetry/null_telemetry_factory";
 import { AbstractConnectionPlugin } from "../../common/lib/abstract_connection_plugin";
 import { ConnectionPluginFactory } from "../../common/lib/plugin_factory";
-import { PluginManager } from "../../common/lib";
 
 const mockPluginService: PluginServiceImpl = mock(PluginServiceImpl);
 const mockPluginServiceInstance: PluginService = instance(mockPluginService);
@@ -49,7 +48,8 @@ describe("testConnectionPluginChainBuilder", () => {
     const result = await ConnectionPluginChainBuilder.getPlugins(
       mockPluginServiceInstance,
       props,
-      new ConnectionProviderManager(mockDefaultConnProvider, mockEffectiveConnProvider)
+      new ConnectionProviderManager(mockDefaultConnProvider, mockEffectiveConnProvider),
+      null
     );
 
     expect(result.length).toBe(4);
@@ -67,7 +67,8 @@ describe("testConnectionPluginChainBuilder", () => {
     const result = await ConnectionPluginChainBuilder.getPlugins(
       mockPluginServiceInstance,
       props,
-      new ConnectionProviderManager(mockDefaultConnProvider, mockEffectiveConnProvider)
+      new ConnectionProviderManager(mockDefaultConnProvider, mockEffectiveConnProvider),
+      null
     );
 
     expect(result.length).toBe(4);
@@ -85,7 +86,8 @@ describe("testConnectionPluginChainBuilder", () => {
     let result = await ConnectionPluginChainBuilder.getPlugins(
       mockPluginServiceInstance,
       props,
-      new ConnectionProviderManager(mockDefaultConnProvider, mockEffectiveConnProvider)
+      new ConnectionProviderManager(mockDefaultConnProvider, mockEffectiveConnProvider),
+      null
     );
 
     expect(result.length).toBe(4);
@@ -99,7 +101,8 @@ describe("testConnectionPluginChainBuilder", () => {
     result = await ConnectionPluginChainBuilder.getPlugins(
       mockPluginServiceInstance,
       props,
-      new ConnectionProviderManager(mockDefaultConnProvider, mockEffectiveConnProvider)
+      new ConnectionProviderManager(mockDefaultConnProvider, mockEffectiveConnProvider),
+      null
     );
 
     expect(result.length).toBe(5);
@@ -119,7 +122,8 @@ describe("testConnectionPluginChainBuilder", () => {
     const result = await ConnectionPluginChainBuilder.getPlugins(
       mockPluginServiceInstance,
       props,
-      new ConnectionProviderManager(mockDefaultConnProvider, mockEffectiveConnProvider)
+      new ConnectionProviderManager(mockDefaultConnProvider, mockEffectiveConnProvider),
+      null
     );
 
     expect(result.length).toBe(2);

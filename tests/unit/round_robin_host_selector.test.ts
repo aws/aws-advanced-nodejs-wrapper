@@ -14,11 +14,9 @@
   limitations under the License.
 */
 
-import { HostInfoBuilder } from "../../common/lib/host_info_builder";
+import { AwsWrapperError, HostInfoBuilder, HostRole } from "../../common/lib";
 import { SimpleHostAvailabilityStrategy } from "../../common/lib/host_availability/simple_host_availability_strategy";
 import { RoundRobinHostSelector } from "../../common/lib/round_robin_host_selector";
-import { HostRole } from "../../common/lib/host_role";
-import { AwsWrapperError } from "../../common/lib/utils/errors";
 import { WrapperProperties } from "../../common/lib/wrapper_property";
 
 const TEST_PORT = 1234;
