@@ -7,6 +7,7 @@
   "exports": {
     ".": {
       "import": "./dist/index.js",
+      "require": "./dist/index.js",
       "types": "./dist/index.d.ts"
     },
     "./pg": {
@@ -18,10 +19,6 @@
       "import": "./dist/mysql.js",
       "require": "./dist/mysql.js",
       "types": "./dist/mysql.d.ts"
-    },
-    "./common": {
-      "import": "./dist/common/lib/index.js",
-      "types": "./dist/common/lib/index.d.ts"
     }
   },
   "workspaces": [

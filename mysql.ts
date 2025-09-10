@@ -16,25 +16,3 @@
 
 export { AwsMySQLClient, AwsMySQLPoolClient } from "./mysql/lib/index";
 export type { AwsMySQLPooledConnection } from "./mysql/lib/index";
-
-export {
-  AwsPoolConfig,
-  HostInfo,
-  HostRole,
-  InternalPooledConnectionProvider,
-  AwsWrapperError,
-  FailoverFailedError,
-  FailoverSuccessError,
-  TransactionResolutionUnknownError,
-  UnsupportedMethodError,
-  TransactionIsolationLevel,
-  HostAvailability
-} from "./common";
-
-export type {
-  ConnectionProvider,
-  InternalPoolMapping,
-  HostAvailabilityStrategy
-} from "./common";
-
-export { logger } from "./common/logutils";
