@@ -6,7 +6,7 @@ In this tutorial, you will set up a Prisma application with the AWS Advanced Nod
 > This tutorial was written for a PostgreSQL datasource using the following technologies:
 >
 > - Prisma 6.0.1
-> - AWS Advanced NodeJS Driver 1.0.0
+> - AWS Advanced NodeJS Driver 1.3.0
 > - node-postgres 8.13.1
 > - TypeScript 5.6.2
 > - Node 22.9.0
@@ -109,7 +109,7 @@ Finally, when you instantiate your Prisma Client, you need to pass an instance o
 
 ```ts
 // src/index.ts
-import { AwsPGClient } from "aws-advanced-nodejs-wrapper/dist/pg/lib/index.js";
+import { AwsPGClient } from "aws-advanced-nodejs-wrapper/pg";
 import { PrismaAws } from "../adapter";
 import { PrismaClient } from "@prisma/client";
 

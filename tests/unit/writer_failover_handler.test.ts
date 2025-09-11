@@ -15,13 +15,11 @@
 */
 
 import { SimpleHostAvailabilityStrategy } from "../../common/lib/host_availability/simple_host_availability_strategy";
-import { HostInfoBuilder } from "../../common/lib/host_info_builder";
+import { AwsWrapperError, HostAvailability, HostInfoBuilder } from "../../common/lib";
 import { PluginServiceImpl } from "../../common/lib/plugin_service";
-import { AwsWrapperError } from "../../common/lib/utils/errors";
 import { ClusterAwareReaderFailoverHandler } from "../../common/lib/plugins/failover/reader_failover_handler";
 import { ClusterAwareWriterFailoverHandler } from "../../common/lib/plugins/failover/writer_failover_handler";
 import { anything, instance, mock, reset, verify, when } from "ts-mockito";
-import { HostAvailability } from "../../common/lib/host_availability/host_availability";
 import { ReaderFailoverResult } from "../../common/lib/plugins/failover/reader_failover_result";
 import { AwsPGClient } from "../../pg/lib";
 import { WriterFailoverResult } from "../../common/lib/plugins/failover/writer_failover_result";

@@ -17,16 +17,19 @@
 import { TestEnvironment } from "./utils/test_environment";
 import { DriverHelper } from "./utils/driver_helper";
 import { AuroraTestUtility } from "./utils/aurora_test_utility";
-import { FailoverSuccessError, TransactionResolutionUnknownError } from "../../../../common/lib/utils/errors";
+import {
+  FailoverSuccessError,
+  PluginManager,
+  TransactionIsolationLevel,
+  TransactionResolutionUnknownError
+} from "../../../../index";
 import { DatabaseEngine } from "./utils/database_engine";
 import { QueryResult } from "pg";
 import { ProxyHelper } from "./utils/proxy_helper";
-import { RdsUtils } from "../../../../common/lib/utils/rds_utils";
 import { logger } from "../../../../common/logutils";
 import { features, instanceCount } from "./config";
 import { TestEnvironmentFeatures } from "./utils/test_environment_features";
-import { PluginManager } from "../../../../common/lib";
-import { TransactionIsolationLevel } from "../../../../common/lib/utils/transaction_isolation_level";
+import { RdsUtils } from "../../../../common/lib/utils/rds_utils";
 
 const itIf =
   features.includes(TestEnvironmentFeatures.FAILOVER_SUPPORTED) &&

@@ -174,6 +174,9 @@ public class ContainerHelper {
         .withFileSystemBind("../../../tsconfig.json", "/app/tsconfig.json", BindMode.READ_ONLY)
         .withFileSystemBind("../../../package.json", "/app/package.json", BindMode.READ_ONLY)
         .withFileSystemBind("../../../package-lock.json", "/app/package-lock.json", BindMode.READ_ONLY)
+        .withFileSystemBind("../../../index.ts", "/app/index.ts", BindMode.READ_ONLY)
+        .withFileSystemBind("../../../mysql.ts", "/app/mysql.ts", BindMode.READ_ONLY)
+        .withFileSystemBind("../../../pg.ts", "/app/pg.ts", BindMode.READ_ONLY)
         .withFileSystemBind("../../../tests/integration/container",
             "/app/tests/integration/container", BindMode.READ_WRITE)
         .withFileSystemBind("../../../tests/integration/container/reports", "/app/build/reports/tests", BindMode.READ_WRITE) // some tests may write some files here

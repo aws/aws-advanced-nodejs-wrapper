@@ -18,15 +18,18 @@ import { features, instanceCount } from "./config";
 import { TestEnvironmentFeatures } from "./utils/test_environment_features";
 import { logger } from "../../../../common/logutils";
 import { TestEnvironment } from "./utils/test_environment";
-import { PluginManager } from "../../../../common/lib";
+import {
+  AwsPoolConfig,
+  FailoverSuccessError,
+  InternalPooledConnectionProvider,
+  PluginManager,
+  TransactionResolutionUnknownError
+} from "../../../../common/lib";
 import { DriverHelper } from "./utils/driver_helper";
-import { AwsPoolConfig } from "../../../../common/lib/aws_pool_config";
-import { FailoverSuccessError, TransactionResolutionUnknownError } from "../../../../common/lib/utils/errors";
 import { AuroraTestUtility } from "./utils/aurora_test_utility";
 import { AwsMySQLPooledConnection } from "../../../../mysql/lib";
 import { ProxyHelper } from "./utils/proxy_helper";
 import { sleep } from "../../../../common/lib/utils/utils";
-import { InternalPooledConnectionProvider } from "../../../../common/lib/internal_pooled_connection_provider";
 
 const itIf =
   !features.includes(TestEnvironmentFeatures.PERFORMANCE) && !features.includes(TestEnvironmentFeatures.RUN_AUTOSCALING_TESTS_ONLY) ? it : it.skip;

@@ -14,9 +14,8 @@
   limitations under the License.
 */
 
-import { AwsMySQLClient } from "../../mysql/lib";
-import { FailoverFailedError, FailoverSuccessError, TransactionResolutionUnknownError } from "../../common/lib/utils/errors";
-import { PluginManager } from "../../common/lib";
+import { AwsMySQLClient } from "../../mysql";
+import { FailoverFailedError, FailoverSuccessError, TransactionResolutionUnknownError, PluginManager } from "../../index";
 
 const mysqlHost = "db-identifier.XYZ.us-east-2.rds.amazonaws.com";
 const username = "john_smith";

@@ -15,7 +15,7 @@
 */
 
 import { PluginServiceImpl } from "../../common/lib/plugin_service";
-import { HostInfo } from "../../common/lib/host_info";
+import { HostInfo } from "../../common/lib";
 import { WrapperProperties } from "../../common/lib/wrapper_property";
 import { anything, instance, mock, when } from "ts-mockito";
 import { DeveloperConnectionPlugin } from "../../common/lib/plugins/dev/developer_connection_plugin";

@@ -25,8 +25,9 @@ import { WrapperProperties } from "../wrapper_property";
 import { IamAuthUtils, TokenInfo } from "../utils/iam_auth_utils";
 import { ClientWrapper } from "../client_wrapper";
 import { RegionUtils } from "../utils/region_utils";
+import { CanReleaseResources } from "../can_release_resources";
 
-export class IamAuthenticationPlugin extends AbstractConnectionPlugin {
+export class IamAuthenticationPlugin extends AbstractConnectionPlugin implements CanReleaseResources {
   private static readonly SUBSCRIBED_METHODS = new Set<string>(["connect", "forceConnect"]);
   protected static readonly tokenCache = new Map<string, TokenInfo>();
   private readonly telemetryFactory;
@@ -133,7 +134,8 @@ export class IamAuthenticationPlugin extends AbstractConnectionPlugin {
     }
   }
 
-  static clearCache(): void {
+  releaseResources(): Promise<void> {
     IamAuthenticationPlugin.tokenCache.clear();
+    return;
   }
 }

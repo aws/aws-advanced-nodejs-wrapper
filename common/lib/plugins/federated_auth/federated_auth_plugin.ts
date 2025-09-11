@@ -28,8 +28,9 @@ import { SamlUtils } from "../../utils/saml_utils";
 import { ClientWrapper } from "../../client_wrapper";
 import { TelemetryCounter } from "../../utils/telemetry/telemetry_counter";
 import { RegionUtils } from "../../utils/region_utils";
+import { CanReleaseResources } from "../../can_release_resources";
 
-export class FederatedAuthPlugin extends AbstractConnectionPlugin {
+export class FederatedAuthPlugin extends AbstractConnectionPlugin implements CanReleaseResources {
   protected static readonly tokenCache = new Map<string, TokenInfo>();
   protected rdsUtils: RdsUtils = new RdsUtils();
   protected pluginService: PluginService;
@@ -123,7 +124,8 @@ export class FederatedAuthPlugin extends AbstractConnectionPlugin {
     FederatedAuthPlugin.tokenCache.set(cacheKey, new TokenInfo(token, tokenExpiry));
   }
 
-  public static clearCache(): void {
+  releaseResources(): Promise<void> {
     FederatedAuthPlugin.tokenCache.clear();
+    return;
   }
 }

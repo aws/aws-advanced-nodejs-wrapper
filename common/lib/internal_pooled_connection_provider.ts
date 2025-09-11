@@ -27,7 +27,7 @@ import { lookup, LookupAddress } from "dns";
 import { promisify } from "util";
 import { HostInfoBuilder } from "./host_info_builder";
 import { RdsUrlType } from "./utils/rds_url_type";
-import { AwsWrapperError } from "./utils/errors";
+import { AwsWrapperError } from "./index";
 import { Messages } from "./utils/messages";
 import { HostSelector } from "./host_selector";
 import { RandomHostSelector } from "./random_host_selector";

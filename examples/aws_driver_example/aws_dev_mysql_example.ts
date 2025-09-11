@@ -14,11 +14,8 @@
   limitations under the License.
 */
 
-import { ErrorSimulatorManager } from "../../common/lib/plugins/dev/error_simulator_manager";
-import { DeveloperConnectionPlugin } from "../../common/lib/plugins/dev/developer_connection_plugin";
-import { ErrorSimulator } from "../../common/lib/plugins/dev/error_simulator";
-import { ErrorSimulatorMethodCallback } from "../../common/lib/plugins/dev/error_simulator_method_callback";
-import { AwsMySQLClient } from "../../mysql/lib";
+import { ErrorSimulatorManager, DeveloperConnectionPlugin, ErrorSimulator, ErrorSimulatorMethodCallback } from "../../index";
+import { AwsMySQLClient } from "../../mysql";
 
 const mySqlHost = "db-identifier.XYZ.us-east-2.rds.amazonaws.com";
 const username = "john_smith";

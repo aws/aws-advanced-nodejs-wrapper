@@ -19,13 +19,14 @@ import { HostListProviderService } from "../../../common/lib/host_list_provider_
 import { HostListProvider } from "../../../common/lib/host_list_provider/host_list_provider";
 import { RdsHostListProvider } from "../../../common/lib/host_list_provider/rds_host_list_provider";
 import { TopologyAwareDatabaseDialect } from "../../../common/lib/topology_aware_database_dialect";
-import { HostInfo } from "../../../common/lib/host_info";
-import { HostRole } from "../../../common/lib/host_role";
+import { HostInfo, HostRole } from "../../../common/lib";
 import { ClientWrapper } from "../../../common/lib/client_wrapper";
 import { DatabaseDialectCodes } from "../../../common/lib/database_dialect/database_dialect_codes";
 import { LimitlessDatabaseDialect } from "../../../common/lib/database_dialect/limitless_database_dialect";
 import { WrapperProperties } from "../../../common/lib/wrapper_property";
-import { MonitoringRdsHostListProvider } from "../../../common/lib/host_list_provider/monitoring/monitoring_host_list_provider";
+import {
+  MonitoringRdsHostListProvider
+} from "../../../common/lib/host_list_provider/monitoring/monitoring_host_list_provider";
 import { PluginService } from "../../../common/lib/plugin_service";
 import { BlueGreenDialect, BlueGreenResult } from "../../../common/lib/database_dialect/blue_green_dialect";
 

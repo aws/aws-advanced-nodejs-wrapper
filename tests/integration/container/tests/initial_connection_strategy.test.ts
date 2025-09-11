@@ -21,10 +21,9 @@ import { ProxyHelper } from "./utils/proxy_helper";
 import { logger } from "../../../../common/logutils";
 import { TestEnvironmentFeatures } from "./utils/test_environment_features";
 import { features, instanceCount } from "./config";
-import { PluginManager } from "../../../../common/lib";
+import { AwsWrapperError, PluginManager } from "../../../../index";
 import { RdsHostListProvider } from "../../../../common/lib/host_list_provider/rds_host_list_provider";
 import { PluginServiceImpl } from "../../../../common/lib/plugin_service";
-import { AwsWrapperError } from "../../../../common/lib/utils/errors";
 
 const itIf =
   !features.includes(TestEnvironmentFeatures.PERFORMANCE) &&

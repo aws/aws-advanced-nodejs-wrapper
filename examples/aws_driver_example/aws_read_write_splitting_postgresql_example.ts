@@ -14,9 +14,8 @@
   limitations under the License.
 */
 
-import { AwsPGClient } from "../../pg/lib";
-import { FailoverFailedError, FailoverSuccessError, TransactionResolutionUnknownError } from "../../common/lib/utils/errors";
-import { PluginManager } from "../../common/lib";
+import { AwsPGClient } from "../../pg";
+import { FailoverFailedError, FailoverSuccessError, TransactionResolutionUnknownError, PluginManager } from "../../index";
 
 const postgresHost = "db-identifier.XYZ.us-east-2.rds.amazonaws.com";
 const username = "john_smith";

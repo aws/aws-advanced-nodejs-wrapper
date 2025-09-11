@@ -14,10 +14,8 @@
   limitations under the License.
 */
 
-import { AwsPGClient } from "../../pg/lib";
-import { PluginManager } from "../../common/lib";
-import { PluginServiceImpl } from "../../common/lib/plugin_service";
-import { TelemetryFactory } from "../../common/lib/utils/telemetry/telemetry_factory";
+import { AwsPGClient } from "../../pg";
+import { PluginManager, PluginServiceImpl, TelemetryFactory } from "../../index";
 
 export class TestConnectionWrapper extends AwsPGClient {
   constructor(config: any, pluginManager: PluginManager, pluginService: PluginService, telemetryFactory?: TelemetryFactory) {

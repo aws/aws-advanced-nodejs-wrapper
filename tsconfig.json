@@ -15,5 +15,5 @@
     "outDir": "dist"
   },
   "exclude": ["tests", "examples"],
-  "include": ["common", "mysql", "pg"]
+  "include": ["**/*.ts", "index.ts", "mysql.ts", "pg.ts"]
 }

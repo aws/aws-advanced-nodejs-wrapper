@@ -14,16 +14,8 @@
   limitations under the License.
 */
 
-import { ConnectionPlugin } from "../../common/lib";
+import { ConnectionPlugin, HostInfo, HostListProviderService, HostChangeOptions, OldConnectionSuggestionAction, HostRole, HostInfoBuilder, SimpleHostAvailabilityStrategy, Messages } from "../../index";
 import { logger } from "../../common/logutils";
-import { HostInfo } from "../../common/lib/host_info";
-import { HostListProviderService } from "../../common/lib/host_list_provider_service";
-import { HostChangeOptions } from "../../common/lib/host_change_options";
-import { OldConnectionSuggestionAction } from "../../common/lib/old_connection_suggestion_action";
-import { HostRole } from "../../common/lib/host_role";
-import { HostInfoBuilder } from "../../common/lib/host_info_builder";
-import { SimpleHostAvailabilityStrategy } from "../../common/lib/host_availability/simple_host_availability_strategy";
-import { Messages } from "../../common/lib/utils/messages";
 
 export class BenchmarkPlugin implements ConnectionPlugin {
   name: string = this.constructor.name;

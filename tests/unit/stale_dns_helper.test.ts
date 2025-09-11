@@ -17,9 +17,9 @@
 import { PluginServiceImpl } from "../../common/lib/plugin_service";
 import { anything, instance, mock, reset, spy, verify, when } from "ts-mockito";
 import { HostListProviderService } from "../../common/lib/host_list_provider_service";
-import { HostInfo } from "../../common/lib/host_info";
-import { HostRole } from "../../common/lib/host_role";
-import { HostAvailability } from "../../common/lib/host_availability/host_availability";
+import { HostInfo } from "../../common/lib";
+import { HostRole } from "../../common/lib";
+import { HostAvailability } from "../../common/lib";
 import { StaleDnsHelper } from "../../common/lib/plugins/stale_dns/stale_dns_helper";
 import { AwsClient } from "../../common/lib/aws_client";
 import { HostChangeOptions } from "../../common/lib/host_change_options";

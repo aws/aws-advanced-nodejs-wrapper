@@ -15,13 +15,11 @@
 */
 
 import { add, complete, configure, cycle, save, suite } from "benny";
-import { ConnectionPlugin, PluginManager } from "../common/lib";
+import { ConnectionPlugin, ConnectionProvider, HostInfoBuilder, PluginManager } from "../common/lib";
 import { PluginServiceManagerContainer } from "../common/lib/plugin_service_manager_container";
 import { instance, mock, when } from "ts-mockito";
-import { ConnectionProvider } from "../common/lib/connection_provider";
-import { HostInfoBuilder } from "../common/lib/host_info_builder";
 import { SimpleHostAvailabilityStrategy } from "../common/lib/host_availability/simple_host_availability_strategy";
-import { PluginService, PluginServiceImpl } from "../common/lib/plugin_service";
+import { PluginServiceImpl } from "../common/lib/plugin_service";
 import { HostListProviderService } from "../common/lib/host_list_provider_service";
 import { HostChangeOptions } from "../common/lib/host_change_options";
 import { WrapperProperties } from "../common/lib/wrapper_property";
@@ -30,10 +28,10 @@ import { ConnectionProviderManager } from "../common/lib/connection_provider_man
 import { PgDatabaseDialect } from "../pg/lib/dialect/pg_database_dialect";
 import { BenchmarkPluginFactory } from "./testplugin/benchmark_plugin_factory";
 import { NodePostgresDriverDialect } from "../pg/lib/dialect/node_postgres_driver_dialect";
-import { ConfigurationProfileBuilder } from "../common/lib/profile/configuration_profile_builder";
 import { ConnectionPluginFactory } from "../common/lib/plugin_factory";
 import { DefaultPlugin } from "../common/lib/plugins/default_plugin";
 import { AwsPGClient } from "../pg/lib";
+import { ConfigurationProfileBuilder } from "../common/lib/profile/configuration_profile_builder";
 
 const mockConnectionProvider = mock<ConnectionProvider>();
 const mockHostListProviderService = mock<HostListProviderService>();

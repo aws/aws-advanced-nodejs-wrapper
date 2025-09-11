@@ -17,18 +17,23 @@
 import { TestEnvironment } from "./utils/test_environment";
 import { DriverHelper } from "./utils/driver_helper";
 import { AuroraTestUtility } from "./utils/aurora_test_utility";
-import { AwsWrapperError, FailoverFailedError, FailoverSuccessError, TransactionResolutionUnknownError } from "../../../../common/lib/utils/errors";
+import {
+  AwsPoolConfig,
+  AwsWrapperError,
+  FailoverFailedError,
+  FailoverSuccessError,
+  HostInfo,
+  InternalPooledConnectionProvider,
+  InternalPoolMapping,
+  PluginManager,
+  TransactionResolutionUnknownError
+} from "../../../../index";
 import { DatabaseEngine } from "./utils/database_engine";
 import { QueryResult } from "pg";
 import { ProxyHelper } from "./utils/proxy_helper";
 import { logger } from "../../../../common/logutils";
 import { TestEnvironmentFeatures } from "./utils/test_environment_features";
 import { features, instanceCount } from "./config";
-import { InternalPooledConnectionProvider } from "../../../../common/lib/internal_pooled_connection_provider";
-import { AwsPoolConfig } from "../../../../common/lib/aws_pool_config";
-import { InternalPoolMapping } from "../../../../common/lib/utils/internal_pool_mapping";
-import { HostInfo } from "../../../../common/lib/host_info";
-import { PluginManager } from "../../../../common/lib";
 import { RdsHostListProvider } from "../../../../common/lib/host_list_provider/rds_host_list_provider";
 import { PluginServiceImpl } from "../../../../common/lib/plugin_service";
 

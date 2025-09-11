@@ -1,0 +1,14 @@
+{
+  "name": "javascript-example",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "JavaScript example using the AWS Advanced NodeJS Wrapper",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "aws-advanced-nodejs-wrapper": "^1.4.0",
+    "pg": "^8.11.0"
+  }
+}

@@ -40,7 +40,7 @@ export function uniqueId(prefix: string): string {
   return `${prefix}${Math.random().toString(16).slice(2)}`;
 }
 
-class AwsWrapperLogger {
+export class AwsWrapperLogger {
   private static readonly logger = createLogger({
     format: combine(
       colorize(),

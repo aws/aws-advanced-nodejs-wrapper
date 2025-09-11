@@ -15,12 +15,9 @@
 */
 
 import { AwsClient } from "../../common/lib/aws_client";
-import { HostAvailability } from "../../common/lib/host_availability/host_availability";
 import { SimpleHostAvailabilityStrategy } from "../../common/lib/host_availability/simple_host_availability_strategy";
-import { HostInfo } from "../../common/lib/host_info";
 import { HostInfoBuilder } from "../../common/lib/host_info_builder";
 import { RdsHostListProvider } from "../../common/lib/host_list_provider/rds_host_list_provider";
-import { HostRole } from "../../common/lib/host_role";
 import { PluginService, PluginServiceImpl } from "../../common/lib/plugin_service";
 import { FailoverMode } from "../../common/lib/plugins/failover/failover_mode";
 import { FailoverPlugin } from "../../common/lib/plugins/failover/failover_plugin";
@@ -28,17 +25,25 @@ import { ClusterAwareReaderFailoverHandler } from "../../common/lib/plugins/fail
 import { ReaderFailoverResult } from "../../common/lib/plugins/failover/reader_failover_result";
 import { ClusterAwareWriterFailoverHandler } from "../../common/lib/plugins/failover/writer_failover_handler";
 import { WriterFailoverResult } from "../../common/lib/plugins/failover/writer_failover_result";
-import { AwsWrapperError, FailoverFailedError, FailoverSuccessError, TransactionResolutionUnknownError } from "../../common/lib/utils/errors";
 import { RdsUrlType } from "../../common/lib/utils/rds_url_type";
 import { RdsUtils } from "../../common/lib/utils/rds_utils";
-import { WrapperProperties } from "../../common/lib/wrapper_property";
-import { AwsMySQLClient } from "../../mysql/lib";
+import { AwsMySQLClient } from "../../mysql";
 import { anything, instance, mock, reset, resetCalls, spy, verify, when } from "ts-mockito";
-import { Messages } from "../../common/lib/utils/messages";
-import { HostChangeOptions } from "../../common/lib/host_change_options";
-import { NullTelemetryFactory } from "../../common/lib/utils/telemetry/null_telemetry_factory";
-import { MySQLClientWrapper } from "../../common/lib/mysql_client_wrapper";
 import { MySQL2DriverDialect } from "../../mysql/lib/dialect/mysql2_driver_dialect";
+import {
+  AwsWrapperError,
+  FailoverFailedError,
+  FailoverSuccessError,
+  HostAvailability,
+  HostInfo,
+  HostRole,
+  TransactionResolutionUnknownError,
+  WrapperProperties
+} from "../../index";
+import { MySQLClientWrapper } from "../../common/lib/mysql_client_wrapper";
+import { NullTelemetryFactory } from "../../common/lib/utils/telemetry/null_telemetry_factory";
+import { HostChangeOptions } from "../../common/lib/host_change_options";
+import { Messages } from "../../common/lib/utils/messages";
 
 const builder = new HostInfoBuilder({ hostAvailabilityStrategy: new SimpleHostAvailabilityStrategy() });
 

@@ -14,9 +14,14 @@
   limitations under the License.
 */
 
+import {
+  HostInfo,
+  AwsWrapperError,
+  UnavailableHostError,
+  HostAvailability
+} from "../../";
 import { PluginService } from "../../plugin_service";
 import { HostChangeOptions } from "../../host_change_options";
-import { HostInfo } from "../../host_info";
 import { OldConnectionSuggestionAction } from "../../old_connection_suggestion_action";
 import { RdsUtils } from "../../utils/rds_utils";
 import { AbstractConnectionPlugin } from "../../abstract_connection_plugin";
@@ -26,9 +31,7 @@ import { MonitorConnectionContext } from "./monitor_connection_context";
 import { logger, uniqueId } from "../../../logutils";
 import { Messages } from "../../utils/messages";
 import { MonitorService, MonitorServiceImpl } from "./monitor_service";
-import { AwsWrapperError, UnavailableHostError } from "../../utils/errors";
 import { HostListProvider } from "../../host_list_provider/host_list_provider";
-import { HostAvailability } from "../../host_availability/host_availability";
 import { CanReleaseResources } from "../../can_release_resources";
 import { SubscribedMethodHelper } from "../../utils/subscribed_method_helper";
 import { ClientWrapper } from "../../client_wrapper";

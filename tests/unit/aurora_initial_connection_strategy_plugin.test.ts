@@ -14,7 +14,9 @@
   limitations under the License.
 */
 
-import { AuroraInitialConnectionStrategyPlugin } from "../../common/lib/plugins/aurora_initial_connection_strategy_plugin";
+import {
+  AuroraInitialConnectionStrategyPlugin
+} from "../../common/lib/plugins/aurora_initial_connection_strategy_plugin";
 import { PluginServiceImpl } from "../../common/lib/plugin_service";
 import { anything, instance, mock, reset, spy, verify, when } from "ts-mockito";
 import { WrapperProperties } from "../../common/lib/wrapper_property";
@@ -23,10 +25,8 @@ import { SimpleHostAvailabilityStrategy } from "../../common/lib/host_availabili
 import { RdsUrlType } from "../../common/lib/utils/rds_url_type";
 import { RdsUtils } from "../../common/lib/utils/rds_utils";
 import { HostListProviderService } from "../../common/lib/host_list_provider_service";
-import { HostRole } from "../../common/lib/host_role";
-import { HostInfo } from "../../common/lib/host_info";
+import { AwsWrapperError, HostInfo, HostRole } from "../../common/lib";
 import { ClientWrapper } from "../../common/lib/client_wrapper";
-import { AwsWrapperError } from "../../common/lib/utils/errors";
 import { MySQLClientWrapper } from "../../common/lib/mysql_client_wrapper";
 import { jest } from "@jest/globals";
 import { PgClientWrapper } from "../../common/lib/pg_client_wrapper";

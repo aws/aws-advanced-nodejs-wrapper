@@ -19,11 +19,9 @@ import { DriverHelper } from "./utils/driver_helper";
 import { logger } from "../../../../common/logutils";
 import { TestEnvironmentFeatures } from "./utils/test_environment_features";
 import { features } from "./config";
-import { PluginManager } from "../../../../common/lib";
-import { AwsPgPoolClient } from "../../../../pg/lib";
-import { AwsMySQLPoolClient } from "../../../../mysql/lib";
-import { AwsPoolConfig } from "../../../../common/lib/aws_pool_config";
-import { InternalPooledConnectionProvider } from "../../../../common/lib/internal_pooled_connection_provider";
+import { AwsPoolConfig, InternalPooledConnectionProvider, PluginManager } from "../../../../index";
+import { AwsPgPoolClient } from "../../../../pg";
+import { AwsMySQLPoolClient } from "../../../../mysql";
 
 const itIf =
   !features.includes(TestEnvironmentFeatures.PERFORMANCE) && !features.includes(TestEnvironmentFeatures.RUN_AUTOSCALING_TESTS_ONLY) ? it : it.skip;

@@ -17,7 +17,7 @@
 import { createPool, PoolOptions } from "mysql2/promise";
 import { AwsInternalPoolClient } from "../../../common/lib/aws_pool_client";
 import { Messages } from "../../../common/lib/utils/messages";
-import { AwsWrapperError } from "../../../common/lib/utils/errors";
+import { AwsWrapperError } from "../../../common/lib";
 
 export class AwsMysqlInternalPoolClient implements AwsInternalPoolClient {
   targetPool: any;
