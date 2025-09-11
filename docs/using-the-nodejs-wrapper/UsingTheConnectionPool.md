@@ -1,6 +1,6 @@
 # Connection Pool with the AWS Advanced NodeJS Wrapper
 
-The AWS Advanced NodeJS Wrapper supports connection pool out of the box. The connection pool supports **promise-based** API compatible with the community drivers.
+The AWS Advanced NodeJS Wrapper supports connecting with a connection pool out of the box. The connection pool supports **promise-based** APIs compatible with the community drivers.
 This documentation details AWS Advanced NodeJS Wrapper's Connection Pool configuration and usage, as well as how to
 migrate to the AWS Pools from community drivers.
 
@@ -72,7 +72,7 @@ wrapper uses different parameter names, see the mapping below:
 | `connectionLimit` | `maxConnections`        | `number` | `10`    | Maximum number of connections in the pool                                                                |
 | `acquireTimeout`  | `idleTimeoutMillis`     | `number` | `60000` | Time in milliseconds before idle connections are closed                                                  |
 | `queueLimit`      | `queueLimit`            | `number` | `0`     | Maximum number of queued connection requests (0 = unlimited)                                             |
-| `timeout`         | ❌ Not supported         | -        | -       | Query timeout can be set using the wrapperQueryTimeout parameter as part of the connection configuration |
+| `timeout`         | ❌ Not supported         | -        | -       | Query timeout can be set using the wrapperQueryTimeout parameter as part of the client configuration |
 | `reconnect`       | ❌ Not supported         | -        | -       | Auto-reconnect is handled by the failover plugin                                                         |
 
 ### Querying With the Pool Client
@@ -320,9 +320,9 @@ const result = await pool.query({
 console.log(result.rows[0]); // { id: 1, name: 'test' }
 ```
 
-## Limitation
+## Limitations
 
-The AWS Advanced NodeJS Wrapper is a promise-based library and do not support callbacks.
+The AWS Advanced NodeJS Wrapper is a promise-based library and does not support callbacks.
 The community drivers' Connection Pool APIs supporting callbacks are not compatible with this wrapper.
 
 ### Unsupported Callback Examples
@@ -355,7 +355,7 @@ pool.query('SELECT NOW()', (err, result) => {
 
 If your application is fetching individual connections from the pool via `conn = await pool.connect()` or `conn = await pool.getConnection()`.
 Ensure your application does not fetch more connections than the max number of connections allowed in the pool, otherwise the application may hang indefinitely depending on community driver behaviour.
-See the [warning](https://node-postgres.com/apis/pool#releasing-clients) for `node-postgres` for instance.
+For instance, see the [warning](https://node-postgres.com/apis/pool#releasing-clients) for `node-postgres`.
 
 ```typescript
 import { AwsPgPoolClient, AwsPoolConfig } from 'aws-advanced-nodejs-wrapper/pg';
