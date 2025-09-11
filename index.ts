@@ -25,6 +25,18 @@ export { HostRole } from "./common/lib/host_role";
 export { WrapperProperties } from "./common/lib/wrapper_property";
 export { ConnectTimePlugin } from "./common/lib/plugins/connect_time_plugin";
 export { ExecuteTimePlugin } from "./common/lib/plugins/execute_time_plugin";
+export { AuroraInitialConnectionStrategyPlugin } from "./common/lib/plugins/aurora_initial_connection_strategy_plugin";
+export { DefaultPlugin } from "./common/lib/plugins/default_plugin";
+export { ReadWriteSplittingPlugin } from "./common/lib/plugins/read_write_splitting_plugin";
+export { FailoverPlugin } from "./common/lib/plugins/failover/failover_plugin";
+export { Failover2Plugin } from "./common/lib/plugins/failover2/failover2_plugin";
+export { HostMonitoringConnectionPlugin } from "./common/lib/plugins/efm/host_monitoring_connection_plugin";
+export { HostMonitoring2ConnectionPlugin } from "./common/lib/plugins/efm2/host_monitoring2_connection_plugin";
+export { DeveloperConnectionPlugin } from "./common/lib/plugins/dev/developer_connection_plugin";
+export { BlueGreenPlugin } from "./common/lib/plugins/bluegreen/blue_green_plugin";
+export { AuroraConnectionTrackerPlugin } from "./common/lib/plugins/connection_tracker/aurora_connection_tracker_plugin";
+export { StaleDnsPlugin } from "./common/lib/plugins/stale_dns/stale_dns_plugin";
+export { ErrorSimulatorManager } from "./common/lib/plugins/dev/error_simulator_manager";
 
 export type { CanReleaseResources } from "./common/lib/can_release_resources";
 export type { ConnectionPlugin } from "./common/lib/connection_plugin";
@@ -37,5 +49,7 @@ export type { ErrorHandler } from "./common/lib/error_handler";
 export type { SessionStateService } from "./common/lib/session_state_service";
 export type { DriverDialect } from "./common/lib/driver_dialect/driver_dialect";
 export type { InternalPoolMapping } from "./common/lib/utils/internal_pool_mapping";
-
+export type { ErrorSimulator } from "./common/lib/plugins/dev/error_simulator";
+export type { ErrorSimulatorMethodCallback } from "./common/lib/plugins/dev/error_simulator_method_callback";
+export type { ErrorSimulatorConnectCallback } from "./common/lib/plugins/dev/error_simulator_connect_callback";
 export { AwsWrapperLogger } from "./common/logutils";

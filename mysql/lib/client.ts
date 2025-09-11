@@ -497,11 +497,11 @@ class BaseAwsMySQLClient extends AwsClient implements MySQLClient {
     );
   }
 
-  query<T extends QueryResult>(sql: string): Promise<Query>;
-  query<T extends QueryResult>(sql: string, values: any): Promise<Query>;
-  query<T extends QueryResult>(options: QueryOptions): Promise<Query>;
-  query<T extends QueryResult>(options: QueryOptions, values: any): Promise<Query>;
-  async query(options: string | QueryOptions, values?: any): Promise<Query> {
+  query<T extends QueryResult>(sql: string): Promise<[T, any]>;
+  query<T extends QueryResult>(sql: string, values: any): Promise<[T, any]>;
+  query<T extends QueryResult>(options: QueryOptions): Promise<[T, any]>;
+  query<T extends QueryResult>(options: QueryOptions, values: any): Promise<[T, any]>;
+  async query(options: string | QueryOptions, values?: any): Promise<[any, any]> {
     if (!this.isConnected) {
       await this.connect(); // client.connect is not required for MySQL clients
       this.isConnected = true;
@@ -527,10 +527,10 @@ class BaseAwsMySQLClient extends AwsClient implements MySQLClient {
     });
   }
 
-  execute<T extends QueryResult>(sql: string): Promise<Query>;
-  execute<T extends QueryResult>(sql: string, values: any): Promise<Query>;
-  execute<T extends QueryResult>(options: QueryOptions): Promise<Query>;
-  async execute(options: string | QueryOptions, values?: any): Promise<Query> {
+  execute<T extends QueryResult>(sql: string): Promise<[T, any]>;
+  execute<T extends QueryResult>(sql: string, values: any): Promise<[T, any]>;
+  execute<T extends QueryResult>(options: QueryOptions): Promise<[T, any]>;
+  async execute(options: string | QueryOptions, values?: any): Promise<[any, any]> {
     if (!this.isConnected) {
       await this.connect(); // client.connect is not required for MySQL clients
       this.isConnected = true;
@@ -606,11 +606,11 @@ export class AwsMySQLPoolClient implements MySQLPoolClient {
     return connection.end();
   }
 
-  query<T extends QueryResult>(sql: string): Promise<Query>;
-  query<T extends QueryResult>(sql: string, values: any): Promise<Query>;
-  query<T extends QueryResult>(options: QueryOptions): Promise<Query>;
-  query<T extends QueryResult>(options: QueryOptions, values: any): Promise<Query>;
-  async query(options: string | QueryOptions, values?: any): Promise<Query> {
+  query<T extends QueryResult>(sql: string): Promise<[T, any]>;
+  query<T extends QueryResult>(sql: string, values: any): Promise<[T, any]>;
+  query<T extends QueryResult>(options: QueryOptions): Promise<[T, any]>;
+  query<T extends QueryResult>(options: QueryOptions, values: any): Promise<[T, any]>;
+  async query(options: string | QueryOptions, values?: any): Promise<[any, any]> {
     const awsMySQLPooledConnection: AwsMySQLPooledConnection = new AwsMySQLPooledConnection(this.config, this.connectionProvider);
     try {
       await awsMySQLPooledConnection.connect();
