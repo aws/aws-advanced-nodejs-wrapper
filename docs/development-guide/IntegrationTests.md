@@ -62,7 +62,7 @@ variable listed in the tables below is not provided by the user, it may use a de
 ##### Environment Variables for Running Against a New Aurora Cluster
 
 | Environment Variable Name        | Description                                                                                                                                                                                                                      | Example Value                                |
-|----------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|----------------------------------------------|
+| -------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------- |
 | `AWS_ACCESS_KEY_ID`              | An AWS access key associated with an IAM user or role with RDS permissions.                                                                                                                                                      | `ASIAIOSFODNN7EXAMPLE`                       |
 | `AWS_SECRET_ACCESS_KEY`          | The secret key associated with the provided AWS_ACCESS_KEY_ID.                                                                                                                                                                   | `wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY`   |
 | `AWS_SESSION_TOKEN`              | AWS Session Token for CLI, SDK, & API access. This value is only required when using MFA credentials. See: [temporary AWS credentials](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_temp_use-resources.html). | `AQoDYXdzEJr...<remainder of session token>` |
@@ -73,7 +73,7 @@ variable listed in the tables below is not provided by the user, it may use a de
 ###### (Optional) Additional Environment Variables
 
 | Environment Variable Name | Description                                                                                                                        | Example Value       | Default Value (If available)                                                      |
-|---------------------------|------------------------------------------------------------------------------------------------------------------------------------|---------------------|-----------------------------------------------------------------------------------|
+| ------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- | ------------------- | --------------------------------------------------------------------------------- |
 | `DB_USERNAME`             | The username to access the database.                                                                                               | `admin`             | `test_user`                                                                       |
 | `DB_PASSWORD`             | The database cluster password.                                                                                                     | `password`          | `secret_password`                                                                 |
 | `DB_DATABASE_NAME`        | Name of the database that will be used by the tests. The default database name is test.                                            | `test_db_name`      | `test_database`                                                                   |
@@ -84,7 +84,7 @@ variable listed in the tables below is not provided by the user, it may use a de
 ##### Environment Variables for Running Against an Existing Aurora Cluster
 
 | Environment Variable Name | Description                                                                                                                                                                                                                      | Example Value                                | Default Value (If available) |
-|---------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|----------------------------------------------|------------------------------|
+| ------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------- | ---------------------------- |
 | `DB_USERNAME`             | The database username to access the specified cluster.                                                                                                                                                                           | `admin`                                      | `test_user`                  |
 | `DB_PASSWORD`             | The database password to access the specified cluster.                                                                                                                                                                           | `password`                                   | `secret_password`            |
 | `DB_DATABASE_NAME`        | Name of the database that will be used by the tests.                                                                                                                                                                             | `test_db_name`                               | `test_database`              |
@@ -100,7 +100,7 @@ variable listed in the tables below is not provided by the user, it may use a de
 ###### (Optional) Additional Environment Variables
 
 | Environment Variable Name | Description                                                                                                                | Example Value                | Default Value (If available)                                                      |
-|---------------------------|----------------------------------------------------------------------------------------------------------------------------|------------------------------|-----------------------------------------------------------------------------------|
+| ------------------------- | -------------------------------------------------------------------------------------------------------------------------- | ---------------------------- | --------------------------------------------------------------------------------- |
 | `NUM_INSTANCES`           | The number of database instances in the cluster to test with. This value must be one of the following: `1`, `2`, `3`, `5`. | `5`                          | Integration tests will be run several times, against `1`, `2`, and `5` instances. |
 | `RDS_ENDPOINT`            | The RDS service endpoint URL for AWS API calls. This is relevant if you are testing against non-prod environments.         | `https://rds-int.amazon.com` | None                                                                              |
 
@@ -162,6 +162,7 @@ Linux:
 Test results can be found in `tests/integration/host/build/test-results/test-all-environments/`.
 
 [^1]:
+
 The cluster domain suffix can be determined by checking the endpoint of an existing cluster in the desired region,
 or by temporarily creating a database to check the endpoint. For example, given the database endpoint
 `db-identifier.cluster-XYZ.us-east-2.rds.amazonaws.com`, the domain suffix would be `XYZ.us-east-2.rds.amazonaws.com`.
