@@ -108,7 +108,7 @@ props.set("connectionProvider", provider);
 > [!IMPORTANT]
 > To ensure the provider can close the pools, call `await PluginManager.releaseResources()` first.
 >
-> You must call `await provider.releaseResources()` to close the internal connection pools when you are finished using all connections. Unless `await ConnectionProviderManager.releaseResources()` is called, the wrapper driver will keep the pools open so that they can be shared between connections.
+> You must call `await provider.releaseResources()` to close the internal connection pools when you are finished using all connections.
 
 ### Reader Selection
 

@@ -14,9 +14,9 @@
   limitations under the License.
 */
 
-import { ErrorPacketParams, OkPacketParams, Query, QueryOptions, QueryResult } from "mysql2";
+import { ErrorPacketParams, OkPacketParams, QueryOptions, QueryResult } from "mysql2";
 import { ConnectionOptions, Prepare, PrepareStatementInfo } from "mysql2/promise";
-import { AwsMySQLClient, AwsMySQLPooledConnection } from "./client";
+import { AwsMySQLPooledConnection } from "./client";
 
 export interface MySQLClient {
   // Methods supported by MySQL2's PromiseConnection
@@ -68,23 +68,23 @@ export interface MySQLClient {
 
   writePacket(packet: any): Promise<void>;
 
-  query<T extends QueryResult>(sql: string): Promise<Query>;
+  query<T extends QueryResult>(sql: string): Promise<[T, any]>;
 
-  query<T extends QueryResult>(sql: string, values: any): Promise<Query>;
+  query<T extends QueryResult>(sql: string, values: any): Promise<[T, any]>;
 
-  query<T extends QueryResult>(options: QueryOptions): Promise<Query>;
+  query<T extends QueryResult>(options: QueryOptions): Promise<[T, any]>;
 
-  query<T extends QueryResult>(options: QueryOptions, values: any): Promise<Query>;
+  query<T extends QueryResult>(options: QueryOptions, values: any): Promise<[T, any]>;
 
-  query<T extends QueryResult>(options: string | QueryOptions, values: any): Promise<Query>;
+  query<T extends QueryResult>(options: string | QueryOptions, values: any): Promise<[T, any]>;
 
-  execute<T extends QueryResult>(sql: string): Promise<Query>;
+  execute<T extends QueryResult>(sql: string): Promise<[T, any]>;
 
-  execute<T extends QueryResult>(sql: string, values: any): Promise<Query>;
+  execute<T extends QueryResult>(sql: string, values: any): Promise<[T, any]>;
 
-  execute<T extends QueryResult>(options: QueryOptions): Promise<Query>;
+  execute<T extends QueryResult>(options: QueryOptions): Promise<[T, any]>;
 
-  execute<T extends QueryResult>(options: string | QueryOptions, values: any): Promise<Query>;
+  execute<T extends QueryResult>(options: string | QueryOptions, values: any): Promise<[T, any]>;
 }
 
 export interface MySQLPoolClient {
@@ -94,13 +94,13 @@ export interface MySQLPoolClient {
 
   end(): Promise<void>;
 
-  query<T extends QueryResult>(sql: string): Promise<Query>;
+  query<T extends QueryResult>(sql: string): Promise<[T, any]>;
 
-  query<T extends QueryResult>(sql: string, values: any): Promise<Query>;
+  query<T extends QueryResult>(sql: string, values: any): Promise<[T, any]>;
 
-  query<T extends QueryResult>(options: QueryOptions): Promise<Query>;
+  query<T extends QueryResult>(options: QueryOptions): Promise<[T, any]>;
 
-  query<T extends QueryResult>(options: QueryOptions, values: any): Promise<Query>;
+  query<T extends QueryResult>(options: QueryOptions, values: any): Promise<[T, any]>;
 
-  query<T extends QueryResult>(options: string | QueryOptions, values: any): Promise<Query>;
+  query<T extends QueryResult>(options: string | QueryOptions, values: any): Promise<[T, any]>;
 }

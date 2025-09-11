@@ -4,6 +4,12 @@
 
 - [npm](https://www.npmjs.com/) 9.2.0+
 
+> [!WARNING]\
+> The imports and query parsing in these samples are only compatible with AWS Advanced NodeJS Wrapper versions 2.0.0 and above.
+> For instances, importing the AwsMySQLClient like so `import { AwsMySQLClient } from "../../mysql"` with Wrapper versions 1.3.0 and earlier will cause an import error.
+> On the other hand, previous ways of imports such as `import { AwsMySQLClient } from "../../mysql/lib"` from version 1.3.0 will still work in version 2.0.0.
+> If you are using versions 1.3.0 and earlier, see the [sample code from version 1.3.0](https://github.com/aws/aws-advanced-nodejs-wrapper/tree/1.3.0/examples/aws_driver_example).
+
 ### Running a Sample
 
 Each code snippet in the `/examples/aws_driver_example` can be run from within the project. Each example requires existing databases or AWS resources, and will need the user to edit any credentials or user specific information for the sample to run correctly.

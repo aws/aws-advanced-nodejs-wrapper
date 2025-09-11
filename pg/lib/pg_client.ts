@@ -30,7 +30,6 @@ export interface PGClient {
 
   end(): Promise<void>;
 
-  // Query methods
   query(text: string): Promise<any>;
 
   query(text: string, values: any[]): Promise<any>;
@@ -46,15 +45,12 @@ export interface PGClient {
     values?: QueryConfigValues<I>
   ): Promise<QueryResult<R>>;
 
-  // Copy methods
   copyFrom(queryText: string): Promise<NodeJS.WritableStream>;
 
   copyTo(queryText: string): Promise<NodeJS.ReadableStream>;
 
-  // Prepared statements
   prepare(name: string, text: string, nParams?: number): Promise<void>;
 
-  // Escape methods
   escapeIdentifier(str: string): Promise<string>;
 
   escapeLiteral(str: string): Promise<string>;
