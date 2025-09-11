@@ -14,7 +14,7 @@
   limitations under the License.
 */
 
-import { HostInfo, HostRole } from "../../common/lib";
+import { HostInfo, HostRole, PluginManager } from "../../common/lib";
 import { FederatedAuthPlugin } from "../../common/lib/plugins/federated_auth/federated_auth_plugin";
 import { PluginServiceImpl } from "../../common/lib/plugin_service";
 import { IamAuthUtils, TokenInfo } from "../../common/lib/utils/iam_auth_utils";
@@ -67,8 +67,8 @@ describe("federatedAuthTest", () => {
     spyPlugin = spy(new FederatedAuthPlugin(instance(mockPluginService), instance(mockCredentialsProviderFactory)));
   });
 
-  afterEach(() => {
-    FederatedAuthPlugin.clearCache();
+  afterEach(async () => {
+    await PluginManager.releaseResources();
   });
 
   it("testCachedToken", async () => {
