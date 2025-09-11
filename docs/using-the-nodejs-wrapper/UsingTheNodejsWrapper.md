@@ -32,8 +32,8 @@ const client = new AwsPgClient({
 await client.connect();
 ```
 
-The AwsMySQLClient and the AwsPgClient return a single connection. These clients follows the same **promise-based** API supported by MySQL2 and Node-Postgres. To learn more about the supported interfaces, see [UsingTheAwsClients](./UsingTheAwsClients.md).
-This wrapper also supports connecting with a Connection Pool. To learn more about it, see [UsingTheConnectionPool](./UsingTheConnectionPool.md).
+The AwsMySQLClient and the AwsPgClient return a single connection. These clients follows the same **promise-based** API supported by MySQL2 and Node-Postgres. To learn more about the supported interfaces, see [Using the AwsClients](./UsingTheAwsClients.md).
+Since version 2.0.0, this wrapper also supports connecting with a Connection Pool. To learn more about it, see [Using the Connection Pool](./UsingTheConnectionPool.md).
 
 ## Logging
 

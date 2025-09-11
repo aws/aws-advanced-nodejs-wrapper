@@ -1,6 +1,6 @@
 # Connection Pool with the AWS Advanced NodeJS Wrapper
 
-The AWS Advanced NodeJS Wrapper supports connecting with a connection pool out of the box. The connection pool supports **promise-based** APIs compatible with the community drivers.
+Since version 2.0.0, the AWS Advanced NodeJS Wrapper supports connecting with a connection pool out of the box. The connection pool supports **promise-based** APIs compatible with the community drivers.
 This documentation details AWS Advanced NodeJS Wrapper's Connection Pool configuration and usage, as well as how to
 migrate to the AWS Pools from community drivers.
 

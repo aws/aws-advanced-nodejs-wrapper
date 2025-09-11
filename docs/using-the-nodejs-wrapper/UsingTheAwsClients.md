@@ -66,6 +66,10 @@ console.log(result.rows[0]);
 If your application is already using promise-based APIs, migrating from community drivers to the wrapper requires minimal modification to existing execution workflows.
 See the sections below for examples of how community driver APIs map to the wrapper APIs.
 
+> [!WARNING]\
+> The imports and query parsing shown in these examples are only compatible with AWS Advanced NodeJS Wrapper versions 2.0.0 and above.
+> If you are using versions 1.3.0 and earlier, see the [sample code from version 1.3.0](https://github.com/aws/aws-advanced-nodejs-wrapper/tree/1.3.0/examples/aws_driver_example).
+
 ## MySQL2 Migration Guide
 
 ### Creating a Client
@@ -323,3 +327,10 @@ const result = await client.query({
 });
 console.log(result.rows[0]); // { id: 1, name: 'test' }
 ```
+
+# Sample Code
+
+For sample JavaScript and TypeScript projects using the AWS Advanced NodeJS Wrapper, see the following directories:
+
+- [JavaScript Example](../../examples/javascript_example)
+- [TypeScript Example](../../examples/typescript_example)
