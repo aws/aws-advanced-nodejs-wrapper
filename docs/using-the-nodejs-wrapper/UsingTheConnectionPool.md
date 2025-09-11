@@ -4,6 +4,10 @@ The AWS Advanced NodeJS Wrapper supports connecting with a connection pool out o
 This documentation details AWS Advanced NodeJS Wrapper's Connection Pool configuration and usage, as well as how to
 migrate to the AWS Pools from community drivers.
 
+> [!NOTE] \
+> This driver also supports [internal connection pool](using-plugins/UsingTheReadWriteSplittingPlugin.md#internal-connection-pooling), which has a different use case.
+> This document focuses on external connection pool. To learn more about internal connection pool and its differences, see the [External Connection Pool vs Internal Connection Pool](#external-connection-pool-vs-internal-connection-pool) section below.
+
 ## AWS Pool Config
 
 | Property             | Type      | Default          | MySQL2 | node-postgres | Description                                                                       |
