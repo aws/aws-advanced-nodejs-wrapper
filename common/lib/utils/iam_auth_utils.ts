@@ -64,29 +64,6 @@ export class IamAuthUtils {
   public static getCacheKey(port: number, user?: string, hostname?: string, region?: string): string {
     return `${region}:${hostname}:${port}:${user}`;
   }
-
-  public static async generateAuthenticationToken(
-    hostname: string,
-    port: number,
-    region: string,
-    user: string,
-    credentials: AwsCredentialIdentity | AwsCredentialIdentityProvider,
-    pluginService: PluginService
-  ): Promise<string> {
-    const telemetryFactory = pluginService.getTelemetryFactory();
-    const telemetryContext = telemetryFactory.openTelemetryContext(IamAuthUtils.TELEMETRY_FETCH_TOKEN, TelemetryTraceLevel.NESTED);
-    return await telemetryContext.start(async () => {
-      const signer = new Signer({
-        hostname: hostname,
-        port: port,
-        region: region,
-        credentials: credentials,
-        username: user
-      });
-
-      return signer.getAuthToken();
-    });
-  }
 }
 
 export class TokenInfo {

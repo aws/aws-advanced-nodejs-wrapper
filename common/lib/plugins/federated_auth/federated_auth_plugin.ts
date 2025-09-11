@@ -28,11 +28,13 @@ import { SamlUtils } from "../../utils/saml_utils";
 import { ClientWrapper } from "../../client_wrapper";
 import { TelemetryCounter } from "../../utils/telemetry/telemetry_counter";
 import { RegionUtils } from "../../utils/region_utils";
+import { TokenUtils } from "../../utils/token_utils";
 
 export class FederatedAuthPlugin extends AbstractConnectionPlugin {
   protected static readonly tokenCache = new Map<string, TokenInfo>();
   protected rdsUtils: RdsUtils = new RdsUtils();
   protected pluginService: PluginService;
+  private readonly tokenUtils: TokenUtils;
   private static readonly subscribedMethods = new Set<string>(["connect", "forceConnect"]);
   private readonly credentialsProviderFactory: CredentialsProviderFactory;
   private readonly fetchTokenCounter: TelemetryCounter;
@@ -41,10 +43,11 @@ export class FederatedAuthPlugin extends AbstractConnectionPlugin {
     return FederatedAuthPlugin.subscribedMethods;
   }
 
-  constructor(pluginService: PluginService, credentialsProviderFactory: CredentialsProviderFactory) {
+  constructor(pluginService: PluginService, credentialsProviderFactory: CredentialsProviderFactory, tokenUtils: TokenUtils) {
     super();
     this.credentialsProviderFactory = credentialsProviderFactory;
     this.pluginService = pluginService;
+    this.tokenUtils = tokenUtils;
     this.fetchTokenCounter = this.pluginService.getTelemetryFactory().createCounter("federatedAuth.fetchToken.count");
   }
 
@@ -109,7 +112,7 @@ export class FederatedAuthPlugin extends AbstractConnectionPlugin {
     }
     const tokenExpiry: number = Date.now() + tokenExpirationSec * 1000;
     const port = IamAuthUtils.getIamPort(props, hostInfo, this.pluginService.getDialect().getDefaultPort());
-    const token = await IamAuthUtils.generateAuthenticationToken(
+    const token = await this.tokenUtils.generateAuthenticationToken(
       iamHost,
       port,
       region,
