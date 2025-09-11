@@ -4,22 +4,18 @@ The AWS Advanced NodeJS Wrapper supports connecting with a connection pool out o
 This documentation details AWS Advanced NodeJS Wrapper's Connection Pool configuration and usage, as well as how to
 migrate to the AWS Pools from community drivers.
 
-## Internal Connection Pooling
-
-Internal connection pooling is an advanced feature that maintains connection pools for each database instance in a cluster. This is particularly useful with the Read/Write Splitting Plugin, where frequent calls to `setReadOnly()` can benefit from reusing existing connections rather than establishing new ones each time. When enabled, the wrapper creates internal pools that allow connections established by previous client objects to be reused, improving performance for applications that frequently switch between reader and writer instances.
-
 ## AWS Pool Config
 
 | Property             | Type      | Default          | MySQL2 | node-postgres | Description                                                                       |
-|----------------------|-----------|------------------|--------|---------------|-----------------------------------------------------------------------------------|
-| `maxConnections`     | `number`  | `10`             | ✅      | ✅             | Maximum number of connections in the pool                                         |
-| `idleTimeoutMillis`  | `number`  | `60000`          | ✅      | ✅             | Time in milliseconds before idle connections are closed                           |
-| `waitForConnections` | `boolean` | `true`           | ✅      | ❌             | **MySQL only** - Whether to wait for available connections when pool is full      |
-| `queueLimit`         | `number`  | `0`              | ✅      | ❌             | **MySQL only** - Maximum number of queued connection requests (0 = unlimited)     |
-| `maxIdleConnections` | `number`  | `maxConnections` | ✅      | ❌             | **MySQL only** - Maximum number of idle connections to maintain                   |
-| `maxLifetimeSeconds` | `number`  | `0`              | ❌      | ✅             | **PostgreSQL only** - Maximum lifetime of a connection in seconds (0 = unlimited) |
-| `minConnections`     | `number`  | `0`              | ❌      | ✅             | **PostgreSQL only** - Minimum number of connections to maintain                   |
-| `allowExitOnIdle`    | `boolean` | `false`          | ❌      | ✅             | **PostgreSQL only** - Allow the pool to close when all connections are idle       |
+| -------------------- | --------- | ---------------- | ------ | ------------- | --------------------------------------------------------------------------------- |
+| `maxConnections`     | `number`  | `10`             | ✅     | ✅            | Maximum number of connections in the pool                                         |
+| `idleTimeoutMillis`  | `number`  | `60000`          | ✅     | ✅            | Time in milliseconds before idle connections are closed                           |
+| `waitForConnections` | `boolean` | `true`           | ✅     | ❌            | **MySQL only** - Whether to wait for available connections when pool is full      |
+| `queueLimit`         | `number`  | `0`              | ✅     | ❌            | **MySQL only** - Maximum number of queued connection requests (0 = unlimited)     |
+| `maxIdleConnections` | `number`  | `maxConnections` | ✅     | ❌            | **MySQL only** - Maximum number of idle connections to maintain                   |
+| `maxLifetimeSeconds` | `number`  | `0`              | ❌     | ✅            | **PostgreSQL only** - Maximum lifetime of a connection in seconds (0 = unlimited) |
+| `minConnections`     | `number`  | `0`              | ❌     | ✅            | **PostgreSQL only** - Minimum number of connections to maintain                   |
+| `allowExitOnIdle`    | `boolean` | `false`          | ❌     | ✅            | **PostgreSQL only** - Allow the pool to close when all connections are idle       |
 
 ## MySQL2 Migration Guide
 
@@ -45,7 +41,7 @@ const pool = mysql.createPool({
 With the `AwsMySQLPoolClient`, provide the configuration separately like so:
 
 ```typescript
-import { AwsMySQLPoolClient, AwsPoolConfig } from 'aws-advanced-nodejs-wrapper/mysql';
+import { AwsMySQLPoolClient, AwsPoolConfig } from "aws-advanced-nodejs-wrapper/mysql";
 
 const poolConfig = new AwsPoolConfig({
   maxConnections: 10,
@@ -55,25 +51,28 @@ const poolConfig = new AwsPoolConfig({
   queueLimit: 0
 });
 
-const pool = new AwsMySQLPoolClient({
-  host: "cluster-endpoint",
-  user: "database-user",
-  password: "database-pwd",
-  database: "db",
-  wrapperQueryTimeout: 60000,
-}, poolConfig);
+const pool = new AwsMySQLPoolClient(
+  {
+    host: "cluster-endpoint",
+    user: "database-user",
+    password: "database-pwd",
+    database: "db",
+    wrapperQueryTimeout: 60000
+  },
+  poolConfig
+);
 ```
 
 All the pool-specific configuration parameters supported by `mysql2` are also supported by the wrapper. However, the
 wrapper uses different parameter names, see the mapping below:
 
-| mysql2 Parameter  | AwsPoolConfig Parameter | Type     | Default | Description                                                                                              |
-|-------------------|-------------------------|----------|---------|----------------------------------------------------------------------------------------------------------|
-| `connectionLimit` | `maxConnections`        | `number` | `10`    | Maximum number of connections in the pool                                                                |
-| `acquireTimeout`  | `idleTimeoutMillis`     | `number` | `60000` | Time in milliseconds before idle connections are closed                                                  |
-| `queueLimit`      | `queueLimit`            | `number` | `0`     | Maximum number of queued connection requests (0 = unlimited)                                             |
-| `timeout`         | ❌ Not supported         | -        | -       | Query timeout can be set using the wrapperQueryTimeout parameter as part of the client configuration |
-| `reconnect`       | ❌ Not supported         | -        | -       | Auto-reconnect is handled by the failover plugin                                                         |
+| mysql2 Parameter  | AwsPoolConfig Parameter | Type     | Default | Description                                                                                          |
+| ----------------- | ----------------------- | -------- | ------- | ---------------------------------------------------------------------------------------------------- |
+| `connectionLimit` | `maxConnections`        | `number` | `10`    | Maximum number of connections in the pool                                                            |
+| `acquireTimeout`  | `idleTimeoutMillis`     | `number` | `60000` | Time in milliseconds before idle connections are closed                                              |
+| `queueLimit`      | `queueLimit`            | `number` | `0`     | Maximum number of queued connection requests (0 = unlimited)                                         |
+| `timeout`         | ❌ Not supported        | -        | -       | Query timeout can be set using the wrapperQueryTimeout parameter as part of the client configuration |
+| `reconnect`       | ❌ Not supported        | -        | -       | Auto-reconnect is handled by the failover plugin                                                     |
 
 ### Querying With the Pool Client
 
@@ -86,18 +85,25 @@ then execute the query.
 **mysql2:**
 
 ```typescript
-const pool = mysql.createPool({ /* config */ });
-const [rows] = await pool.query('SELECT NOW()');
+const pool = mysql.createPool({
+  /* config */
+});
+const [rows] = await pool.query("SELECT NOW()");
 console.log(rows[0]); // { 'NOW()': 2023-12-01T10:30:00.000Z }
 ```
 
 **AwsMySQLPoolClient:**
 
 ```typescript
-import { AwsMySQLPoolClient, AwsPoolConfig } from 'aws-advanced-nodejs-wrapper/mysql';
+import { AwsMySQLPoolClient, AwsPoolConfig } from "aws-advanced-nodejs-wrapper/mysql";
 
-const pool = new AwsMySQLPoolClient({ /* config */ }, poolConfig);
-const result = await pool.query('SELECT NOW()');
+const pool = new AwsMySQLPoolClient(
+  {
+    /* config */
+  },
+  poolConfig
+);
+const result = await pool.query("SELECT NOW()");
 console.log(result[0][0]); // { 'NOW()': 2023-12-01T10:30:00.000Z }
 ```
 
@@ -106,14 +112,14 @@ console.log(result[0][0]); // { 'NOW()': 2023-12-01T10:30:00.000Z }
 **mysql2:**
 
 ```typescript
-const [rows] = await pool.query('SELECT ? as name, ? as age', ['John', 25]);
+const [rows] = await pool.query("SELECT ? as name, ? as age", ["John", 25]);
 console.log(rows[0]); // { name: 'John', age: 25 }
 ```
 
 **AwsMySQLPoolClient:**
 
 ```typescript
-const result = await pool.query('SELECT ? as name, ? as age', ['John', 25]);
+const result = await pool.query("SELECT ? as name, ? as age", ["John", 25]);
 console.log(result[0][0]); // { name: 'John', age: 25 }
 ```
 
@@ -123,8 +129,8 @@ console.log(result[0][0]); // { name: 'John', age: 25 }
 
 ```typescript
 const [rows] = await pool.query({
-  sql: 'SELECT ? as name, ? as age',
-  values: ['Jane', 30]
+  sql: "SELECT ? as name, ? as age",
+  values: ["Jane", 30]
 });
 console.log(rows[0]); // { name: 'Jane', age: 30 }
 ```
@@ -133,8 +139,8 @@ console.log(rows[0]); // { name: 'Jane', age: 30 }
 
 ```typescript
 const result = await pool.query({
-  sql: 'SELECT ? as name, ? as age',
-  values: ['Jane', 30]
+  sql: "SELECT ? as name, ? as age",
+  values: ["Jane", 30]
 });
 console.log(result[0][0]); // { name: 'Jane', age: 30 }
 ```
@@ -144,16 +150,16 @@ console.log(result[0][0]); // { name: 'Jane', age: 30 }
 **mysql2:**
 
 ```typescript
-const [rows] = await pool.execute('SELECT ? as id, ? as status', [1, 'active']);
+const [rows] = await pool.execute("SELECT ? as id, ? as status", [1, "active"]);
 console.log(rows[0]); // { id: 1, status: 'active' }
 ```
 
 **AwsMySQLPoolClient:**
 
 ```typescript
-const result = await pool.execute('SELECT ? as id, ? as status', [1, 'active']);
+const result = await pool.execute("SELECT ? as id, ? as status", [1, "active"]);
 console.log(result[0][0]); // { id: 1, status: 'active' }
-``` 
+```
 
 ## Node-Postgres Migration Guide
 
@@ -172,13 +178,13 @@ const pool = new Pool({
   idleTimeoutMillis: 30000,
   connectionTimeoutMillis: 2000,
   maxLifetimeSeconds: 60
-})
+});
 ```
 
 With the `AwsPgPoolClient`, provide the configuration separately like so:
 
 ```typescript
-import { AwsPgPoolClient, AwsPoolConfig } from 'aws-advanced-nodejs-wrapper/pg';
+import { AwsPgPoolClient, AwsPoolConfig } from "aws-advanced-nodejs-wrapper/pg";
 
 const poolConfig = new AwsPoolConfig({
   maxConnections: 10,
@@ -187,12 +193,15 @@ const poolConfig = new AwsPoolConfig({
   maxLifetimeSeconds: 60
 });
 
-const pool = new AwsPgPoolClient({
-  host: "cluster-endpoint",
-  user: "database-user",
-  password: "database-pwd",
-  database: "db"
-}, poolConfig);
+const pool = new AwsPgPoolClient(
+  {
+    host: "cluster-endpoint",
+    user: "database-user",
+    password: "database-pwd",
+    database: "db"
+  },
+  poolConfig
+);
 ```
 
 All the [pool-specific configuration parameters](https://node-postgres.com/apis/pool#new-pool) supported by
@@ -200,13 +209,13 @@ All the [pool-specific configuration parameters](https://node-postgres.com/apis/
 However, the wrapper uses different parameter names, see the mapping below:
 
 | node-postgres Parameter   | AwsPoolConfig Parameter | Type      | Default | Description                                                                                                     |
-|---------------------------|-------------------------|-----------|---------|-----------------------------------------------------------------------------------------------------------------|
+| ------------------------- | ----------------------- | --------- | ------- | --------------------------------------------------------------------------------------------------------------- |
 | `max`                     | `maxConnections`        | `number`  | `10`    | Maximum number of connections in the pool                                                                       |
 | `min`                     | `minConnections`        | `number`  | `0`     | Minimum number of connections to maintain                                                                       |
 | `idleTimeoutMillis`       | `idleTimeoutMillis`     | `number`  | `60000` | Time in milliseconds before idle connections are closed                                                         |
 | `allowExitOnIdle`         | `allowExitOnIdle`       | `boolean` | `false` | Allow the pool to close when all connections are idle                                                           |
 | `maxLifetimeSeconds`      | `maxLifetimeSeconds`    | `number`  | `0`     | Maximum lifetime of a connection in seconds (0 = unlimited)                                                     |
-| `connectionTimeoutMillis` | ❌ Not supported         | -         | -       | Connection timeout can be set using the wrapperConnectTimeout parameter as part of the connection configuration |
+| `connectionTimeoutMillis` | ❌ Not supported        | -         | -       | Connection timeout can be set using the wrapperConnectTimeout parameter as part of the connection configuration |
 
 ### Querying With the Pool Client
 
@@ -219,18 +228,25 @@ then execute the query.
 **node-postgres:**
 
 ```typescript
-const pool = new Pool({ /* config */ });
-const result = await pool.query('SELECT NOW()');
+const pool = new Pool({
+  /* config */
+});
+const result = await pool.query("SELECT NOW()");
 console.log(result.rows[0]); // { now: 2023-12-01T10:30:00.000Z }
 ```
 
 **AwsPgPoolClient:**
 
 ```typescript
-import { AwsPgPoolClient, AwsPoolConfig } from 'aws-advanced-nodejs-wrapper/pg';
+import { AwsPgPoolClient, AwsPoolConfig } from "aws-advanced-nodejs-wrapper/pg";
 
-const pool = new AwsPgPoolClient({ /* config */ }, poolConfig);
-const result = await pool.query('SELECT NOW()');
+const pool = new AwsPgPoolClient(
+  {
+    /* config */
+  },
+  poolConfig
+);
+const result = await pool.query("SELECT NOW()");
 console.log(result.rows[0]); // { now: 2023-12-01T10:30:00.000Z }
 ```
 
@@ -239,14 +255,14 @@ console.log(result.rows[0]); // { now: 2023-12-01T10:30:00.000Z }
 **node-postgres:**
 
 ```typescript
-const result = await pool.query('SELECT $1::text as name, $2::int as age', ['John', 25]);
+const result = await pool.query("SELECT $1::text as name, $2::int as age", ["John", 25]);
 console.log(result.rows[0]); // { name: 'John', age: 25 }
 ```
 
 **AwsPgPoolClient:**
 
 ```typescript
-const result = await pool.query('SELECT $1::text as name, $2::int as age', ['John', 25]);
+const result = await pool.query("SELECT $1::text as name, $2::int as age", ["John", 25]);
 console.log(result.rows[0]); // { name: 'John', age: 25 }
 ```
 
@@ -256,8 +272,8 @@ console.log(result.rows[0]); // { name: 'John', age: 25 }
 
 ```typescript
 const result = await pool.query({
-  text: 'SELECT $1::text as name, $2::int as age',
-  values: ['Jane', 30]
+  text: "SELECT $1::text as name, $2::int as age",
+  values: ["Jane", 30]
 });
 console.log(result.rows[0]); // { name: 'Jane', age: 30 }
 ```
@@ -266,8 +282,8 @@ console.log(result.rows[0]); // { name: 'Jane', age: 30 }
 
 ```typescript
 const result = await pool.query({
-  text: 'SELECT $1::text as name, $2::int as age',
-  values: ['Jane', 30]
+  text: "SELECT $1::text as name, $2::int as age",
+  values: ["Jane", 30]
 });
 console.log(result.rows[0]); // { name: 'Jane', age: 30 }
 ```
@@ -278,9 +294,9 @@ console.log(result.rows[0]); // { name: 'Jane', age: 30 }
 
 ```typescript
 const result = await pool.query({
-  text: 'SELECT $1::int as id, $2::text as status',
-  values: [1, 'active'],
-  rowMode: 'array'
+  text: "SELECT $1::int as id, $2::text as status",
+  values: [1, "active"],
+  rowMode: "array"
 });
 console.log(result.rows[0]); // [1, 'active']
 ```
@@ -289,9 +305,9 @@ console.log(result.rows[0]); // [1, 'active']
 
 ```typescript
 const result = await pool.query({
-  text: 'SELECT $1::int as id, $2::text as status',
-  values: [1, 'active'],
-  rowMode: 'arra'
+  text: "SELECT $1::int as id, $2::text as status",
+  values: [1, "active"],
+  rowMode: "arra"
 });
 console.log(result.rows[0]); // [1, 'active']
 ```
@@ -302,9 +318,9 @@ console.log(result.rows[0]); // [1, 'active']
 
 ```typescript
 const result = await pool.query({
-  name: 'fetch-data',
-  text: 'SELECT $1::int as id, $2::text as name',
-  values: [1, 'test']
+  name: "fetch-data",
+  text: "SELECT $1::int as id, $2::text as name",
+  values: [1, "test"]
 });
 console.log(result.rows[0]); // { id: 1, name: 'test' }
 ```
@@ -313,9 +329,9 @@ console.log(result.rows[0]); // { id: 1, name: 'test' }
 
 ```typescript
 const result = await pool.query({
-  name: 'fetch-data',
-  text: 'SELECT $1::int as id, $2::text as name',
-  values: [1, 'test']
+  name: "fetch-data",
+  text: "SELECT $1::int as id, $2::text as name",
+  values: [1, "test"]
 });
 console.log(result.rows[0]); // { id: 1, name: 'test' }
 ```
@@ -328,23 +344,25 @@ The community drivers' Connection Pool APIs supporting callbacks are not compati
 ### Unsupported Callback Examples
 
 **MySQL2 callback API (not supported):**
+
 ```typescript
 // ❌ This will NOT work with AwsMySQLPoolClient
-pool.query('SELECT NOW()', (error, results, fields) => {
+pool.query("SELECT NOW()", (error, results, fields) => {
   if (error) {
     throw error;
-  };
+  }
   console.log(results[0]);
 });
 ```
 
 **node-postgres callback API (not supported):**
+
 ```typescript
 // ❌ This will NOT work with AwsPgPoolClient
-pool.query('SELECT NOW()', (err, result) => {
+pool.query("SELECT NOW()", (err, result) => {
   if (err) {
     throw err;
-  };
+  }
   console.log(result.rows[0]);
 });
 ```
@@ -358,10 +376,15 @@ Ensure your application does not fetch more connections than the max number of c
 For instance, see the [warning](https://node-postgres.com/apis/pool#releasing-clients) for `node-postgres`.
 
 ```typescript
-import { AwsPgPoolClient, AwsPoolConfig } from 'aws-advanced-nodejs-wrapper/pg';
+import { AwsPgPoolClient, AwsPoolConfig } from "aws-advanced-nodejs-wrapper/pg";
 
 const poolConfig = new AwsPoolConfig({ maxConnections: 10 });
-const pool = new AwsPgPoolClient({ /* connection parameters */ }, poolConfig);
+const pool = new AwsPgPoolClient(
+  {
+    /* connection parameters */
+  },
+  poolConfig
+);
 
 // Fetch 10 connections (pool limit)
 const connections = [];
@@ -375,7 +398,7 @@ for (const conn of connections) {
 }
 
 // Attempting to query directly via the pool when number of active connections have already reached the maxConnections limit may result in the application hanging.
-const result = await pool.query('SELECT NOW()');
+const result = await pool.query("SELECT NOW()");
 ```
 
 ### Resources Cleanup
