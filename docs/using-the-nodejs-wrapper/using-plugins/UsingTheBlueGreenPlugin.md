@@ -6,6 +6,10 @@ The [Blue/Green Deployment](https://docs.aws.amazon.com/whitepapers/latest/blue-
 
 The AWS Advanced NodeJS Wrapper leverages the Blue/Green Deployment approach by intelligently managing traffic distribution between blue and green nodes, minimizing the impact of stale DNS data and connectivity disruptions on user applications.
 
+**Important: Service Dependency**
+
+Support for Blue/Green deployments using the AWS Advanced Go Wrapper requires specific metadata tables that are **not available in the current RDS and Aurora service**. Please contact your AWS account team for metadata release timelines.
+
 ## Prerequisites
 
 > [!WARNING]\
@@ -86,6 +90,11 @@ await client.connect();
 
 > [!WARNING]\
 > **Always ensure you provide a non-zero network timeout value to the Blue/Green Deployment Plugin**
+
+### Connections with the IAM Authentication Plugin
+
+When connecting with the IAM Authentication Plugin, additional permissions for the IAM user may be required.
+See [Connecting with Multi-AZ or Blue/Green Deployments](UsingTheIamAuthenticationPlugin.md#connecting-with-multi-az-or-bluegreen-deployments) for specifics.
 
 ## Plan your Blue/Green switchover in advance
 

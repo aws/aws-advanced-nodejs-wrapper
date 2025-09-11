@@ -99,9 +99,10 @@ variable listed in the tables below is not provided by the user, it may use a de
 
 ###### (Optional) Additional Environment Variables
 
-| Environment Variable Name | Description                                                                                                                | Example Value | Default Value (If available)                                                      |
-|---------------------------|----------------------------------------------------------------------------------------------------------------------------|---------------|-----------------------------------------------------------------------------------|
-| `NUM_INSTANCES`           | The number of database instances in the cluster to test with. This value must be one of the following: `1`, `2`, `3`, `5`. | `5`           | Integration tests will be run several times, against `1`, `2`, and `5` instances. |
+| Environment Variable Name | Description                                                                                                                | Example Value                | Default Value (If available)                                                      |
+|---------------------------|----------------------------------------------------------------------------------------------------------------------------|------------------------------|-----------------------------------------------------------------------------------|
+| `NUM_INSTANCES`           | The number of database instances in the cluster to test with. This value must be one of the following: `1`, `2`, `3`, `5`. | `5`                          | Integration tests will be run several times, against `1`, `2`, and `5` instances. |
+| `RDS_ENDPOINT`            | The RDS service endpoint URL for AWS API calls. This is relevant if you are testing against non-prod environments.         | `https://rds-int.amazon.com` | None                                                                              |
 
 ### Standard Integration Tests
 
