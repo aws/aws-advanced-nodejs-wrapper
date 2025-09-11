@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/#semantic-versioning-200).
 
+## [2.0.0] - 2025-09-11
+
+### :magic_wand: Added
+
+- [Connection Pool](https://github.com/aws/aws-advanced-nodejs-wrapper/blob/main/docs/using-the-nodejs-wrapper/UsingTheConnectionPool.md).
+- [Exported additional API compatible with the community drivers](https://github.com/aws/aws-advanced-nodejs-wrapper/blob/main/docs/using-the-nodejs-wrapper/UsingTheAwsClients.md).
+
 ## [1.3.0] - 2025-07-28
 
 ### :magic_wand: Added
@@ -69,6 +76,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 The Amazon Web Services (AWS) Advanced NodeJS Wrapper allows an application to take advantage of the features of clustered Aurora databases.
 
+[2.0.0]: https://github.com/aws/aws-advanced-nodejs-wrapper/compare/1.3.0...2.0.0
 [1.3.0]: https://github.com/aws/aws-advanced-nodejs-wrapper/compare/1.2.0...1.3.0
 [1.2.0]: https://github.com/aws/aws-advanced-nodejs-wrapper/compare/1.1.0...1.2.0
 [1.1.0]: https://github.com/aws/aws-advanced-nodejs-wrapper/compare/1.0.0...1.1.0
