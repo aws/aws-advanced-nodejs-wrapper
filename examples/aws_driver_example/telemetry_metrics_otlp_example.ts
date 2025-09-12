@@ -26,7 +26,7 @@ import { Resource } from "@opentelemetry/resources";
 import { ATTR_SERVICE_NAME } from "@opentelemetry/semantic-conventions";
 import { PeriodicExportingMetricReader } from "@opentelemetry/sdk-metrics";
 import { OTLPMetricExporter } from "@opentelemetry/exporter-metrics-otlp-grpc";
-import { AwsPGClient } from "../../pg/lib";
+import { AwsPGClient } from "../../pg";
 
 const traceExporter = new OTLPTraceExporter({ url: "http://localhost:4317" });
 const resource = Resource.default().merge(

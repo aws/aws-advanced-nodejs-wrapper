@@ -23,7 +23,7 @@ import { PluginServiceImpl } from "../../common/lib/plugin_service";
 import { CustomEndpointMonitorImpl } from "../../common/lib/plugins/custom_endpoint/custom_endpoint_monitor_impl";
 import { HostInfoBuilder } from "../../common/lib/host_info_builder";
 import { SimpleHostAvailabilityStrategy } from "../../common/lib/host_availability/simple_host_availability_strategy";
-import { AwsWrapperError } from "../../common/lib/utils/errors";
+import { AwsWrapperError } from "../../common/lib";
 
 const mockRdsClientFunc = () => instance(mock(RDSClient));
 const mockPluginService = mock(PluginServiceImpl);

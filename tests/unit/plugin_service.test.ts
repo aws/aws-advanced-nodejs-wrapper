@@ -14,21 +14,21 @@
   limitations under the License.
 */
 
-import { PluginServiceImpl } from "../../common/lib/plugin_service";
-import { PluginServiceManagerContainer } from "../../common/lib/plugin_service_manager_container";
+import { DatabaseDialect, HostInfo } from "../../index";
 import { mock } from "ts-mockito";
-import { AwsClient } from "../../common/lib/aws_client";
-import { DatabaseDialect, DatabaseType } from "../../common/lib/database_dialect/database_dialect";
-import { DatabaseDialectCodes } from "../../common/lib/database_dialect/database_dialect_codes";
 import { MySQLDatabaseDialect } from "../../mysql/lib/dialect/mysql_database_dialect";
 import { RdsMySQLDatabaseDialect } from "../../mysql/lib/dialect/rds_mysql_database_dialect";
 import { AuroraMySQLDatabaseDialect } from "../../mysql/lib/dialect/aurora_mysql_database_dialect";
 import { RdsMultiAZClusterMySQLDatabaseDialect } from "../../mysql/lib/dialect/rds_multi_az_mysql_database_dialect";
 import { MySQL2DriverDialect } from "../../mysql/lib/dialect/mysql2_driver_dialect";
-import { AllowedAndBlockedHosts } from "../../common/lib/allowed_and_blocked_hosts";
-import { HostInfoBuilder } from "../../common/lib/host_info_builder";
 import { SimpleHostAvailabilityStrategy } from "../../common/lib/host_availability/simple_host_availability_strategy";
-import { HostInfo } from "../../common/lib/host_info";
+import { HostInfoBuilder } from "../../common/lib";
+import { PluginServiceImpl } from "../../common/lib/plugin_service";
+import { DatabaseDialectCodes } from "../../common/lib/database_dialect/database_dialect_codes";
+import { AwsClient } from "../../common/lib/aws_client";
+import { PluginServiceManagerContainer } from "../../common/lib/plugin_service_manager_container";
+import { AllowedAndBlockedHosts } from "../../common/lib/allowed_and_blocked_hosts";
+import { DatabaseType } from "../../common/lib/database_dialect/database_dialect";
 
 function createHost(host: string) {
   return new HostInfoBuilder({

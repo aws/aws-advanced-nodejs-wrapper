@@ -14,9 +14,9 @@
   limitations under the License.
 */
 
-import { HostRole } from "../../common/lib/host_role";
-import { HostInfoBuilder } from "../../common/lib/host_info_builder";
-import { HostAvailability } from "../../common/lib/host_availability/host_availability";
+import { HostRole } from "../../common/lib";
+import { HostInfoBuilder } from "../../common/lib";
+import { HostAvailability } from "../../common/lib";
 import { SimpleHostAvailabilityStrategy } from "../../common/lib/host_availability/simple_host_availability_strategy";
 import { RandomHostSelector } from "../../common/lib/random_host_selector";
 

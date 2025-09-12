@@ -14,7 +14,7 @@
   limitations under the License.
 */
 
-import { AwsMySQLClient } from "../../mysql/lib";
+import { AwsMySQLClient } from "../../mysql";
 
 const mysqlHost = "db-identifier.XYZ.us-east-2.rds.amazonaws.com";
 const port = 3306;
@@ -35,8 +35,8 @@ const client = new AwsMySQLClient({
 // Attempt connection.
 try {
   await client.connect();
-  const result = await client.query({ sql: "SELECT 1" });
-  console.log(result);
+  const [rows] = await client.query({ sql: "SELECT 1" });
+  console.log(rows[0]); // { "1": 1 }
 } finally {
   await client.end();
 }

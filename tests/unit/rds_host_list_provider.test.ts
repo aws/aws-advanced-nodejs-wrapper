@@ -16,16 +16,13 @@
 
 import { RdsHostListProvider } from "../../common/lib/host_list_provider/rds_host_list_provider";
 import { anything, instance, mock, reset, spy, verify, when } from "ts-mockito";
-import { PluginService, PluginServiceImpl } from "../../common/lib/plugin_service";
+import { PluginServiceImpl } from "../../common/lib/plugin_service";
 import { AwsClient } from "../../common/lib/aws_client";
-import { HostInfo } from "../../common/lib/host_info";
-import { HostInfoBuilder } from "../../common/lib/host_info_builder";
+import { AwsWrapperError, HostInfo, HostInfoBuilder, HostRole } from "../../common/lib";
 import { SimpleHostAvailabilityStrategy } from "../../common/lib/host_availability/simple_host_availability_strategy";
 import { ConnectionUrlParser } from "../../common/lib/utils/connection_url_parser";
 import { AwsPGClient } from "../../pg/lib";
-import { AwsWrapperError } from "../../common/lib/utils/errors";
 import { sleep } from "../../common/lib/utils/utils";
-import { HostRole } from "../../common/lib/host_role";
 import { AuroraPgDatabaseDialect } from "../../pg/lib/dialect/aurora_pg_database_dialect";
 import { ClientWrapper } from "../../common/lib/client_wrapper";
 import { PgConnectionUrlParser } from "../../pg/lib/pg_connection_url_parser";

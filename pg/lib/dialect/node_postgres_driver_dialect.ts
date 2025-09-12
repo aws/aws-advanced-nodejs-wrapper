@@ -20,11 +20,10 @@ import { ClientWrapper } from "../../../common/lib/client_wrapper";
 import pkgPg from "pg";
 
 import { WrapperProperties } from "../../../common/lib/wrapper_property";
-import { AwsPoolConfig } from "../../../common/lib/aws_pool_config";
+import { AwsPoolConfig, HostInfo } from "../../../common/lib";
 import { AwsInternalPoolClient } from "../../../common/lib/aws_pool_client";
 import { AwsPgInternalPoolClient } from "../icp/pg_internal_pool_client";
 import { PgClientWrapper } from "../../../common/lib/pg_client_wrapper";
-import { HostInfo } from "../../../common/lib/host_info";
 
 export class NodePostgresDriverDialect implements DriverDialect {
   protected dialectName: string = this.constructor.name;

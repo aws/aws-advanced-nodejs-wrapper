@@ -20,12 +20,14 @@ import { AuroraTestUtility } from "./utils/aurora_test_utility";
 import { logger } from "../../../../common/logutils";
 import { TestEnvironmentFeatures } from "./utils/test_environment_features";
 import { features, instanceCount } from "./config";
-import { InternalPooledConnectionProvider } from "../../../../common/lib/internal_pooled_connection_provider";
-import { AwsPoolConfig } from "../../../../common/lib/aws_pool_config";
+import {
+  AwsPoolConfig,
+  FailoverSuccessError,
+  InternalPooledConnectionProvider,
+  PluginManager,
+} from "../../../../index";
 import { TestInstanceInfo } from "./utils/test_instance_info";
 import { sleep } from "../../../../common/lib/utils/utils";
-import { FailoverSuccessError } from "../../../../common/lib/utils/errors";
-import { PluginManager } from "../../../../common/lib";
 
 const itIf =
   !features.includes(TestEnvironmentFeatures.PERFORMANCE) &&

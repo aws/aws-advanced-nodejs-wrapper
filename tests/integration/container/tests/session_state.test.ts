@@ -22,12 +22,10 @@ import { DatabaseEngine } from "./utils/database_engine";
 import { TestEnvironmentFeatures } from "./utils/test_environment_features";
 import { features } from "./config";
 import { DatabaseEngineDeployment } from "./utils/database_engine_deployment";
-import { PluginManager } from "../../../../common/lib";
-import { AwsPGClient } from "../../../../pg/lib";
-import { PluginService } from "../../../../common/lib/plugin_service";
+import { PluginManager, PluginService, TransactionIsolationLevel } from "../../../../index";
+import { AwsPGClient } from "../../../../pg";
 import { TestDriver } from "./utils/test_driver";
-import { AwsMySQLClient } from "../../../../mysql/lib";
-import { TransactionIsolationLevel } from "../../../../common/lib/utils/transaction_isolation_level";
+import { AwsMySQLClient } from "../../../../mysql";
 
 const itIf =
   !features.includes(TestEnvironmentFeatures.PERFORMANCE) && !features.includes(TestEnvironmentFeatures.RUN_AUTOSCALING_TESTS_ONLY)

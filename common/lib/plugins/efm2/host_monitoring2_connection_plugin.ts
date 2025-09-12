@@ -26,7 +26,7 @@ import { MonitorConnectionContext } from "./monitor_connection_context";
 import { logger, uniqueId } from "../../../logutils";
 import { Messages } from "../../utils/messages";
 import { MonitorService, MonitorServiceImpl } from "./monitor_service";
-import { AwsWrapperError } from "../../utils/errors";
+import { AwsWrapperError } from "../../";
 import { HostListProvider } from "../../host_list_provider/host_list_provider";
 import { CanReleaseResources } from "../../can_release_resources";
 import { SubscribedMethodHelper } from "../../utils/subscribed_method_helper";

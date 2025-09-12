@@ -16,11 +16,9 @@
 
 import { PluginServiceImpl } from "../../common/lib/plugin_service";
 import { IamAuthenticationPlugin } from "../../common/lib/authentication/iam_authentication_plugin";
-import { HostInfoBuilder } from "../../common/lib/host_info_builder";
+import { AwsWrapperError, HostInfo, HostInfoBuilder, PluginManager } from "../../common/lib";
 import { SimpleHostAvailabilityStrategy } from "../../common/lib/host_availability/simple_host_availability_strategy";
-import { HostInfo } from "../../common/lib/host_info";
 import { AwsClient } from "../../common/lib/aws_client";
-import { AwsWrapperError } from "../../common/lib/utils/errors";
 import { WrapperProperties } from "../../common/lib/wrapper_property";
 import fetch from "node-fetch";
 import { anything, instance, mock, spy, when } from "ts-mockito";
@@ -103,7 +101,7 @@ async function testToken(info: HostInfo, plugin: IamAuthenticationPlugin) {
 
 describe("testIamAuth", () => {
   beforeEach(() => {
-    IamAuthenticationPlugin.clearCache();
+    PluginManager.releaseResources();
 
     props.clear();
     props.set(WrapperProperties.USER.name, "postgresqlUser");

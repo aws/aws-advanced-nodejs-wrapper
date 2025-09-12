@@ -14,7 +14,7 @@
   limitations under the License.
 */
 
-import { AwsPGClient } from "../../pg/lib";
+import { AwsPGClient } from "../../pg";
 import { AsyncHooksContextManager } from "@opentelemetry/context-async-hooks";
 import { context } from "@opentelemetry/api";
 import { NodeSDK } from "@opentelemetry/sdk-node";

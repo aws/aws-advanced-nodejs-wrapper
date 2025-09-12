@@ -28,8 +28,9 @@ import { AwsWrapperError } from "../../utils/errors";
 import { ClientWrapper } from "../../client_wrapper";
 import { TelemetryCounter } from "../../utils/telemetry/telemetry_counter";
 import { RegionUtils } from "../../utils/region_utils";
+import { CanReleaseResources } from "../../can_release_resources";
 
-export class OktaAuthPlugin extends AbstractConnectionPlugin {
+export class OktaAuthPlugin extends AbstractConnectionPlugin implements CanReleaseResources {
   protected static readonly tokenCache = new Map<string, TokenInfo>();
   private static readonly subscribedMethods = new Set<string>(["connect", "forceConnect"]);
   protected pluginService: PluginService;
@@ -125,7 +126,8 @@ export class OktaAuthPlugin extends AbstractConnectionPlugin {
     OktaAuthPlugin.tokenCache.set(cacheKey, new TokenInfo(token, tokenExpiry));
   }
 
-  public static clearCache(): void {
+  releaseResources(): Promise<void> {
     OktaAuthPlugin.tokenCache.clear();
+    return;
   }
 }

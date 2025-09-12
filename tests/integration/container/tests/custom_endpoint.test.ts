@@ -19,7 +19,7 @@ import { TestEnvironmentFeatures } from "./utils/test_environment_features";
 import { TestEnvironment } from "./utils/test_environment";
 import { AuroraTestUtility } from "./utils/aurora_test_utility";
 import { DriverHelper } from "./utils/driver_helper";
-import { AwsWrapperError, FailoverSuccessError } from "../../../../common/lib/utils/errors";
+import { AwsWrapperError, FailoverSuccessError } from "../../../../common/lib";
 import {
   CreateDBClusterEndpointCommand,
   DBClusterEndpoint,
@@ -33,7 +33,7 @@ import { randomUUID } from "node:crypto";
 import { TestInstanceInfo } from "./utils/test_instance_info";
 import { logger } from "../../../../common/logutils";
 import { ProxyHelper } from "./utils/proxy_helper";
-import { PluginManager } from "../../../../common/lib";
+import { PluginManager } from "../../../../index";
 import { TestDriver } from "./utils/test_driver";
 
 const itIf =

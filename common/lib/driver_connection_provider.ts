@@ -19,7 +19,7 @@ import { HostRole } from "./host_role";
 import { HostInfo } from "./host_info";
 import { HostSelector } from "./host_selector";
 import { RandomHostSelector } from "./random_host_selector";
-import { UnsupportedStrategyError } from "./utils/errors";
+import { UnsupportedStrategyError } from "./index";
 import { WrapperProperties } from "./wrapper_property";
 import { Messages } from "./utils/messages";
 import { RdsUtils } from "./utils/rds_utils";

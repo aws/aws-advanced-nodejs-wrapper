@@ -15,13 +15,12 @@
 */
 
 import { RdsHostListProvider } from "../rds_host_list_provider";
-import { HostInfo } from "../../host_info";
-import { ClusterTopologyMonitor, ClusterTopologyMonitorImpl } from "./cluster_topology_monitor";
+import { HostInfo, AwsWrapperError } from "../../";
 import { PluginService } from "../../plugin_service";
+import { ClusterTopologyMonitor, ClusterTopologyMonitorImpl } from "./cluster_topology_monitor";
 import { HostListProviderService } from "../../host_list_provider_service";
 import { ClientWrapper } from "../../client_wrapper";
 import { DatabaseDialect } from "../../database_dialect/database_dialect";
-import { AwsWrapperError } from "../../utils/errors";
 import { Messages } from "../../utils/messages";
 import { WrapperProperties } from "../../wrapper_property";
 import { BlockingHostListProvider } from "../host_list_provider";

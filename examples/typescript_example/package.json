@@ -1,0 +1,21 @@
+{
+  "name": "typescript-example",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "TypeScript example using the AWS Advanced NodeJS Wrapper",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "npm run build && node dist/index.js",
+    "dev": "ts-node src/index.ts"
+  },
+  "dependencies": {
+    "aws-advanced-nodejs-wrapper": "^2.0.0",
+    "mysql2": "^3.6.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0",
+    "ts-node": "^10.9.0"
+  }
+}

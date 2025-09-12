@@ -14,10 +14,9 @@
   limitations under the License.
 */
 
-import { InternalPooledConnectionProvider } from "../../common/lib/internal_pooled_connection_provider";
+import { InternalPooledConnectionProvider, PluginManager } from "../../index";
 import { logger } from "../../common/logutils";
-import { AwsPGClient } from "../../pg/lib";
-import { PluginManager } from "../../common/lib";
+import { AwsPGClient } from "../../pg";
 
 const postgresHost = "db-identifier.XYZ.us-east-2.rds.amazonaws.com";
 const username = "john_smith";

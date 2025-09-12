@@ -16,14 +16,15 @@
 
 import { MonitorImpl } from "../../common/lib/plugins/efm/monitor";
 import { anything, instance, mock, reset, spy, verify, when } from "ts-mockito";
-import { PluginServiceImpl } from "../../common/lib/plugin_service";
-import { HostInfo } from "../../common/lib/host_info";
+import { PluginService, PluginServiceImpl } from "../../common/lib/plugin_service";
+import { HostInfo } from "../../common/lib";
 import { AwsClient } from "../../common/lib/aws_client";
 import { MonitorConnectionContext } from "../../common/lib/plugins/efm/monitor_connection_context";
 import { sleep } from "../../common/lib/utils/utils";
 import { ClientWrapper } from "../../common/lib/client_wrapper";
 import { NullTelemetryFactory } from "../../common/lib/utils/telemetry/null_telemetry_factory";
 import { MySQLClientWrapper } from "../../common/lib/mysql_client_wrapper";
+import { MySQL2DriverDialect } from "../../mysql/lib/dialect/mysql2_driver_dialect";
 
 class MonitorImplTest extends MonitorImpl {
   constructor(pluginService: PluginService, hostInfo: HostInfo, properties: Map<string, any>, monitorDisposalTimeMillis: number) {
@@ -38,7 +39,7 @@ class MonitorImplTest extends MonitorImpl {
 const mockPluginService = mock(PluginServiceImpl);
 const mockHostInfo = mock(HostInfo);
 const mockClient = mock(AwsClient);
-const mockClientWrapper: ClientWrapper = new MySQLClientWrapper(undefined, mock(HostInfo), new Map<string, any>());
+const mockClientWrapper: ClientWrapper = new MySQLClientWrapper(undefined, mock(HostInfo), new Map<string, any>(), new MySQL2DriverDialect());
 
 const SHORT_INTERVAL_MILLIS = 30;
 
@@ -105,7 +106,7 @@ describe("monitor impl test", () => {
   it("run with context", async () => {
     const monitorContextInstance = new MonitorConnectionContext(
       monitor,
-      mockClient,
+      mockClientWrapper,
       30000,
       5000,
       3,

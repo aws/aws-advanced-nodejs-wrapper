@@ -14,9 +14,8 @@
   limitations under the License.
 */
 
-import { AwsMySQLClient } from "../../mysql/lib";
-import { FailoverFailedError, FailoverSuccessError, TransactionResolutionUnknownError } from "../../common/lib/utils/errors";
-import { PluginManager } from "../../common/lib";
+import { AwsMySQLClient } from "../../mysql";
+import { FailoverFailedError, FailoverSuccessError, TransactionResolutionUnknownError, PluginManager } from "../../index";
 
 const mysqlHost = "db-identifier.XYZ.us-east-2.rds.amazonaws.com";
 const username = "john_smith";
@@ -54,8 +53,8 @@ try {
   await setInitialSessionSettings(client);
 
   // Example query
-  const result = await queryWithFailoverHandling(client, "UPDATE bank_test SET account_balance=account_balance - 100 WHERE name='Jane Doe'");
-  console.log(result);
+  const [rows] = await queryWithFailoverHandling(client, "UPDATE bank_test SET account_balance=account_balance - 100 WHERE name='Jane Doe'");
+  console.log("Updated rows:", rows[0].affectedRows); // Updated rows: 1
 
   // Internally switch to a reader connection.
   await client.setReadOnly(true);

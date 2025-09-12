@@ -14,9 +14,8 @@
   limitations under the License.
 */
 
-import { AwsPGClient } from "../../pg/lib";
-import { FailoverFailedError, FailoverSuccessError, TransactionResolutionUnknownError } from "../../common/lib/utils/errors";
-import { PluginManager } from "../../common/lib";
+import { AwsPGClient } from "../../pg";
+import { FailoverFailedError, FailoverSuccessError, TransactionResolutionUnknownError, PluginManager } from "../../index";
 
 const postgresHost = "db-identifier.XYZ.us-east-2.rds.amazonaws.com";
 const username = "john_smith";
@@ -54,7 +53,7 @@ try {
 
   // Example query
   const result = await queryWithFailoverHandling(client, "UPDATE bank_test SET account_balance=account_balance - 100 WHERE name='Jane Doe'");
-  console.log(result);
+  console.log("Updated rows:", result.rowCount); // Updated rows: 1
 
   // Internally switch to a reader connection.
   await client.setReadOnly(true);

@@ -20,7 +20,7 @@ import { ReaderFailoverResult } from "./reader_failover_result";
 import { getTimeoutTask, maskProperties, shuffleList, sleep } from "../../utils/utils";
 import { HostRole } from "../../host_role";
 import { HostAvailability } from "../../host_availability/host_availability";
-import { AwsWrapperError, InternalQueryTimeoutError } from "../../utils/errors";
+import { AwsWrapperError, InternalQueryTimeoutError } from "../../";
 import { logger, uniqueId } from "../../../logutils";
 import { Messages } from "../../utils/messages";
 import { WrapperProperties } from "../../wrapper_property";

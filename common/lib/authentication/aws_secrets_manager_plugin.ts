@@ -30,8 +30,9 @@ import { WrapperProperties } from "../wrapper_property";
 import { logAndThrowError } from "../utils/utils";
 import { ClientWrapper } from "../client_wrapper";
 import { TelemetryTraceLevel } from "../utils/telemetry/telemetry_trace_level";
+import { CanReleaseResources } from "../can_release_resources";
 
-export class AwsSecretsManagerPlugin extends AbstractConnectionPlugin {
+export class AwsSecretsManagerPlugin extends AbstractConnectionPlugin implements CanReleaseResources {
   private static readonly TELEMETRY_UPDATE_SECRETS = "fetch credentials";
   private static readonly TELEMETRY_FETCH_CREDENTIALS_COUNTER = "secretsManager.fetchCredentials.count";
   private static SUBSCRIBED_METHODS: Set<string> = new Set<string>(["connect", "forceConnect"]);
@@ -168,6 +169,11 @@ export class AwsSecretsManagerPlugin extends AbstractConnectionPlugin {
       return secret;
     }
     throw new AwsWrapperError(Messages.get("AwsSecretsManagerConnectionPlugin.failedToFetchDbCredentials"));
+  }
+
+  releaseResources(): Promise<void> {
+    AwsSecretsManagerPlugin.secretsCache.clear();
+    return;
   }
 }
 

@@ -17,15 +17,13 @@
 import { TestEnvironment } from "./utils/test_environment";
 import { DriverHelper } from "./utils/driver_helper";
 import { AuroraTestUtility } from "./utils/aurora_test_utility";
-import { FailoverSuccessError } from "../../../../common/lib/utils/errors";
+import { FailoverSuccessError, InternalPooledConnectionProvider, PluginManager } from "../../../../index";
+import { RdsHostListProvider } from "../../../../common/lib/host_list_provider/rds_host_list_provider";
+import { PluginServiceImpl } from "../../../../common/lib/plugin_service";
 import { ProxyHelper } from "./utils/proxy_helper";
 import { logger } from "../../../../common/logutils";
 import { TestEnvironmentFeatures } from "./utils/test_environment_features";
 import { features, instanceCount } from "./config";
-import { InternalPooledConnectionProvider } from "../../../../common/lib/internal_pooled_connection_provider";
-import { PluginManager } from "../../../../common/lib";
-import { RdsHostListProvider } from "../../../../common/lib/host_list_provider/rds_host_list_provider";
-import { PluginService, PluginServiceImpl } from "../../../../common/lib/plugin_service";
 
 const itIf =
   !features.includes(TestEnvironmentFeatures.PERFORMANCE) &&

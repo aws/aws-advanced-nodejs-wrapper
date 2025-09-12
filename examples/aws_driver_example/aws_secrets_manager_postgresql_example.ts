@@ -14,7 +14,7 @@
   limitations under the License.
 */
 
-import { AwsPGClient } from "../../pg/lib";
+import { AwsPGClient } from "../../pg";
 
 const postgresHost = "db-identifier.XYZ.us-east-2.rds.amazonaws.com";
 const database = "employees";
@@ -38,7 +38,7 @@ const client = new AwsPGClient({
 try {
   await client.connect();
   const result = await client.query("select 1");
-  console.log(result);
+  console.log(result.rows[0]); // { "?column?": 1 }
 } finally {
   await client.end();
 }

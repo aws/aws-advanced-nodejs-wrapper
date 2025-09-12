@@ -14,12 +14,9 @@
   limitations under the License.
 */
 
-import { HostInfo } from "../../common/lib/host_info";
+import { AwsWrapperError, HostAvailability, HostInfo, HostRole } from "../../common/lib";
 import { PluginServiceImpl } from "../../common/lib/plugin_service";
 import { ClusterAwareReaderFailoverHandler } from "../../common/lib/plugins/failover/reader_failover_handler";
-import { HostAvailability } from "../../common/lib/host_availability/host_availability";
-import { HostRole } from "../../common/lib/host_role";
-import { AwsWrapperError } from "../../common/lib/utils/errors";
 import { anything, instance, mock, reset, verify, when } from "ts-mockito";
 import { ClientWrapper } from "../../common/lib/client_wrapper";
 import { PgDatabaseDialect } from "../../pg/lib/dialect/pg_database_dialect";

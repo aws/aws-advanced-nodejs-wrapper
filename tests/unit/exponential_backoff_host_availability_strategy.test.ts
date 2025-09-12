@@ -14,11 +14,12 @@
   limitations under the License.
 */
 
-import { ExponentialBackoffHostAvailabilityStrategy } from "../../common/lib/host_availability/exponential_backoff_host_availability_strategy";
-import { HostAvailability } from "../../common/lib/host_availability/host_availability";
+import {
+  ExponentialBackoffHostAvailabilityStrategy
+} from "../../common/lib/host_availability/exponential_backoff_host_availability_strategy";
+import { HostAvailability, IllegalArgumentError } from "../../common/lib";
 import { sleep } from "../../common/lib/utils/utils";
 import { WrapperProperties } from "../../common/lib/wrapper_property";
-import { IllegalArgumentError } from "../../common/lib/utils/errors";
 
 describe("exponentialBackoffTests", () => {
   let props: Map<string, any>;

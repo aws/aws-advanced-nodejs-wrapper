@@ -18,7 +18,7 @@
   "dependencies": {
     "@prisma/client": "6.0.0",
     "@prisma/driver-adapter-utils": "^6.0.0",
-    "aws-advanced-nodejs-wrapper": "^1.0.0",
+    "aws-advanced-nodejs-wrapper": "^2.0.0",
     "pg": "^8.13.1",
     "util": "^0.12.5"
   }

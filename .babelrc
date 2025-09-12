@@ -1,7 +1,10 @@
 {
   "plugins": [
     ["babel-plugin-transform-rewrite-imports", {
-      "appendExtension": ".js"
+      "appendExtension": ".js",
+      "replaceExtensions": {
+        "(.+?)/common/lib$": "$1/common/lib/index"
+      }
     }]
   ]
 }

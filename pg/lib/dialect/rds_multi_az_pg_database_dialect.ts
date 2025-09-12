@@ -17,11 +17,9 @@
 import { HostListProviderService } from "../../../common/lib/host_list_provider_service";
 import { HostListProvider } from "../../../common/lib/host_list_provider/host_list_provider";
 import { ClientWrapper } from "../../../common/lib/client_wrapper";
-import { HostInfo } from "../../../common/lib/host_info";
-import { HostRole } from "../../../common/lib/host_role";
+import { AwsWrapperError, HostInfo, HostRole } from "../../../common/lib";
 import { Messages } from "../../../common/lib/utils/messages";
 import { logger } from "../../../common/logutils";
-import { AwsWrapperError } from "../../../common/lib/utils/errors";
 import { TopologyAwareDatabaseDialect } from "../../../common/lib/topology_aware_database_dialect";
 import { RdsHostListProvider } from "../../../common/lib/host_list_provider/rds_host_list_provider";
 import { PgDatabaseDialect } from "./pg_database_dialect";
@@ -29,7 +27,9 @@ import { ErrorHandler } from "../../../common/lib/error_handler";
 import { MultiAzPgErrorHandler } from "../multi_az_pg_error_handler";
 import { WrapperProperties } from "../../../common/lib/wrapper_property";
 import { PluginService } from "../../../common/lib/plugin_service";
-import { MonitoringRdsHostListProvider } from "../../../common/lib/host_list_provider/monitoring/monitoring_host_list_provider";
+import {
+  MonitoringRdsHostListProvider
+} from "../../../common/lib/host_list_provider/monitoring/monitoring_host_list_provider";
 
 export class RdsMultiAZClusterPgDatabaseDialect extends PgDatabaseDialect implements TopologyAwareDatabaseDialect {
   constructor() {

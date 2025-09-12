@@ -15,7 +15,11 @@
 */
 
 import { AbstractConnectionPlugin } from "../abstract_connection_plugin";
-import { HostInfo } from "../host_info";
+import {
+  HostInfo,
+  FailoverError,
+  HostRole
+} from "../";
 import { PluginService } from "../plugin_service";
 import { HostListProviderService } from "../host_list_provider_service";
 import { OldConnectionSuggestionAction } from "../old_connection_suggestion_action";
@@ -23,8 +27,6 @@ import { HostChangeOptions } from "../host_change_options";
 import { WrapperProperties } from "../wrapper_property";
 import { Messages } from "../utils/messages";
 import { logger } from "../../logutils";
-import { FailoverError } from "../utils/errors";
-import { HostRole } from "../host_role";
 import { SqlMethodUtils } from "../utils/sql_method_utils";
 import { ClientWrapper } from "../client_wrapper";
 import { getWriter, logAndThrowError } from "../utils/utils";

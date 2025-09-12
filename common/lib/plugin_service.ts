@@ -23,7 +23,7 @@ import { BlockingHostListProvider, HostListProvider } from "./host_list_provider
 import { ConnectionUrlParser } from "./utils/connection_url_parser";
 import { DatabaseDialect, DatabaseType } from "./database_dialect/database_dialect";
 import { HostInfoBuilder } from "./host_info_builder";
-import { AwsWrapperError } from "./utils/errors";
+import { AwsWrapperError } from "./";
 import { HostAvailability } from "./host_availability/host_availability";
 import { CacheMap } from "./utils/cache_map";
 import { HostChangeOptions } from "./host_change_options";

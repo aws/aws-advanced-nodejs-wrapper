@@ -14,7 +14,7 @@
   limitations under the License.
 */
 
-import { AwsPGClient } from "aws-advanced-nodejs-wrapper/dist/pg/lib/index.js"; // the AWS client
+import { AwsPGClient } from "aws-advanced-nodejs-wrapper/pg"; // the AWS client
 import { PrismaAws } from "../adapter"; // the custom adapter
 import { PrismaClient } from "@prisma/client"; // the prisma client
 

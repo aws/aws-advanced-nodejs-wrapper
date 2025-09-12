@@ -17,7 +17,7 @@
 import { SqlMethodUtils } from "../../common/lib/utils/sql_method_utils";
 import { MySQLDatabaseDialect } from "../../mysql/lib/dialect/mysql_database_dialect";
 import { PgDatabaseDialect } from "../../pg/lib/dialect/pg_database_dialect";
-import { TransactionIsolationLevel } from "../../common/lib/utils/transaction_isolation_level";
+import { TransactionIsolationLevel } from "../../common/lib";
 import { NodePostgresDriverDialect } from "../../pg/lib/dialect/node_postgres_driver_dialect";
 import { MySQL2DriverDialect } from "../../mysql/lib/dialect/mysql2_driver_dialect";
 

@@ -14,15 +14,18 @@
   limitations under the License.
 */
 
-import { AwsPGClient } from "../../pg/lib";
-import { FailoverFailedError, FailoverSuccessError, TransactionResolutionUnknownError } from "../../common/lib/utils/errors";
-import { InternalPooledConnectionProvider } from "../../common/lib/internal_pooled_connection_provider";
-import { HostInfo } from "../../common/lib/host_info";
-import { InternalPoolMapping } from "../../common/lib/utils/internal_pool_mapping";
-import { ConnectionProviderManager } from "../../common/lib/connection_provider_manager";
-import { WrapperProperties } from "../../common/lib/wrapper_property";
-import { AwsPoolConfig } from "../../common/lib/aws_pool_config";
-import { PluginManager } from "../../common/lib";
+import { AwsPGClient } from "../../pg";
+import {
+  AwsPoolConfig,
+  FailoverFailedError,
+  FailoverSuccessError,
+  HostInfo,
+  InternalPooledConnectionProvider,
+  InternalPoolMapping,
+  PluginManager,
+  TransactionResolutionUnknownError,
+  WrapperProperties
+} from "../../index";
 
 const postgresHost = "db-identifier.XYZ.us-east-2.rds.amazonaws.com";
 const username = "john_smith";
@@ -45,7 +48,12 @@ const myPoolKeyFunc: InternalPoolMapping = {
  * Configure read-write splitting to use internal connection pools (the getPoolKey
  * parameter is optional, see UsingTheReadWriteSplittingPlugin.md for more info).
  */
-const poolConfig = new AwsPoolConfig({ maxConnections: 10, maxIdleConnections: 10, idleTimeoutMillis: 10000, allowExitOnIdle: true });
+const poolConfig = new AwsPoolConfig({
+  maxConnections: 10,
+  maxIdleConnections: 10,
+  idleTimeoutMillis: 10000,
+  allowExitOnIdle: true
+});
 const provider = new InternalPooledConnectionProvider(poolConfig, myPoolKeyFunc);
 
 const client = new AwsPGClient({
