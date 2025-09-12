@@ -11,6 +11,7 @@
     ]
   },
   "transformIgnorePatterns": ["node_modules"],
+  "modulePathIgnorePatterns": ["<rootDir>/examples/javascript_example/", "<rootDir>/examples/typescript_example/"],
   "moduleNameMapper": {
     "^uuid$": "uuid"
   },
