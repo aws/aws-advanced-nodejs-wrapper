@@ -39,7 +39,8 @@ PostgreSQL and MySQL tests are currently supported.
 
 > [!TIP]
 > If you are not running against an existing cluster (`REUSE_RDS_DB` is `false`), the test will automatically create and
-> delete the test resources. However, if the tests fail, the test resources may not be fully cleaned up. After running the
+> delete the test resources. However, if the tests fail, the test resources may not be fully cleaned up. After running
+> the
 > integration tests, ensure all test resources are cleaned up.
 
 #### Environment Variables
@@ -53,7 +54,8 @@ variable listed in the tables below is not provided by the user, it may use a de
 
 > [!NOTE]
 > If you are running tests against an existing cluster, the tests will only run against the Aurora database engine of
-> that cluster. For example, if you specify a MySQL cluster using the environment variables, only the MySQL tests will be
+> that cluster. For example, if you specify a MySQL cluster using the environment variables, only the MySQL tests will
+> be
 > run even if you pick test-all-aurora as the task. To run against Postgres instead, you will need to change your
 > environment variables.
 
@@ -75,7 +77,7 @@ variable listed in the tables below is not provided by the user, it may use a de
 | `DB_USERNAME`             | The username to access the database.                                                                                               | `admin`             | `test_user`                                                                       |
 | `DB_PASSWORD`             | The database cluster password.                                                                                                     | `password`          | `secret_password`                                                                 |
 | `DB_DATABASE_NAME`        | Name of the database that will be used by the tests. The default database name is test.                                            | `test_db_name`      | `test_database`                                                                   |
-| `RDS_CLUSTER_NAME`        | The database identifier for your Aurora or RDS cluster. Must be a unique value to avoid conflicting with existing clusters.        | `db-identifier`     |
+| `RDS_DB_NAME`             | The database identifier for your Aurora or RDS cluster. Must be a unique value to avoid conflicting with existing clusters.        | `db-identifier`     |
 | `IAM_USER`                | User within the database that is identified with AWSAuthenticationPlugin. This is used for AWS IAM Authentication and is optional. | `example_user_name` | `jane_doe`                                                                        |
 | `NUM_INSTANCES`           | The number of database instances in the cluster to test with. This value must be one of the following: `1`, `2`, `3`, `5`.         | `5`                 | Integration tests will be run several times, against `1`, `2`, and `5` instances. |
 
@@ -86,8 +88,8 @@ variable listed in the tables below is not provided by the user, it may use a de
 | `DB_USERNAME`             | The database username to access the specified cluster.                                                                                                                                                                           | `admin`                                      | `test_user`                  |
 | `DB_PASSWORD`             | The database password to access the specified cluster.                                                                                                                                                                           | `password`                                   | `secret_password`            |
 | `DB_DATABASE_NAME`        | Name of the database that will be used by the tests.                                                                                                                                                                             | `test_db_name`                               | `test_database`              |
-| `RDS_CLUSTER_NAME`        | The database identifier for your Aurora or RDS cluster. Must be a unique value to avoid conflicting with existing clusters.                                                                                                      | `db-identifier`                              |
-| `RDS_CLUSTER_DOMAIN`      | The database connection suffix of the existing cluster.[^1]                                                                                                                                                                      | `XYZ.us-east-2.rds.amazonaws.com`            |
+| `RDS_DB_NAME`             | The database identifier for your Aurora or RDS cluster. Must be a unique value to avoid conflicting with existing clusters.                                                                                                      | `db-identifier`                              |
+| `RDS_DB_DOMAIN`           | The database connection suffix of the existing cluster.[^1]                                                                                                                                                                      | `XYZ.us-east-2.rds.amazonaws.com`            |
 | `IAM_USER`                | User within the database that is identified with AWSAuthenticationPlugin. This is used for AWS IAM Authentication and is optional.                                                                                               | `example_user_name`                          | `jane_doe`                   |
 | `AWS_ACCESS_KEY_ID`       | An AWS access key associated with an IAM user or role with RDS permissions.                                                                                                                                                      | `ASIAIOSFODNN7EXAMPLE`                       |
 | `AWS_SECRET_ACCESS_KEY`   | The secret key associated with the provided AWS_ACCESS_KEY_ID.                                                                                                                                                                   | `wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY`   |
@@ -97,9 +99,10 @@ variable listed in the tables below is not provided by the user, it may use a de
 
 ###### (Optional) Additional Environment Variables
 
-| Environment Variable Name | Description                                                                                                                | Example Value | Default Value (If available)                                                      |
-| ------------------------- | -------------------------------------------------------------------------------------------------------------------------- | ------------- | --------------------------------------------------------------------------------- |
-| `NUM_INSTANCES`           | The number of database instances in the cluster to test with. This value must be one of the following: `1`, `2`, `3`, `5`. | `5`           | Integration tests will be run several times, against `1`, `2`, and `5` instances. |
+| Environment Variable Name | Description                                                                                                                | Example Value                | Default Value (If available)                                                      |
+| ------------------------- | -------------------------------------------------------------------------------------------------------------------------- | ---------------------------- | --------------------------------------------------------------------------------- |
+| `NUM_INSTANCES`           | The number of database instances in the cluster to test with. This value must be one of the following: `1`, `2`, `3`, `5`. | `5`                          | Integration tests will be run several times, against `1`, `2`, and `5` instances. |
+| `RDS_ENDPOINT`            | The RDS service endpoint URL for AWS API calls. This is relevant if you are testing against non-prod environments.         | `https://rds-int.amazon.com` | None                                                                              |
 
 ### Standard Integration Tests
 
@@ -159,8 +162,9 @@ Linux:
 Test results can be found in `tests/integration/host/build/test-results/test-all-environments/`.
 
 [^1]:
-    The cluster domain suffix can be determined by checking the endpoint of an existing cluster in the desired region,
-    or by temporarily creating a database to check the endpoint. For example, given the database endpoint
-    `db-identifier.cluster-XYZ.us-east-2.rds.amazonaws.com`, the domain suffix would be `XYZ.us-east-2.rds.amazonaws.com`.
-    See [here](https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/Aurora.Endpoints.Cluster.html) for more
-    information on Amazon Aurora cluster endpoints.
+
+The cluster domain suffix can be determined by checking the endpoint of an existing cluster in the desired region,
+or by temporarily creating a database to check the endpoint. For example, given the database endpoint
+`db-identifier.cluster-XYZ.us-east-2.rds.amazonaws.com`, the domain suffix would be `XYZ.us-east-2.rds.amazonaws.com`.
+See [here](https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/Aurora.Endpoints.Cluster.html) for more
+information on Amazon Aurora cluster endpoints.

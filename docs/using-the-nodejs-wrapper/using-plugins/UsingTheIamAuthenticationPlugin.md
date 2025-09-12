@@ -27,7 +27,8 @@ The AWS Advanced NodeJS Wrapper supports Amazon AWS Identity and Access Manageme
          `CREATE USER example_user_name IDENTIFIED WITH AWSAuthenticationPlugin AS 'RDS';`
       2. For a PostgreSQL database, use the following command to create a new user:<br>
          `CREATE USER db_userx; GRANT rds_iam TO db_userx;`
-4. Add the plugin code `iam` to the [`plugins`](../UsingTheNodejsWrapper.md#connection-plugin-manager-parameters) connection parameter.
+4. If connecting to a Multi-AZ deployment or using the Blue/Green plugin with a Blue/Green deployment, ensure the IAM user has access to required tables. See [Connecting with Multi-AZ or Blue/Green Deployments](UsingTheIamAuthenticationPlugin.md#connecting-with-multi-az-or-bluegreen-deployments) for specifics.
+5. Add the plugin code `iam` to the [`plugins`](../UsingTheNodejsWrapper.md#connection-plugin-manager-parameters) connection parameter.
 
 | Parameter            | Value    |                 Required                  | Description                                                                                                                                                                                                                                | Default Value                                    | Example Value                                       |
 | :------------------- | :------- | :---------------------------------------: | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :----------------------------------------------- | :-------------------------------------------------- |
@@ -37,6 +38,15 @@ The AWS Advanced NodeJS Wrapper supports Amazon AWS Identity and Access Manageme
 | `iamTokenExpiration` | `Number` |                    No                     | This property determines how long an IAM token is kept in the driver cache before a new one is generated. The default expiration time is set to be 15 minutes. Note that IAM database authentication tokens have a lifetime of 15 minutes. | `900`                                            | `600`                                               |
 
 This plugin requires a valid set of AWS credentials to retrieve the database credentials from AWS Secrets Manager. The AWS credentials must be located in [one of these locations](https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/Package/-aws-sdk-credential-providers/#fromNodeProviderChain) supported by the AWS SDK's default credentials provider. See also at [AWS Credentials Configuration](../custom-configuration/AwsCredentialsConfiguration.md)
+
+### Connecting with Multi-AZ or Blue/Green Deployments
+
+The following additional permissions are required when connecting to a Multi-AZ deployment or using the Blue/Green plugin with a Blue/Green deployment.
+
+| Engine | Deployment             | Additional Required Permissions                                                                                                                       |
+| ------ | ---------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| mysql  | Multi-AZ or Blue/Green | `GRANT SELECT ON mysql.* TO '" + dbUser + "'@'%'`                                                                                                     |
+| pg     | Multi-AZ               | `CREATE EXTENSION rds_tools`<br>`GRANT USAGE ON SCHEMA rds_tools TO " + dbUser`<br>`GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA rds_tools TO " + dbUser` |
 
 ## Using the IAM Authentication Plugin with Custom Endpoints
 
