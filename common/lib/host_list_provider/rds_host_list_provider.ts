@@ -21,7 +21,7 @@ import { RdsUrlType } from "../utils/rds_url_type";
 import { RdsUtils } from "../utils/rds_utils";
 import { HostListProviderService } from "../host_list_provider_service";
 import { ConnectionUrlParser } from "../utils/connection_url_parser";
-import { AwsWrapperError } from "../";
+import { AwsWrapperError } from "../utils/errors";
 import { Messages } from "../utils/messages";
 import { WrapperProperties } from "../wrapper_property";
 import { logger } from "../../logutils";
