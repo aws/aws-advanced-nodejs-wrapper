@@ -18,7 +18,7 @@
   "HostListProviderService.notFound": "HostListProviderService not found.",
   "HostInfo.noHostParameter": "Host parameter must be set, HostInfo not found or not provided.",
   "HostInfo.weightLessThanZero": "A HostInfo object was created with a weight value less than 0.",
-  "AwsSecretsManagerConnectionPlugin.failedToFetchDbCredentials": "Was not able to either fetch or read the database credentials from AWS Secrets Manager. Ensure the correct secretId and region properties have been provided.",
+  "AwsSecretsManagerConnectionPlugin.failedToFetchDbCredentials": "Was not able to either fetch or read the database credentials from AWS Secrets Manager due to error: %s. Ensure the correct secretId and region properties have been provided.",
   "AwsSecretsManagerConnectionPlugin.missingRequiredConfigParameter": "Configuration parameter '%s' is required.",
   "AwsSecretsManagerConnectionPlugin.unhandledError": "Unhandled error: '%s'",
   "AwsSecretsManagerConnectionPlugin.endpointOverrideInvalidConnection": "A connection to the provided endpoint could not be established: '%s'.",

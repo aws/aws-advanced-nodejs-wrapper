@@ -22,6 +22,7 @@ import { features } from "./config";
 import { AwsPoolConfig, InternalPooledConnectionProvider, PluginManager } from "../../../../index";
 import { AwsPgPoolClient } from "../../../../pg";
 import { AwsMySQLPoolClient } from "../../../../mysql";
+import { readFileSync } from "fs";
 
 const itIf =
   !features.includes(TestEnvironmentFeatures.PERFORMANCE) && !features.includes(TestEnvironmentFeatures.RUN_AUTOSCALING_TESTS_ONLY) ? it : it.skip;
@@ -39,6 +40,10 @@ async function createConnection(plugins: string = "failover"): Promise<any> {
     database: env.databaseInfo.defaultDbName,
     password: env.databaseInfo.password,
     port: env.databaseInfo.instanceEndpointPort,
+    ssl: {
+      rejectUnauthorized: false,
+      ca: readFileSync("/app/global-bundle.pem").toString()
+    },
     plugins
   };
   const configuredProps = DriverHelper.addDriverSpecificConfiguration(props, env.engine);
@@ -56,6 +61,10 @@ async function createAwsPGPool(plugins: string = "failover"): Promise<AwsPgPoolC
     database: env.databaseInfo.defaultDbName,
     password: env.databaseInfo.password,
     port: env.databaseInfo.instanceEndpointPort,
+    ssl: {
+      rejectUnauthorized: false,
+      ca: readFileSync("/app/global-bundle.pem").toString()
+    },
     plugins
   };
   const poolConfig = new AwsPoolConfig({
@@ -80,6 +89,10 @@ async function createAwsPGPoolWithICP(plugins: string = "failover"): Promise<Aws
     database: env.databaseInfo.defaultDbName,
     password: env.databaseInfo.password,
     port: env.databaseInfo.instanceEndpointPort,
+    ssl: {
+      rejectUnauthorized: false,
+      ca: readFileSync("/app/global-bundle.pem").toString()
+    },
     plugins,
     provider: provider
   };

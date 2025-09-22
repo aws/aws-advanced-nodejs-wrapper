@@ -82,13 +82,21 @@ export class DriverHelper {
           default:
             throw new Error("invalid engine");
         }
-      case DatabaseEngineDeployment.RDS_MULTI_AZ_INSTANCE:
       case DatabaseEngineDeployment.RDS_MULTI_AZ_CLUSTER:
         switch (engine) {
           case DatabaseEngine.PG:
             return "SELECT SUBSTRING(endpoint FROM 0 FOR POSITION('.' IN endpoint)) as id FROM rds_tools.show_topology() WHERE id IN (SELECT dbi_resource_id FROM rds_tools.dbi_resource_id())";
           case DatabaseEngine.MYSQL:
             return "SELECT SUBSTRING_INDEX(endpoint, '.', 1) as id FROM mysql.rds_topology WHERE id=@@server_id";
+          default:
+            throw new Error("invalid engine");
+        }
+      case DatabaseEngineDeployment.RDS_MULTI_AZ_INSTANCE:
+        switch (engine) {
+          case DatabaseEngine.PG:
+            return "SELECT dbi_resource_id AS id FROM rds_tools.dbi_resource_id()";
+          case DatabaseEngine.MYSQL:
+            return "SELECT @@server_id AS id";
           default:
             throw new Error("invalid engine");
         }
@@ -99,7 +107,6 @@ export class DriverHelper {
 
   static async executeInstanceQuery(engine: DatabaseEngine, deployment: DatabaseEngineDeployment, client: AwsClient) {
     const sql = DriverHelper.getInstanceIdSql(engine, deployment);
-    let result;
     switch (engine) {
       case DatabaseEngine.PG:
         return await (client as AwsPGClient).query(sql).then((result) => {

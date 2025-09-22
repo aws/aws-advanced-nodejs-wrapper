@@ -61,6 +61,9 @@ export class TestEnvironment {
 
   static async verifyClusterStatus(auroraUtility?: AuroraTestUtility) {
     const info = TestEnvironment.env?.info;
+    if (info?.request.instanceCount <= 1) {
+      return;
+    }
     if (info?.request.deployment === DatabaseEngineDeployment.AURORA || info?.request.deployment === DatabaseEngineDeployment.RDS_MULTI_AZ_CLUSTER) {
       let remainingTries = 3;
       let success = false;

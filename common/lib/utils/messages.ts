@@ -17,15 +17,46 @@
 import path from "path";
 import { I18n } from "i18n";
 import { fileURLToPath } from "url";
+import fs from "fs";
+
+const getModuleDir = () => {
+  if (typeof __dirname !== "undefined") {
+    return __dirname;
+  }
+  return path.dirname(fileURLToPath(import.meta.url));
+};
+
+const findLocalesDir = (baseDir: string): string => {
+  const localesDir = path.join(baseDir, "locales");
+  if (fs.existsSync(localesDir)) {
+    return localesDir;
+  }
+
+  // baseDir wasn't correctly constructed, attempt to resolve path to locales using relative path.
+  const pathFromRoot = "../../../common/lib/utils/locales";
+  const packageDir = path.resolve(baseDir, pathFromRoot);
+  if (fs.existsSync(packageDir)) {
+    return packageDir;
+  }
+
+  fs.mkdirSync(localesDir, { recursive: true });
+  return localesDir;
+};
 
 export class Messages {
-  static __filename = fileURLToPath(import.meta.url);
-  static __dirname = path.dirname(Messages.__filename);
+  static __dirname = getModuleDir();
+  private static _i18n: I18n | null = null;
 
-  static i18n = new I18n({
-    locales: ["en"],
-    directory: path.join(Messages.__dirname, "locales")
-  });
+  static get i18n(): I18n {
+    if (!Messages._i18n) {
+      const localesDir = findLocalesDir(Messages.__dirname);
+      Messages._i18n = new I18n({
+        locales: ["en"],
+        directory: localesDir
+      });
+    }
+    return Messages._i18n;
+  }
 
   static get(key: string, ...val: string[]) {
     return Messages.i18n.__(key, ...val);

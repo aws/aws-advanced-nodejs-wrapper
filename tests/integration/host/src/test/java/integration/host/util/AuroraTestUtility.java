@@ -380,6 +380,7 @@ public class AuroraTestUtility {
             .engine(engine)
             .engineVersion(version)
             .enablePerformanceInsights(false)
+            .enableIAMDatabaseAuthentication(true)
             .backupRetentionPeriod(1)
             .storageEncrypted(true)
             .tags(this.getTag())
@@ -463,11 +464,11 @@ public class AuroraTestUtility {
         instance.endpoint().port());
   }
 
-  public List<DBInstance> getDBInstances(String clusterId) {
+  public List<DBInstance> getDBInstances(String clusterId, String filterName) {
     final DescribeDbInstancesResponse dbInstancesResult =
         rdsClient.describeDBInstances(
             (builder) ->
-                builder.filters(Filter.builder().name("db-cluster-id").values(clusterId).build()));
+                builder.filters(Filter.builder().name(filterName).values(clusterId).build()));
     return dbInstancesResult.dbInstances();
   }
 
@@ -922,7 +923,11 @@ public class AuroraTestUtility {
   }
 
   public DatabaseEngine getClusterEngine(final DBCluster cluster) {
-    switch (cluster.engine()) {
+    return getEngine(cluster.engine());
+  }
+
+  public DatabaseEngine getEngine(final String engine) {
+    switch (engine) {
       case "aurora-postgresql":
       case "postgres":
         return DatabaseEngine.PG;
@@ -930,7 +935,7 @@ public class AuroraTestUtility {
       case "mysql":
         return DatabaseEngine.MYSQL;
       default:
-        throw new UnsupportedOperationException(cluster.engine());
+        throw new UnsupportedOperationException(engine);
     }
   }
 
@@ -971,8 +976,9 @@ public class AuroraTestUtility {
     }
   }
 
-  public List<TestInstanceInfo> getTestInstancesInfo(final String clusterId) {
-    List<DBInstance> dbInstances = getDBInstances(clusterId);
+  public List<TestInstanceInfo> getTestInstancesInfo(final String clusterId, boolean isCluster) {
+    final String filterName = isCluster ? "db-cluster-id": "db-instance-id";
+    List<DBInstance> dbInstances = getDBInstances(clusterId, filterName);
     List<TestInstanceInfo> instancesInfo = new ArrayList<>();
     for (DBInstance dbInstance : dbInstances) {
       instancesInfo.add(
@@ -1160,6 +1166,10 @@ public class AuroraTestUtility {
       String connectionUrl,
       String userName,
       String password) {
+    if (databaseEngine == DatabaseEngine.MYSQL) {
+      return;
+    }
+
     AuroraTestUtility.registerDriver(databaseEngine);
 
     try (final Connection conn = DriverManager.getConnection(connectionUrl, userName, password);
