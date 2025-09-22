@@ -6,7 +6,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
-import java.util.concurrent.Future;
 import java.util.Set;
 import java.util.logging.Logger;
 import java.util.stream.Stream;
@@ -107,6 +106,10 @@ public class TestEnvironmentProvider implements TestTemplateInvocationContextPro
             if (instances == DatabaseInstances.MULTI_INSTANCE && numOfInstances == 1) {
               continue;
             }
+            if (deployment == DatabaseEngineDeployment.RDS_MULTI_AZ_INSTANCE && numOfInstances != 1) {
+              // Multi-AZ instance deployment only support 1 instance endpoint.
+              continue;
+            }
             if (deployment == DatabaseEngineDeployment.RDS_MULTI_AZ_CLUSTER && numOfInstances != 3) {
               // Multi-AZ clusters supports only 3 instances
               continue;
@@ -132,10 +135,13 @@ public class TestEnvironmentProvider implements TestTemplateInvocationContextPro
                             ? null
                             : TestEnvironmentFeatures.FAILOVER_SUPPORTED,
                         deployment == DatabaseEngineDeployment.DOCKER
-                            || deployment == DatabaseEngineDeployment.RDS_MULTI_AZ_CLUSTER
                             || excludeIam
                             ? null
                             : TestEnvironmentFeatures.IAM,
+                        deployment == DatabaseEngineDeployment.RDS_MULTI_AZ_CLUSTER
+                            || deployment == DatabaseEngineDeployment.RDS_MULTI_AZ_INSTANCE
+                            ? TestEnvironmentFeatures.RDS_MULTI_AZ_SUPPORTED
+                            : null,
                         excludeSecretsManager ? null : TestEnvironmentFeatures.SECRETS_MANAGER,
                         excludePerformance ? null : TestEnvironmentFeatures.PERFORMANCE,
                         excludeMysqlDriver ? TestEnvironmentFeatures.SKIP_MYSQL_DRIVER_TESTS : null,
