@@ -37,7 +37,6 @@ as it calls the provided method without additional operations. This is helpful w
 See the following classes for examples:
 
 - [IamAuthenticationPlugin](../../common/lib/authentication/iam_authentication_plugin.ts)
-
   - The `IamAuthenticationPlugin` class only overrides the `connect` method because the plugin is only concerned with creating
     database connections with IAM database credentials.
 

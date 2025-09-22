@@ -59,9 +59,10 @@ import static org.junit.jupiter.api.Assertions.fail;
  * must be defined: - AWS_ACCESS_KEY_ID - AWS_SECRET_ACCESS_KEY
  */
 public class AuroraTestUtility {
-
+  public static final String CLUSTER_ID_FILTER_NAME = "db-cluster-id";
   private static final Logger LOGGER = Logger.getLogger(AuroraTestUtility.class.getName());
   private static final int MULTI_AZ_SIZE = 3;
+  private static final String INSTANCE_ID_FILTER_NAME = "db-instance-id";
 
   // Default values
   private String dbUsername = "my_test_username";
@@ -333,7 +334,7 @@ public class AuroraTestUtility {
         waiter.waitUntilDBInstanceAvailable(
             (requestBuilder) ->
                 requestBuilder.filters(
-                    Filter.builder().name("db-cluster-id").values(identifier).build()),
+                    Filter.builder().name(CLUSTER_ID_FILTER_NAME).values(identifier).build()),
             (configurationBuilder) -> configurationBuilder.maxAttempts(480).waitTimeout(Duration.ofMinutes(240)));
 
     if (waiterResponse.matched().exception().isPresent()) {
@@ -380,6 +381,7 @@ public class AuroraTestUtility {
             .engine(engine)
             .engineVersion(version)
             .enablePerformanceInsights(false)
+            .enableIAMDatabaseAuthentication(true)
             .backupRetentionPeriod(1)
             .storageEncrypted(true)
             .tags(this.getTag())
@@ -396,7 +398,7 @@ public class AuroraTestUtility {
         waiter.waitUntilDBInstanceAvailable(
             (requestBuilder) ->
                 requestBuilder.filters(
-                    Filter.builder().name("db-cluster-id").values(identifier).build()),
+                    Filter.builder().name(CLUSTER_ID_FILTER_NAME).values(identifier).build()),
             (configurationBuilder) -> configurationBuilder.waitTimeout(Duration.ofMinutes(30)));
 
     if (waiterResponse.matched().exception().isPresent()) {
@@ -463,11 +465,11 @@ public class AuroraTestUtility {
         instance.endpoint().port());
   }
 
-  public List<DBInstance> getDBInstances(String clusterId) {
+  public List<DBInstance> getDBInstances(String clusterId, String filterName) {
     final DescribeDbInstancesResponse dbInstancesResult =
         rdsClient.describeDBInstances(
             (builder) ->
-                builder.filters(Filter.builder().name("db-cluster-id").values(clusterId).build()));
+                builder.filters(Filter.builder().name(filterName).values(clusterId).build()));
     return dbInstancesResult.dbInstances();
   }
 
@@ -713,7 +715,7 @@ public class AuroraTestUtility {
           waiter.waitUntilDBClusterDeleted(
               (requestBuilder) ->
                   requestBuilder.filters(
-                      Filter.builder().name("db-cluster-id").values(identifier).build()),
+                      Filter.builder().name(CLUSTER_ID_FILTER_NAME).values(identifier).build()),
               (configurationBuilder) -> configurationBuilder.waitTimeout(Duration.ofMinutes(60)));
 
       if (waiterResponse.matched().exception().isPresent()) {
@@ -756,7 +758,7 @@ public class AuroraTestUtility {
           waiter.waitUntilDBClusterDeleted(
               (requestBuilder) ->
                   requestBuilder.filters(
-                      Filter.builder().name("db-cluster-id").values(identifier).build()),
+                      Filter.builder().name(CLUSTER_ID_FILTER_NAME).values(identifier).build()),
               (configurationBuilder) -> configurationBuilder.waitTimeout(Duration.ofMinutes(60)));
 
       if (waiterResponse.matched().exception().isPresent()) {
@@ -887,7 +889,7 @@ public class AuroraTestUtility {
   public DBCluster getClusterByArn(final String clusterArn) {
     final DescribeDbClustersRequest request =
         DescribeDbClustersRequest.builder()
-            .filters(Filter.builder().name("db-cluster-id").values(clusterArn).build())
+            .filters(Filter.builder().name(CLUSTER_ID_FILTER_NAME).values(clusterArn).build())
             .build();
     final DescribeDbClustersResponse response = rdsClient.describeDBClusters(request);
     if (!response.hasDbClusters()) {
@@ -921,8 +923,8 @@ public class AuroraTestUtility {
     return response.dbInstances().get(0);
   }
 
-  public DatabaseEngine getClusterEngine(final DBCluster cluster) {
-    switch (cluster.engine()) {
+  public DatabaseEngine getEngine(final String engine) {
+    switch (engine) {
       case "aurora-postgresql":
       case "postgres":
         return DatabaseEngine.PG;
@@ -930,7 +932,7 @@ public class AuroraTestUtility {
       case "mysql":
         return DatabaseEngine.MYSQL;
       default:
-        throw new UnsupportedOperationException(cluster.engine());
+        throw new UnsupportedOperationException(engine);
     }
   }
 
@@ -971,8 +973,9 @@ public class AuroraTestUtility {
     }
   }
 
-  public List<TestInstanceInfo> getTestInstancesInfo(final String clusterId) {
-    List<DBInstance> dbInstances = getDBInstances(clusterId);
+  public List<TestInstanceInfo> getTestInstancesInfo(final String clusterId, boolean isCluster) {
+    final String filterName = isCluster ? CLUSTER_ID_FILTER_NAME: INSTANCE_ID_FILTER_NAME;
+    List<DBInstance> dbInstances = getDBInstances(clusterId, filterName);
     List<TestInstanceInfo> instancesInfo = new ArrayList<>();
     for (DBInstance dbInstance : dbInstances) {
       instancesInfo.add(
@@ -1080,23 +1083,6 @@ public class AuroraTestUtility {
     LOGGER.finest("Instance " + instanceId + " status (after wait): " + status);
   }
 
-  public List<TestInstanceInfo> getClusterInstanceIds(final String clusterId) {
-    final DescribeDbInstancesResponse dbInstancesResult =
-        rdsClient.describeDBInstances(
-            (builder) ->
-                builder.filters(Filter.builder().name("db-cluster-id").values(clusterId).build()));
-
-    List<TestInstanceInfo> result = new ArrayList<>();
-    for (DBInstance instance : dbInstancesResult.dbInstances()) {
-      result.add(
-          new TestInstanceInfo(
-              instance.dbInstanceIdentifier(),
-              instance.endpoint().address(),
-              instance.endpoint().port()));
-    }
-    return result;
-  }
-
   public static void registerDriver(DatabaseEngine engine) {
     try {
       Class.forName(DriverHelper.getDriverClassname(engine));
@@ -1160,6 +1146,10 @@ public class AuroraTestUtility {
       String connectionUrl,
       String userName,
       String password) {
+    if (databaseEngine == DatabaseEngine.MYSQL) {
+      return;
+    }
+
     AuroraTestUtility.registerDriver(databaseEngine);
 
     try (final Connection conn = DriverManager.getConnection(connectionUrl, userName, password);
@@ -1293,22 +1283,6 @@ public class AuroraTestUtility {
 
     if (!allowedStatusSet.contains(status.toLowerCase())) {
       throw new RuntimeException("BlueGreen Deployment " + blueGreenId + " has wrong status.");
-    }
-  }
-
-  public void switchoverBlueGreenDeployment(String blueGreenId) {
-    SwitchoverBlueGreenDeploymentResponse response = rdsClient.switchoverBlueGreenDeployment(
-        SwitchoverBlueGreenDeploymentRequest.builder()
-            .blueGreenDeploymentIdentifier(blueGreenId)
-            .build());
-
-    if (!response.sdkHttpResponse().isSuccessful()) {
-      LOGGER.finest(String.format("switchoverBlueGreenDeployment response: %d, %s",
-          response.sdkHttpResponse().statusCode(),
-          response.sdkHttpResponse().statusText()));
-      throw new RuntimeException(response.sdkHttpResponse().statusText().orElse("Unspecified error."));
-    } else {
-      LOGGER.finest("switchoverBlueGreenDeployment request is sent");
     }
   }
 

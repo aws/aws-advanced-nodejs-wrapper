@@ -28,6 +28,7 @@ import {
 import { DriverHelper } from "./utils/driver_helper";
 import { AuroraTestUtility } from "./utils/aurora_test_utility";
 import { sleep } from "../../../../common/lib/utils/utils";
+import { readFileSync } from "fs";
 
 const itIf =
   !features.includes(TestEnvironmentFeatures.PERFORMANCE) && !features.includes(TestEnvironmentFeatures.RUN_AUTOSCALING_TESTS_ONLY) ? it : it.skip;
@@ -48,6 +49,10 @@ async function createPool(plugins: string = "efm2,failover2"): Promise<any> {
     database: env.databaseInfo.defaultDbName,
     password: env.databaseInfo.password,
     port: env.databaseInfo.instanceEndpointPort,
+    ssl: {
+      rejectUnauthorized: false,
+      ca: readFileSync("/app/global-bundle.pem").toString()
+    },
     plugins
   };
   const poolConfig = new AwsPoolConfig({

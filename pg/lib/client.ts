@@ -31,15 +31,15 @@ import { RdsPgDatabaseDialect } from "./dialect/rds_pg_database_dialect";
 import { PgDatabaseDialect } from "./dialect/pg_database_dialect";
 import { AuroraPgDatabaseDialect } from "./dialect/aurora_pg_database_dialect";
 import {
+  AwsPoolConfig,
   AwsWrapperError,
-  FailoverSuccessError,
-  UndefinedClientError,
-  UnsupportedMethodError,
   ConnectionProvider,
+  FailoverSuccessError,
   HostInfo,
-  TransactionIsolationLevel,
   InternalPooledConnectionProvider,
-  AwsPoolConfig
+  TransactionIsolationLevel,
+  UndefinedClientError,
+  UnsupportedMethodError
 } from "../../common/lib";
 import { Messages } from "../../common/lib/utils/messages";
 import { ClientWrapper } from "../../common/lib/client_wrapper";
@@ -172,7 +172,7 @@ class BaseAwsPgClient extends AwsClient implements PGClient {
       "end",
       () => {
         const res = this.targetClient!.end();
-        this.targetClient = null;
+        this.targetClient = undefined;
         this.isConnected = false;
         return res;
       },
@@ -211,7 +211,7 @@ class BaseAwsPgClient extends AwsClient implements PGClient {
         try {
           const role = await this.pluginService.getHostRole(result);
           // The current host role may be incorrect, use the created client to confirm the host role.
-          if (role !== result.hostInfo.role) {
+          if (role !== undefined && role !== result.hostInfo.role) {
             result.hostInfo.role = role;
             this.pluginService.setCurrentHostInfo(result.hostInfo);
             this.pluginService.setInitialConnectionHostInfo(result.hostInfo);

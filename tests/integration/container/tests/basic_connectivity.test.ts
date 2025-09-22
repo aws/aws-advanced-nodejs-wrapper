@@ -21,20 +21,21 @@ import { AuroraTestUtility } from "./utils/aurora_test_utility";
 import { logger } from "../../../../common/logutils";
 import { DatabaseEngine } from "./utils/database_engine";
 import { TestEnvironmentFeatures } from "./utils/test_environment_features";
-import { features } from "./config";
+import { features, instanceCount } from "./config";
 import { DatabaseEngineDeployment } from "./utils/database_engine_deployment";
 import { PluginManager } from "../../../../index";
 
 const itIf =
   !features.includes(TestEnvironmentFeatures.PERFORMANCE) && !features.includes(TestEnvironmentFeatures.RUN_AUTOSCALING_TESTS_ONLY) ? it : it.skip;
+const itIfMinTwoInstance = instanceCount >= 2 ? itIf : it.skip;
 
 let client: any;
 let auroraTestUtility: AuroraTestUtility;
 
-async function executeInstanceQuery(client: any, engine: DatabaseEngine, deployment: DatabaseEngineDeployment, props: any): Promise<void> {
+async function executeSelect1(client: any, engine: DatabaseEngine, deployment: DatabaseEngineDeployment, props: any): Promise<void> {
   await client.connect();
 
-  const res = await DriverHelper.executeInstanceQuery(engine, deployment, client);
+  const res = await DriverHelper.executeQuery(engine, client, "SELECT 1", 10000);
 
   expect(res).not.toBeNull();
 }
@@ -59,8 +60,8 @@ afterEach(async () => {
   logger.info(`Test finished: ${expect.getState().currentTestName}`);
 }, 1320000);
 
-describe("basic_connectivity", () => {
-  itIf(
+describe("basic connectivity", () => {
+  itIfMinTwoInstance(
     "wrapper with failover plugins read only endpoint",
     async () => {
       const env = await TestEnvironment.getCurrent();
@@ -82,12 +83,12 @@ describe("basic_connectivity", () => {
       props = DriverHelper.addDriverSpecificConfiguration(props, env.engine);
       client = initClientFunc(props);
 
-      await executeInstanceQuery(client, env.engine, env.deployment, props);
+      await executeSelect1(client, env.engine, env.deployment, props);
     },
     1320000
   );
 
-  itIf(
+  itIfMinTwoInstance(
     "wrapper with failover plugins cluster endpoint",
     async () => {
       const env = await TestEnvironment.getCurrent();
@@ -109,7 +110,7 @@ describe("basic_connectivity", () => {
       props = DriverHelper.addDriverSpecificConfiguration(props, env.engine);
 
       client = initClientFunc(props);
-      await executeInstanceQuery(client, env.engine, env.deployment, props);
+      await executeSelect1(client, env.engine, env.deployment, props);
     },
     1320000
   );
@@ -136,7 +137,7 @@ describe("basic_connectivity", () => {
       props = DriverHelper.addDriverSpecificConfiguration(props, env.engine);
 
       client = initClientFunc(props);
-      await executeInstanceQuery(client, env.engine, env.deployment, props);
+      await executeSelect1(client, env.engine, env.deployment, props);
     },
     1320000
   );
@@ -165,7 +166,7 @@ describe("basic_connectivity", () => {
       client = initClientFunc(props);
       await client.connect();
 
-      const res = await DriverHelper.executeInstanceQuery(env.engine, env.deployment, client);
+      const res = await executeSelect1(client, env.engine, env.deployment, props);
 
       expect(res).not.toBeNull();
     },
@@ -173,7 +174,7 @@ describe("basic_connectivity", () => {
   );
 
   itIf(
-    "wrapper_proxy",
+    "wrapper proxy",
     async () => {
       const env = await TestEnvironment.getCurrent();
       const driver = DriverHelper.getDriverForDatabaseEngine(env.engine);

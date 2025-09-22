@@ -35,7 +35,7 @@ jobs:
       - name: "Package Wrapper"
         run: |
           mkdir -p ./build
-          npm run prepublish
+          npm run prepublishOnly
       - name: "Set Version Env Variable"
         run: echo "RELEASE_VERSION=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
       - name: "Get Release Details"

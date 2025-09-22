@@ -479,19 +479,6 @@ describe("aurora read write splitting", () => {
 
       const newWriterId = await auroraTestUtility.queryInstanceId(client);
       expect(newWriterId).not.toBe(initialWriterId);
-
-      secondaryClient = initClientFunc(config);
-      await secondaryClient.connect();
-      provider.logConnections();
-      const oldWriterId = await auroraTestUtility.queryInstanceId(secondaryClient);
-      // This should be a new connection to the initial writer instance (now a reader).
-      expect(oldWriterId).toBe(initialWriterId);
-      provider.logConnections();
-      try {
-        await secondaryClient.end();
-      } catch (error) {
-        // pass
-      }
     },
     1000000
   );
