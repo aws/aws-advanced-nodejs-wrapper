@@ -18,9 +18,15 @@ import path from "path";
 import { I18n } from "i18n";
 import { fileURLToPath } from "url";
 
+const getModuleDir = () => {
+  if (typeof __dirname !== "undefined") {
+    return __dirname;
+  }
+  return path.dirname(fileURLToPath(import.meta.url));
+};
+
 export class Messages {
-  static __filename = fileURLToPath(import.meta.url);
-  static __dirname = path.dirname(Messages.__filename);
+  static __dirname = getModuleDir();
 
   static i18n = new I18n({
     locales: ["en"],

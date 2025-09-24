@@ -146,7 +146,7 @@ export class AwsSecretsManagerPlugin extends AbstractConnectionPlugin implements
           AwsSecretsManagerPlugin.secretsCache.set(JSON.stringify(this.secretKey), this.secret);
         } catch (error: any) {
           if (error instanceof SecretsManagerServiceException) {
-            logAndThrowError(Messages.get("AwsSecretsManagerConnectionPlugin.failedToFetchDbCredentials"));
+            logAndThrowError(Messages.get("AwsSecretsManagerConnectionPlugin.failedToFetchDbCredentials", error.message));
           } else if (error instanceof Error && error.message.includes("AWS SDK error")) {
             logAndThrowError(Messages.get("AwsSecretsManagerConnectionPlugin.endpointOverrideInvalidConnection", error.message));
           } else {
