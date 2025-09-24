@@ -56,7 +56,6 @@
     "@babel/cli": "^7.27.2",
     "@babel/core": "^7.26.10",
     "@babel/node": "^7.27.1",
-
     "@types/i18n": "^0.13.12",
     "@types/jest": "^29.5.13",
     "@types/lodash": "^4.17.20",
@@ -65,7 +64,6 @@
     "@types/pg": "^8.15.2",
     "@types/tough-cookie": "^4.0.5",
     "@typescript-eslint/eslint-plugin": "^8.31.0",
-
     "babel-plugin-transform-rewrite-imports": "^1.5.3",
     "benny": "^3.7.1",
     "copyfiles": "^2.4.1",
@@ -128,27 +126,69 @@
     "pg": "^8.16.0"
   },
   "peerDependenciesMeta": {
-    "@aws-sdk/client-rds": { "optional": true },
-    "@aws-sdk/client-secrets-manager": { "optional": true },
-    "@aws-sdk/client-sts": { "optional": true },
-    "@aws-sdk/client-xray": { "optional": true },
-    "@aws-sdk/credential-providers": { "optional": true },
-    "@aws-sdk/rds-signer": { "optional": true },
-    "@opentelemetry/exporter-metrics-otlp-grpc": { "optional": true },
-    "@opentelemetry/exporter-trace-otlp-grpc": { "optional": true },
-    "@opentelemetry/id-generator-aws-xray": { "optional": true },
-    "@opentelemetry/instrumentation-aws-sdk": { "optional": true },
-    "@opentelemetry/instrumentation-http": { "optional": true },
-    "@opentelemetry/propagator-aws-xray": { "optional": true },
-    "@opentelemetry/sdk-metrics": { "optional": true },
-    "@opentelemetry/sdk-node": { "optional": true },
-    "aws-xray-sdk": { "optional": true },
-    "axios": { "optional": true },
-    "axios-cookiejar-support": { "optional": true },
-    "entities": { "optional": true },
-    "mysql2": { "optional": true },
-    "node-fetch": { "optional": true },
-    "pg": { "optional": true }
+    "@aws-sdk/client-rds": {
+      "optional": true
+    },
+    "@aws-sdk/client-secrets-manager": {
+      "optional": true
+    },
+    "@aws-sdk/client-sts": {
+      "optional": true
+    },
+    "@aws-sdk/client-xray": {
+      "optional": true
+    },
+    "@aws-sdk/credential-providers": {
+      "optional": true
+    },
+    "@aws-sdk/rds-signer": {
+      "optional": true
+    },
+    "@opentelemetry/exporter-metrics-otlp-grpc": {
+      "optional": true
+    },
+    "@opentelemetry/exporter-trace-otlp-grpc": {
+      "optional": true
+    },
+    "@opentelemetry/id-generator-aws-xray": {
+      "optional": true
+    },
+    "@opentelemetry/instrumentation-aws-sdk": {
+      "optional": true
+    },
+    "@opentelemetry/instrumentation-http": {
+      "optional": true
+    },
+    "@opentelemetry/propagator-aws-xray": {
+      "optional": true
+    },
+    "@opentelemetry/sdk-metrics": {
+      "optional": true
+    },
+    "@opentelemetry/sdk-node": {
+      "optional": true
+    },
+    "aws-xray-sdk": {
+      "optional": true
+    },
+    "axios": {
+      "optional": true
+    },
+    "axios-cookiejar-support": {
+      "optional": true
+    },
+    "entities": {
+      "optional": true
+    },
+    "mysql2": {
+      "optional": true
+    },
+    "node-fetch": {
+      "optional": true
+    },
+    "pg": {
+      "optional": true
+    }
   },
   "overrides": {
     "braces": "^3.0.3",
