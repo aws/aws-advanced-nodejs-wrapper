@@ -45,7 +45,7 @@ export class LimitlessQueryHelper {
     const hostName: string = row["router_endpoint"];
     const cpu: number = row["load"];
 
-    let weight: number = Math.round(10 - cpu * 10);
+    let weight: number = 10 - Math.floor(cpu * 10);
 
     if (weight < 1 || weight > 10) {
       weight = 1; // default to 1
