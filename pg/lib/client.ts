@@ -14,15 +14,7 @@
   limitations under the License.
 */
 
-import {
-  QueryArrayConfig,
-  QueryArrayResult,
-  QueryConfig,
-  QueryConfigValues,
-  QueryResult,
-  QueryResultRow,
-  Submittable
-} from "pg";
+import { ClientConfig, QueryArrayConfig, QueryArrayResult, QueryConfig, QueryConfigValues, QueryResult, QueryResultRow, Submittable } from "pg";
 import { AwsClient } from "../../common/lib/aws_client";
 import { PgConnectionUrlParser } from "./pg_connection_url_parser";
 import { DatabaseDialect, DatabaseType } from "../../common/lib/database_dialect/database_dialect";
@@ -31,15 +23,15 @@ import { RdsPgDatabaseDialect } from "./dialect/rds_pg_database_dialect";
 import { PgDatabaseDialect } from "./dialect/pg_database_dialect";
 import { AuroraPgDatabaseDialect } from "./dialect/aurora_pg_database_dialect";
 import {
+  AwsPoolConfig,
   AwsWrapperError,
-  FailoverSuccessError,
-  UndefinedClientError,
-  UnsupportedMethodError,
   ConnectionProvider,
+  FailoverSuccessError,
   HostInfo,
-  TransactionIsolationLevel,
   InternalPooledConnectionProvider,
-  AwsPoolConfig
+  TransactionIsolationLevel,
+  UndefinedClientError,
+  UnsupportedMethodError
 } from "../../common/lib";
 import { Messages } from "../../common/lib/utils/messages";
 import { ClientWrapper } from "../../common/lib/client_wrapper";
@@ -49,6 +41,9 @@ import { NodePostgresDriverDialect } from "./dialect/node_postgres_driver_dialec
 import { isDialectTopologyAware } from "../../common/lib/utils/utils";
 import { PGClient, PGPoolClient } from "./pg_client";
 import { DriverConnectionProvider } from "../../common/lib/driver_connection_provider";
+import { AwsClientConfig } from "../../common/lib/wrapper_property";
+
+export interface AwsPgClientConfig extends ClientConfig, AwsClientConfig {}
 
 class BaseAwsPgClient extends AwsClient implements PGClient {
   private static readonly knownDialectsByCode: Map<string, DatabaseDialect> = new Map([
@@ -58,7 +53,7 @@ class BaseAwsPgClient extends AwsClient implements PGClient {
     [DatabaseDialectCodes.RDS_MULTI_AZ_PG, new RdsMultiAZClusterPgDatabaseDialect()]
   ]);
 
-  constructor(config: any, connectionProvider?: ConnectionProvider) {
+  constructor(config: AwsPgClientConfig, connectionProvider?: ConnectionProvider) {
     super(
       config,
       DatabaseType.POSTGRES,
@@ -90,7 +85,7 @@ class BaseAwsPgClient extends AwsClient implements PGClient {
     return result;
   }
 
-  isReadOnly(): boolean {
+  isReadOnly(): boolean | undefined {
     return this.pluginService.getSessionStateService().getReadOnly();
   }
 
@@ -128,7 +123,7 @@ class BaseAwsPgClient extends AwsClient implements PGClient {
     this.pluginService.getSessionStateService().setTransactionIsolation(level);
   }
 
-  getTransactionIsolation(): TransactionIsolationLevel {
+  getTransactionIsolation(): TransactionIsolationLevel | undefined {
     return this.pluginService.getSessionStateService().getTransactionIsolation();
   }
 
@@ -155,7 +150,7 @@ class BaseAwsPgClient extends AwsClient implements PGClient {
     return result;
   }
 
-  getSchema(): string {
+  getSchema(): string | undefined {
     return this.pluginService.getSessionStateService().getSchema();
   }
 
@@ -172,7 +167,7 @@ class BaseAwsPgClient extends AwsClient implements PGClient {
       "end",
       () => {
         const res = this.targetClient!.end();
-        this.targetClient = null;
+        this.targetClient = undefined;
         this.isConnected = false;
         return res;
       },
@@ -211,7 +206,7 @@ class BaseAwsPgClient extends AwsClient implements PGClient {
         try {
           const role = await this.pluginService.getHostRole(result);
           // The current host role may be incorrect, use the created client to confirm the host role.
-          if (role !== result.hostInfo.role) {
+          if (role !== undefined && role !== result.hostInfo.role) {
             result.hostInfo.role = role;
             this.pluginService.setCurrentHostInfo(result.hostInfo);
             this.pluginService.setInitialConnectionHostInfo(result.hostInfo);
