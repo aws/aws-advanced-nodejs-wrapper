@@ -24,7 +24,7 @@ export class RdsPgDatabaseDialect extends PgDatabaseDialect implements BlueGreen
 
   private static readonly EXTENSIONS_SQL: string =
     "SELECT (setting LIKE '%rds_tools%') AS rds_tools, (setting LIKE '%aurora_stat_utils%') AS aurora_stat_utils " +
-    "FROM pg_settings WHERE name='rds.extensions'";
+    "FROM pg_catalog.pg_settings WHERE name OPERATOR(pg_catalog.=) 'rds.extensions'";
 
   private static readonly BG_STATUS_QUERY: string = `SELECT * FROM rds_tools.show_topology('aws_advanced_nodejs_wrapper-${RdsPgDatabaseDialect.VERSION}')`;
 

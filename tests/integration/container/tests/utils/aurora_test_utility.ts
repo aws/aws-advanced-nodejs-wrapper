@@ -116,7 +116,7 @@ export class AuroraTestUtility {
             break;
           case DatabaseEngine.PG:
             retrieveTopologySql =
-              "SELECT SERVER_ID, SESSION_ID FROM aurora_replica_status() ORDER BY CASE WHEN SESSION_ID = 'MASTER_SESSION_ID' THEN 0 ELSE 1 END";
+              "SELECT SERVER_ID, SESSION_ID FROM pg_catalog.aurora_replica_status() ORDER BY CASE WHEN SESSION_ID OPERATOR(pg_catalog.=) 'MASTER_SESSION_ID' THEN 0 ELSE 1 END";
             break;
           default:
             throw new Error(`Unsupported database engine: ${engine}`);
@@ -134,7 +134,7 @@ export class AuroraTestUtility {
           }
           case DatabaseEngine.PG:
             retrieveTopologySql =
-              "SELECT SUBSTRING(endpoint FROM 0 FOR POSITION('.' IN endpoint)) as SERVER_ID FROM rds_tools.show_topology() ORDER BY CASE WHEN id = (SELECT MAX(multi_az_db_cluster_source_dbi_resource_id) FROM rds_tools.multi_az_db_cluster_source_dbi_resource_id()) THEN 0 ELSE 1 END, endpoint";
+              "SELECT SUBSTRING(endpoint FROM 0 FOR POSITION('.' IN endpoint)) as SERVER_ID FROM rds_tools.show_topology() ORDER BY CASE WHEN id OPERATOR(pg_catalog.=) (SELECT MAX(multi_az_db_cluster_source_dbi_resource_id) FROM rds_tools.multi_az_db_cluster_source_dbi_resource_id()) THEN 0 ELSE 1 END, endpoint";
 
             break;
           default:

@@ -668,7 +668,7 @@ async function getWrapperBlueExecutingConnectivityMonitoringPromise(
   let query;
   switch (env.info.request.engine) {
     case DatabaseEngine.PG:
-      query = "SELECT PG_SLEEP(5)";
+      query = "SELECT pg_catalog.PG_SLEEP(5)";
       break;
     case DatabaseEngine.MYSQL:
       query = "SELECT SLEEP(5)";

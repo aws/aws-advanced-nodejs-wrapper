@@ -24,31 +24,31 @@ import { ClientWrapper } from "../../../common/lib/client_wrapper";
 import { DatabaseDialectCodes } from "../../../common/lib/database_dialect/database_dialect_codes";
 import { LimitlessDatabaseDialect } from "../../../common/lib/database_dialect/limitless_database_dialect";
 import { WrapperProperties } from "../../../common/lib/wrapper_property";
-import {
-  MonitoringRdsHostListProvider
-} from "../../../common/lib/host_list_provider/monitoring/monitoring_host_list_provider";
+import { MonitoringRdsHostListProvider } from "../../../common/lib/host_list_provider/monitoring/monitoring_host_list_provider";
 import { PluginService } from "../../../common/lib/plugin_service";
 import { BlueGreenDialect, BlueGreenResult } from "../../../common/lib/database_dialect/blue_green_dialect";
 
 export class AuroraPgDatabaseDialect extends PgDatabaseDialect implements TopologyAwareDatabaseDialect, LimitlessDatabaseDialect, BlueGreenDialect {
   private static readonly VERSION = process.env.npm_package_version;
   private static readonly TOPOLOGY_QUERY: string =
-    "SELECT server_id, CASE WHEN SESSION_ID = 'MASTER_SESSION_ID' THEN TRUE ELSE FALSE END AS is_writer, " +
+    "SELECT server_id, CASE WHEN SESSION_ID OPERATOR(pg_catalog.=) 'MASTER_SESSION_ID' THEN TRUE ELSE FALSE END AS is_writer, " +
     "CPU, COALESCE(REPLICA_LAG_IN_MSEC, 0) AS lag, LAST_UPDATE_TIMESTAMP " +
-    "FROM aurora_replica_status() " +
+    "FROM pg_catalog.aurora_replica_status() " +
     // filter out nodes that haven't been updated in the last 5 minutes
-    "WHERE EXTRACT(EPOCH FROM(NOW() - LAST_UPDATE_TIMESTAMP)) <= 300 OR SESSION_ID = 'MASTER_SESSION_ID' " +
+    "WHERE EXTRACT(EPOCH FROM(pg_catalog.NOW() OPERATOR(pg_catalog.-) LAST_UPDATE_TIMESTAMP)) OPERATOR(pg_catalog.<=) 300 OR SESSION_ID OPERATOR(pg_catalog.=) 'MASTER_SESSION_ID' " +
     "OR LAST_UPDATE_TIMESTAMP IS NULL";
   private static readonly EXTENSIONS_SQL: string =
-    "SELECT (setting LIKE '%aurora_stat_utils%') AS aurora_stat_utils FROM pg_settings WHERE name='rds.extensions'";
-  private static readonly HOST_ID_QUERY: string = "SELECT aurora_db_instance_identifier() as host";
-  private static readonly IS_READER_QUERY: string = "SELECT pg_is_in_recovery() as is_reader";
+    "SELECT (setting LIKE '%aurora_stat_utils%') AS aurora_stat_utils FROM pg_catalog.pg_settings WHERE name OPERATOR(pg_catalog.=) 'rds.extensions'";
+  private static readonly HOST_ID_QUERY: string = "SELECT pg_catalog.aurora_db_instance_identifier() as host";
+  private static readonly IS_READER_QUERY: string = "SELECT pg_catalog.pg_is_in_recovery() as is_reader";
   private static readonly IS_WRITER_QUERY: string =
-    "SELECT server_id " + "FROM aurora_replica_status() " + "WHERE SESSION_ID = 'MASTER_SESSION_ID' AND SERVER_ID = aurora_db_instance_identifier()";
+    "SELECT server_id " +
+    "FROM pg_catalog.aurora_replica_status() " +
+    "WHERE SESSION_ID OPERATOR(pg_catalog.=) 'MASTER_SESSION_ID' AND SERVER_ID OPERATOR(pg_catalog.=) pg_catalog.aurora_db_instance_identifier()";
 
-  private static readonly BG_STATUS_QUERY: string = `SELECT * FROM get_blue_green_fast_switchover_metadata('aws_advanced_nodejs_wrapper-${AuroraPgDatabaseDialect.VERSION}')`;
+  private static readonly BG_STATUS_QUERY: string = `SELECT * FROM pg_catalog.get_blue_green_fast_switchover_metadata('aws_advanced_nodejs_wrapper-${AuroraPgDatabaseDialect.VERSION}')`;
 
-  private static readonly TOPOLOGY_TABLE_EXIST_QUERY: string = "SELECT 'get_blue_green_fast_switchover_metadata'::regproc";
+  private static readonly TOPOLOGY_TABLE_EXIST_QUERY: string = "SELECT pg_catalog.'get_blue_green_fast_switchover_metadata'::regproc";
 
   getHostListProvider(props: Map<string, any>, originalUrl: string, hostListProviderService: HostListProviderService): HostListProvider {
     if (WrapperProperties.PLUGINS.get(props).includes("failover2")) {
