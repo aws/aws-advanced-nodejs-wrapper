@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/#semantic-versioning-200).
 
+## [2.0.1] - 2025-10-17
+
+### :bug: Fixed
+
+- Limitless Connection Plugin to properly round the load metric values for Limitless transaction routers ([PR #557](https://github.com/aws/aws-advanced-nodejs-wrapper/pull/557)).
+
+### :crab: Changed
+
+- Update documentation for Blue/Green Support ([PR #564](https://github.com/aws/aws-advanced-nodejs-wrapper/pull/564)).
+- Add qualifiers to PostgreSQL SQL statements ([PR #574](https://github.com/aws/aws-advanced-nodejs-wrapper/pull/574)).
+
 ## [2.0.0] - 2025-09-11
 
 ### :magic_wand: Added
@@ -76,6 +87,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 The Amazon Web Services (AWS) Advanced NodeJS Wrapper allows an application to take advantage of the features of clustered Aurora databases.
 
+[2.0.1]: https://github.com/aws/aws-advanced-nodejs-wrapper/compare/2.0.0...2.0.1
 [2.0.0]: https://github.com/aws/aws-advanced-nodejs-wrapper/compare/1.3.0...2.0.0
 [1.3.0]: https://github.com/aws/aws-advanced-nodejs-wrapper/compare/1.2.0...1.3.0
 [1.2.0]: https://github.com/aws/aws-advanced-nodejs-wrapper/compare/1.1.0...1.2.0
