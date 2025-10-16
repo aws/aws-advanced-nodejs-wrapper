@@ -7,6 +7,7 @@
 | Mar 12 2025  | [Release 1.2.0](https://github.com/awslabs/aws-advanced-nodejs-wrapper/releases/tag/1.2.0) |
 | Jul 29 2025  | [Release 1.3.0](https://github.com/awslabs/aws-advanced-nodejs-wrapper/releases/tag/1.3.0) |
 | Sep 11 2025  | [Release 2.0.0](https://github.com/awslabs/aws-advanced-nodejs-wrapper/releases/tag/2.0.0) |
+| Oct 17 2025  | [Release 2.0.1](https://github.com/awslabs/aws-advanced-nodejs-wrapper/releases/tag/2.0.1) |
 
 `aws-advanced-nodejs-wrapper` [follows semver](https://semver.org/#semantic-versioning-200) which means we will only
 release breaking changes in major versions. Generally speaking patches will be released to fix existing problems without
