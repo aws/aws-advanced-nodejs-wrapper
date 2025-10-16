@@ -1,17 +1,17 @@
 /*
- Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
-
- Licensed under the Apache License, Version 2.0 (the "License").
- You may not use this file except in compliance with the License.
- You may obtain a copy of the License at
-
- http://www.apache.org/licenses/LICENSE-2.0
-
- Unless required by applicable law or agreed to in writing, software
- distributed under the License is distributed on an "AS IS" BASIS,
- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- See the License for the specific language governing permissions and
- limitations under the License.
+  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ 
+  Licensed under the Apache License, Version 2.0 (the "License").
+  You may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+ 
+  http://www.apache.org/licenses/LICENSE-2.0
+ 
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
 */
 
 import { features, instanceCount } from "./config";
@@ -120,7 +120,9 @@ describe("pg pool integration tests", () => {
     describe(`using ${name}`, () => {
       itIfPG("concurrent execution", async () => {
         client = await factory();
-        const queries = Array.from({ length: 10 }, (_, i) => client.query("SELECT $1::int as query_id, pg_backend_pid() as connection_id", [i + 1]));
+        const queries = Array.from({ length: 10 }, (_, i) =>
+          client.query("SELECT $1::int as query_id, pg_catalog.pg_backend_pid() as connection_id", [i + 1])
+        );
         const results = await Promise.all(queries);
         expect(results).toHaveLength(10);
         const connectionIds = new Set();
@@ -136,7 +138,7 @@ describe("pg pool integration tests", () => {
         const results = [];
         const connectionIds = new Set();
         for (let i = 0; i < 10; i++) {
-          const result = await client.query("SELECT $1::int as query_id, pg_backend_pid() as connection_id", [i + 1]);
+          const result = await client.query("SELECT $1::int as query_id, pg_catalog.pg_backend_pid() as connection_id", [i + 1]);
           results.push(result);
           connectionIds.add(result.rows[0].connection_id);
         }

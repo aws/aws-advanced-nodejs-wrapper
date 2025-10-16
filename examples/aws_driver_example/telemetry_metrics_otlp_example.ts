@@ -83,7 +83,7 @@ const client = new AwsPGClient({
 
 try {
   await client.connect();
-  const result = (await client.query("select * from aurora_db_instance_identifier()")).rows[0];
+  const result = (await client.query("select * from pg_catalog.aurora_db_instance_identifier()")).rows[0];
   console.log(result);
 } finally {
   await client.end();

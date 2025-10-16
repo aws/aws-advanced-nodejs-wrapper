@@ -62,7 +62,7 @@ export class DriverHelper {
       case DatabaseEngineDeployment.AURORA:
         switch (engine) {
           case DatabaseEngine.PG:
-            return "SELECT pg_sleep(10)";
+            return "SELECT pg_catalog.pg_sleep(10)";
           case DatabaseEngine.MYSQL:
             return "SELECT sleep(10)";
           default:
@@ -76,7 +76,7 @@ export class DriverHelper {
       case DatabaseEngineDeployment.AURORA:
         switch (engine) {
           case DatabaseEngine.PG:
-            return "SELECT aurora_db_instance_identifier() as id";
+            return "SELECT pg_catalog.aurora_db_instance_identifier() as id";
           case DatabaseEngine.MYSQL:
             return "SELECT @@aurora_server_id as id";
           default:
@@ -137,7 +137,7 @@ export class DriverHelper {
   static getSleepQuery(engine: DatabaseEngine, seconds: number) {
     switch (engine) {
       case DatabaseEngine.PG:
-        return `select pg_sleep(${seconds})`;
+        return `select pg_catalog.pg_sleep(${seconds})`;
       case DatabaseEngine.MYSQL:
         return `select sleep(${seconds})`;
       default:

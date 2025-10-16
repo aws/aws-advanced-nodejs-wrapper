@@ -27,9 +27,7 @@ import { ErrorHandler } from "../../../common/lib/error_handler";
 import { MultiAzPgErrorHandler } from "../multi_az_pg_error_handler";
 import { WrapperProperties } from "../../../common/lib/wrapper_property";
 import { PluginService } from "../../../common/lib/plugin_service";
-import {
-  MonitoringRdsHostListProvider
-} from "../../../common/lib/host_list_provider/monitoring/monitoring_host_list_provider";
+import { MonitoringRdsHostListProvider } from "../../../common/lib/host_list_provider/monitoring/monitoring_host_list_provider";
 
 export class RdsMultiAZClusterPgDatabaseDialect extends PgDatabaseDialect implements TopologyAwareDatabaseDialect {
   constructor() {
@@ -38,13 +36,13 @@ export class RdsMultiAZClusterPgDatabaseDialect extends PgDatabaseDialect implem
   private static readonly VERSION = process.env.npm_package_version;
   private static readonly TOPOLOGY_QUERY: string = `SELECT id, endpoint, port FROM rds_tools.show_topology('aws_advanced_nodejs_wrapper-"${RdsMultiAZClusterPgDatabaseDialect.VERSION}"')`;
   private static readonly WRITER_HOST_FUNC_EXIST_QUERY: string =
-    "SELECT 1 AS tmp FROM information_schema.routines WHERE routine_schema='rds_tools' AND routine_name='multi_az_db_cluster_source_dbi_resource_id'";
+    "SELECT 1 AS tmp FROM information_schema.routines WHERE routine_schema OPERATOR(pg_catalog.=) 'rds_tools' AND routine_name OPERATOR(pg_catalog.=) 'multi_az_db_cluster_source_dbi_resource_id'";
   private static readonly FETCH_WRITER_HOST_QUERY: string =
     "SELECT multi_az_db_cluster_source_dbi_resource_id FROM rds_tools.multi_az_db_cluster_source_dbi_resource_id()";
   private static readonly FETCH_WRITER_HOST_QUERY_COLUMN_NAME: string = "multi_az_db_cluster_source_dbi_resource_id";
   private static readonly HOST_ID_QUERY: string = "SELECT dbi_resource_id FROM rds_tools.dbi_resource_id()";
   private static readonly HOST_ID_QUERY_COLUMN_NAME: string = "dbi_resource_id";
-  private static readonly IS_READER_QUERY: string = "SELECT pg_is_in_recovery() AS is_reader";
+  private static readonly IS_READER_QUERY: string = "SELECT pg_catalog.pg_is_in_recovery() AS is_reader";
   private static readonly IS_READER_QUERY_COLUMN_NAME: string = "is_reader";
 
   async isDialect(targetClient: ClientWrapper): Promise<boolean> {

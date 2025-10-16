@@ -17,9 +17,7 @@
 import { DatabaseDialect, DatabaseType } from "../../../common/lib/database_dialect/database_dialect";
 import { HostListProviderService } from "../../../common/lib/host_list_provider_service";
 import { HostListProvider } from "../../../common/lib/host_list_provider/host_list_provider";
-import {
-  ConnectionStringHostListProvider
-} from "../../../common/lib/host_list_provider/connection_string_host_list_provider";
+import { ConnectionStringHostListProvider } from "../../../common/lib/host_list_provider/connection_string_host_list_provider";
 import { AwsWrapperError, HostRole, TransactionIsolationLevel, UnsupportedMethodError } from "../../../common/lib";
 import { DatabaseDialectCodes } from "../../../common/lib/database_dialect/database_dialect_codes";
 import { ClientWrapper } from "../../../common/lib/client_wrapper";
@@ -41,7 +39,7 @@ export class PgDatabaseDialect implements DatabaseDialect {
   }
 
   getHostAliasQuery(): string {
-    return "SELECT CONCAT(inet_server_addr(), ':', inet_server_port())";
+    return "SELECT pg_catalog.CONCAT(pg_catalog.inet_server_addr(), ':', pg_catalog.inet_server_port())";
   }
 
   async getHostAliasAndParseResults(targetClient: ClientWrapper): Promise<string> {
@@ -56,7 +54,7 @@ export class PgDatabaseDialect implements DatabaseDialect {
   }
 
   getServerVersionQuery(): string {
-    return "SELECT 'version', VERSION()";
+    return "SELECT 'version', pg_catalog.VERSION()";
   }
 
   getSetReadOnlyQuery(readOnly: boolean): string {
@@ -98,7 +96,7 @@ export class PgDatabaseDialect implements DatabaseDialect {
 
   async isDialect(targetClient: ClientWrapper): Promise<boolean> {
     return await targetClient
-      .query("SELECT 1 FROM pg_proc LIMIT 1")
+      .query("SELECT 1 FROM pg_catalog.pg_proc LIMIT 1")
       .then((result: { rows: any }) => {
         return !!result.rows[0];
       })
