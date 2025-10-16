@@ -79,7 +79,7 @@
     "@types/i18n": "^0.13.12",
     "@types/jest": "^29.5.13",
     "@types/lodash": "^4.17.20",
-    "@types/node": "^22.10.7",
+    "@types/node": "^24.8.0",
     "@types/node-fetch": "^2.6.11",
     "@types/pg": "^8.15.2",
     "@types/tough-cookie": "^4.0.5",
