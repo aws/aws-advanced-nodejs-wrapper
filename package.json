@@ -53,7 +53,7 @@
     "dist"
   ],
   "devDependencies": {
-    "@aws-sdk/client-rds": "^3.823.0",
+    "@aws-sdk/client-rds": "^3.913.0",
     "@aws-sdk/client-secrets-manager": "^3.821.0",
     "@aws-sdk/client-sts": "^3.823.0",
     "@aws-sdk/client-xray": "^3.823.0",
