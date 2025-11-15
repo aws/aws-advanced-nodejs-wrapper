@@ -34,14 +34,6 @@ const itIf =
 
 let client: any;
 
-async function executeInstanceQuery(client: any, engine: DatabaseEngine, deployment: DatabaseEngineDeployment, props: any): Promise<void> {
-  await client.connect();
-
-  const res = await DriverHelper.executeInstanceQuery(engine, deployment, client);
-
-  expect(res).not.toBeNull();
-}
-
 beforeEach(async () => {
   logger.info(`Test started: ${expect.getState().currentTestName}`);
   await ProxyHelper.enableAllConnectivity();
