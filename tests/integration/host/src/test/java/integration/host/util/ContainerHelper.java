@@ -236,9 +236,14 @@ public class ContainerHelper {
 
     Long exitCode = dockerClient.inspectExecCmd(execCreateCmdResponse.getId()).exec().getExitCodeLong();
     if (exitCode != 0) {
-      // Wait 5 minutes in case there are any dangling promises waiting to complete.
-      Thread.sleep(5 * 60 * 1000);
+      System.out.println("None-zero exit code, wait 10 minutes in case there are any dangling promises.");
+      // Wait 10 minutes in case there are any dangling promises waiting to complete.
+      Thread.sleep(10 * 60 * 1000);
       exitCode = dockerClient.inspectExecCmd(execCreateCmdResponse.getId()).exec().getExitCodeLong();
+    }
+
+    if (exitCode != 0) {
+      System.err.println("Command failed with exit code " + exitCode + ": " + String.join(" ", command));
     }
 
     return exitCode;
