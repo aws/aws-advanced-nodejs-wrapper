@@ -32,7 +32,7 @@ import { HttpInstrumentation } from "@opentelemetry/instrumentation-http";
 import { AwsInstrumentation } from "@opentelemetry/instrumentation-aws-sdk";
 import { AWSXRayIdGenerator } from "@opentelemetry/id-generator-aws-xray";
 import { OTLPTraceExporter } from "@opentelemetry/exporter-trace-otlp-grpc";
-import { Resource } from "@opentelemetry/resources";
+import { resourceFromAttributes } from "@opentelemetry/resources";
 import { ATTR_SERVICE_NAME } from "@opentelemetry/semantic-conventions";
 import { PeriodicExportingMetricReader } from "@opentelemetry/sdk-metrics";
 import { OTLPMetricExporter } from "@opentelemetry/exporter-metrics-otlp-grpc";
@@ -61,6 +61,9 @@ export class TestEnvironment {
 
   static async verifyClusterStatus(auroraUtility?: AuroraTestUtility) {
     const info = TestEnvironment.env?.info;
+    if (info?.request.instanceCount <= 1) {
+      return;
+    }
     if (info?.request.deployment === DatabaseEngineDeployment.AURORA || info?.request.deployment === DatabaseEngineDeployment.RDS_MULTI_AZ_CLUSTER) {
       let remainingTries = 3;
       let success = false;
@@ -242,11 +245,9 @@ export class TestEnvironment {
     const traceExporter = new OTLPTraceExporter({
       url: `http://${env.info.tracesTelemetryInfo.endpoint}:${env.info.tracesTelemetryInfo.endpointPort}`
     });
-    const resource = Resource.default().merge(
-      new Resource({
-        [ATTR_SERVICE_NAME]: "aws-advanced-nodejs-wrapper"
-      })
-    );
+    const resource = resourceFromAttributes({
+      [ATTR_SERVICE_NAME]: "aws-advanced-nodejs-wrapper"
+    });
 
     const metricReader = new PeriodicExportingMetricReader({
       exporter: new OTLPMetricExporter({

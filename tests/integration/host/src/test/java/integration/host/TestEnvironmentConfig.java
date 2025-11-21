@@ -444,30 +444,40 @@ public class TestEnvironmentConfig implements AutoCloseable {
         throw new RuntimeException("Environment variable RDS_DB_NAME is required.");
       }
 
-      if (!env.auroraUtil.doesClusterExist(env.rdsDbName)) {
-        throw new RuntimeException(
-            "It's requested to reuse existing DB cluster but it doesn't exist: "
-                + env.rdsDbName
-                + ".cluster-"
-                + env.rdsDbDomain);
+      String dbEngineName = null;
+      String engineVersion = null;
+      if (numOfInstances > 1 || env.info.getRequest().getDatabaseEngineDeployment() != DatabaseEngineDeployment.RDS_MULTI_AZ_INSTANCE) {
+        if (!env.auroraUtil.doesClusterExist(env.rdsDbName)) {
+          throw new RuntimeException(
+              "It's requested to reuse existing DB cluster but it doesn't exist: "
+                  + env.rdsDbName
+                  + ".cluster-"
+                  + env.rdsDbDomain);
+        }
+        LOGGER.finer(
+            "Reuse existing cluster " + env.rdsDbName + ".cluster-" + env.rdsDbDomain);
+        DBCluster clusterInfo = env.auroraUtil.getClusterInfo(env.rdsDbName);
+        dbEngineName = clusterInfo.engine();
+        engineVersion = clusterInfo.engineVersion();
+      } else {
+        DBInstance instanceInfo = env.auroraUtil.getDBInstance(env.rdsDbName);
+        dbEngineName = instanceInfo.engine();
+        engineVersion = instanceInfo.engineVersion();
       }
-      LOGGER.finer(
-          "Reuse existing cluster " + env.rdsDbName + ".cluster-" + env.rdsDbDomain);
 
-      DBCluster clusterInfo = env.auroraUtil.getClusterInfo(env.rdsDbName);
+      DatabaseEngine dbEngine =  env.auroraUtil.getEngine(dbEngineName);
 
-      DatabaseEngine existingClusterDatabaseEngine = env.auroraUtil.getClusterEngine(clusterInfo);
-      if (existingClusterDatabaseEngine != env.info.getRequest().getDatabaseEngine()) {
+      if (dbEngine != env.info.getRequest().getDatabaseEngine()) {
         throw new RuntimeException(
-            "Existing cluster is "
-                + existingClusterDatabaseEngine
-                + " cluster. "
+            "Existing deployment is "
+                + dbEngine
+                + ". "
                 + env.info.getRequest().getDatabaseEngine()
                 + " is expected.");
       }
 
-      env.info.setDatabaseEngine(clusterInfo.engine());
-      env.info.setDatabaseEngineVersion(clusterInfo.engineVersion());
+      env.info.setDatabaseEngine(dbEngineName);
+      env.info.setDatabaseEngineVersion(engineVersion);
     } else {
       if (StringUtils.isNullOrEmpty(env.rdsDbName)) {
         int remainingTries = 5;
@@ -513,7 +523,7 @@ public class TestEnvironmentConfig implements AutoCloseable {
             env.info.getDatabaseInfo().getClusterParameterGroupName(),
             numOfInstances);
 
-        List<DBInstance> dbInstances = env.auroraUtil.getDBInstances(env.rdsDbName);
+        List<DBInstance> dbInstances = env.auroraUtil.getDBInstances(env.rdsDbName, AuroraTestUtility.CLUSTER_ID_FILTER_NAME);
         if (dbInstances.isEmpty()) {
           throw new RuntimeException("Failed to get instance information for cluster " + env.rdsDbName);
         }
@@ -541,25 +551,33 @@ public class TestEnvironmentConfig implements AutoCloseable {
 
     int port = getPort(env.info.getRequest());
 
-    env.info
-        .getDatabaseInfo()
-        .setClusterEndpoint(env.rdsDbName + ".cluster-" + env.rdsDbDomain, port);
-    env.info
-        .getDatabaseInfo()
-        .setClusterReadOnlyEndpoint(
-            env.rdsDbName + ".cluster-ro-" + env.rdsDbDomain, port);
     env.info.getDatabaseInfo().setInstanceEndpointSuffix(env.rdsDbDomain, port);
 
-    List<TestInstanceInfo> instances = env.auroraUtil.getTestInstancesInfo(env.rdsDbName);
+    final boolean hasClusterInformation = numOfInstances > 1 || env.info.getRequest().getDatabaseEngineDeployment() != DatabaseEngineDeployment.RDS_MULTI_AZ_INSTANCE;
+    List<TestInstanceInfo> instances = env.auroraUtil.getTestInstancesInfo(env.rdsDbName, hasClusterInformation);
     env.info.getDatabaseInfo().getInstances().clear();
     env.info.getDatabaseInfo().getInstances().addAll(instances);
 
-    // Make sure the cluster is available and accessible.
-    try {
-      env.auroraUtil.waitUntilClusterHasRightState(env.rdsDbName);
-    } catch (InterruptedException ex) {
-      Thread.currentThread().interrupt();
-      throw new RuntimeException(ex);
+    if (hasClusterInformation) {
+      env.info
+          .getDatabaseInfo()
+          .setClusterEndpoint(env.rdsDbName + ".cluster-" + env.rdsDbDomain, port);
+      env.info
+          .getDatabaseInfo()
+          .setClusterReadOnlyEndpoint(
+              env.rdsDbName + ".cluster-ro-" + env.rdsDbDomain, port);
+
+      // Make sure the cluster is available and accessible.
+      try {
+        env.auroraUtil.waitUntilClusterHasRightState(env.rdsDbName);
+      } catch (InterruptedException ex) {
+        Thread.currentThread().interrupt();
+        throw new RuntimeException(ex);
+      }
+    }
+
+    if (env.reuseDb) {
+      return;
     }
 
     final DatabaseEngineDeployment deployment = env.info.getRequest().getDatabaseEngineDeployment();

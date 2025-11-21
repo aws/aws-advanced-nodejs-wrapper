@@ -21,6 +21,7 @@ import com.github.dockerjava.api.command.ExecCreateCmd;
 import com.github.dockerjava.api.command.ExecCreateCmdResponse;
 import com.github.dockerjava.api.command.InspectContainerResponse;
 import com.github.dockerjava.api.exception.DockerException;
+import com.github.dockerjava.api.exception.NotFoundException;
 import integration.host.TestEnvironmentConfig;
 import integration.host.TestInstanceInfo;
 import org.testcontainers.DockerClientFactory;
@@ -236,9 +237,19 @@ public class ContainerHelper {
 
     Long exitCode = dockerClient.inspectExecCmd(execCreateCmdResponse.getId()).exec().getExitCodeLong();
     if (exitCode != 0) {
-      // Wait 5 minutes in case there are any dangling promises waiting to complete.
-      Thread.sleep(5 * 60 * 1000);
-      exitCode = dockerClient.inspectExecCmd(execCreateCmdResponse.getId()).exec().getExitCodeLong();
+      System.out.println("None-zero exit code: " + exitCode + ", wait 10 minutes in case there are any dangling promises.");
+      // Wait 10 minutes in case there are any dangling promises waiting to complete.
+      Thread.sleep(10 * 60 * 1000);
+      try {
+        exitCode = dockerClient.inspectExecCmd(execCreateCmdResponse.getId()).exec().getExitCodeLong();
+      } catch (NotFoundException e) {
+        // Exec instance was cleaned up.
+        exitCode = 0L;
+      }
+    }
+
+    if (exitCode != 0) {
+      System.err.println("Command failed with exit code " + exitCode + ": " + String.join(" ", command));
     }
 
     return exitCode;

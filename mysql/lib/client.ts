@@ -24,14 +24,14 @@ import { MySQLDatabaseDialect } from "./dialect/mysql_database_dialect";
 import { AuroraMySQLDatabaseDialect } from "./dialect/aurora_mysql_database_dialect";
 import { RdsMySQLDatabaseDialect } from "./dialect/rds_mysql_database_dialect";
 import {
-  TransactionIsolationLevel,
+  AwsPoolConfig,
   AwsWrapperError,
-  FailoverSuccessError,
-  UndefinedClientError,
-  UnsupportedMethodError,
   ConnectionProvider,
+  FailoverSuccessError,
   InternalPooledConnectionProvider,
-  AwsPoolConfig
+  TransactionIsolationLevel,
+  UndefinedClientError,
+  UnsupportedMethodError
 } from "../../common/lib";
 import { Messages } from "../../common/lib/utils/messages";
 import { ClientWrapper } from "../../common/lib/client_wrapper";
@@ -75,7 +75,7 @@ class BaseAwsMySQLClient extends AwsClient implements MySQLClient {
         try {
           const role = await this.pluginService.getHostRole(result);
           // The current host role may be incorrect, use the created client to confirm the host role.
-          if (role !== result.hostInfo.role) {
+          if (role !== undefined && role !== result.hostInfo.role) {
             result.hostInfo.role = role;
             this.pluginService.setCurrentHostInfo(result.hostInfo);
             this.pluginService.setInitialConnectionHostInfo(result.hostInfo);
@@ -199,7 +199,7 @@ class BaseAwsMySQLClient extends AwsClient implements MySQLClient {
       () => {
         this.pluginService.removeErrorListener(this.targetClient);
         const res = ClientUtils.queryWithTimeout(this.targetClient.end(), this.properties);
-        this.targetClient = null;
+        this.targetClient = undefined;
         this.isConnected = false;
         return res;
       },
