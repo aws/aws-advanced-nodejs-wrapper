@@ -84,6 +84,6 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: integration-report-default-${{ matrix.dbEngine }}
+          name: integration-report-default-${{ matrix.dbEngine }}-${{ matrix.versions}}
           path: ./tests/integration/container/reports
           retention-days: 5
