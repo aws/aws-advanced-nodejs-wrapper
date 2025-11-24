@@ -13,7 +13,6 @@ Before running the integration tests for the AWS Advanced NodeJS Wrapper, you mu
 #### Aurora Test Requirements
 
 - An AWS account with:
-
   - RDS permissions.
   - EC2 permissions so integration tests can add the current IP address in the Aurora cluster's EC2 security group.
   - For more information,

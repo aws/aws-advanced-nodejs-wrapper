@@ -26,7 +26,6 @@ import { AwsPGClient } from "../pg/lib";
 import { NullTelemetryFactory } from "../common/lib/utils/telemetry/null_telemetry_factory";
 import { OpenTelemetryFactory } from "../common/lib/utils/telemetry/open_telemetry_factory";
 import { OTLPTraceExporter } from "@opentelemetry/exporter-trace-otlp-grpc";
-import { Resource } from "@opentelemetry/resources";
 import { ATTR_SERVICE_NAME } from "@opentelemetry/semantic-conventions";
 import { PeriodicExportingMetricReader } from "@opentelemetry/sdk-metrics";
 import { OTLPMetricExporter } from "@opentelemetry/exporter-metrics-otlp-grpc";
@@ -41,6 +40,7 @@ import { ConnectionProviderManager } from "../common/lib/connection_provider_man
 import { PgClientWrapper } from "../common/lib/pg_client_wrapper";
 import { DriverDialect } from "../common/lib/driver_dialect/driver_dialect";
 import { NodePostgresDriverDialect } from "../pg/lib/dialect/node_postgres_driver_dialect";
+import { resourceFromAttributes } from "@opentelemetry/resources";
 
 const mockConnectionProvider = mock<ConnectionProvider>();
 const mockPluginService = mock(PluginServiceImpl);
@@ -103,11 +103,9 @@ const pluginManager = new PluginManager(
 );
 
 const traceExporter = new OTLPTraceExporter({ url: "http://localhost:4317" });
-const resource = Resource.default().merge(
-  new Resource({
-    [ATTR_SERVICE_NAME]: "aws-advanced-nodejs-wrapper"
-  })
-);
+const resource = resourceFromAttributes({
+  [ATTR_SERVICE_NAME]: "aws-advanced-nodejs-wrapper"
+});
 
 const metricReader = new PeriodicExportingMetricReader({
   exporter: new OTLPMetricExporter(),

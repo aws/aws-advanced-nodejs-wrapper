@@ -177,7 +177,7 @@ describe("testSecretsManager", () => {
 
     await expect(async () => {
       await plugin.connect(TEST_HOSTINFO, TEST_PROPS, true, mockConnectFunction);
-    }).rejects.toThrow(new AwsWrapperError(Messages.get("AwsSecretsManagerConnectionPlugin.failedToFetchDbCredentials")));
+    }).rejects.toThrow(new AwsWrapperError(Messages.get("AwsSecretsManagerConnectionPlugin.failedToFetchDbCredentials", "message")));
 
     expect(AwsSecretsManagerPlugin.secretsCache.size).toBe(0);
     verify(mockSecretsManagerClient.send(anything())).once();

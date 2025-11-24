@@ -1,4 +1,4 @@
-name: Integration Tests Default
+name: Integration Tests
 
 on:
   workflow_dispatch:
@@ -20,12 +20,13 @@ permissions:
 
 jobs:
   run-integration-tests:
-    name: Run Integration Tests with Default
+    name: Run Integration Tests
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        dbEngine: ["mysql", "postgres"]
+        versions: [ "default", "latest" ]
+        dbEngine: ["aurora-mysql", "aurora-postgres", "multi-az-mysql", "multi-az-postgres" ]
 
     steps:
       - name: Clone repository
@@ -54,14 +55,14 @@ jobs:
 
       - name: Run Integration Tests
         run: |
-          ./gradlew --no-parallel --no-daemon test-aurora-${{ matrix.dbEngine }} --info
+          ./gradlew --no-parallel --no-daemon test-${{ matrix.dbEngine }} --info
         env:
           RDS_DB_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
           AWS_ACCESS_KEY_ID: ${{ steps.creds.outputs.aws-access-key-id }}
           AWS_SECRET_ACCESS_KEY: ${{ steps.creds.outputs.aws-secret-access-key }}
           AWS_SESSION_TOKEN: ${{ steps.creds.outputs.aws-session-token }}
-          AURORA_MYSQL_DB_ENGINE_VERSION: "default"
-          AURORA_PG_DB_ENGINE_VERSION: "default"
+          AURORA_MYSQL_DB_ENGINE_VERSION: ${{ matrix.dbEngine }}
+          AURORA_PG_DB_ENGINE_VERSION: ${{ matrix.versions }}
 
       - name: "Get Github Action IP"
         if: always()
@@ -82,6 +83,6 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: integration-report-default-${{ matrix.dbEngine }}
+          name: integration-report-default-${{ matrix.dbEngine }}-${{ matrix.versions}}
           path: ./tests/integration/container/reports
           retention-days: 5

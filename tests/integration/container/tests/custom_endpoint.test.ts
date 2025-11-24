@@ -45,7 +45,7 @@ const itIf =
     : it.skip;
 
 // Custom endpoint is not compatible with multi-az clusters.
-const describeIf = !features.includes(TestEnvironmentFeatures.RDS_MULTI_AZ_CLUSTER_SUPPORTED) ? describe : describe.skip;
+const describeIf = !features.includes(TestEnvironmentFeatures.RDS_MULTI_AZ_SUPPORTED) ? describe : describe.skip;
 
 const endpointId1 = `test-endpoint-1-${randomUUID()}`;
 const endpointId2 = `test-endpoint-2-${randomUUID()}`;

@@ -40,7 +40,7 @@ const itIf =
     : it.skip;
 const itIfTwoInstance = instanceCount == 2 ? itIf : it.skip;
 const itIfThreeInstanceAuroraCluster =
-  instanceCount == 3 && !features.includes(TestEnvironmentFeatures.RDS_MULTI_AZ_CLUSTER_SUPPORTED) ? it : it.skip;
+  instanceCount == 3 && !features.includes(TestEnvironmentFeatures.RDS_MULTI_AZ_SUPPORTED) ? it : it.skip;
 
 let env: TestEnvironment;
 let driver;
