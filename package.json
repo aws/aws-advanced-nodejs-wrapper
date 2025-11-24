@@ -58,7 +58,7 @@
   "devDependencies": {
     "@aws-sdk/client-rds": "^3.900.0",
     "@aws-sdk/client-secrets-manager": "^3.900.0",
-    "@aws-sdk/client-sts": "^3.900.0",
+    "@aws-sdk/client-sts": "^3.936.0",
     "@aws-sdk/client-xray": "^3.900.0",
     "@aws-sdk/credential-providers": "^3.900.0",
     "@aws-sdk/rds-signer": "^3.900.0",
@@ -125,7 +125,7 @@
   "peerDependencies": {
     "@aws-sdk/client-rds": "^3.900.0",
     "@aws-sdk/client-secrets-manager": "^3.900.0",
-    "@aws-sdk/client-sts": "^3.900.0",
+    "@aws-sdk/client-sts": "^3.936.0",
     "@aws-sdk/client-xray": "^3.900.0",
     "@aws-sdk/credential-providers": "^3.900.0",
     "@aws-sdk/rds-signer": "^3.900.0",
