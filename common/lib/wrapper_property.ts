@@ -19,6 +19,173 @@ import { DatabaseDialect } from "./database_dialect/database_dialect";
 import { ClusterTopologyMonitorImpl } from "./host_list_provider/monitoring/cluster_topology_monitor";
 import { BlueGreenStatusProvider } from "./plugins/bluegreen/blue_green_status_provider";
 
+export interface AwsClientConfig {
+  /** Comma separated list of connection plugin codes */
+  plugins?: string;
+  /** This flag is enabled by default, meaning that the plugins order will be automatically adjusted. Disable it at your own risk or if you really need plugins to be executed in a particular order. */
+  autoSortWrapperPluginOrder?: boolean;
+  /** A unique identifier for the supported database dialect. */
+  dialect?: string;
+  /** The connection provider used to create connections. */
+  connectionProvider?: ConnectionProvider;
+  /** Timeout in milliseconds for the wrapper to execute queries against MySQL database engines */
+  mysqlQueryTimeout?: number;
+  /** Timeout in milliseconds for the wrapper to create a connection. */
+  wrapperConnectTimeout?: number;
+  /** Timeout in milliseconds for the wrapper to execute queries. */
+  wrapperQueryTimeout?: number;
+  /** Enables session state transfer to a new connection. */
+  transferSessionStateOnSwitch?: boolean;
+  /** Enables resetting a connection's session state before closing it. */
+  resetSessionStateOnClose?: boolean;
+  /** Enables to rollback a current transaction being in progress when switching to a new connection. */
+  rollbackOnSwitch?: boolean;
+  /** An override for specifying the default host availability change strategy. */
+  defaultHostAvailabilityStrategy?: string;
+  /** Max number of retries for checking a host's availability. */
+  hostAvailabilityStrategyMaxRetries?: number;
+  /** The initial backoff time in seconds. */
+  hostAvailabilityStrategyInitialBackoffTimeSec?: number;
+  /** Interval in millis between measuring response time to a database host. */
+  responseMeasurementIntervalMs?: number;
+  /** Overrides the host that is used to generate the IAM token */
+  iamHost?: string;
+  /** Overrides default port that is used to generate the IAM token */
+  iamDefaultPort?: number;
+  /** Overrides AWS region that is used to generate the IAM token */
+  iamRegion?: string;
+  /** The ARN of the IAM Role that is to be assumed. */
+  iamRoleArn?: string;
+  /** The ARN of the identity provider */
+  iamIdpArn?: string;
+  /** IAM token cache expiration in seconds */
+  iamTokenExpiration?: number;
+  /** The federated user name */
+  idpUsername?: string;
+  /** The federated user password */
+  idpPassword?: string;
+  /** The hosting URL of the Identity Provider */
+  idpEndpoint?: string;
+  /** The hosting port of the Identity Provider */
+  idpPort?: number;
+  /** The ID of the AWS application configured on Okta */
+  appId?: string;
+  /** The relaying party identifier */
+  rpIdentifier?: string;
+  /** The IAM user used to access the database */
+  dbUser?: string;
+  /** The options to be passed into the httpsAgent */
+  httpsAgentOptions?: Record<string, any>;
+  /** The name or the ARN of the secret to retrieve. */
+  secretId?: string;
+  /** The region of the secret to retrieve. */
+  secretRegion?: string;
+  /** The endpoint of the secret to retrieve. */
+  secretEndpoint?: string;
+  /** Cluster topology refresh rate in millis during a writer failover process. During the writer failover process, cluster topology may be refreshed at a faster pace than normal to speed up discovery of the newly promoted writer. */
+  failoverClusterTopologyRefreshRateMs?: number;
+  /** Maximum allowed time for the failover process. */
+  failoverTimeoutMs?: number;
+  /** Interval of time to wait between attempts to reconnect to a failed writer during a writer failover process. */
+  failoverWriterReconnectIntervalMs?: number;
+  /** Reader connection attempt timeout during a reader failover process. */
+  failoverReaderConnectTimeoutMs?: number;
+  /** Enable/disable cluster-aware failover logic. */
+  enableClusterAwareFailover?: boolean;
+  /** Set host role to follow during failover. */
+  failoverMode?: string;
+  /** The strategy that should be used to select a new reader host while opening a new connection. */
+  failoverReaderHostSelectorStrategy?: string;
+  /** Cluster topology refresh rate in millis. The cached topology for the cluster will be invalidated after the specified time, after which it will be updated during the next interaction with the connection. */
+  clusterTopologyRefreshRateMs?: number;
+  /** Cluster topology high refresh rate in millis. */
+  clusterTopologyHighRefreshRateMs?: number;
+  /** A unique identifier for the cluster. Connections with the same cluster id share a cluster topology cache. If unspecified, a cluster id is automatically created for AWS RDS clusters. */
+  clusterId?: string;
+  /** The cluster instance DNS pattern that will be used to build a complete instance endpoint. A "?" character in this pattern should be used as a placeholder for cluster instance names. This pattern is required to be specified for IP address or custom domain connections to AWS RDS clusters. Otherwise, if unspecified, the pattern will be automatically created for AWS RDS clusters. */
+  clusterInstanceHostPattern?: string;
+  /** Set to true if you are providing a connection string with multiple comma-delimited hosts and your cluster has only one writer. The writer must be the first host in the connection string */
+  singleWriterConnectionString?: boolean;
+  /** The strategy that should be used to select a new reader host. */
+  readerHostSelectorStrategy?: string;
+  /** Maximum allowed time for the retries opening a connection. */
+  openConnectionRetryTimeoutMs?: number;
+  /** Time between each retry of opening a connection. */
+  openConnectionRetryIntervalMs?: number;
+  /** Interval in millis between sending SQL to the server and the first probe to database host. */
+  failureDetectionTime?: number;
+  /** Enable enhanced failure detection logic. */
+  failureDetectionEnabled?: boolean;
+  /** Interval in millis between probes to database host. */
+  failureDetectionInterval?: number;
+  /** Number of failed connection checks before considering database host unhealthy. */
+  failureDetectionCount?: number;
+  /** Interval in milliseconds for a monitor to be considered inactive and to be disposed. */
+  monitorDisposalTime?: number;
+  /** Comma separated list of database host-weight pairs in the format of `<host>:<weight>`. */
+  roundRobinHostWeightPairs?: string;
+  /** The default weight for any hosts that have not been configured with the `roundRobinHostWeightPairs` parameter. */
+  roundRobinDefaultWeight?: number;
+  /** Enables telemetry and observability of the wrapper */
+  enableTelemetry?: boolean;
+  /** Force submitting traces related to calls as top level traces. */
+  telemetrySubmitToplevel?: boolean;
+  /** Method to export telemetry traces of the wrapper. */
+  telemetryTracesBackend?: string;
+  /** Method to export telemetry metrics of the wrapper. */
+  telemetryMetricsBackend?: string;
+  /** Post an additional top-level trace for failover process. */
+  telemetryFailoverAdditionalTopTrace?: boolean;
+  /** If the cache of transaction router info is empty and a new connection is made, this property toggles whether the plugin will wait and synchronously fetch transaction router info before selecting a transaction router to connect to, or to fall back to using the provided DB Shard Group endpoint URL. */
+  limitlessWaitForTransactionRouterInfo?: boolean;
+  /** Interval in millis between retries fetching Limitless Transaction Router information. */
+  limitlessGetTransactionRouterInfoRetryIntervalMs?: number;
+  /** Max number of connection retries fetching Limitless Transaction Router information. */
+  limitlessGetTransactionRouterInfoMaxRetries?: number;
+  /** Interval in millis between polling for Limitless Transaction Routers to the database. */
+  limitlessTransactionRouterMonitorIntervalMs?: number;
+  /** Max number of connection retries the Limitless Connection Plugin will attempt. */
+  limitlessConnectMaxRetries?: number;
+  /** Interval in milliseconds for an Limitless router monitor to be considered inactive and to be disposed. */
+  limitlessTransactionRouterMonitorDisposalTimeMs?: number;
+  /** Map containing any keepAlive properties that the target driver accepts in the client configuration. */
+  wrapperKeepAliveProperties?: Map<string, any>;
+  /** A reference to a custom database dialect object. */
+  customDatabaseDialect?: DatabaseDialect;
+  /** A reference to a custom AwsCredentialsProviderHandler object. */
+  customAwsCredentialProviderHandler?: any;
+  /** Name of the AWS Profile to use for IAM or SecretsManager auth. */
+  awsProfile?: string;
+  /** Driver configuration profile name */
+  profileName?: string;
+  /** Controls how frequently custom endpoint monitors fetch custom endpoint info, in milliseconds. */
+  customEndpointInfoRefreshRateMs?: number;
+  /** Controls whether to wait for custom endpoint info to become available before connecting or executing a method. Waiting is only necessary if a connection to a given custom endpoint has not been opened or used recently. Note that disabling this may result in occasional connections to instances outside of the custom endpoint. */
+  waitForCustomEndpointInfo?: boolean;
+  /** Controls the maximum amount of time that the plugin will wait for custom endpoint info to be made available by the custom endpoint monitor, in milliseconds. */
+  waitForCustomEndpointInfoTimeoutMs?: number;
+  /** Controls how long a monitor should run without use before expiring and being removed, in milliseconds. */
+  customEndpointMonitorExpirationMs?: number;
+  /** The region of the cluster's custom endpoints. If not specified, the region will be parsed from the URL. */
+  customEndpointRegion?: string;
+  /** Enables replacing a green host name with the original hostname after a blue/green switchover and the green name no longer resolves. */
+  enableGreenHostReplacement?: boolean;
+  /** Connect timeout in milliseconds during Blue/Green Deployment switchover. */
+  bgConnectTimeoutMs?: number;
+  /** Blue/Green Deployment ID */
+  bgdId?: string;
+  /** Baseline Blue/Green Deployment status checking interval in milliseconds. */
+  bgBaselineMs?: number;
+  /** Increased Blue/Green Deployment status checking interval in milliseconds. */
+  bgIncreasedMs?: number;
+  /** High Blue/Green Deployment status checking interval in milliseconds. */
+  bgHighMs?: number;
+  /** Blue/Green Deployment switchover timeout in milliseconds. */
+  bgSwitchoverTimeoutMs?: number;
+  /** Enables Blue/Green Deployment switchover to suspend new blue connection requests while the switchover process is in progress. */
+  bgSuspendNewBlueConnections?: boolean;
+}
+
 export class WrapperProperty<T> {
   name: string;
   description: string;
