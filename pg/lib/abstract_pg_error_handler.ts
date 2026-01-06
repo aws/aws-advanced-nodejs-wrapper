@@ -24,6 +24,8 @@ export abstract class AbstractPgErrorHandler implements ErrorHandler {
   protected unexpectedError: Error | null = null;
   protected static readonly SYNTAX_ERROR_CODE = "42601";
   protected static readonly SYNTAX_ERROR_MESSAGE = "syntax error";
+  protected isNoOpListenerAttached = false;
+  protected isTrackingListenerAttached = false;
 
   abstract getNetworkErrors(): string[];
 
@@ -84,20 +86,24 @@ export abstract class AbstractPgErrorHandler implements ErrorHandler {
   }
 
   attachErrorListener(clientWrapper: ClientWrapper | undefined): void {
-    if (!clientWrapper || !clientWrapper.client) {
+    if (!clientWrapper || !clientWrapper.client || this.isTrackingListenerAttached) {
       return;
     }
     this.unexpectedError = null;
     clientWrapper.client.removeListener("error", this.noOpListener);
+    this.isNoOpListenerAttached = false;
     clientWrapper.client.on("error", this.trackingListener);
+    this.isTrackingListenerAttached = true;
   }
 
   attachNoOpErrorListener(clientWrapper: ClientWrapper | undefined): void {
-    if (!clientWrapper || !clientWrapper.client) {
+    if (!clientWrapper || !clientWrapper.client || this.isNoOpListenerAttached) {
       return;
     }
     clientWrapper.client.removeListener("error", this.trackingListener);
+    this.isTrackingListenerAttached = false;
     clientWrapper.client.on("error", this.noOpListener);
+    this.isNoOpListenerAttached = true;
   }
 
   removeErrorListener(clientWrapper: ClientWrapper | undefined): void {
@@ -106,5 +112,6 @@ export abstract class AbstractPgErrorHandler implements ErrorHandler {
     }
 
     clientWrapper.client.removeListener("error", this.trackingListener);
+    this.isTrackingListenerAttached = false;
   }
 }

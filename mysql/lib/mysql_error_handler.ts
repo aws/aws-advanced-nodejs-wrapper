@@ -24,6 +24,8 @@ export class MySQLErrorHandler implements ErrorHandler {
   private unexpectedError: Error | null = null;
   protected static readonly SYNTAX_ERROR_CODES = ["42000", "42S02"];
   protected static readonly SYNTAX_ERROR_MESSAGE = "You have an error in your SQL syntax";
+  protected isNoOpListenerAttached = false;
+  protected isTrackingListenerAttached = false;
 
   protected noOpListener(error: any) {
     // Ignore the received error.
@@ -80,20 +82,24 @@ export class MySQLErrorHandler implements ErrorHandler {
   }
 
   attachErrorListener(clientWrapper: ClientWrapper | undefined): void {
-    if (!clientWrapper || !clientWrapper.client) {
+    if (!clientWrapper || !clientWrapper.client || this.isTrackingListenerAttached) {
       return;
     }
     this.unexpectedError = null;
-    clientWrapper.client.removeListener("error", this.noOpListener);
-    clientWrapper.client.on("error", this.trackingListener);
+    clientWrapper.client.connection.removeListener("error", this.noOpListener);
+    this.isNoOpListenerAttached = false;
+    clientWrapper.client.connection.on("error", this.trackingListener);
+    this.isTrackingListenerAttached = true;
   }
 
   attachNoOpErrorListener(clientWrapper: ClientWrapper | undefined): void {
-    if (!clientWrapper || !clientWrapper.client) {
+    if (!clientWrapper || !clientWrapper.client || this.isNoOpListenerAttached) {
       return;
     }
-    clientWrapper.client.removeListener("error", this.trackingListener);
-    clientWrapper.client.on("error", this.noOpListener);
+    clientWrapper.client.connection.removeListener("error", this.trackingListener);
+    this.isTrackingListenerAttached = false;
+    clientWrapper.client.connection.on("error", this.noOpListener);
+    this.isNoOpListenerAttached = true;
   }
 
   removeErrorListener(clientWrapper: ClientWrapper | undefined): void {
@@ -101,6 +107,7 @@ export class MySQLErrorHandler implements ErrorHandler {
       return;
     }
 
-    clientWrapper.client.removeListener("error", this.trackingListener);
+    clientWrapper.client.connection.removeListener("error", this.trackingListener);
+    this.isTrackingListenerAttached = false;
   }
 }
