@@ -18,7 +18,6 @@ import { ErrorHandler } from "../../common/lib/error_handler";
 import { ClientWrapper } from "../../common/lib/client_wrapper";
 import { logger } from "../../common/logutils";
 import { Messages } from "../../common/lib/utils/messages";
-import { error } from "winston";
 
 export abstract class AbstractPgErrorHandler implements ErrorHandler {
   protected unexpectedError: Error | null = null;
