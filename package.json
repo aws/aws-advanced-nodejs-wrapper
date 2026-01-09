@@ -75,7 +75,7 @@
     "@opentelemetry/sdk-node": "^0.208.0",
     "@types/jest": "^29.5.14",
     "@types/lodash": "^4.17.20",
-    "@types/node": "^22.10.7",
+    "@types/node": "^24.10.1",
     "@types/node-fetch": "^2.6.11",
     "@types/pg": "^8.15.2",
     "@types/tough-cookie": "^4.0.5",
