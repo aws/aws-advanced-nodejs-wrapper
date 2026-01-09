@@ -171,6 +171,7 @@ class BaseAwsPgClient extends AwsClient implements PGClient {
       this.properties,
       "end",
       () => {
+        this.pluginService.removeErrorListener(this.targetClient);
         const res = this.targetClient!.end();
         this.targetClient = undefined;
         this.isConnected = false;
