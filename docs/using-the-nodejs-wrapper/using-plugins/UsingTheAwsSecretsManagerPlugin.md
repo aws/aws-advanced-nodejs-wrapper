@@ -20,18 +20,24 @@ The following properties are required for the AWS Secrets Manager Connection Plu
 > [!NOTE]  
 > To use this plugin, you will need to set the following AWS Secrets Manager specific parameters.
 
-| Parameter        | Value  |              Required               | Description                                                                                                                                                                                                                       | Example                  | Default Value |
-| ---------------- | :----: | :---------------------------------: | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :----------------------- | ------------- |
-| `secretId`       | String |                 Yes                 | Set this value to be the secret name or the secret ARN.                                                                                                                                                                           | `secretId`               | `null`        |
-| `secretRegion`   | String | Yes unless the `secretId` is an ARN | Set this value to be the region your secret is in.                                                                                                                                                                                | `us-east-2`              | `null`        |
-| `secretEndpoint` | String |                 No                  | Set this value to be the endpoint override to retrieve your secret from. This parameter value should be in the form of a URL, with a valid protocol (ex. `https://`) and domain (ex. `localhost`). A port number is not required. | `https://localhost:1234` | `null`        |
+| Parameter                |  Value  |              Required               | Description                                                                                                                                                                                                                       | Example                  | Default Value |
+|--------------------------|:-------:|:-----------------------------------:|:----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|:-------------------------|---------------|
+| `secretId`               | String  |                 Yes                 | Set this value to be the secret name or the secret ARN.                                                                                                                                                                           | `secretId`               | `null`        |
+| `secretRegion`           | String  | Yes unless the `secretId` is an ARN | Set this value to be the region your secret is in.                                                                                                                                                                                | `us-east-2`              | `null`        |
+| `secretEndpoint`         | String  |                 No                  | Set this value to be the endpoint override to retrieve your secret from. This parameter value should be in the form of a URL, with a valid protocol (ex. `https://`) and domain (ex. `localhost`). A port number is not required. | `https://localhost:1234` | `null`        |
+| `secretExpirationSec`    | Integer |                 No                  | This property sets the time in seconds that secrets are cached before it is re-fetched.                                                                                                                                           | `600`                    | `870`         |
+| `secretUsernameProperty` | String  |                 No                  | Set this value to be the key in the JSON secret that contains the username for database connection.                                                                                                                               | `db_user`                | `username`    |
+| `secretPasswordProperty` | String  |                 No                  | Set this value to be the key in the JSON secret that contains the password for database connection.                                                                                                                               | `db_pass`                | `password`    |
 
 > [!NOTE]  
 > A Secret ARN has the following format: `arn:aws:secretsmanager:<Region>:<AccountId>:secret:SecretName-6RandomCharacters`
 
 ## Secret Data
 
-The plugin assumes that the secret contains the following properties `username` and `password`.
+The secret stored in the AWS Secrets Manager should be a JSON object containing the properties `username` and `password`. If the secret contains different key names, you can specify them with the `secretUsernameProperty` and `secretPasswordProperty` parameters.
+
+> [!NOTE]
+> Only un-nested JSON format is supported at the moment.
 
 ### Example
 

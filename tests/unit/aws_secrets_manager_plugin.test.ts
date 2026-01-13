@@ -50,7 +50,8 @@ const TEST_HOSTINFO: HostInfo = new HostInfoBuilder({
   hostAvailabilityStrategy: new SimpleHostAvailabilityStrategy(),
   host: TEST_HOST
 }).build();
-const TEST_SECRET = new Secret(TEST_USERNAME, TEST_PASSWORD);
+const EXPIRATION_TIME = 870;
+const TEST_SECRET = new Secret(TEST_USERNAME, TEST_PASSWORD, EXPIRATION_TIME);
 const TEST_SECRET_CACHE_KEY = new SecretCacheKey(TEST_SECRET_ID, TEST_SECRET_REGION);
 
 const VALID_SECRET_RESPONSE = {
@@ -146,7 +147,7 @@ describe("testSecretsManager", () => {
   // In this case, the plugin will fetch the secret and will retry the connection.
   it.each([MYSQL_AUTH_ERROR, PG_AUTH_ERROR])("connect with new secret after trying with cached secrets", async (error) => {
     // Add initial cached secret to be used for a connection.
-    AwsSecretsManagerPlugin.secretsCache.set(JSON.stringify(TEST_SECRET_CACHE_KEY), new Secret("", ""));
+    AwsSecretsManagerPlugin.secretsCache.set(JSON.stringify(TEST_SECRET_CACHE_KEY), new Secret("", "", EXPIRATION_TIME));
     when(mockSecretsManagerClient.send(anything())).thenResolve(VALID_SECRET_RESPONSE);
     plugin.secretsManagerClient = instance(mockSecretsManagerClient);
 
@@ -209,5 +210,71 @@ describe("testSecretsManager", () => {
     // The region specified in `secretsManagerRegion` should override the region parsed from ARN.
     expect(secretKey.region).not.toBe(regionFromArn);
     expect(secretKey.region).toBe(expectedRegion);
+  });
+
+  it("connect with custom json keys", async () => {
+    const customSecretResponse = {
+      SecretString: '{"db_user": "foo", "db_pass": "bar"}',
+      $metadata: {}
+    };
+    const props = new Map();
+    WrapperProperties.SECRET_ID.set(props, TEST_SECRET_ID);
+    WrapperProperties.SECRET_REGION.set(props, TEST_SECRET_REGION);
+    WrapperProperties.SECRET_USERNAME_PROPERTY.set(props, "db_user");
+    WrapperProperties.SECRET_PASSWORD_PROPERTY.set(props, "db_pass");
+    const testPlugin = new AwsSecretsManagerPlugin(instance(mockPluginService), props);
+    when(mockSecretsManagerClient.send(anything())).thenResolve(customSecretResponse);
+    testPlugin.secretsManagerClient = instance(mockSecretsManagerClient);
+
+    await testPlugin.connect(TEST_HOSTINFO, props, true, mockConnectFunction);
+
+    verify(mockSecretsManagerClient.send(anything())).once();
+    expect(props.get(WrapperProperties.USER.name)).toBe("foo");
+    expect(props.get(WrapperProperties.PASSWORD.name)).toBe("bar");
+  });
+
+  it("connect with one custom json key", async () => {
+    const customSecretResponse = {
+      SecretString: '{"db_user": "foo", "password": "bar"}',
+      $metadata: {}
+    };
+    const props = new Map();
+    WrapperProperties.SECRET_ID.set(props, TEST_SECRET_ID);
+    WrapperProperties.SECRET_REGION.set(props, TEST_SECRET_REGION);
+    WrapperProperties.SECRET_USERNAME_PROPERTY.set(props, "db_user");
+    const testPlugin = new AwsSecretsManagerPlugin(instance(mockPluginService), props);
+    when(mockSecretsManagerClient.send(anything())).thenResolve(customSecretResponse);
+    testPlugin.secretsManagerClient = instance(mockSecretsManagerClient);
+
+    await testPlugin.connect(TEST_HOSTINFO, props, true, mockConnectFunction);
+
+    verify(mockSecretsManagerClient.send(anything())).once();
+    expect(props.get(WrapperProperties.USER.name)).toBe("foo");
+    expect(props.get(WrapperProperties.PASSWORD.name)).toBe("bar");
+  });
+
+  it("fetch new secret when cached secret is expired", async () => {
+    const expiredSecret = new Secret("oldUser", "oldPass", 0);
+    await new Promise((resolve) => setTimeout(resolve, 10));
+    AwsSecretsManagerPlugin.secretsCache.set(JSON.stringify(TEST_SECRET_CACHE_KEY), expiredSecret);
+    when(mockSecretsManagerClient.send(anything())).thenResolve(VALID_SECRET_RESPONSE);
+    plugin.secretsManagerClient = instance(mockSecretsManagerClient);
+
+    await plugin.connect(TEST_HOSTINFO, TEST_PROPS, true, mockConnectFunction);
+
+    verify(mockSecretsManagerClient.send(anything())).once();
+    expect(TEST_PROPS.get(WrapperProperties.USER.name)).toBe(TEST_USERNAME);
+    expect(TEST_PROPS.get(WrapperProperties.PASSWORD.name)).toBe(TEST_PASSWORD);
+  });
+
+  it("use cached secret when not expired", async () => {
+    const validSecret = new Secret(TEST_USERNAME, TEST_PASSWORD, 3600);
+    AwsSecretsManagerPlugin.secretsCache.set(JSON.stringify(TEST_SECRET_CACHE_KEY), validSecret);
+
+    await plugin.connect(TEST_HOSTINFO, TEST_PROPS, true, mockConnectFunction);
+
+    verify(mockSecretsManagerClient.send(anything())).never();
+    expect(TEST_PROPS.get(WrapperProperties.USER.name)).toBe(TEST_USERNAME);
+    expect(TEST_PROPS.get(WrapperProperties.PASSWORD.name)).toBe(TEST_PASSWORD);
   });
 });

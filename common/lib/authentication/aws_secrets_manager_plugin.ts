@@ -16,6 +16,7 @@
 
 import {
   GetSecretValueCommand,
+  GetSecretValueCommandOutput,
   SecretsManagerClient,
   SecretsManagerClientConfig,
   SecretsManagerServiceException
@@ -39,6 +40,9 @@ export class AwsSecretsManagerPlugin extends AbstractConnectionPlugin implements
   private static SECRETS_ARN_PATTERN: RegExp = new RegExp("^arn:aws:secretsmanager:(?<region>[^:\\n]*):[^:\\n]*:([^:/\\n]*[:/])?(.*)$");
   private readonly pluginService: PluginService;
   private readonly fetchCredentialsCounter;
+  private readonly expirationSec: number;
+  private readonly usernameKey: string;
+  private readonly passwordKey: string;
   private secret: Secret | null = null;
   static secretsCache: Map<string, Secret> = new Map();
   secretKey: SecretCacheKey;
@@ -51,10 +55,23 @@ export class AwsSecretsManagerPlugin extends AbstractConnectionPlugin implements
     const secretId = WrapperProperties.SECRET_ID.get(properties);
     const endpoint = WrapperProperties.SECRET_ENDPOINT.get(properties);
     let region = WrapperProperties.SECRET_REGION.get(properties);
+
+    this.expirationSec = WrapperProperties.SECRET_EXPIRATION_SEC.get(properties);
+    this.usernameKey = WrapperProperties.SECRET_USERNAME_PROPERTY.get(properties);
+    this.passwordKey = WrapperProperties.SECRET_PASSWORD_PROPERTY.get(properties);
+
     const config: SecretsManagerClientConfig = {};
 
     if (!secretId) {
       throw new AwsWrapperError(Messages.get("AwsSecretsManagerConnectionPlugin.missingRequiredConfigParameter", WrapperProperties.SECRET_ID.name));
+    }
+
+    if (!this.usernameKey || !this.passwordKey) {
+      throw new AwsWrapperError(Messages.get("AwsSecretsManagerConnectionPlugin.emptyPropertyKeys"));
+    }
+
+    if (this.expirationSec < 0) {
+      throw new AwsWrapperError(Messages.get("AwsSecretsManagerConnectionPlugin.invalidExpirationTime", String(this.expirationSec)));
     }
 
     if (!region) {
@@ -139,12 +156,15 @@ export class AwsSecretsManagerPlugin extends AbstractConnectionPlugin implements
       let fetched = false;
       this.secret = AwsSecretsManagerPlugin.secretsCache.get(JSON.stringify(this.secretKey)) ?? null;
 
-      if (!this.secret || forceRefresh) {
+      if (!this.secret || this.secret.isExpired() || forceRefresh) {
         try {
           this.secret = await this.fetchLatestCredentials();
           fetched = true;
           AwsSecretsManagerPlugin.secretsCache.set(JSON.stringify(this.secretKey), this.secret);
         } catch (error: any) {
+          if (error instanceof AwsWrapperError) {
+            throw error;
+          }
           if (error instanceof SecretsManagerServiceException) {
             logAndThrowError(Messages.get("AwsSecretsManagerConnectionPlugin.failedToFetchDbCredentials", error.message));
           } else if (error instanceof Error && error.message.includes("AWS SDK error")) {
@@ -163,12 +183,14 @@ export class AwsSecretsManagerPlugin extends AbstractConnectionPlugin implements
       SecretId: this.secretKey.secretId
     };
     const command = new GetSecretValueCommand(commandInput);
-    const result = await this.secretsManagerClient.send(command);
-    const secret = new Secret(JSON.parse(result.SecretString ?? "").username, JSON.parse(result.SecretString ?? "").password);
-    if (secret && secret.username && secret.password) {
-      return secret;
+    const result: GetSecretValueCommandOutput = await this.secretsManagerClient.send(command);
+    const secretJson: string = JSON.parse(result.SecretString ?? "");
+    const username = secretJson[this.usernameKey];
+    const password = secretJson[this.passwordKey];
+    if (!username || !password) {
+      throw new AwsWrapperError(Messages.get("AwsSecretsManagerConnectionPlugin.emptySecretValue", this.usernameKey, this.passwordKey));
     }
-    throw new AwsWrapperError(Messages.get("AwsSecretsManagerConnectionPlugin.failedToFetchDbCredentials"));
+    return new Secret(username, password, this.expirationSec);
   }
 
   releaseResources(): Promise<void> {
@@ -198,9 +220,15 @@ export class SecretCacheKey {
 export class Secret {
   readonly username: string;
   readonly password: string;
+  readonly expirationTime: number;
 
-  constructor(username: string, password: string) {
+  constructor(username: string, password: string, expirationSec: number) {
     this.username = username;
     this.password = password;
+    this.expirationTime = Date.now() + expirationSec * 1000;
+  }
+
+  isExpired(): boolean {
+    return Date.now() >= this.expirationTime;
   }
 }

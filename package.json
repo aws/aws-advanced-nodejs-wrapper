@@ -31,7 +31,7 @@
     "mysql"
   ],
   "scripts": {
-    "check": "prettier . --check --config .prettierrc --log-level error",
+    "check": "prettier . --check --config .prettierrc",
     "bench-plugin-manager": "npx tsx tests/plugin_manager_benchmarks.ts",
     "bench-plugins": "npx tsx tests/plugin_benchmarks.ts",
     "bench-plugin-manager-otel": "npx tsx tests/plugin_manager_telemetry_benchmarks.ts",

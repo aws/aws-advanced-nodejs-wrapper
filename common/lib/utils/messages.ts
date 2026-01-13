@@ -40,7 +40,12 @@ const MESSAGES: Record<string, string> = {
   "HostInfo.weightLessThanZero": "A HostInfo object was created with a weight value less than 0.",
   "AwsSecretsManagerConnectionPlugin.failedToFetchDbCredentials":
     "Was not able to either fetch or read the database credentials from AWS Secrets Manager due to error: %s. Ensure the correct secretId and region properties have been provided.",
+  "AwsSecretsManagerConnectionPlugin.emptySecretValue":
+    "Unable to fetch database credentials with the given username key and password key. Please review the values specified in secretUsernameProperty (%s) and secretPasswordProperty (%s) and ensure they match the Secrets Manager JSON format.",
   "AwsSecretsManagerConnectionPlugin.missingRequiredConfigParameter": "Configuration parameter '%s' is required.",
+  "AwsSecretsManagerConnectionPlugin.emptyPropertyKeys":
+    "secretUsernameProperty and secretPasswordProperty cannot be empty strings. Please ensure they are correct and match the Secret value's JSON format.",
+  "AwsSecretsManagerConnectionPlugin.invalidExpirationTime": "The expiration time (%s) must be set to a non-negative value.",
   "AwsSecretsManagerConnectionPlugin.unhandledError": "Unhandled error: '%s'",
   "AwsSecretsManagerConnectionPlugin.endpointOverrideInvalidConnection": "A connection to the provided endpoint could not be established: '%s'.",
   "ClusterAwareReaderFailoverHandler.invalidTopology": "'%s' was called with an invalid (null or empty) topology",
