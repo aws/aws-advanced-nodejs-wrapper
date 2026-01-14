@@ -20,6 +20,7 @@ const mysqlHost = "db-identifier.XYZ.us-east-2.rds.amazonaws.com";
 const port = 3306;
 const secretId = "SecretName";
 const secretRegion = "us-east-1";
+const secretExpirationTime = 1000;
 /* secretId can be set as secret ARN instead. The ARN includes the secretRegion */
 // const secretId = "arn:aws:secretsmanager:us-east-1:AccountId:secret:SecretName-6RandomCharacters";
 
@@ -29,7 +30,13 @@ const client = new AwsMySQLClient({
   port: port,
   secretId: secretId,
   secretRegion: secretRegion,
-  plugins: "secretsManager"
+  secretExpirationSec: secretExpirationTime,
+  plugins: "secretsManager",
+  // By default, the Secrets Manager plugin assumes the secret stored in the AWS Secrets Manager to be a JSON object containing the properties `username` and `password`.
+  // If the secret contains different key names, you can specify them with the `secretUsernameProperty` and `secretPasswordProperty` parameters.
+  // This example assumes the credentials are stored under the keys db_user and db_pass.
+  secretUsernameProperty: "db_user",
+  secretPasswordProperty: "db_pass"
 });
 
 // Attempt connection.
