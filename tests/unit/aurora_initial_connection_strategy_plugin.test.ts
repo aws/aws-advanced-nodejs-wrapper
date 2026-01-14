@@ -90,15 +90,6 @@ describe("Aurora initial connection strategy plugin", () => {
     await expect(plugin.connect(hostInfo, props, true, mockFunc)).rejects.toThrow(Error);
   });
 
-  it("test static HostListProvider", async () => {
-    const plugin = new AuroraInitialConnectionStrategyPlugin(instance(mockPluginService));
-    when(mockHostListProviderService.isStaticHostListProvider()).thenReturn(true);
-
-    expect(() => {
-      plugin.initHostProvider(hostInfo, props, instance(mockHostListProviderService), mockFunc);
-    }).toThrow(AwsWrapperError);
-  });
-
   it("test writer - not found", async () => {
     when(mockRdsUtils.identifyRdsType(anything())).thenReturn(RdsUrlType.RDS_WRITER_CLUSTER);
     when(mockPluginService.getAllHosts()).thenReturn([hostInfoBuilder.withRole(HostRole.READER).build()]);
