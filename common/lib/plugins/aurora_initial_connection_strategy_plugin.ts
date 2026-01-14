@@ -51,9 +51,6 @@ export class AuroraInitialConnectionStrategyPlugin extends AbstractConnectionPlu
     initHostProviderFunc: () => void
   ): void {
     this.hostListProviderService = hostListProviderService;
-    if (hostListProviderService.isStaticHostListProvider()) {
-      throw new AwsWrapperError(Messages.get("AuroraInitialConnectionStrategyPlugin.requireDynamicProvider"));
-    }
     initHostProviderFunc();
   }
 
