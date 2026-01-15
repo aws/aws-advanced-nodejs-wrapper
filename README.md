@@ -72,11 +72,11 @@ This wrapper currently does not support failover with Amazon Aurora Global Datab
 ## Getting Help and Opening Issues
 
 If you encounter a bug with the AWS Advanced NodeJS Wrapper, we would like to hear about it.
-Please search the [existing issues](https://github.com/awslabs/aws-advanced-nodejs-wrapper/issues) to see if others are also experiencing the issue before reporting the problem in a new issue. GitHub issues are intended for bug reports and feature requests.
+Please search the [existing issues](https://github.com/aws/aws-advanced-nodejs-wrapper/issues) to see if others are also experiencing the issue before reporting the problem in a new issue. GitHub issues are intended for bug reports and feature requests.
 
 When opening a new issue, please fill in all required fields in the issue template to help expedite the investigation process.
 
-For all other questions, please use [GitHub discussions](https://github.com/awslabs/aws-advanced-nodejs-wrapper/discussions).
+For all other questions, please use [GitHub discussions](https://github.com/aws/aws-advanced-nodejs-wrapper/discussions).
 
 ## How to Contribute
 

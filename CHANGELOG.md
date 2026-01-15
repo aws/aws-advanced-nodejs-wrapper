@@ -7,12 +7,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ## [2.1.0] - 2026-01-15
 
 ### :magic_wand: Added
-- New connection properties allowing users to load custom Secrets [using the AWS Secrets Manager Authentication Plugin](https://github.com/aws/aws-advanced-nodejs-wrapper/blob/main/docs/using-the-nodejs-wrapper/using-plugins/UsingTheAwsSecretsManagerPlugin.md).
+
+- New connection properties for users to load custom Secrets [using the AWS Secrets Manager Authentication Plugin](https://github.com/aws/aws-advanced-nodejs-wrapper/blob/main/docs/using-the-nodejs-wrapper/using-plugins/UsingTheAwsSecretsManagerPlugin.md).
 
 ### :bug: Fixed
+
 - Aurora Initial Connection Strategy Plugin incorrectly erroring out during initial connections when using instance endpoints ([PR #601](https://github.com/aws/aws-advanced-nodejs-wrapper/pull/601)).
 - Event listeners not properly removed resulting in unnecessary warning, addresses [issue #598](https://github.com/aws/aws-advanced-nodejs-wrapper/issues/598).
-- Runtime dependencies are not properly configured, causing import errors in certain environment ([PR #592](https://github.com/aws/aws-advanced-nodejs-wrapper/pull/592)).
+- Runtime dependency configuration causing import errors in certain environments ([PR #592](https://github.com/aws/aws-advanced-nodejs-wrapper/pull/592)).
 
 ## [2.0.1] - 2025-10-17
 
