@@ -12,7 +12,7 @@ Before using the AWS Advanced NodeJS Wrapper, you must install:
 
 If you are using the AWS Advanced NodeJS Wrapper as part of a Node project, include the wrapper and underlying driver as dependencies.
 
-> **Note:** Depending on which features of the AWS Advanced NodeJS Wrapper you use, you may have additional package requirements. Please refer to this [table](https://github.com/awslabs/aws-advanced-nodejs-wrapper/blob/main/docs/using-the-nodejs-wrapper/UsingTheNodejsWrapper.md#list-of-available-plugins) for more information.
+> **Note:** Depending on which features of the AWS Advanced NodeJS Wrapper you use, you may have additional package requirements. Please refer to this [table](https://github.com/aws/aws-advanced-nodejs-wrapper/blob/main/docs/using-the-nodejs-wrapper/UsingTheNodejsWrapper.md#list-of-available-plugins) for more information.
 
 ## Obtaining the AWS Advanced NodeJS Wrapper
 

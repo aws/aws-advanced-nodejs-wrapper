@@ -1,6 +1,6 @@
 {
   "name": "aws-advanced-nodejs-wrapper",
-  "version": "2.0.1",
+  "version": "2.1.0",
   "type": "module",
   "engines": {
     "node": ">=22.9.0",

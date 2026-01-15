@@ -10,7 +10,7 @@
 Clone the AWS Advanced NodeJS Wrapper repository:
 
 ```bash
-git clone https://github.com/awslabs/aws-advanced-nodejs-wrapper.git
+git clone https://github.com/aws/aws-advanced-nodejs-wrapper.git
 ```
 
 You can now make changes in the repository.
