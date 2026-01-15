@@ -168,6 +168,21 @@ export class WrapperProperties {
   static readonly SECRET_ID = new WrapperProperty<string>("secretId", "The name or the ARN of the secret to retrieve.", null);
   static readonly SECRET_REGION = new WrapperProperty<string>("secretRegion", "The region of the secret to retrieve.", null);
   static readonly SECRET_ENDPOINT = new WrapperProperty<string>("secretEndpoint", "The endpoint of the secret to retrieve.", null);
+  static readonly SECRET_EXPIRATION_SEC = new WrapperProperty<number>(
+    "secretExpirationSec",
+    "Secrets Manager credentials' expiration time in seconds.",
+    870
+  );
+  static readonly SECRET_USERNAME_PROPERTY = new WrapperProperty<string>(
+    "secretUsernameProperty",
+    "Set this value to be the key in the JSON secret that contains the username for database connection.",
+    "username"
+  );
+  static readonly SECRET_PASSWORD_PROPERTY = new WrapperProperty<string>(
+    "secretPasswordProperty",
+    "Set this value to be the key in the JSON secret that contains the password for database connection.",
+    "password"
+  );
 
   static readonly FAILOVER_CLUSTER_TOPOLOGY_REFRESH_RATE_MS = new WrapperProperty<number>(
     "failoverClusterTopologyRefreshRateMs",
