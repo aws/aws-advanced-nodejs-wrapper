@@ -87,7 +87,7 @@
     "babel-plugin-transform-rewrite-imports": "^1.5.3",
     "benny": "^3.7.1",
     "copyfiles": "^2.4.1",
-    "cross-env": "^7.0.3",
+    "cross-env": "^10.1.0",
     "entities": "^6.0.0",
     "eslint": "^9.26.0",
     "eslint-config-prettier": "^10.1.1",
