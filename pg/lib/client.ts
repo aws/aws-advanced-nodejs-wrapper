@@ -14,15 +14,7 @@
   limitations under the License.
 */
 
-import {
-  QueryArrayConfig,
-  QueryArrayResult,
-  QueryConfig,
-  QueryConfigValues,
-  QueryResult,
-  QueryResultRow,
-  Submittable
-} from "pg";
+import { ClientConfig, QueryArrayConfig, QueryArrayResult, QueryConfig, QueryConfigValues, QueryResult, QueryResultRow, Submittable } from "pg";
 import { AwsClient } from "../../common/lib/aws_client";
 import { PgConnectionUrlParser } from "./pg_connection_url_parser";
 import { DatabaseDialect, DatabaseType } from "../../common/lib/database_dialect/database_dialect";
@@ -49,6 +41,9 @@ import { NodePostgresDriverDialect } from "./dialect/node_postgres_driver_dialec
 import { isDialectTopologyAware } from "../../common/lib/utils/utils";
 import { PGClient, PGPoolClient } from "./pg_client";
 import { DriverConnectionProvider } from "../../common/lib/driver_connection_provider";
+import { AwsClientConfig } from "../../common/lib/wrapper_property";
+
+export interface AwsPgClientConfig extends ClientConfig, AwsClientConfig {}
 
 class BaseAwsPgClient extends AwsClient implements PGClient {
   private static readonly knownDialectsByCode: Map<string, DatabaseDialect> = new Map([
@@ -58,7 +53,7 @@ class BaseAwsPgClient extends AwsClient implements PGClient {
     [DatabaseDialectCodes.RDS_MULTI_AZ_PG, new RdsMultiAZClusterPgDatabaseDialect()]
   ]);
 
-  constructor(config: any, connectionProvider?: ConnectionProvider) {
+  constructor(config: AwsPgClientConfig, connectionProvider?: ConnectionProvider) {
     super(
       config,
       DatabaseType.POSTGRES,
@@ -90,7 +85,7 @@ class BaseAwsPgClient extends AwsClient implements PGClient {
     return result;
   }
 
-  isReadOnly(): boolean {
+  isReadOnly(): boolean | undefined {
     return this.pluginService.getSessionStateService().getReadOnly();
   }
 
@@ -128,7 +123,7 @@ class BaseAwsPgClient extends AwsClient implements PGClient {
     this.pluginService.getSessionStateService().setTransactionIsolation(level);
   }
 
-  getTransactionIsolation(): TransactionIsolationLevel {
+  getTransactionIsolation(): TransactionIsolationLevel | undefined {
     return this.pluginService.getSessionStateService().getTransactionIsolation();
   }
 
@@ -155,7 +150,7 @@ class BaseAwsPgClient extends AwsClient implements PGClient {
     return result;
   }
 
-  getSchema(): string {
+  getSchema(): string | undefined {
     return this.pluginService.getSessionStateService().getSchema();
   }
 

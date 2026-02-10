@@ -42,6 +42,9 @@ import { MySQL2DriverDialect } from "./dialect/mysql2_driver_dialect";
 import { isDialectTopologyAware } from "../../common/lib/utils/utils";
 import { MySQLClient, MySQLPoolClient } from "./mysql_client";
 import { DriverConnectionProvider } from "../../common/lib/driver_connection_provider";
+import { AwsClientConfig } from "../../common/lib/wrapper_property";
+
+export interface AwsMySQLClientConfig extends ConnectionOptions, AwsClientConfig {}
 
 class BaseAwsMySQLClient extends AwsClient implements MySQLClient {
   private static readonly knownDialectsByCode: Map<string, DatabaseDialect> = new Map([
@@ -51,7 +54,7 @@ class BaseAwsMySQLClient extends AwsClient implements MySQLClient {
     [DatabaseDialectCodes.RDS_MULTI_AZ_MYSQL, new RdsMultiAZClusterMySQLDatabaseDialect()]
   ]);
 
-  constructor(config: any, connectionProvider?: ConnectionProvider) {
+  constructor(config: AwsMySQLClientConfig, connectionProvider?: ConnectionProvider) {
     super(
       config,
       DatabaseType.MYSQL,
@@ -113,7 +116,7 @@ class BaseAwsMySQLClient extends AwsClient implements MySQLClient {
     return result;
   }
 
-  isReadOnly(): boolean {
+  isReadOnly(): boolean | undefined {
     return this.pluginService.getSessionStateService().getReadOnly();
   }
 
@@ -129,7 +132,7 @@ class BaseAwsMySQLClient extends AwsClient implements MySQLClient {
     return result;
   }
 
-  getAutoCommit(): boolean {
+  getAutoCommit(): boolean | undefined {
     return this.pluginService.getSessionStateService().getAutoCommit();
   }
 
@@ -142,7 +145,7 @@ class BaseAwsMySQLClient extends AwsClient implements MySQLClient {
     this.pluginService.getSessionStateService().setCatalog(catalog);
   }
 
-  getCatalog(): string {
+  getCatalog(): string | undefined {
     return this.pluginService.getSessionStateService().getCatalog();
   }
 
@@ -150,7 +153,7 @@ class BaseAwsMySQLClient extends AwsClient implements MySQLClient {
     throw new UnsupportedMethodError(Messages.get("Client.methodNotSupported", "setSchema"));
   }
 
-  getSchema(): string {
+  getSchema(): string | undefined {
     throw new UnsupportedMethodError(Messages.get("Client.methodNotSupported", "getSchema"));
   }
 
@@ -181,7 +184,7 @@ class BaseAwsMySQLClient extends AwsClient implements MySQLClient {
     this.pluginService.getSessionStateService().setTransactionIsolation(level);
   }
 
-  getTransactionIsolation(): TransactionIsolationLevel {
+  getTransactionIsolation(): TransactionIsolationLevel | undefined {
     return this.pluginService.getSessionStateService().getTransactionIsolation();
   }
 
@@ -198,6 +201,10 @@ class BaseAwsMySQLClient extends AwsClient implements MySQLClient {
       "end",
       () => {
         this.pluginService.removeErrorListener(this.targetClient);
+        if (!this.targetClient) {
+          this.isConnected = false;
+          return Promise.resolve();
+        }
         const res = ClientUtils.queryWithTimeout(this.targetClient.end(), this.properties);
         this.targetClient = undefined;
         this.isConnected = false;
