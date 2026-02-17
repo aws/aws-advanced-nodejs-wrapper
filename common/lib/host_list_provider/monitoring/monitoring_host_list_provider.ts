@@ -27,6 +27,7 @@ import { BlockingHostListProvider } from "../host_list_provider";
 import { logger } from "../../../logutils";
 import { SlidingExpirationCacheWithCleanupTask } from "../../utils/sliding_expiration_cache_with_cleanup_task";
 import { isDialectTopologyAware } from "../../utils/utils";
+import { TopologyUtils } from "../topology_utils";
 
 export class MonitoringRdsHostListProvider extends RdsHostListProvider implements BlockingHostListProvider {
   static readonly CACHE_CLEANUP_NANOS: bigint = BigInt(60_000_000_000); // 1 minute.
@@ -48,8 +49,14 @@ export class MonitoringRdsHostListProvider extends RdsHostListProvider implement
 
   private readonly pluginService: PluginService;
 
-  constructor(properties: Map<string, any>, originalUrl: string, hostListProviderService: HostListProviderService, pluginService: PluginService) {
-    super(properties, originalUrl, hostListProviderService);
+  constructor(
+    properties: Map<string, any>,
+    originalUrl: string,
+    topologyUtils: TopologyUtils,
+    hostListProviderService: HostListProviderService,
+    pluginService: PluginService
+  ) {
+    super(properties, originalUrl, topologyUtils, hostListProviderService);
     this.pluginService = pluginService;
   }
 
@@ -58,7 +65,7 @@ export class MonitoringRdsHostListProvider extends RdsHostListProvider implement
     await MonitoringRdsHostListProvider.monitors.clear();
   }
 
-  async queryForTopology(targetClient: ClientWrapper, dialect: DatabaseDialect): Promise<HostInfo[]> {
+  async getCurrentTopology(targetClient: ClientWrapper, dialect: DatabaseDialect): Promise<HostInfo[]> {
     const monitor: ClusterTopologyMonitor = this.initMonitor();
 
     try {
@@ -70,11 +77,7 @@ export class MonitoringRdsHostListProvider extends RdsHostListProvider implement
   }
 
   async sqlQueryForTopology(targetClient: ClientWrapper): Promise<HostInfo[]> {
-    const dialect: DatabaseDialect = this.hostListProviderService.getDialect();
-    if (!isDialectTopologyAware(dialect)) {
-      throw new TypeError(Messages.get("RdsHostListProvider.incorrectDialect"));
-    }
-    return await dialect.queryForTopology(targetClient, this).then((res: any) => this.processQueryResults(res));
+    return await this.topologyUtils.queryForTopology(targetClient, this.pluginService.getDialect(), this.initialHost, this.clusterInstanceTemplate);
   }
 
   async forceMonitoringRefresh(shouldVerifyWriter: boolean, timeoutMs: number): Promise<HostInfo[]> {
@@ -88,6 +91,7 @@ export class MonitoringRdsHostListProvider extends RdsHostListProvider implement
       this.clusterId,
       () =>
         new ClusterTopologyMonitorImpl(
+          this.topologyUtils,
           this.clusterId,
           this.initialHost,
           this.properties,

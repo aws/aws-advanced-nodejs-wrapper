@@ -56,7 +56,7 @@ const MESSAGES: Record<string, string> = {
   "ClusterAwareReaderFailoverHandler.selectedTaskChosen": "Selected task has already been chosen. Abort client for host: %s",
   "Utils.topology": "Topology: %s",
   "RdsHostListProvider.incorrectDialect": "Dialect needs to be a topology aware dialect.",
-  "RdsHostListProvider.suggestedClusterId": "ClusterId '%s' is suggested for url '%s'.",
+  "RdsHostListProvider.noClusterId": "No clusterId found. Please ensure clusterId parameter is set to a non-empty string.",
   "ConnectionStringHostListProvider.parsedListEmpty": "Can't parse connection string: '%s'.",
   "ConnectionStringHostListProvider.errorIdentifyConnection": "An error occurred while obtaining the connection's host ID.",
   "ExecuteTimePlugin.executeTime": "Executed method '%s' in %s milliseconds.",
