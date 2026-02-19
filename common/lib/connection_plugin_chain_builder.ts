@@ -29,7 +29,7 @@ import { FailoverPluginFactory } from "./plugins/failover/failover_plugin_factor
 import { Failover2PluginFactory } from "./plugins/failover2/failover2_plugin_factory";
 import { StaleDnsPluginFactory } from "./plugins/stale_dns/stale_dns_plugin_factory";
 import { FederatedAuthPluginFactory } from "./plugins/federated_auth/federated_auth_plugin_factory";
-import { ReadWriteSplittingPluginFactory } from "./plugins/read_write_splitting_plugin_factory";
+import { ReadWriteSplittingPluginFactory } from "./plugins/read_write_splitting/read_write_splitting_plugin_factory";
 import { OktaAuthPluginFactory } from "./plugins/federated_auth/okta_auth_plugin_factory";
 import { HostMonitoringPluginFactory } from "./plugins/efm/host_monitoring_plugin_factory";
 import { AuroraInitialConnectionStrategyFactory } from "./plugins/aurora_initial_connection_strategy_plugin_factory";
