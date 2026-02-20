@@ -82,6 +82,16 @@ const mockExecuteFuncThrowsFailoverSuccessError = jest.fn(() => {
   throw new FailoverSuccessError("test");
 });
 
+class TestReadWriteSplitting extends ReadWriteSplittingPlugin {
+  getWriterTargetClient(): ClientWrapper | undefined {
+    return this.writerTargetClient;
+  }
+
+  getReaderTargetClient(): ClientWrapper | undefined {
+    return this.readerCacheItem?.get();
+  }
+}
+
 describe("reader write splitting test", () => {
   beforeEach(() => {
     when(mockPluginService.getHostListProvider()).thenReturn(instance(mockHostListProvider));
@@ -116,7 +126,7 @@ describe("reader write splitting test", () => {
     when(mockPluginService.getCurrentHostInfo()).thenReturn(writerHost);
     when(mockPluginService.connect(anything(), anything(), anything())).thenResolve(mockReaderWrapper);
 
-    const target = new ReadWriteSplittingPlugin(
+    const target = new TestReadWriteSplitting(
       mockPluginServiceInstance,
       properties,
       mockHostListProviderService,
@@ -127,7 +137,7 @@ describe("reader write splitting test", () => {
     await target.switchClientIfRequired(true);
     verify(mockPluginService.refreshHostList()).once();
     verify(mockPluginService.setCurrentClient(mockReaderWrapper, readerHost1)).once();
-    expect(target.readerTargetClient).toBe(mockReaderWrapper);
+    expect(target.getReaderTargetClient()).toBe(mockReaderWrapper);
   });
 
   it("test set read only false", async () => {
@@ -140,7 +150,7 @@ describe("reader write splitting test", () => {
     when(mockPluginService.getCurrentHostInfo()).thenReturn(readerHost1);
     when(mockPluginService.connect(anything(), anything(), anything())).thenResolve(mockWriterWrapper);
 
-    const target = new ReadWriteSplittingPlugin(
+    const target = new TestReadWriteSplitting(
       mockPluginServiceInstance,
       properties,
       mockHostListProviderService,
@@ -150,7 +160,7 @@ describe("reader write splitting test", () => {
 
     await target.switchClientIfRequired(false);
     verify(mockPluginService.setCurrentClient(mockWriterWrapper, writerHost)).once();
-    expect(target.writerTargetClient).toEqual(mockWriterWrapper);
+    expect(target.getWriterTargetClient()).toEqual(mockWriterWrapper);
   });
 
   it("test set read only true already on reader", async () => {
@@ -164,7 +174,7 @@ describe("reader write splitting test", () => {
     when(mockPluginService.getCurrentHostInfo()).thenReturn(readerHost1);
     when(mockPluginService.connect(anything(), anything(), anything())).thenResolve(mockReaderWrapper);
 
-    const target = new ReadWriteSplittingPlugin(
+    const target = new TestReadWriteSplitting(
       mockPluginServiceInstance,
       properties,
       mockHostListProviderServiceInstance,
@@ -174,8 +184,8 @@ describe("reader write splitting test", () => {
 
     await target.switchClientIfRequired(true);
     verify(mockPluginService.setCurrentClient(anything(), anything())).never();
-    expect(target.readerTargetClient).toEqual(mockReaderWrapper);
-    expect(target.writerTargetClient).toEqual(undefined);
+    expect(target.getReaderTargetClient()).toEqual(mockReaderWrapper);
+    expect(target.getWriterTargetClient()).toEqual(undefined);
   });
 
   it("test set read only false already on reader", async () => {
@@ -188,7 +198,7 @@ describe("reader write splitting test", () => {
     when(mockPluginService.getCurrentHostInfo()).thenReturn(writerHost);
     when(mockPluginService.connect(anything(), anything(), anything())).thenResolve(mockReaderWrapper);
 
-    const target = new ReadWriteSplittingPlugin(
+    const target = new TestReadWriteSplitting(
       mockPluginServiceInstance,
       properties,
       mockHostListProviderServiceInstance,
@@ -198,8 +208,8 @@ describe("reader write splitting test", () => {
 
     await target.switchClientIfRequired(false);
     verify(mockPluginService.setCurrentClient(anything(), anything())).never();
-    expect(target.writerTargetClient).toEqual(mockWriterWrapper);
-    expect(target.readerTargetClient).toEqual(undefined);
+    expect(target.getWriterTargetClient()).toEqual(mockWriterWrapper);
+    expect(target.getReaderTargetClient()).toEqual(undefined);
   });
 
   it("test set read only true one host", async () => {
@@ -214,7 +224,7 @@ describe("reader write splitting test", () => {
     when(mockPluginService.getCurrentHostInfo()).thenReturn(writerHost);
     when(mockPluginService.connect(anything(), anything(), anything())).thenReturn(Promise.resolve(mockWriterWrapper));
 
-    const target = new ReadWriteSplittingPlugin(
+    const target = new TestReadWriteSplitting(
       mockPluginServiceInstance,
       properties,
       mockHostListProviderService,
@@ -225,8 +235,8 @@ describe("reader write splitting test", () => {
     await target.switchClientIfRequired(true);
 
     verify(mockPluginService.setCurrentClient(anything(), anything())).never();
-    expect(target.readerTargetClient).toEqual(undefined);
-    expect(target.writerTargetClient).toEqual(mockWriterWrapper);
+    expect(target.getReaderTargetClient()).toEqual(undefined);
+    expect(target.getWriterTargetClient()).toEqual(mockWriterWrapper);
   });
 
   it("test connect incorrect host role", async () => {
@@ -242,7 +252,7 @@ describe("reader write splitting test", () => {
     when(mockHostListProviderService.isStaticHostListProvider()).thenReturn(false);
     when(mockHostListProviderService.getHostListProvider()).thenReturn(mockHostListProviderInstance);
 
-    const target = new ReadWriteSplittingPlugin(
+    const target = new TestReadWriteSplitting(
       mockPluginServiceInstance,
       properties,
       mockHostListProviderServiceInstance,
@@ -264,7 +274,7 @@ describe("reader write splitting test", () => {
     when(mockPluginService.getCurrentHostInfo()).thenReturn(readerHost1);
     when(await mockPluginService.connect(writerHost, properties)).thenReject();
 
-    const target = new ReadWriteSplittingPlugin(
+    const target = new TestReadWriteSplitting(
       mockPluginServiceInstance,
       properties,
       mockHostListProviderService,
@@ -287,7 +297,7 @@ describe("reader write splitting test", () => {
     when(mockPluginService.getCurrentHostInfo()).thenReturn(writerHost);
     when(mockPluginService.connect(readerHost1 || readerHost2, properties)).thenReject();
 
-    const target = new ReadWriteSplittingPlugin(
+    const target = new TestReadWriteSplitting(
       mockPluginServiceInstance,
       properties,
       mockHostListProviderServiceInstance,
@@ -297,7 +307,7 @@ describe("reader write splitting test", () => {
 
     await target.switchClientIfRequired(true);
     verify(mockPluginService.setCurrentClient(anything(), anything())).never();
-    expect(target.readerTargetClient).toEqual(undefined);
+    expect(target.getReaderTargetClient()).toEqual(undefined);
   });
 
   it("test set read only on closed connection", async () => {
@@ -308,7 +318,7 @@ describe("reader write splitting test", () => {
     when(mockPluginService.getCurrentClient()).thenReturn(instance(mockClosedWriterClient));
     when(mockPluginService.getCurrentHostInfo()).thenReturn(writerHost);
 
-    const target = new ReadWriteSplittingPlugin(
+    const target = new TestReadWriteSplitting(
       mockPluginServiceInstance,
       properties,
       mockHostListProviderService,
@@ -318,7 +328,7 @@ describe("reader write splitting test", () => {
 
     await expect(async () => await target.switchClientIfRequired(true)).rejects.toThrow(AwsWrapperError);
     verify(mockPluginService.setCurrentClient(anything(), anything())).never();
-    expect(target.readerTargetClient).toEqual(undefined);
+    expect(target.getReaderTargetClient()).toEqual(undefined);
   });
 
   it("test execute failover to new writer", async () => {
@@ -330,7 +340,7 @@ describe("reader write splitting test", () => {
     when(mockPluginService.getCurrentClient()).thenReturn(mockNewWriterClient);
     when(mockPluginService.getCurrentHostInfo()).thenReturn(writerHost);
     when(await mockPluginService.isClientValid(mockWriterWrapper)).thenReturn(true);
-    const target = new ReadWriteSplittingPlugin(
+    const target = new TestReadWriteSplitting(
       mockPluginServiceInstance,
       properties,
       mockHostListProviderService,
@@ -352,7 +362,7 @@ describe("reader write splitting test", () => {
     when(mockPluginService.getCurrentClient()).thenReturn(mockWriterClient);
     when(mockPluginService.getCurrentHostInfo()).thenReturn(writerHost);
 
-    const target = new ReadWriteSplittingPlugin(
+    const target = new TestReadWriteSplitting(
       mockPluginServiceInstance,
       properties,
       mockHostListProviderService,
@@ -372,7 +382,7 @@ describe("reader write splitting test", () => {
     when(mockPluginService.getCurrentHostInfo()).thenReturn(writerHost);
     when(mockPluginService.acceptsStrategy(anything(), anything())).thenReturn(true);
 
-    const target = new ReadWriteSplittingPlugin(
+    const target = new TestReadWriteSplitting(
       mockPluginServiceInstance,
       properties,
       mockHostListProviderService,
@@ -394,7 +404,7 @@ describe("reader write splitting test", () => {
     when(mockPluginService.acceptsStrategy(anything(), anything())).thenReturn(true);
     when(mockHostListProviderService.isStaticHostListProvider()).thenReturn(false);
 
-    const target = new ReadWriteSplittingPlugin(
+    const target = new TestReadWriteSplitting(
       mockPluginServiceInstance,
       properties,
       mockHostListProviderServiceInstance,
@@ -431,7 +441,7 @@ describe("reader write splitting test", () => {
     const spyTarget = instance(target);
     await spyTarget.switchClientIfRequired(true);
     await spyTarget.switchClientIfRequired(false);
-    verify(target.closeTargetClientIfIdle(poolClientWrapper)).once();
+    verify(target.closeWriterClientIfIdle()).once();
   });
 
   it("test pooled writer connection after set read only", async () => {
@@ -480,6 +490,6 @@ describe("reader write splitting test", () => {
     await spyTarget.switchClientIfRequired(false);
     await spyTarget.switchClientIfRequired(true);
 
-    verify(target.closeTargetClientIfIdle(poolClientWrapper)).twice();
+    verify(target.closeWriterClientIfIdle()).twice();
   });
 });
