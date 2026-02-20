@@ -150,6 +150,10 @@ export interface PluginService extends ErrorHandler {
   getStatus<T>(clazz: any, key: string): T;
 
   isPluginInUse(plugin: any): boolean;
+
+  isPooledClient(): boolean;
+
+  setIsPooledClient(isPooledClient: boolean): void;
 }
 
 export class PluginServiceImpl implements PluginService, HostListProviderService {
@@ -171,6 +175,8 @@ export class PluginServiceImpl implements PluginService, HostListProviderService
   private allowedAndBlockedHosts: AllowedAndBlockedHosts | null = null;
   protected static readonly statusesExpiringCache: CacheMap<string, any> = new CacheMap();
   protected static readonly DEFAULT_STATUS_CACHE_EXPIRE_NANO: number = 3_600_000_000_000; // 60 minutes
+
+  protected _isPooledClient: boolean = false;
 
   constructor(
     container: PluginServiceManagerContainer,
@@ -781,5 +787,13 @@ export class PluginServiceImpl implements PluginService, HostListProviderService
 
   isPluginInUse(plugin: any) {
     return this.pluginServiceManagerContainer.pluginManager!.isPluginInUse(plugin);
+  }
+
+  isPooledClient(): boolean {
+    return this._isPooledClient;
+  }
+
+  setIsPooledClient(isPooledClient: boolean): void {
+    this._isPooledClient = isPooledClient;
   }
 }
