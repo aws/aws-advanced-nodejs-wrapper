@@ -29,6 +29,7 @@ import { AwsWrapperError } from "../utils/errors";
 import { HostAvailability } from "../host_availability/host_availability";
 import { ClientWrapper } from "../client_wrapper";
 import { TelemetryTraceLevel } from "../utils/telemetry/telemetry_trace_level";
+import { ConnectionInfo } from "../connection_info";
 
 export class DefaultPlugin extends AbstractConnectionPlugin {
   id: string = uniqueId("_defaultPlugin");
@@ -79,10 +80,11 @@ export class DefaultPlugin extends AbstractConnectionPlugin {
       TelemetryTraceLevel.NESTED
     );
 
-    const result = await telemetryContext.start(async () => await connProvider.connect(hostInfo, this.pluginService, props));
+    const result: ConnectionInfo = await telemetryContext.start(async () => await connProvider.connect(hostInfo, this.pluginService, props));
     this.pluginService.setAvailability(hostInfo.allAliases, HostAvailability.AVAILABLE);
-    await this.pluginService.updateDialect(result);
-    return result;
+    this.pluginService.setIsPooledClient(result.isPooled);
+    await this.pluginService.updateDialect(result.client);
+    return result.client;
   }
 
   override async execute<Type>(methodName: string, methodFunc: () => Promise<Type>): Promise<Type> {

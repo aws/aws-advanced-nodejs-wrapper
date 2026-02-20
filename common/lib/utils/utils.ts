@@ -117,6 +117,14 @@ export function isDialectTopologyAware(dialect: any): dialect is TopologyAwareDa
   return dialect;
 }
 
+export function containsHostAndPort(hosts: HostInfo[] | null | undefined, hostAndPort: string): boolean {
+  if (!hosts || hosts.length === 0) {
+    return false;
+  }
+
+  return hosts.some((host) => host.hostAndPort === hostAndPort);
+}
+
 export class Pair<K, V> {
   private readonly _left: K;
   private readonly _right: V;
