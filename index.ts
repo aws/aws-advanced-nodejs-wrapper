@@ -27,7 +27,7 @@ export { ConnectTimePlugin } from "./common/lib/plugins/connect_time_plugin";
 export { ExecuteTimePlugin } from "./common/lib/plugins/execute_time_plugin";
 export { AuroraInitialConnectionStrategyPlugin } from "./common/lib/plugins/aurora_initial_connection_strategy_plugin";
 export { DefaultPlugin } from "./common/lib/plugins/default_plugin";
-export { ReadWriteSplittingPlugin } from "./common/lib/plugins/read_write_splitting_plugin";
+export { ReadWriteSplittingPlugin } from "./common/lib/plugins/read_write_splitting/read_write_splitting_plugin";
 export { FailoverPlugin } from "./common/lib/plugins/failover/failover_plugin";
 export { Failover2Plugin } from "./common/lib/plugins/failover2/failover2_plugin";
 export { HostMonitoringConnectionPlugin } from "./common/lib/plugins/efm/host_monitoring_connection_plugin";
