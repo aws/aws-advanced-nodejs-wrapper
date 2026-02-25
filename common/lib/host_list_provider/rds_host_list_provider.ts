@@ -44,16 +44,12 @@ export class RdsHostListProvider implements DynamicHostListProvider {
   private initialHostList: HostInfo[];
   protected initialHost: HostInfo;
   private refreshRateNano: number;
-  private suggestedClusterIdRefreshRateNano: number = 10 * 60 * 1_000_000_000; // 10 minutes
   private hostList?: HostInfo[];
   protected readonly connectionUrlParser: ConnectionUrlParser;
   protected readonly hostListProviderService: HostListProviderService;
 
-  public static readonly suggestedPrimaryClusterIdCache: CacheMap<string, string> = new CacheMap<string, string>();
-  public static readonly primaryClusterIdCache: CacheMap<string, boolean> = new CacheMap<string, boolean>();
   public clusterId: string = Date.now().toString();
   public isInitialized: boolean = false;
-  public isPrimaryClusterId?: boolean;
   public clusterInstanceTemplate?: HostInfo;
 
   constructor(properties: Map<string, any>, originalUrl: string, hostListProviderService: HostListProviderService) {
@@ -87,8 +83,6 @@ export class RdsHostListProvider implements DynamicHostListProvider {
       return;
     }
 
-    this.isPrimaryClusterId = false;
-
     const hostInfoBuilder = this.hostListProviderService.getHostInfoBuilder();
 
     this.clusterInstanceTemplate = hostInfoBuilder
@@ -98,29 +92,7 @@ export class RdsHostListProvider implements DynamicHostListProvider {
 
     this.validateHostPatternSetting(this.clusterInstanceTemplate.host);
 
-    const clusterIdSetting: string = WrapperProperties.CLUSTER_ID.get(this.properties);
-    if (clusterIdSetting) {
-      this.clusterId = clusterIdSetting;
-    } else if (this.rdsUrlType === RdsUrlType.RDS_PROXY) {
-      // Each proxy is associated with a single cluster, so it's safe to use RDS Proxy Url as cluster
-      // identification
-      this.clusterId = this.initialHost.url;
-    } else if (this.rdsUrlType.isRds) {
-      const clusterSuggestedResult: ClusterSuggestedResult | null = this.getSuggestedClusterId(this.initialHost.hostAndPort);
-      if (clusterSuggestedResult && clusterSuggestedResult.clusterId) {
-        this.clusterId = clusterSuggestedResult.clusterId;
-        this.isPrimaryClusterId = clusterSuggestedResult.isPrimaryClusterId;
-      } else {
-        const clusterRdsHostUrl: string | null = this.rdsHelper.getRdsClusterHostUrl(this.initialHost.host);
-        if (clusterRdsHostUrl) {
-          this.clusterId = this.clusterInstanceTemplate.isPortSpecified()
-            ? `${clusterRdsHostUrl}:${this.clusterInstanceTemplate.port}`
-            : clusterRdsHostUrl;
-          this.isPrimaryClusterId = true;
-          RdsHostListProvider.primaryClusterIdCache.put(this.clusterId, true, this.suggestedClusterIdRefreshRateNano);
-        }
-      }
-    }
+    this.clusterId = WrapperProperties.CLUSTER_ID.get(this.properties);
 
     this.isInitialized = true;
   }
@@ -195,18 +167,11 @@ export class RdsHostListProvider implements DynamicHostListProvider {
       throw new AwsWrapperError("no cluster id");
     }
 
-    const suggestedPrimaryClusterId: string | null = RdsHostListProvider.suggestedPrimaryClusterIdCache.get(this.clusterId);
-    if (suggestedPrimaryClusterId && this.clusterId !== suggestedPrimaryClusterId) {
-      this.clusterId = suggestedPrimaryClusterId;
-      this.isPrimaryClusterId = true;
-    }
-
     const cachedHosts: HostInfo[] | null = this.getStoredTopology();
 
     // This clusterId is a primary one and is about to create a new entry in the cache.
     // When a primary entry is created it needs to be suggested for other (non-primary) entries.
     // Remember a flag to do suggestion after cache is updated.
-    const needToSuggest: boolean = !cachedHosts && this.isPrimaryClusterId === true;
     if (!cachedHosts || forceUpdate) {
       // need to re-fetch the topology.
       if (!targetClient || !(await this.hostListProviderService.isClientValid(targetClient))) {
@@ -216,9 +181,6 @@ export class RdsHostListProvider implements DynamicHostListProvider {
       const hosts = await this.queryForTopology(targetClient, this.hostListProviderService.getDialect());
       if (hosts && hosts.length > 0) {
         this.storageService.set(this.clusterId, new Topology(hosts));
-        if (needToSuggest) {
-          this.suggestPrimaryCluster(hosts);
-        }
         return new FetchTopologyResult(false, hosts);
       }
     }
@@ -227,63 +189,6 @@ export class RdsHostListProvider implements DynamicHostListProvider {
       return new FetchTopologyResult(false, this.initialHostList);
     } else {
       return new FetchTopologyResult(true, cachedHosts);
-    }
-  }
-
-  private getSuggestedClusterId(hostAndPort: string): ClusterSuggestedResult | null {
-    const cache: ExpirationCache<string, Topology> = this.storageService.getAll(Topology) as ExpirationCache<string, Topology>;
-    if (!cache) {
-      return null;
-    }
-    for (const [key, hosts] of cache.getEntries()) {
-      const isPrimaryCluster: boolean = RdsHostListProvider.primaryClusterIdCache.get(key, false, this.suggestedClusterIdRefreshRateNano) ?? false;
-      if (key === hostAndPort) {
-        return new ClusterSuggestedResult(hostAndPort, isPrimaryCluster);
-      }
-
-      if (hosts) {
-        for (const hostInfo of hosts.hosts) {
-          if (hostInfo.hostAndPort === hostAndPort) {
-            logger.debug(Messages.get("RdsHostListProvider.suggestedClusterId", key, hostAndPort));
-            return new ClusterSuggestedResult(key, isPrimaryCluster);
-          }
-        }
-      }
-    }
-    return null;
-  }
-
-  suggestPrimaryCluster(primaryClusterHosts: HostInfo[]): void {
-    if (!primaryClusterHosts) {
-      return;
-    }
-
-    const primaryClusterHostUrls: Set<string> = new Set<string>();
-    primaryClusterHosts.forEach((hostInfo) => {
-      primaryClusterHostUrls.add(hostInfo.url);
-    });
-
-    const cache: ExpirationCache<string, Topology> = this.storageService.getAll(Topology) as ExpirationCache<string, Topology>;
-    if (!cache) {
-      return;
-    }
-    for (const [clusterId, clusterHosts] of cache.getEntries()) {
-      const isPrimaryCluster: boolean | null = RdsHostListProvider.primaryClusterIdCache.get(
-        clusterId,
-        false,
-        this.suggestedClusterIdRefreshRateNano
-      );
-      const suggestedPrimaryClusterId: string | null = RdsHostListProvider.suggestedPrimaryClusterIdCache.get(clusterId);
-      if (isPrimaryCluster || suggestedPrimaryClusterId || !clusterHosts) {
-        continue;
-      }
-
-      for (const clusterHost of clusterHosts.hosts) {
-        if (primaryClusterHostUrls.has(clusterHost.url)) {
-          RdsHostListProvider.suggestedPrimaryClusterIdCache.put(clusterId, this.clusterId, this.suggestedClusterIdRefreshRateNano);
-          break;
-        }
-      }
     }
   }
 
@@ -366,8 +271,8 @@ export class RdsHostListProvider implements DynamicHostListProvider {
   }
 
   static clearAll(): void {
-    RdsHostListProvider.primaryClusterIdCache.clear();
-    RdsHostListProvider.suggestedPrimaryClusterIdCache.clear();
+    // No-op
+    // TODO: remove if still not used after full service container refactoring
   }
 
   clear(): void {
@@ -418,15 +323,5 @@ export class FetchTopologyResult {
   constructor(isCachedData: boolean, hosts: HostInfo[]) {
     this.hosts = hosts;
     this.isCachedData = isCachedData;
-  }
-}
-
-class ClusterSuggestedResult {
-  clusterId: string;
-  isPrimaryClusterId: boolean;
-
-  constructor(clusterId: string, isPrimaryClusterId: boolean) {
-    this.clusterId = clusterId;
-    this.isPrimaryClusterId = isPrimaryClusterId;
   }
 }

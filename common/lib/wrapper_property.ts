@@ -234,8 +234,8 @@ export class WrapperProperties {
     "clusterId",
     "A unique identifier for the cluster. " +
       "Connections with the same cluster id share a cluster topology cache. " +
-      "If unspecified, a cluster id is automatically created for AWS RDS clusters.",
-    null
+      "If unspecified, a cluster id is '1'.",
+    "1"
   );
 
   static readonly CLUSTER_INSTANCE_HOST_PATTERN = new WrapperProperty<string>(
