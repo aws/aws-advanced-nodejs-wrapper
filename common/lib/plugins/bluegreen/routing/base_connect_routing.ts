@@ -25,7 +25,7 @@ import { PluginService } from "../../../plugin_service";
 export abstract class BaseConnectRouting extends BaseRouting implements ConnectRouting {
   isMatch(hostInfo: HostInfo, hostRole: BlueGreenRole): boolean {
     return (
-      (this.hostAndPort === null || this.hostAndPort === (hostInfo ?? hostInfo.getHostAndPort().toLowerCase())) &&
+      (this.hostAndPort === null || this.hostAndPort === (hostInfo ?? hostInfo.hostAndPort.toLowerCase())) &&
       (this.role === null || this.role === hostRole)
     );
   }
