@@ -25,6 +25,9 @@ import { ClientWrapper } from "../../client_wrapper";
 import { AwsWrapperError } from "../../utils/errors";
 import { MonitoringRdsHostListProvider } from "./monitoring_host_list_provider";
 import { Messages } from "../../utils/messages";
+import { CoreServicesContainer } from "../../utils/core_services_container";
+import { Topology } from "../topology";
+import { StorageService, StorageServiceImpl } from "../../utils/storage/storage_service";
 
 export interface ClusterTopologyMonitor {
   forceRefresh(client: ClientWrapper, timeoutMs: number): Promise<HostInfo[]>;
@@ -45,8 +48,8 @@ export class ClusterTopologyMonitorImpl implements ClusterTopologyMonitor {
   private readonly _hostListProvider: MonitoringRdsHostListProvider;
   private readonly refreshRateMs: number;
   private readonly highRefreshRateMs: number;
+  private readonly storageService: StorageService;
 
-  private topologyMap: CacheMap<string, HostInfo[]>;
   private writerHostInfo: HostInfo = null;
   private isVerifiedWriterConnection: boolean = false;
   private monitoringClient: ClientWrapper = null;
@@ -72,7 +75,6 @@ export class ClusterTopologyMonitorImpl implements ClusterTopologyMonitor {
 
   constructor(
     clusterId: string,
-    topologyMap: CacheMap<string, HostInfo[]>,
     initialHostInfo: HostInfo,
     props: Map<string, any>,
     pluginService: PluginService,
@@ -81,7 +83,7 @@ export class ClusterTopologyMonitorImpl implements ClusterTopologyMonitor {
     highRefreshRateMs: number
   ) {
     this.clusterId = clusterId;
-    this.topologyMap = topologyMap;
+    this.storageService = CoreServicesContainer.getInstance().getStorageService(); // TODO: store serviceContainer instead
     this.initialHostInfo = initialHostInfo;
     this._pluginService = pluginService;
     this._hostListProvider = hostListProvider;
@@ -125,7 +127,7 @@ export class ClusterTopologyMonitorImpl implements ClusterTopologyMonitor {
   async forceMonitoringRefresh(shouldVerifyWriter: boolean, timeoutMs: number): Promise<HostInfo[] | null> {
     if (Date.now() < this.ignoreNewTopologyRequestsEndTimeMs) {
       // Previous failover has just completed, use results without triggering new update.
-      const currentHosts = this.topologyMap.get(this.clusterId);
+      const currentHosts = this.getStoredHosts();
       if (currentHosts !== null) {
         logger.info(Messages.get("ClusterTopologyMonitoring.ignoringNewTopologyRequest"));
         return currentHosts;
@@ -158,7 +160,7 @@ export class ClusterTopologyMonitorImpl implements ClusterTopologyMonitor {
     // Signal to any monitor that might be in delay, that topology should be updated.
     this.requestToUpdateTopology = true;
 
-    const currentHosts: HostInfo[] = this.topologyMap.get(this.clusterId);
+    const currentHosts: HostInfo[] = this.getStoredHosts();
 
     if (timeoutMs === 0) {
       logger.info(logTopology(currentHosts, Messages.get("ClusterTopologyMonitoring.timeoutSetToZero")));
@@ -168,7 +170,7 @@ export class ClusterTopologyMonitorImpl implements ClusterTopologyMonitor {
     const endTime = Date.now() + timeoutMs;
     let latestHosts: HostInfo[];
 
-    while ((latestHosts = this.topologyMap.get(this.clusterId)) === currentHosts && Date.now() < endTime) {
+    while ((latestHosts = this.getStoredHosts()) === currentHosts && Date.now() < endTime) {
       await sleep(1000);
     }
 
@@ -244,7 +246,7 @@ export class ClusterTopologyMonitorImpl implements ClusterTopologyMonitor {
   }
 
   updateTopologyCache(hosts: HostInfo[]): void {
-    this.topologyMap.put(this.clusterId, hosts, ClusterTopologyMonitorImpl.TOPOLOGY_CACHE_EXPIRATION_NANOS);
+    this.storageService.set(this.clusterId, new Topology(hosts));
     this.requestToUpdateTopology = false;
   }
 
@@ -296,7 +298,7 @@ export class ClusterTopologyMonitorImpl implements ClusterTopologyMonitor {
             this.hostMonitorsLatestTopology = [];
 
             // Use any client to gather topology information.
-            let hosts: HostInfo[] = this.topologyMap.get(this.clusterId);
+            let hosts: HostInfo[] = this.getStoredHosts();
             if (!hosts) {
               hosts = await this.openAnyClientAndUpdateTopology();
             }
@@ -392,6 +394,11 @@ export class ClusterTopologyMonitorImpl implements ClusterTopologyMonitor {
     }
   }
 
+  private getStoredHosts(): HostInfo[] | null {
+    const topology = this.storageService.get(Topology, this.clusterId);
+    return topology == null ? null : topology.hosts;
+  }
+
   private async delay(useHighRefreshRate: boolean) {
     if (Date.now() < this.highRefreshRateEndTimeMs) {
       useHighRefreshRate = true;
@@ -404,7 +411,7 @@ export class ClusterTopologyMonitorImpl implements ClusterTopologyMonitor {
   }
 
   logTopology(msgPrefix: string) {
-    const hosts: HostInfo[] = this.topologyMap.get(this.clusterId);
+    const hosts: HostInfo[] = this.getStoredHosts();
     if (hosts && hosts.length !== 0) {
       logger.debug(logTopology(hosts, msgPrefix));
     }
