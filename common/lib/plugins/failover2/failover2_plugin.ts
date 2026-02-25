@@ -138,7 +138,7 @@ export class Failover2Plugin extends AbstractConnectionPlugin implements CanRele
       return await this._staleDnsHelper.getVerifiedConnection(hostInfo.host, isInitialConnection, this.hostListProviderService!, props, connectFunc);
     }
 
-    const hostInfoWithAvailability: HostInfo = this.pluginService.getHosts().find((x) => x.getHostAndPort() === hostInfo.getHostAndPort());
+    const hostInfoWithAvailability: HostInfo = this.pluginService.getHosts().find((x) => x.hostAndPort === hostInfo.hostAndPort);
 
     let client: ClientWrapper = null;
     if (!hostInfoWithAvailability || hostInfoWithAvailability.getAvailability() != HostAvailability.NOT_AVAILABLE) {

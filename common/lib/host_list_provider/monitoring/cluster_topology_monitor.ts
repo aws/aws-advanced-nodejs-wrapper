@@ -528,9 +528,9 @@ export class HostMonitor {
     }
 
     const latestWriterHostInfo: HostInfo = hosts.find((x) => x.role === HostRole.WRITER);
-    if (latestWriterHostInfo && writerHostInfo && latestWriterHostInfo.getHostAndPort() !== writerHostInfo.getHostAndPort()) {
+    if (latestWriterHostInfo && writerHostInfo && latestWriterHostInfo.hostAndPort !== writerHostInfo.hostAndPort) {
       this.writerChanged = true;
-      logger.debug(Messages.get("HostMonitor.writerHostChanged", writerHostInfo.getHostAndPort(), latestWriterHostInfo.getHostAndPort()));
+      logger.debug(Messages.get("HostMonitor.writerHostChanged", writerHostInfo.hostAndPort, latestWriterHostInfo.hostAndPort));
       this.monitor.updateTopologyCache(hosts);
       logger.debug(logTopology(hosts, `[hostMonitor ${this.hostInfo.hostId}] `));
     }

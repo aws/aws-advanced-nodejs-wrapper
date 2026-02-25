@@ -36,7 +36,7 @@ export class OpenedConnectionTracker {
 
     // Check if the connection was established using an instance endpoint
     if (OpenedConnectionTracker.rdsUtils.isRdsInstance(hostInfo.host)) {
-      this.trackConnection(hostInfo.getHostAndPort(), client);
+      this.trackConnection(hostInfo.hostAndPort, client);
       return;
     }
 
