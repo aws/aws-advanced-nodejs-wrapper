@@ -89,7 +89,6 @@ export class MonitoringRdsHostListProvider extends RdsHostListProvider implement
       () =>
         new ClusterTopologyMonitorImpl(
           this.clusterId,
-          MonitoringRdsHostListProvider.topologyCache,
           this.initialHost,
           this.properties,
           this.pluginService,
