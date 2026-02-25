@@ -56,10 +56,6 @@ export interface StorageService {
    */
   set<V>(key: unknown, item: V): void;
 
-  // TODO: temporary method to return all storage services for a specific item class.
-  // Should be removed along with the cluster id refactoring.
-  getAll<V>(itemClass: Constructor<V>): ExpirationCache<unknown, unknown> | null;
-
   /**
    * Gets an item stored in the storage service.
    *
