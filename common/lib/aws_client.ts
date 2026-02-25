@@ -35,11 +35,14 @@ import { Messages } from "./utils/messages";
 import { HostListProviderService } from "./host_list_provider_service";
 import { SessionStateClient } from "./session_state_client";
 import { DriverConnectionProvider } from "./driver_connection_provider";
+import { StorageService } from "./utils/storage/storage_service";
+import { CoreServicesContainer } from "./utils/core_services_container";
 
 const { EventEmitter } = pkgStream;
 
 export abstract class AwsClient extends EventEmitter implements SessionStateClient {
   private _defaultPort: number = -1;
+  private readonly storageService: StorageService;
   protected telemetryFactory: TelemetryFactory;
   protected pluginManager: PluginManager;
   protected pluginService: PluginService;
@@ -63,6 +66,8 @@ export abstract class AwsClient extends EventEmitter implements SessionStateClie
     this._connectionUrlParser = parser;
 
     this.properties = new Map<string, any>(Object.entries(config));
+
+    this.storageService = CoreServicesContainer.getInstance().getStorageService();
 
     const profileName = WrapperProperties.PROFILE_NAME.get(this.properties);
     if (profileName && profileName.length > 0) {
