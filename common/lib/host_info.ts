@@ -65,10 +65,6 @@ export class HostInfo {
     return this.port != HostInfo.NO_PORT;
   }
 
-  getHostAndPort(): string {
-    return this.isPortSpecified() ? this.host + ":" + this.port : this.host;
-  }
-
   addAlias(...alias: string[]) {
     if (!alias || alias.length < 1) {
       return;
