@@ -14,6 +14,9 @@ on:
       - "docs/**"
       - "ISSUE_TEMPLATE/**"
       - "**/remove-old-artifacts.yml"
+  pull_request:
+    branches:
+      - dev/v3
 
 permissions:
   id-token: write   # This is required for requesting the JWT
