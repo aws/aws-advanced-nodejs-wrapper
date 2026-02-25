@@ -24,7 +24,7 @@ import { ConnectionPlugin } from "../../../connection_plugin";
 export abstract class BaseExecuteRouting extends BaseRouting implements ExecuteRouting {
   isMatch(hostInfo: HostInfo, hostRole: BlueGreenRole): boolean {
     return (
-      (this.hostAndPort === null || this.hostAndPort === (hostInfo ?? hostInfo.getHostAndPort().toLowerCase())) &&
+      (this.hostAndPort === null || this.hostAndPort === (hostInfo ?? hostInfo.hostAndPort.toLowerCase())) &&
       (this.role === null || this.role === hostRole)
     );
   }

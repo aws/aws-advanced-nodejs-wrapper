@@ -99,12 +99,12 @@ export class SubstituteConnectRouting extends BaseConnectRouting {
         // try with another IAM host
       }
     }
-    throw new AwsWrapperError(Messages.get("Bgd.inProgressCantOpenConnection", this.substituteHost.getHostAndPort()));
+    throw new AwsWrapperError(Messages.get("Bgd.inProgressCantOpenConnection", this.substituteHost.hostAndPort));
   }
 
   toString(): string {
-    return `${this.constructor.name} [${this.hostAndPort ?? "<null>"}, ${this.role?.name ?? "<null>"}, substitute: ${this.substituteHost?.getHostAndPort() ?? "<null>"}, iamHosts: ${
-      this.iamHosts?.map((host) => host.getHostAndPort()).join(", ") ?? "<null>"
+    return `${this.constructor.name} [${this.hostAndPort ?? "<null>"}, ${this.role?.name ?? "<null>"}, substitute: ${this.substituteHost?.hostAndPort ?? "<null>"}, iamHosts: ${
+      this.iamHosts?.map((host) => host.hostAndPort).join(", ") ?? "<null>"
     }]`;
   }
 }

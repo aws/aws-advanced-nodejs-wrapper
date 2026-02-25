@@ -874,7 +874,7 @@ export class BlueGreenStatusProvider {
     logger.debug(
       "Corresponding hosts:\n" +
         Array.from(this.correspondingHosts.entries())
-          .map(([key, value]) => `   ${key} -> ${value.right == null ? "<null>" : value.right.getHostAndPort()}`)
+          .map(([key, value]) => `   ${key} -> ${value.right == null ? "<null>" : value.right.hostAndPort}`)
           .join("\n")
     );
 

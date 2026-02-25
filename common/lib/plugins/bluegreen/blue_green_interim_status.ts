@@ -104,7 +104,7 @@ export class BlueGreenInterimStatus {
       this.startTopology == null
         ? ""
         : this.startTopology
-            .map((x) => x.getHostAndPort() + x.role)
+            .map((x) => x.hostAndPort + x.role)
             .sort()
             .join(",")
     );
@@ -114,7 +114,7 @@ export class BlueGreenInterimStatus {
       this.currentTopology == null
         ? ""
         : this.currentTopology
-            .map((x) => x.getHostAndPort() + x.role)
+            .map((x) => x.hostAndPort + x.role)
             .sort()
             .join(",")
     );
