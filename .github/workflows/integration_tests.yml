@@ -16,6 +16,7 @@ on:
   pull_request:
     branches:
       - dev/v3
+      - refactor/full-service-container
 
 permissions:
   id-token: write   # This is required for requesting the JWT
