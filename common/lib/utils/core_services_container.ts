@@ -15,6 +15,7 @@
  */
 
 import { StorageService, StorageServiceImpl } from "./storage/storage_service";
+import { MonitorService, MonitorServiceImpl } from "./monitoring/monitor_service";
 
 /**
  * A singleton container object used to instantiate and access core universal services. This class should be used
@@ -26,12 +27,13 @@ import { StorageService, StorageServiceImpl } from "./storage/storage_service";
 export class CoreServicesContainer {
   private static readonly INSTANCE = new CoreServicesContainer();
 
-  // private readonly monitorService: MonitorService; // TODO: implement monitor service
+  // TODO: implement monitor service
+  private readonly monitorService: MonitorService;
   private readonly storageService: StorageService;
 
   private constructor() {
     this.storageService = new StorageServiceImpl();
-    // this.monitorService = new MonitorServiceImpl();
+    this.monitorService = new MonitorServiceImpl();
   }
 
   static getInstance(): CoreServicesContainer {
@@ -42,9 +44,9 @@ export class CoreServicesContainer {
     return this.storageService;
   }
 
-  // getMonitorService(): MonitorService {
-  //   return this.monitorService;
-  // }
+  getMonitorService(): MonitorService {
+    return this.monitorService;
+  }
 
   static releaseResources(): void {
     CoreServicesContainer.INSTANCE.storageService.releaseResources();

@@ -17,7 +17,6 @@
 import { anything, instance, mock, when } from "ts-mockito";
 import { ConnectionProvider, HostInfoBuilder, PluginManager } from "../common/lib";
 import { PluginServiceImpl } from "../common/lib/plugin_service";
-import { PluginServiceManagerContainer } from "../common/lib/plugin_service_manager_container";
 import { WrapperProperties } from "../common/lib/wrapper_property";
 import { add, complete, configure, cycle, save, suite } from "benny";
 import { TestConnectionWrapper } from "./testplugin/test_connection_wrapper";
@@ -41,6 +40,7 @@ import { PgClientWrapper } from "../common/lib/pg_client_wrapper";
 import { DriverDialect } from "../common/lib/driver_dialect/driver_dialect";
 import { NodePostgresDriverDialect } from "../pg/lib/dialect/node_postgres_driver_dialect";
 import { resourceFromAttributes } from "@opentelemetry/resources";
+import { FullServicesContainerImpl } from "../common/lib/utils/full_services_container";
 
 const mockConnectionProvider = mock<ConnectionProvider>();
 const mockPluginService = mock(PluginServiceImpl);
@@ -60,8 +60,8 @@ when(mockPluginService.getCurrentClient()).thenReturn(mockClientWrapper.client);
 when(mockPluginService.getDriverDialect()).thenReturn(mockDialect);
 
 const connectionString = "my.domain.com";
-const pluginServiceManagerContainer = new PluginServiceManagerContainer();
-pluginServiceManagerContainer.pluginService = instance(mockPluginService);
+const servicesContainer = mock(FullServicesContainerImpl);
+when(servicesContainer.getPluginService()).thenReturn(instance(mockPluginService));
 
 const propsExecute = new Map<string, any>();
 const propsReadWrite = new Map<string, any>();
@@ -84,19 +84,19 @@ WrapperProperties.TELEMETRY_TRACES_BACKEND.set(propsReadWrite, "OTLP");
 WrapperProperties.TELEMETRY_TRACES_BACKEND.set(props, "OTLP");
 
 const pluginManagerExecute = new PluginManager(
-  pluginServiceManagerContainer,
+  servicesContainer,
   propsExecute,
   new ConnectionProviderManager(instance(mockConnectionProvider), null),
   telemetryFactory
 );
 const pluginManagerReadWrite = new PluginManager(
-  pluginServiceManagerContainer,
+  servicesContainer,
   propsReadWrite,
   new ConnectionProviderManager(instance(mockConnectionProvider), null),
   telemetryFactory
 );
 const pluginManager = new PluginManager(
-  pluginServiceManagerContainer,
+  servicesContainer,
   props,
   new ConnectionProviderManager(instance(mockConnectionProvider), null),
   new NullTelemetryFactory()
