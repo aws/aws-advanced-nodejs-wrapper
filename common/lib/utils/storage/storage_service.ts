@@ -15,9 +15,10 @@
  */
 
 import { Constructor, ItemDisposalFunc, ShouldDisposeFunc } from "../../types";
-import { logger } from "../../../logutils";
 import { ExpirationCache } from "./expiration_cache";
 import { Topology } from "../../host_list_provider/topology";
+import { AwsWrapperError } from "../errors";
+import { Messages } from "../messages";
 
 const DEFAULT_CLEANUP_INTERVAL_NANOS = 5 * 60 * 1_000_000_000; // 5 minutes
 
@@ -165,7 +166,7 @@ export class StorageServiceImpl implements StorageService {
     if (!cache) {
       const supplier = StorageServiceImpl.defaultCacheSuppliers.get(itemClass);
       if (!supplier) {
-        throw new Error(`StorageServiceImpl: Item class not registered: ${itemClass.name}`);
+        throw new AwsWrapperError(Messages.get("StorageService.itemClassNotRegistered", itemClass.name));
       }
       cache = supplier();
       this.caches.set(itemClass, cache);
@@ -174,16 +175,8 @@ export class StorageServiceImpl implements StorageService {
     try {
       cache.put(key, item);
     } catch (error) {
-      throw new Error(`StorageServiceImpl: Unexpected value mismatch for ${itemClass.name}: ${error}`);
+      throw new AwsWrapperError(Messages.get("StorageService.unexpectedValueMismatch", itemClass.name, String(error)));
     }
-  }
-
-  getAll<V>(itemClass: Constructor<V>): ExpirationCache<unknown, unknown> | null {
-    const cache = this.caches.get(itemClass);
-    if (!cache) {
-      return null;
-    }
-    return cache;
   }
 
   get<V>(itemClass: Constructor<V>, key?: unknown): V | null {
@@ -201,7 +194,6 @@ export class StorageServiceImpl implements StorageService {
       return value as V;
     }
 
-    logger.debug(`StorageServiceImpl: Item class mismatch for key ${String(key)}: ` + `expected ${itemClass.name}, got ${value.constructor.name}`);
     return null;
   }
 

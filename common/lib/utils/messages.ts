@@ -374,7 +374,9 @@ const MESSAGES: Record<string, string> = {
     "Blue/Green Deployment switchover is still in progress and a corresponding host for '%s' is not found after %s ms. Try to connect again later.",
   "Bgd.correspondingHostFoundContinueWithConnect":
     "A corresponding host for '%s' is found. Continue with connect call. The call was suspended for %s ms.",
-  "Bgd.completedContinueWithConnect": "Blue/Green Deployment status is completed. Continue with 'connect' call. The call was suspended for %s ms."
+  "Bgd.completedContinueWithConnect": "Blue/Green Deployment status is completed. Continue with 'connect' call. The call was suspended for %s ms.",
+  "StorageService.itemClassNotRegistered": "StorageServiceImpl: Item class not registered: %s",
+  "StorageService.unexpectedValueMismatch": "StorageServiceImpl: Unexpected value mismatch for %s: %s"
 };
 
 export class Messages {
