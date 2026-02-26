@@ -102,6 +102,12 @@ export interface StorageService {
    * @returns The number of items stored for the given item class
    */
   size(itemClass: Constructor): number;
+
+  /**
+   * Cleanup method to stop the cleanup interval timer.
+   * Should be called when the service is no longer needed.
+   */
+  releaseResources(): void;
 }
 
 type CacheSupplier = () => ExpirationCache<unknown, unknown>;
@@ -129,7 +135,6 @@ export class StorageServiceImpl implements StorageService {
   }
 
   protected removeExpiredItems(): void {
-    logger.debug("StorageServiceImpl: Removing expired items");
     for (const cache of this.caches.values()) {
       cache.removeExpiredEntries();
     }
@@ -246,11 +251,7 @@ export class StorageServiceImpl implements StorageService {
     StorageServiceImpl.defaultCacheSuppliers.set(itemClass, supplier);
   }
 
-  /**
-   * Cleanup method to stop the cleanup interval timer.
-   * Should be called when the service is no longer needed.
-   */
-  destroy(): void {
+  releaseResources(): void {
     if (this.cleanupIntervalHandle) {
       clearInterval(this.cleanupIntervalHandle);
       this.cleanupIntervalHandle = undefined;
