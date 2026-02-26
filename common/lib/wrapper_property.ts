@@ -232,9 +232,7 @@ export class WrapperProperties {
 
   static readonly CLUSTER_ID = new WrapperProperty<string>(
     "clusterId",
-    "A unique identifier for the cluster. " +
-      "Connections with the same cluster id share a cluster topology cache. " +
-      "If unspecified, a cluster id is '1'.",
+    "A unique identifier for the cluster. Connections with the same cluster id share a cluster topology cache. If unspecified, cluster id will be '1'.",
     "1"
   );
 
