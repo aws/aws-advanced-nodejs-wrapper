@@ -15,7 +15,7 @@
 */
 
 import { SlidingExpirationCache } from "../../common/lib/utils/sliding_expiration_cache";
-import { convertNanosToMs, sleep } from "../../common/lib/utils/utils";
+import { convertMsToNanos, convertNanosToMs, sleep } from "../../common/lib/utils/utils";
 import { SlidingExpirationCacheWithCleanupTask } from "../../common/lib/utils/sliding_expiration_cache_with_cleanup_task";
 
 class DisposableItem {
@@ -48,9 +48,9 @@ class AsyncDisposableItem {
 describe("test_sliding_expiration_cache", () => {
   it("test compute if absent", async () => {
     const target = new SlidingExpirationCache(BigInt(50_000_000));
-    const result1 = target.computeIfAbsent(1, () => "a", BigInt(1));
+    const result1 = target.computeIfAbsent(1, () => "a", convertMsToNanos(100));
     const originalItemExpiration = target.map.get(1)!.expirationTimeNs;
-    const result2 = target.computeIfAbsent(1, () => "b", BigInt(5));
+    const result2 = target.computeIfAbsent(1, () => "b", convertMsToNanos(500));
     const updatedItemExpiration = target.map.get(1)?.expirationTimeNs;
 
     expect(updatedItemExpiration).toBeGreaterThan(originalItemExpiration);
@@ -59,7 +59,7 @@ describe("test_sliding_expiration_cache", () => {
     expect(target.get(1)).toEqual("a");
 
     await sleep(700);
-    const result3 = target.computeIfAbsent(1, () => "b", BigInt(5));
+    const result3 = target.computeIfAbsent(1, () => "b", convertMsToNanos(500));
     expect(result3).toEqual("b");
     expect(target.get(1)).toEqual("b");
   });
@@ -71,19 +71,19 @@ describe("test_sliding_expiration_cache", () => {
       (item) => item.dispose()
     );
     const itemToRemove = new DisposableItem(true);
-    let result = target.computeIfAbsent("itemToRemove", () => itemToRemove, BigInt(15_000_000_000));
+    let result = target.computeIfAbsent("itemToRemove", () => itemToRemove, convertMsToNanos(15_000));
     expect(itemToRemove).toEqual(result);
 
     const itemToCleanup = new DisposableItem(true);
-    result = target.computeIfAbsent("itemToCleanup", () => itemToCleanup, BigInt(1));
+    result = target.computeIfAbsent("itemToCleanup", () => itemToCleanup, convertMsToNanos(100));
     expect(itemToCleanup).toEqual(result);
 
     const nonDisposableItem = new DisposableItem(false);
-    result = target.computeIfAbsent("nonDisposableItem", () => nonDisposableItem, BigInt(1));
+    result = target.computeIfAbsent("nonDisposableItem", () => nonDisposableItem, convertMsToNanos(100));
     expect(nonDisposableItem).toEqual(result);
 
     const nonExpiredItem = new DisposableItem(true);
-    result = target.computeIfAbsent("nonExpiredItem", () => nonExpiredItem, BigInt(15_000_000_000));
+    result = target.computeIfAbsent("nonExpiredItem", () => nonExpiredItem, convertMsToNanos(15_000));
     expect(nonExpiredItem).toEqual(result);
 
     await sleep(700);

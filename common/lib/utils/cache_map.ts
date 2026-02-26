@@ -14,17 +14,40 @@
   limitations under the License.
 */
 
-class CacheItem<V> {
-  readonly item: V;
-  private readonly expirationTimeNanos: bigint;
+import { getTimeInNanos } from "./utils";
 
-  constructor(item: V, expirationTimeNanos: bigint) {
+export class CacheItem<V> {
+  private readonly item: V;
+  private _expirationTimeNs: bigint;
+
+  constructor(item: V, expirationTime: bigint) {
     this.item = item;
-    this.expirationTimeNanos = expirationTimeNanos;
+    this._expirationTimeNs = expirationTime;
   }
 
   isExpired(): boolean {
-    return process.hrtime.bigint() > this.expirationTimeNanos;
+    if (this._expirationTimeNs <= 0) {
+      // No expiration time.
+      return false;
+    }
+    return getTimeInNanos() > this._expirationTimeNs;
+  }
+
+  get(returnExpired: boolean = false): V | null {
+    return this.isExpired() && !returnExpired ? null : this.item;
+  }
+
+  updateExpiration(expirationIntervalNanos: bigint): CacheItem<V> {
+    this._expirationTimeNs = getTimeInNanos() + expirationIntervalNanos;
+    return this;
+  }
+
+  get expirationTimeNs(): bigint {
+    return this._expirationTimeNs;
+  }
+
+  toString(): string {
+    return `CacheItem [item=${this.item}, expirationTime=${this._expirationTimeNs}]`;
   }
 }
 
@@ -38,7 +61,7 @@ export class CacheMap<K, V> {
   get(key: K, defaultItemValue?: any, itemExpirationNano?: any): V | null {
     const cacheItem: CacheItem<V> | undefined = this.cache.get(key);
     if (cacheItem && !cacheItem.isExpired()) {
-      return cacheItem.item;
+      return cacheItem.get();
     }
 
     if (!defaultItemValue || !itemExpirationNano) {
@@ -72,14 +95,6 @@ export class CacheMap<K, V> {
 
   clear() {
     this.cache.clear();
-  }
-
-  getEntries(): Map<K, V> {
-    const entries: Map<K, V> = new Map();
-    this.cache.forEach((v, k) => {
-      entries.set(k, v.item);
-    });
-    return entries;
   }
 
   protected cleanUp() {

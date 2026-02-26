@@ -45,4 +45,8 @@ export class CoreServicesContainer {
   // getMonitorService(): MonitorService {
   //   return this.monitorService;
   // }
+
+  static releaseResources(): void {
+    CoreServicesContainer.INSTANCE.storageService.releaseResources();
+  }
 }
