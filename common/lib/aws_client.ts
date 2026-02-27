@@ -14,8 +14,7 @@
   limitations under the License.
 */
 
-import { PluginServiceManagerContainer } from "./plugin_service_manager_container";
-import { PluginService, PluginServiceImpl } from "./plugin_service";
+import { PluginService } from "./plugin_service";
 import { DatabaseDialect, DatabaseType } from "./database_dialect/database_dialect";
 import { ConnectionUrlParser } from "./utils/connection_url_parser";
 import { HostListProvider } from "./host_list_provider/host_list_provider";
@@ -23,26 +22,29 @@ import { PluginManager } from "./plugin_manager";
 
 import pkgStream from "stream";
 import { ClientWrapper } from "./client_wrapper";
-import { ConnectionProviderManager } from "./connection_provider_manager";
 import { DefaultTelemetryFactory } from "./utils/telemetry/default_telemetry_factory";
 import { TelemetryFactory } from "./utils/telemetry/telemetry_factory";
 import { DriverDialect } from "./driver_dialect/driver_dialect";
 import { WrapperProperties } from "./wrapper_property";
 import { DriverConfigurationProfiles } from "./profile/driver_configuration_profiles";
 import { ConfigurationProfile } from "./profile/configuration_profile";
-import { AwsWrapperError, TransactionIsolationLevel, ConnectionProvider } from "./";
+import { AwsWrapperError, ConnectionProvider, TransactionIsolationLevel } from "./";
 import { Messages } from "./utils/messages";
 import { HostListProviderService } from "./host_list_provider_service";
 import { SessionStateClient } from "./session_state_client";
-import { DriverConnectionProvider } from "./driver_connection_provider";
+import { ServiceUtils } from "./utils/service_utils";
 import { StorageService } from "./utils/storage/storage_service";
+import { MonitorService } from "./utils/monitoring/monitor_service";
 import { CoreServicesContainer } from "./utils/core_services_container";
+import { FullServicesContainer } from "./utils/full_services_container";
 
 const { EventEmitter } = pkgStream;
 
 export abstract class AwsClient extends EventEmitter implements SessionStateClient {
   private _defaultPort: number = -1;
+  private readonly fullServiceContainer: FullServicesContainer;
   private readonly storageService: StorageService;
+  private readonly monitorService: MonitorService;
   protected telemetryFactory: TelemetryFactory;
   protected pluginManager: PluginManager;
   protected pluginService: PluginService;
@@ -103,22 +105,25 @@ export abstract class AwsClient extends EventEmitter implements SessionStateClie
       }
     }
 
+    const coreServicesContainer: CoreServicesContainer = CoreServicesContainer.getInstance();
+    this.storageService = coreServicesContainer.getStorageService();
+    this.monitorService = coreServicesContainer.getMonitorService();
     this.telemetryFactory = new DefaultTelemetryFactory(this.properties);
-    const container = new PluginServiceManagerContainer();
-    this.pluginService = new PluginServiceImpl(
-      container,
+
+    this.fullServiceContainer = ServiceUtils.instance.createStandardServiceContainer(
+      this.storageService,
+      this.monitorService,
       this,
+      this.properties,
       dbType,
       knownDialectsByCode,
-      this.properties,
-      this._configurationProfile?.getDriverDialect() ?? driverDialect
+      this._configurationProfile?.getDriverDialect() ?? driverDialect,
+      this.telemetryFactory,
+      connectionProvider
     );
-    this.pluginManager = new PluginManager(
-      container,
-      this.properties,
-      new ConnectionProviderManager(connectionProvider ?? new DriverConnectionProvider(), WrapperProperties.CONNECTION_PROVIDER.get(this.properties)),
-      this.telemetryFactory
-    );
+
+    this.pluginService = this.fullServiceContainer.getPluginService();
+    this.pluginManager = this.fullServiceContainer.getPluginManager();
   }
 
   private async setup() {
@@ -159,11 +164,11 @@ export abstract class AwsClient extends EventEmitter implements SessionStateClie
 
   abstract setReadOnly(readOnly: boolean): Promise<any | void>;
 
-  abstract isReadOnly(): boolean;
+  abstract isReadOnly(): boolean | undefined;
 
   abstract setAutoCommit(autoCommit: boolean): Promise<any | void>;
 
-  abstract getAutoCommit(): boolean;
+  abstract getAutoCommit(): boolean | undefined;
 
   abstract setTransactionIsolation(level: TransactionIsolationLevel): Promise<any | void>;
 

@@ -25,8 +25,8 @@ import { SimpleHostAvailabilityStrategy } from "../common/lib/host_availability/
 import { HostInfoBuilder } from "../common/lib";
 import { PgClientWrapper } from "../common/lib/pg_client_wrapper";
 import { NullTelemetryFactory } from "../common/lib/utils/telemetry/null_telemetry_factory";
-import { PluginServiceManagerContainer } from "../common/lib/plugin_service_manager_container";
 import { ConnectionProviderManager } from "../common/lib/connection_provider_manager";
+import { FullServicesContainerImpl } from "../common/lib/utils/full_services_container";
 
 const mockConnectionProvider = mock<ConnectionProvider>();
 const mockPluginService = mock(PluginServiceImpl);
@@ -47,8 +47,8 @@ when(mockPluginService.getCurrentClient()).thenReturn(mockClientWrapper.client);
 when(mockPluginService.getDriverDialect()).thenReturn(mockDialect);
 
 const connectionString = "my.domain.com";
-const pluginServiceManagerContainer = new PluginServiceManagerContainer();
-pluginServiceManagerContainer.pluginService = instance(mockPluginService);
+const servicesContainer = mock(FullServicesContainerImpl);
+when(servicesContainer.getPluginService()).thenReturn(instance(mockPluginService));
 
 function getProps(plugins: string) {
   const props = new Map();
@@ -59,7 +59,7 @@ function getProps(plugins: string) {
 
 function getPluginManager(props: Map<string, any>) {
   return new PluginManager(
-    pluginServiceManagerContainer,
+    servicesContainer,
     props,
     new ConnectionProviderManager(instance(mockConnectionProvider), null),
     new NullTelemetryFactory()
