@@ -162,9 +162,9 @@ export class RdsMultiAZClusterMySQLDatabaseDialect extends MySQLDatabaseDialect 
   async getInstanceId(targetClient: ClientWrapper): Promise<[string, string]> {
     try {
       const res = await targetClient.query(RdsMultiAZClusterMySQLDatabaseDialect.INSTANCE_ID_QUERY);
-      const id = res[0][0]["instance_id"];
-      const server_id = res[0][0]["instance_name"];
-      return [id, server_id];
+      const instance_id = res[0][0]["instance_id"];
+      const instance_name = res[0][0]["instance_name"];
+      return [instance_id, instance_name];
     } catch (error: any) {
       throw new AwsWrapperError(Messages.get("RdsMultiAZMySQLDatabaseDialect.invalidQuery", error.message));
     }

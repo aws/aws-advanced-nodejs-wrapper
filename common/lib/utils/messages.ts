@@ -375,8 +375,9 @@ const MESSAGES: Record<string, string> = {
   "Bgd.correspondingHostFoundContinueWithConnect":
     "A corresponding host for '%s' is found. Continue with connect call. The call was suspended for %s ms.",
   "Bgd.completedContinueWithConnect": "Blue/Green Deployment status is completed. Continue with 'connect' call. The call was suspended for %s ms.",
-  "StorageService.itemClassNotRegistered": "StorageServiceImpl: Item class not registered: %s",
-  "StorageService.unexpectedValueMismatch": "StorageServiceImpl: Unexpected value mismatch for %s: %s"
+  "StorageService.itemClassNotRegistered": "[StorageService] Item class not registered: %s",
+  "StorageService.unexpectedValueMismatch": "[StorageService] Unexpected value mismatch for %s: %s",
+  "TopologyUtils.instanceIdRequired": "InstanceId must not be en empty string."
 };
 
 export class Messages {

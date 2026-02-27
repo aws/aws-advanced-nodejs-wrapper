@@ -112,15 +112,7 @@ export class RdsHostListProvider implements DynamicHostListProvider {
   }
 
   async getHostRole(client: ClientWrapper, dialect: DatabaseDialect): Promise<HostRole> {
-    if (!isDialectTopologyAware(dialect)) {
-      throw new TypeError(Messages.get("RdsHostListProvider.incorrectDialect"));
-    }
-
-    if (client) {
-      return await dialect.getHostRole(client);
-    } else {
-      throw new AwsWrapperError(Messages.get("AwsClient.targetClientNotDefined"));
-    }
+    return this.topologyUtils.getHostRole(client);
   }
 
   async getWriterId(client: ClientWrapper): Promise<string | null> {
@@ -138,7 +130,7 @@ export class RdsHostListProvider implements DynamicHostListProvider {
 
   async identifyConnection(targetClient: ClientWrapper): Promise<HostInfo | null> {
     const instanceIds: [string, string] = await this.topologyUtils.getInstanceId(targetClient);
-    if (!instanceIds || instanceIds.some((id) => !id)) {
+    if (instanceIds.some((id) => !id)) {
       return null;
     }
 

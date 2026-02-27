@@ -97,6 +97,9 @@ export class TopologyUtils {
     initialHost: HostInfo,
     instanceTemplate: HostInfo
   ): HostInfo {
+    if (!instanceId) {
+      throw new AwsWrapperError(Messages.get("TopologyUtils.instanceIdRequired"));
+    }
     instanceName = !instanceName ? "?" : instanceName;
     const endpoint: string = instanceTemplate.host.replace("?", instanceName);
     const port = instanceTemplate?.isPortSpecified() ? instanceTemplate?.port : initialHost?.port;

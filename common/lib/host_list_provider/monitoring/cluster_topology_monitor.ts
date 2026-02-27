@@ -532,7 +532,7 @@ export class HostMonitor {
     let hosts: HostInfo[];
     try {
       hosts = await this.monitor.hostListProvider.sqlQueryForTopology(client);
-      if (hosts === null || hosts.length === 0) {
+      if (hosts === null) {
         return;
       }
       this.monitor.hostMonitorsLatestTopology = hosts;

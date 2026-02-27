@@ -118,9 +118,9 @@ export class AuroraPgDatabaseDialect extends PgDatabaseDialect implements Topolo
   async getInstanceId(targetClient: ClientWrapper): Promise<[string, string]> {
     const res = await targetClient.query(AuroraPgDatabaseDialect.INSTANCE_ID_QUERY);
     try {
-      const host: string = res.rows[0]["instance_id"];
-      const writerId: string = res.rows[0]["instance_name"];
-      return [host, writerId];
+      const instance_id: string = res.rows[0]["instance_id"];
+      const instance_name: string = res.rows[0]["instance_name"];
+      return [instance_id, instance_name];
     } catch (e: any) {
       if (e.message.includes("Cannot read properties of undefined")) {
         // Query returned no result, targetClient is not connected to a writer.

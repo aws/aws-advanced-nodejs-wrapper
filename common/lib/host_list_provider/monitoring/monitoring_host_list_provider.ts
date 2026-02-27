@@ -95,6 +95,7 @@ export class MonitoringRdsHostListProvider extends RdsHostListProvider implement
           this.clusterId,
           this.initialHost,
           this.properties,
+          this.clusterInstanceTemplate,
           this.pluginService,
           this,
           WrapperProperties.CLUSTER_TOPOLOGY_REFRESH_RATE_MS.get(this.properties),

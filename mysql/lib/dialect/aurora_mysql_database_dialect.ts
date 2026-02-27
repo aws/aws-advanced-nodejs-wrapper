@@ -45,7 +45,7 @@ export class AuroraMySQLDatabaseDialect extends MySQLDatabaseDialect implements 
     "SELECT server_id " +
     "FROM information_schema.replica_host_status " +
     "WHERE SESSION_ID = 'MASTER_SESSION_ID' AND SERVER_ID = @@aurora_server_id";
-  protected static readonly INSTANCE_ID_QUERY: string = "SELECT @@aurora_server_id as instance_id, @@aurora_server_id as as instance_name";
+  protected static readonly INSTANCE_ID_QUERY: string = "SELECT @@aurora_server_id as instance_id, @@aurora_server_id as instance_name";
   private static readonly AURORA_VERSION_QUERY = "SHOW VARIABLES LIKE 'aurora_version'";
 
   private static readonly BG_STATUS_QUERY: string = "SELECT * FROM mysql.rds_topology";
@@ -116,9 +116,9 @@ export class AuroraMySQLDatabaseDialect extends MySQLDatabaseDialect implements 
   async getInstanceId(targetClient: ClientWrapper): Promise<[string, string]> {
     const res = await targetClient.query(AuroraMySQLDatabaseDialect.INSTANCE_ID_QUERY);
     try {
-      const host: string = res[0][0]["instance_id"];
-      const writerId: string = res[0][0]["instance_name"];
-      return [host, writerId];
+      const instance_id: string = res[0][0]["instance_id"];
+      const instance_name: string = res[0][0]["instance_name"];
+      return [instance_id, instance_name];
     } catch (e: any) {
       if (e.message.includes("Cannot read properties of undefined")) {
         // Query returned no result, targetClient is not connected to a writer.

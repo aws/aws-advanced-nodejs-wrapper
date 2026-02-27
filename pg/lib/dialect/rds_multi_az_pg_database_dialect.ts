@@ -153,9 +153,9 @@ export class RdsMultiAZClusterPgDatabaseDialect extends PgDatabaseDialect implem
   async getInstanceId(targetClient: ClientWrapper): Promise<[string, string]> {
     try {
       const res = await targetClient.query(RdsMultiAZClusterPgDatabaseDialect.INSTANCE_ID_QUERY);
-      const id = res.rows[0]["instance_id"];
-      const server_id = res.rows[0]["instance_name"];
-      return [id, server_id];
+      const instance_id = res.rows[0]["instance_id"];
+      const instance_name = res.rows[0]["instance_name"];
+      return [instance_id, instance_name];
     } catch (error: any) {
       throw new AwsWrapperError(Messages.get("RdsMultiAZPgDatabaseDialect.invalidQuery", error.message));
     }
