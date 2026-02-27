@@ -14,7 +14,6 @@
   limitations under the License.
 */
 
-import { PluginServiceManagerContainer } from "./plugin_service_manager_container";
 import { ErrorHandler } from "./error_handler";
 import { HostInfo } from "./host_info";
 import { AwsClient } from "./aws_client";
@@ -45,6 +44,7 @@ import { TelemetryFactory } from "./utils/telemetry/telemetry_factory";
 import { DriverDialect } from "./driver_dialect/driver_dialect";
 import { AllowedAndBlockedHosts } from "./allowed_and_blocked_hosts";
 import { ConnectionPlugin } from "./connection_plugin";
+import { FullServicesContainer } from "./utils/full_services_container";
 
 export interface PluginService extends ErrorHandler {
   isInTransaction(): boolean;
@@ -72,6 +72,8 @@ export interface PluginService extends ErrorHandler {
   getProperties(): Map<string, any>;
 
   getDialect(): DatabaseDialect;
+
+  isDialectConfirmed(): boolean;
 
   getDriverDialect(): DriverDialect;
 
@@ -159,11 +161,12 @@ export class PluginServiceImpl implements PluginService, HostListProviderService
   private _hostListProvider?: HostListProvider;
   private _initialConnectionHostInfo?: HostInfo;
   private _isInTransaction: boolean = false;
-  private pluginServiceManagerContainer: PluginServiceManagerContainer;
+  private serviceContainer: FullServicesContainer;
   protected hosts: HostInfo[] = [];
   private dbDialectProvider: DatabaseDialectProvider;
   private readonly initialHost: string;
   private dialect: DatabaseDialect;
+  private _isDialectConfirmed: boolean = false;
   private readonly driverDialect: DriverDialect;
   protected readonly sessionStateService: SessionStateService;
   protected static readonly hostAvailabilityExpiringCache: CacheMap<string, HostAvailability> = new CacheMap<string, HostAvailability>();
@@ -173,7 +176,7 @@ export class PluginServiceImpl implements PluginService, HostListProviderService
   protected static readonly DEFAULT_STATUS_CACHE_EXPIRE_NANO: number = 3_600_000_000_000; // 60 minutes
 
   constructor(
-    container: PluginServiceManagerContainer,
+    container: FullServicesContainer,
     client: AwsClient,
     dbType: DatabaseType,
     knownDialectsByCode: Map<DatabaseDialectCodes, DatabaseDialect>,
@@ -181,12 +184,11 @@ export class PluginServiceImpl implements PluginService, HostListProviderService
     driverDialect: DriverDialect
   ) {
     this._currentClient = client;
-    this.pluginServiceManagerContainer = container;
+    this.serviceContainer = container;
     this.props = props;
     this.dbDialectProvider = new DatabaseDialectManager(knownDialectsByCode, dbType, this.props);
     this.driverDialect = driverDialect;
     this.initialHost = props.get(WrapperProperties.HOST.name);
-    container.pluginService = this;
 
     this.dialect = WrapperProperties.CUSTOM_DATABASE_DIALECT.get(this.props) ?? this.dbDialectProvider.getDialect(this.props);
     this.sessionStateService = new SessionStateServiceImpl(this, this.props);
@@ -217,7 +219,7 @@ export class PluginServiceImpl implements PluginService, HostListProviderService
   }
 
   getHostInfoByStrategy(role: HostRole, strategy: string, hosts?: HostInfo[]): HostInfo | undefined {
-    const pluginManager = this.pluginServiceManagerContainer.pluginManager;
+    const pluginManager = this.serviceContainer.getPluginManager();
     return pluginManager?.getHostInfoByStrategy(role, strategy, hosts);
   }
 
@@ -279,6 +281,10 @@ export class PluginServiceImpl implements PluginService, HostListProviderService
     return this.dialect;
   }
 
+  isDialectConfirmed(): boolean {
+    return this._isDialectConfirmed;
+  }
+
   getDriverDialect(): DriverDialect {
     return this.driverDialect;
   }
@@ -292,7 +298,7 @@ export class PluginServiceImpl implements PluginService, HostListProviderService
   }
 
   acceptsStrategy(role: HostRole, strategy: string): boolean {
-    return this.pluginServiceManagerContainer.pluginManager?.acceptsStrategy(role, strategy) ?? false;
+    return this.serviceContainer.getPluginManager()?.acceptsStrategy(role, strategy) ?? false;
   }
 
   async forceRefreshHostList(): Promise<void>;
@@ -415,7 +421,7 @@ export class PluginServiceImpl implements PluginService, HostListProviderService
 
     if (changes.size > 0) {
       this.hosts = newHosts ? newHosts : [];
-      await this.pluginServiceManagerContainer.pluginManager!.notifyHostListChanged(changes);
+      await this.serviceContainer.getPluginManager()!.notifyHostListChanged(changes);
     }
   }
 
@@ -519,13 +525,13 @@ export class PluginServiceImpl implements PluginService, HostListProviderService
   connect(hostInfo: HostInfo, props: Map<string, any>): Promise<ClientWrapper>;
   connect(hostInfo: HostInfo, props: Map<string, any>, pluginToSkip: ConnectionPlugin): Promise<ClientWrapper>;
   connect(hostInfo: HostInfo, props: Map<string, any>, pluginToSkip?: ConnectionPlugin): Promise<ClientWrapper> {
-    return this.pluginServiceManagerContainer.pluginManager!.connect(hostInfo, props, false, pluginToSkip);
+    return this.serviceContainer.getPluginManager()!.connect(hostInfo, props, false, pluginToSkip);
   }
 
   forceConnect(hostInfo: HostInfo, props: Map<string, any>): Promise<ClientWrapper>;
   forceConnect(hostInfo: HostInfo, props: Map<string, any>, pluginToSkip: ConnectionPlugin): Promise<ClientWrapper>;
   forceConnect(hostInfo: HostInfo, props: Map<string, any>, pluginToSkip?: ConnectionPlugin): Promise<ClientWrapper> {
-    return this.pluginServiceManagerContainer.pluginManager!.forceConnect(hostInfo, props, false, pluginToSkip);
+    return this.serviceContainer.getPluginManager()!.forceConnect(hostInfo, props, false, pluginToSkip);
   }
 
   async setCurrentClient(newClient: ClientWrapper, hostInfo: HostInfo): Promise<Set<HostChangeOptions>> {
@@ -535,8 +541,8 @@ export class PluginServiceImpl implements PluginService, HostListProviderService
       this.sessionStateService.reset();
       const changes = new Set<HostChangeOptions>([HostChangeOptions.INITIAL_CONNECTION]);
 
-      if (this.pluginServiceManagerContainer.pluginManager) {
-        await this.pluginServiceManagerContainer.pluginManager.notifyConnectionChanged(changes, null);
+      if (this.serviceContainer.getPluginManager()) {
+        await this.serviceContainer.getPluginManager().notifyConnectionChanged(changes, null);
       }
 
       return changes;
@@ -563,8 +569,9 @@ export class PluginServiceImpl implements PluginService, HostListProviderService
               }
             }
 
-            const pluginOpinions: Set<OldConnectionSuggestionAction> =
-              await this.pluginServiceManagerContainer.pluginManager!.notifyConnectionChanged(changes, null);
+            const pluginOpinions: Set<OldConnectionSuggestionAction> = await this.serviceContainer
+              .getPluginManager()!
+              .notifyConnectionChanged(changes, null);
 
             const shouldCloseConnection =
               changes.has(HostChangeOptions.CONNECTION_OBJECT_CHANGED) &&
@@ -638,6 +645,7 @@ export class PluginServiceImpl implements PluginService, HostListProviderService
     const originalDialect = this.dialect;
     this.dialect = await this.dbDialectProvider.getDialectForUpdate(targetClient, this.initialHost, this.props.get(WrapperProperties.HOST.name));
 
+    this._isDialectConfirmed = true;
     if (originalDialect === this.dialect) {
       return;
     }
@@ -685,7 +693,7 @@ export class PluginServiceImpl implements PluginService, HostListProviderService
   }
 
   getTelemetryFactory(): TelemetryFactory {
-    return this.pluginServiceManagerContainer.pluginManager!.getTelemetryFactory();
+    return this.serviceContainer.getPluginManager()!.getTelemetryFactory();
   }
 
   /* Error Handler interface implementation */
@@ -780,6 +788,6 @@ export class PluginServiceImpl implements PluginService, HostListProviderService
   }
 
   isPluginInUse(plugin: any) {
-    return this.pluginServiceManagerContainer.pluginManager!.isPluginInUse(plugin);
+    return this.serviceContainer.getPluginManager()!.isPluginInUse(plugin);
   }
 }
