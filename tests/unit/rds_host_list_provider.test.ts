@@ -14,7 +14,6 @@
   limitations under the License.
 */
 
-import { RdsHostListProvider } from "../../common/lib/host_list_provider/rds_host_list_provider";
 import { anything, instance, mock, reset, spy, verify, when } from "ts-mockito";
 import { PluginServiceImpl } from "../../common/lib/plugin_service";
 import { AwsClient } from "../../common/lib/aws_client";
@@ -30,6 +29,7 @@ import { PgClientWrapper } from "../../common/lib/pg_client_wrapper";
 import { CoreServicesContainer } from "../../common/lib/utils/core_services_container";
 import { StorageService } from "../../common/lib/utils/storage/storage_service";
 import { Topology } from "../../common/lib/host_list_provider/topology";
+import { RdsHostListProvider } from "../../common/lib/host_list_provider/rds_host_list_provider";
 
 const mockClient: AwsClient = mock(AwsPGClient);
 const mockDialect: AuroraPgDatabaseDialect = mock(AuroraPgDatabaseDialect);
@@ -58,8 +58,6 @@ const clientWrapper: ClientWrapper = new PgClientWrapper(undefined, currentHostI
 const mockClientWrapper: ClientWrapper = mock(clientWrapper);
 
 const storageService: StorageService = CoreServicesContainer.getInstance().getStorageService();
-
-const defaultRefreshRateNano: number = 5 * 1_000_000_000;
 
 function createHost(config: any): HostInfo {
   const info = new HostInfoBuilder(config);

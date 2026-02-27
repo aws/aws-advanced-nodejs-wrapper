@@ -16,7 +16,6 @@
 
 import { add, complete, configure, cycle, save, suite } from "benny";
 import { ConnectionPlugin, ConnectionProvider, HostInfoBuilder, PluginManager } from "../common/lib";
-import { PluginServiceManagerContainer } from "../common/lib/plugin_service_manager_container";
 import { instance, mock, when } from "ts-mockito";
 import { SimpleHostAvailabilityStrategy } from "../common/lib/host_availability/simple_host_availability_strategy";
 import { PluginServiceImpl } from "../common/lib/plugin_service";
@@ -32,6 +31,7 @@ import { ConnectionPluginFactory } from "../common/lib/plugin_factory";
 import { DefaultPlugin } from "../common/lib/plugins/default_plugin";
 import { AwsPGClient } from "../pg/lib";
 import { ConfigurationProfileBuilder } from "../common/lib/profile/configuration_profile_builder";
+import { FullServicesContainerImpl } from "../common/lib/utils/full_services_container";
 
 const mockConnectionProvider = mock<ConnectionProvider>();
 const mockHostListProviderService = mock<HostListProviderService>();
@@ -43,8 +43,8 @@ when(mockPluginService.getDialect()).thenReturn(new PgDatabaseDialect());
 when(mockPluginService.getDriverDialect()).thenReturn(new NodePostgresDriverDialect());
 when(mockPluginService.getCurrentClient()).thenReturn(mockClient);
 
-const pluginServiceManagerContainer = new PluginServiceManagerContainer();
-pluginServiceManagerContainer.pluginService = instance(mockPluginService);
+const servicesContainer = mock(FullServicesContainerImpl);
+when(servicesContainer.getPluginService()).thenReturn(instance(mockPluginService));
 
 const propsWithNoPlugins = new Map<string, any>();
 const propsWithPlugins = new Map<string, any>();
@@ -53,7 +53,7 @@ WrapperProperties.PLUGINS.set(propsWithNoPlugins, "");
 
 function getPluginManagerWithPlugins() {
   return new PluginManager(
-    pluginServiceManagerContainer,
+    servicesContainer,
     propsWithPlugins,
     new ConnectionProviderManager(instance(mockConnectionProvider), null),
     new NullTelemetryFactory()
@@ -62,7 +62,7 @@ function getPluginManagerWithPlugins() {
 
 function getPluginManagerWithNoPlugins() {
   return new PluginManager(
-    pluginServiceManagerContainer,
+    servicesContainer,
     propsWithNoPlugins,
     new ConnectionProviderManager(instance(mockConnectionProvider), null),
     new NullTelemetryFactory()

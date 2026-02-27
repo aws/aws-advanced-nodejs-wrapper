@@ -186,6 +186,21 @@ const MESSAGES: Record<string, string> = {
   "MonitorImpl.stopMonitoringTaskNewContext": "Stop monitoring task for checking new contexts for '%s'",
   "MonitorService.startMonitoringNullMonitor": "Start monitoring called but could not find monitor for host: '%s'.",
   "MonitorService.emptyAliasSet": "Empty alias set passed for '%s'. Set should not be empty.",
+  "MonitorServiceImpl.checkingMonitors": "Checking monitors for errors...",
+  "MonitorServiceImpl.monitorClassMismatch":
+    "The monitor stored at '%s' did not have the expected type. The expected type was '%s', but the monitor '%s' had a type of '%s'.",
+  "MonitorServiceImpl.monitorStuck": "Monitor '%s' has not been updated within the inactive timeout of %s milliseconds. The monitor will be stopped.",
+  "MonitorServiceImpl.monitorTypeNotRegistered":
+    "The given monitor class '%s' is not registered. Please register the monitor class before running monitors of that class with the monitor service.",
+  "MonitorServiceImpl.recreatingMonitor": "Recreating monitor: '%s'.",
+  "MonitorServiceImpl.removedErrorMonitor": "Removed monitor in error state: '%s'.",
+  "MonitorServiceImpl.removedExpiredMonitor": "Removed expired monitor: '%s'.",
+  "MonitorServiceImpl.stopAndRemoveMissingMonitorType":
+    "The monitor service received a request to stop a monitor with type '%s' and key '%s', but the monitor service does not have any monitors registered under the given type. Please ensure monitors are registered under the correct type.",
+  "MonitorServiceImpl.stopAndRemoveMonitorsMissingType":
+    "The monitor service received a request to stop all monitors with type '%s', but the monitor service does not have any monitors registered under the given type. Please ensure monitors are registered under the correct type.",
+  "MonitorServiceImpl.unexpectedMonitorClass":
+    "Monitor type mismatch - the monitor '%s' was unexpectedly found under the '%s' monitor class category. Please verify that monitors are submitted under their concrete class.",
   "PluginService.hostListEmpty": "Current host list is empty.",
   "PluginService.releaseResources": "Releasing resources.",
   "PluginService.hostsChangeListEmpty": "There are no changes in the hosts' availability.",

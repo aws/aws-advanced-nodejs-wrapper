@@ -19,7 +19,6 @@ import { HostInfo } from "./host_info";
 import { ConnectionPluginChainBuilder } from "./connection_plugin_chain_builder";
 import { AwsWrapperError } from "./utils/errors";
 import { Messages } from "./utils/messages";
-import { PluginServiceManagerContainer } from "./plugin_service_manager_container";
 import { HostListProviderService } from "./host_list_provider_service";
 import { HostChangeOptions } from "./host_change_options";
 import { OldConnectionSuggestionAction } from "./old_connection_suggestion_action";
@@ -32,6 +31,7 @@ import { TelemetryTraceLevel } from "./utils/telemetry/telemetry_trace_level";
 import { ConnectionProvider } from "./connection_provider";
 import { ConnectionPluginFactory } from "./plugin_factory";
 import { ConfigurationProfile } from "./profile/configuration_profile";
+import { FullServicesContainer } from "./utils/full_services_container";
 
 type PluginFunc<T> = (plugin: ConnectionPlugin, targetFunc: () => Promise<T>) => Promise<T>;
 
@@ -79,17 +79,16 @@ export class PluginManager {
   private readonly props: Map<string, any>;
   private _plugins: ConnectionPlugin[] = [];
   private readonly connectionProviderManager: ConnectionProviderManager;
-  private pluginServiceManagerContainer: PluginServiceManagerContainer;
+  private fullServiceContainer: FullServicesContainer;
   protected telemetryFactory: TelemetryFactory;
 
   constructor(
-    pluginServiceManagerContainer: PluginServiceManagerContainer,
+    fullServicesContainer: FullServicesContainer,
     props: Map<string, any>,
     connectionProviderManager: ConnectionProviderManager,
     telemetryFactory: TelemetryFactory
   ) {
-    this.pluginServiceManagerContainer = pluginServiceManagerContainer;
-    this.pluginServiceManagerContainer.pluginManager = this;
+    this.fullServiceContainer = fullServicesContainer;
     this.connectionProviderManager = connectionProviderManager;
     this.props = props;
     this.telemetryFactory = telemetryFactory;
@@ -98,17 +97,15 @@ export class PluginManager {
   async init(configurationProfile?: ConfigurationProfile | null): Promise<void>;
   async init(configurationProfile: ConfigurationProfile | null, plugins: ConnectionPlugin[]): Promise<void>;
   async init(configurationProfile: ConfigurationProfile | null, plugins?: ConnectionPlugin[]) {
-    if (this.pluginServiceManagerContainer.pluginService != null) {
-      if (plugins) {
-        this._plugins = plugins;
-      } else {
-        this._plugins = await ConnectionPluginChainBuilder.getPlugins(
-          this.pluginServiceManagerContainer.pluginService,
-          this.props,
-          this.connectionProviderManager,
-          configurationProfile
-        );
-      }
+    if (plugins) {
+      this._plugins = plugins;
+    } else {
+      this._plugins = await ConnectionPluginChainBuilder.getPlugins(
+        this.fullServiceContainer.getPluginService(),
+        this.props,
+        this.connectionProviderManager,
+        configurationProfile
+      );
     }
     for (const plugin of this._plugins) {
       PluginManager.PLUGINS.add(plugin);
@@ -128,8 +125,8 @@ export class PluginManager {
     }
 
     const telemetryContext = this.telemetryFactory.openTelemetryContext(methodName, TelemetryTraceLevel.NESTED);
-    const currentClient: ClientWrapper = this.pluginServiceManagerContainer.pluginService.getCurrentClient().targetClient;
-    this.pluginServiceManagerContainer.pluginService.attachNoOpErrorListener(currentClient);
+    const currentClient: ClientWrapper = this.fullServiceContainer.getPluginService().getCurrentClient().targetClient;
+    this.fullServiceContainer.getPluginService().attachNoOpErrorListener(currentClient);
     try {
       return await telemetryContext.start(() => {
         return this.executeWithSubscribedPlugins(
@@ -142,7 +139,7 @@ export class PluginManager {
         );
       });
     } finally {
-      this.pluginServiceManagerContainer.pluginService.attachErrorListener(currentClient);
+      this.fullServiceContainer.getPluginService().attachErrorListener(currentClient);
     }
   }
 

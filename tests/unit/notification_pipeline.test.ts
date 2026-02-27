@@ -16,7 +16,6 @@
 
 import { HostChangeOptions } from "../../common/lib/host_change_options";
 import { OldConnectionSuggestionAction } from "../../common/lib/old_connection_suggestion_action";
-import { PluginServiceManagerContainer } from "../../common/lib/plugin_service_manager_container";
 import { DefaultPlugin } from "../../common/lib/plugins/default_plugin";
 import { instance, mock } from "ts-mockito";
 import { PluginServiceImpl } from "../../common/lib/plugin_service";
@@ -24,6 +23,7 @@ import { DriverConnectionProvider } from "../../common/lib/driver_connection_pro
 import { ConnectionProviderManager } from "../../common/lib/connection_provider_manager";
 import { NullTelemetryFactory } from "../../common/lib/utils/telemetry/null_telemetry_factory";
 import { PluginManager } from "../../common/lib";
+import { FullServicesContainer, FullServicesContainerImpl } from "../../common/lib/utils/full_services_container";
 
 class TestPlugin extends DefaultPlugin {
   counter: number = 0;
@@ -43,7 +43,7 @@ class TestPlugin extends DefaultPlugin {
   }
 }
 
-const container: PluginServiceManagerContainer = new PluginServiceManagerContainer();
+const container: FullServicesContainer = mock(FullServicesContainerImpl);
 const props: Map<string, any> = mock(Map<string, any>);
 const hostListChanges: Map<string, Set<HostChangeOptions>> = mock(Map<string, Set<HostChangeOptions>>);
 const connectionChanges: Set<HostChangeOptions> = mock(Set<HostChangeOptions>);

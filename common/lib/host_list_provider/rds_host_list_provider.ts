@@ -26,14 +26,12 @@ import { Messages } from "../utils/messages";
 import { WrapperProperties } from "../wrapper_property";
 import { logger } from "../../logutils";
 import { HostAvailability } from "../host_availability/host_availability";
-import { CacheMap } from "../utils/cache_map";
 import { isDialectTopologyAware, logTopology } from "../utils/utils";
 import { DatabaseDialect } from "../database_dialect/database_dialect";
 import { ClientWrapper } from "../client_wrapper";
 import { CoreServicesContainer } from "../utils/core_services_container";
 import { StorageService } from "../utils/storage/storage_service";
 import { Topology } from "./topology";
-import { ExpirationCache } from "../utils/storage/expiration_cache";
 
 export class RdsHostListProvider implements DynamicHostListProvider {
   private readonly originalUrl: string;
