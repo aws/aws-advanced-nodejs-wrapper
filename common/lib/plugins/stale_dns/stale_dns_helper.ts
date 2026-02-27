@@ -83,9 +83,9 @@ export class StaleDnsHelper {
       // This is if-statement is only reached if the connection url is a writer cluster endpoint.
       // If the new connection resolves to a reader instance, this means the topology is outdated.
       // Force refresh to update the topology.
-      await this.pluginService.forceRefreshHostList(currentTargetClient);
+      await this.pluginService.forceRefreshHostList();
     } else {
-      await this.pluginService.refreshHostList(currentTargetClient);
+      await this.pluginService.refreshHostList();
     }
 
     logger.debug(logTopology(this.pluginService.getAllHosts(), "[StaleDnsHelper.getVerifiedConnection] "));

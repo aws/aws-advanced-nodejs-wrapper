@@ -28,6 +28,7 @@ import { WrapperProperties } from "../../../common/lib/wrapper_property";
 import { PluginService } from "../../../common/lib/plugin_service";
 import { MonitoringRdsHostListProvider } from "../../../common/lib/host_list_provider/monitoring/monitoring_host_list_provider";
 import { TopologyQueryResult, TopologyUtils } from "../../../common/lib/host_list_provider/topology_utils";
+import { FullServicesContainer } from "../../../common/lib/utils/full_services_container";
 
 export class RdsMultiAZClusterPgDatabaseDialect extends PgDatabaseDialect implements TopologyAwareDatabaseDialect {
   constructor() {
@@ -64,9 +65,9 @@ export class RdsMultiAZClusterPgDatabaseDialect extends PgDatabaseDialect implem
     }
   }
 
-  getHostListProvider(props: Map<string, any>, originalUrl: string, hostListProviderService: HostListProviderService): HostListProvider {
-    const topologyUtils: TopologyUtils = new TopologyUtils(this, hostListProviderService.getHostInfoBuilder());
-    return new RdsHostListProvider(props, originalUrl, topologyUtils, hostListProviderService);
+  getHostListProvider(props: Map<string, any>, originalUrl: string, servicesContainer: FullServicesContainer): HostListProvider {
+    const topologyUtils: TopologyUtils = new TopologyUtils(this, servicesContainer.getHostListProviderService().getHostInfoBuilder());
+    return new RdsHostListProvider(props, originalUrl, topologyUtils, servicesContainer);
   }
 
   async queryForTopology(targetClient: ClientWrapper): Promise<TopologyQueryResult[]> {

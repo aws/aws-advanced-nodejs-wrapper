@@ -14,7 +14,7 @@
   limitations under the License.
 */
 
-import { BlockingHostListProvider, HostListProvider } from "./host_list_provider/host_list_provider";
+import { HostListProvider } from "./host_list_provider/host_list_provider";
 import { HostInfo } from "./host_info";
 import { AwsClient } from "./aws_client";
 import { DatabaseDialect } from "./database_dialect/database_dialect";
@@ -53,6 +53,4 @@ export interface HostListProviderService {
   getTelemetryFactory(): TelemetryFactory;
 
   setAllowedAndBlockedHosts(allowedAndBlockedHosts: AllowedAndBlockedHosts): void;
-
-  isBlockingHostListProvider(arg: any): arg is BlockingHostListProvider;
 }

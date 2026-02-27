@@ -188,7 +188,7 @@ export class Failover2Plugin extends AbstractConnectionPlugin implements CanRele
     }
 
     if (isInitialConnection) {
-      await this.pluginService.refreshHostList(client);
+      await this.pluginService.refreshHostList();
     }
 
     return client;

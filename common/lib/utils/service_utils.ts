@@ -29,6 +29,8 @@ import { DriverDialect } from "../driver_dialect/driver_dialect";
 import { MonitorService } from "./monitoring/monitor_service";
 import { TelemetryFactory } from "./telemetry/telemetry_factory";
 import { EventPublisher } from "./events/event";
+import { PartialPluginService } from "../partial_plugin_service";
+import { ConnectionUrlParser } from "./connection_url_parser";
 
 export class ServiceUtils {
   private static readonly _instance: ServiceUtils = new ServiceUtils();
@@ -72,18 +74,17 @@ export class ServiceUtils {
     return servicesContainer;
   }
 
-  async createMinimalServiceContainer(
+  createMinimalServiceContainer(
     storageService: StorageService,
     monitorService: MonitorService,
     eventPublisher: EventPublisher,
-    client: AwsClient,
     props: Map<string, unknown>,
-    dbType: DatabaseType,
-    knownDialectsByCode: Map<DatabaseDialectCodes, DatabaseDialect>,
+    dialect: DatabaseDialect,
     driverDialect: DriverDialect,
     telemetryFactory: TelemetryFactory,
-    connectionProvider: ConnectionProvider | null
-  ): Promise<FullServicesContainer> {
+    connectionProvider: ConnectionProvider | null,
+    connectionUrlParser: ConnectionUrlParser
+  ): FullServicesContainer {
     const servicesContainer: FullServicesContainer = new FullServicesContainerImpl(
       storageService,
       monitorService,
@@ -92,7 +93,7 @@ export class ServiceUtils {
       telemetryFactory
     );
 
-    const pluginService = new PluginServiceImpl(servicesContainer, client, dbType, knownDialectsByCode, props, driverDialect);
+    const pluginService = new PartialPluginService(servicesContainer, props, dialect, driverDialect, connectionUrlParser);
     const pluginManager = new PluginManager(
       servicesContainer,
       props,
@@ -104,7 +105,20 @@ export class ServiceUtils {
     servicesContainer.setPluginManager(pluginManager);
     servicesContainer.setHostListProviderService(pluginService);
 
-    await pluginManager.init();
     return servicesContainer;
+  }
+
+  createMinimalServiceContainerFrom(servicesContainer: FullServicesContainer, props: Map<string, unknown>): FullServicesContainer {
+    return this.createMinimalServiceContainer(
+      servicesContainer.getStorageService(),
+      servicesContainer.getMonitorService(),
+      servicesContainer.getEventPublisher(),
+      props,
+      servicesContainer.getPluginService().getDialect(),
+      servicesContainer.getPluginService().getDriverDialect(),
+      servicesContainer.getTelemetryFactory(),
+      servicesContainer.getDefaultConnectionProvider(),
+      servicesContainer.getPluginService().getConnectionUrlParser()
+    );
   }
 }

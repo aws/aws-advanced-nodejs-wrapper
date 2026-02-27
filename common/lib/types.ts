@@ -31,8 +31,3 @@ export type ShouldDisposeFunc<V> = (item: V) => boolean;
  * @param item The item to dispose
  */
 export type ItemDisposalFunc<V> = (item: V) => void;
-
-/**
- * Type representing an event class constructor.
- */
-export type EventClass<T extends import("./utils/events/event").Event = import("./utils/events/event").Event> = new (...args: any[]) => T;

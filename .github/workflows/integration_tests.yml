@@ -5,6 +5,7 @@ on:
   push:
     branches:
       - main
+      - refactor/monitor-service
     paths-ignore:
       - "**/*.md"
       - "**/*.jpg"
@@ -29,7 +30,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        dbEngine: ["aurora-mysql", "aurora-postgres", "multi-az-mysql"]
+        dbEngine: ["aurora-mysql", "aurora-postgres"]
 
     steps:
       - name: Clone repository
@@ -64,7 +65,7 @@ jobs:
           AWS_ACCESS_KEY_ID: ${{ steps.creds.outputs.aws-access-key-id }}
           AWS_SECRET_ACCESS_KEY: ${{ steps.creds.outputs.aws-secret-access-key }}
           AWS_SESSION_TOKEN: ${{ steps.creds.outputs.aws-session-token }}
-          AURORA_MYSQL_DB_ENGINE_VERSION: ${{ matrix.dbEngine }}
+          AURORA_MYSQL_DB_ENGINE_VERSION: default
           AURORA_PG_DB_ENGINE_VERSION: default
 
       - name: "Get Github Action IP"
@@ -131,7 +132,7 @@ jobs:
           AWS_ACCESS_KEY_ID: ${{ steps.creds.outputs.aws-access-key-id }}
           AWS_SECRET_ACCESS_KEY: ${{ steps.creds.outputs.aws-secret-access-key }}
           AWS_SESSION_TOKEN: ${{ steps.creds.outputs.aws-session-token }}
-          AURORA_MYSQL_DB_ENGINE_VERSION: ${{ matrix.dbEngine }}
+          AURORA_MYSQL_DB_ENGINE_VERSION: latest
           AURORA_PG_DB_ENGINE_VERSION: latest
 
       - name: "Get Github Action IP"

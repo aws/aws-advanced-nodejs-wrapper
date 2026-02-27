@@ -80,7 +80,7 @@ export class GlobalAuroraPgDatabaseDialect extends AuroraPgDatabaseDialect imple
   // TODO: implement GetHostListProvider once GDBHostListProvider is implemented
 
   async queryForTopology(targetClient: ClientWrapper): Promise<TopologyQueryResult[]> {
-    const res = await targetClient.query(GlobalAuroraPgDatabaseDialect.GLOBAL_TOPOLOGY_QUERY);
+    const res = await targetClient.queryWithTimeout(GlobalAuroraPgDatabaseDialect.GLOBAL_TOPOLOGY_QUERY);
     const hosts: TopologyQueryResult[] = [];
     const rows: any[] = res.rows;
     rows.forEach((row) => {

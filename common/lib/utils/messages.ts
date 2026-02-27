@@ -190,21 +190,19 @@ const MESSAGES: Record<string, string> = {
   "MonitorImpl.stopMonitoringTaskNewContext": "Stop monitoring task for checking new contexts for '%s'",
   "MonitorService.startMonitoringNullMonitor": "Start monitoring called but could not find monitor for host: '%s'.",
   "MonitorService.emptyAliasSet": "Empty alias set passed for '%s'. Set should not be empty.",
-  "MonitorServiceImpl.checkingMonitors": "Checking monitors for errors...",
-  "MonitorServiceImpl.monitorClassMismatch":
+  "MonitorService.monitorClassMismatch":
     "The monitor stored at '%s' did not have the expected type. The expected type was '%s', but the monitor '%s' had a type of '%s'.",
-  "MonitorServiceImpl.monitorStuck": "Monitor '%s' has not been updated within the inactive timeout of %s milliseconds. The monitor will be stopped.",
-  "MonitorServiceImpl.monitorTypeNotRegistered":
+  "MonitorService.monitorStuck": "Monitor '%s' has not been updated within the inactive timeout of %s milliseconds. The monitor will be stopped.",
+  "MonitorService.monitorTypeNotRegistered":
     "The given monitor class '%s' is not registered. Please register the monitor class before running monitors of that class with the monitor service.",
-  "MonitorServiceImpl.recreatingMonitor": "Recreating monitor: '%s'.",
-  "MonitorServiceImpl.removedErrorMonitor": "Removed monitor in error state: '%s'.",
-  "MonitorServiceImpl.removedExpiredMonitor": "Removed expired monitor: '%s'.",
-  "MonitorServiceImpl.stopAndRemoveMissingMonitorType":
+  "MonitorService.recreatingMonitor": "Recreating monitor: '%s'.",
+  "MonitorService.removedErrorMonitor": "Removed monitor in error state: '%s'.",
+  "MonitorService.removedExpiredMonitor": "Removed expired monitor: '%s'.",
+  "MonitorService.stopAndRemoveMissingMonitorType":
     "The monitor service received a request to stop a monitor with type '%s' and key '%s', but the monitor service does not have any monitors registered under the given type. Please ensure monitors are registered under the correct type.",
-  "MonitorServiceImpl.stopAndRemoveMonitorsMissingType":
+  "MonitorService.stopAndRemoveMonitorsMissingType":
     "The monitor service received a request to stop all monitors with type '%s', but the monitor service does not have any monitors registered under the given type. Please ensure monitors are registered under the correct type.",
-  "MonitorServiceImpl.unexpectedMonitorClass":
-    "Monitor type mismatch - the monitor '%s' was unexpectedly found under the '%s' monitor class category. Please verify that monitors are submitted under their concrete class.",
+  "MonitorService.cleanupTaskInterrupted": "Monitor service cleanup task interrupted.",
   "PluginService.hostListEmpty": "Current host list is empty.",
   "PluginService.releaseResources": "Releasing resources.",
   "PluginService.hostsChangeListEmpty": "There are no changes in the hosts' availability.",
@@ -215,9 +213,7 @@ const MESSAGES: Record<string, string> = {
     "The detected host list provider is not a BlockingHostListProvider. A BlockingHostListProvider is required to force refresh the host list. Detected host list provider: '%s'.",
   "PluginService.currentHostNotAllowed": "The current host is not in the list of allowed hosts. Current host: '%s'. Allowed hosts: '%s'.",
   "PluginService.currentHostNotDefined": "The current host is undefined.",
-  "MonitoringHostListProvider.requiresMonitor":
-    "The MonitoringRdsHostListProvider could not retrieve or initialize a ClusterTopologyMonitor for refreshing the topology.",
-  "MonitoringHostListProvider.errorForceRefresh": "The MonitoringRdsHostListProvider could not refresh the topology, caught error: '%s'",
+  "PartialPluginService.unexpectedMethodCall": "Unexpected method call: '%s'. This method is not supported by PartialPluginService.",
   "HostMonitoringConnectionPlugin.activatedMonitoring": "Executing method '%s', monitoring is activated.",
   "HostMonitoringConnectionPlugin.unableToIdentifyConnection":
     "Unable to identify the given connection: '%s', please ensure the correct host list provider is specified. The host list provider in use is: '%s'.",
@@ -310,11 +306,17 @@ const MESSAGES: Record<string, string> = {
     "An error occurred while attempting to obtain the writer id because the query was invalid. Please ensure you are connecting to an Aurora or RDS DB cluster. Error: '%s'",
   "ClusterTopologyMonitor.unableToConnect": "Could not connect to initial host: '%s'.",
   "ClusterTopologyMonitor.openedMonitoringConnection": "Opened monitoring connection to: '%s'.",
-  "ClusterTopologyMonitor.startMonitoring": "Start cluster monitoring task.",
+  "ClusterTopologyMonitor.startMonitoring": "[clusterId: '%s'] Start cluster topology monitoring for '%s'.",
+  "ClusterTopologyMonitor.startingHostMonitoringTasks": "Starting host monitoring tasks.",
+  "ClusterTopologyMonitor.stopHostMonitoringTask": "Stop cluster topology monitoring task for '%s'.",
   "ClusterTopologyMonitor.errorDuringMonitoring": "Error thrown during cluster topology monitoring: '%s'.",
   "ClusterTopologyMonitor.endMonitoring": "Stop cluster topology monitoring.",
+  "ClusterTopologyMonitor.matchingReaderTopologies":
+    "Reader topologies have been consistent for '%s' ms. Updating topology cache.",
+  "ClusterTopologyMonitor.reset": "[clusterId: '%s'] Resetting cluster topology monitor for '%s'.",
+  "ClusterTopologyMonitor.resetEventReceived": "MonitorResetEvent received.",
   "HostMonitor.startMonitoring": "Host monitor '%s' started.",
-  "HostMonitor.detectedWriter": "Detected writer: '%s' - '%s'.",
+  "HostMonitor.detectedWriter": "Detected writer: '%s'.",
   "HostMonitor.endMonitoring": "Host monitor '%s' completed in '%s'.",
   "HostMonitor.writerHostChanged": "Writer host has changed from '%s' to '%s'.",
   "HostMonitor.writerIsStale": "Connected writer instance '%s' is stale.",
@@ -399,7 +401,12 @@ const MESSAGES: Record<string, string> = {
   "TopologyUtils.instanceIdRequired": "InstanceId must not be en empty string.",
   "TopologyUtils.errorGettingHostRole": "An error occurred while trying to get the host role.",
   "GlobalTopologyUtils.missingRegion": "Host '%s' is missing region information in the topology query result.",
-  "GlobalTopologyUtils.missingTemplateForRegion": "No cluster instance template found for region '%s' when processing host '%s'."
+  "GlobalTopologyUtils.missingTemplateForRegion": "No cluster instance template found for region '%s' when processing host '%s'.",
+  "GlobalTopologyUtils.globalClusterInstanceHostPatternsRequired":
+    "The 'globalClusterInstanceHostPatterns' property is required for Global Aurora Databases.",
+  "GlobalTopologyUtils.invalidPatternFormat":
+    "Invalid pattern format '%s'. Expected format: 'region:host-pattern' (e.g., 'us-east-1:?.cluster-xyz.us-east-1.rds.amazonaws.com').",
+  "GlobalAuroraTopologyMonitor.cannotFindRegionTemplate": "Cannot find cluster instance template for region '%s'."
 };
 
 export class Messages {

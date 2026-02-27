@@ -23,20 +23,12 @@ export type DynamicHostListProvider = HostListProvider;
 
 export type StaticHostListProvider = HostListProvider;
 
-export interface BlockingHostListProvider extends HostListProvider {
-  forceMonitoringRefresh(shouldVerifyWriter: boolean, timeoutMs: number): Promise<HostInfo[]>;
-
-  clearAll(): Promise<void>;
-}
-
 export interface HostListProvider {
   refresh(): Promise<HostInfo[]>;
 
-  refresh(client: ClientWrapper): Promise<HostInfo[]>;
-
   forceRefresh(): Promise<HostInfo[]>;
 
-  forceRefresh(client: ClientWrapper): Promise<HostInfo[]>;
+  forceMonitoringRefresh(shouldVerifyWriter: boolean, timeoutMs: number): Promise<HostInfo[]>;
 
   getHostRole(client: ClientWrapper, dialect: DatabaseDialect): Promise<HostRole>;
 

@@ -65,17 +65,12 @@ export class ConnectionStringHostListProvider implements StaticHostListProvider 
     this.isInitialized = true;
   }
 
-  refresh(): Promise<HostInfo[]>;
-  refresh(client: ClientWrapper): Promise<HostInfo[]>;
-  refresh(client?: ClientWrapper): Promise<HostInfo[]>;
-  refresh(client?: ClientWrapper | undefined): Promise<HostInfo[]> {
+  refresh(): Promise<HostInfo[]> {
     this.init();
     return Promise.resolve(this.hostList);
   }
 
-  forceRefresh(): Promise<HostInfo[]>;
-  forceRefresh(client: ClientWrapper): Promise<HostInfo[]>;
-  forceRefresh(client?: ClientWrapper): Promise<HostInfo[]> {
+  forceRefresh(): Promise<HostInfo[]> {
     this.init();
     return Promise.resolve(this.hostList);
   }
@@ -89,7 +84,7 @@ export class ConnectionStringHostListProvider implements StaticHostListProvider 
       return null;
     }
     const instance = await this.hostListProviderService.getDialect().getHostAliasAndParseResults(client.client);
-    const topology = await this.refresh(client.client);
+    const topology = await this.refresh();
     if (!topology || topology.length == 0) {
       return null;
     }

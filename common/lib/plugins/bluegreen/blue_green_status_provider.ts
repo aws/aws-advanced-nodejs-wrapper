@@ -41,6 +41,8 @@ import { SuspendExecuteRouting } from "./routing/suspend_execute_routing";
 import { SuspendUntilCorrespondingHostFoundConnectRouting } from "./routing/suspend_until_corresponding_host_found_connect_routing";
 import { RejectConnectRouting } from "./routing/reject_connect_routing";
 import { getValueHash } from "./blue_green_utils";
+import { FullServicesContainer } from "../../utils/full_services_container";
+import { StorageService } from "../../utils/storage/storage_service";
 
 export class BlueGreenStatusProvider {
   static readonly MONITORING_PROPERTY_PREFIX = "blue_green_monitoring_";
@@ -76,14 +78,18 @@ export class BlueGreenStatusProvider {
   protected readonly switchoverTimeoutNanos: bigint;
   protected readonly suspendNewBlueConnectionsWhenInProgress: boolean;
 
+  protected readonly servicesContainer: FullServicesContainer;
+  protected readonly storageService: StorageService;
   protected readonly pluginService: PluginService;
   protected readonly properties: Map<string, any>;
   protected readonly bgdId: string;
   protected phaseTimeNanos: Map<string, PhaseTimeInfo> = new Map();
   protected readonly rdsUtils: RdsUtils = new RdsUtils();
 
-  constructor(pluginService: PluginService, properties: Map<string, any>, bgdId: string) {
-    this.pluginService = pluginService;
+  constructor(servicesContainer: FullServicesContainer, properties: Map<string, any>, bgdId: string) {
+    this.servicesContainer = servicesContainer;
+    this.pluginService = this.servicesContainer.getPluginService();
+    this.storageService = this.servicesContainer.getStorageService();
     this.properties = properties;
     this.bgdId = bgdId;
 
@@ -107,7 +113,7 @@ export class BlueGreenStatusProvider {
       BlueGreenRole.SOURCE,
       this.bgdId,
       this.pluginService.getCurrentHostInfo(),
-      this.pluginService,
+      this.servicesContainer,
       this.getMonitoringProperties(),
       this.statusCheckIntervalMap,
       { onBlueGreenStatusChanged: (role, status) => this.prepareStatus(role, status) }
@@ -117,7 +123,7 @@ export class BlueGreenStatusProvider {
       BlueGreenRole.TARGET,
       this.bgdId,
       this.pluginService.getCurrentHostInfo(),
-      this.pluginService,
+      this.servicesContainer,
       this.getMonitoringProperties(),
       this.statusCheckIntervalMap,
       { onBlueGreenStatusChanged: (role, status) => this.prepareStatus(role, status) }

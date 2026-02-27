@@ -28,6 +28,7 @@ import { ErrorHandler } from "../../../common/lib/error_handler";
 import { MySQLErrorHandler } from "../mysql_error_handler";
 import { Messages } from "../../../common/lib/utils/messages";
 import { HostRole } from "../../../common/lib/host_role";
+import { FullServicesContainer } from "../../../common/lib/utils/full_services_container";
 
 export class MySQLDatabaseDialect implements DatabaseDialect {
   protected dialectName: string = this.constructor.name;
@@ -108,8 +109,8 @@ export class MySQLDatabaseDialect implements DatabaseDialect {
       });
   }
 
-  getHostListProvider(props: Map<string, any>, originalUrl: string, hostListProviderService: HostListProviderService): HostListProvider {
-    return new ConnectionStringHostListProvider(props, originalUrl, this.getDefaultPort(), hostListProviderService);
+  getHostListProvider(props: Map<string, any>, originalUrl: string, servicesContainer: FullServicesContainer): HostListProvider {
+    return new ConnectionStringHostListProvider(props, originalUrl, this.getDefaultPort(), servicesContainer.getHostListProviderService());
   }
 
   getErrorHandler(): ErrorHandler {

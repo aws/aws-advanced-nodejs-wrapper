@@ -14,7 +14,9 @@
   limitations under the License.
 */
 
-import { EventClass } from "../../types";
+import { Constructor } from "../../types";
+
+export type EventClass = Constructor<Event>;
 
 /**
  * An interface for events that need to be communicated between different components.
@@ -32,7 +34,7 @@ export interface EventSubscriber {
    * if it has subscribed to the event class.
    * @param event the event to process.
    */
-  processEvent(event: Event): void;
+  processEvent(event: Event): Promise<void>;
 }
 
 /**

@@ -114,7 +114,7 @@ export interface StorageService {
    * Cleanup method to stop the cleanup interval timer.
    * Should be called when the service is no longer needed.
    */
-  releaseResources(): void;
+  releaseResources(): Promise<void>;
 }
 
 type CacheSupplier = () => ExpirationCache<unknown, unknown>;
@@ -252,7 +252,7 @@ export class StorageServiceImpl implements StorageService {
     return cache.size();
   }
 
-  releaseResources(): void {
+  async releaseResources(): Promise<void> {
     if (this.cleanupIntervalHandle) {
       clearInterval(this.cleanupIntervalHandle);
       this.cleanupIntervalHandle = undefined;
