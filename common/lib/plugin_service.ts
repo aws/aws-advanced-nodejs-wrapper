@@ -18,11 +18,11 @@ import { ErrorHandler } from "./error_handler";
 import { HostInfo } from "./host_info";
 import { AwsClient } from "./aws_client";
 import { HostListProviderService } from "./host_list_provider_service";
-import { BlockingHostListProvider, HostListProvider } from "./host_list_provider/host_list_provider";
+import { HostListProvider } from "./host_list_provider/host_list_provider";
 import { ConnectionUrlParser } from "./utils/connection_url_parser";
 import { DatabaseDialect, DatabaseType } from "./database_dialect/database_dialect";
 import { HostInfoBuilder } from "./host_info_builder";
-import { AwsWrapperError } from "./";
+import { AwsTimeoutError, AwsWrapperError } from "./";
 import { HostAvailability } from "./host_availability/host_availability";
 import { CacheMap } from "./utils/cache_map";
 import { HostChangeOptions } from "./host_change_options";
@@ -85,17 +85,9 @@ export interface PluginService extends ErrorHandler {
 
   forceRefreshHostList(): Promise<void>;
 
-  forceRefreshHostList(targetClient: ClientWrapper): Promise<void>;
-
-  forceRefreshHostList(targetClient?: ClientWrapper): Promise<void>;
-
   forceMonitoringRefresh(shouldVerifyWriter: boolean, timeoutMs: number): Promise<boolean>;
 
   refreshHostList(): Promise<void>;
-
-  refreshHostList(targetClient: ClientWrapper): Promise<void>;
-
-  refreshHostList(targetClient?: ClientWrapper): Promise<void>;
 
   getAllHosts(): HostInfo[];
 
@@ -160,12 +152,13 @@ export interface PluginService extends ErrorHandler {
 
 export class PluginServiceImpl implements PluginService, HostListProviderService {
   private static readonly DEFAULT_HOST_AVAILABILITY_CACHE_EXPIRE_NANO = 5 * 60_000_000_000; // 5 minutes
+  private static readonly DEFAULT_TOPOLOGY_QUERY_TIMEOUT_MS = 5000; // 5 seconds.
   private readonly _currentClient: AwsClient;
   private _currentHostInfo?: HostInfo;
   private _hostListProvider?: HostListProvider;
   private _initialConnectionHostInfo?: HostInfo;
   private _isInTransaction: boolean = false;
-  private serviceContainer: FullServicesContainer;
+  private servicesContainer: FullServicesContainer;
   protected hosts: HostInfo[] = [];
   private dbDialectProvider: DatabaseDialectProvider;
   private readonly initialHost: string;
@@ -190,7 +183,7 @@ export class PluginServiceImpl implements PluginService, HostListProviderService
     driverDialect: DriverDialect
   ) {
     this._currentClient = client;
-    this.serviceContainer = container;
+    this.servicesContainer = container;
     this.props = props;
     this.dbDialectProvider = new DatabaseDialectManager(knownDialectsByCode, dbType, this.props);
     this.driverDialect = driverDialect;
@@ -225,7 +218,7 @@ export class PluginServiceImpl implements PluginService, HostListProviderService
   }
 
   getHostInfoByStrategy(role: HostRole, strategy: string, hosts?: HostInfo[]): HostInfo | undefined {
-    const pluginManager = this.serviceContainer.getPluginManager();
+    const pluginManager = this.servicesContainer.getPluginManager();
     return pluginManager?.getHostInfoByStrategy(role, strategy, hosts);
   }
 
@@ -304,53 +297,34 @@ export class PluginServiceImpl implements PluginService, HostListProviderService
   }
 
   acceptsStrategy(role: HostRole, strategy: string): boolean {
-    return this.serviceContainer.getPluginManager()?.acceptsStrategy(role, strategy) ?? false;
+    return this.servicesContainer.getPluginManager()?.acceptsStrategy(role, strategy) ?? false;
   }
 
-  async forceRefreshHostList(): Promise<void>;
-  async forceRefreshHostList(targetClient: ClientWrapper): Promise<void>;
-  async forceRefreshHostList(targetClient?: ClientWrapper): Promise<void> {
-    const updatedHostList = targetClient
-      ? await this.getHostListProvider()?.forceRefresh(targetClient)
-      : await this.getHostListProvider()?.forceRefresh();
-    if (updatedHostList && updatedHostList !== this.hosts) {
-      this.updateHostAvailability(updatedHostList);
-      await this.setHostList(this.hosts, updatedHostList);
-    }
+  async forceRefreshHostList(): Promise<void> {
+    await this.forceMonitoringRefresh(false, PluginServiceImpl.DEFAULT_TOPOLOGY_QUERY_TIMEOUT_MS);
   }
 
   async forceMonitoringRefresh(shouldVerifyWriter: boolean, timeoutMs: number): Promise<boolean> {
     const hostListProvider: HostListProvider = this.getHostListProvider();
-    if (!this.isBlockingHostListProvider(hostListProvider)) {
-      logger.info(Messages.get("PluginService.requiredBlockingHostListProvider", typeof hostListProvider));
-      throw new AwsWrapperError(Messages.get("PluginService.requiredBlockingHostListProvider", typeof hostListProvider));
-    }
-
     try {
       const updatedHostList: HostInfo[] = await hostListProvider.forceMonitoringRefresh(shouldVerifyWriter, timeoutMs);
       if (updatedHostList) {
-        if (updatedHostList !== this.hosts) {
-          this.updateHostAvailability(updatedHostList);
-          await this.setHostList(this.hosts, updatedHostList);
-        }
+        this.updateHostAvailability(updatedHostList);
+        await this.setHostList(this.hosts, updatedHostList);
         return true;
       }
     } catch (err) {
-      // Do nothing.
-      logger.info(Messages.get("PluginService.forceMonitoringRefreshTimeout", timeoutMs.toString()));
+      if (err instanceof AwsTimeoutError) {
+        // Do nothing.
+        logger.info(Messages.get("PluginService.forceMonitoringRefreshTimeout", timeoutMs.toString()));
+      }
     }
 
     return false;
   }
 
-  isBlockingHostListProvider(arg: any): arg is BlockingHostListProvider {
-    return arg != null && typeof arg.clearAll === "function" && typeof arg.forceMonitoringRefresh === "function";
-  }
-
-  async refreshHostList(): Promise<void>;
-  async refreshHostList(targetClient: ClientWrapper): Promise<void>;
-  async refreshHostList(targetClient?: ClientWrapper): Promise<void> {
-    const updatedHostList = targetClient ? await this.getHostListProvider()?.refresh(targetClient) : await this.getHostListProvider()?.refresh();
+  async refreshHostList(): Promise<void> {
+    const updatedHostList = await this.getHostListProvider()?.refresh();
     if (updatedHostList && updatedHostList !== this.hosts) {
       this.updateHostAvailability(updatedHostList);
       await this.setHostList(this.hosts, updatedHostList);
@@ -427,7 +401,7 @@ export class PluginServiceImpl implements PluginService, HostListProviderService
 
     if (changes.size > 0) {
       this.hosts = newHosts ? newHosts : [];
-      await this.serviceContainer.getPluginManager()!.notifyHostListChanged(changes);
+      await this.servicesContainer.getPluginManager()!.notifyHostListChanged(changes);
     }
   }
 
@@ -531,13 +505,13 @@ export class PluginServiceImpl implements PluginService, HostListProviderService
   connect(hostInfo: HostInfo, props: Map<string, any>): Promise<ClientWrapper>;
   connect(hostInfo: HostInfo, props: Map<string, any>, pluginToSkip: ConnectionPlugin): Promise<ClientWrapper>;
   connect(hostInfo: HostInfo, props: Map<string, any>, pluginToSkip?: ConnectionPlugin): Promise<ClientWrapper> {
-    return this.serviceContainer.getPluginManager()!.connect(hostInfo, props, false, pluginToSkip);
+    return this.servicesContainer.getPluginManager()!.connect(hostInfo, props, false, pluginToSkip);
   }
 
   forceConnect(hostInfo: HostInfo, props: Map<string, any>): Promise<ClientWrapper>;
   forceConnect(hostInfo: HostInfo, props: Map<string, any>, pluginToSkip: ConnectionPlugin): Promise<ClientWrapper>;
   forceConnect(hostInfo: HostInfo, props: Map<string, any>, pluginToSkip?: ConnectionPlugin): Promise<ClientWrapper> {
-    return this.serviceContainer.getPluginManager()!.forceConnect(hostInfo, props, false, pluginToSkip);
+    return this.servicesContainer.getPluginManager()!.forceConnect(hostInfo, props, false, pluginToSkip);
   }
 
   async setCurrentClient(newClient: ClientWrapper, hostInfo: HostInfo): Promise<Set<HostChangeOptions>> {
@@ -547,8 +521,8 @@ export class PluginServiceImpl implements PluginService, HostListProviderService
       this.sessionStateService.reset();
       const changes = new Set<HostChangeOptions>([HostChangeOptions.INITIAL_CONNECTION]);
 
-      if (this.serviceContainer.getPluginManager()) {
-        await this.serviceContainer.getPluginManager().notifyConnectionChanged(changes, null);
+      if (this.servicesContainer.getPluginManager()) {
+        await this.servicesContainer.getPluginManager().notifyConnectionChanged(changes, null);
       }
 
       return changes;
@@ -575,7 +549,7 @@ export class PluginServiceImpl implements PluginService, HostListProviderService
               }
             }
 
-            const pluginOpinions: Set<OldConnectionSuggestionAction> = await this.serviceContainer
+            const pluginOpinions: Set<OldConnectionSuggestionAction> = await this.servicesContainer
               .getPluginManager()!
               .notifyConnectionChanged(changes, null);
 
@@ -656,7 +630,7 @@ export class PluginServiceImpl implements PluginService, HostListProviderService
       return;
     }
 
-    this._hostListProvider = this.dialect.getHostListProvider(this.props, this.props.get(WrapperProperties.HOST.name), this);
+    this._hostListProvider = this.dialect.getHostListProvider(this.props, this.props.get(WrapperProperties.HOST.name), this.servicesContainer);
   }
 
   private async updateReadOnly(statements: string[]) {
@@ -699,7 +673,7 @@ export class PluginServiceImpl implements PluginService, HostListProviderService
   }
 
   getTelemetryFactory(): TelemetryFactory {
-    return this.serviceContainer.getPluginManager()!.getTelemetryFactory();
+    return this.servicesContainer.getPluginManager()!.getTelemetryFactory();
   }
 
   /* Error Handler interface implementation */
@@ -794,7 +768,7 @@ export class PluginServiceImpl implements PluginService, HostListProviderService
   }
 
   isPluginInUse(plugin: any) {
-    return this.serviceContainer.getPluginManager()!.isPluginInUse(plugin);
+    return this.servicesContainer.getPluginManager()!.isPluginInUse(plugin);
   }
 
   isPooledClient(): boolean {

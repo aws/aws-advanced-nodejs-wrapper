@@ -65,7 +65,7 @@ export function logTopology(hosts: HostInfo[], msgPrefix: string) {
   return `${msgPrefix}${Messages.get("Utils.topology", msg)}`;
 }
 
-export function getTimeInNanos() {
+export function getTimeInNanos(): bigint {
   return process.hrtime.bigint();
 }
 

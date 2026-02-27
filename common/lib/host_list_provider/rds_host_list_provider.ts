@@ -21,29 +21,36 @@ import { RdsUrlType } from "../utils/rds_url_type";
 import { RdsUtils } from "../utils/rds_utils";
 import { HostListProviderService } from "../host_list_provider_service";
 import { ConnectionUrlParser } from "../utils/connection_url_parser";
-import { AwsWrapperError } from "../utils/errors";
+import { AwsTimeoutError, AwsWrapperError } from "../utils/errors";
 import { Messages } from "../utils/messages";
 import { WrapperProperties } from "../wrapper_property";
 import { logger } from "../../logutils";
-import { isDialectTopologyAware, logTopology } from "../utils/utils";
+import { isDialectTopologyAware } from "../utils/utils";
 import { DatabaseDialect } from "../database_dialect/database_dialect";
 import { ClientWrapper } from "../client_wrapper";
 import { CoreServicesContainer } from "../utils/core_services_container";
 import { StorageService } from "../utils/storage/storage_service";
 import { Topology } from "./topology";
 import { TopologyUtils } from "./topology_utils";
+import { FullServicesContainer } from "../utils/full_services_container";
+import { PluginService } from "../plugin_service";
+import { ClusterTopologyMonitor, ClusterTopologyMonitorImpl } from "./monitoring/cluster_topology_monitor";
+import { MonitorInitializer } from "../utils/monitoring/monitor";
 
 export class RdsHostListProvider implements DynamicHostListProvider {
+  private static readonly DEFAULT_TOPOLOGY_QUERY_TIMEOUT_MS: number = 5000;
   private readonly originalUrl: string;
-  private readonly rdsHelper: RdsUtils;
+  protected readonly rdsHelper: RdsUtils;
+  protected readonly servicesContainers: FullServicesContainer;
+  private readonly pluginService: PluginService;
   private readonly storageService: StorageService;
   protected readonly topologyUtils: TopologyUtils;
   protected readonly properties: Map<string, any>;
   private rdsUrlType: RdsUrlType;
   private initialHostList: HostInfo[];
   protected initialHost: HostInfo;
-  private refreshRateNano: number;
-  private hostList?: HostInfo[];
+  protected refreshRateNano: number;
+  protected highRefreshRateNano: number;
   protected readonly connectionUrlParser: ConnectionUrlParser;
   protected readonly hostListProviderService: HostListProviderService;
 
@@ -51,18 +58,34 @@ export class RdsHostListProvider implements DynamicHostListProvider {
   public isInitialized: boolean = false;
   public clusterInstanceTemplate?: HostInfo;
 
-  constructor(properties: Map<string, any>, originalUrl: string, topologyUtils: TopologyUtils, hostListProviderService: HostListProviderService) {
+  constructor(properties: Map<string, any>, originalUrl: string, topologyUtils: TopologyUtils, servicesContainers: FullServicesContainer) {
     this.rdsHelper = new RdsUtils();
     this.topologyUtils = topologyUtils;
-    this.hostListProviderService = hostListProviderService;
-    this.connectionUrlParser = hostListProviderService.getConnectionUrlParser();
+    this.servicesContainers = servicesContainers;
+    this.pluginService = this.servicesContainers.getPluginService();
+    this.storageService = this.servicesContainers.getStorageService();
+    this.hostListProviderService = this.servicesContainers.getHostListProviderService();
+    this.connectionUrlParser = this.hostListProviderService.getConnectionUrlParser();
     this.originalUrl = originalUrl;
     this.properties = properties;
-    this.storageService = CoreServicesContainer.getInstance().getStorageService(); // TODO: store the service container instead.
+    this.refreshRateNano = WrapperProperties.CLUSTER_TOPOLOGY_REFRESH_RATE_MS.get(this.properties) * 1000000;
+    this.highRefreshRateNano = WrapperProperties.CLUSTER_TOPOLOGY_HIGH_REFRESH_RATE_MS.get(this.properties) * 1000000;
+  }
 
-    let port = WrapperProperties.PORT.get(properties);
+  init(): void {
+    if (this.isInitialized) {
+      return;
+    }
+
+    this.initSettings();
+
+    this.isInitialized = true;
+  }
+
+  protected initSettings(): void {
+    let port = WrapperProperties.PORT.get(this.properties);
     if (port == null) {
-      port = hostListProviderService.getDialect().getDefaultPort();
+      port = this.hostListProviderService.getDialect().getDefaultPort();
     }
 
     this.initialHostList = this.connectionUrlParser.getHostsFromConnectionUrl(this.originalUrl, false, port, () =>
@@ -74,15 +97,8 @@ export class RdsHostListProvider implements DynamicHostListProvider {
 
     this.initialHost = this.initialHostList[0];
     this.hostListProviderService.setInitialConnectionHostInfo(this.initialHost);
-    this.refreshRateNano = WrapperProperties.CLUSTER_TOPOLOGY_REFRESH_RATE_MS.get(this.properties) * 1000000;
-    this.rdsUrlType = this.rdsHelper.identifyRdsType(this.initialHost.host);
-  }
 
-  init(): void {
-    if (this.isInitialized) {
-      return;
-    }
-
+    this.clusterId = WrapperProperties.CLUSTER_ID.get(this.properties);
     const hostInfoBuilder = this.hostListProviderService.getHostInfoBuilder();
 
     this.clusterInstanceTemplate = hostInfoBuilder
@@ -91,27 +107,47 @@ export class RdsHostListProvider implements DynamicHostListProvider {
       .build();
 
     this.validateHostPatternSetting(this.clusterInstanceTemplate.host);
-
-    this.clusterId = WrapperProperties.CLUSTER_ID.get(this.properties);
-
-    this.isInitialized = true;
+    this.rdsUrlType = this.rdsHelper.identifyRdsType(this.initialHost.host);
   }
 
-  async forceRefresh(): Promise<HostInfo[]>;
-  async forceRefresh(targetClient: ClientWrapper): Promise<HostInfo[]>;
-  async forceRefresh(targetClient?: ClientWrapper): Promise<HostInfo[]> {
+  protected async getOrCreateMonitor(): Promise<ClusterTopologyMonitor> {
+    const initializer: MonitorInitializer = {
+      createMonitor: (servicesContainer: FullServicesContainer): ClusterTopologyMonitor => {
+        return new ClusterTopologyMonitorImpl(
+          servicesContainer,
+          this.topologyUtils,
+          this.clusterId,
+          this.initialHost,
+          this.properties,
+          this.clusterInstanceTemplate,
+          this.refreshRateNano,
+          this.highRefreshRateNano
+        );
+      }
+    };
+
+    return await this.servicesContainers
+      .getMonitorService()
+      .runIfAbsent(ClusterTopologyMonitorImpl, this.clusterId, this.servicesContainers, this.properties, initializer);
+  }
+
+  async forceRefresh(): Promise<HostInfo[]> {
+    return this.forceMonitoringRefresh(false, RdsHostListProvider.DEFAULT_TOPOLOGY_QUERY_TIMEOUT_MS);
+  }
+
+  async forceMonitoringRefresh(verifyTopology: boolean, timeoutMs: number): Promise<HostInfo[]> {
     this.init();
 
-    const currentClient = targetClient ?? this.hostListProviderService.getCurrentClient().targetClient;
-    if (currentClient) {
-      const results: FetchTopologyResult = await this.getTopology(currentClient, true);
-      this.hostList = results.hosts;
-      return Array.from(this.hostList);
+    if (!this.pluginService.isDialectConfirmed()) {
+      // We need to confirm the dialect before creating a topology monitor so that it uses the correct SQL queries.
+      // We will return the original hosts parsed from the connections string until the dialect has been confirmed.
+      return this.initialHostList;
     }
-    throw new AwsWrapperError("Could not retrieve targetClient.");
+
+    return await this.forceRefreshMonitor(verifyTopology, timeoutMs);
   }
 
-  async getHostRole(client: ClientWrapper, dialect: DatabaseDialect): Promise<HostRole> {
+  async getHostRole(client: ClientWrapper, _dialect: DatabaseDialect): Promise<HostRole> {
     return this.topologyUtils.getHostRole(client);
   }
 
@@ -134,7 +170,7 @@ export class RdsHostListProvider implements DynamicHostListProvider {
       return null;
     }
 
-    let topology = await this.refresh(targetClient);
+    let topology = await this.refresh();
     let isForcedRefresh = false;
 
     if (!topology) {
@@ -161,47 +197,37 @@ export class RdsHostListProvider implements DynamicHostListProvider {
     return matches.length === 0 ? null : matches[0];
   }
 
-  async refresh(): Promise<HostInfo[]>;
-  async refresh(targetClient: ClientWrapper): Promise<HostInfo[]>;
-  async refresh(targetClient?: ClientWrapper): Promise<HostInfo[]> {
+  async refresh(): Promise<HostInfo[]> {
     this.init();
 
-    const currentClient = targetClient ?? this.hostListProviderService.getCurrentClient().targetClient;
-    const results: FetchTopologyResult = await this.getTopology(currentClient, false);
-    logger.debug(logTopology(results.hosts, results.isCachedData ? "[From cache] " : ""));
-    this.hostList = results.hosts;
-    return this.hostList;
+    const results: FetchTopologyResult = await this.getTopology();
+    return results.hosts;
   }
 
-  async getTopology(targetClient: ClientWrapper | undefined, forceUpdate: boolean): Promise<FetchTopologyResult> {
+  async getTopology(): Promise<FetchTopologyResult> {
     this.init();
 
-    if (!this.clusterId) {
-      throw new AwsWrapperError(Messages.get("RdsHostListProvider.noClusterId"));
-    }
+    const storedTopology: HostInfo[] | null = this.getStoredTopology();
 
-    const cachedHosts: HostInfo[] | null = this.getStoredTopology();
-
-    // This clusterId is a primary one and is about to create a new entry in the cache.
-    // When a primary entry is created it needs to be suggested for other (non-primary) entries.
-    // Remember a flag to do suggestion after cache is updated.
-    if (!cachedHosts || forceUpdate) {
+    if (!storedTopology) {
       // need to re-fetch the topology.
-      if (!targetClient || !(await this.hostListProviderService.isClientValid(targetClient))) {
+
+      if (!this.pluginService.isDialectConfirmed()) {
+        // We need to confirm the dialect before creating a topology monitor so that it uses the correct SQL queries.
+        // We will return the original hosts parsed from the connections string until the dialect has been confirmed.
         return new FetchTopologyResult(false, this.initialHostList);
       }
 
-      const hosts = await this.getCurrentTopology(targetClient, this.hostListProviderService.getDialect());
+      const hosts = await this.forceRefreshMonitor(false, RdsHostListProvider.DEFAULT_TOPOLOGY_QUERY_TIMEOUT_MS);
       if (hosts && hosts.length > 0) {
-        this.storageService.set(this.clusterId, new Topology(hosts));
         return new FetchTopologyResult(false, hosts);
       }
     }
 
-    if (!cachedHosts) {
+    if (!storedTopology) {
       return new FetchTopologyResult(false, this.initialHostList);
     } else {
-      return new FetchTopologyResult(true, cachedHosts);
+      return new FetchTopologyResult(true, storedTopology);
     }
   }
 
@@ -209,12 +235,16 @@ export class RdsHostListProvider implements DynamicHostListProvider {
     return await this.topologyUtils.queryForTopology(targetClient, dialect, this.initialHost, this.clusterInstanceTemplate);
   }
 
-  private getHostEndpoint(hostName: string): string | null {
-    if (!this.clusterInstanceTemplate || !this.clusterInstanceTemplate.host) {
-      return null;
+  protected async forceRefreshMonitor(verifyTopology: boolean, timeoutMs: number): Promise<HostInfo[] | null> {
+    const monitor = await this.getOrCreateMonitor();
+    try {
+      return await monitor.forceMonitoringRefresh(verifyTopology, timeoutMs);
+    } catch (error) {
+      if (error instanceof AwsTimeoutError) {
+        return null;
+      }
+      throw error;
     }
-    const host = this.clusterInstanceTemplate.host;
-    return host.replace("?", hostName);
   }
 
   getStoredTopology(): HostInfo[] | null {
@@ -238,7 +268,7 @@ export class RdsHostListProvider implements DynamicHostListProvider {
     }
   }
 
-  private validateHostPatternSetting(hostPattern: string) {
+  protected validateHostPatternSetting(hostPattern: string) {
     if (!this.rdsHelper.isDnsPatternValid(hostPattern)) {
       const message: string = Messages.get("RdsHostListProvider.invalidPattern.suggestedClusterId");
       logger.error(message);

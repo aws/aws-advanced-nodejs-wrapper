@@ -113,7 +113,7 @@ class BaseAwsMySQLClient extends AwsClient implements MySQLClient {
     return result;
   }
 
-  isReadOnly(): boolean {
+  isReadOnly(): boolean | undefined {
     return this.pluginService.getSessionStateService().getReadOnly();
   }
 
@@ -129,7 +129,7 @@ class BaseAwsMySQLClient extends AwsClient implements MySQLClient {
     return result;
   }
 
-  getAutoCommit(): boolean {
+  getAutoCommit(): boolean | undefined {
     return this.pluginService.getSessionStateService().getAutoCommit();
   }
 
@@ -142,7 +142,7 @@ class BaseAwsMySQLClient extends AwsClient implements MySQLClient {
     this.pluginService.getSessionStateService().setCatalog(catalog);
   }
 
-  getCatalog(): string {
+  getCatalog(): string | undefined {
     return this.pluginService.getSessionStateService().getCatalog();
   }
 
@@ -150,7 +150,7 @@ class BaseAwsMySQLClient extends AwsClient implements MySQLClient {
     throw new UnsupportedMethodError(Messages.get("Client.methodNotSupported", "setSchema"));
   }
 
-  getSchema(): string {
+  getSchema(): string | undefined {
     throw new UnsupportedMethodError(Messages.get("Client.methodNotSupported", "getSchema"));
   }
 
@@ -181,7 +181,7 @@ class BaseAwsMySQLClient extends AwsClient implements MySQLClient {
     this.pluginService.getSessionStateService().setTransactionIsolation(level);
   }
 
-  getTransactionIsolation(): TransactionIsolationLevel {
+  getTransactionIsolation(): TransactionIsolationLevel | undefined {
     return this.pluginService.getSessionStateService().getTransactionIsolation();
   }
 
@@ -197,6 +197,10 @@ class BaseAwsMySQLClient extends AwsClient implements MySQLClient {
       this.properties,
       "end",
       () => {
+        if (!this.targetClient) {
+          return Promise.resolve(undefined);
+        }
+
         this.pluginService.removeErrorListener(this.targetClient);
         const res = ClientUtils.queryWithTimeout(this.targetClient.end(), this.properties);
         this.targetClient = undefined;

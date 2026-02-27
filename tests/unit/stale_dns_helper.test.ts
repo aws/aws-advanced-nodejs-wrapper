@@ -130,7 +130,7 @@ describe("test_stale_dns_helper", () => {
 
     expect(mockConnectFunc).toHaveBeenCalled();
     expect(readerA.role).toBe(HostRole.READER);
-    verify(mockPluginService.forceRefreshHostList(anything())).once();
+    verify(mockPluginService.forceRefreshHostList()).once();
     expect(mockInitialClientWrapper).toBe(returnConn);
   });
 
@@ -155,7 +155,7 @@ describe("test_stale_dns_helper", () => {
     );
 
     expect(mockConnectFunc).toHaveBeenCalled();
-    verify(mockPluginService.refreshHostList(anything())).once();
+    verify(mockPluginService.refreshHostList()).once();
     expect(mockInitialClientWrapper).toBe(returnConn);
   });
 

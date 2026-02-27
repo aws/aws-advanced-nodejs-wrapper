@@ -36,6 +36,7 @@ import { HostListProviderService } from "../../host_list_provider_service";
 import { StatusInfo } from "./status_info";
 import { DatabaseDialect } from "../../database_dialect/database_dialect";
 import { AwsWrapperError } from "../../utils/errors";
+import { FullServicesContainer } from "../../utils/full_services_container";
 
 export interface OnBlueGreenStatusChange {
   onBlueGreenStatusChanged(role: BlueGreenRole, interimStatus: BlueGreenInterimStatus): void;
@@ -50,6 +51,7 @@ export class BlueGreenStatusMonitor {
   protected static readonly knownVersions: Set<string> = new Set<string>([BlueGreenStatusMonitor.latestKnownVersion]);
 
   protected readonly blueGreenDialect: BlueGreenDialect;
+  protected readonly servicesContainer: FullServicesContainer;
   protected readonly pluginService: PluginService;
   protected readonly bgdId: string;
   protected readonly props: Map<string, any>;
@@ -99,7 +101,7 @@ export class BlueGreenStatusMonitor {
     role: BlueGreenRole,
     bgdId: string,
     initialHostInfo: HostInfo,
-    pluginService: PluginService,
+    servicesContainer: FullServicesContainer,
     props: Map<string, any>,
     statusCheckIntervalMap: Map<BlueGreenIntervalRate, bigint>,
     onBlueGreenStatusChangeFunc: OnBlueGreenStatusChange
@@ -107,7 +109,8 @@ export class BlueGreenStatusMonitor {
     this.role = role;
     this.bgdId = bgdId;
     this.initialHostInfo = initialHostInfo;
-    this.pluginService = pluginService;
+    this.servicesContainer = servicesContainer;
+    this.pluginService = this.servicesContainer.getPluginService();
     this.props = props;
     this.statusCheckIntervalMap = statusCheckIntervalMap;
     this.onBlueGreenStatusChangeFunc = onBlueGreenStatusChangeFunc;
@@ -296,12 +299,7 @@ export class BlueGreenStatusMonitor {
       return;
     }
 
-    const client: ClientWrapper = this.clientWrapper;
-    if (await this.isConnectionClosed(client)) {
-      return;
-    }
-
-    this.currentTopology = await this.hostListProvider.forceRefresh(client);
+    this.currentTopology = await this.hostListProvider.forceRefresh();
     if (this.collectedTopology) {
       this.startTopology = this.currentTopology;
     }
@@ -518,7 +516,7 @@ export class BlueGreenStatusMonitor {
     if (connectionHostInfoCopy) {
       this.hostListProvider = this.pluginService
         .getDialect()
-        .getHostListProvider(hostListProperties, connectionHostInfoCopy.host, this.pluginService as unknown as HostListProviderService);
+        .getHostListProvider(hostListProperties, connectionHostInfoCopy.host, this.servicesContainer);
     } else {
       logger.warn(Messages.get("Bgd.hostInfoNull"));
     }

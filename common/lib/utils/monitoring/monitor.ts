@@ -25,9 +25,8 @@ export enum MonitorState {
 }
 
 export enum MonitorErrorResponse {
-  STOP_MONITOR,
-  LOG_WARNING,
-  THROW_EXCEPTION
+  NO_ACTION,
+  RECREATE
 }
 
 export class MonitorSettings {
@@ -43,13 +42,13 @@ export class MonitorSettings {
 }
 
 export interface Monitor {
-  start(): void;
+  start(): Promise<void>;
 
   monitor(): Promise<void>;
 
-  stop(): void;
+  stop(): Promise<void>;
 
-  close(): void;
+  close(): Promise<void>;
 
   getLastActivityTimestampNanos(): bigint;
 
@@ -75,7 +74,7 @@ export abstract class AbstractMonitor implements Monitor {
     this.state = MonitorState.STOPPED;
   }
 
-  start(): void {
+  async start(): Promise<void> {
     this.monitorPromise = this.run();
   }
 
@@ -87,7 +86,7 @@ export abstract class AbstractMonitor implements Monitor {
     } catch (error) {
       this.state = MonitorState.ERROR;
     } finally {
-      this.close();
+      await this.close();
     }
   }
 
@@ -101,11 +100,11 @@ export abstract class AbstractMonitor implements Monitor {
       await Promise.race([this.monitorPromise, timeout]);
     }
 
-    this.close();
+    await this.close();
     this.state = MonitorState.STOPPED;
   }
 
-  close(): void {
+  async close(): Promise<void> {
     // Do nothing
   }
 

@@ -55,7 +55,11 @@ export class CoreServicesContainer {
     return this.eventPublisher;
   }
 
-  static releaseResources(): void {
-    CoreServicesContainer.INSTANCE.storageService.releaseResources();
+  static async releaseResources(): Promise<void> {
+    await CoreServicesContainer.INSTANCE.storageService.releaseResources();
+    await CoreServicesContainer.INSTANCE.monitorService.releaseResources();
+    if (CoreServicesContainer.INSTANCE.eventPublisher instanceof BatchingEventPublisher) {
+      CoreServicesContainer.INSTANCE.eventPublisher.releaseResources();
+    }
   }
 }

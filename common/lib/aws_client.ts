@@ -139,12 +139,12 @@ export abstract class AwsClient extends EventEmitter implements SessionStateClie
     await this.setup();
     const hostListProvider: HostListProvider = this.pluginService
       .getDialect()
-      .getHostListProvider(this.properties, this.properties.get("host"), <HostListProviderService>(<unknown>this.pluginService));
+      .getHostListProvider(this.properties, this.properties.get("host"), this.fullServiceContainer);
     this.pluginService.setHostListProvider(hostListProvider);
     await this.pluginService.refreshHostList();
     const initialHostInfo = this.pluginService.getInitialConnectionHostInfo();
     if (initialHostInfo != null) {
-      await this.pluginManager.initHostProvider(initialHostInfo, this.properties, <HostListProviderService>(<unknown>this.pluginService));
+      await this.pluginManager.initHostProvider(initialHostInfo, this.properties, this.fullServiceContainer.getHostListProviderService());
       await this.pluginService.refreshHostList();
     }
   }
@@ -176,15 +176,15 @@ export abstract class AwsClient extends EventEmitter implements SessionStateClie
 
   abstract setTransactionIsolation(level: TransactionIsolationLevel): Promise<any | void>;
 
-  abstract getTransactionIsolation(): TransactionIsolationLevel;
+  abstract getTransactionIsolation(): TransactionIsolationLevel | undefined;
 
   abstract setSchema(schema: any): Promise<any | void>;
 
-  abstract getSchema(): string;
+  abstract getSchema(): string | undefined;
 
   abstract setCatalog(catalog: string): Promise<any | void>;
 
-  abstract getCatalog(): string;
+  abstract getCatalog(): string | undefined;
 
   abstract end(): Promise<any>;
 

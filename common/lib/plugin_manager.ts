@@ -393,7 +393,7 @@ export class PluginManager {
     }
 
     PluginManager.STRATEGY_PLUGIN_CHAIN_CACHE.clear();
-    CoreServicesContainer.releaseResources();
+    await CoreServicesContainer.releaseResources();
 
     PluginManager.PLUGINS = new Set();
   }

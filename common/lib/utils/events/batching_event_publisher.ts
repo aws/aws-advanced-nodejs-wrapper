@@ -38,21 +38,21 @@ export class BatchingEventPublisher implements EventPublisher {
     this.publishingInterval.unref();
   }
 
-  protected sendMessages(): void {
+  protected async sendMessages(): Promise<void> {
     for (const event of this.pendingEvents) {
       this.pendingEvents.delete(event);
-      this.deliverEvent(event);
+      await this.deliverEvent(event);
     }
   }
 
-  protected deliverEvent(event: Event): void {
+  protected async deliverEvent(event: Event): Promise<void> {
     const subscribers = this.subscribersMap.get(event.constructor as EventClass);
     if (!subscribers) {
       return;
     }
 
     for (const subscriber of subscribers) {
-      subscriber.processEvent(event);
+      await subscriber.processEvent(event);
     }
   }
 
@@ -81,7 +81,7 @@ export class BatchingEventPublisher implements EventPublisher {
 
   publish(event: Event): void {
     if (event.isImmediateDelivery) {
-      this.deliverEvent(event);
+      this.deliverEvent(event).catch(() => {});
     } else {
       this.pendingEvents.add(event);
     }
