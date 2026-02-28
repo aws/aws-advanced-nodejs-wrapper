@@ -20,7 +20,7 @@ import { ClientWrapper } from "../../../common/lib/client_wrapper";
 import { AwsWrapperError, HostInfo, HostRole } from "../../../common/lib";
 import { Messages } from "../../../common/lib/utils/messages";
 import { logger } from "../../../common/logutils";
-import { TopologyAwareDatabaseDialect } from "../../../common/lib/topology_aware_database_dialect";
+import { TopologyAwareDatabaseDialect } from "../../../common/lib/database_dialect/topology_aware_database_dialect";
 import { RdsHostListProvider } from "../../../common/lib/host_list_provider/rds_host_list_provider";
 import { PgDatabaseDialect } from "./pg_database_dialect";
 import { ErrorHandler } from "../../../common/lib/error_handler";

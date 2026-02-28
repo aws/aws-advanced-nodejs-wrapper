@@ -60,6 +60,10 @@ export class RdsUtils {
   // https://aws.amazon.com/compliance/fips/#FIPS_Endpoints_by_Service
   // https://docs.aws.amazon.com/AWSJavaSDK/latest/javadoc/com/amazonaws/services/s3/model/Region.html
 
+  // https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/Concepts.Aurora_Fea_Regions_DB-eng.Feature.GlobalDatabase.html
+  private static readonly AURORA_GLOBAL_WRITER_DNS_PATTERN =
+    /^(?<instance>.+)\.(?<dns>global-)?(?<domain>[a-zA-Z0-9]+\.global\.rds\.amazonaws\.com\.?)$/i;
+
   private static readonly AURORA_DNS_PATTERN =
     /^(?<instance>.+)\.(?<dns>proxy-|cluster-|cluster-ro-|cluster-custom-|shardgrp-)?(?<domain>[a-zA-Z0-9]+\.(?<region>[a-zA-Z0-9-]+)\.rds\.amazonaws\.com)$/i;
   private static readonly AURORA_INSTANCE_PATTERN = /^(?<instance>.+)\.(?<domain>[a-zA-Z0-9]+\.(?<region>[a-zA-Z0-9-]+)\.rds\.amazonaws\.com)$/i;
@@ -231,6 +235,11 @@ export class RdsUtils {
     return null;
   }
 
+  public isGlobalDbWriterClusterDns(host: string): boolean {
+    const dnsGroup = this.getDnsGroup(host);
+    return equalsIgnoreCase(dnsGroup, "global-");
+  }
+
   public isWriterClusterDns(host: string): boolean {
     const dnsGroup = this.getDnsGroup(host);
     return equalsIgnoreCase(dnsGroup, "cluster-");
@@ -300,6 +309,8 @@ export class RdsUtils {
 
     if (this.isIPv4(host) || this.isIPv6(host)) {
       return RdsUrlType.IP_ADDRESS;
+    } else if (this.isGlobalDbWriterClusterDns(host)) {
+      return RdsUrlType.RDS_GLOBAL_WRITER_CLUSTER;
     } else if (this.isWriterClusterDns(host)) {
       return RdsUrlType.RDS_WRITER_CLUSTER;
     } else if (this.isReaderClusterDns(host)) {
@@ -382,7 +393,8 @@ export class RdsUtils {
       RdsUtils.AURORA_DNS_PATTERN,
       RdsUtils.AURORA_CHINA_DNS_PATTERN,
       RdsUtils.AURORA_OLD_CHINA_DNS_PATTERN,
-      RdsUtils.AURORA_GOV_DNS_PATTERN
+      RdsUtils.AURORA_GOV_DNS_PATTERN,
+      RdsUtils.AURORA_GLOBAL_WRITER_DNS_PATTERN
     );
     return this.getRegexGroup(matcher, RdsUtils.DNS_GROUP);
   }
