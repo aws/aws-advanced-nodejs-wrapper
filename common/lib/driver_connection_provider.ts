@@ -30,6 +30,7 @@ import { logger } from "../logutils";
 import { ClientWrapper } from "./client_wrapper";
 import { RoundRobinHostSelector } from "./round_robin_host_selector";
 import { DriverDialect } from "./driver_dialect/driver_dialect";
+import { ConnectionInfo } from "./connection_info";
 
 export class DriverConnectionProvider implements ConnectionProvider {
   private static readonly acceptedStrategies: Map<string, HostSelector> = new Map([
@@ -46,7 +47,7 @@ export class DriverConnectionProvider implements ConnectionProvider {
     return true;
   }
 
-  async connect(hostInfo: HostInfo, pluginService: PluginService, props: Map<string, any>): Promise<ClientWrapper> {
+  async connect(hostInfo: HostInfo, pluginService: PluginService, props: Map<string, any>): Promise<ConnectionInfo> {
     let resultTargetClient;
     const resultProps = new Map(props);
     resultProps.set(WrapperProperties.HOST.name, hostInfo.host);
@@ -92,7 +93,7 @@ export class DriverConnectionProvider implements ConnectionProvider {
       resultTargetClient = driverDialect.connect(hostInfo, resultProps);
     }
     pluginService.attachErrorListener(resultTargetClient);
-    return resultTargetClient;
+    return new ConnectionInfo(resultTargetClient, false);
   }
 
   getHostInfoByStrategy(hosts: HostInfo[], role: HostRole, strategy: string, props?: Map<string, any>): HostInfo {
