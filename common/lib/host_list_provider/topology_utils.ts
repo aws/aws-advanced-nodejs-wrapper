@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-import { TopologyAwareDatabaseDialect } from "../topology_aware_database_dialect";
 import { ClientWrapper } from "../client_wrapper";
 import { DatabaseDialect } from "../database_dialect/database_dialect";
 import { HostInfo } from "../host_info";
@@ -24,6 +23,21 @@ import { HostRole } from "../host_role";
 import { HostAvailability } from "../host_availability/host_availability";
 import { HostInfoBuilder } from "../host_info_builder";
 import { AwsWrapperError } from "../utils/errors";
+import { TopologyAwareDatabaseDialect } from "../database_dialect/topology_aware_database_dialect";
+
+/**
+ * Options for creating a TopologyQueryResult instance.
+ */
+export interface TopologyQueryResultOptions {
+  host: string;
+  isWriter: boolean;
+  weight: number;
+  lastUpdateTime?: number;
+  port?: number;
+  id?: string;
+  endpoint?: string;
+  awsRegion?: string;
+}
 
 /**
  * Represents the result of a topology query for a single database instance.
@@ -33,19 +47,21 @@ export class TopologyQueryResult {
   host: string;
   isWriter: boolean;
   weight: number;
-  lastUpdateTime: number;
+  lastUpdateTime?: number;
   port?: number;
   id?: string;
   endpoint?: string;
+  awsRegion?: string;
 
-  constructor(host: string, isWriter: boolean, weight: number, lastUpdateTime: number, port?: number, id?: string, endpoint?: string) {
-    this.host = host;
-    this.isWriter = isWriter;
-    this.weight = weight;
-    this.lastUpdateTime = lastUpdateTime;
-    this.port = port;
-    this.id = id;
-    this.endpoint = endpoint;
+  constructor(options: TopologyQueryResultOptions) {
+    this.host = options.host;
+    this.isWriter = options.isWriter;
+    this.weight = options.weight;
+    this.lastUpdateTime = options.lastUpdateTime;
+    this.port = options.port;
+    this.id = options.id;
+    this.endpoint = options.endpoint;
+    this.awsRegion = options.awsRegion;
   }
 }
 
@@ -88,31 +104,39 @@ export class TopologyUtils {
       .then((res: TopologyQueryResult[]) => this.verifyWriter(this.createHosts(res, initialHost, clusterInstanceTemplate)));
   }
 
-  createHost(
-    instanceId: string,
-    instanceName: string,
+  public createHost(
+    instanceId: string | undefined,
+    instanceName: string | undefined,
     isWriter: boolean,
     weight: number,
     lastUpdateTime: number,
     initialHost: HostInfo,
-    instanceTemplate: HostInfo
+    instanceTemplate: HostInfo,
+    endpoint?: string,
+    port?: number
   ): HostInfo {
-    if (!instanceId) {
+    const hostname = !instanceName ? "?" : instanceName;
+    const finalInstanceId = instanceId ?? hostname;
+
+    if (!finalInstanceId) {
       throw new AwsWrapperError(Messages.get("TopologyUtils.instanceIdRequired"));
     }
-    instanceName = !instanceName ? "?" : instanceName;
-    const endpoint: string = instanceTemplate.host.replace("?", instanceName);
-    const port = instanceTemplate?.isPortSpecified() ? instanceTemplate?.port : initialHost?.port;
 
-    return this.hostInfoBuilder
-      .withHost(endpoint ?? "")
-      .withPort(port ?? HostInfo.NO_PORT)
+    const finalEndpoint = endpoint ?? this.getHostEndpoint(hostname, instanceTemplate) ?? "";
+
+    const finalPort = port ?? (instanceTemplate?.isPortSpecified() ? instanceTemplate?.port : initialHost?.port);
+
+    const host: HostInfo = this.hostInfoBuilder
+      .withHost(finalEndpoint)
+      .withPort(finalPort ?? HostInfo.NO_PORT)
       .withRole(isWriter ? HostRole.WRITER : HostRole.READER)
       .withAvailability(HostAvailability.AVAILABLE)
       .withWeight(weight)
       .withLastUpdateTime(lastUpdateTime)
-      .withHostId(instanceId)
+      .withHostId(finalInstanceId)
       .build();
+    host.addAlias(finalEndpoint);
+    return host;
   }
 
   /**
@@ -126,19 +150,19 @@ export class TopologyUtils {
   public createHosts(topologyQueryResults: TopologyQueryResult[], initialHost: HostInfo, clusterInstanceTemplate: HostInfo): HostInfo[] {
     const hostsMap = new Map<string, HostInfo>();
     topologyQueryResults.forEach((row) => {
-      const hostname = !row.host ? "?" : row.host;
-      const endpoint: string | null = row.endpoint ?? this.getHostEndpoint(hostname, clusterInstanceTemplate);
+      const lastUpdateTime = row.lastUpdateTime ?? Date.now();
 
-      const host = this.hostInfoBuilder
-        .withHost(endpoint ?? "")
-        .withPort((row.port ?? clusterInstanceTemplate?.isPortSpecified()) ? clusterInstanceTemplate?.port : initialHost.port)
-        .withRole(row.isWriter ? HostRole.WRITER : HostRole.READER)
-        .withAvailability(HostAvailability.AVAILABLE)
-        .withWeight(row.weight)
-        .withLastUpdateTime(row.lastUpdateTime)
-        .withHostId(row.id ?? hostname)
-        .build();
-      host.addAlias(endpoint);
+      const host = this.createHost(
+        row.id,
+        row.host,
+        row.isWriter,
+        row.weight,
+        lastUpdateTime,
+        initialHost,
+        clusterInstanceTemplate,
+        row.endpoint,
+        row.port
+      );
 
       const existing = hostsMap.get(host.host);
       if (!existing || existing.lastUpdateTime < host.lastUpdateTime) {
@@ -156,7 +180,7 @@ export class TopologyUtils {
    * @param clusterInstanceTemplate the template containing the endpoint pattern.
    * @returns the constructed endpoint, or null if the template is invalid.
    */
-  private getHostEndpoint(hostName: string, clusterInstanceTemplate: HostInfo): string | null {
+  protected getHostEndpoint(hostName: string, clusterInstanceTemplate: HostInfo): string | null {
     if (!clusterInstanceTemplate || !clusterInstanceTemplate.host) {
       return null;
     }

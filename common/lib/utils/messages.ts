@@ -377,7 +377,10 @@ const MESSAGES: Record<string, string> = {
   "Bgd.completedContinueWithConnect": "Blue/Green Deployment status is completed. Continue with 'connect' call. The call was suspended for %s ms.",
   "StorageService.itemClassNotRegistered": "[StorageService] Item class not registered: %s",
   "StorageService.unexpectedValueMismatch": "[StorageService] Unexpected value mismatch for %s: %s",
-  "TopologyUtils.instanceIdRequired": "InstanceId must not be en empty string."
+  "TopologyUtils.instanceIdRequired": "InstanceId must not be en empty string.",
+  "TopologyUtils.errorGettingHostRole": "An error occurred while trying to get the host role.",
+  "GlobalTopologyUtils.missingRegion": "Host '%s' is missing region information in the topology query result.",
+  "GlobalTopologyUtils.missingTemplateForRegion": "No cluster instance template found for region '%s' when processing host '%s'."
 };
 
 export class Messages {

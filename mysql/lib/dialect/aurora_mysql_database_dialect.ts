@@ -18,7 +18,6 @@ import { MySQLDatabaseDialect } from "./mysql_database_dialect";
 import { HostListProviderService } from "../../../common/lib/host_list_provider_service";
 import { HostListProvider } from "../../../common/lib/host_list_provider/host_list_provider";
 import { RdsHostListProvider } from "../../../common/lib/host_list_provider/rds_host_list_provider";
-import { HostInfo } from "../../../common/lib/host_info";
 import { TopologyAwareDatabaseDialect } from "../../../common/lib/database_dialect/topology_aware_database_dialect";
 import { HostRole } from "../../../common/lib/host_role";
 import { ClientWrapper } from "../../../common/lib/client_wrapper";
@@ -30,7 +29,6 @@ import {
 import { PluginService } from "../../../common/lib/plugin_service";
 import { BlueGreenDialect, BlueGreenResult } from "../../../common/lib/database_dialect/blue_green_dialect";
 import { TopologyQueryResult, TopologyUtils } from "../../../common/lib/host_list_provider/topology_utils";
-import { RdsTopologyUtils } from "../../../common/lib/host_list_provider/aurora_topology_utils";
 
 export class AuroraMySQLDatabaseDialect extends MySQLDatabaseDialect implements TopologyAwareDatabaseDialect, BlueGreenDialect {
   private static readonly TOPOLOGY_QUERY: string =
@@ -53,7 +51,7 @@ export class AuroraMySQLDatabaseDialect extends MySQLDatabaseDialect implements 
     "SELECT 1 AS tmp FROM information_schema.tables WHERE table_schema = 'mysql' AND table_name = 'rds_topology'";
 
   getHostListProvider(props: Map<string, any>, originalUrl: string, hostListProviderService: HostListProviderService): HostListProvider {
-    const topologyUtils: TopologyUtils = new RdsTopologyUtils(this, hostListProviderService.getHostInfoBuilder());
+    const topologyUtils: TopologyUtils = new TopologyUtils(this, hostListProviderService.getHostInfoBuilder());
     if (WrapperProperties.PLUGINS.get(props).includes("failover2")) {
       return new MonitoringRdsHostListProvider(
         props,
@@ -78,12 +76,12 @@ export class AuroraMySQLDatabaseDialect extends MySQLDatabaseDialect implements 
       const cpuUtilization: number = row["cpu"];
       const hostLag: number = row["lag"];
       const lastUpdateTime: number = row["last_update_timestamp"] ? Date.parse(row["last_update_timestamp"]) : Date.now();
-      const result: TopologyQueryResult = new TopologyQueryResult(
-        hostName,
-        isWriter,
-        Math.round(hostLag) * 100 + Math.round(cpuUtilization),
-        lastUpdateTime
-      );
+      const result: TopologyQueryResult = new TopologyQueryResult({
+        host: hostName,
+        isWriter: isWriter,
+        weight: Math.round(hostLag) * 100 + Math.round(cpuUtilization),
+        lastUpdateTime: lastUpdateTime
+      });
       results.push(result);
     });
     return results;

@@ -92,8 +92,8 @@ describe("testTopologyUtils", () => {
     });
 
     const queryResults: TopologyQueryResult[] = [
-      new TopologyQueryResult("instance-1", true, 100, timestamp, 5432, "id-1"),
-      new TopologyQueryResult("instance-2", false, 50, timestamp, 5432, "id-2")
+      new TopologyQueryResult({ host: "instance-1", isWriter: true, weight: 100, lastUpdateTime: timestamp, port: 5432, id: "id-1" }),
+      new TopologyQueryResult({ host: "instance-2", isWriter: false, weight: 50, lastUpdateTime: timestamp, port: 5432, id: "id-2" })
     ];
 
     when(mockDialect.queryForTopology(anything())).thenResolve(queryResults);
@@ -174,9 +174,9 @@ describe("testTopologyUtils", () => {
     });
 
     const queryResults: TopologyQueryResult[] = [
-      new TopologyQueryResult("instance-1", true, 100, timestamp, 3306, "id-1"),
-      new TopologyQueryResult("instance-2", false, 50, timestamp, 3306, "id-2"),
-      new TopologyQueryResult("instance-3", false, 75, timestamp, 3306, "id-3")
+      new TopologyQueryResult({ host: "instance-1", isWriter: true, weight: 100, lastUpdateTime: timestamp, port: 3306, id: "id-1" }),
+      new TopologyQueryResult({ host: "instance-2", isWriter: false, weight: 50, lastUpdateTime: timestamp, port: 3306, id: "id-2" }),
+      new TopologyQueryResult({ host: "instance-3", isWriter: false, weight: 75, lastUpdateTime: timestamp, port: 3306, id: "id-3" })
     ];
 
     const result = topologyUtils.createHosts(queryResults, initialHost, clusterInstanceTemplate);
@@ -207,7 +207,17 @@ describe("testTopologyUtils", () => {
       hostAvailabilityStrategy: new SimpleHostAvailabilityStrategy()
     });
 
-    const queryResults: TopologyQueryResult[] = [new TopologyQueryResult("instance-1", true, 100, timestamp, 3306, "id-1", "custom-endpoint.com")];
+    const queryResults: TopologyQueryResult[] = [
+      new TopologyQueryResult({
+        host: "instance-1",
+        isWriter: true,
+        weight: 100,
+        lastUpdateTime: timestamp,
+        port: 3306,
+        id: "id-1",
+        endpoint: "custom-endpoint.com"
+      })
+    ];
 
     const result = topologyUtils.createHosts(queryResults, initialHost, clusterInstanceTemplate);
 
@@ -231,7 +241,15 @@ describe("testTopologyUtils", () => {
       hostAvailabilityStrategy: new SimpleHostAvailabilityStrategy()
     });
 
-    const queryResults: TopologyQueryResult[] = [new TopologyQueryResult("instance-1", true, 100, timestamp, undefined, "id-1")];
+    const queryResults: TopologyQueryResult[] = [
+      new TopologyQueryResult({
+        host: "instance-1",
+        isWriter: true,
+        weight: 100,
+        lastUpdateTime: timestamp,
+        id: "id-1"
+      })
+    ];
 
     const result = topologyUtils.createHosts(queryResults, initialHost, clusterInstanceTemplate);
 
@@ -363,8 +381,8 @@ describe("testTopologyUtils", () => {
     });
 
     const queryResults: TopologyQueryResult[] = [
-      new TopologyQueryResult("instance-1", false, 100, oldTimestamp, 3306, "id-1"),
-      new TopologyQueryResult("instance-1", false, 50, newTimestamp, 3306, "id-1-updated")
+      new TopologyQueryResult({ host: "instance-1", isWriter: false, weight: 100, lastUpdateTime: oldTimestamp, port: 3306, id: "id-1" }),
+      new TopologyQueryResult({ host: "instance-1", isWriter: false, weight: 50, lastUpdateTime: newTimestamp, port: 3306, id: "id-1-updated" })
     ];
 
     const result = topologyUtils.createHosts(queryResults, initialHost, clusterInstanceTemplate);

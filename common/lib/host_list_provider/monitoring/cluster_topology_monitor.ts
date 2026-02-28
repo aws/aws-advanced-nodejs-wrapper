@@ -230,7 +230,7 @@ export class ClusterTopologyMonitorImpl implements ClusterTopologyMonitor {
             } else {
               const pair: [string, string] = await this.topologyUtils.getInstanceId(this.monitoringClient);
               const instanceTemplate: HostInfo = await this.getInstanceTemplate(pair[1], this.monitoringClient);
-              this.writerHostInfo = this.topologyUtils.createHost(pair[0], pair[1], true, 0, null, this.initialHostInfo, instanceTemplate);
+              this.writerHostInfo = this.topologyUtils.createHost(pair[0], pair[1], true, 0, Date.now(), this.initialHostInfo, instanceTemplate);
               logger.debug(Messages.get("ClusterTopologyMonitor.writerMonitoringConnection", this.writerHostInfo.host));
             }
           }

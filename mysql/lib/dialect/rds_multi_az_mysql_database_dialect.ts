@@ -26,11 +26,8 @@ import { RdsHostListProvider } from "../../../common/lib/host_list_provider/rds_
 import { FailoverRestriction } from "../../../common/lib/plugins/failover/failover_restriction";
 import { WrapperProperties } from "../../../common/lib/wrapper_property";
 import { PluginService } from "../../../common/lib/plugin_service";
-import {
-  MonitoringRdsHostListProvider
-} from "../../../common/lib/host_list_provider/monitoring/monitoring_host_list_provider";
+import { MonitoringRdsHostListProvider } from "../../../common/lib/host_list_provider/monitoring/monitoring_host_list_provider";
 import { TopologyQueryResult, TopologyUtils } from "../../../common/lib/host_list_provider/topology_utils";
-import { RdsTopologyUtils } from "../../../common/lib/host_list_provider/aurora_topology_utils";
 
 export class RdsMultiAZClusterMySQLDatabaseDialect extends MySQLDatabaseDialect implements TopologyAwareDatabaseDialect {
   private static readonly TOPOLOGY_QUERY: string = "SELECT id, endpoint, port FROM mysql.rds_topology";
@@ -75,7 +72,7 @@ export class RdsMultiAZClusterMySQLDatabaseDialect extends MySQLDatabaseDialect 
   }
 
   getHostListProvider(props: Map<string, any>, originalUrl: string, hostListProviderService: HostListProviderService): HostListProvider {
-    const topologyUtils: TopologyUtils = new RdsTopologyUtils(this, hostListProviderService.getHostInfoBuilder());
+    const topologyUtils: TopologyUtils = new TopologyUtils(this, hostListProviderService.getHostInfoBuilder());
     if (WrapperProperties.PLUGINS.get(props).includes("failover2")) {
       return new MonitoringRdsHostListProvider(
         props,
@@ -125,7 +122,13 @@ export class RdsMultiAZClusterMySQLDatabaseDialect extends MySQLDatabaseDialect 
       const id: string = row["id"];
       const port: number = row["port"];
       const isWriter: boolean = id === writerHostId;
-      const host: TopologyQueryResult = new TopologyQueryResult(endpoint.substring(0, endpoint.indexOf(".")), isWriter, 0, Date.now(), port);
+      const host: TopologyQueryResult = new TopologyQueryResult({
+        host: endpoint.substring(0, endpoint.indexOf(".")),
+        isWriter: isWriter,
+        weight: 0,
+        lastUpdateTime: Date.now(),
+        port: port
+      });
       hosts.push(host);
     });
     return hosts;

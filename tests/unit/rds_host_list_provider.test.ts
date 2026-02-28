@@ -205,7 +205,14 @@ describe("testRdsHostListProvider", () => {
   });
 
   it("testIdentifyConnectionHostInTopology", async () => {
-    when(mockDialect.queryForTopology(anything())).thenResolve([new TopologyQueryResult("instance-1", true, HostInfo.DEFAULT_WEIGHT, Date.now())]);
+    when(mockDialect.queryForTopology(anything())).thenResolve([
+      new TopologyQueryResult({
+        host: "instance-1",
+        isWriter: true,
+        weight: HostInfo.DEFAULT_WEIGHT,
+        lastUpdateTime: Date.now()
+      })
+    ]);
 
     when(await mockTopologyUtils.getInstanceId(anything())).thenReturn(["instance1", "instance1"]);
     const rdsHostListProvider = getRdsHostListProvider("foo");

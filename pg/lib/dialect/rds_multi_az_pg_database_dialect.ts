@@ -19,7 +19,6 @@ import { HostListProvider } from "../../../common/lib/host_list_provider/host_li
 import { ClientWrapper } from "../../../common/lib/client_wrapper";
 import { AwsWrapperError, HostRole } from "../../../common/lib";
 import { Messages } from "../../../common/lib/utils/messages";
-import { logger } from "../../../common/logutils";
 import { TopologyAwareDatabaseDialect } from "../../../common/lib/database_dialect/topology_aware_database_dialect";
 import { RdsHostListProvider } from "../../../common/lib/host_list_provider/rds_host_list_provider";
 import { PgDatabaseDialect } from "./pg_database_dialect";
@@ -27,11 +26,8 @@ import { ErrorHandler } from "../../../common/lib/error_handler";
 import { MultiAzPgErrorHandler } from "../multi_az_pg_error_handler";
 import { WrapperProperties } from "../../../common/lib/wrapper_property";
 import { PluginService } from "../../../common/lib/plugin_service";
-import {
-  MonitoringRdsHostListProvider
-} from "../../../common/lib/host_list_provider/monitoring/monitoring_host_list_provider";
+import { MonitoringRdsHostListProvider } from "../../../common/lib/host_list_provider/monitoring/monitoring_host_list_provider";
 import { TopologyQueryResult, TopologyUtils } from "../../../common/lib/host_list_provider/topology_utils";
-import { RdsTopologyUtils } from "../../../common/lib/host_list_provider/aurora_topology_utils";
 
 export class RdsMultiAZClusterPgDatabaseDialect extends PgDatabaseDialect implements TopologyAwareDatabaseDialect {
   constructor() {
@@ -69,7 +65,7 @@ export class RdsMultiAZClusterPgDatabaseDialect extends PgDatabaseDialect implem
   }
 
   getHostListProvider(props: Map<string, any>, originalUrl: string, hostListProviderService: HostListProviderService): HostListProvider {
-    const topologyUtils: TopologyUtils = new RdsTopologyUtils(this, hostListProviderService.getHostInfoBuilder());
+    const topologyUtils: TopologyUtils = new TopologyUtils(this, hostListProviderService.getHostInfoBuilder());
     if (WrapperProperties.PLUGINS.get(props).includes("failover2")) {
       return new MonitoringRdsHostListProvider(
         props,
@@ -119,7 +115,13 @@ export class RdsMultiAZClusterPgDatabaseDialect extends PgDatabaseDialect implem
       const id: string = row["id"];
       const port: number = row["port"];
       const isWriter: boolean = id === writerHostId;
-      const host: TopologyQueryResult = new TopologyQueryResult(endpoint.substring(0, endpoint.indexOf(".")), isWriter, 0, Date.now(), port);
+      const host: TopologyQueryResult = new TopologyQueryResult({
+        host: endpoint.substring(0, endpoint.indexOf(".")),
+        isWriter: isWriter,
+        weight: 0,
+        lastUpdateTime: Date.now(),
+        port: port
+      });
       hosts.push(host);
     });
     return hosts;

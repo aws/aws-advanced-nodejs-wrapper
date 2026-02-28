@@ -19,7 +19,7 @@ import { HostListProviderService } from "../../../common/lib/host_list_provider_
 import { HostListProvider } from "../../../common/lib/host_list_provider/host_list_provider";
 import { RdsHostListProvider } from "../../../common/lib/host_list_provider/rds_host_list_provider";
 import { TopologyAwareDatabaseDialect } from "../../../common/lib/database_dialect/topology_aware_database_dialect";
-import { HostInfo, HostRole } from "../../../common/lib";
+import { HostRole } from "../../../common/lib";
 import { ClientWrapper } from "../../../common/lib/client_wrapper";
 import { DatabaseDialectCodes } from "../../../common/lib/database_dialect/database_dialect_codes";
 import { LimitlessDatabaseDialect } from "../../../common/lib/database_dialect/limitless_database_dialect";
@@ -28,7 +28,6 @@ import { MonitoringRdsHostListProvider } from "../../../common/lib/host_list_pro
 import { PluginService } from "../../../common/lib/plugin_service";
 import { BlueGreenDialect, BlueGreenResult } from "../../../common/lib/database_dialect/blue_green_dialect";
 import { TopologyQueryResult, TopologyUtils } from "../../../common/lib/host_list_provider/topology_utils";
-import { RdsTopologyUtils } from "../../../common/lib/host_list_provider/aurora_topology_utils";
 
 export class AuroraPgDatabaseDialect extends PgDatabaseDialect implements TopologyAwareDatabaseDialect, LimitlessDatabaseDialect, BlueGreenDialect {
   private static readonly VERSION = process.env.npm_package_version;
@@ -55,7 +54,7 @@ export class AuroraPgDatabaseDialect extends PgDatabaseDialect implements Topolo
   private static readonly TOPOLOGY_TABLE_EXIST_QUERY: string = "SELECT pg_catalog.'get_blue_green_fast_switchover_metadata'::regproc";
 
   getHostListProvider(props: Map<string, any>, originalUrl: string, hostListProviderService: HostListProviderService): HostListProvider {
-    const topologyUtils: TopologyUtils = new RdsTopologyUtils(this, hostListProviderService.getHostInfoBuilder());
+    const topologyUtils: TopologyUtils = new TopologyUtils(this, hostListProviderService.getHostInfoBuilder());
     if (WrapperProperties.PLUGINS.get(props).includes("failover2")) {
       return new MonitoringRdsHostListProvider(
         props,
@@ -80,12 +79,12 @@ export class AuroraPgDatabaseDialect extends PgDatabaseDialect implements Topolo
       const cpuUtilization: number = row["cpu"];
       const hostLag: number = row["lag"];
       const lastUpdateTime: number = row["last_update_timestamp"] ? Date.parse(row["last_update_timestamp"]) : Date.now();
-      const host: TopologyQueryResult = new TopologyQueryResult(
-        hostName,
+      const host: TopologyQueryResult = new TopologyQueryResult({
+        host: hostName,
         isWriter,
-        Math.round(hostLag) * 100 + Math.round(cpuUtilization),
+        weight: Math.round(hostLag) * 100 + Math.round(cpuUtilization),
         lastUpdateTime
-      );
+      });
       results.push(host);
     });
     return results;
