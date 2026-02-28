@@ -23,7 +23,7 @@ import { HostRole } from "../../../common/lib/host_role";
 import { Messages } from "../../../common/lib/utils/messages";
 import { logger } from "../../../common/logutils";
 import { AwsWrapperError } from "../../../common/lib/utils/errors";
-import { TopologyAwareDatabaseDialect } from "../../../common/lib/topology_aware_database_dialect";
+import { TopologyAwareDatabaseDialect } from "../../../common/lib/database_dialect/topology_aware_database_dialect";
 import { RdsHostListProvider } from "../../../common/lib/host_list_provider/rds_host_list_provider";
 import { FailoverRestriction } from "../../../common/lib/plugins/failover/failover_restriction";
 import { WrapperProperties } from "../../../common/lib/wrapper_property";

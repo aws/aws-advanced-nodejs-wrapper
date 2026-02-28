@@ -19,7 +19,7 @@ import { HostListProviderService } from "../../../common/lib/host_list_provider_
 import { HostListProvider } from "../../../common/lib/host_list_provider/host_list_provider";
 import { RdsHostListProvider } from "../../../common/lib/host_list_provider/rds_host_list_provider";
 import { HostInfo } from "../../../common/lib/host_info";
-import { TopologyAwareDatabaseDialect } from "../../../common/lib/topology_aware_database_dialect";
+import { TopologyAwareDatabaseDialect } from "../../../common/lib/database_dialect/topology_aware_database_dialect";
 import { HostRole } from "../../../common/lib/host_role";
 import { ClientWrapper } from "../../../common/lib/client_wrapper";
 import { DatabaseDialectCodes } from "../../../common/lib/database_dialect/database_dialect_codes";
@@ -87,7 +87,7 @@ export class AuroraMySQLDatabaseDialect extends MySQLDatabaseDialect implements 
     try {
       const writerId: string = res[0][0]["server_id"];
       return writerId ? writerId : null;
-    } catch (e) {
+    } catch (e: any) {
       if (e.message.includes("Cannot read properties of undefined")) {
         // Query returned no result, targetClient is not connected to a writer.
         return null;
