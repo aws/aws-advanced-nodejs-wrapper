@@ -15,7 +15,6 @@
 */
 
 import { HostInfo } from "../../host_info";
-import { CacheMap } from "../../utils/cache_map";
 import { PluginService } from "../../plugin_service";
 import { HostAvailability } from "../../host_availability/host_availability";
 import { logTopology, sleep } from "../../utils/utils";
@@ -27,7 +26,9 @@ import { MonitoringRdsHostListProvider } from "./monitoring_host_list_provider";
 import { Messages } from "../../utils/messages";
 import { CoreServicesContainer } from "../../utils/core_services_container";
 import { Topology } from "../topology";
-import { StorageService, StorageServiceImpl } from "../../utils/storage/storage_service";
+import { StorageService } from "../../utils/storage/storage_service";
+import { TopologyUtils } from "../topology_utils";
+import { RdsUtils } from "../../utils/rds_utils";
 
 export interface ClusterTopologyMonitor {
   forceRefresh(client: ClientWrapper, timeoutMs: number): Promise<HostInfo[]>;
@@ -49,6 +50,9 @@ export class ClusterTopologyMonitorImpl implements ClusterTopologyMonitor {
   private readonly refreshRateMs: number;
   private readonly highRefreshRateMs: number;
   private readonly storageService: StorageService;
+  private readonly topologyUtils: TopologyUtils;
+  private readonly rdsUtils: RdsUtils = new RdsUtils();
+  private readonly instanceTemplate: HostInfo;
 
   private writerHostInfo: HostInfo = null;
   private isVerifiedWriterConnection: boolean = false;
@@ -74,17 +78,21 @@ export class ClusterTopologyMonitorImpl implements ClusterTopologyMonitor {
   private requestToUpdateTopology: boolean = false;
 
   constructor(
+    topologyUtils: TopologyUtils,
     clusterId: string,
     initialHostInfo: HostInfo,
     props: Map<string, any>,
+    instanceTemplate: HostInfo,
     pluginService: PluginService,
     hostListProvider: MonitoringRdsHostListProvider,
     refreshRateMs: number,
     highRefreshRateMs: number
   ) {
+    this.topologyUtils = topologyUtils;
     this.clusterId = clusterId;
     this.storageService = CoreServicesContainer.getInstance().getStorageService(); // TODO: store serviceContainer instead
     this.initialHostInfo = initialHostInfo;
+    this.instanceTemplate = instanceTemplate;
     this._pluginService = pluginService;
     this._hostListProvider = hostListProvider;
     this.refreshRateMs = refreshRateMs;
@@ -212,12 +220,19 @@ export class ClusterTopologyMonitorImpl implements ClusterTopologyMonitor {
         this.monitoringClient = client;
         logger.debug(Messages.get("ClusterTopologyMonitor.openedMonitoringConnection", this.initialHostInfo.host));
         try {
-          const writerId = await this.getWriterHostIdIfConnected(this.monitoringClient, this.initialHostInfo.hostId);
-          if (writerId) {
+          if (await this.topologyUtils.isWriterInstance(this.monitoringClient)) {
             this.isVerifiedWriterConnection = true;
-            this.writerHostInfo = this.initialHostInfo;
-            logger.info(Messages.get("ClusterTopologyMonitor.writerMonitoringConnection", this.initialHostInfo.host));
-            writerVerifiedByThisTask = true;
+
+            if (this.rdsUtils.isRdsInstance(this.initialHostInfo.host)) {
+              this.writerHostInfo = this.initialHostInfo;
+              logger.info(Messages.get("ClusterTopologyMonitor.writerMonitoringConnection", this.writerHostInfo.host));
+              writerVerifiedByThisTask = true;
+            } else {
+              const pair: [string, string] = await this.topologyUtils.getInstanceId(this.monitoringClient);
+              const instanceTemplate: HostInfo = await this.getInstanceTemplate(pair[1], this.monitoringClient);
+              this.writerHostInfo = this.topologyUtils.createHost(pair[0], pair[1], true, 0, Date.now(), this.initialHostInfo, instanceTemplate);
+              logger.debug(Messages.get("ClusterTopologyMonitor.writerMonitoringConnection", this.writerHostInfo.host));
+            }
           }
         } catch (error) {
           // Do nothing.
@@ -243,6 +258,10 @@ export class ClusterTopologyMonitorImpl implements ClusterTopologyMonitor {
       await this.updateMonitoringClient(null);
     }
     return hosts;
+  }
+
+  protected getInstanceTemplate(hostId: string, targetClient: ClientWrapper): Promise<HostInfo> {
+    return Promise.resolve(this.instanceTemplate);
   }
 
   updateTopologyCache(hosts: HostInfo[]): void {
@@ -513,7 +532,7 @@ export class HostMonitor {
     let hosts: HostInfo[];
     try {
       hosts = await this.monitor.hostListProvider.sqlQueryForTopology(client);
-      if (hosts === null || hosts.length === 0) {
+      if (hosts === null) {
         return;
       }
       this.monitor.hostMonitorsLatestTopology = hosts;

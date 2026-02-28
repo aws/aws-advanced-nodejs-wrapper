@@ -17,8 +17,7 @@
 import { AuroraPgDatabaseDialect } from "./aurora_pg_database_dialect";
 import { GlobalAuroraTopologyDialect } from "../../../common/lib/database_dialect/topology_aware_database_dialect";
 import { ClientWrapper } from "../../../common/lib/client_wrapper";
-import { HostInfo } from "../../../common/lib";
-import { HostListProvider } from "../../../common/lib/host_list_provider/host_list_provider";
+import { TopologyQueryResult } from "../../../common/lib/host_list_provider/topology_utils";
 
 export class GlobalAuroraPgDatabaseDialect extends AuroraPgDatabaseDialect implements GlobalAuroraTopologyDialect {
   private static readonly GLOBAL_STATUS_FUNC_EXISTS_QUERY = "select 'aurora_global_db_status'::regproc";
@@ -78,18 +77,23 @@ export class GlobalAuroraPgDatabaseDialect extends AuroraPgDatabaseDialect imple
     return [];
   }
 
-  async queryForTopology(targetClient: ClientWrapper, hostListProvider: HostListProvider): Promise<HostInfo[]> {
+  // TODO: implement GetHostListProvider once GDBHostListProvider is implemented
+
+  async queryForTopology(targetClient: ClientWrapper): Promise<TopologyQueryResult[]> {
     const res = await targetClient.query(GlobalAuroraPgDatabaseDialect.GLOBAL_TOPOLOGY_QUERY);
-    const hosts: HostInfo[] = [];
+    const hosts: TopologyQueryResult[] = [];
     const rows: any[] = res.rows;
     rows.forEach((row) => {
-      // According to the topology query the result set
-      // should contain 4 columns: node ID, 1/0 (writer/reader), CPU utilization, node lag in time.
       const hostName: string = row["server_id"];
       const isWriter: boolean = row["is_writer"];
-      const hostLag: number = row["visibility_lag_in_msec"] ?? 0; // visibility_lag_in_msec is nullable.
-      const awsRegion: string = row["aws_region"]; // TODO: update this after topologyUtils PR is merged.
-      const host: HostInfo = hostListProvider.createHost(hostName, isWriter, Math.round(hostLag) * 100, Date.now() /* TODO: update this after topologyUtils PR is merged */);
+      const hostLag: number = row["visibility_lag_in_msec"] ?? 0;
+      const awsRegion: string = row["aws_region"];
+      const host: TopologyQueryResult = new TopologyQueryResult({
+        host: hostName,
+        isWriter: isWriter,
+        weight: Math.round(hostLag) * 100,
+        awsRegion: awsRegion
+      });
       hosts.push(host);
     });
     return hosts;

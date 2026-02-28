@@ -40,9 +40,7 @@ export interface HostListProvider {
 
   getHostRole(client: ClientWrapper, dialect: DatabaseDialect): Promise<HostRole>;
 
-  identifyConnection(targetClient: ClientWrapper, dialect: DatabaseDialect): Promise<HostInfo | null>;
-
-  createHost(host: string, isWriter: boolean, weight: number, lastUpdateTime: number, port?: number): HostInfo;
+  identifyConnection(targetClient: ClientWrapper): Promise<HostInfo | null>;
 
   getHostProviderType(): string;
 

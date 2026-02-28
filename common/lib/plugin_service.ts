@@ -513,7 +513,7 @@ export class PluginServiceImpl implements PluginService, HostListProviderService
     if (!provider) {
       return Promise.reject();
     }
-    return provider.identifyConnection(targetClient, this.dialect);
+    return provider.identifyConnection(targetClient);
   }
 
   connect(hostInfo: HostInfo, props: Map<string, any>): Promise<ClientWrapper>;
