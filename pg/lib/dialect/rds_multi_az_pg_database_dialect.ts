@@ -120,7 +120,8 @@ export class RdsMultiAZClusterPgDatabaseDialect extends PgDatabaseDialect implem
         isWriter: isWriter,
         weight: 0,
         lastUpdateTime: Date.now(),
-        port: port
+        port: port,
+        id: id
       });
       hosts.push(host);
     });
