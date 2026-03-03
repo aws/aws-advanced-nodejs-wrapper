@@ -17,9 +17,8 @@
 import { HostListProviderService } from "../../../common/lib/host_list_provider_service";
 import { HostListProvider } from "../../../common/lib/host_list_provider/host_list_provider";
 import { ClientWrapper } from "../../../common/lib/client_wrapper";
-import { AwsWrapperError, HostInfo, HostRole } from "../../../common/lib";
+import { AwsWrapperError, HostRole } from "../../../common/lib";
 import { Messages } from "../../../common/lib/utils/messages";
-import { logger } from "../../../common/logutils";
 import { TopologyAwareDatabaseDialect } from "../../../common/lib/database_dialect/topology_aware_database_dialect";
 import { RdsHostListProvider } from "../../../common/lib/host_list_provider/rds_host_list_provider";
 import { PgDatabaseDialect } from "./pg_database_dialect";
@@ -28,6 +27,7 @@ import { MultiAzPgErrorHandler } from "../multi_az_pg_error_handler";
 import { WrapperProperties } from "../../../common/lib/wrapper_property";
 import { PluginService } from "../../../common/lib/plugin_service";
 import { MonitoringRdsHostListProvider } from "../../../common/lib/host_list_provider/monitoring/monitoring_host_list_provider";
+import { TopologyQueryResult, TopologyUtils } from "../../../common/lib/host_list_provider/topology_utils";
 
 export class RdsMultiAZClusterPgDatabaseDialect extends PgDatabaseDialect implements TopologyAwareDatabaseDialect {
   constructor() {
@@ -44,6 +44,10 @@ export class RdsMultiAZClusterPgDatabaseDialect extends PgDatabaseDialect implem
   private static readonly HOST_ID_QUERY_COLUMN_NAME: string = "dbi_resource_id";
   private static readonly IS_READER_QUERY: string = "SELECT pg_catalog.pg_is_in_recovery() AS is_reader";
   private static readonly IS_READER_QUERY_COLUMN_NAME: string = "is_reader";
+  protected static readonly INSTANCE_ID_QUERY: string =
+    "SELECT id as instance_id, SUBSTRING(endpoint FROM 0 FOR POSITION('.' IN endpoint)) as instance_name " +
+    "FROM rds_tools.show_topology() " +
+    "WHERE id OPERATOR(pg_catalog.=) rds_tools.dbi_resource_id()";
 
   async isDialect(targetClient: ClientWrapper): Promise<boolean> {
     const res = await targetClient.query(RdsMultiAZClusterPgDatabaseDialect.WRITER_HOST_FUNC_EXIST_QUERY).catch(() => false);
@@ -61,13 +65,20 @@ export class RdsMultiAZClusterPgDatabaseDialect extends PgDatabaseDialect implem
   }
 
   getHostListProvider(props: Map<string, any>, originalUrl: string, hostListProviderService: HostListProviderService): HostListProvider {
+    const topologyUtils: TopologyUtils = new TopologyUtils(this, hostListProviderService.getHostInfoBuilder());
     if (WrapperProperties.PLUGINS.get(props).includes("failover2")) {
-      return new MonitoringRdsHostListProvider(props, originalUrl, hostListProviderService, <PluginService>(<unknown>hostListProviderService));
+      return new MonitoringRdsHostListProvider(
+        props,
+        originalUrl,
+        topologyUtils,
+        hostListProviderService,
+        <PluginService>(<unknown>hostListProviderService)
+      );
     }
-    return new RdsHostListProvider(props, originalUrl, hostListProviderService);
+    return new RdsHostListProvider(props, originalUrl, topologyUtils, hostListProviderService);
   }
 
-  async queryForTopology(targetClient: ClientWrapper, hostListProvider: HostListProvider): Promise<HostInfo[]> {
+  async queryForTopology(targetClient: ClientWrapper): Promise<TopologyQueryResult[]> {
     try {
       let writerHostId: string = await this.executeTopologyRelatedQuery(
         targetClient,
@@ -80,7 +91,7 @@ export class RdsMultiAZClusterPgDatabaseDialect extends PgDatabaseDialect implem
 
       const res = await targetClient.query(RdsMultiAZClusterPgDatabaseDialect.TOPOLOGY_QUERY);
       const rows: any[] = res.rows;
-      return this.processTopologyQueryResults(hostListProvider, writerHostId, rows);
+      return this.processTopologyQueryResults(writerHostId, rows);
     } catch (error: any) {
       throw new AwsWrapperError(Messages.get("RdsMultiAZPgDatabaseDialect.invalidQuery", error.message));
     }
@@ -95,8 +106,8 @@ export class RdsMultiAZClusterPgDatabaseDialect extends PgDatabaseDialect implem
     return "";
   }
 
-  private async processTopologyQueryResults(hostListProvider: HostListProvider, writerHostId: string, rows: any[]): Promise<HostInfo[]> {
-    const hostMap: Map<string, HostInfo> = new Map<string, HostInfo>();
+  private async processTopologyQueryResults(writerHostId: string, rows: any[]): Promise<TopologyQueryResult[]> {
+    const hosts: TopologyQueryResult[] = [];
     rows.forEach((row) => {
       // According to the topology query the result set
       // should contain 3 columns: endpoint, id, and port
@@ -104,32 +115,16 @@ export class RdsMultiAZClusterPgDatabaseDialect extends PgDatabaseDialect implem
       const id: string = row["id"];
       const port: number = row["port"];
       const isWriter: boolean = id === writerHostId;
-
-      const host: HostInfo = hostListProvider.createHost(endpoint.substring(0, endpoint.indexOf(".")), isWriter, 0, Date.now(), port);
-      host.hostId = id;
-      host.addAlias(endpoint);
-      hostMap.set(host.host, host);
+      const host: TopologyQueryResult = new TopologyQueryResult({
+        host: endpoint.substring(0, endpoint.indexOf(".")),
+        isWriter: isWriter,
+        weight: 0,
+        lastUpdateTime: Date.now(),
+        port: port,
+        id: id
+      });
+      hosts.push(host);
     });
-
-    let hosts: HostInfo[] = [];
-    const writers: HostInfo[] = [];
-
-    for (const [key, info] of hostMap.entries()) {
-      if (info.role !== HostRole.WRITER) {
-        hosts.push(info);
-      } else {
-        writers.push(info);
-      }
-    }
-
-    const writerCount: number = writers.length;
-    if (writerCount === 0) {
-      logger.error(Messages.get("RdsMultiAzDatabaseDialect.invalidTopology", this.dialectName));
-      hosts = [];
-    } else {
-      hosts.push(writers[0]);
-    }
-
     return hosts;
   }
 
@@ -143,7 +138,7 @@ export class RdsMultiAZClusterPgDatabaseDialect extends PgDatabaseDialect implem
       : HostRole.READER;
   }
 
-  async getWriterId(targetClient: ClientWrapper): Promise<string> {
+  async getWriterId(targetClient: ClientWrapper): Promise<string | null> {
     try {
       const writerHostId: string = await this.executeTopologyRelatedQuery(
         targetClient,
@@ -153,6 +148,17 @@ export class RdsMultiAZClusterPgDatabaseDialect extends PgDatabaseDialect implem
       const currentConnection = await this.identifyConnection(targetClient);
 
       return currentConnection && currentConnection === writerHostId ? currentConnection : null;
+    } catch (error: any) {
+      throw new AwsWrapperError(Messages.get("RdsMultiAZPgDatabaseDialect.invalidQuery", error.message));
+    }
+  }
+
+  async getInstanceId(targetClient: ClientWrapper): Promise<[string, string]> {
+    try {
+      const res = await targetClient.query(RdsMultiAZClusterPgDatabaseDialect.INSTANCE_ID_QUERY);
+      const instance_id = res.rows[0]["instance_id"];
+      const instance_name = res.rows[0]["instance_name"];
+      return [instance_id, instance_name];
     } catch (error: any) {
       throw new AwsWrapperError(Messages.get("RdsMultiAZPgDatabaseDialect.invalidQuery", error.message));
     }
