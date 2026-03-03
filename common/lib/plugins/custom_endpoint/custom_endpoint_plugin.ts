@@ -31,11 +31,14 @@ import { sleep } from "../../utils/utils";
 import { CustomEndpointMonitor, CustomEndpointMonitorImpl } from "./custom_endpoint_monitor_impl";
 import { SubscribedMethodHelper } from "../../utils/subscribed_method_helper";
 import { CanReleaseResources } from "../../can_release_resources";
+import { RdsUrlType } from "../../utils/rds_url_type";
+import { GDBRegionUtils } from "../../utils/gdb_region_utils";
 
 export class CustomEndpointPlugin extends AbstractConnectionPlugin implements CanReleaseResources {
   private static readonly TELEMETRY_WAIT_FOR_INFO_COUNTER = "customEndpoint.waitForInfo.counter";
   private static SUBSCRIBED_METHODS: Set<string> = new Set<string>(SubscribedMethodHelper.NETWORK_BOUND_METHODS);
   private static readonly CACHE_CLEANUP_NANOS = BigInt(60_000_000_000);
+  private static readonly regionUtils: RegionUtils = new RegionUtils();
 
   private static readonly rdsUtils = new RdsUtils();
   protected static readonly monitors: SlidingExpirationCache<string, CustomEndpointMonitor> = new SlidingExpirationCache(
@@ -106,8 +109,7 @@ export class CustomEndpointPlugin extends AbstractConnectionPlugin implements Ca
       throw new AwsWrapperError(Messages.get("CustomEndpointPlugin.errorParsingEndpointIdentifier", this.customEndpointHostInfo.host));
     }
 
-    const regionUtils = new RegionUtils();
-    this.region = await regionUtils.getRegion(WrapperProperties.CUSTOM_ENDPOINT_REGION.name, this.customEndpointHostInfo, props);
+    this.region = await CustomEndpointPlugin.regionUtils.getRegion(WrapperProperties.CUSTOM_ENDPOINT_REGION.name, this.customEndpointHostInfo, props);
     if (!this.region) {
       throw new AwsWrapperError(Messages.get("CustomEndpointPlugin.unableToDetermineRegion", WrapperProperties.CUSTOM_ENDPOINT_REGION.name));
     }

@@ -25,7 +25,7 @@ import { TelemetryTraceLevel } from "./telemetry/telemetry_trace_level";
 import { HostInfoBuilder } from "../host_info_builder";
 
 export class IamAuthUtils {
-  private readonly TELEMETRY_FETCH_TOKEN = "fetch IAM token";
+  private static readonly TELEMETRY_FETCH_TOKEN = "fetch IAM token";
 
   public getIamHost(props: Map<string, any>, hostInfo: HostInfo): HostInfo {
     const iamHost: string | null = WrapperProperties.IAM_HOST.get(props);
@@ -65,7 +65,7 @@ export class IamAuthUtils {
     pluginService: PluginService
   ): Promise<string> {
     const telemetryFactory = pluginService.getTelemetryFactory();
-    const telemetryContext = telemetryFactory.openTelemetryContext(this.TELEMETRY_FETCH_TOKEN, TelemetryTraceLevel.NESTED);
+    const telemetryContext = telemetryFactory.openTelemetryContext(IamAuthUtils.TELEMETRY_FETCH_TOKEN, TelemetryTraceLevel.NESTED);
     return await telemetryContext.start(async () => {
       const signer = new Signer({
         hostname: hostname,
