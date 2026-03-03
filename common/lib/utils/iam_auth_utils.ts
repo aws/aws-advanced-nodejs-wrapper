@@ -16,23 +16,26 @@
 
 import { logger } from "../../logutils";
 import { HostInfo } from "../host_info";
-import { WrapperProperties, WrapperProperty } from "../wrapper_property";
-import { AwsWrapperError } from "./errors";
+import { WrapperProperties } from "../wrapper_property";
 import { Messages } from "./messages";
-import { RdsUtils } from "./rds_utils";
 import { Signer } from "@aws-sdk/rds-signer";
 import { AwsCredentialIdentity, AwsCredentialIdentityProvider } from "@smithy/types/dist-types/identity/awsCredentialIdentity";
 import { PluginService } from "../plugin_service";
 import { TelemetryTraceLevel } from "./telemetry/telemetry_trace_level";
+import { HostInfoBuilder } from "../host_info_builder";
 
 export class IamAuthUtils {
-  private static readonly TELEMETRY_FETCH_TOKEN = "fetch IAM token";
+  private readonly TELEMETRY_FETCH_TOKEN = "fetch IAM token";
 
-  public static getIamHost(props: Map<string, any>, hostInfo: HostInfo): string {
-    return WrapperProperties.IAM_HOST.get(props) ? WrapperProperties.IAM_HOST.get(props) : hostInfo.host;
+  public getIamHost(props: Map<string, any>, hostInfo: HostInfo): HostInfo {
+    const iamHost: string | null = WrapperProperties.IAM_HOST.get(props);
+
+    return iamHost
+      ? new HostInfoBuilder({ hostAvailabilityStrategy: hostInfo.hostAvailabilityStrategy }).copyFrom(hostInfo).withHost(iamHost).build()
+      : hostInfo;
   }
 
-  public static getIamPort(props: Map<string, any>, hostInfo: HostInfo, defaultPort: number): number {
+  public getIamPort(props: Map<string, any>, hostInfo: HostInfo, defaultPort: number): number {
     const port = WrapperProperties.IAM_DEFAULT_PORT.get(props);
     if (port) {
       if (isNaN(port) || port <= 0) {
@@ -49,23 +52,11 @@ export class IamAuthUtils {
     }
   }
 
-  public static getRdsRegion(hostname: string, rdsUtils: RdsUtils, props: Map<string, any>, wrapperProperty: WrapperProperty<any>): string {
-    const rdsRegion = rdsUtils.getRdsRegion(hostname);
-
-    if (!rdsRegion) {
-      const errorMessage = Messages.get("Authentication.unsupportedHostname", hostname);
-      logger.debug(errorMessage);
-      throw new AwsWrapperError(errorMessage);
-    }
-
-    return wrapperProperty.get(props) ? wrapperProperty.get(props) : rdsRegion;
-  }
-
-  public static getCacheKey(port: number, user?: string, hostname?: string, region?: string): string {
+  public getCacheKey(port: number, user?: string, hostname?: string, region?: string): string {
     return `${region}:${hostname}:${port}:${user}`;
   }
 
-  public static async generateAuthenticationToken(
+  public async generateAuthenticationToken(
     hostname: string,
     port: number,
     region: string,
@@ -74,7 +65,7 @@ export class IamAuthUtils {
     pluginService: PluginService
   ): Promise<string> {
     const telemetryFactory = pluginService.getTelemetryFactory();
-    const telemetryContext = telemetryFactory.openTelemetryContext(IamAuthUtils.TELEMETRY_FETCH_TOKEN, TelemetryTraceLevel.NESTED);
+    const telemetryContext = telemetryFactory.openTelemetryContext(this.TELEMETRY_FETCH_TOKEN, TelemetryTraceLevel.NESTED);
     return await telemetryContext.start(async () => {
       const signer = new Signer({
         hostname: hostname,

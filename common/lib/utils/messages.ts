@@ -167,6 +167,8 @@ const MESSAGES: Record<string, string> = {
     "Okta SAML Assertion request failed with HTTP status '%s', reason phrase '%s', and response '%s'",
   "SamlCredentialsProviderFactory.getSamlAssertionFailed": "Failed to get SAML Assertion due to error: '%s'",
   "SamlAuthPlugin.unhandledError": "Unhandled error: '%s'",
+  "SamlAuthPlugin.unableToDetermineRegion":
+    "Unable to determine connection region. If you are using a non-standard RDS URL, please set the '%s' property.",
   "HostAvailabilityStrategy.invalidMaxRetries":
     "Invalid value of '%s' for configuration parameter `hostAvailabilityStrategyMaxRetries`. It must be an integer greater or equal to 1.",
   "HostAvailabilityStrategy.invalidInitialBackoffTime":
