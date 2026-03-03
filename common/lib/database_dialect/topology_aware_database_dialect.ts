@@ -14,13 +14,12 @@
  * limitations under the License.
  */
 
-import { HostInfo } from "../host_info";
-import { HostListProvider } from "../host_list_provider/host_list_provider";
 import { HostRole } from "../host_role";
 import { ClientWrapper } from "../client_wrapper";
+import { TopologyQueryResult } from "../host_list_provider/topology_utils";
 
 export interface TopologyAwareDatabaseDialect {
-  queryForTopology(client: ClientWrapper, hostListProvider: HostListProvider): Promise<HostInfo[]>;
+  queryForTopology(client: ClientWrapper): Promise<TopologyQueryResult[]>;
 
   identifyConnection(targetClient: ClientWrapper): Promise<string>;
 
@@ -28,6 +27,8 @@ export interface TopologyAwareDatabaseDialect {
 
   // Returns the host id of the targetClient if it is connected to a writer, null otherwise.
   getWriterId(targetClient: ClientWrapper): Promise<string | null>;
+
+  getInstanceId(targetClient: ClientWrapper): Promise<[string, string]>;
 }
 
 export interface GlobalAuroraTopologyDialect extends TopologyAwareDatabaseDialect {

@@ -19,7 +19,7 @@ import { HostListProviderService } from "../../../common/lib/host_list_provider_
 import { HostListProvider } from "../../../common/lib/host_list_provider/host_list_provider";
 import { RdsHostListProvider } from "../../../common/lib/host_list_provider/rds_host_list_provider";
 import { TopologyAwareDatabaseDialect } from "../../../common/lib/database_dialect/topology_aware_database_dialect";
-import { HostInfo, HostRole } from "../../../common/lib";
+import { HostRole } from "../../../common/lib";
 import { ClientWrapper } from "../../../common/lib/client_wrapper";
 import { DatabaseDialectCodes } from "../../../common/lib/database_dialect/database_dialect_codes";
 import { LimitlessDatabaseDialect } from "../../../common/lib/database_dialect/limitless_database_dialect";
@@ -27,6 +27,7 @@ import { WrapperProperties } from "../../../common/lib/wrapper_property";
 import { MonitoringRdsHostListProvider } from "../../../common/lib/host_list_provider/monitoring/monitoring_host_list_provider";
 import { PluginService } from "../../../common/lib/plugin_service";
 import { BlueGreenDialect, BlueGreenResult } from "../../../common/lib/database_dialect/blue_green_dialect";
+import { TopologyQueryResult, TopologyUtils } from "../../../common/lib/host_list_provider/topology_utils";
 
 export class AuroraPgDatabaseDialect extends PgDatabaseDialect implements TopologyAwareDatabaseDialect, LimitlessDatabaseDialect, BlueGreenDialect {
   private static readonly VERSION = process.env.npm_package_version;
@@ -40,6 +41,8 @@ export class AuroraPgDatabaseDialect extends PgDatabaseDialect implements Topolo
   private static readonly EXTENSIONS_SQL: string =
     "SELECT (setting LIKE '%aurora_stat_utils%') AS aurora_stat_utils FROM pg_catalog.pg_settings WHERE name OPERATOR(pg_catalog.=) 'rds.extensions'";
   private static readonly HOST_ID_QUERY: string = "SELECT pg_catalog.aurora_db_instance_identifier() as host";
+  protected static readonly INSTANCE_ID_QUERY: string =
+    "SELECT pg_catalog.aurora_db_instance_identifier() as instance_id, pg_catalog.aurora_db_instance_identifier() as instance_name";
   private static readonly IS_READER_QUERY: string = "SELECT pg_catalog.pg_is_in_recovery() as is_reader";
   private static readonly IS_WRITER_QUERY: string =
     "SELECT server_id " +
@@ -51,15 +54,22 @@ export class AuroraPgDatabaseDialect extends PgDatabaseDialect implements Topolo
   private static readonly TOPOLOGY_TABLE_EXIST_QUERY: string = "SELECT pg_catalog.'get_blue_green_fast_switchover_metadata'::regproc";
 
   getHostListProvider(props: Map<string, any>, originalUrl: string, hostListProviderService: HostListProviderService): HostListProvider {
+    const topologyUtils: TopologyUtils = new TopologyUtils(this, hostListProviderService.getHostInfoBuilder());
     if (WrapperProperties.PLUGINS.get(props).includes("failover2")) {
-      return new MonitoringRdsHostListProvider(props, originalUrl, hostListProviderService, <PluginService>(<unknown>hostListProviderService));
+      return new MonitoringRdsHostListProvider(
+        props,
+        originalUrl,
+        topologyUtils,
+        hostListProviderService,
+        <PluginService>(<unknown>hostListProviderService)
+      );
     }
-    return new RdsHostListProvider(props, originalUrl, hostListProviderService);
+    return new RdsHostListProvider(props, originalUrl, topologyUtils, hostListProviderService);
   }
 
-  async queryForTopology(targetClient: ClientWrapper, hostListProvider: HostListProvider): Promise<HostInfo[]> {
+  async queryForTopology(targetClient: ClientWrapper): Promise<TopologyQueryResult[]> {
     const res = await targetClient.query(AuroraPgDatabaseDialect.TOPOLOGY_QUERY);
-    const hosts: HostInfo[] = [];
+    const results: TopologyQueryResult[] = [];
     const rows: any[] = res.rows;
     rows.forEach((row) => {
       // According to the topology query the result set
@@ -69,10 +79,15 @@ export class AuroraPgDatabaseDialect extends PgDatabaseDialect implements Topolo
       const cpuUtilization: number = row["cpu"];
       const hostLag: number = row["lag"];
       const lastUpdateTime: number = row["last_update_timestamp"] ? Date.parse(row["last_update_timestamp"]) : Date.now();
-      const host: HostInfo = hostListProvider.createHost(hostName, isWriter, Math.round(hostLag) * 100 + Math.round(cpuUtilization), lastUpdateTime);
-      hosts.push(host);
+      const host: TopologyQueryResult = new TopologyQueryResult({
+        host: hostName,
+        isWriter,
+        weight: Math.round(hostLag) * 100 + Math.round(cpuUtilization),
+        lastUpdateTime
+      });
+      results.push(host);
     });
-    return hosts;
+    return results;
   }
 
   async identifyConnection(targetClient: ClientWrapper): Promise<string> {
@@ -90,10 +105,25 @@ export class AuroraPgDatabaseDialect extends PgDatabaseDialect implements Topolo
     try {
       const writerId: string = res.rows[0]["server_id"];
       return writerId ? writerId : null;
-    } catch (e) {
+    } catch (e: any) {
       if (e.message.includes("Cannot read properties of undefined")) {
         // Query returned no result, targetClient is not connected to a writer.
         return null;
+      }
+      throw e;
+    }
+  }
+
+  async getInstanceId(targetClient: ClientWrapper): Promise<[string, string]> {
+    const res = await targetClient.query(AuroraPgDatabaseDialect.INSTANCE_ID_QUERY);
+    try {
+      const instance_id: string = res.rows[0]["instance_id"];
+      const instance_name: string = res.rows[0]["instance_name"];
+      return [instance_id, instance_name];
+    } catch (e: any) {
+      if (e.message.includes("Cannot read properties of undefined")) {
+        // Query returned no result, targetClient is not connected to a writer.
+        return ["", ""];
       }
       throw e;
     }

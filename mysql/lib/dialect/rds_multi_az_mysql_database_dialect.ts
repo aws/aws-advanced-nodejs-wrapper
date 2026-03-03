@@ -18,10 +18,8 @@ import { MySQLDatabaseDialect } from "./mysql_database_dialect";
 import { HostListProviderService } from "../../../common/lib/host_list_provider_service";
 import { HostListProvider } from "../../../common/lib/host_list_provider/host_list_provider";
 import { ClientWrapper } from "../../../common/lib/client_wrapper";
-import { HostInfo } from "../../../common/lib/host_info";
 import { HostRole } from "../../../common/lib/host_role";
 import { Messages } from "../../../common/lib/utils/messages";
-import { logger } from "../../../common/logutils";
 import { AwsWrapperError } from "../../../common/lib/utils/errors";
 import { TopologyAwareDatabaseDialect } from "../../../common/lib/database_dialect/topology_aware_database_dialect";
 import { RdsHostListProvider } from "../../../common/lib/host_list_provider/rds_host_list_provider";
@@ -29,6 +27,7 @@ import { FailoverRestriction } from "../../../common/lib/plugins/failover/failov
 import { WrapperProperties } from "../../../common/lib/wrapper_property";
 import { PluginService } from "../../../common/lib/plugin_service";
 import { MonitoringRdsHostListProvider } from "../../../common/lib/host_list_provider/monitoring/monitoring_host_list_provider";
+import { TopologyQueryResult, TopologyUtils } from "../../../common/lib/host_list_provider/topology_utils";
 
 export class RdsMultiAZClusterMySQLDatabaseDialect extends MySQLDatabaseDialect implements TopologyAwareDatabaseDialect {
   private static readonly TOPOLOGY_QUERY: string = "SELECT id, endpoint, port FROM mysql.rds_topology";
@@ -41,6 +40,8 @@ export class RdsMultiAZClusterMySQLDatabaseDialect extends MySQLDatabaseDialect 
   private static readonly HOST_ID_QUERY_COLUMN_NAME: string = "host";
   private static readonly IS_READER_QUERY: string = "SELECT @@read_only AS is_reader";
   private static readonly IS_READER_QUERY_COLUMN_NAME: string = "is_reader";
+  protected static readonly INSTANCE_ID_QUERY: string =
+    "SELECT id as instance_id, SUBSTRING_INDEX(endpoint, '.', 1) as instance_name FROM mysql.rds_topology WHERE id = @@server_id";
 
   async isDialect(targetClient: ClientWrapper): Promise<boolean> {
     let res = await targetClient.query(RdsMultiAZClusterMySQLDatabaseDialect.TOPOLOGY_TABLE_EXIST_QUERY).catch(() => false);
@@ -71,13 +72,20 @@ export class RdsMultiAZClusterMySQLDatabaseDialect extends MySQLDatabaseDialect 
   }
 
   getHostListProvider(props: Map<string, any>, originalUrl: string, hostListProviderService: HostListProviderService): HostListProvider {
+    const topologyUtils: TopologyUtils = new TopologyUtils(this, hostListProviderService.getHostInfoBuilder());
     if (WrapperProperties.PLUGINS.get(props).includes("failover2")) {
-      return new MonitoringRdsHostListProvider(props, originalUrl, hostListProviderService, <PluginService>(<unknown>hostListProviderService));
+      return new MonitoringRdsHostListProvider(
+        props,
+        originalUrl,
+        topologyUtils,
+        hostListProviderService,
+        <PluginService>(<unknown>hostListProviderService)
+      );
     }
-    return new RdsHostListProvider(props, originalUrl, hostListProviderService);
+    return new RdsHostListProvider(props, originalUrl, topologyUtils, hostListProviderService);
   }
 
-  async queryForTopology(targetClient: ClientWrapper, hostListProvider: HostListProvider): Promise<HostInfo[]> {
+  async queryForTopology(targetClient: ClientWrapper): Promise<TopologyQueryResult[]> {
     try {
       let writerHostId: string = await this.executeTopologyRelatedQuery(
         targetClient,
@@ -90,7 +98,7 @@ export class RdsMultiAZClusterMySQLDatabaseDialect extends MySQLDatabaseDialect 
 
       const res = await targetClient.query(RdsMultiAZClusterMySQLDatabaseDialect.TOPOLOGY_QUERY);
       const rows: any[] = res[0];
-      return this.processTopologyQueryResults(hostListProvider, writerHostId, rows);
+      return this.processTopologyQueryResults(writerHostId, rows);
     } catch (error: any) {
       throw new AwsWrapperError(Messages.get("RdsMultiAZMySQLDatabaseDialect.invalidQuery", error.message));
     }
@@ -105,8 +113,8 @@ export class RdsMultiAZClusterMySQLDatabaseDialect extends MySQLDatabaseDialect 
     return "";
   }
 
-  private async processTopologyQueryResults(hostListProvider: HostListProvider, writerHostId: string, rows: any[]): Promise<HostInfo[]> {
-    const hostMap: Map<string, HostInfo> = new Map<string, HostInfo>();
+  private async processTopologyQueryResults(writerHostId: string, rows: any[]): Promise<TopologyQueryResult[]> {
+    const hosts: TopologyQueryResult[] = [];
     rows.forEach((row) => {
       // According to the topology query the result set
       // should contain 3 columns: endpoint, id, and port
@@ -114,39 +122,23 @@ export class RdsMultiAZClusterMySQLDatabaseDialect extends MySQLDatabaseDialect 
       const id: string = row["id"];
       const port: number = row["port"];
       const isWriter: boolean = id === writerHostId;
-
-      const host: HostInfo = hostListProvider.createHost(endpoint.substring(0, endpoint.indexOf(".")), isWriter, 0, Date.now(), port);
-      host.hostId = id;
-      host.addAlias(endpoint);
-      hostMap.set(host.host, host);
+      const host: TopologyQueryResult = new TopologyQueryResult({
+        host: endpoint.substring(0, endpoint.indexOf(".")),
+        isWriter: isWriter,
+        weight: 0,
+        lastUpdateTime: Date.now(),
+        port: port,
+        id: id
+      });
+      hosts.push(host);
     });
-
-    let hosts: HostInfo[] = [];
-    const writers: HostInfo[] = [];
-
-    for (const [key, info] of hostMap.entries()) {
-      if (info.role !== HostRole.WRITER) {
-        hosts.push(info);
-      } else {
-        writers.push(info);
-      }
-    }
-
-    const writerCount: number = writers.length;
-    if (writerCount === 0) {
-      logger.error(Messages.get("RdsMultiAzDatabaseDialect.invalidTopology", this.dialectName));
-      hosts = [];
-    } else {
-      hosts.push(writers[0]);
-    }
-
     return hosts;
   }
 
   async getHostRole(client: ClientWrapper): Promise<HostRole> {
     return (await this.executeTopologyRelatedQuery(
       client,
-      RdsMultiAZClusterMySQLDatabaseDialect.IS_READER_QUERY,
+      RdsMultiAZClusterMySQLDatabaseDialect.INSTANCE_ID_QUERY,
       RdsMultiAZClusterMySQLDatabaseDialect.IS_READER_QUERY_COLUMN_NAME
     )) == "0"
       ? HostRole.WRITER
@@ -166,6 +158,17 @@ export class RdsMultiAZClusterMySQLDatabaseDialect extends MySQLDatabaseDialect 
         return currentConnection ?? null;
       }
       return writerHostId;
+    } catch (error: any) {
+      throw new AwsWrapperError(Messages.get("RdsMultiAZMySQLDatabaseDialect.invalidQuery", error.message));
+    }
+  }
+
+  async getInstanceId(targetClient: ClientWrapper): Promise<[string, string]> {
+    try {
+      const res = await targetClient.query(RdsMultiAZClusterMySQLDatabaseDialect.INSTANCE_ID_QUERY);
+      const instance_id = res[0][0]["instance_id"];
+      const instance_name = res[0][0]["instance_name"];
+      return [instance_id, instance_name];
     } catch (error: any) {
       throw new AwsWrapperError(Messages.get("RdsMultiAZMySQLDatabaseDialect.invalidQuery", error.message));
     }

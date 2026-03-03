@@ -56,7 +56,7 @@ const MESSAGES: Record<string, string> = {
   "ClusterAwareReaderFailoverHandler.selectedTaskChosen": "Selected task has already been chosen. Abort client for host: %s",
   "Utils.topology": "Topology: %s",
   "RdsHostListProvider.incorrectDialect": "Dialect needs to be a topology aware dialect.",
-  "RdsHostListProvider.suggestedClusterId": "ClusterId '%s' is suggested for url '%s'.",
+  "RdsHostListProvider.noClusterId": "No clusterId found. Please ensure clusterId parameter is set to a non-empty string.",
   "ConnectionStringHostListProvider.parsedListEmpty": "Can't parse connection string: '%s'.",
   "ConnectionStringHostListProvider.errorIdentifyConnection": "An error occurred while obtaining the connection's host ID.",
   "ExecuteTimePlugin.executeTime": "Executed method '%s' in %s milliseconds.",
@@ -375,8 +375,12 @@ const MESSAGES: Record<string, string> = {
   "Bgd.correspondingHostFoundContinueWithConnect":
     "A corresponding host for '%s' is found. Continue with connect call. The call was suspended for %s ms.",
   "Bgd.completedContinueWithConnect": "Blue/Green Deployment status is completed. Continue with 'connect' call. The call was suspended for %s ms.",
-  "StorageService.itemClassNotRegistered": "StorageServiceImpl: Item class not registered: %s",
-  "StorageService.unexpectedValueMismatch": "StorageServiceImpl: Unexpected value mismatch for %s: %s"
+  "StorageService.itemClassNotRegistered": "[StorageService] Item class not registered: %s",
+  "StorageService.unexpectedValueMismatch": "[StorageService] Unexpected value mismatch for %s: %s",
+  "TopologyUtils.instanceIdRequired": "InstanceId must not be en empty string.",
+  "TopologyUtils.errorGettingHostRole": "An error occurred while trying to get the host role.",
+  "GlobalTopologyUtils.missingRegion": "Host '%s' is missing region information in the topology query result.",
+  "GlobalTopologyUtils.missingTemplateForRegion": "No cluster instance template found for region '%s' when processing host '%s'."
 };
 
 export class Messages {
