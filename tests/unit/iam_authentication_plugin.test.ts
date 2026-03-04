@@ -21,7 +21,7 @@ import { SimpleHostAvailabilityStrategy } from "../../common/lib/host_availabili
 import { AwsClient } from "../../common/lib/aws_client";
 import { WrapperProperties } from "../../common/lib/wrapper_property";
 import fetch from "node-fetch";
-import { anything, instance, mock, spy, when } from "ts-mockito";
+import { anything, instance, mock, reset, spy, when } from "ts-mockito";
 import { IamAuthUtils, TokenInfo } from "../../common/lib/utils/iam_auth_utils";
 import { NullTelemetryFactory } from "../../common/lib/utils/telemetry/null_telemetry_factory";
 
@@ -58,21 +58,10 @@ const props = new Map<string, any>();
 
 const mockPluginService: PluginServiceImpl = mock(PluginServiceImpl);
 const mockClient: AwsClient = mock(AwsClient);
-const spyIamAuthUtils = spy(IamAuthUtils);
 
 class IamAuthenticationPluginTestClass extends IamAuthenticationPlugin {
   put(key: string, token: TokenInfo) {
     IamAuthenticationPlugin.tokenCache.set(key, token);
-  }
-
-  public async generateAuthenticationToken(
-    hostInfo: HostInfo,
-    props: Map<string, any>,
-    hostname: string,
-    port: number,
-    region: string
-  ): Promise<string> {
-    return Promise.resolve(GENERATED_TOKEN);
   }
 }
 
@@ -100,8 +89,11 @@ async function testToken(info: HostInfo, plugin: IamAuthenticationPlugin) {
 }
 
 describe("testIamAuth", () => {
+  let spyIamAuthUtils: IamAuthUtils;
+
   beforeEach(() => {
     PluginManager.releaseResources();
+    spyIamAuthUtils = spy(new IamAuthUtils());
 
     props.clear();
     props.set(WrapperProperties.USER.name, "postgresqlUser");
@@ -110,15 +102,20 @@ describe("testIamAuth", () => {
 
     when(mockPluginService.getCurrentClient()).thenReturn(instance(mockClient));
     when(mockPluginService.getTelemetryFactory()).thenReturn(new NullTelemetryFactory());
+
     when(spyIamAuthUtils.generateAuthenticationToken(anything(), anything(), anything(), anything(), anything(), anything())).thenResolve(
       GENERATED_TOKEN
     );
   });
 
+  afterEach(() => {
+    reset(spyIamAuthUtils);
+  });
+
   it("testPostgresConnectValidTokenInCache", async () => {
     when(mockClient.defaultPort).thenReturn(DEFAULT_PG_PORT);
 
-    const plugin = new IamAuthenticationPluginTestClass(instance(mockPluginService));
+    const plugin = new IamAuthenticationPluginTestClass(instance(mockPluginService), instance(spyIamAuthUtils));
     plugin.put(PG_CACHE_KEY, new TokenInfo(TEST_TOKEN, Date.now() + 300000));
     await testToken(PG_HOST_INFO, plugin);
   });
@@ -129,7 +126,7 @@ describe("testIamAuth", () => {
 
     when(mockClient.defaultPort).thenReturn(DEFAULT_MYSQL_PORT);
 
-    const plugin = new IamAuthenticationPluginTestClass(instance(mockPluginService));
+    const plugin = new IamAuthenticationPluginTestClass(instance(mockPluginService), instance(spyIamAuthUtils));
     plugin.put(MYSQL_CACHE_KEY, new TokenInfo(TEST_TOKEN, Date.now() + 300000));
 
     await testToken(MYSQL_HOST_INFO, plugin);
@@ -139,7 +136,7 @@ describe("testIamAuth", () => {
     props.set(WrapperProperties.IAM_DEFAULT_PORT.name, 0);
 
     const cacheKeyWithNewPort: string = `us-east-2:pg.testdb.us-east-2.rds.amazonaws.com:${PG_HOST_INFO_WITH_PORT.port}:postgresqlUser`;
-    const plugin = new IamAuthenticationPluginTestClass(instance(mockPluginService));
+    const plugin = new IamAuthenticationPluginTestClass(instance(mockPluginService), instance(spyIamAuthUtils));
 
     plugin.put(cacheKeyWithNewPort, new TokenInfo(TEST_TOKEN, Date.now() + 300000));
 
@@ -151,7 +148,7 @@ describe("testIamAuth", () => {
     when(mockClient.defaultPort).thenReturn(DEFAULT_PG_PORT);
 
     const cacheKeyWithNewPort: string = `us-east-2:pg.testdb.us-east-2.rds.amazonaws.com:${DEFAULT_PG_PORT}:postgresqlUser`;
-    const plugin = new IamAuthenticationPluginTestClass(instance(mockPluginService));
+    const plugin = new IamAuthenticationPluginTestClass(instance(mockPluginService), instance(spyIamAuthUtils));
 
     plugin.put(cacheKeyWithNewPort, new TokenInfo(TEST_TOKEN, Date.now() + 300000));
 
@@ -160,7 +157,7 @@ describe("testIamAuth", () => {
 
   it("testConnectExpiredTokenInCache", async () => {
     when(mockClient.defaultPort).thenReturn(DEFAULT_PG_PORT);
-    const plugin = new IamAuthenticationPluginTestClass(instance(mockPluginService));
+    const plugin = new IamAuthenticationPluginTestClass(instance(mockPluginService), instance(spyIamAuthUtils));
     plugin.put(PG_CACHE_KEY, new TokenInfo(TEST_TOKEN, Date.now() - 300000));
 
     await testGenerateToken(PG_HOST_INFO, plugin);
@@ -168,13 +165,13 @@ describe("testIamAuth", () => {
 
   it("testConnectEmptyCache", async () => {
     when(mockClient.defaultPort).thenReturn(DEFAULT_PG_PORT);
-    const plugin = new IamAuthenticationPluginTestClass(instance(mockPluginService));
+    const plugin = new IamAuthenticationPluginTestClass(instance(mockPluginService), instance(spyIamAuthUtils));
     await testGenerateToken(PG_HOST_INFO, plugin);
   });
 
   it("testConnectWithSpecifiedPort", async () => {
     const cacheKeyWithSpecifiedPort: string = "us-east-2:pg.testdb.us-east-2.rds.amazonaws.com:1234:postgresqlUser";
-    const plugin = new IamAuthenticationPluginTestClass(instance(mockPluginService));
+    const plugin = new IamAuthenticationPluginTestClass(instance(mockPluginService), instance(spyIamAuthUtils));
     plugin.put(cacheKeyWithSpecifiedPort, new TokenInfo(TEST_TOKEN, Date.now() + 300000));
 
     await testToken(PG_HOST_INFO_WITH_PORT, plugin);
@@ -185,7 +182,7 @@ describe("testIamAuth", () => {
     props.set(WrapperProperties.IAM_DEFAULT_PORT.name, iamDefaultPort);
 
     const cacheKeyWithNewPort: string = `us-east-2:pg.testdb.us-east-2.rds.amazonaws.com:${iamDefaultPort}:postgresqlUser`;
-    const plugin = new IamAuthenticationPluginTestClass(instance(mockPluginService));
+    const plugin = new IamAuthenticationPluginTestClass(instance(mockPluginService), instance(spyIamAuthUtils));
     plugin.put(cacheKeyWithNewPort, new TokenInfo(TEST_TOKEN, Date.now() + 300000));
 
     await testToken(PG_HOST_INFO_WITH_PORT, plugin);
@@ -196,7 +193,7 @@ describe("testIamAuth", () => {
     when(mockClient.defaultPort).thenReturn(DEFAULT_PG_PORT);
 
     const cacheKeyWithNewRegion: string = `us-west-1:pg.testdb.us-west-1.rds.amazonaws.com:${DEFAULT_PG_PORT}:postgresqlUser`;
-    const plugin = new IamAuthenticationPluginTestClass(instance(mockPluginService));
+    const plugin = new IamAuthenticationPluginTestClass(instance(mockPluginService), instance(spyIamAuthUtils));
     plugin.put(cacheKeyWithNewRegion, new TokenInfo(TEST_TOKEN, Date.now() + 300000));
 
     await testToken(PG_HOST_INFO_WITH_REGION, plugin);
