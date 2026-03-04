@@ -116,7 +116,7 @@ const MESSAGES: Record<string, string> = {
   "AuroraStaleDnsHelper.staleDnsDetected": "Stale DNS data detected. Opening a connection to '%s'.",
   "ReadWriteSplittingPlugin.setReadOnlyOnClosedClient": "setReadOnly cannot be called on a closed client '%s'.",
   "ReadWriteSplittingPlugin.errorSwitchingToCachedReader":
-    "An error occurred while trying to switch to a cached reader client: '%s'. The driver will attempt to establish a new reader client.",
+    "An error occurred while trying to switch to a cached reader client: '%s'. Error message: '%s'. The driver will attempt to establish a new reader client.",
   "ReadWriteSplittingPlugin.errorSwitchingToReader": "An error occurred while trying to switch to a reader client: '%s'.",
   "ReadWriteSplittingPlugin.errorSwitchingToWriter": "An error occurred while trying to switch to a writer client: '%s'.",
   "ReadWriteSplittingPlugin.closingInternalClients": "Closing all internal clients except for the current one.",
@@ -137,6 +137,7 @@ const MESSAGES: Record<string, string> = {
   "ReadWriteSplittingPlugin.failoverErrorWhileExecutingCommand": "Detected a failover error while executing a command: '%s'",
   "ReadWriteSplittingPlugin.noReadersAvailable": "The plugin was unable to establish a reader client to any reader instance.",
   "ReadWriteSplittingPlugin.successfullyConnectedToReader": "Successfully connected to a new reader host: '%s'",
+  "ReadWriteSplittingPlugin.previousReaderNotAllowed": "The previous reader connection cannot be used because it is no longer in the list of allowed hosts. Previous reader: %s. Allowed hosts: %s",
   "ReadWriteSplittingPlugin.failedToConnectToReader": "Failed to connect to reader host: '%s'",
   "ReadWriteSplittingPlugin.unsupportedHostSelectorStrategy":
     "Unsupported host selection strategy '%s' specified in plugin configuration parameter 'readerHostSelectorStrategy'. Please visit the Read/Write Splitting Plugin documentation for all supported strategies.",

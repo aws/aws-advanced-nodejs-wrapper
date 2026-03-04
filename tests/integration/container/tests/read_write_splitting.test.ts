@@ -112,6 +112,7 @@ describe("aurora read write splitting", () => {
   }, 1320000);
 
   afterEach(async () => {
+    await ProxyHelper.enableAllConnectivity();
     if (client !== null) {
       try {
         await client.end();

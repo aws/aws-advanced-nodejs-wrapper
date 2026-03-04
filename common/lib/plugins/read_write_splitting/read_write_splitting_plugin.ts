@@ -14,38 +14,19 @@
  * limitations under the License.
  */
 
-import { AbstractConnectionPlugin } from "../../abstract_connection_plugin";
-import {
-  HostInfo,
-  FailoverError,
-  HostRole
-} from "../../index";
+import { HostInfo, HostRole } from "../../index";
 import { PluginService } from "../../plugin_service";
 import { HostListProviderService } from "../../host_list_provider_service";
-import { OldConnectionSuggestionAction } from "../../old_connection_suggestion_action";
-import { HostChangeOptions } from "../../host_change_options";
-import { WrapperProperties } from "../../wrapper_property";
 import { Messages } from "../../utils/messages";
-import { logger } from "../../../logutils";
-import { SqlMethodUtils } from "../../utils/sql_method_utils";
 import { ClientWrapper } from "../../client_wrapper";
-import { getWriter, logAndThrowError } from "../../utils/utils";
-import { CanReleaseResources } from "../../can_release_resources";
-import { PoolClientWrapper } from "../../pool_client_wrapper";
+import { containsHostAndPort, getWriter, logAndThrowError, logTopology } from "../../utils/utils";
+import { AbstractReadWriteSplittingPlugin } from "./abstract_read_write_splitting_plugin";
+import { WrapperProperties } from "../../wrapper_property";
+import { logger } from "../../../logutils";
+import { CacheItem } from "../../utils/cache_map";
 
-export class ReadWriteSplittingPlugin extends AbstractConnectionPlugin implements CanReleaseResources {
-  private static readonly subscribedMethods: Set<string> = new Set(["initHostProvider", "connect", "notifyConnectionChanged", "query"]);
-  private readonly readerSelectorStrategy: string = "";
-
-  private _hostListProviderService: HostListProviderService | undefined;
-  private pluginService: PluginService;
-  private readonly _properties: Map<string, any>;
-  private _readerHostInfo?: HostInfo = undefined;
-  private isReaderClientFromInternalPool: boolean = false;
-  private isWriterClientFromInternalPool: boolean = false;
-  private _inReadWriteSplit = false;
-  writerTargetClient: ClientWrapper | undefined;
-  readerTargetClient: ClientWrapper | undefined;
+export class ReadWriteSplittingPlugin extends AbstractReadWriteSplittingPlugin {
+  protected hosts: HostInfo[] = [];
 
   constructor(pluginService: PluginService, properties: Map<string, any>);
   constructor(
@@ -62,53 +43,10 @@ export class ReadWriteSplittingPlugin extends AbstractConnectionPlugin implement
     writerClient?: ClientWrapper,
     readerClient?: ClientWrapper
   ) {
-    super();
-    this.pluginService = pluginService;
-    this._properties = properties;
-    this.readerSelectorStrategy = WrapperProperties.READER_HOST_SELECTOR_STRATEGY.get(properties);
+    super(pluginService, properties);
     this._hostListProviderService = hostListProviderService;
     this.writerTargetClient = writerClient;
-    this.readerTargetClient = readerClient;
-  }
-
-  override getSubscribedMethods(): Set<string> {
-    return ReadWriteSplittingPlugin.subscribedMethods;
-  }
-
-  override initHostProvider(
-    hostInfo: HostInfo,
-    props: Map<string, any>,
-    hostListProviderService: HostListProviderService,
-    initHostProviderFunc: () => void
-  ) {
-    this._hostListProviderService = hostListProviderService;
-    initHostProviderFunc();
-  }
-
-  override notifyConnectionChanged(changes: Set<HostChangeOptions>): Promise<OldConnectionSuggestionAction> {
-    try {
-      this.updateInternalClientInfo();
-    } catch (e) {
-      // pass
-    }
-    if (this._inReadWriteSplit) {
-      return Promise.resolve(OldConnectionSuggestionAction.PRESERVE);
-    }
-    return Promise.resolve(OldConnectionSuggestionAction.NO_OPINION);
-  }
-
-  updateInternalClientInfo(): void {
-    const currentTargetClient = this.pluginService.getCurrentClient().targetClient;
-    const currentHost = this.pluginService.getCurrentHostInfo();
-    if (currentHost === null || currentTargetClient === null) {
-      return;
-    }
-
-    if (currentHost.role === HostRole.WRITER) {
-      this.setWriterClient(currentTargetClient, currentHost);
-    } else {
-      this.setReaderClient(currentTargetClient, currentHost);
-    }
+    this.readerCacheItem = new CacheItem(readerClient, BigInt(0));
   }
 
   override async connect(
@@ -143,151 +81,116 @@ export class ReadWriteSplittingPlugin extends AbstractConnectionPlugin implement
     return result;
   }
 
-  override async execute<T>(methodName: string, executeFunc: () => Promise<T>, methodArgs: any): Promise<T> {
-    const statement = SqlMethodUtils.parseMethodArgs(methodArgs, this.pluginService.getDriverDialect());
-    const statements = SqlMethodUtils.parseMultiStatementQueries(statement);
+  protected isWriter(currentHost: HostInfo): boolean {
+    return HostRole.WRITER === currentHost.role;
+  }
 
-    const updateReadOnly: boolean | undefined = SqlMethodUtils.doesSetReadOnly(statements, this.pluginService.getDialect());
-    if (updateReadOnly !== undefined) {
+  protected isReader(currentHost: HostInfo): boolean {
+    return HostRole.READER === currentHost.role;
+  }
+
+  protected async refreshAndStoreTopology(currentClient: ClientWrapper | undefined): Promise<void> {
+    if (await this.pluginService.isClientValid(currentClient)) {
       try {
-        await this.switchClientIfRequired(updateReadOnly);
-      } catch (error) {
-        await this.closeIdleClients();
-        throw error;
-      }
-    }
-
-    try {
-      return await executeFunc();
-    } catch (error: any) {
-      if (error instanceof FailoverError) {
-        logger.debug(Messages.get("ReadWriteSplittingPlugin.failoverErrorWhileExecutingCommand", methodName));
-        await this.closeIdleClients();
-      } else {
-        logger.debug(Messages.get("ReadWriteSplittingPlugin.errorWhileExecutingCommand", methodName, error.message));
-      }
-
-      throw error;
-    }
-  }
-
-  setWriterClient(writerTargetClient: ClientWrapper | undefined, writerHostInfo: HostInfo): void {
-    this.writerTargetClient = writerTargetClient;
-    logger.debug(Messages.get("ReadWriteSplittingPlugin.setWriterClient", writerHostInfo.url));
-  }
-
-  setReaderClient(readerTargetClient: ClientWrapper | undefined, readerHost: HostInfo): void {
-    this.readerTargetClient = readerTargetClient;
-    this._readerHostInfo = readerHost;
-    logger.debug(Messages.get("ReadWriteSplittingPlugin.setReaderClient", readerHost.url));
-  }
-
-  async getNewWriterClient(writerHost: HostInfo) {
-    const props = new Map(this._properties);
-    props.set(WrapperProperties.HOST.name, writerHost.host);
-    try {
-      const copyProps = new Map<string, any>(props);
-      WrapperProperties.ENABLE_CLUSTER_AWARE_FAILOVER.set(copyProps, false);
-      const targetClient = await this.pluginService.connect(writerHost, copyProps, this);
-      this.isWriterClientFromInternalPool = targetClient instanceof PoolClientWrapper;
-      this.setWriterClient(targetClient, writerHost);
-      await this.switchCurrentTargetClientTo(this.writerTargetClient, writerHost);
-    } catch (any) {
-      logger.warn(Messages.get("ReadWriteSplittingPlugin.failedToConnectToWriter", writerHost.url));
-    }
-  }
-
-  async switchClientIfRequired(readOnly: boolean) {
-    const currentClient = this.pluginService.getCurrentClient();
-    if (!(await currentClient.isValid())) {
-      logAndThrowError(Messages.get("ReadWriteSplittingPlugin.setReadOnlyOnClosedClient", currentClient.targetClient?.id ?? "undefined client"));
-    }
-    try {
-      await this.pluginService.refreshHostList();
-    } catch {
-      // pass
-    }
-
-    const hosts: HostInfo[] = this.pluginService.getHosts();
-    if (hosts == null || hosts.length === 0) {
-      logAndThrowError(Messages.get("ReadWriteSplittingPlugin.emptyHostList"));
-    }
-    const currentHost = this.pluginService.getCurrentHostInfo();
-    if (currentHost == null) {
-      logAndThrowError(Messages.get("ReadWriteSplittingPlugin.unavailableHostInfo"));
-    } else if (readOnly) {
-      if (!this.pluginService.isInTransaction() && currentHost.role != HostRole.READER) {
-        try {
-          await this.switchToReaderTargetClient(hosts);
-        } catch (error: any) {
-          if (!(await currentClient.isValid())) {
-            logAndThrowError(Messages.get("ReadWriteSplittingPlugin.errorSwitchingToReader", error.message));
-          }
-          logger.warn(Messages.get("ReadWriteSplittingPlugin.fallbackToWriter", currentHost.url));
-        }
-      }
-    } else if (currentHost.role != HostRole.WRITER) {
-      if (this.pluginService.isInTransaction()) {
-        logAndThrowError(Messages.get("ReadWriteSplittingPlugin.setReadOnlyFalseInTransaction"));
-      }
-      try {
-        await this.switchToWriterTargetClient(hosts);
-      } catch (error: any) {
-        logAndThrowError(Messages.get("ReadWriteSplittingPlugin.errorSwitchingToWriter", error.message));
-      }
-    }
-  }
-
-  async switchCurrentTargetClientTo(newTargetClient: ClientWrapper | undefined, newClientHost: HostInfo | undefined) {
-    const currentTargetClient = this.pluginService.getCurrentClient().targetClient;
-
-    if (currentTargetClient === newTargetClient) {
-      return;
-    }
-    if (newClientHost && newTargetClient) {
-      try {
-        await this.pluginService.setCurrentClient(newTargetClient, newClientHost);
-        logger.debug(Messages.get("ReadWriteSplittingPlugin.settingCurrentClient", newTargetClient.id, newClientHost.url));
-      } catch (error) {
+        await this.pluginService.refreshHostList();
+      } catch {
         // pass
       }
     }
+
+    this.hosts = this.pluginService.getHosts();
+    if (this.hosts == null || this.hosts.length === 0) {
+      logAndThrowError(Messages.get("ReadWriteSplittingPlugin.emptyHostList"));
+    }
+
+    this.writerHostInfo = getWriter(this.hosts, Messages.get("ReadWriteSplittingPlugin.noWriterFound"));
   }
 
-  async initializeReaderClient(hosts: HostInfo[]) {
-    if (hosts.length === 1) {
-      const writerHost = getWriter(hosts, Messages.get("ReadWriteSplittingPlugin.noWriterFound"));
-      if (writerHost) {
-        if (!(await this.isTargetClientUsable(this.writerTargetClient))) {
-          await this.getNewWriterClient(writerHost);
-        }
-        logger.warn(Messages.get("ReadWriteSplittingPlugin.noReadersFound", writerHost.url));
+  protected async forceRefreshAndStoreTopology(currentClient: ClientWrapper | undefined): Promise<void> {
+    if (await this.pluginService.isClientValid(currentClient)) {
+      try {
+        await this.pluginService.forceRefreshHostList();
+      } catch {
+        // ignore
       }
+    }
+
+    this.hosts = this.pluginService.getHosts();
+    if (this.hosts == null || this.hosts.length === 0) {
+      logAndThrowError(Messages.get("ReadWriteSplittingPlugin.emptyHostList"));
+    }
+
+    this.writerHostInfo = getWriter(this.hosts, Messages.get("ReadWriteSplittingPlugin.noWriterFound"));
+  }
+
+  override async initializeWriterClient(): Promise<void> {
+    let client: ClientWrapper = await this.connectToWriter();
+
+    if (!this.isWriter(client.hostInfo)) {
+      // refresh and store topology updates this.writerHostInfo.
+      await this.forceRefreshAndStoreTopology(client);
+
+      if (client !== this.readerCacheItem.get() && client !== this.pluginService.getCurrentClient().targetClient) {
+        try {
+          await client.end();
+        } catch (error) {
+          // Ignore
+        }
+      }
+
+      client = await this.connectToWriter();
+    }
+    this.isWriterClientFromInternalPool = this.pluginService.isPooledClient();
+    this.setWriterClient(client, this.writerHostInfo);
+    await this.switchCurrentTargetClientTo(this.writerTargetClient, this.writerHostInfo);
+  }
+
+  private async connectToWriter() {
+    const copyProps = new Map(this._properties);
+    copyProps.set(WrapperProperties.HOST.name, this.writerHostInfo.host);
+    return await this.pluginService.connect(this.writerHostInfo, copyProps, this);
+  }
+
+  override async initializeReaderClient() {
+    if (this.hosts.length === 1) {
+      if (!(await this.isTargetClientUsable(this.writerTargetClient))) {
+        await this.initializeWriterClient();
+      }
+      logger.warn(Messages.get("ReadWriteSplittingPlugin.noReadersFound", this.writerHostInfo.hostAndPort));
     } else {
       await this.getNewReaderClient();
+      logger.debug(Messages.get("ReadWriteSplittingPlugin.switchedFromWriterToReader", this.readerHostInfo.hostAndPort));
     }
   }
 
-  async getNewReaderClient() {
+  override shouldUpdateReaderClient(currentClient: ClientWrapper | undefined, host: HostInfo): boolean {
+    return this.isReader(host);
+  }
+
+  override shouldUpdateWriterClient(currentClient: ClientWrapper | undefined, host: HostInfo): boolean {
+    return this.isWriter(host);
+  }
+
+  protected async getNewReaderClient() {
     let targetClient = undefined;
     let readerHost: HostInfo | undefined = undefined;
-    const connectAttempts = this.pluginService.getHosts().length;
+
+    const hostCandidates: HostInfo[] = this.getReaderHostCandidates();
+
+    const connectAttempts = hostCandidates.length * 2;
 
     for (let i = 0; i < connectAttempts; i++) {
       const host = this.pluginService.getHostInfoByStrategy(HostRole.READER, this.readerSelectorStrategy);
       if (host) {
-        const props = new Map(this._properties);
-        props.set(WrapperProperties.HOST.name, host.host);
-
         try {
-          const copyProps = new Map<string, any>(props);
-          WrapperProperties.ENABLE_CLUSTER_AWARE_FAILOVER.set(copyProps, false);
+          const copyProps = new Map<string, any>(this._properties);
+          copyProps.set(WrapperProperties.HOST.name, host.host);
           targetClient = await this.pluginService.connect(host, copyProps, this);
-          this.isReaderClientFromInternalPool = targetClient instanceof PoolClientWrapper;
+          this.isReaderClientFromInternalPool = this.pluginService.isPooledClient();
           readerHost = host;
           break;
         } catch (any) {
-          logger.warn(Messages.get("ReadWriteSplittingPlugin.failedToConnectToReader", host.url));
+          logger.warn(Messages.get("ReadWriteSplittingPlugin.failedToConnectToReader", host.hostAndPort));
         }
       }
     }
@@ -295,99 +198,19 @@ export class ReadWriteSplittingPlugin extends AbstractConnectionPlugin implement
       logAndThrowError(Messages.get("ReadWriteSplittingPlugin.noReadersAvailable"));
       return;
     }
-    logger.debug(Messages.get("ReadWriteSplittingPlugin.successfullyConnectedToReader", readerHost.url));
-    this.setReaderClient(targetClient, readerHost);
-    await this.switchCurrentTargetClientTo(this.readerTargetClient, this._readerHostInfo);
+    logger.debug(Messages.get("ReadWriteSplittingPlugin.successfullyConnectedToReader", readerHost.hostAndPort));
+    await this.setReaderClient(targetClient, readerHost);
+    await this.switchCurrentTargetClientTo(this.readerCacheItem.get(), this.readerHostInfo);
   }
 
-  async switchToWriterTargetClient(hosts: HostInfo[]) {
-    const currentHost = this.pluginService.getCurrentHostInfo();
-    const currentClient = this.pluginService.getCurrentClient();
-    if (currentHost !== null && currentHost?.role === HostRole.WRITER && (await currentClient.isValid())) {
-      return;
-    }
-    this._inReadWriteSplit = true;
-    const writerHost = getWriter(hosts, Messages.get("ReadWriteSplittingPlugin.noWriterFound"));
-    if (!writerHost) {
-      return;
-    }
-    if (!(await this.isTargetClientUsable(this.writerTargetClient))) {
-      await this.getNewWriterClient(writerHost);
-    } else if (this.writerTargetClient) {
-      await this.switchCurrentTargetClientTo(this.writerTargetClient, writerHost);
-    }
-
-    logger.debug(Messages.get("ReadWriteSplittingPlugin.switchedFromReaderToWriter", writerHost.url));
-    if (this.isReaderClientFromInternalPool) {
-      await this.closeTargetClientIfIdle(this.readerTargetClient);
+  protected async closeReaderIfNecessary(): Promise<void> {
+    if (this.readerHostInfo != null && !containsHostAndPort(this.hosts, this.readerHostInfo.hostAndPort)) {
+      logger.debug(Messages.get("ReadWriteSplittingPlugin.previousReaderNotAllowed", this.readerHostInfo.toString(), logTopology(this.hosts, "")));
+      await this.closeReaderClientIfIdle();
     }
   }
 
-  async switchToReaderTargetClient(hosts: HostInfo[]) {
-    const currentHost = this.pluginService.getCurrentHostInfo();
-    const currentClient = this.pluginService.getCurrentClient();
-    if (currentHost !== null && currentHost?.role === HostRole.READER && currentClient) {
-      return;
-    }
-
-    if (this._readerHostInfo && !hosts.some((hostInfo: HostInfo) => hostInfo.host === this._readerHostInfo?.host)) {
-      // The old reader cannot be used anymore because it is no longer in the list of allowed hosts.
-      await this.closeTargetClientIfIdle(this.readerTargetClient);
-    }
-
-    this._inReadWriteSplit = true;
-    if (!(await this.isTargetClientUsable(this.readerTargetClient))) {
-      await this.initializeReaderClient(hosts);
-    } else if (this.readerTargetClient != null && this._readerHostInfo != null) {
-      try {
-        await this.switchCurrentTargetClientTo(this.readerTargetClient, this._readerHostInfo);
-        logger.debug(Messages.get("ReadWriteSplittingPlugin.switchedFromWriterToReader", this._readerHostInfo.url));
-      } catch (error: any) {
-        logger.debug(Messages.get("ReadWriteSplittingPlugin.errorSwitchingToCachedReader", this._readerHostInfo.url));
-        await this.pluginService.abortTargetClient(this.readerTargetClient);
-        this.readerTargetClient = undefined;
-        this._readerHostInfo = undefined;
-        await this.initializeReaderClient(hosts);
-      }
-    }
-    if (this.isWriterClientFromInternalPool) {
-      await this.closeTargetClientIfIdle(this.writerTargetClient);
-    }
-  }
-
-  async isTargetClientUsable(targetClient: ClientWrapper | undefined): Promise<boolean> {
-    if (!targetClient) {
-      return Promise.resolve(false);
-    }
-    return await this.pluginService.isClientValid(targetClient);
-  }
-
-  async closeTargetClientIfIdle(internalTargetClient: ClientWrapper | undefined) {
-    const currentTargetClient = this.pluginService.getCurrentClient().targetClient;
-    try {
-      if (internalTargetClient != null && internalTargetClient !== currentTargetClient && (await this.isTargetClientUsable(internalTargetClient))) {
-        await this.pluginService.abortTargetClient(internalTargetClient);
-
-        if (internalTargetClient === this.writerTargetClient) {
-          this.writerTargetClient = undefined;
-        }
-        if (internalTargetClient === this.readerTargetClient) {
-          this.readerTargetClient = undefined;
-          this._readerHostInfo = undefined;
-        }
-      }
-    } catch (error) {
-      // ignore
-    }
-  }
-
-  async closeIdleClients() {
-    logger.debug(Messages.get("ReadWriteSplittingPlugin.closingInternalClients"));
-    await this.closeTargetClientIfIdle(this.readerTargetClient);
-    await this.closeTargetClientIfIdle(this.writerTargetClient);
-  }
-
-  async releaseResources() {
-    await this.closeIdleClients();
+  protected getReaderHostCandidates(): HostInfo[] | undefined {
+    return this.pluginService.getHosts();
   }
 }

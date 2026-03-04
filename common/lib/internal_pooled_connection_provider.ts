@@ -39,6 +39,7 @@ import { LeastConnectionsHostSelector } from "./least_connections_host_selector"
 import { PoolClientWrapper } from "./pool_client_wrapper";
 import { logger } from "../logutils";
 import { SlidingExpirationCacheWithCleanupTask } from "./utils/sliding_expiration_cache_with_cleanup_task";
+import { ConnectionInfo } from "./connection_info";
 
 export class InternalPooledConnectionProvider implements PooledConnectionProvider, CanReleaseResources {
   static readonly CACHE_CLEANUP_NANOS: bigint = BigInt(10 * 60_000_000_000); // 10 minutes
@@ -79,7 +80,7 @@ export class InternalPooledConnectionProvider implements PooledConnectionProvide
     return RdsUrlType.RDS_INSTANCE === urlType;
   }
 
-  async connect(hostInfo: HostInfo, pluginService: PluginService, props: Map<string, any>): Promise<ClientWrapper> {
+  async connect(hostInfo: HostInfo, pluginService: PluginService, props: Map<string, any>): Promise<ConnectionInfo> {
     const resultProps = new Map(props);
     resultProps.set(WrapperProperties.HOST.name, hostInfo.host);
     if (hostInfo.isPortSpecified()) {
@@ -122,7 +123,7 @@ export class InternalPooledConnectionProvider implements PooledConnectionProvide
 
     const poolClient = await this.getPoolConnection(connectionHostInfo, props);
     pluginService.attachErrorListener(poolClient);
-    return poolClient;
+    return new ConnectionInfo(poolClient, true);
   }
 
   async getPoolConnection(hostInfo: HostInfo, props: Map<string, string>) {

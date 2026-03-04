@@ -32,6 +32,7 @@ import { TelemetryTraceLevel } from "./utils/telemetry/telemetry_trace_level";
 import { ConnectionProvider } from "./connection_provider";
 import { ConnectionPluginFactory } from "./plugin_factory";
 import { ConfigurationProfile } from "./profile/configuration_profile";
+import { CoreServicesContainer } from "./utils/core_services_container";
 
 type PluginFunc<T> = (plugin: ConnectionPlugin, targetFunc: () => Promise<T>) => Promise<T>;
 
@@ -395,6 +396,7 @@ export class PluginManager {
     }
 
     PluginManager.STRATEGY_PLUGIN_CHAIN_CACHE.clear();
+    CoreServicesContainer.releaseResources();
 
     PluginManager.PLUGINS = new Set();
   }
