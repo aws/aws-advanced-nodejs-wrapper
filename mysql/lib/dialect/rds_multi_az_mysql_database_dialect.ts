@@ -73,15 +73,6 @@ export class RdsMultiAZClusterMySQLDatabaseDialect extends MySQLDatabaseDialect 
 
   getHostListProvider(props: Map<string, any>, originalUrl: string, hostListProviderService: HostListProviderService): HostListProvider {
     const topologyUtils: TopologyUtils = new TopologyUtils(this, hostListProviderService.getHostInfoBuilder());
-    if (WrapperProperties.PLUGINS.get(props).includes("failover2")) {
-      return new MonitoringRdsHostListProvider(
-        props,
-        originalUrl,
-        topologyUtils,
-        hostListProviderService,
-        <PluginService>(<unknown>hostListProviderService)
-      );
-    }
     return new RdsHostListProvider(props, originalUrl, topologyUtils, hostListProviderService);
   }
 
