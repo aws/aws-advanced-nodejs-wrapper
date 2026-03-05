@@ -25,6 +25,12 @@ export class AwsPgInternalPoolClient implements AwsInternalPoolClient {
 
   constructor(props: pkgPg.PoolConfig) {
     this.targetPool = new pkgPg.Pool(props);
+    // Handle idle client errors to prevent process crash during Aurora failover.
+    // When a failover occurs, idle connections in the pool are terminated by the server,
+    // which emits 'error' events. Without this handler, Node.js throws an uncaught exception.
+    this.targetPool.on("error", () => {
+      // Intentionally swallowed. The failover plugin will handle reconnection.
+    });
   }
 
   async end(): Promise<any> {
