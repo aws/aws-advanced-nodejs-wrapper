@@ -39,6 +39,7 @@ import { ConnectionProvider } from "../../common/lib";
 import { TelemetryFactory } from "../../common/lib/utils/telemetry/telemetry_factory";
 import { MonitorService } from "../../common/lib/utils/monitoring/monitor_service";
 import { FullServicesContainerImpl } from "../../common/lib/utils/full_services_container";
+import { EventPublisher } from "../../common/lib/utils/events/event";
 
 const LOCALHOST = "localhost";
 const RDS_DATABASE = "database-1.xyz.us-east-2.rds.amazonaws.com";
@@ -187,6 +188,7 @@ const expectedDialectMapping: Map<DatabaseDialectCodes, DialectInputOutput> = ne
 const fullServicesContainer = new FullServicesContainerImpl(
   mock<StorageService>(),
   mock<MonitorService>(),
+  mock<EventPublisher>(),
   mock<ConnectionProvider>(),
   mock<TelemetryFactory>()
 );

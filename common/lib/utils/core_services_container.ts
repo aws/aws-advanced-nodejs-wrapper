@@ -16,6 +16,8 @@
 
 import { StorageService, StorageServiceImpl } from "./storage/storage_service";
 import { MonitorService, MonitorServiceImpl } from "./monitoring/monitor_service";
+import { EventPublisher } from "./events/event";
+import { BatchingEventPublisher } from "./events/batching_event_publisher";
 
 /**
  * A singleton container object used to instantiate and access core universal services. This class should be used
@@ -27,13 +29,14 @@ import { MonitorService, MonitorServiceImpl } from "./monitoring/monitor_service
 export class CoreServicesContainer {
   private static readonly INSTANCE = new CoreServicesContainer();
 
-  // TODO: implement monitor service
   private readonly monitorService: MonitorService;
   private readonly storageService: StorageService;
+  private readonly eventPublisher: EventPublisher;
 
   private constructor() {
-    this.storageService = new StorageServiceImpl();
-    this.monitorService = new MonitorServiceImpl();
+    this.eventPublisher = new BatchingEventPublisher();
+    this.storageService = new StorageServiceImpl(this.eventPublisher);
+    this.monitorService = new MonitorServiceImpl(this.eventPublisher);
   }
 
   static getInstance(): CoreServicesContainer {
@@ -46,6 +49,10 @@ export class CoreServicesContainer {
 
   getMonitorService(): MonitorService {
     return this.monitorService;
+  }
+
+  getEventPublisher(): EventPublisher {
+    return this.eventPublisher;
   }
 
   static releaseResources(): void {

@@ -17,6 +17,7 @@
 import { Monitor, MonitorErrorResponse, MonitorInitializer } from "./monitor";
 import { Constructor } from "../../types";
 import { FullServicesContainer } from "../full_services_container";
+import { EventPublisher } from "../events/event";
 
 export interface MonitorService {
   registerMonitorTypeIfAbsent<T extends Monitor>(
@@ -48,8 +49,13 @@ export interface MonitorService {
   releaseResources(): void;
 }
 
-// TODO: complete implementation
 export class MonitorServiceImpl implements MonitorService {
+  protected readonly publisher: EventPublisher;
+
+  constructor(publisher: EventPublisher) {
+    this.publisher = publisher;
+  }
+
   get<T extends Monitor>(monitorClass: Constructor<T>, key: unknown): T | null {
     return undefined;
   }

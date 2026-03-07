@@ -21,11 +21,15 @@ import { ConnectionProvider } from "../connection_provider";
 import { TelemetryFactory } from "./telemetry/telemetry_factory";
 import { StorageService } from "./storage/storage_service";
 import { MonitorService } from "./monitoring/monitor_service";
+import { EventPublisher } from "./events/event";
+import { ImportantEventService } from "./important_event_service";
 
 export interface FullServicesContainer {
   getStorageService(): StorageService;
 
   getMonitorService(): MonitorService;
+
+  getEventPublisher(): EventPublisher;
 
   getDefaultConnectionProvider(): ConnectionProvider;
 
@@ -37,9 +41,13 @@ export interface FullServicesContainer {
 
   getPluginService(): PluginService;
 
+  getImportantEventService(): ImportantEventService;
+
   setMonitorService(monitorService: MonitorService): void;
 
   setStorageService(storageService: StorageService): void;
+
+  setEventPublisher(eventPublisher: EventPublisher): void;
 
   setTelemetryFactory(telemetryFactory: TelemetryFactory): void;
 
@@ -48,27 +56,34 @@ export interface FullServicesContainer {
   setHostListProviderService(hostListProviderService: HostListProviderService): void;
 
   setPluginService(pluginService: PluginService): void;
+
+  setImportantEventService(importantEventService: ImportantEventService): void;
 }
 
 export class FullServicesContainerImpl implements FullServicesContainer {
   private storageService: StorageService;
   private monitorService: MonitorService;
+  private eventPublisher: EventPublisher;
   private defaultConnectionProvider: ConnectionProvider;
   private telemetryFactory: TelemetryFactory;
   private pluginManager: PluginManager;
   private hostListProviderService: HostListProviderService;
   private pluginService: PluginService;
+  private importantEventService: ImportantEventService;
 
   constructor(
     storageService: StorageService,
     monitorService: MonitorService,
+    eventPublisher: EventPublisher,
     defaultConnProvider: ConnectionProvider,
     telemetryFactory: TelemetryFactory
   ) {
     this.storageService = storageService;
     this.monitorService = monitorService;
+    this.eventPublisher = eventPublisher;
     this.defaultConnectionProvider = defaultConnProvider;
     this.telemetryFactory = telemetryFactory;
+    this.importantEventService = new ImportantEventService();
   }
 
   getStorageService(): StorageService {
@@ -77,6 +92,10 @@ export class FullServicesContainerImpl implements FullServicesContainer {
 
   getMonitorService(): MonitorService {
     return this.monitorService;
+  }
+
+  getEventPublisher(): EventPublisher {
+    return this.eventPublisher;
   }
 
   getDefaultConnectionProvider(): ConnectionProvider {
@@ -99,12 +118,20 @@ export class FullServicesContainerImpl implements FullServicesContainer {
     return this.pluginService;
   }
 
+  getImportantEventService(): ImportantEventService {
+    return this.importantEventService;
+  }
+
   setMonitorService(monitorService: MonitorService): void {
     this.monitorService = monitorService;
   }
 
   setStorageService(storageService: StorageService): void {
     this.storageService = storageService;
+  }
+
+  setEventPublisher(eventPublisher: EventPublisher): void {
+    this.eventPublisher = eventPublisher;
   }
 
   setTelemetryFactory(telemetryFactory: TelemetryFactory): void {
@@ -121,5 +148,9 @@ export class FullServicesContainerImpl implements FullServicesContainer {
 
   setPluginService(pluginService: PluginService): void {
     this.pluginService = pluginService;
+  }
+
+  setImportantEventService(importantEventService: ImportantEventService): void {
+    this.importantEventService = importantEventService;
   }
 }
