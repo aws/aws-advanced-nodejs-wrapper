@@ -15,14 +15,7 @@
 */
 
 import { AwsClient } from "../../common/lib/aws_client";
-import {
-  AwsPoolConfig,
-  HostInfo,
-  HostInfoBuilder,
-  HostRole,
-  InternalPooledConnectionProvider,
-  InternalPoolMapping
-} from "../../common/lib";
+import { AwsPoolConfig, HostInfo, HostInfoBuilder, HostRole, InternalPooledConnectionProvider, InternalPoolMapping } from "../../common/lib";
 import { PluginServiceImpl } from "../../common/lib/plugin_service";
 import { anything, instance, mock, reset, spy, when } from "ts-mockito";
 import { HostListProviderService } from "../../common/lib/host_list_provider_service";
@@ -36,9 +29,7 @@ import { AwsMySQLClient } from "../../mysql/lib";
 import { MySQLDatabaseDialect } from "../../mysql/lib/dialect/mysql_database_dialect";
 import { MySQL2DriverDialect } from "../../mysql/lib/dialect/mysql2_driver_dialect";
 import { PoolClientWrapper } from "../../common/lib/pool_client_wrapper";
-import {
-  SlidingExpirationCacheWithCleanupTask
-} from "../../common/lib/utils/sliding_expiration_cache_with_cleanup_task";
+import { SlidingExpirationCacheWithCleanupTask } from "../../common/lib/utils/sliding_expiration_cache_with_cleanup_task";
 
 const user1 = "user1";
 const user2 = "user2";

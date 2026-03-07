@@ -17,12 +17,7 @@
 import { TestEnvironment } from "./utils/test_environment";
 import { DriverHelper } from "./utils/driver_helper";
 import { AuroraTestUtility } from "./utils/aurora_test_utility";
-import {
-  FailoverSuccessError,
-  PluginManager,
-  TransactionIsolationLevel,
-  TransactionResolutionUnknownError
-} from "../../../../index";
+import { FailoverSuccessError, PluginManager, TransactionIsolationLevel, TransactionResolutionUnknownError } from "../../../../index";
 import { DatabaseEngine } from "./utils/database_engine";
 import { QueryResult } from "pg";
 import { ProxyHelper } from "./utils/proxy_helper";
@@ -39,8 +34,7 @@ const itIf =
     ? it
     : it.skip;
 const itIfTwoInstance = instanceCount == 2 ? itIf : it.skip;
-const itIfThreeInstanceAuroraCluster =
-  instanceCount == 3 && !features.includes(TestEnvironmentFeatures.RDS_MULTI_AZ_SUPPORTED) ? it : it.skip;
+const itIfThreeInstanceAuroraCluster = instanceCount == 3 && !features.includes(TestEnvironmentFeatures.RDS_MULTI_AZ_SUPPORTED) ? it : it.skip;
 
 let env: TestEnvironment;
 let driver;
