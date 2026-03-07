@@ -14,15 +14,7 @@
   limitations under the License.
 */
 
-import {
-  QueryArrayConfig,
-  QueryArrayResult,
-  QueryConfig,
-  QueryConfigValues,
-  QueryResult,
-  QueryResultRow,
-  Submittable
-} from "pg";
+import { QueryArrayConfig, QueryArrayResult, QueryConfig, QueryConfigValues, QueryResult, QueryResultRow, Submittable } from "pg";
 import { AwsClient } from "../../common/lib/aws_client";
 import { PgConnectionUrlParser } from "./pg_connection_url_parser";
 import { DatabaseDialect, DatabaseType } from "../../common/lib/database_dialect/database_dialect";

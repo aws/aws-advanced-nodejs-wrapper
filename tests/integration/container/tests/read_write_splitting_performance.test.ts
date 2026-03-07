@@ -21,12 +21,7 @@ import { TestEnvironmentFeatures } from "./utils/test_environment_features";
 import { features, instanceCount } from "./config";
 import { PerfStat } from "./utils/perf_stat";
 import { PerfTestUtility } from "./utils/perf_util";
-import {
-  ConnectTimePlugin,
-  ExecuteTimePlugin,
-  InternalPooledConnectionProvider,
-  PluginManager
-} from "../../../../index";
+import { ConnectTimePlugin, ExecuteTimePlugin, InternalPooledConnectionProvider, PluginManager } from "../../../../index";
 import { TestDriver } from "./utils/test_driver";
 
 const itIf =

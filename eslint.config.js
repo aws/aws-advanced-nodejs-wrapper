@@ -35,7 +35,7 @@ const compat = new FlatCompat({
 });
 
 export default defineConfig([
-  globalIgnores(["**/node_modules", "**/gradle", "**/dist", "**/coverage"]),
+  globalIgnores(["**/node_modules", "**/gradle", "**/dist", "**/coverage", "**/*.js"]),
   {
     extends: compat.extends(
       "eslint:recommended",

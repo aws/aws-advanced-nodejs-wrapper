@@ -14,12 +14,7 @@
   limitations under the License.
 */
 
-import {
-  HostInfo,
-  AwsWrapperError,
-  UnavailableHostError,
-  HostAvailability
-} from "../../";
+import { HostInfo, AwsWrapperError, UnavailableHostError, HostAvailability } from "../../";
 import { PluginService } from "../../plugin_service";
 import { HostChangeOptions } from "../../host_change_options";
 import { OldConnectionSuggestionAction } from "../../old_connection_suggestion_action";
