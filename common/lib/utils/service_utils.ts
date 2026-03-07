@@ -28,6 +28,7 @@ import { DatabaseDialectCodes } from "../database_dialect/database_dialect_codes
 import { DriverDialect } from "../driver_dialect/driver_dialect";
 import { MonitorService } from "./monitoring/monitor_service";
 import { TelemetryFactory } from "./telemetry/telemetry_factory";
+import { EventPublisher } from "./events/event";
 
 export class ServiceUtils {
   private static readonly _instance: ServiceUtils = new ServiceUtils();
@@ -39,6 +40,7 @@ export class ServiceUtils {
   createStandardServiceContainer(
     storageService: StorageService,
     monitorService: MonitorService,
+    eventPublisher: EventPublisher,
     client: AwsClient,
     props: Map<string, unknown>,
     dbType: DatabaseType,
@@ -50,6 +52,7 @@ export class ServiceUtils {
     const servicesContainer: FullServicesContainer = new FullServicesContainerImpl(
       storageService,
       monitorService,
+      eventPublisher,
       connectionProvider,
       telemetryFactory
     );
@@ -72,6 +75,7 @@ export class ServiceUtils {
   async createMinimalServiceContainer(
     storageService: StorageService,
     monitorService: MonitorService,
+    eventPublisher: EventPublisher,
     client: AwsClient,
     props: Map<string, unknown>,
     dbType: DatabaseType,
@@ -83,6 +87,7 @@ export class ServiceUtils {
     const servicesContainer: FullServicesContainer = new FullServicesContainerImpl(
       storageService,
       monitorService,
+      eventPublisher,
       connectionProvider,
       telemetryFactory
     );

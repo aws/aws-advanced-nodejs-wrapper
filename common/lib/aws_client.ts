@@ -37,6 +37,7 @@ import { StorageService } from "./utils/storage/storage_service";
 import { MonitorService } from "./utils/monitoring/monitor_service";
 import { CoreServicesContainer } from "./utils/core_services_container";
 import { FullServicesContainer } from "./utils/full_services_container";
+import { EventPublisher } from "./utils/events/event";
 
 const { EventEmitter } = pkgStream;
 
@@ -45,6 +46,7 @@ export abstract class AwsClient extends EventEmitter implements SessionStateClie
   private readonly fullServiceContainer: FullServicesContainer;
   private readonly storageService: StorageService;
   private readonly monitorService: MonitorService;
+  private readonly eventPublisher: EventPublisher;
   protected telemetryFactory: TelemetryFactory;
   protected pluginManager: PluginManager;
   protected pluginService: PluginService;
@@ -108,11 +110,13 @@ export abstract class AwsClient extends EventEmitter implements SessionStateClie
     const coreServicesContainer: CoreServicesContainer = CoreServicesContainer.getInstance();
     this.storageService = coreServicesContainer.getStorageService();
     this.monitorService = coreServicesContainer.getMonitorService();
+    this.eventPublisher = coreServicesContainer.getEventPublisher();
     this.telemetryFactory = new DefaultTelemetryFactory(this.properties);
 
     this.fullServiceContainer = ServiceUtils.instance.createStandardServiceContainer(
       this.storageService,
       this.monitorService,
+      this.eventPublisher,
       this,
       this.properties,
       dbType,
