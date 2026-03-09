@@ -69,20 +69,20 @@ export class RegionUtils {
   protected static readonly rdsUtils = new RdsUtils();
 
   async getRegion(regionKey: string, hostInfo?: HostInfo, props?: Map<string, any>): Promise<string | null> {
-    const region = this.getRegionFromRegionString(props.get(regionKey));
+    const region = this.getRegionFromRegionString(props?.get(regionKey));
 
     if (region !== null) {
-      return Promise.resolve(region);
+      return region;
     }
 
     if (hostInfo) {
-      return Promise.resolve(this.getRegionFromHost(hostInfo.host));
+      return this.getRegionFromHost(hostInfo.host);
     }
 
-    return Promise.resolve(region);
+    return region;
   }
 
-  private getRegionFromRegionString(regionString: string): string | null {
+  getRegionFromRegionString(regionString: string): string | null {
     if (!regionString) {
       return null;
     }
@@ -95,7 +95,7 @@ export class RegionUtils {
     return region;
   }
 
-  private getRegionFromHost(host: string): string | null {
+  getRegionFromHost(host: string): string | null {
     const regionString = RegionUtils.rdsUtils.getRdsRegion(host);
     if (!regionString) {
       throw new AwsWrapperError(Messages.get("AwsSdk.unsupportedRegion", regionString));

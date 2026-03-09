@@ -19,9 +19,12 @@ import { HostInfo } from "../host_info";
 import { AwsCredentialsManager } from "../authentication/aws_credentials_manager";
 import { DescribeGlobalClustersCommand, GlobalCluster, GlobalClusterMember, RDSClient } from "@aws-sdk/client-rds";
 import { AwsCredentialIdentity, AwsCredentialIdentityProvider } from "@smithy/types/dist-types/identity/awsCredentialIdentity";
+import { logger } from "../../logutils";
+import { Messages } from "./messages";
+import { AwsWrapperError } from "./errors";
 
 export class GDBRegionUtils extends RegionUtils {
-  private static readonly GDB_CLUSTER_ARN_PATTERN = /^arn:aws:rds:(?<region>[^:\n]*):([^:\n]*):([^:/\n]*[:/])?(.*)$/;
+  private static readonly GDB_CLUSTER_ARN_PATTERN = /^arn:aws[^:]*:rds:(?<region>[^:\n]*):([^:\n]*):([^:/\n]*[:/])?(.*)$/;
   private static readonly REGION_GROUP = "region";
   private credentialsProvider: AwsCredentialIdentity | AwsCredentialIdentityProvider | undefined;
 
@@ -31,12 +34,12 @@ export class GDBRegionUtils extends RegionUtils {
   }
 
   async getRegion(regionKey: string, hostInfo?: HostInfo, props?: Map<string, any>): Promise<string | null> {
-    if (props.get(regionKey)) {
-      return super.getRegion(props.get(regionKey), hostInfo);
-    }
-
     if (!hostInfo || !props) {
       return null;
+    }
+
+    if (props.get(regionKey)) {
+      return this.getRegionFromRegionString(props.get(regionKey));
     }
 
     const clusterId = GDBRegionUtils.rdsUtils.getRdsClusterId(hostInfo.host);
@@ -49,7 +52,7 @@ export class GDBRegionUtils extends RegionUtils {
   }
 
   private async findWriterClusterArn(hostInfo: HostInfo, props: Map<string, any>, globalClusterIdentifier: string): Promise<string | null> {
-    if (this.credentialsProvider != null) {
+    if (!this.credentialsProvider) {
       this.credentialsProvider = AwsCredentialsManager.getProvider(hostInfo, props);
     }
 
@@ -62,6 +65,11 @@ export class GDBRegionUtils extends RegionUtils {
 
       const response = await rdsClient.send(command);
       return this.extractWriterClusterArn(response.GlobalClusters);
+    } catch (error) {
+      if (error instanceof Error) {
+        logger.debug(Messages.get("GDBRegionUtils.unableToRetrieveGlobalClusterARN"));
+        throw new AwsWrapperError(Messages.get("GDBRegionUtils.unableToRetrieveGlobalClusterARN"));
+      }
     } finally {
       rdsClient.destroy();
     }
@@ -82,6 +90,11 @@ export class GDBRegionUtils extends RegionUtils {
     return null;
   }
 
+  getRegionFromClusterArn(clusterArn: string): string | null {
+    const match = clusterArn.match(GDBRegionUtils.GDB_CLUSTER_ARN_PATTERN);
+    return match?.groups?.[GDBRegionUtils.REGION_GROUP] ?? null;
+  }
+
   private findWriterMemberArn(members?: GlobalClusterMember[]): string | null {
     if (!members) {
       return null;
@@ -89,11 +102,6 @@ export class GDBRegionUtils extends RegionUtils {
 
     const writerMember = members.find((member) => member.IsWriter);
     return writerMember?.DBClusterArn ?? null;
-  }
-
-  private getRegionFromClusterArn(clusterArn: string): string | null {
-    const match = clusterArn.match(GDBRegionUtils.GDB_CLUSTER_ARN_PATTERN);
-    return match?.groups?.[GDBRegionUtils.REGION_GROUP] ?? null;
   }
 
   private getRdsClient(): RDSClient {

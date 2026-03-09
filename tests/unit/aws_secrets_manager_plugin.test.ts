@@ -197,6 +197,20 @@ describe("testSecretsManager", () => {
   });
 
   it.each([
+    ["arn:aws:secretsmanager:us-east-1:123456789012:secret:mysecret", "us-east-1"],
+    ["arn:aws-us-gov:secretsmanager:us-gov-west-1:123456789012:secret:mysecret", "us-gov-west-1"],
+    ["arn:aws-cn:secretsmanager:cn-north-1:123456789012:secret:mysecret", "cn-north-1"],
+    ["arn:aws-iso:secretsmanager:us-iso-east-1:123456789012:secret:mysecret", "us-iso-east-1"],
+    ["arn:aws-iso-b:secretsmanager:us-isob-east-1:123456789012:secret:mysecret", "us-isob-east-1"]
+  ])("connect using partition-agnostic arn: %s", async (arn, expectedRegion) => {
+    const props = new Map();
+    WrapperProperties.SECRET_ID.set(props, arn);
+    const testPlugin = new AwsSecretsManagerPlugin(instance(mockPluginService), props);
+    const secretKey = testPlugin.secretKey;
+    expect(secretKey.region).toBe(expectedRegion);
+  });
+
+  it.each([
     [TEST_ARN_1, "us-east-2"],
     [TEST_ARN_2, "us-west-1"],
     [TEST_ARN_3, "us-east-2"]

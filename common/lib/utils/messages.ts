@@ -102,6 +102,7 @@ const MESSAGES: Record<string, string> = {
   "Failover.timeoutError": "Internal failover task has timed out.",
   "Failover.newWriterNotAllowed":
     "The failover process identified the new writer but the host is not in the list of allowed hosts. New writer host: '%s'. Allowed hosts: '%s'.",
+  "GDBRegionUtils.unableToRetrieveGlobalClusterARN": "Unable to retrieve the primary global region for the provided global database cluster.",
   "StaleDnsHelper.clusterEndpointDns": "Cluster endpoint resolves to '%s'.",
   "StaleDnsHelper.writerHostInfo": "Writer host: '%s'.",
   "StaleDnsHelper.writerInetAddress": "Writer host address: '%s'",
