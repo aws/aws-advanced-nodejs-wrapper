@@ -17,5 +17,9 @@
 import { AwsCredentialIdentity, AwsCredentialIdentityProvider } from "@smithy/types/dist-types/identity/awsCredentialIdentity";
 
 export interface CredentialsProviderFactory {
-  getAwsCredentialsProvider(host: string, region: string, props: Map<string, any>): Promise<AwsCredentialIdentity | AwsCredentialIdentityProvider>;
+  getAwsCredentialsProvider(
+    host: string,
+    region: string | null,
+    props: Map<string, any>
+  ): Promise<AwsCredentialIdentity | AwsCredentialIdentityProvider>;
 }
