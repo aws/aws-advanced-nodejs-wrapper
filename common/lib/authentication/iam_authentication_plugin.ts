@@ -26,19 +26,26 @@ import { IamAuthUtils, TokenInfo } from "../utils/iam_auth_utils";
 import { ClientWrapper } from "../client_wrapper";
 import { RegionUtils } from "../utils/region_utils";
 import { CanReleaseResources } from "../can_release_resources";
+import { RdsUrlType } from "../utils/rds_url_type";
+import { RdsUtils } from "../utils/rds_utils";
+import { GDBRegionUtils } from "../utils/gdb_region_utils";
 
 export class IamAuthenticationPlugin extends AbstractConnectionPlugin implements CanReleaseResources {
   private static readonly SUBSCRIBED_METHODS = new Set<string>(["connect", "forceConnect"]);
   protected static readonly tokenCache = new Map<string, TokenInfo>();
   private readonly telemetryFactory;
   private readonly fetchTokenCounter;
-  private pluginService: PluginService;
+  private readonly pluginService: PluginService;
+  private readonly rdsUtils: RdsUtils = new RdsUtils();
+  protected regionUtils: RegionUtils;
+  protected readonly iamAuthUtils: IamAuthUtils;
 
-  constructor(pluginService: PluginService) {
+  constructor(pluginService: PluginService, iamAuthUtils: IamAuthUtils = new IamAuthUtils()) {
     super();
     this.pluginService = pluginService;
     this.telemetryFactory = this.pluginService.getTelemetryFactory();
     this.fetchTokenCounter = this.telemetryFactory.createCounter("iam.fetchTokenCount");
+    this.iamAuthUtils = iamAuthUtils;
   }
 
   getSubscribedMethods(): Set<string> {
@@ -74,14 +81,22 @@ export class IamAuthenticationPlugin extends AbstractConnectionPlugin implements
       throw new AwsWrapperError(`${WrapperProperties.USER} is null or empty`);
     }
 
-    const host = IamAuthUtils.getIamHost(props, hostInfo);
-    const region: string = RegionUtils.getRegion(props.get(WrapperProperties.IAM_REGION.name), host);
-    const port = IamAuthUtils.getIamPort(props, hostInfo, this.pluginService.getCurrentClient().defaultPort);
+    const host = this.iamAuthUtils.getIamHost(props, hostInfo);
+    const port = this.iamAuthUtils.getIamPort(props, hostInfo, this.pluginService.getCurrentClient().defaultPort);
+
+    const type: RdsUrlType = this.rdsUtils.identifyRdsType(host.host);
+    this.regionUtils = type == RdsUrlType.RDS_GLOBAL_WRITER_CLUSTER ? new GDBRegionUtils() : new RegionUtils();
+    const region: string | null = await this.regionUtils.getRegion(WrapperProperties.IAM_REGION.name, host, props);
+
+    if (!region) {
+      throw new AwsWrapperError(Messages.get("SamlAuthPlugin.unableToDetermineRegion", WrapperProperties.IAM_REGION.name));
+    }
+
     const tokenExpirationSec = WrapperProperties.IAM_TOKEN_EXPIRATION.get(props);
     if (tokenExpirationSec < 0) {
       throw new AwsWrapperError(Messages.get("AuthenticationToken.tokenExpirationLessThanZero"));
     }
-    const cacheKey: string = IamAuthUtils.getCacheKey(port, user, host, region);
+    const cacheKey: string = this.iamAuthUtils.getCacheKey(port, user, host.host, region);
 
     const tokenInfo = IamAuthenticationPlugin.tokenCache.get(cacheKey);
     const isCachedToken: boolean = tokenInfo !== undefined && !tokenInfo.isExpired();
@@ -91,8 +106,8 @@ export class IamAuthenticationPlugin extends AbstractConnectionPlugin implements
       WrapperProperties.PASSWORD.set(props, tokenInfo.token);
     } else {
       const tokenExpiry: number = Date.now() + tokenExpirationSec * 1000;
-      const token = await IamAuthUtils.generateAuthenticationToken(
-        host,
+      const token = await this.iamAuthUtils.generateAuthenticationToken(
+        host.host,
         port,
         region,
         user,
@@ -118,8 +133,8 @@ export class IamAuthenticationPlugin extends AbstractConnectionPlugin implements
       // Try to generate a new token and try to connect again
 
       const tokenExpiry: number = Date.now() + tokenExpirationSec * 1000;
-      const token = await IamAuthUtils.generateAuthenticationToken(
-        host,
+      const token = await this.iamAuthUtils.generateAuthenticationToken(
+        host.host,
         port,
         region,
         user,

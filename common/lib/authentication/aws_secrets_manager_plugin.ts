@@ -37,7 +37,7 @@ export class AwsSecretsManagerPlugin extends AbstractConnectionPlugin implements
   private static readonly TELEMETRY_UPDATE_SECRETS = "fetch credentials";
   private static readonly TELEMETRY_FETCH_CREDENTIALS_COUNTER = "secretsManager.fetchCredentials.count";
   private static SUBSCRIBED_METHODS: Set<string> = new Set<string>(["connect", "forceConnect"]);
-  private static SECRETS_ARN_PATTERN: RegExp = new RegExp("^arn:aws:secretsmanager:(?<region>[^:\\n]*):[^:\\n]*:([^:/\\n]*[:/])?(.*)$");
+  private static SECRETS_ARN_PATTERN: RegExp = new RegExp("^arn:aws[^:]*:secretsmanager:(?<region>[^:\\n]*):[^:\\n]*:([^:/\\n]*[:/])?(.*)$");
   private readonly pluginService: PluginService;
   private readonly fetchCredentialsCounter;
   private readonly expirationSec: number;
