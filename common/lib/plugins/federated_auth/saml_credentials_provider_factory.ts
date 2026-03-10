@@ -17,7 +17,6 @@
 import { CredentialsProviderFactory } from "./credentials_provider_factory";
 import { AssumeRoleWithSAMLCommand, STSClient } from "@aws-sdk/client-sts";
 import { WrapperProperties } from "../../wrapper_property";
-
 import { AwsWrapperError } from "../../utils/errors";
 import { AwsCredentialIdentity, AwsCredentialIdentityProvider } from "@smithy/types/dist-types/identity/awsCredentialIdentity";
 import { decode } from "entities";
@@ -25,7 +24,7 @@ import { decode } from "entities";
 export abstract class SamlCredentialsProviderFactory implements CredentialsProviderFactory {
   async getAwsCredentialsProvider(
     host: string,
-    region: string,
+    region: string | null,
     props: Map<string, any>
   ): Promise<AwsCredentialIdentity | AwsCredentialIdentityProvider> {
     const samlAssertion = await this.getSamlAssertion(props);
@@ -35,9 +34,7 @@ export abstract class SamlCredentialsProviderFactory implements CredentialsProvi
       PrincipalArn: WrapperProperties.IAM_IDP_ARN.get(props)
     });
 
-    const stsClient = new STSClient({
-      region: region
-    });
+    const stsClient = region !== null ? new STSClient({ region }) : new STSClient();
 
     const results = await stsClient.send(assumeRoleWithSamlRequest);
     const credentials = results["Credentials"];
