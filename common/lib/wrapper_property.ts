@@ -564,6 +564,24 @@ export class WrapperProperties {
     ["writer", "none"]
   );
 
+  static readonly GDB_RW_HOME_REGION = new WrapperProperty<string>(
+    "gdbRwHomeRegion",
+    "Specifies the home region for read/write splitting.",
+    null
+  );
+
+  static readonly GDB_RW_RESTRICT_WRITER_TO_HOME_REGION = new WrapperProperty<boolean>(
+    "gdbRwRestrictWriterToHomeRegion",
+    "Prevents connections to a writer node outside of the defined home region.",
+    true
+  );
+
+  static readonly GDB_RW_RESTRICT_READER_TO_HOME_REGION = new WrapperProperty<boolean>(
+    "gdbRwRestrictReaderToHomeRegion",
+    "Prevents connections to a reader node outside of the defined home region.",
+    true
+  );
+
   private static readonly PREFIXES = [
     WrapperProperties.MONITORING_PROPERTY_PREFIX,
     ClusterTopologyMonitorImpl.MONITORING_PROPERTY_PREFIX,

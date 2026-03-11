@@ -30,11 +30,13 @@ import { FailoverError } from "../../utils/errors";
 import { WrapperProperties } from "../../wrapper_property";
 import { convertMsToNanos, getTimeInNanos, logAndThrowError } from "../../utils/utils";
 import { CacheItem } from "../../utils/cache_map";
+import { FullServicesContainer } from "../../utils/full_services_container";
 
 export abstract class AbstractReadWriteSplittingPlugin extends AbstractConnectionPlugin implements CanReleaseResources {
   private static readonly subscribedMethods: Set<string> = new Set(["initHostProvider", "connect", "notifyConnectionChanged", "query"]);
 
   protected _hostListProviderService: HostListProviderService | undefined;
+  protected servicesContainer: FullServicesContainer;
   protected pluginService: PluginService;
   protected readonly _properties: Map<string, any>;
   protected readerHostInfo?: HostInfo = undefined;
@@ -48,9 +50,10 @@ export abstract class AbstractReadWriteSplittingPlugin extends AbstractConnectio
 
   private _inReadWriteSplit = false;
 
-  protected constructor(pluginService: PluginService, properties: Map<string, any>) {
+  protected constructor(serviceContainer: FullServicesContainer, properties: Map<string, any>) {
     super();
-    this.pluginService = pluginService;
+    this.servicesContainer = serviceContainer;
+    this.pluginService = this.servicesContainer.getPluginService();
     this._properties = properties;
     this.readerSelectorStrategy = WrapperProperties.READER_HOST_SELECTOR_STRATEGY.get(properties);
   }
