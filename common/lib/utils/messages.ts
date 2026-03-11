@@ -416,7 +416,14 @@ const MESSAGES: Record<string, string> = {
   "GlobalDbFailoverPlugin.currentFailoverMode": "Current Global DB failover mode: %s",
   "GlobalDbFailoverPlugin.failoverElapsed": "Global DB failover elapsed time: %s ms",
   "GlobalDbFailoverPlugin.candidateNull": "Candidate host is null for role: %s",
-  "GlobalDbFailoverPlugin.unableToConnect": "Unable to establish a connection during Global DB failover."
+  "GlobalDbFailoverPlugin.unableToConnect": "Unable to establish a connection during Global DB failover.",
+  "GlobalDbFailoverPlugin.unableToConnect": "Unable to establish a connection during failover.",
+  "GdbReadWriteSplittingPlugin.missingHomeRegion":
+    "Unable to parse home region from endpoint '%s'. Please ensure you have set the 'gdbRwHomeRegion' connection parameter.",
+  "GdbReadWriteSplittingPlugin.cantConnectWriterOutOfHomeRegion":
+    "Writer connection to '%s' is not allowed since it is out of home region '%s'.",
+  "GdbReadWriteSplittingPlugin.noAvailableReadersInHomeRegion": "No available reader nodes in home region '%s'.",
+  "GdbReadWriteSplittingPlugin.parameterValue": "%s=%s"
 };
 
 export class Messages {

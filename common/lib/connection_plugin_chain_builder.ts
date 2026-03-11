@@ -45,6 +45,7 @@ import { HostMonitoring2PluginFactory } from "./plugins/efm2/host_monitoring2_pl
 import { BlueGreenPluginFactory } from "./plugins/bluegreen/blue_green_plugin_factory";
 import { GlobalDbFailoverPluginFactory } from "./plugins/gdb_failover/global_db_failover_plugin_factory";
 import { FullServicesContainer } from "./utils/full_services_container";
+import { GdbReadWriteSplittingPluginFactory } from "./plugins/read_write_splitting/gdb_read_write_splitting_plugin_factory";
 
 /*
   Type alias used for plugin factory sorting. It holds a reference to a plugin
@@ -65,6 +66,7 @@ export class ConnectionPluginChainBuilder {
     ["staleDns", { factory: StaleDnsPluginFactory, weight: 500 }],
     ["bg", { factory: BlueGreenPluginFactory, weight: 550 }],
     ["readWriteSplitting", { factory: ReadWriteSplittingPluginFactory, weight: 600 }],
+    ["gdbReadWriteSplitting", { factory: GdbReadWriteSplittingPluginFactory, weight: 610 }],
     ["failover", { factory: FailoverPluginFactory, weight: 700 }],
     ["failover2", { factory: Failover2PluginFactory, weight: 710 }],
     ["gdbFailover", { factory: GlobalDbFailoverPluginFactory, weight: 720 }],
@@ -87,6 +89,7 @@ export class ConnectionPluginChainBuilder {
     [StaleDnsPluginFactory, 500],
     [BlueGreenPluginFactory, 550],
     [ReadWriteSplittingPluginFactory, 600],
+    [GdbReadWriteSplittingPluginFactory, 610],
     [FailoverPluginFactory, 700],
     [Failover2PluginFactory, 710],
     [GlobalDbFailoverPluginFactory, 720],
