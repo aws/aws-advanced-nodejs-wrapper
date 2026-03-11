@@ -43,6 +43,7 @@ import { CustomEndpointPluginFactory } from "./plugins/custom_endpoint/custom_en
 import { ConfigurationProfile } from "./profile/configuration_profile";
 import { HostMonitoring2PluginFactory } from "./plugins/efm2/host_monitoring2_plugin_factory";
 import { BlueGreenPluginFactory } from "./plugins/bluegreen/blue_green_plugin_factory";
+import { GdbReadWriteSplittingPluginFactory } from "./plugins/read_write_splitting/gdb_read_write_splitting_plugin_factory";
 
 /*
   Type alias used for plugin factory sorting. It holds a reference to a plugin
@@ -63,6 +64,7 @@ export class ConnectionPluginChainBuilder {
     ["staleDns", { factory: StaleDnsPluginFactory, weight: 500 }],
     ["bg", { factory: BlueGreenPluginFactory, weight: 550 }],
     ["readWriteSplitting", { factory: ReadWriteSplittingPluginFactory, weight: 600 }],
+    ["gdbReadWriteSplitting", { factory: GdbReadWriteSplittingPluginFactory, weight: 610 }],
     ["failover", { factory: FailoverPluginFactory, weight: 700 }],
     ["failover2", { factory: Failover2PluginFactory, weight: 710 }],
     ["efm", { factory: HostMonitoringPluginFactory, weight: 800 }],

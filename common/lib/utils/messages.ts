@@ -384,7 +384,13 @@ const MESSAGES: Record<string, string> = {
   "TopologyUtils.instanceIdRequired": "InstanceId must not be en empty string.",
   "TopologyUtils.errorGettingHostRole": "An error occurred while trying to get the host role.",
   "GlobalTopologyUtils.missingRegion": "Host '%s' is missing region information in the topology query result.",
-  "GlobalTopologyUtils.missingTemplateForRegion": "No cluster instance template found for region '%s' when processing host '%s'."
+  "GlobalTopologyUtils.missingTemplateForRegion": "No cluster instance template found for region '%s' when processing host '%s'.",
+  "GdbReadWriteSplittingPlugin.missingHomeRegion":
+    "Unable to parse home region from endpoint '%s'. Please ensure you have set the 'gdbRwHomeRegion' connection parameter.",
+  "GdbReadWriteSplittingPlugin.cantConnectWriterOutOfHomeRegion":
+    "Writer connection to '%s' is not allowed since it is out of home region '%s'.",
+  "GdbReadWriteSplittingPlugin.noAvailableReadersInHomeRegion": "No available reader nodes in home region '%s'.",
+  "GdbReadWriteSplittingPlugin.parameterValue": "%s=%s"
 };
 
 export class Messages {
