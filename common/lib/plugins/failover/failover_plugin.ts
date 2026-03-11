@@ -17,14 +17,14 @@
 import { AbstractConnectionPlugin } from "../../abstract_connection_plugin";
 import { logger } from "../../../logutils";
 import {
-  HostInfo,
   AwsWrapperError,
   FailoverFailedError,
   FailoverSuccessError,
-  TransactionResolutionUnknownError,
-  UnavailableHostError,
+  HostAvailability,
+  HostInfo,
   HostRole,
-  HostAvailability
+  TransactionResolutionUnknownError,
+  UnavailableHostError
 } from "../../";
 import { PluginService } from "../../plugin_service";
 import { OldConnectionSuggestionAction } from "../../old_connection_suggestion_action";
@@ -255,6 +255,7 @@ export class FailoverPlugin extends AbstractConnectionPlugin {
       // Verify there aren't any unexpected error emitted while the connection was idle.
       if (this.pluginService.hasNetworkError()) {
         // Throw the unexpected error directly to be handled.
+
         throw this.pluginService.getUnexpectedError();
       }
 

@@ -471,6 +471,13 @@ export class WrapperProperties {
     false
   );
 
+  static readonly CACHED_READER_KEEP_ALIVE_TIMEOUT = new WrapperProperty<number>(
+    "cachedReaderKeepAliveTimeoutMs",
+    "The time in milliseconds to keep a reader connection alive in the cache. " +
+      "Default value 0 means the Wrapper will keep reusing the same cached reader connection.",
+    0
+  );
+
   private static readonly PREFIXES = [
     WrapperProperties.MONITORING_PROPERTY_PREFIX,
     ClusterTopologyMonitorImpl.MONITORING_PROPERTY_PREFIX,
