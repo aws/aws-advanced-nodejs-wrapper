@@ -122,7 +122,7 @@ describe("reader write splitting test", () => {
   it("test set read only true", async () => {
     const mockPluginServiceInstance = instance(mockPluginService);
     when(mockPluginService.getAllHosts()).thenReturn(singleReaderTopology);
-    when(mockPluginService.getHostInfoByStrategy(anything(), anything())).thenReturn(readerHost1);
+    when(mockPluginService.getHostInfoByStrategy(anything(), anything(), anything())).thenReturn(readerHost1);
     when(mockPluginService.getCurrentClient()).thenReturn(instance(mockWriterClient));
     when(await mockPluginService.isClientValid(anything())).thenReturn(true);
     when(await mockWriterClient.isValid()).thenReturn(true);
@@ -422,7 +422,7 @@ describe("reader write splitting test", () => {
   it("test pooled reader connection after set read only", async () => {
     const mockPluginServiceInstance = instance(mockPluginService);
     when(mockPluginService.getHosts()).thenReturn(singleReaderTopology);
-    when(mockPluginService.getHostInfoByStrategy(anything(), anything())).thenReturn(readerHost1);
+    when(mockPluginService.getHostInfoByStrategy(anything(), anything(), anything())).thenReturn(readerHost1);
     when(mockPluginService.getCurrentClient()).thenReturn(instance(mockWriterClient));
     when(mockPluginService.isPooledClient()).thenReturn(true);
     when(await mockWriterClient.isValid()).thenReturn(true);
@@ -451,7 +451,7 @@ describe("reader write splitting test", () => {
   it("test pooled writer connection after set read only", async () => {
     const mockPluginServiceInstance = instance(mockPluginService);
     when(mockPluginService.getHosts()).thenReturn(singleReaderTopology);
-    when(mockPluginService.getHostInfoByStrategy(HostRole.READER, "random")).thenReturn(readerHost1);
+    when(mockPluginService.getHostInfoByStrategy(HostRole.READER, "random", singleReaderTopology)).thenReturn(readerHost1);
     when(mockPluginService.getCurrentClient()).thenReturn(instance(mockWriterClient));
     when(mockPluginService.isPooledClient()).thenReturn(true);
     when(await mockWriterClient.isValid()).thenReturn(true);

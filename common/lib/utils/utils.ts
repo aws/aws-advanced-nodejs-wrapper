@@ -118,7 +118,7 @@ export function isDialectTopologyAware(dialect: any): dialect is TopologyAwareDa
 }
 
 export function containsHostAndPort(hosts: HostInfo[] | null | undefined, hostAndPort: string): boolean {
-  if (!hosts || hosts.length === 0) {
+  if (hosts?.length === 0) {
     return false;
   }
 

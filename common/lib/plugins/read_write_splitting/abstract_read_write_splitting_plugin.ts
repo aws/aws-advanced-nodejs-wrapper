@@ -1,18 +1,18 @@
 /*
- * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License").
- * You may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ 
+  Licensed under the Apache License, Version 2.0 (the "License").
+  You may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+ 
+  http://www.apache.org/licenses/LICENSE-2.0
+ 
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+*/
 
 import { CanReleaseResources } from "../../can_release_resources";
 import { AbstractConnectionPlugin } from "../../abstract_connection_plugin";
@@ -207,7 +207,7 @@ export abstract class AbstractReadWriteSplittingPlugin extends AbstractConnectio
       await this.closeReaderClientIfIdle();
     }
 
-    logger.debug(Messages.get("ReadWriteSplittingPlugin.switchedFromReaderToWriter", this.writerHostInfo.hostAndPort));
+    logger.debug(Messages.get("ReadWriteSplittingPlugin.switchedFromReaderToWriter", this.writerHostInfo?.hostAndPort ?? "unknown"));
   }
 
   async switchToReaderTargetClient() {
@@ -226,7 +226,7 @@ export abstract class AbstractReadWriteSplittingPlugin extends AbstractConnectio
     } else {
       try {
         await this.switchCurrentTargetClientTo(this.readerCacheItem.get(), this.readerHostInfo);
-        logger.debug(Messages.get("ReadWriteSplittingPlugin.switchedFromWriterToReader", this.readerHostInfo.hostAndPort));
+        logger.debug(Messages.get("ReadWriteSplittingPlugin.switchedFromWriterToReader", this.readerHostInfo?.hostAndPort ?? "unknown"));
       } catch (error: any) {
         logger.debug(
           Messages.get(
