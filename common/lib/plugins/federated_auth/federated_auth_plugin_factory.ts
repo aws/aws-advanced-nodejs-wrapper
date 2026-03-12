@@ -34,7 +34,7 @@ export class FederatedAuthPluginFactory extends ConnectionPluginFactory {
         FederatedAuthPluginFactory.adfsCredentialsProvider = await import("./adfs_credentials_provider_factory");
       }
 
-      const pluginService = servicesContainer.getPluginService();
+      const pluginService = servicesContainer.pluginService;
       const adfsCredentialsProviderFactory = new FederatedAuthPluginFactory.adfsCredentialsProvider.AdfsCredentialsProviderFactory(pluginService);
       return new FederatedAuthPluginFactory.federatedAuthPlugin.FederatedAuthPlugin(pluginService, adfsCredentialsProviderFactory);
     } catch (error: any) {

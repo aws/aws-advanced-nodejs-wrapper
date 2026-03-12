@@ -28,7 +28,7 @@ export class StaleDnsPluginFactory extends ConnectionPluginFactory {
       if (!StaleDnsPluginFactory.staleDnsPlugin) {
         StaleDnsPluginFactory.staleDnsPlugin = await import("./stale_dns_plugin");
       }
-      return new StaleDnsPluginFactory.staleDnsPlugin.StaleDnsPlugin(servicesContainer.getPluginService(), properties);
+      return new StaleDnsPluginFactory.staleDnsPlugin.StaleDnsPlugin(servicesContainer.pluginService, properties);
     } catch (error: any) {
       throw new AwsWrapperError(Messages.get("ConnectionPluginChainBuilder.errorImportingPlugin", error.message, "StaleDnsPlugin"));
     }

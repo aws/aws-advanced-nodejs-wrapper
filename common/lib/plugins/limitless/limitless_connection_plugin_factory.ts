@@ -28,7 +28,7 @@ export class LimitlessConnectionPluginFactory implements ConnectionPluginFactory
       if (!LimitlessConnectionPluginFactory.limitlessPlugin) {
         LimitlessConnectionPluginFactory.limitlessPlugin = await import("./limitless_connection_plugin");
       }
-      return new LimitlessConnectionPluginFactory.limitlessPlugin.LimitlessConnectionPlugin(servicesContainer.getPluginService(), properties);
+      return new LimitlessConnectionPluginFactory.limitlessPlugin.LimitlessConnectionPlugin(servicesContainer.pluginService, properties);
     } catch (error: any) {
       throw new AwsWrapperError(Messages.get("ConnectionPluginChainBuilder.errorImportingPlugin", error.message, "LimitlessConnectionPlugin"));
     }

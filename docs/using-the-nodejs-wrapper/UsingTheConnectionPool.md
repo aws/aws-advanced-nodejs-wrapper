@@ -407,7 +407,7 @@ const result = await pool.query("SELECT NOW()");
 
 ### Resources Cleanup
 
-Throughout the application lifetime, some plugins like the Aurora Connection Tracker Plugin or the Host Monitoring Connection Plugin may create background threads shared by all connections.
+Throughout the application lifetime, some plugins like the Aurora Connection Tracker Plugin or the Host Monitoring Connection Plugin may create background tasks shared by all connections.
 
 At the end of your application, call `PluginManager.releaseResources()` to clean up these shared resources.
 

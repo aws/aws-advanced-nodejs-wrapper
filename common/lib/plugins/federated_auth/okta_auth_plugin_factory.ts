@@ -33,7 +33,7 @@ export class OktaAuthPluginFactory extends ConnectionPluginFactory {
         OktaAuthPluginFactory.oktaCredentialsProviderFactory = await import("./okta_credentials_provider_factory");
       }
 
-      const pluginService = servicesContainer.getPluginService();
+      const pluginService = servicesContainer.pluginService;
       const oktaCredentialsProviderFactory = new OktaAuthPluginFactory.oktaCredentialsProviderFactory.OktaCredentialsProviderFactory(pluginService);
       return new OktaAuthPluginFactory.oktaAuthPlugin.OktaAuthPlugin(pluginService, oktaCredentialsProviderFactory);
     } catch (error: any) {

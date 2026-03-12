@@ -26,7 +26,7 @@ export class HighestWeightHostSelector implements HostSelector {
 
   getHost(hosts: HostInfo[], role: HostRole, props?: Map<string, any>): HostInfo {
     const eligibleHosts: HostInfo[] = hosts
-      .filter((host: HostInfo) => host.role === role && host.availability === HostAvailability.AVAILABLE)
+      .filter((host: HostInfo) => (role === null || host.role === role) && host.availability === HostAvailability.AVAILABLE)
       .sort((hostA: HostInfo, hostB: HostInfo) => (hostA.weight > hostB.weight ? -1 : hostA.weight < hostB.weight ? 1 : 0));
 
     if (eligibleHosts.length === 0) {

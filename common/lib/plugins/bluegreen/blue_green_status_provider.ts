@@ -20,7 +20,7 @@ import { SimpleHostAvailabilityStrategy } from "../../host_availability/simple_h
 import { BlueGreenStatusMonitor } from "./blue_green_status_monitor";
 import { BlueGreenInterimStatus } from "./blue_green_interim_status";
 import { HostInfo } from "../../host_info";
-import { convertMsToNanos, getTimeInNanos, Pair } from "../../utils/utils";
+import { convertMsToNanos, getTimeInNanos } from "../../utils/utils";
 import { BlueGreenRole } from "./blue_green_role";
 import { BlueGreenStatus } from "./blue_green_status";
 import { BlueGreenPhase } from "./blue_green_phase";
@@ -56,8 +56,8 @@ export class BlueGreenStatusProvider {
   protected interimStatuses: BlueGreenInterimStatus[] = [null, null];
   protected hostIpAddresses: Map<string, string> = new Map();
 
-  // The second parameter of Pair is null when no corresponding host is found.
-  protected readonly correspondingHosts: Map<string, Pair<HostInfo, HostInfo | null>> = new Map();
+  // The second element is null when no corresponding host is found.
+  protected readonly correspondingHosts: Map<string, [HostInfo, HostInfo | null]> = new Map();
 
   // all known host names; host with no port
   protected readonly roleByHost: Map<string, BlueGreenRole> = new Map();
@@ -88,8 +88,8 @@ export class BlueGreenStatusProvider {
 
   constructor(servicesContainer: FullServicesContainer, properties: Map<string, any>, bgdId: string) {
     this.servicesContainer = servicesContainer;
-    this.pluginService = this.servicesContainer.getPluginService();
-    this.storageService = this.servicesContainer.getStorageService();
+    this.pluginService = this.servicesContainer.pluginService;
+    this.storageService = this.servicesContainer.storageService;
     this.properties = properties;
     this.bgdId = bgdId;
 
@@ -240,19 +240,19 @@ export class BlueGreenStatusProvider {
 
       if (blueWriterHostInfo) {
         // greenWriterHostInfo can be null but that will be handled properly by corresponding routing.
-        this.correspondingHosts.set(blueWriterHostInfo.host, new Pair(blueWriterHostInfo, greenWriterHostInfo));
+        this.correspondingHosts.set(blueWriterHostInfo.host, [blueWriterHostInfo, greenWriterHostInfo]);
       }
 
       if (sortedBlueReaderHostInfos?.length > 0) {
         if (sortedGreenReaderHostInfos?.length > 0) {
           let greenIndex: number = 0;
           sortedBlueReaderHostInfos.forEach((blueHostInfo) => {
-            this.correspondingHosts.set(blueHostInfo.host, new Pair(blueHostInfo, sortedGreenReaderHostInfos.at(greenIndex++)));
+            this.correspondingHosts.set(blueHostInfo.host, [blueHostInfo, sortedGreenReaderHostInfos.at(greenIndex++)]);
             greenIndex %= sortedGreenReaderHostInfos.length;
           });
         } else {
           sortedBlueReaderHostInfos.forEach((blueHostInfo) => {
-            this.correspondingHosts.set(blueHostInfo.host, new Pair(blueHostInfo, greenWriterHostInfo));
+            this.correspondingHosts.set(blueHostInfo.host, [blueHostInfo, greenWriterHostInfo]);
           });
         }
       }
@@ -276,7 +276,7 @@ export class BlueGreenStatusProvider {
         if (!this.correspondingHosts.has(blueClusterHost)) {
           this.correspondingHosts.set(
             blueClusterHost,
-            new Pair(this.hostInfoBuilder.withHost(blueClusterHost).build(), this.hostInfoBuilder.withHost(greenClusterHost).build())
+            [this.hostInfoBuilder.withHost(blueClusterHost).build(), this.hostInfoBuilder.withHost(greenClusterHost).build()]
           );
         }
       }
@@ -296,7 +296,7 @@ export class BlueGreenStatusProvider {
         if (!this.correspondingHosts.has(blueClusterReaderHost)) {
           this.correspondingHosts.set(
             blueClusterReaderHost,
-            new Pair(this.hostInfoBuilder.withHost(blueClusterReaderHost).build(), this.hostInfoBuilder.withHost(greenClusterReaderHost).build())
+            [this.hostInfoBuilder.withHost(blueClusterReaderHost).build(), this.hostInfoBuilder.withHost(greenClusterReaderHost).build()]
           );
         }
       }
@@ -316,7 +316,7 @@ export class BlueGreenStatusProvider {
               if (!this.correspondingHosts.has(blueHost)) {
                 this.correspondingHosts.set(
                   blueHost,
-                  new Pair(this.hostInfoBuilder.withHost(blueHost).build(), this.hostInfoBuilder.withHost(greenHost).build())
+                  [this.hostInfoBuilder.withHost(blueHost).build(), this.hostInfoBuilder.withHost(greenHost).build()]
                 );
               }
             }
@@ -489,7 +489,7 @@ export class BlueGreenStatusProvider {
     Array.from(this.roleByHost.entries())
       .filter(([host, role]) => role === BlueGreenRole.SOURCE && this.correspondingHosts.has(host))
       .forEach(([host, role]) => {
-        const hostSpec = this.correspondingHosts.get(host).left;
+        const hostSpec = this.correspondingHosts.get(host)[0];
         const blueIp = this.hostIpAddresses.get(hostSpec.host);
         const substituteHostSpecWithIp = !blueIp ? hostSpec : this.hostInfoBuilder.copyFrom(hostSpec).withHost(blueIp).build();
 
@@ -633,9 +633,9 @@ export class BlueGreenStatusProvider {
       .forEach(([host, role]) => {
         const blueHost: string = host;
         const isBlueHostInstance: boolean = this.rdsUtils.isRdsInstance(blueHost);
-        const pair: Pair<HostInfo, HostInfo | null> | undefined = this.correspondingHosts?.get(host);
-        const blueHostInfo: HostInfo | undefined = pair?.left;
-        const greenHostInfo: HostInfo | undefined = pair?.right;
+        const pair: [HostInfo, HostInfo | null] | undefined = this.correspondingHosts?.get(host);
+        const blueHostInfo: HostInfo | undefined = pair?.[0];
+        const greenHostInfo: HostInfo | undefined = pair?.[1];
 
         if (!greenHostInfo) {
           // A corresponding host is not found. We need to suspend this call.
@@ -878,7 +878,7 @@ export class BlueGreenStatusProvider {
     logger.debug(
       "Corresponding hosts:\n" +
         Array.from(this.correspondingHosts.entries())
-          .map(([key, value]) => `   ${key} -> ${value.right == null ? "<null>" : value.right.hostAndPort}`)
+          .map(([key, value]) => `   ${key} -> ${value[1] == null ? "<null>" : value[1].hostAndPort}`)
           .join("\n")
     );
 

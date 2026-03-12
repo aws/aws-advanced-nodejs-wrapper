@@ -28,7 +28,7 @@ export class IamAuthenticationPluginFactory extends ConnectionPluginFactory {
       if (!IamAuthenticationPluginFactory.iamAuthenticationPlugin) {
         IamAuthenticationPluginFactory.iamAuthenticationPlugin = await import("./iam_authentication_plugin");
       }
-      return new IamAuthenticationPluginFactory.iamAuthenticationPlugin.IamAuthenticationPlugin(servicesContainer.getPluginService());
+      return new IamAuthenticationPluginFactory.iamAuthenticationPlugin.IamAuthenticationPlugin(servicesContainer.pluginService);
     } catch (error: any) {
       throw new AwsWrapperError(Messages.get("ConnectionPluginChainBuilder.errorImportingPlugin", error.message, "IamAuthenticationPlugin"));
     }

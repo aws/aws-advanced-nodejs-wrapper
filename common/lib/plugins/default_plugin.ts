@@ -41,7 +41,7 @@ export class DefaultPlugin extends AbstractConnectionPlugin {
   constructor(servicesContainer: FullServicesContainer, connectionProviderManager: ConnectionProviderManager) {
     super();
     this.servicesContainer = servicesContainer;
-    this.pluginService = servicesContainer.getPluginService();
+    this.pluginService = servicesContainer.pluginService;
     this.connectionProviderManager = connectionProviderManager;
   }
 

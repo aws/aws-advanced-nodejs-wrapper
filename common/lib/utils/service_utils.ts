@@ -67,9 +67,9 @@ export class ServiceUtils {
       telemetryFactory
     );
 
-    servicesContainer.setPluginService(pluginService);
-    servicesContainer.setPluginManager(pluginManager);
-    servicesContainer.setHostListProviderService(pluginService);
+    servicesContainer.pluginService = pluginService;
+    servicesContainer.pluginManager = pluginManager;
+    servicesContainer.hostListProviderService = pluginService;
 
     return servicesContainer;
   }
@@ -101,24 +101,24 @@ export class ServiceUtils {
       telemetryFactory
     );
 
-    servicesContainer.setPluginService(pluginService);
-    servicesContainer.setPluginManager(pluginManager);
-    servicesContainer.setHostListProviderService(pluginService);
+    servicesContainer.pluginService = pluginService;
+    servicesContainer.pluginManager = pluginManager;
+    servicesContainer.hostListProviderService = pluginService;
 
     return servicesContainer;
   }
 
   createMinimalServiceContainerFrom(servicesContainer: FullServicesContainer, props: Map<string, unknown>): FullServicesContainer {
     return this.createMinimalServiceContainer(
-      servicesContainer.getStorageService(),
-      servicesContainer.getMonitorService(),
-      servicesContainer.getEventPublisher(),
+      servicesContainer.storageService,
+      servicesContainer.monitorService,
+      servicesContainer.eventPublisher,
       props,
-      servicesContainer.getPluginService().getDialect(),
-      servicesContainer.getPluginService().getDriverDialect(),
-      servicesContainer.getTelemetryFactory(),
-      servicesContainer.getDefaultConnectionProvider(),
-      servicesContainer.getPluginService().getConnectionUrlParser()
+      servicesContainer.pluginService.getDialect(),
+      servicesContainer.pluginService.getDriverDialect(),
+      servicesContainer.telemetryFactory,
+      servicesContainer.defaultConnectionProvider,
+      servicesContainer.pluginService.getConnectionUrlParser()
     );
   }
 }

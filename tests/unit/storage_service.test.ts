@@ -24,7 +24,7 @@ describe("test_storage_service", () => {
   let storageService: StorageService;
 
   beforeEach(() => {
-    storageService = CoreServicesContainer.getInstance().getStorageService();
+    storageService = CoreServicesContainer.getInstance().storageService;
   });
 
   afterEach(() => {

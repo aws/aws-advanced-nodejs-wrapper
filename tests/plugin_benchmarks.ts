@@ -48,7 +48,7 @@ when(mockPluginService.getDriverDialect()).thenReturn(mockDialect);
 
 const connectionString = "my.domain.com";
 const servicesContainer = mock(FullServicesContainerImpl);
-when(servicesContainer.getPluginService()).thenReturn(instance(mockPluginService));
+when(servicesContainer.pluginService).thenReturn(instance(mockPluginService));
 
 function getProps(plugins: string) {
   const props = new Map();

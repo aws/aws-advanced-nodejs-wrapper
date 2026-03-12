@@ -56,7 +56,7 @@ when(mockPluginService.getDriverDialect()).thenReturn(new NodePostgresDriverDial
 when(mockPluginService.getCurrentClient()).thenReturn(mockClient);
 
 const servicesContainer = mock(FullServicesContainerImpl);
-when(servicesContainer.getPluginService()).thenReturn(instance(mockPluginService));
+when(servicesContainer.pluginService).thenReturn(instance(mockPluginService));
 
 const propsWithNoPlugins = new Map<string, any>();
 const propsWithPlugins = new Map<string, any>();

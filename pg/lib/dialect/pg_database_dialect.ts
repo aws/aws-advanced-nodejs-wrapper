@@ -107,7 +107,7 @@ export class PgDatabaseDialect implements DatabaseDialect {
   }
 
   getHostListProvider(props: Map<string, any>, originalUrl: string, servicesContainer: FullServicesContainer): HostListProvider {
-    return new ConnectionStringHostListProvider(props, originalUrl, this.getDefaultPort(), servicesContainer.getHostListProviderService());
+    return new ConnectionStringHostListProvider(props, originalUrl, this.getDefaultPort(), servicesContainer.hostListProviderService);
   }
 
   getErrorHandler(): ErrorHandler {

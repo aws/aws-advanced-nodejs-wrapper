@@ -29,7 +29,7 @@ export class FailoverPluginFactory extends ConnectionPluginFactory {
       if (!FailoverPluginFactory.failoverPlugin) {
         FailoverPluginFactory.failoverPlugin = await import("./failover_plugin");
       }
-      return new FailoverPluginFactory.failoverPlugin.FailoverPlugin(servicesContainer.getPluginService(), properties, new RdsUtils());
+      return new FailoverPluginFactory.failoverPlugin.FailoverPlugin(servicesContainer.pluginService, properties, new RdsUtils());
     } catch (error: any) {
       throw new AwsWrapperError(Messages.get("ConnectionPluginChainBuilder.errorImportingPlugin", error.message, "FailoverPlugin"));
     }

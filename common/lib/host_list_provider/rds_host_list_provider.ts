@@ -62,9 +62,9 @@ export class RdsHostListProvider implements DynamicHostListProvider {
     this.rdsHelper = new RdsUtils();
     this.topologyUtils = topologyUtils;
     this.servicesContainers = servicesContainers;
-    this.pluginService = this.servicesContainers.getPluginService();
-    this.storageService = this.servicesContainers.getStorageService();
-    this.hostListProviderService = this.servicesContainers.getHostListProviderService();
+    this.pluginService = this.servicesContainers.pluginService;
+    this.storageService = this.servicesContainers.storageService;
+    this.hostListProviderService = this.servicesContainers.hostListProviderService;
     this.connectionUrlParser = this.hostListProviderService.getConnectionUrlParser();
     this.originalUrl = originalUrl;
     this.properties = properties;
@@ -126,9 +126,13 @@ export class RdsHostListProvider implements DynamicHostListProvider {
       }
     };
 
-    return await this.servicesContainers
-      .getMonitorService()
-      .runIfAbsent(ClusterTopologyMonitorImpl, this.clusterId, this.servicesContainers, this.properties, initializer);
+    return await this.servicesContainers.monitorService.runIfAbsent(
+      ClusterTopologyMonitorImpl,
+      this.clusterId,
+      this.servicesContainers,
+      this.properties,
+      initializer
+    );
   }
 
   async forceRefresh(): Promise<HostInfo[]> {
@@ -257,14 +261,9 @@ export class RdsHostListProvider implements DynamicHostListProvider {
     return topology == null ? null : topology.hosts;
   }
 
-  static clearAll(): void {
-    // No-op
-    // TODO: remove if still not used after full service container refactoring
-  }
-
   clear(): void {
     if (this.clusterId) {
-      CoreServicesContainer.getInstance().getStorageService().remove(Topology, this.clusterId);
+      this.servicesContainers.storageService.remove(Topology, this.clusterId);
     }
   }
 
@@ -276,7 +275,7 @@ export class RdsHostListProvider implements DynamicHostListProvider {
     }
 
     const rdsUrlType: RdsUrlType = this.rdsHelper.identifyRdsType(hostPattern);
-    if (rdsUrlType == RdsUrlType.RDS_PROXY) {
+    if (rdsUrlType == RdsUrlType.RDS_PROXY || rdsUrlType == RdsUrlType.RDS_PROXY_ENDPOINT) {
       const message: string = Messages.get("RdsHostListProvider.clusterInstanceHostPatternNotSupportedForRDSProxy");
       logger.error(message);
       throw new AwsWrapperError(message);

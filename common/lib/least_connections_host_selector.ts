@@ -32,7 +32,7 @@ export class LeastConnectionsHostSelector implements HostSelector {
 
   getHost(hosts: HostInfo[], role: HostRole, props?: Map<string, any>): HostInfo {
     const eligibleHosts: HostInfo[] = hosts
-      .filter((host: HostInfo) => host.role === role && host.availability === HostAvailability.AVAILABLE)
+      .filter((host: HostInfo) => (role === null || host.role === role) && host.availability === HostAvailability.AVAILABLE)
       .sort((hostA: HostInfo, hostB: HostInfo) => {
         const hostACount = this.getNumConnections(hostA, LeastConnectionsHostSelector.databasePools);
         const hostBCount = this.getNumConnections(hostB, LeastConnectionsHostSelector.databasePools);

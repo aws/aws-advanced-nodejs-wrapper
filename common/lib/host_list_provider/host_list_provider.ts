@@ -19,16 +19,12 @@ import { HostRole } from "../host_role";
 import { DatabaseDialect } from "../database_dialect/database_dialect";
 import { ClientWrapper } from "../client_wrapper";
 
-export type DynamicHostListProvider = HostListProvider;
-
 export type StaticHostListProvider = HostListProvider;
 
 export interface HostListProvider {
   refresh(): Promise<HostInfo[]>;
 
   forceRefresh(): Promise<HostInfo[]>;
-
-  forceMonitoringRefresh(shouldVerifyWriter: boolean, timeoutMs: number): Promise<HostInfo[]>;
 
   getHostRole(client: ClientWrapper, dialect: DatabaseDialect): Promise<HostRole>;
 
@@ -37,4 +33,8 @@ export interface HostListProvider {
   getHostProviderType(): string;
 
   getClusterId(): string;
+}
+
+export interface DynamicHostListProvider extends HostListProvider {
+  forceMonitoringRefresh(shouldVerifyWriter: boolean, timeoutMs: number): Promise<HostInfo[]>;
 }

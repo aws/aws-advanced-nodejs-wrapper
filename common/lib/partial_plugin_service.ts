@@ -21,9 +21,9 @@ import { HostListProvider } from "./host_list_provider/host_list_provider";
 import { ConnectionUrlParser } from "./utils/connection_url_parser";
 import { DatabaseDialect } from "./database_dialect/database_dialect";
 import { HostInfoBuilder } from "./host_info_builder";
-import { AwsTimeoutError, AwsWrapperError } from "./";
+import { AwsTimeoutError, AwsWrapperError, UnsupportedMethodError } from "./";
 import { HostAvailability } from "./host_availability/host_availability";
-import { CacheMap } from "./utils/cache_map";
+import { HostAvailabilityCacheItem } from "./host_availability/host_availability_cache_item";
 import { HostChangeOptions } from "./host_change_options";
 import { HostRole } from "./host_role";
 import { SessionStateService } from "./session_state_service";
@@ -38,6 +38,8 @@ import { AllowedAndBlockedHosts } from "./allowed_and_blocked_hosts";
 import { ConnectionPlugin } from "./connection_plugin";
 import { FullServicesContainer } from "./utils/full_services_container";
 import { HostListProviderService } from "./host_list_provider_service";
+import { StorageService } from "./utils/storage/storage_service";
+import { CoreServicesContainer } from "./utils/core_services_container";
 
 /**
  * A PluginService containing some methods that are not intended to be called. This class is intended to be used
@@ -46,12 +48,10 @@ import { HostListProviderService } from "./host_list_provider_service";
  * UnsupportedOperationException when called.
  */
 export class PartialPluginService implements PluginService, HostListProviderService {
-  private static readonly DEFAULT_HOST_AVAILABILITY_CACHE_EXPIRE_NANO = 5 * 60_000_000_000; // 5 minutes
   private static readonly DEFAULT_TOPOLOGY_QUERY_TIMEOUT_MS = 5000; // 5 seconds
 
-  protected static readonly hostAvailabilityExpiringCache: CacheMap<string, HostAvailability> = new CacheMap<string, HostAvailability>();
-
   protected readonly servicesContainer: FullServicesContainer;
+  protected readonly storageService: StorageService;
   protected readonly props: Map<string, any>;
   protected hostListProvider: HostListProvider | null = null;
   protected hosts: HostInfo[] = [];
@@ -72,8 +72,9 @@ export class PartialPluginService implements PluginService, HostListProviderServ
     connectionUrlParser: ConnectionUrlParser
   ) {
     this.servicesContainer = servicesContainer;
-    this.servicesContainer.setHostListProviderService(this);
-    this.servicesContainer.setPluginService(this);
+    this.storageService = servicesContainer.storageService;
+    this.servicesContainer.hostListProviderService = this;
+    this.servicesContainer.pluginService = this;
 
     this.props = props;
     this.dialect = dialect;
@@ -112,7 +113,10 @@ export class PartialPluginService implements PluginService, HostListProviderServ
         }
 
         if (!this.currentHostInfo) {
-          this.currentHostInfo = this.getHosts()[0];
+          const hosts = this.getHosts();
+          if (hosts.length > 0) {
+            this.currentHostInfo = hosts[0];
+          }
         }
       }
 
@@ -238,11 +242,7 @@ export class PartialPluginService implements PluginService, HostListProviderServ
     for (const host of hostsToChange) {
       const currentAvailability = host.getAvailability();
       host.availability = availability;
-      PartialPluginService.hostAvailabilityExpiringCache.put(
-        host.url,
-        availability,
-        PartialPluginService.DEFAULT_HOST_AVAILABILITY_CACHE_EXPIRE_NANO
-      );
+      this.storageService.set(host.url, new HostAvailabilityCacheItem(availability));
       if (currentAvailability !== availability) {
         let hostChanges: Set<HostChangeOptions>;
         if (availability === HostAvailability.AVAILABLE) {
@@ -255,7 +255,7 @@ export class PartialPluginService implements PluginService, HostListProviderServ
     }
 
     if (changes.size > 0) {
-      this.servicesContainer.getPluginManager()?.notifyHostListChanged(changes);
+      this.servicesContainer.pluginManager?.notifyHostListChanged(changes);
     }
   }
 
@@ -290,8 +290,13 @@ export class PartialPluginService implements PluginService, HostListProviderServ
   async forceMonitoringRefresh(shouldVerifyWriter: boolean, timeoutMs: number): Promise<boolean> {
     const hostListProvider = this.getHostListProvider();
 
+    if (!this.isDynamicHostListProvider()) {
+      const providerName = hostListProvider?.constructor.name ?? "null";
+      throw new UnsupportedMethodError(Messages.get("PluginService.requiredDynamicHostListProvider", providerName));
+    }
+
     try {
-      const updatedHostList = await hostListProvider.forceMonitoringRefresh(shouldVerifyWriter, timeoutMs);
+      const updatedHostList = await (hostListProvider as any).forceMonitoringRefresh(shouldVerifyWriter, timeoutMs);
       if (updatedHostList) {
         this.updateHostAvailability(updatedHostList);
         this.setHostList(this.hosts, updatedHostList);
@@ -333,14 +338,13 @@ export class PartialPluginService implements PluginService, HostListProviderServ
 
     if (changes.size > 0) {
       this.hosts = newHosts ? newHosts : [];
-      this.servicesContainer.getPluginManager()?.notifyHostListChanged(changes);
+      this.servicesContainer.pluginManager?.notifyHostListChanged(changes);
     }
   }
 
-  isStaticHostListProvider(): boolean {
-    // Check if the host list provider is a static provider
+  isDynamicHostListProvider(): boolean {
     const provider = this.getHostListProvider();
-    return provider !== null && provider.constructor.name === "StaticHostListProvider";
+    return provider !== null && typeof (provider as any).forceMonitoringRefresh === "function";
   }
 
   setHostListProvider(hostListProvider: HostListProvider): void {
@@ -356,7 +360,7 @@ export class PartialPluginService implements PluginService, HostListProviderServ
   forceConnect(hostInfo: HostInfo, props: Map<string, any>): Promise<ClientWrapper>;
   forceConnect(hostInfo: HostInfo, props: Map<string, any>, pluginToSkip: ConnectionPlugin | null): Promise<ClientWrapper>;
   forceConnect(hostInfo: HostInfo, props: Map<string, any>, pluginToSkip?: ConnectionPlugin | null): Promise<ClientWrapper> {
-    const pluginManager = this.servicesContainer.getPluginManager();
+    const pluginManager = this.servicesContainer.pluginManager;
     if (!pluginManager) {
       throw new AwsWrapperError(Messages.get("PartialPluginService.unexpectedMethodCall", "forceConnect"));
     }
@@ -365,9 +369,9 @@ export class PartialPluginService implements PluginService, HostListProviderServ
 
   protected updateHostAvailability(hosts: HostInfo[]): void {
     hosts.forEach((host) => {
-      const availability = PartialPluginService.hostAvailabilityExpiringCache.get(host.url);
-      if (availability != null) {
-        host.availability = availability;
+      const cacheItem = this.storageService.get(HostAvailabilityCacheItem, host.url);
+      if (cacheItem != null) {
+        host.availability = cacheItem.availability;
       }
     });
   }
@@ -467,7 +471,7 @@ export class PartialPluginService implements PluginService, HostListProviderServ
   }
 
   getTelemetryFactory(): TelemetryFactory {
-    const pluginManager = this.servicesContainer.getPluginManager();
+    const pluginManager = this.servicesContainer.pluginManager;
     if (!pluginManager) {
       throw new AwsWrapperError(Messages.get("PartialPluginService.unexpectedMethodCall", "getTelemetryFactory"));
     }
@@ -522,18 +526,18 @@ export class PartialPluginService implements PluginService, HostListProviderServ
 
   isPluginInUse(plugin: any): boolean {
     try {
-      return this.servicesContainer.getPluginManager()?.isPluginInUse(plugin) ?? false;
+      return this.servicesContainer.pluginManager?.isPluginInUse(plugin) ?? false;
     } catch (e) {
       return false;
     }
   }
 
   getPlugin<T>(pluginClazz: new (...args: any[]) => T): T | null {
-    return this.servicesContainer.getPluginManager()?.unwrapPlugin(pluginClazz) ?? null;
+    return this.servicesContainer.pluginManager?.unwrapPlugin(pluginClazz) ?? null;
   }
 
   static clearCache(): void {
-    PartialPluginService.hostAvailabilityExpiringCache.clear();
+    CoreServicesContainer.getInstance().storageService.clear(HostAvailabilityCacheItem);
   }
 
   isPooledClient(): boolean {

@@ -23,6 +23,8 @@ import { EventPublisher } from "../events/event";
 import { DataAccessEvent } from "../events/data_access_event";
 import { AllowedAndBlockedHosts } from "../../allowed_and_blocked_hosts";
 import { BlueGreenStatus } from "../../plugins/bluegreen/blue_green_status";
+import { HostAvailabilityCacheItem } from "../../host_availability/host_availability_cache_item";
+import { StatusCacheItem } from "../status_cache_item";
 
 const DEFAULT_CLEANUP_INTERVAL_NANOS = 5 * 60 * 1_000_000_000; // 5 minutes
 const SIXTY_MINUTES_NANOS = BigInt(60 * 60 * 1_000_000_000); // 60 minutes
@@ -120,11 +122,18 @@ export interface StorageService {
 type CacheSupplier = () => ExpirationCache<unknown, unknown>;
 
 export class StorageServiceImpl implements StorageService {
+  private static readonly DEFAULT_HOST_AVAILABILITY_CACHE_EXPIRE_NANO = BigInt(5 * 60_000_000_000); // 5 minutes
+
   private static readonly defaultCacheSuppliers: Map<Constructor, CacheSupplier> = (() => {
     const suppliers = new Map<Constructor, CacheSupplier>();
     suppliers.set(Topology, () => new ExpirationCache());
     suppliers.set(AllowedAndBlockedHosts, () => new ExpirationCache());
     suppliers.set(BlueGreenStatus, () => new ExpirationCache(false, SIXTY_MINUTES_NANOS, null, null));
+    suppliers.set(
+      HostAvailabilityCacheItem,
+      () => new ExpirationCache(true, StorageServiceImpl.DEFAULT_HOST_AVAILABILITY_CACHE_EXPIRE_NANO, null, null)
+    );
+    suppliers.set(StatusCacheItem, () => new ExpirationCache(false, SIXTY_MINUTES_NANOS, null, null));
     return suppliers;
   })();
 
@@ -134,19 +143,17 @@ export class StorageServiceImpl implements StorageService {
 
   constructor(publisher: EventPublisher, cleanupIntervalNanos: number = DEFAULT_CLEANUP_INTERVAL_NANOS) {
     this.publisher = publisher;
-    this.initCleanupThread(cleanupIntervalNanos);
+    this.initCleanupTask(cleanupIntervalNanos);
   }
 
-  protected initCleanupThread(cleanupIntervalNanos: number): void {
+  protected initCleanupTask(cleanupIntervalNanos: number): void {
     const intervalMs = cleanupIntervalNanos / 1_000_000;
     this.cleanupIntervalHandle = setInterval(() => {
       this.removeExpiredItems();
     }, intervalMs);
 
-    // Allow Node.js to exit even if this timer is active
-    if (this.cleanupIntervalHandle.unref) {
-      this.cleanupIntervalHandle.unref();
-    }
+    // Unref the timer to prevent this background cleanup task from blocking the application from gracefully exiting.
+    this.cleanupIntervalHandle.unref();
   }
 
   protected removeExpiredItems(): void {
@@ -200,7 +207,7 @@ export class StorageServiceImpl implements StorageService {
     }
 
     const value = cache.get(key);
-    if (value === null || value === undefined) {
+    if (!value) {
       return null;
     }
 

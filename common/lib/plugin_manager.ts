@@ -31,7 +31,7 @@ import { TelemetryTraceLevel } from "./utils/telemetry/telemetry_trace_level";
 import { ConnectionProvider } from "./connection_provider";
 import { ConnectionPluginFactory } from "./plugin_factory";
 import { ConfigurationProfile } from "./profile/configuration_profile";
-import { FullServicesContainer, FullServicesContainerImpl } from "./utils/full_services_container";
+import { FullServicesContainer } from "./utils/full_services_container";
 import { CoreServicesContainer } from "./utils/core_services_container";
 
 type PluginFunc<T> = (plugin: ConnectionPlugin, targetFunc: () => Promise<T>) => Promise<T>;
@@ -126,8 +126,8 @@ export class PluginManager {
     }
 
     const telemetryContext = this.telemetryFactory.openTelemetryContext(methodName, TelemetryTraceLevel.NESTED);
-    const currentClient: ClientWrapper = this.fullServicesContainer.getPluginService().getCurrentClient().targetClient;
-    this.fullServicesContainer.getPluginService().attachNoOpErrorListener(currentClient);
+    const currentClient: ClientWrapper = this.fullServicesContainer.pluginService.getCurrentClient().targetClient;
+    this.fullServicesContainer.pluginService.attachNoOpErrorListener(currentClient);
     try {
       return await telemetryContext.start(() => {
         return this.executeWithSubscribedPlugins(
@@ -140,7 +140,7 @@ export class PluginManager {
         );
       });
     } finally {
-      this.fullServicesContainer.getPluginService().attachErrorListener(currentClient);
+      this.fullServicesContainer.pluginService.attachErrorListener(currentClient);
     }
   }
 

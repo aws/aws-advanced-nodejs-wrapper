@@ -1,12 +1,12 @@
 /*
   Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
-
+ 
   Licensed under the Apache License, Version 2.0 (the "License").
   You may not use this file except in compliance with the License.
   You may obtain a copy of the License at
-
+ 
   http://www.apache.org/licenses/LICENSE-2.0
-
+ 
   Unless required by applicable law or agreed to in writing, software
   distributed under the License is distributed on an "AS IS" BASIS,
   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -29,11 +29,11 @@ import { TopologyUtils } from "../topology_utils";
 import { RdsUtils } from "../../utils/rds_utils";
 import { AbstractMonitor, Monitor } from "../../utils/monitoring/monitor";
 import { FullServicesContainer } from "../../utils/full_services_container";
-import { HostListProvider } from "../host_list_provider";
 import { HostListProviderService } from "../../host_list_provider_service";
 import { Event, EventSubscriber } from "../../utils/events/event";
 import { MonitorResetEvent } from "../../utils/events/monitor_reset_event";
 import { ServiceUtils } from "../../utils/service_utils";
+import { WrapperProperties } from "../../wrapper_property";
 
 export interface ClusterTopologyMonitor extends Monitor, EventSubscriber {
   forceRefresh(client: ClientWrapper, timeoutMs: number): Promise<HostInfo[]>;
@@ -59,6 +59,8 @@ export interface ClusterTopologyMonitor extends Monitor, EventSubscriber {
 export class ClusterTopologyMonitorImpl extends AbstractMonitor implements ClusterTopologyMonitor {
   private static readonly MONITOR_TERMINATION_TIMEOUT_SEC: number = 30;
   private static readonly STABLE_TOPOLOGIES_DURATION_NS: bigint = convertMsToNanos(15000); // 15 seconds.
+  protected static readonly DEFAULT_CONNECTION_TIMEOUT_MS: number = 5000;
+  protected static readonly DEFAULT_QUERY_TIMEOUT_MS: number = 5000;
 
   static readonly MONITORING_PROPERTY_PREFIX: string = "topology_monitoring_";
 
@@ -67,7 +69,6 @@ export class ClusterTopologyMonitorImpl extends AbstractMonitor implements Clust
   private readonly servicesContainer: FullServicesContainer;
   private readonly _monitoringProperties: Map<string, any>;
   private readonly _pluginService: PluginService;
-  private readonly _hostListProvider: HostListProvider | null;
   protected readonly hostListProviderService: HostListProviderService;
   private readonly refreshRateNs: number;
   private readonly highRefreshRateNs: number;
@@ -75,9 +76,9 @@ export class ClusterTopologyMonitorImpl extends AbstractMonitor implements Clust
   private readonly rdsUtils: RdsUtils = new RdsUtils();
   protected readonly instanceTemplate: HostInfo;
 
-  private writerHostInfo: HostInfo = null;
+  private writerHostInfo: HostInfo | null = null;
   private isVerifiedWriterConnection: boolean = false;
-  private monitoringClient: ClientWrapper = null;
+  private monitoringClient: ClientWrapper | null = null;
   private highRefreshRateEndTimeNs: bigint = BigInt(0);
 
   public readonly topologyUtils: TopologyUtils;
@@ -97,9 +98,7 @@ export class ClusterTopologyMonitorImpl extends AbstractMonitor implements Clust
   public hostMonitorsLatestTopology: HostInfo[] = [];
 
   // Controls for stopping asynchronous monitoring tasks.
-  private stopMonitoring: boolean = false;
   public hostMonitorsStop: boolean = false;
-  private untrackedPromises: Promise<void>[] = [];
 
   // Signals to other methods that asynchronous tasks have completed/should be completed.
   private requestToUpdateTopology: boolean = false;
@@ -122,10 +121,9 @@ export class ClusterTopologyMonitorImpl extends AbstractMonitor implements Clust
     this.initialHostInfo = initialHostInfo;
     this.instanceTemplate = instanceTemplate;
     this.servicesContainer = servicesContainer;
-    this.storageService = this.servicesContainer.getStorageService();
-    this._pluginService = this.servicesContainer.getPluginService();
-    this.hostListProviderService = this.servicesContainer.getHostListProviderService();
-    this._hostListProvider = this.hostListProviderService.getHostListProvider();
+    this.storageService = this.servicesContainer.storageService;
+    this._pluginService = this.servicesContainer.pluginService;
+    this.hostListProviderService = this.servicesContainer.hostListProviderService;
     this.refreshRateNs = refreshRateNs;
     this.highRefreshRateNs = highRefreshRateNs;
 
@@ -136,11 +134,14 @@ export class ClusterTopologyMonitorImpl extends AbstractMonitor implements Clust
         this._monitoringProperties.delete(key);
       }
     }
-    this.untrackedPromises.push(this.monitor());
-  }
 
-  get hostListProvider(): HostListProvider {
-    return this._hostListProvider;
+    const connectTimeout =
+      this._monitoringProperties.get(WrapperProperties.WRAPPER_CONNECT_TIMEOUT.name) ?? ClusterTopologyMonitorImpl.DEFAULT_CONNECTION_TIMEOUT_MS;
+    const queryTimeout =
+      this._monitoringProperties.get(WrapperProperties.WRAPPER_QUERY_TIMEOUT.name) ?? ClusterTopologyMonitorImpl.DEFAULT_QUERY_TIMEOUT_MS;
+    const driverDialect = this._pluginService.getDriverDialect();
+    driverDialect.setConnectTimeout(this._monitoringProperties, connectTimeout);
+    driverDialect.setQueryTimeout(this._monitoringProperties, undefined, queryTimeout);
   }
 
   get pluginService(): PluginService {
@@ -152,10 +153,8 @@ export class ClusterTopologyMonitorImpl extends AbstractMonitor implements Clust
   }
 
   async close(): Promise<void> {
-    this.stopMonitoring = true;
     this.hostMonitorsStop = true;
     this.requestToUpdateTopology = true;
-    await Promise.all(this.untrackedPromises);
     await Promise.all(this.submittedHosts.values());
 
     const monitoringClientToClose = this.monitoringClient;
@@ -178,7 +177,6 @@ export class ClusterTopologyMonitorImpl extends AbstractMonitor implements Clust
       await this.closeConnection(hostMonitorsReaderClientToClose);
     }
 
-    this.untrackedPromises = [];
     this.submittedHosts.clear();
     this.hostMonitors.clear();
   }
@@ -199,7 +197,7 @@ export class ClusterTopologyMonitorImpl extends AbstractMonitor implements Clust
 
   async forceRefresh(client: ClientWrapper, timeoutMs: number): Promise<HostInfo[] | null> {
     if (this.isVerifiedWriterConnection) {
-      // Get the monitoring thread to refresh the topology using a verified connection.
+      // Get the monitoring task to refresh the topology using a verified connection.
       return await this.waitTillTopologyGetsUpdated(timeoutMs);
     }
 
@@ -208,7 +206,7 @@ export class ClusterTopologyMonitorImpl extends AbstractMonitor implements Clust
   }
 
   async waitTillTopologyGetsUpdated(timeoutMs: number): Promise<HostInfo[] | null> {
-    // Notify the monitoring thread, which may be sleeping, that topology should be refreshed immediately.
+    // Notify the monitoring task, which may be sleeping, that topology should be refreshed immediately.
     this.requestToUpdateTopology = true;
 
     const currentHosts: HostInfo[] = this.getStoredHosts();
@@ -252,7 +250,7 @@ export class ClusterTopologyMonitorImpl extends AbstractMonitor implements Clust
     if (!this.monitoringClient) {
       let client: ClientWrapper;
       try {
-        client = await this.servicesContainer.getPluginService().forceConnect(this.initialHostInfo, this._monitoringProperties);
+        client = await this.servicesContainer.pluginService.forceConnect(this.initialHostInfo, this._monitoringProperties);
       } catch (connectError) {
         // Unable to connect to host;
         return null;
@@ -302,7 +300,7 @@ export class ClusterTopologyMonitorImpl extends AbstractMonitor implements Clust
     return this.topologyUtils.queryForTopology(client, this.pluginService.getDialect(), this.initialHostInfo, this.instanceTemplate);
   }
 
-  updateHostsAvailability(hosts: HostInfo[]): HostInfo[] {
+  updateHostsAvailability(hosts: HostInfo[]): void {
     if (!hosts) {
       return;
     }
@@ -318,30 +316,23 @@ export class ClusterTopologyMonitorImpl extends AbstractMonitor implements Clust
   }
 
   protected clearTopologyCache(): void {
-    this.servicesContainer.getStorageService().remove(Topology, this.clusterId);
+    this.servicesContainer.storageService.remove(Topology, this.clusterId);
   }
 
-  async closeConnection(client: ClientWrapper): Promise<void> {
-    if (client !== null) {
-      await client.abort();
-      client = null;
-    }
+  async closeConnection(client: ClientWrapper | null): Promise<void> {
+    await client?.abort();
   }
 
   async updateMonitoringClient(newClient: ClientWrapper | null): Promise<void> {
     const clientToClose = this.monitoringClient;
     this.monitoringClient = newClient;
-    if (clientToClose) {
-      await clientToClose.abort();
-    }
+    await clientToClose?.abort();
   }
 
   async stop(): Promise<void> {
     this._stop = true;
     this.hostMonitorsStop = true;
-    this.stopMonitoring = true;
 
-    await Promise.all(this.untrackedPromises);
     await Promise.all(this.submittedHosts.values());
 
     await this.closeHostMonitors();
@@ -366,7 +357,6 @@ export class ClusterTopologyMonitorImpl extends AbstractMonitor implements Clust
       await this.closeConnection(monitoringClientToClose);
     }
 
-    this.untrackedPromises = [];
     this.submittedHosts.clear();
 
     return super.stop();
@@ -375,7 +365,7 @@ export class ClusterTopologyMonitorImpl extends AbstractMonitor implements Clust
   async monitor(): Promise<void> {
     try {
       logger.debug(Messages.get("ClusterTopologyMonitor.startMonitoring", this.clusterId, this.initialHostInfo.host));
-      this.servicesContainer.getEventPublisher().subscribe(this, new Set([MonitorResetEvent]));
+      this.servicesContainer.eventPublisher.subscribe(this, new Set([MonitorResetEvent]));
 
       while (!this._stop) {
         this.lastActivityTimestampNanos = getTimeInNanos();
@@ -388,7 +378,7 @@ export class ClusterTopologyMonitorImpl extends AbstractMonitor implements Clust
             this.hostMonitorsStop = false;
             await this.hostMonitorClientCleanUp();
             this.hostMonitorsWriterInfo = null;
-            this.hostMonitorsLatestTopology = null;
+            this.hostMonitorsLatestTopology = [];
 
             let hosts: HostInfo[] = this.getStoredHosts();
             if (hosts === null) {
@@ -408,7 +398,7 @@ export class ClusterTopologyMonitorImpl extends AbstractMonitor implements Clust
                   this.servicesContainer,
                   this._monitoringProperties
                 );
-                await minimalServiceContainer.getPluginManager().init();
+                await minimalServiceContainer.pluginManager.init();
                 const hostMonitor = new HostMonitor(minimalServiceContainer, this, hostInfo, this.writerHostInfo);
                 const promise = hostMonitor.run();
                 this.submittedHosts.set(hostInfo.host, promise);
@@ -419,9 +409,9 @@ export class ClusterTopologyMonitorImpl extends AbstractMonitor implements Clust
           } else {
             // The host monitors are running, so we check if the writer has been detected.
             const writerClient: ClientWrapper | null = this.hostMonitorsWriterClient;
-            const writerClientHostInfo: HostInfo = this.hostMonitorsWriterInfo;
+            const writerClientHostInfo: HostInfo | null = this.hostMonitorsWriterInfo;
 
-            if (writerClient !== null && writerClientHostInfo !== null) {
+            if (writerClient && writerClientHostInfo) {
               logger.debug(Messages.get("ClusterTopologyMonitor.writerPickedUpFromHostMonitors", writerClientHostInfo.toString()));
 
               this.monitoringClient = writerClient;
@@ -439,8 +429,8 @@ export class ClusterTopologyMonitorImpl extends AbstractMonitor implements Clust
               continue;
             } else {
               // Update host monitors with the new instances in the topology.
-              const hosts: HostInfo[] = this.hostMonitorsLatestTopology;
-              if (hosts !== null && !this.hostMonitorsStop) {
+              const hosts: HostInfo[] | null = this.hostMonitorsLatestTopology;
+              if (hosts && !this.hostMonitorsStop) {
                 hosts.forEach((hostInfo) => {
                   if (!this.submittedHosts.get(hostInfo.host)) {
                     const hostMonitor = new HostMonitor(this.servicesContainer, this, hostInfo, this.writerHostInfo);
@@ -467,7 +457,9 @@ export class ClusterTopologyMonitorImpl extends AbstractMonitor implements Clust
           const hosts: HostInfo[] = await this.fetchTopologyAndUpdateCache(this.monitoringClient);
           if (hosts === null) {
             // Attempt to fetch topology failed, so we switch to panic mode.
+            const clientToClose = this.monitoringClient;
             this.monitoringClient = null;
+            await this.closeConnection(clientToClose);
             this.isVerifiedWriterConnection = false;
             this.writerHostInfo = null;
             continue;
@@ -490,7 +482,7 @@ export class ClusterTopologyMonitorImpl extends AbstractMonitor implements Clust
       await this.closeHostMonitors();
       await this.hostMonitorClientCleanUp();
 
-      this.servicesContainer.getEventPublisher().unsubscribe(this, new Set([MonitorResetEvent]));
+      this.servicesContainer.eventPublisher.unsubscribe(this, new Set([MonitorResetEvent]));
 
       logger.debug(Messages.get("ClusterTopologyMonitor.stopHostMonitoringTask", this.initialHostInfo.host));
     }
@@ -630,8 +622,7 @@ export class ClusterTopologyMonitorImpl extends AbstractMonitor implements Clust
   }
 
   private getStoredHosts(): HostInfo[] | null {
-    const topology = this.storageService.get(Topology, this.clusterId);
-    return topology == null ? null : topology.hosts;
+    return this.storageService.get(Topology, this.clusterId)?.hosts ?? null;
   }
 
   private async delay(useHighRefreshRate: boolean): Promise<void> {
@@ -654,12 +645,12 @@ export class HostMonitor {
   protected readonly servicesContainer: FullServicesContainer;
   protected readonly monitor: ClusterTopologyMonitorImpl;
   protected readonly hostInfo: HostInfo;
-  protected readonly writerHostInfo: HostInfo;
+  protected readonly writerHostInfo: HostInfo | null;
   protected writerChanged: boolean = false;
   protected connectionAttempts: number = 0;
   protected client: ClientWrapper | null = null;
 
-  constructor(servicesContainer: FullServicesContainer, monitor: ClusterTopologyMonitorImpl, hostInfo: HostInfo, writerHostInfo: HostInfo) {
+  constructor(servicesContainer: FullServicesContainer, monitor: ClusterTopologyMonitorImpl, hostInfo: HostInfo, writerHostInfo: HostInfo | null) {
     this.servicesContainer = servicesContainer;
     this.monitor = monitor;
     this.hostInfo = hostInfo;
@@ -670,7 +661,7 @@ export class HostMonitor {
     let updateTopology: boolean = false;
     const startTime: number = Date.now();
     logger.debug(Messages.get("HostMonitor.startMonitoring", this.hostInfo.hostId));
-    const pluginService = this.servicesContainer.getPluginService();
+    const pluginService = this.servicesContainer.pluginService;
     try {
       while (!this.monitor.hostMonitorsStop) {
         if (!this.client) {
@@ -687,7 +678,7 @@ export class HostMonitor {
               this.monitor.readerTopologiesById.delete(this.hostInfo.hostId);
               continue;
             } else if (pluginService.isLoginError(error)) {
-              throw new AwsWrapperError("Login error detected during monitoring.", error);
+              throw new AwsWrapperError(Messages.get("HostMonitor.loginErrorDuringMonitoring"), error);
             } else {
               // It might be some transient error. Let's try again.
               // If the error repeats, we will try again after a longer delay.
@@ -701,7 +692,7 @@ export class HostMonitor {
         }
 
         if (this.client) {
-          let isWriter: boolean;
+          let isWriter: boolean = false;
           try {
             isWriter = await this.monitor.topologyUtils.isWriterInstance(this.client);
           } catch (error) {
@@ -727,7 +718,7 @@ export class HostMonitor {
 
           if (isWriter) {
             // This prevents us from closing the connection in the finally block.
-            if (this.monitor.hostMonitorsWriterClient !== null) {
+            if (this.monitor.hostMonitorsWriterClient) {
               // The writer connection is already set up, probably by another host monitor.
               await this.monitor.closeConnection(this.client);
             } else {
@@ -735,7 +726,7 @@ export class HostMonitor {
               logger.debug(Messages.get("HostMonitor.detectedWriter", this.hostInfo.hostId, this.hostInfo.url));
 
               this.servicesContainer
-                .getImportantEventService()
+                .importantEventService
                 .registerEvent(() => Messages.get("HostMonitor.detectedWriter", this.hostInfo.hostId, this.hostInfo.url));
 
               await this.monitor.fetchTopologyAndUpdateCache(this.client);
@@ -756,7 +747,7 @@ export class HostMonitor {
               // be established.
               if (updateTopology) {
                 await this.readerTaskFetchTopology(this.client, this.writerHostInfo);
-              } else if (this.monitor.hostMonitorsReaderClient === null) {
+              } else if (!this.monitor.hostMonitorsReaderClient) {
                 this.monitor.hostMonitorsReaderClient = this.client;
                 updateTopology = true;
                 await this.readerTaskFetchTopology(this.client, this.writerHostInfo);
@@ -781,22 +772,22 @@ export class HostMonitor {
     }
   }
 
-  private async readerTaskFetchTopology(client: any, writerHostInfo: HostInfo) {
+  private async readerTaskFetchTopology(client: ClientWrapper, writerHostInfo: HostInfo | null) {
     if (!client) {
       return;
     }
 
-    let hosts: HostInfo[];
+    let hosts: HostInfo[] | null;
     try {
       hosts = await this.monitor.queryForTopology(client);
-      if (hosts === null) {
+      if (!hosts) {
         return;
       }
     } catch (error) {
       return;
     }
 
-    // Share this topology so that the main monitoring thread can adjust the node monitoring threads.
+    // Share this topology so that the main monitoring task can adjust the node monitoring tasks.
     this.monitor.hostMonitorsLatestTopology = hosts;
     this.monitor.readerTopologiesById.set(this.hostInfo.hostId, hosts);
 
@@ -807,7 +798,7 @@ export class HostMonitor {
       return;
     }
 
-    const latestWriterHostInfo: HostInfo = hosts.find((x) => x.role === HostRole.WRITER);
+    const latestWriterHostInfo = hosts.find((x) => x.role === HostRole.WRITER);
     if (latestWriterHostInfo && writerHostInfo && latestWriterHostInfo.hostAndPort !== writerHostInfo.hostAndPort) {
       this.writerChanged = true;
       logger.debug(Messages.get("HostMonitor.writerHostChanged", writerHostInfo.hostAndPort, latestWriterHostInfo.hostAndPort));

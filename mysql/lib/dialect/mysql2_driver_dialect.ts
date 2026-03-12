@@ -47,6 +47,8 @@ export class MySQL2DriverDialect implements DriverDialect {
   preparePoolClientProperties(props: Map<string, any>, poolConfig: AwsPoolConfig | undefined): any {
     const finalPoolConfig: PoolOptions = {};
     const finalClientProps = WrapperProperties.removeWrapperProperties(props);
+    this.setKeepAliveProperties(finalClientProps, props.get(WrapperProperties.KEEPALIVE_PROPERTIES.name));
+    this.setConnectTimeout(finalClientProps, props.get(WrapperProperties.WRAPPER_CONNECT_TIMEOUT.name));
 
     Object.assign(finalPoolConfig, Object.fromEntries(finalClientProps.entries()));
     finalPoolConfig.connectionLimit = poolConfig?.maxConnections;
@@ -69,6 +71,9 @@ export class MySQL2DriverDialect implements DriverDialect {
   }
 
   setQueryTimeout(props: Map<string, any>, sql?: any, wrapperQueryTimeout?: any) {
+    if (!sql) {
+      return;
+    }
     const timeout = wrapperQueryTimeout ?? props.get(WrapperProperties.WRAPPER_QUERY_TIMEOUT.name);
     if (timeout && !sql[MySQL2DriverDialect.QUERY_TIMEOUT_PROPERTY_NAME]) {
       sql[MySQL2DriverDialect.QUERY_TIMEOUT_PROPERTY_NAME] = Number(timeout);

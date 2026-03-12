@@ -29,9 +29,9 @@ import { BatchingEventPublisher } from "./events/batching_event_publisher";
 export class CoreServicesContainer {
   private static readonly INSTANCE = new CoreServicesContainer();
 
-  private readonly monitorService: MonitorService;
-  private readonly storageService: StorageService;
-  private readonly eventPublisher: EventPublisher;
+  readonly monitorService: MonitorService;
+  readonly storageService: StorageService;
+  readonly eventPublisher: EventPublisher;
 
   private constructor() {
     this.eventPublisher = new BatchingEventPublisher();
@@ -41,18 +41,6 @@ export class CoreServicesContainer {
 
   static getInstance(): CoreServicesContainer {
     return CoreServicesContainer.INSTANCE;
-  }
-
-  getStorageService(): StorageService {
-    return this.storageService;
-  }
-
-  getMonitorService(): MonitorService {
-    return this.monitorService;
-  }
-
-  getEventPublisher(): EventPublisher {
-    return this.eventPublisher;
   }
 
   static async releaseResources(): Promise<void> {

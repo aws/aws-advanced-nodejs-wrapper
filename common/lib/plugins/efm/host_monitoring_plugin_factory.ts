@@ -29,7 +29,11 @@ export class HostMonitoringPluginFactory extends ConnectionPluginFactory {
       if (!HostMonitoringPluginFactory.hostMonitoringPlugin) {
         HostMonitoringPluginFactory.hostMonitoringPlugin = await import("./host_monitoring_connection_plugin");
       }
-      return new HostMonitoringPluginFactory.hostMonitoringPlugin.HostMonitoringConnectionPlugin(servicesContainer.getPluginService(), properties, new RdsUtils());
+      return new HostMonitoringPluginFactory.hostMonitoringPlugin.HostMonitoringConnectionPlugin(
+        servicesContainer.pluginService,
+        properties,
+        new RdsUtils()
+      );
     } catch (error: any) {
       throw new AwsWrapperError(Messages.get("ConnectionPluginChainBuilder.errorImportingPlugin", error.message, "HostMonitoringPlugin"));
     }

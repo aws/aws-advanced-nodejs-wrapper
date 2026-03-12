@@ -22,29 +22,34 @@ import { isDialectTopologyAware } from "../utils/utils";
 import { Messages } from "../utils/messages";
 import { AwsWrapperError } from "../utils/errors";
 
-export class GlobalTopologyUtils extends TopologyUtils {
-  async queryForTopology(
-    targetClient: ClientWrapper,
-    dialect: DatabaseDialect,
-    initialHost: HostInfo,
-    clusterInstanceTemplate: HostInfo
-  ): Promise<HostInfo[]> {
-    throw new AwsWrapperError("Not implemented");
-  }
+export interface GdbTopologyUtils {
+  getRegion(instanceId: string, targetClient: ClientWrapper, dialect: DatabaseDialect): Promise<string | null>;
+}
 
-  async queryForTopologyWithRegion(
+export class GlobalTopologyUtils extends TopologyUtils implements GdbTopologyUtils {
+  async queryForTopology(
     targetClient: ClientWrapper,
     dialect: DatabaseDialect,
     initialHost: HostInfo,
     instanceTemplateByRegion: Map<string, HostInfo>
   ): Promise<HostInfo[]> {
     if (!isDialectTopologyAware(dialect)) {
-      throw new TypeError(Messages.get("RdsHostListProvider.incorrectDialect"));
+      throw new AwsWrapperError(Messages.get("RdsHostListProvider.incorrectDialect"));
     }
 
     return await dialect
       .queryForTopology(targetClient)
       .then((res: TopologyQueryResult[]) => this.verifyWriter(this.createHostsWithTemplateMap(res, initialHost, instanceTemplateByRegion)));
+  }
+
+  async getRegion(instanceId: string, targetClient: ClientWrapper, dialect: DatabaseDialect): Promise<string | null> {
+    if (!isDialectTopologyAware(dialect)) {
+      throw new AwsWrapperError(Messages.get("RdsHostListProvider.incorrectDialect"));
+    }
+
+    const results = await dialect.queryForTopology(targetClient);
+    const match = results.find((row) => row.id === instanceId);
+    return match?.awsRegion ?? null;
   }
 
   private createHostsWithTemplateMap(

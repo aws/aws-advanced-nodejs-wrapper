@@ -71,7 +71,7 @@ export abstract class AwsClient extends EventEmitter implements SessionStateClie
 
     this.properties = new Map<string, any>(Object.entries(config));
 
-    this.storageService = CoreServicesContainer.getInstance().getStorageService();
+    this.storageService = CoreServicesContainer.getInstance().storageService;
 
     const profileName = WrapperProperties.PROFILE_NAME.get(this.properties);
     if (profileName && profileName.length > 0) {
@@ -108,9 +108,9 @@ export abstract class AwsClient extends EventEmitter implements SessionStateClie
     }
 
     const coreServicesContainer: CoreServicesContainer = CoreServicesContainer.getInstance();
-    this.storageService = coreServicesContainer.getStorageService();
-    this.monitorService = coreServicesContainer.getMonitorService();
-    this.eventPublisher = coreServicesContainer.getEventPublisher();
+    this.storageService = coreServicesContainer.storageService;
+    this.monitorService = coreServicesContainer.monitorService;
+    this.eventPublisher = coreServicesContainer.eventPublisher;
     this.telemetryFactory = new DefaultTelemetryFactory(this.properties);
 
     this.fullServiceContainer = ServiceUtils.instance.createStandardServiceContainer(
@@ -126,8 +126,8 @@ export abstract class AwsClient extends EventEmitter implements SessionStateClie
       connectionProvider
     );
 
-    this.pluginService = this.fullServiceContainer.getPluginService();
-    this.pluginManager = this.fullServiceContainer.getPluginManager();
+    this.pluginService = this.fullServiceContainer.pluginService;
+    this.pluginManager = this.fullServiceContainer.pluginManager;
   }
 
   private async setup() {
@@ -144,7 +144,7 @@ export abstract class AwsClient extends EventEmitter implements SessionStateClie
     await this.pluginService.refreshHostList();
     const initialHostInfo = this.pluginService.getInitialConnectionHostInfo();
     if (initialHostInfo != null) {
-      await this.pluginManager.initHostProvider(initialHostInfo, this.properties, this.fullServiceContainer.getHostListProviderService());
+      await this.pluginManager.initHostProvider(initialHostInfo, this.properties, this.fullServiceContainer.hostListProviderService);
       await this.pluginService.refreshHostList();
     }
   }

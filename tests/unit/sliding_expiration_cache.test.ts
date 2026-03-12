@@ -127,7 +127,7 @@ describe("test_sliding_expiration_cache", () => {
     expect(item2.disposed).toEqual(true);
   });
 
-  it("test async cleanup thread", async () => {
+  it("test async cleanup task", async () => {
     const cleanupIntervalNanos = BigInt(300_000_000); // .3 seconds
     const disposeMs = 1000;
     const target = new SlidingExpirationCacheWithCleanupTask(

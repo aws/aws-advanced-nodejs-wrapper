@@ -252,7 +252,7 @@ describe("reader write splitting test", () => {
     when(mockPluginService.getCurrentHostInfo()).thenReturn(readerHost1);
 
     when(mockPluginService.acceptsStrategy(anything(), anything())).thenReturn(true);
-    when(mockHostListProviderService.isStaticHostListProvider()).thenReturn(false);
+    when(mockHostListProviderService.isDynamicHostListProvider()).thenReturn(true);
     when(mockHostListProviderService.getHostListProvider()).thenReturn(mockHostListProviderInstance);
 
     const target = new TestReadWriteSplitting(
@@ -405,7 +405,7 @@ describe("reader write splitting test", () => {
 
     when(mockPluginService.getCurrentHostInfo()).thenReturn(writerHostUnknownRole);
     when(mockPluginService.acceptsStrategy(anything(), anything())).thenReturn(true);
-    when(mockHostListProviderService.isStaticHostListProvider()).thenReturn(false);
+    when(mockHostListProviderService.isDynamicHostListProvider()).thenReturn(true);
 
     const target = new TestReadWriteSplitting(
       mockPluginServiceInstance,

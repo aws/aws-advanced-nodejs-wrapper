@@ -29,7 +29,11 @@ export class DeveloperConnectionPluginFactory extends ConnectionPluginFactory {
       if (!DeveloperConnectionPluginFactory.developerPlugin) {
         DeveloperConnectionPluginFactory.developerPlugin = await import("./developer_connection_plugin");
       }
-      return new DeveloperConnectionPluginFactory.developerPlugin.DeveloperConnectionPlugin(servicesContainer.getPluginService(), properties, new RdsUtils());
+      return new DeveloperConnectionPluginFactory.developerPlugin.DeveloperConnectionPlugin(
+        servicesContainer.pluginService,
+        properties,
+        new RdsUtils()
+      );
     } catch (error: any) {
       throw new AwsWrapperError(Messages.get("ConnectionPluginChainBuilder.errorImportingPlugin", error.message, "DeveloperConnectionPlugin"));
     }

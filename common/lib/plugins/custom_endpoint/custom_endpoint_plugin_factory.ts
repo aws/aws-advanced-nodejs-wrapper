@@ -27,7 +27,7 @@ export class CustomEndpointPluginFactory extends ConnectionPluginFactory {
       if (!CustomEndpointPluginFactory.customEndpointPlugin) {
         CustomEndpointPluginFactory.customEndpointPlugin = await import("./custom_endpoint_plugin");
       }
-      return new CustomEndpointPluginFactory.customEndpointPlugin.CustomEndpointPlugin(servicesContainer.getPluginService(), props);
+      return new CustomEndpointPluginFactory.customEndpointPlugin.CustomEndpointPlugin(servicesContainer.pluginService, props);
     } catch (error: any) {
       throw new AwsWrapperError(Messages.get("ConnectionPluginChainBuilder.errorImportingPlugin", error.message, "CustomEndpointPlugin"));
     }

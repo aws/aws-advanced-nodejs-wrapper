@@ -127,6 +127,8 @@ export class MonitorServiceImpl implements MonitorService, EventSubscriber {
 
   protected readonly publisher: EventPublisher;
   protected readonly monitorCaches = new Map<Constructor<Monitor>, CacheContainer>();
+  // Use a pending promise map to prevent race conditions when creating monitors.
+  private readonly pendingMonitors = new Map<string, Promise<Monitor>>();
   private cleanupTask: Promise<void> | null = null;
   private interruptCleanupTask: (() => void) | null = null;
   private isInitialized: boolean = false;
@@ -134,10 +136,10 @@ export class MonitorServiceImpl implements MonitorService, EventSubscriber {
   constructor(publisher: EventPublisher, cleanupIntervalNs: bigint = DEFAULT_CLEANUP_INTERVAL_NS) {
     this.publisher = publisher;
     this.publisher.subscribe(this, new Set([DataAccessEvent, MonitorStopEvent]));
-    this.initCleanupThread(cleanupIntervalNs);
+    this.initCleanupTask(cleanupIntervalNs);
   }
 
-  protected initCleanupThread(cleanupIntervalNs: bigint): void {
+  protected initCleanupTask(cleanupIntervalNs: bigint): void {
     this.isInitialized = true;
     this.cleanupTask = this.runCleanupLoop(cleanupIntervalNs);
   }
@@ -274,12 +276,40 @@ export class MonitorServiceImpl implements MonitorService, EventSubscriber {
       }
     }
 
-    const monitorItem = new MonitorItem(() => initializer.createMonitor(servicesContainer));
-    const expirationNs = cacheContainer.getSettings().expirationTimeoutNanos;
-    cache.set(key, new CacheItem(monitorItem, getTimeInNanos() + expirationNs));
-    await monitorItem.getMonitor().start();
+    const pendingKey = `${monitorClass.name}:${JSON.stringify(key)}`;
 
-    return monitorItem.getMonitor() as T;
+    // Check if the monitor is already being created by another async task.
+    const pendingPromise = this.pendingMonitors.get(pendingKey);
+    if (pendingPromise) {
+      return (await pendingPromise) as T;
+    }
+
+    // Use the pending promise pattern to create monitors. This prevents race condition.
+    const createPromise = (async (): Promise<Monitor> => {
+      try {
+        const recheckCacheItem = cache.get(key);
+        if (recheckCacheItem) {
+          const recheckMonitorItem = recheckCacheItem.get(true);
+          if (recheckMonitorItem) {
+            recheckCacheItem.updateExpiration(cacheContainer.getSettings().expirationTimeoutNanos);
+            return recheckMonitorItem.getMonitor();
+          }
+        }
+
+        const monitorItem = new MonitorItem(() => initializer.createMonitor(servicesContainer));
+        const expirationNs = cacheContainer.getSettings().expirationTimeoutNanos;
+        cache.set(key, new CacheItem(monitorItem, getTimeInNanos() + expirationNs));
+        await monitorItem.getMonitor().start();
+
+        return monitorItem.getMonitor();
+      } finally {
+        // Delete the key once monitor has been successfully created.
+        this.pendingMonitors.delete(pendingKey);
+      }
+    })();
+
+    this.pendingMonitors.set(pendingKey, createPromise);
+    return (await createPromise) as T;
   }
 
   get<T extends Monitor>(monitorClass: Constructor<T>, key: unknown): T | null {
@@ -344,10 +374,7 @@ export class MonitorServiceImpl implements MonitorService, EventSubscriber {
     const cacheItem = cache.get(key);
     if (cacheItem) {
       cache.delete(key);
-      const monitorItem = cacheItem.get(true);
-      if (monitorItem) {
-        await monitorItem.getMonitor().stop();
-      }
+      await cacheItem.get(true)?.getMonitor().stop();
     }
   }
 
@@ -359,13 +386,9 @@ export class MonitorServiceImpl implements MonitorService, EventSubscriber {
     }
 
     const cache = cacheContainer.getCache();
-    const entries = Array.from(cache.entries());
-    for (const [key, cacheItem] of entries) {
+    for (const [key, cacheItem] of cache.entries()) {
       cache.delete(key);
-      const monitorItem = cacheItem.get(true);
-      if (monitorItem) {
-        await monitorItem.getMonitor().stop();
-      }
+      await cacheItem.get(true)?.getMonitor().stop();
     }
   }
 
@@ -376,11 +399,9 @@ export class MonitorServiceImpl implements MonitorService, EventSubscriber {
   }
 
   async releaseResources(): Promise<void> {
-    // Stop cleanup thread
+    // Stop cleanup task
     this.isInitialized = false;
-    if (this.interruptCleanupTask) {
-      this.interruptCleanupTask();
-    }
+    this.interruptCleanupTask?.();
     if (this.cleanupTask) {
       await this.cleanupTask;
     }
@@ -390,25 +411,20 @@ export class MonitorServiceImpl implements MonitorService, EventSubscriber {
 
   async processEvent(event: Event): Promise<void> {
     if (event instanceof DataAccessEvent) {
-      const accessEvent = event as DataAccessEvent;
       for (const container of this.monitorCaches.values()) {
-        if (container.getProducedDataClass() === null || accessEvent.dataClass !== container.getProducedDataClass()) {
+        if (!container.getProducedDataClass() || event.dataClass !== container.getProducedDataClass()) {
           continue;
         }
 
         // The data produced by the monitor in this cache with this key has been accessed recently,
         // so we extend the monitor's expiration.
-        const cacheItem = container.getCache().get(accessEvent.key);
-        if (cacheItem) {
-          cacheItem.updateExpiration(container.getSettings().expirationTimeoutNanos);
-        }
+        container.getCache().get(event.key)?.updateExpiration(container.getSettings().expirationTimeoutNanos);
       }
       return;
     }
 
     if (event instanceof MonitorStopEvent) {
-      const stopEvent = event as MonitorStopEvent;
-      await this.stopAndRemove(stopEvent.monitorClass, stopEvent.key);
+      await this.stopAndRemove(event.monitorClass, event.key);
       return;
     }
 
@@ -429,6 +445,6 @@ export class MonitorServiceImpl implements MonitorService, EventSubscriber {
   }
 
   private isEventSubscriber(obj: unknown): obj is EventSubscriber {
-    return obj !== null && typeof obj === "object" && "processEvent" in obj && typeof (obj as any).processEvent === "function";
+    return typeof obj === "object" && obj !== null && "processEvent" in obj && typeof (obj as EventSubscriber).processEvent === "function";
   }
 }

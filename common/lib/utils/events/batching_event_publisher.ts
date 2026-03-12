@@ -14,8 +14,9 @@
   limitations under the License.
 */
 
-import { Event, EventPublisher, EventSubscriber } from "./event";
-import { EventClass } from "../../types";
+import { Event, EventClass, EventPublisher, EventSubscriber } from "./event";
+import { Messages } from "../messages";
+import { logger } from "../../../logutils";
 
 const DEFAULT_MESSAGE_INTERVAL_MS = 30_000; // 30 seconds
 
@@ -34,7 +35,7 @@ export class BatchingEventPublisher implements EventPublisher {
 
   protected initPublishingInterval(messageIntervalMs: number): void {
     this.publishingInterval = setInterval(() => this.sendMessages(), messageIntervalMs);
-    // Allow the process to exit even if the interval is still running
+    // Unref the timer to prevent this background task from blocking the application from gracefully exiting.
     this.publishingInterval.unref();
   }
 
@@ -81,7 +82,9 @@ export class BatchingEventPublisher implements EventPublisher {
 
   publish(event: Event): void {
     if (event.isImmediateDelivery) {
-      this.deliverEvent(event).catch(() => {});
+      this.deliverEvent(event).catch((err) => {
+        logger.debug(Messages.get("BatchingEventPublisher.errorDeliveringImmediateEvent", err?.message ?? String(err)));
+      });
     } else {
       this.pendingEvents.add(event);
     }

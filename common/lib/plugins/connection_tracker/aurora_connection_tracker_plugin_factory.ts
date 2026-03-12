@@ -29,7 +29,7 @@ export class AuroraConnectionTrackerPluginFactory extends ConnectionPluginFactor
         AuroraConnectionTrackerPluginFactory.auroraConnectionTrackerPlugin = await import("./aurora_connection_tracker_plugin");
       }
       return new AuroraConnectionTrackerPluginFactory.auroraConnectionTrackerPlugin.AuroraConnectionTrackerPlugin(
-        servicesContainer.getPluginService()
+        servicesContainer.pluginService
       );
     } catch (error: any) {
       throw new AwsWrapperError(Messages.get("ConnectionPluginChainBuilder.errorImportingPlugin", error.message, "AuroraConnectionTrackerPlugin"));

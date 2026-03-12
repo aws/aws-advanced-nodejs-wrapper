@@ -110,7 +110,7 @@ export class BlueGreenStatusMonitor {
     this.bgdId = bgdId;
     this.initialHostInfo = initialHostInfo;
     this.servicesContainer = servicesContainer;
-    this.pluginService = this.servicesContainer.getPluginService();
+    this.pluginService = this.servicesContainer.pluginService;
     this.props = props;
     this.statusCheckIntervalMap = statusCheckIntervalMap;
     this.onBlueGreenStatusChangeFunc = onBlueGreenStatusChangeFunc;

@@ -28,7 +28,7 @@ export interface HostListProviderService {
 
   setHostListProvider(hostListProvider: HostListProvider): void;
 
-  isStaticHostListProvider(): boolean;
+  isDynamicHostListProvider(): boolean;
 
   setInitialConnectionHostInfo(initialConnectionHostInfo: HostInfo): void;
 

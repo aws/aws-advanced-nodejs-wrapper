@@ -24,52 +24,31 @@ import { MonitorService } from "./monitoring/monitor_service";
 import { EventPublisher } from "./events/event";
 import { ImportantEventService } from "./important_event_service";
 
+/**
+ * Container for services used throughout the wrapper.
+ */
 export interface FullServicesContainer {
-  getStorageService(): StorageService;
-
-  getMonitorService(): MonitorService;
-
-  getEventPublisher(): EventPublisher;
-
-  getDefaultConnectionProvider(): ConnectionProvider;
-
-  getTelemetryFactory(): TelemetryFactory;
-
-  getPluginManager(): PluginManager;
-
-  getHostListProviderService(): HostListProviderService;
-
-  getPluginService(): PluginService;
-
-  getImportantEventService(): ImportantEventService;
-
-  setMonitorService(monitorService: MonitorService): void;
-
-  setStorageService(storageService: StorageService): void;
-
-  setEventPublisher(eventPublisher: EventPublisher): void;
-
-  setTelemetryFactory(telemetryFactory: TelemetryFactory): void;
-
-  setPluginManager(connectionPluginManager: PluginManager): void;
-
-  setHostListProviderService(hostListProviderService: HostListProviderService): void;
-
-  setPluginService(pluginService: PluginService): void;
-
-  setImportantEventService(importantEventService: ImportantEventService): void;
+  storageService: StorageService;
+  monitorService: MonitorService;
+  eventPublisher: EventPublisher;
+  readonly defaultConnectionProvider: ConnectionProvider;
+  telemetryFactory: TelemetryFactory;
+  pluginManager: PluginManager;
+  hostListProviderService: HostListProviderService;
+  pluginService: PluginService;
+  importantEventService: ImportantEventService;
 }
 
 export class FullServicesContainerImpl implements FullServicesContainer {
-  private storageService: StorageService;
-  private monitorService: MonitorService;
-  private eventPublisher: EventPublisher;
-  private defaultConnectionProvider: ConnectionProvider;
-  private telemetryFactory: TelemetryFactory;
-  private pluginManager: PluginManager;
-  private hostListProviderService: HostListProviderService;
-  private pluginService: PluginService;
-  private importantEventService: ImportantEventService;
+  storageService: StorageService;
+  monitorService: MonitorService;
+  eventPublisher: EventPublisher;
+  readonly defaultConnectionProvider: ConnectionProvider;
+  telemetryFactory: TelemetryFactory;
+  pluginManager!: PluginManager;
+  hostListProviderService!: HostListProviderService;
+  pluginService!: PluginService;
+  importantEventService: ImportantEventService;
 
   constructor(
     storageService: StorageService,
@@ -84,73 +63,5 @@ export class FullServicesContainerImpl implements FullServicesContainer {
     this.defaultConnectionProvider = defaultConnProvider;
     this.telemetryFactory = telemetryFactory;
     this.importantEventService = new ImportantEventService();
-  }
-
-  getStorageService(): StorageService {
-    return this.storageService;
-  }
-
-  getMonitorService(): MonitorService {
-    return this.monitorService;
-  }
-
-  getEventPublisher(): EventPublisher {
-    return this.eventPublisher;
-  }
-
-  getDefaultConnectionProvider(): ConnectionProvider {
-    return this.defaultConnectionProvider;
-  }
-
-  getTelemetryFactory(): TelemetryFactory {
-    return this.telemetryFactory;
-  }
-
-  getPluginManager(): PluginManager {
-    return this.pluginManager;
-  }
-
-  getHostListProviderService(): HostListProviderService {
-    return this.hostListProviderService;
-  }
-
-  getPluginService(): PluginService {
-    return this.pluginService;
-  }
-
-  getImportantEventService(): ImportantEventService {
-    return this.importantEventService;
-  }
-
-  setMonitorService(monitorService: MonitorService): void {
-    this.monitorService = monitorService;
-  }
-
-  setStorageService(storageService: StorageService): void {
-    this.storageService = storageService;
-  }
-
-  setEventPublisher(eventPublisher: EventPublisher): void {
-    this.eventPublisher = eventPublisher;
-  }
-
-  setTelemetryFactory(telemetryFactory: TelemetryFactory): void {
-    this.telemetryFactory = telemetryFactory;
-  }
-
-  setPluginManager(connectionPluginManager: PluginManager): void {
-    this.pluginManager = connectionPluginManager;
-  }
-
-  setHostListProviderService(hostListProviderService: HostListProviderService): void {
-    this.hostListProviderService = hostListProviderService;
-  }
-
-  setPluginService(pluginService: PluginService): void {
-    this.pluginService = pluginService;
-  }
-
-  setImportantEventService(importantEventService: ImportantEventService): void {
-    this.importantEventService = importantEventService;
   }
 }

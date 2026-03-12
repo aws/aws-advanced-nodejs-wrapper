@@ -14,7 +14,6 @@
   limitations under the License.
 */
 
-import { HostListProviderService } from "../../../common/lib/host_list_provider_service";
 import { HostListProvider } from "../../../common/lib/host_list_provider/host_list_provider";
 import { ClientWrapper } from "../../../common/lib/client_wrapper";
 import { AwsWrapperError, HostRole } from "../../../common/lib";
@@ -24,10 +23,8 @@ import { RdsHostListProvider } from "../../../common/lib/host_list_provider/rds_
 import { PgDatabaseDialect } from "./pg_database_dialect";
 import { ErrorHandler } from "../../../common/lib/error_handler";
 import { MultiAzPgErrorHandler } from "../multi_az_pg_error_handler";
-import { WrapperProperties } from "../../../common/lib/wrapper_property";
-import { PluginService } from "../../../common/lib/plugin_service";
-import { MonitoringRdsHostListProvider } from "../../../common/lib/host_list_provider/monitoring/monitoring_host_list_provider";
-import { TopologyQueryResult, TopologyUtils } from "../../../common/lib/host_list_provider/topology_utils";
+import { TopologyQueryResult } from "../../../common/lib/host_list_provider/topology_utils";
+import { AuroraTopologyUtils } from "../../../common/lib/host_list_provider/aurora_topology_utils";
 import { FullServicesContainer } from "../../../common/lib/utils/full_services_container";
 
 export class RdsMultiAZClusterPgDatabaseDialect extends PgDatabaseDialect implements TopologyAwareDatabaseDialect {
@@ -66,7 +63,7 @@ export class RdsMultiAZClusterPgDatabaseDialect extends PgDatabaseDialect implem
   }
 
   getHostListProvider(props: Map<string, any>, originalUrl: string, servicesContainer: FullServicesContainer): HostListProvider {
-    const topologyUtils: TopologyUtils = new TopologyUtils(this, servicesContainer.getHostListProviderService().getHostInfoBuilder());
+    const topologyUtils = new AuroraTopologyUtils(this, servicesContainer.hostListProviderService.getHostInfoBuilder());
     return new RdsHostListProvider(props, originalUrl, topologyUtils, servicesContainer);
   }
 

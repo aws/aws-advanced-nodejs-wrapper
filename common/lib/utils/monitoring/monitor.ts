@@ -96,8 +96,14 @@ export abstract class AbstractMonitor implements Monitor {
     this._stop = true;
 
     if (this.monitorPromise) {
-      const timeout = new Promise<void>((resolve) => setTimeout(resolve, this.terminationTimeoutMs));
+      let timeoutId: ReturnType<typeof setTimeout> | undefined;
+      const timeout = new Promise<void>((resolve) => {
+        timeoutId = setTimeout(resolve, this.terminationTimeoutMs);
+      });
       await Promise.race([this.monitorPromise, timeout]);
+      if (timeoutId !== undefined) {
+        clearTimeout(timeoutId);
+      }
     }
 
     await this.close();

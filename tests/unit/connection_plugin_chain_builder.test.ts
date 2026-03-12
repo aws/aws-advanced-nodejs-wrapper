@@ -42,6 +42,10 @@ describe("testConnectionPluginChainBuilder", () => {
     when(mockPluginService.getTelemetryFactory()).thenReturn(new NullTelemetryFactory());
   });
 
+  afterEach(async () => {
+    await PluginManager.releaseResources();
+  });
+
   it.each([["iam,staleDns,failover"], ["iam,  staleDns,    failover"]])("sort plugins", async (plugins) => {
     const props = new Map();
     props.set(WrapperProperties.PLUGINS.name, plugins);
@@ -135,7 +139,7 @@ describe("testConnectionPluginChainBuilder", () => {
 
 class TestPluginFactory extends ConnectionPluginFactory {
   async getInstance(servicesContainer: FullServicesContainer, properties: Map<string, any>): Promise<TestPlugin> {
-    return new TestPlugin(servicesContainer.getPluginService(), properties);
+    return new TestPlugin(servicesContainer.pluginService, properties);
   }
 }
 
