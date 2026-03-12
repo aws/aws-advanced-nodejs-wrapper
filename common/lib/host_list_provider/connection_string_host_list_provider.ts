@@ -112,4 +112,8 @@ export class ConnectionStringHostListProvider implements StaticHostListProvider 
   getClusterId(): string {
     throw new AwsWrapperError("ConnectionStringHostListProvider does not support getClusterId.");
   }
+
+  forceMonitoringRefresh(shouldVerifyWriter: boolean, timeoutMs: number): Promise<HostInfo[]> {
+    throw new AwsWrapperError("ConnectionStringHostListProvider does not support forceMonitoringRefresh.");
+  }
 }

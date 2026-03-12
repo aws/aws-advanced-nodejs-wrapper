@@ -142,3 +142,40 @@ export class Pair<K, V> {
     return this._right;
   }
 }
+
+export function parseInstanceTemplates(
+  instanceTemplatesString: string | null,
+  hostValidator: (hostPattern: string) => void,
+  hostInfoBuilderFunc: () => { withHost(host: string): { build(): HostInfo } }
+): Map<string, HostInfo> {
+  if (!instanceTemplatesString) {
+    throw new AwsWrapperError(Messages.get("Utils.globalClusterInstanceHostPatternsRequired"));
+  }
+
+  const instanceTemplates = new Map<string, HostInfo>();
+  const patterns = instanceTemplatesString.split(",");
+
+  for (const pattern of patterns) {
+    const trimmedPattern = pattern.trim();
+    const colonIndex = trimmedPattern.indexOf(":");
+    if (colonIndex === -1) {
+      throw new AwsWrapperError(Messages.get("Utils.invalidPatternFormat", trimmedPattern));
+    }
+
+    const region = trimmedPattern.substring(0, colonIndex).trim();
+    const hostPattern = trimmedPattern.substring(colonIndex + 1).trim();
+
+    if (!region || !hostPattern) {
+      throw new AwsWrapperError(Messages.get("Utils.invalidPatternFormat", trimmedPattern));
+    }
+
+    hostValidator(hostPattern);
+
+    const hostInfo = hostInfoBuilderFunc().withHost(hostPattern).build();
+    instanceTemplates.set(region, hostInfo);
+  }
+
+  logger.debug(`Detected Global Database patterns: ${JSON.stringify(Array.from(instanceTemplates.entries()))}`);
+
+  return instanceTemplates;
+}
