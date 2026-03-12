@@ -18,6 +18,10 @@ import { AuroraMySQLDatabaseDialect } from "./aurora_mysql_database_dialect";
 import { GlobalAuroraTopologyDialect } from "../../../common/lib/database_dialect/topology_aware_database_dialect";
 import { ClientWrapper } from "../../../common/lib/client_wrapper";
 import { TopologyQueryResult } from "../../../common/lib/host_list_provider/topology_utils";
+import { FullServicesContainer } from "../../../common/lib/utils/full_services_container";
+import { HostListProvider } from "../../../common/lib/host_list_provider/host_list_provider";
+import { GlobalAuroraHostListProvider } from "../../../common/lib/host_list_provider/global_aurora_host_list_provider";
+import { GlobalTopologyUtils } from "../../../common/lib/host_list_provider/global_topology_utils";
 
 export class GlobalAuroraMySQLDatabaseDialect extends AuroraMySQLDatabaseDialect implements GlobalAuroraTopologyDialect {
   private static readonly GLOBAL_STATUS_TABLE_EXISTS_QUERY =
@@ -29,8 +33,8 @@ export class GlobalAuroraMySQLDatabaseDialect extends AuroraMySQLDatabaseDialect
     " upper(table_schema) = 'INFORMATION_SCHEMA' AND upper(table_name) = 'AURORA_GLOBAL_DB_INSTANCE_STATUS'";
 
   private static readonly GLOBAL_TOPOLOGY_QUERY =
-    "SELECT SERVER_ID, CASE WHEN SESSION_ID = 'MASTER_SESSION_ID' THEN TRUE ELSE FALSE END AS IS_WRITER, " +
-    "VISIBILITY_LAG_IN_MSEC, AWS_REGION " +
+    "SELECT server_id, CASE WHEN SESSION_ID = 'MASTER_SESSION_ID' THEN TRUE ELSE FALSE END AS is_writer, " +
+    "visibility_lag_in_msec, aws_region " +
     "FROM information_schema.aurora_global_db_instance_status";
 
   private static readonly REGION_COUNT_QUERY = "SELECT count(1) FROM information_schema.aurora_global_db_status";
@@ -68,7 +72,14 @@ export class GlobalAuroraMySQLDatabaseDialect extends AuroraMySQLDatabaseDialect
     return [];
   }
 
-  // TODO: implement GetHostListProvider once GDBHostListProvider is implemented
+  getHostListProvider(props: Map<string, any>, originalUrl: string, servicesContainer: FullServicesContainer): HostListProvider {
+    return new GlobalAuroraHostListProvider(
+      props,
+      originalUrl,
+      new GlobalTopologyUtils(this, servicesContainer.getPluginService().getHostInfoBuilder()),
+      servicesContainer
+    );
+  }
 
   async queryForTopology(targetClient: ClientWrapper): Promise<TopologyQueryResult[]> {
     const res = await targetClient.query(GlobalAuroraMySQLDatabaseDialect.GLOBAL_TOPOLOGY_QUERY);
@@ -77,7 +88,7 @@ export class GlobalAuroraMySQLDatabaseDialect extends AuroraMySQLDatabaseDialect
     rows.forEach((row) => {
       const hostName: string = row["server_id"];
       const isWriter: boolean = row["is_writer"];
-      const hostLag: number = row["visibility_lag_in_msec"] ?? 0; // visibility_lag_in_msec is nullable.
+      const hostLag: number = row["visibility_lag_in_msec"] ?? 0; // visibility_lag_in_sec is nullable.
       const awsRegion: string = row["aws_region"];
 
       const host: TopologyQueryResult = new TopologyQueryResult({

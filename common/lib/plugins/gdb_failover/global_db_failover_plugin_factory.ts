@@ -15,23 +15,24 @@
 */
 
 import { ConnectionPluginFactory } from "../../plugin_factory";
+import { PluginService } from "../../plugin_service";
 import { ConnectionPlugin } from "../../connection_plugin";
 import { RdsUtils } from "../../utils/rds_utils";
 import { AwsWrapperError } from "../../utils/errors";
 import { Messages } from "../../utils/messages";
 import { FullServicesContainer } from "../../utils/full_services_container";
 
-export class Failover2PluginFactory extends ConnectionPluginFactory {
-  private static failover2Plugin: any;
+export class GlobalDbFailoverPluginFactory extends ConnectionPluginFactory {
+  private static globalDbFailoverPlugin: any;
 
   async getInstance(servicesContainer: FullServicesContainer, properties: Map<string, any>): Promise<ConnectionPlugin> {
     try {
-      if (!Failover2PluginFactory.failover2Plugin) {
-        Failover2PluginFactory.failover2Plugin = await import("./failover2_plugin");
+      if (!GlobalDbFailoverPluginFactory.globalDbFailoverPlugin) {
+        GlobalDbFailoverPluginFactory.globalDbFailoverPlugin = await import("./global_db_failover_plugin");
       }
-      return new Failover2PluginFactory.failover2Plugin.Failover2Plugin(servicesContainer, properties, new RdsUtils());
+      return new GlobalDbFailoverPluginFactory.globalDbFailoverPlugin.GlobalDbFailoverPlugin(servicesContainer, properties, new RdsUtils());
     } catch (error: any) {
-      throw new AwsWrapperError(Messages.get("ConnectionPluginChainBuilder.errorImportingPlugin", error.message, "Failover2Plugin"));
+      throw new AwsWrapperError(Messages.get("ConnectionPluginChainBuilder.errorImportingPlugin", error.message, "GlobalDbFailoverPlugin"));
     }
   }
 }

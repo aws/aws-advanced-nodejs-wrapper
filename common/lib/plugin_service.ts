@@ -444,7 +444,6 @@ export class PluginServiceImpl implements PluginService, HostListProviderService
     ];
 
     if (hostsToChange.length === 0) {
-      logger.debug(Messages.get("PluginService.hostsChangeListEmpty"));
       return;
     }
 
