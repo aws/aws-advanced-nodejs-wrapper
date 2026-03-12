@@ -160,8 +160,8 @@ export class ClusterTopologyMonitorImpl extends AbstractMonitor implements Clust
     this.stopMonitoring = true;
     this.hostMonitorsStop = true;
     this.requestToUpdateTopology = true;
-    // await Promise.all(this.untrackedPromises);
-    // await Promise.all(this.submittedHosts.values());
+    await Promise.all(this.untrackedPromises);
+    await Promise.all(this.submittedHosts.values());
 
     const monitoringClientToClose = this.monitoringClient;
     const hostMonitorsWriterClientToClose = this.hostMonitorsWriterClient;
@@ -258,7 +258,7 @@ export class ClusterTopologyMonitorImpl extends AbstractMonitor implements Clust
       let client: ClientWrapper;
       try {
         client = await this.servicesContainer.getPluginService().forceConnect(this.initialHostInfo, this._monitoringProperties);
-      } catch {
+      } catch (connectError) {
         // Unable to connect to host;
         return null;
       }
@@ -374,7 +374,6 @@ export class ClusterTopologyMonitorImpl extends AbstractMonitor implements Clust
 
     this.untrackedPromises = [];
     this.submittedHosts.clear();
-    this.hostMonitors.clear();
 
     return super.stop();
   }
@@ -417,8 +416,8 @@ export class ClusterTopologyMonitorImpl extends AbstractMonitor implements Clust
                 );
                 await minimalServiceContainer.getPluginManager().init();
                 const hostMonitor = new HostMonitor(minimalServiceContainer, this, hostInfo, this.writerHostInfo);
-                this.submittedHosts.set(hostInfo.host, hostMonitor.run());
-                this.hostMonitors.set(hostInfo.host, hostMonitor);
+                const promise = hostMonitor.run();
+                this.submittedHosts.set(hostInfo.host, promise);
               }
             });
 
@@ -451,7 +450,8 @@ export class ClusterTopologyMonitorImpl extends AbstractMonitor implements Clust
                 hosts.forEach((hostInfo) => {
                   if (!this.submittedHosts.get(hostInfo.host)) {
                     const hostMonitor = new HostMonitor(this.servicesContainer, this, hostInfo, this.writerHostInfo);
-                    this.submittedHosts.set(hostInfo.host, hostMonitor.run());
+                    const promise = hostMonitor.run();
+                    this.submittedHosts.set(hostInfo.host, promise);
                   }
                 });
               }
@@ -697,7 +697,8 @@ export class HostMonitor {
             } else {
               // It might be some transient error. Let's try again.
               // If the error repeats, we will try again after a longer delay.
-              await sleep(this.calculateBackoffWithJitter(this.connectionAttempts++));
+              const backoff = this.calculateBackoffWithJitter(this.connectionAttempts++);
+              await sleep(backoff);
               this.monitor.completedOneCycle.set(this.hostInfo.hostId, true);
               this.monitor.readerTopologiesById.delete(this.hostInfo.hostId);
               continue;
@@ -718,7 +719,8 @@ export class HostMonitor {
           if (isWriter) {
             try {
               // First connection after failover may be stale.
-              if ((await this.monitor.pluginService.getHostRole(this.client)) !== HostRole.WRITER) {
+              const hostRole = await this.monitor.pluginService.getHostRole(this.client);
+              if (hostRole !== HostRole.WRITER) {
                 isWriter = false;
               }
             } catch (error: any) {

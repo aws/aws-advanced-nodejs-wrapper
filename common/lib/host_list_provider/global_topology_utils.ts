@@ -21,15 +21,18 @@ import { HostInfo } from "../host_info";
 import { isDialectTopologyAware } from "../utils/utils";
 import { Messages } from "../utils/messages";
 import { AwsWrapperError } from "../utils/errors";
+import { HostInfoBuilder } from "../host_info_builder";
+import { logger } from "../../logutils";
 
 export class GlobalTopologyUtils extends TopologyUtils {
-  async queryForTopology(
+  override async queryForTopology(
     targetClient: ClientWrapper,
     dialect: DatabaseDialect,
     initialHost: HostInfo,
     clusterInstanceTemplate: HostInfo
   ): Promise<HostInfo[]> {
-    throw new AwsWrapperError("Not implemented");
+    // This method should not be called on this class.
+    throw new AwsWrapperError("GlobalTopologyUtils.queryForTopology should not be called directly. Use queryForTopologyWithRegion instead.");
   }
 
   async queryForTopologyWithRegion(
@@ -39,12 +42,59 @@ export class GlobalTopologyUtils extends TopologyUtils {
     instanceTemplateByRegion: Map<string, HostInfo>
   ): Promise<HostInfo[]> {
     if (!isDialectTopologyAware(dialect)) {
-      throw new TypeError(Messages.get("RdsHostListProvider.incorrectDialect"));
+      throw new AwsWrapperError(Messages.get("RdsHostListProvider.incorrectDialect"));
     }
 
     return await dialect
       .queryForTopology(targetClient)
       .then((res: TopologyQueryResult[]) => this.verifyWriter(this.createHostsWithTemplateMap(res, initialHost, instanceTemplateByRegion)));
+  }
+
+  async getRegion(instanceId: string, targetClient: ClientWrapper, dialect: DatabaseDialect): Promise<string | null> {
+    if (!isDialectTopologyAware(dialect)) {
+      throw new AwsWrapperError(Messages.get("RdsHostListProvider.incorrectDialect"));
+    }
+
+    const results = await dialect.queryForTopology(targetClient);
+    const match = results.find((row) => row.id === instanceId);
+    return match?.awsRegion ?? null;
+  }
+
+  parseInstanceTemplates(
+    instanceTemplatesString: string | null,
+    hostValidator: (hostPattern: string) => void,
+    hostInfoBuilderFunc: () => HostInfoBuilder
+  ): Map<string, HostInfo> {
+    if (!instanceTemplatesString) {
+      throw new AwsWrapperError(Messages.get("GlobalTopologyUtils.globalClusterInstanceHostPatternsRequired"));
+    }
+
+    const instanceTemplates = new Map<string, HostInfo>();
+    const patterns = instanceTemplatesString.split(",");
+
+    for (const pattern of patterns) {
+      const trimmedPattern = pattern.trim();
+      const colonIndex = trimmedPattern.indexOf(":");
+      if (colonIndex === -1) {
+        throw new AwsWrapperError(Messages.get("GlobalTopologyUtils.invalidPatternFormat", trimmedPattern));
+      }
+
+      const region = trimmedPattern.substring(0, colonIndex).trim();
+      const hostPattern = trimmedPattern.substring(colonIndex + 1).trim();
+
+      if (!region || !hostPattern) {
+        throw new AwsWrapperError(Messages.get("GlobalTopologyUtils.invalidPatternFormat", trimmedPattern));
+      }
+
+      hostValidator(hostPattern);
+
+      const hostInfo = hostInfoBuilderFunc().withHost(hostPattern).build();
+      instanceTemplates.set(region, hostInfo);
+    }
+
+    logger.debug(`Detected Global Database patterns: ${JSON.stringify(Array.from(instanceTemplates.entries()))}`);
+
+    return instanceTemplates;
   }
 
   private createHostsWithTemplateMap(

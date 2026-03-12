@@ -89,7 +89,11 @@ const MESSAGES: Record<string, string> = {
   "Failover.unableToConnectToWriter": "Unable to establish SQL connection to the writer instance.",
   "Failover.unableToConnectToWriterDueToError": "Unable to establish SQL connection to the writer instance: %s due to error: %s.",
   "Failover.unableToConnectToReader": "Unable to establish SQL connection to the reader instance.",
+  "Failover.unableToRefreshHostList": "The request to discover the new topology timed out or was unsuccessful.",
   "Failover.unableToDetermineWriter": "Unable to determine the current writer instance.",
+  "Failover.unexpectedReaderRole": "The new writer was identified to be '%s', but querying the instance for its role returned a role of %s.",
+  "Failover.strictReaderUnknownHostRole":
+    "Unable to determine host role for '%s'. Since failover mode is set to STRICT_READER and the host may be a writer, it will not be selected for reader failover.",
   "Failover.detectedError": "[Failover] Detected an error while executing a command: %s",
   "Failover.failoverDisabled": "Cluster-aware failover is disabled.",
   "Failover.establishedConnection": "[Failover] Connected to %s",
@@ -99,6 +103,7 @@ const MESSAGES: Record<string, string> = {
   "Failover.noOperationsAfterConnectionClosed": "No operations allowed after client ended.",
   "Failover.transactionResolutionUnknownError": "Unknown transaction resolution error occurred during failover.",
   "Failover.connectionExplicitlyClosed": "Unable to failover on an explicitly closed connection.",
+  "Failover.failoverReaderTimeout": "The reader failover process was not able to establish a connection before timing out.",
   "Failover.timeoutError": "Internal failover task has timed out.",
   "Failover.newWriterNotAllowed":
     "The failover process identified the new writer but the host is not in the list of allowed hosts. New writer host: '%s'. Allowed hosts: '%s'.",
@@ -109,12 +114,9 @@ const MESSAGES: Record<string, string> = {
   "StaleDnsHelper.staleDnsDetected": "Stale DNS data detected. Opening a connection to '%s'.",
   "StaleDnsHelper.reset": "Reset stored writer host.",
   "StaleDnsPlugin.requireDynamicProvider": "Dynamic host list provider is required.",
+  "StaleDnsHelper.currentWriterNotAllowed": "The current writer is not in the list of allowed hosts. Current host: '%s'. Allowed hosts: %s",
   "Client.methodNotSupported": "Method '%s' not supported.",
   "Client.invalidTransactionIsolationLevel": "An invalid transaction isolation level was provided: '%s'.",
-  "AuroraStaleDnsHelper.clusterEndpointDns": "Cluster endpoint resolves to '%s'.",
-  "AuroraStaleDnsHelper.writerHostSpec": "Writer host: '%s'.",
-  "AuroraStaleDnsHelper.writerInetAddress": "Writer host address: '%s'",
-  "AuroraStaleDnsHelper.staleDnsDetected": "Stale DNS data detected. Opening a connection to '%s'.",
   "ReadWriteSplittingPlugin.setReadOnlyOnClosedClient": "setReadOnly cannot be called on a closed client '%s'.",
   "ReadWriteSplittingPlugin.errorSwitchingToCachedReader":
     "An error occurred while trying to switch to a cached reader client: '%s'. Error message: '%s'. The driver will attempt to establish a new reader client.",
@@ -138,7 +140,8 @@ const MESSAGES: Record<string, string> = {
   "ReadWriteSplittingPlugin.failoverErrorWhileExecutingCommand": "Detected a failover error while executing a command: '%s'",
   "ReadWriteSplittingPlugin.noReadersAvailable": "The plugin was unable to establish a reader client to any reader instance.",
   "ReadWriteSplittingPlugin.successfullyConnectedToReader": "Successfully connected to a new reader host: '%s'",
-  "ReadWriteSplittingPlugin.previousReaderNotAllowed": "The previous reader connection cannot be used because it is no longer in the list of allowed hosts. Previous reader: %s. Allowed hosts: %s",
+  "ReadWriteSplittingPlugin.previousReaderNotAllowed":
+    "The previous reader connection cannot be used because it is no longer in the list of allowed hosts. Previous reader: %s. Allowed hosts: %s",
   "ReadWriteSplittingPlugin.failedToConnectToReader": "Failed to connect to reader host: '%s'",
   "ReadWriteSplittingPlugin.unsupportedHostSelectorStrategy":
     "Unsupported host selection strategy '%s' specified in plugin configuration parameter 'readerHostSelectorStrategy'. Please visit the Read/Write Splitting Plugin documentation for all supported strategies.",
@@ -205,7 +208,6 @@ const MESSAGES: Record<string, string> = {
   "MonitorService.cleanupTaskInterrupted": "Monitor service cleanup task interrupted.",
   "PluginService.hostListEmpty": "Current host list is empty.",
   "PluginService.releaseResources": "Releasing resources.",
-  "PluginService.hostsChangeListEmpty": "There are no changes in the hosts' availability.",
   "PluginService.failedToRetrieveHostPort": "Could not retrieve Host:Port for connection.",
   "PluginService.nonEmptyAliases": "fillAliases called when HostInfo already contains the following aliases: '%s'.",
   "PluginService.forceMonitoringRefreshTimeout": "A timeout error occurred after waiting '%s' ms for refreshed topology.",
@@ -311,8 +313,7 @@ const MESSAGES: Record<string, string> = {
   "ClusterTopologyMonitor.stopHostMonitoringTask": "Stop cluster topology monitoring task for '%s'.",
   "ClusterTopologyMonitor.errorDuringMonitoring": "Error thrown during cluster topology monitoring: '%s'.",
   "ClusterTopologyMonitor.endMonitoring": "Stop cluster topology monitoring.",
-  "ClusterTopologyMonitor.matchingReaderTopologies":
-    "Reader topologies have been consistent for '%s' ms. Updating topology cache.",
+  "ClusterTopologyMonitor.matchingReaderTopologies": "Reader topologies have been consistent for '%s' ms. Updating topology cache.",
   "ClusterTopologyMonitor.reset": "[clusterId: '%s'] Resetting cluster topology monitor for '%s'.",
   "ClusterTopologyMonitor.resetEventReceived": "MonitorResetEvent received.",
   "HostMonitor.startMonitoring": "Host monitor '%s' started.",
@@ -406,7 +407,16 @@ const MESSAGES: Record<string, string> = {
     "The 'globalClusterInstanceHostPatterns' property is required for Global Aurora Databases.",
   "GlobalTopologyUtils.invalidPatternFormat":
     "Invalid pattern format '%s'. Expected format: 'region:host-pattern' (e.g., 'us-east-1:?.cluster-xyz.us-east-1.rds.amazonaws.com').",
-  "GlobalAuroraTopologyMonitor.cannotFindRegionTemplate": "Cannot find cluster instance template for region '%s'."
+  "GlobalAuroraTopologyMonitor.cannotFindRegionTemplate": "Cannot find cluster instance template for region '%s'.",
+  "GlobalDbFailoverPlugin.missingHomeRegion":
+    "The 'failoverHomeRegion' property is required when connecting to a Global Aurora Database without a region in the URL.",
+  "GlobalDbFailoverPlugin.missingInitialHost": "Unable to determine the initial connection host.",
+  "GlobalDbFailoverPlugin.startFailover": "Starting Global DB failover procedure.",
+  "GlobalDbFailoverPlugin.isHomeRegion": "Is home region: %s",
+  "GlobalDbFailoverPlugin.currentFailoverMode": "Current Global DB failover mode: %s",
+  "GlobalDbFailoverPlugin.failoverElapsed": "Global DB failover elapsed time: %s ms",
+  "GlobalDbFailoverPlugin.candidateNull": "Candidate host is null for role: %s",
+  "GlobalDbFailoverPlugin.unableToConnect": "Unable to establish a connection during Global DB failover."
 };
 
 export class Messages {

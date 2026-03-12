@@ -95,6 +95,14 @@ export class DatabaseDialectManager implements DatabaseDialectProvider {
 
     if (this.dbType === DatabaseType.MYSQL) {
       const type = this.rdsHelper.identifyRdsType(host);
+      if (type == RdsUrlType.RDS_GLOBAL_WRITER_CLUSTER) {
+        this.canUpdate = false;
+        this.dialectCode = DatabaseDialectCodes.GLOBAL_AURORA_MYSQL;
+        this.dialect = <DatabaseDialect>this.knownDialectsByCode.get(DatabaseDialectCodes.GLOBAL_AURORA_MYSQL);
+        this.logCurrentDialect();
+        return this.dialect;
+      }
+
       if (type.isRdsCluster) {
         this.canUpdate = true;
         this.dialectCode = DatabaseDialectCodes.AURORA_MYSQL;
@@ -124,6 +132,14 @@ export class DatabaseDialectManager implements DatabaseDialectProvider {
         this.canUpdate = false;
         this.dialectCode = DatabaseDialectCodes.AURORA_PG;
         this.dialect = <DatabaseDialect>this.knownDialectsByCode.get(DatabaseDialectCodes.AURORA_PG);
+        this.logCurrentDialect();
+        return this.dialect;
+      }
+
+      if (type == RdsUrlType.RDS_GLOBAL_WRITER_CLUSTER) {
+        this.canUpdate = false;
+        this.dialectCode = DatabaseDialectCodes.GLOBAL_AURORA_PG;
+        this.dialect = <DatabaseDialect>this.knownDialectsByCode.get(DatabaseDialectCodes.GLOBAL_AURORA_PG);
         this.logCurrentDialect();
         return this.dialect;
       }
