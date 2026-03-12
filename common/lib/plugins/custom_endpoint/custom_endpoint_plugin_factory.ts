@@ -15,19 +15,19 @@
 */
 
 import { ConnectionPluginFactory } from "../../plugin_factory";
-import { PluginService } from "../../plugin_service";
 import { AwsWrapperError } from "../../utils/errors";
 import { Messages } from "../../utils/messages";
+import { FullServicesContainer } from "../../utils/full_services_container";
 
 export class CustomEndpointPluginFactory extends ConnectionPluginFactory {
   private static customEndpointPlugin: any;
 
-  async getInstance(pluginService: PluginService, props: Map<string, any>) {
+  async getInstance(servicesContainer: FullServicesContainer, props: Map<string, any>) {
     try {
       if (!CustomEndpointPluginFactory.customEndpointPlugin) {
         CustomEndpointPluginFactory.customEndpointPlugin = await import("./custom_endpoint_plugin");
       }
-      return new CustomEndpointPluginFactory.customEndpointPlugin.CustomEndpointPlugin(pluginService, props);
+      return new CustomEndpointPluginFactory.customEndpointPlugin.CustomEndpointPlugin(servicesContainer.getPluginService(), props);
     } catch (error: any) {
       throw new AwsWrapperError(Messages.get("ConnectionPluginChainBuilder.errorImportingPlugin", error.message, "CustomEndpointPlugin"));
     }

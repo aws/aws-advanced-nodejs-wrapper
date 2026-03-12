@@ -15,20 +15,20 @@
 */
 
 import { ConnectionPluginFactory } from "../../../plugin_factory";
-import { PluginService } from "../../../plugin_service";
 import { ConnectionPlugin } from "../../../connection_plugin";
 import { AwsWrapperError } from "../../../utils/errors";
 import { Messages } from "../../../utils/messages";
+import { FullServicesContainer } from "../../../utils/full_services_container";
 
 export class FastestResponseStrategyPluginFactory extends ConnectionPluginFactory {
   private static fastestResponseStrategyPlugin: any;
 
-  async getInstance(pluginService: PluginService, properties: Map<string, any>): Promise<ConnectionPlugin> {
+  async getInstance(servicesContainer: FullServicesContainer, properties: Map<string, any>): Promise<ConnectionPlugin> {
     try {
       if (!FastestResponseStrategyPluginFactory.fastestResponseStrategyPlugin) {
         FastestResponseStrategyPluginFactory.fastestResponseStrategyPlugin = await import("./fastest_response_strategy_plugin");
       }
-      return new FastestResponseStrategyPluginFactory.fastestResponseStrategyPlugin.FastestResponseStrategyPlugin(pluginService, properties);
+      return new FastestResponseStrategyPluginFactory.fastestResponseStrategyPlugin.FastestResponseStrategyPlugin(servicesContainer.getPluginService(), properties);
     } catch (error: any) {
       throw new AwsWrapperError(
         Messages.get("ConnectionPluginChainBuilder.errorImportingPlugin", error.message, "FastestResponseStrategyPluginFactory")

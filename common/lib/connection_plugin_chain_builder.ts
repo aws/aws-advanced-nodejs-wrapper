@@ -43,6 +43,7 @@ import { CustomEndpointPluginFactory } from "./plugins/custom_endpoint/custom_en
 import { ConfigurationProfile } from "./profile/configuration_profile";
 import { HostMonitoring2PluginFactory } from "./plugins/efm2/host_monitoring2_plugin_factory";
 import { BlueGreenPluginFactory } from "./plugins/bluegreen/blue_green_plugin_factory";
+import { FullServicesContainer } from "./utils/full_services_container";
 
 /*
   Type alias used for plugin factory sorting. It holds a reference to a plugin
@@ -99,7 +100,7 @@ export class ConnectionPluginChainBuilder {
   ]);
 
   static async getPlugins(
-    pluginService: PluginService,
+    servicesContainer: FullServicesContainer,
     props: Map<string, any>,
     connectionProviderManager: ConnectionProviderManager,
     configurationProfile: ConfigurationProfile | null
@@ -162,10 +163,10 @@ export class ConnectionPluginChainBuilder {
 
     for (const pluginFactoryInfo of pluginFactoryInfoList) {
       const factoryObj = new pluginFactoryInfo.factory();
-      plugins.push(await factoryObj.getInstance(pluginService, props));
+      plugins.push(await factoryObj.getInstance(servicesContainer, props));
     }
 
-    plugins.push(new DefaultPlugin(pluginService, connectionProviderManager));
+    plugins.push(new DefaultPlugin(servicesContainer, connectionProviderManager));
 
     return plugins;
   }

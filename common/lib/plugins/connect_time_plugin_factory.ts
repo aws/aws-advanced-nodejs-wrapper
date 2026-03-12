@@ -15,15 +15,15 @@
 */
 
 import { ConnectionPluginFactory } from "../plugin_factory";
-import { PluginService } from "../plugin_service";
 import { ConnectionPlugin } from "../connection_plugin";
 import { AwsWrapperError } from "../utils/errors";
 import { Messages } from "../utils/messages";
+import { FullServicesContainer } from "../utils/full_services_container";
 
 export class ConnectTimePluginFactory extends ConnectionPluginFactory {
   private static connectTimePlugin: any;
 
-  async getInstance(pluginService: PluginService, properties: Map<string, any>): Promise<ConnectionPlugin> {
+  async getInstance(servicesContainer: FullServicesContainer, properties: Map<string, any>): Promise<ConnectionPlugin> {
     try {
       if (!ConnectTimePluginFactory.connectTimePlugin) {
         ConnectTimePluginFactory.connectTimePlugin = await import("./connect_time_plugin");

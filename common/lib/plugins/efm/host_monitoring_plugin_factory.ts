@@ -15,21 +15,21 @@
 */
 
 import { ConnectionPluginFactory } from "../../plugin_factory";
-import { PluginService } from "../../plugin_service";
 import { ConnectionPlugin } from "../../connection_plugin";
 import { RdsUtils } from "../../utils/rds_utils";
 import { AwsWrapperError } from "../../utils/errors";
 import { Messages } from "../../utils/messages";
+import { FullServicesContainer } from "../../utils/full_services_container";
 
 export class HostMonitoringPluginFactory extends ConnectionPluginFactory {
   private static hostMonitoringPlugin: any;
 
-  async getInstance(pluginService: PluginService, properties: Map<string, any>): Promise<ConnectionPlugin> {
+  async getInstance(servicesContainer: FullServicesContainer, properties: Map<string, any>): Promise<ConnectionPlugin> {
     try {
       if (!HostMonitoringPluginFactory.hostMonitoringPlugin) {
         HostMonitoringPluginFactory.hostMonitoringPlugin = await import("./host_monitoring_connection_plugin");
       }
-      return new HostMonitoringPluginFactory.hostMonitoringPlugin.HostMonitoringConnectionPlugin(pluginService, properties, new RdsUtils());
+      return new HostMonitoringPluginFactory.hostMonitoringPlugin.HostMonitoringConnectionPlugin(servicesContainer.getPluginService(), properties, new RdsUtils());
     } catch (error: any) {
       throw new AwsWrapperError(Messages.get("ConnectionPluginChainBuilder.errorImportingPlugin", error.message, "HostMonitoringPlugin"));
     }

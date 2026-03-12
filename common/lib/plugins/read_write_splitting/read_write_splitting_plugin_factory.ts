@@ -15,20 +15,20 @@
 */
 
 import { ConnectionPluginFactory } from "../../plugin_factory";
-import { PluginService } from "../../plugin_service";
 import { ConnectionPlugin } from "../../connection_plugin";
 import { AwsWrapperError } from "../../utils/errors";
 import { Messages } from "../../utils/messages";
+import { FullServicesContainer } from "../../utils/full_services_container";
 
 export class ReadWriteSplittingPluginFactory extends ConnectionPluginFactory {
   private static readWriteSplittingPlugin: any;
 
-  async getInstance(pluginService: PluginService, properties: Map<string, any>): Promise<ConnectionPlugin> {
+  async getInstance(servicesContainer: FullServicesContainer, properties: Map<string, any>): Promise<ConnectionPlugin> {
     try {
       if (!ReadWriteSplittingPluginFactory.readWriteSplittingPlugin) {
         ReadWriteSplittingPluginFactory.readWriteSplittingPlugin = await import("./read_write_splitting_plugin");
       }
-      return new ReadWriteSplittingPluginFactory.readWriteSplittingPlugin.ReadWriteSplittingPlugin(pluginService, properties);
+      return new ReadWriteSplittingPluginFactory.readWriteSplittingPlugin.ReadWriteSplittingPlugin(servicesContainer.getPluginService(), properties);
     } catch (error: any) {
       throw new AwsWrapperError(Messages.get("ConnectionPluginChainBuilder.errorImportingPlugin", error.message, "readWriteSplittingPlugin"));
     }

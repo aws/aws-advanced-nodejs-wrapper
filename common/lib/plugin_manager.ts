@@ -80,7 +80,7 @@ export class PluginManager {
   private readonly props: Map<string, any>;
   private _plugins: ConnectionPlugin[] = [];
   private readonly connectionProviderManager: ConnectionProviderManager;
-  private fullServiceContainer: FullServicesContainer;
+  private fullServicesContainer: FullServicesContainer;
   protected telemetryFactory: TelemetryFactory;
 
   constructor(
@@ -89,7 +89,7 @@ export class PluginManager {
     connectionProviderManager: ConnectionProviderManager,
     telemetryFactory: TelemetryFactory
   ) {
-    this.fullServiceContainer = fullServicesContainer;
+    this.fullServicesContainer = fullServicesContainer;
     this.connectionProviderManager = connectionProviderManager;
     this.props = props;
     this.telemetryFactory = telemetryFactory;
@@ -102,7 +102,7 @@ export class PluginManager {
       this._plugins = plugins;
     } else {
       this._plugins = await ConnectionPluginChainBuilder.getPlugins(
-        this.fullServiceContainer.getPluginService(),
+        this.fullServicesContainer,
         this.props,
         this.connectionProviderManager,
         configurationProfile
@@ -126,8 +126,8 @@ export class PluginManager {
     }
 
     const telemetryContext = this.telemetryFactory.openTelemetryContext(methodName, TelemetryTraceLevel.NESTED);
-    const currentClient: ClientWrapper = this.fullServiceContainer.getPluginService().getCurrentClient().targetClient;
-    this.fullServiceContainer.getPluginService().attachNoOpErrorListener(currentClient);
+    const currentClient: ClientWrapper = this.fullServicesContainer.getPluginService().getCurrentClient().targetClient;
+    this.fullServicesContainer.getPluginService().attachNoOpErrorListener(currentClient);
     try {
       return await telemetryContext.start(() => {
         return this.executeWithSubscribedPlugins(
@@ -140,7 +140,7 @@ export class PluginManager {
         );
       });
     } finally {
-      this.fullServiceContainer.getPluginService().attachErrorListener(currentClient);
+      this.fullServicesContainer.getPluginService().attachErrorListener(currentClient);
     }
   }
 
