@@ -44,6 +44,7 @@ import { readFileSync } from "fs";
 
 export class TestEnvironment {
   private static env?: TestEnvironment;
+  private static sdk?: NodeSDK;
 
   private readonly _info: TestEnvironmentInfo;
   private proxies?: { [s: string]: ProxyInfo };
@@ -281,6 +282,7 @@ export class TestEnvironment {
 
     // this enables the API to record telemetry
     sdk.start();
+    TestEnvironment.sdk = sdk;
     // gracefully shut down the SDK on process exit
     process.on("SIGTERM", () => {
       sdk
@@ -291,6 +293,17 @@ export class TestEnvironment {
     });
 
     return env;
+  }
+
+  static async shutdownTelemetry(): Promise<void> {
+    if (TestEnvironment.sdk) {
+      try {
+        await TestEnvironment.sdk.shutdown();
+      } catch (error) {
+        // ignore
+      }
+      TestEnvironment.sdk = undefined;
+    }
   }
 
   static async initProxies(environment: TestEnvironment) {

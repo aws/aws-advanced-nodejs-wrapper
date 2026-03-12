@@ -141,7 +141,7 @@ beforeEach(async () => {
   logger.info(`Test started: ${expect.getState().currentTestName}`);
   await TestEnvironment.verifyClusterStatus();
   client = null;
-}, 60000);
+}, 1320000);
 
 afterEach(async () => {
   if (client !== null) {

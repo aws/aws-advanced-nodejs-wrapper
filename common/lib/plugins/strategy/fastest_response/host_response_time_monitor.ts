@@ -17,66 +17,95 @@
 import { HostInfo } from "../../../host_info";
 import { PluginService } from "../../../plugin_service";
 import { TelemetryFactory } from "../../../utils/telemetry/telemetry_factory";
-import { sleep } from "../../../utils/utils";
+import { sleepWithAbort } from "../../../utils/utils";
 import { logger } from "../../../../logutils";
 import { Messages } from "../../../utils/messages";
 import { TelemetryTraceLevel } from "../../../utils/telemetry/telemetry_trace_level";
 import { ClientWrapper } from "../../../client_wrapper";
-import { TelemetryContext } from "../../../utils/telemetry/telemetry_context";
 import { WrapperProperties } from "../../../wrapper_property";
+import { AbstractMonitor } from "../../../utils/monitoring/monitor";
+import { FullServicesContainer } from "../../../utils/full_services_container";
 
-export class HostResponseTimeMonitor {
-  static readonly MONITORING_PROPERTY_PREFIX = "frt_";
+export class ResponseTimeHolder {
+  private readonly url: string;
+  private readonly responseTime: number;
+
+  constructor(url: string, responseTime: number) {
+    this.url = url;
+    this.responseTime = responseTime;
+  }
+
+  getUrl(): string {
+    return this.url;
+  }
+
+  getResponseTime(): number {
+    return this.responseTime;
+  }
+}
+
+export class HostResponseTimeMonitor extends AbstractMonitor {
   static readonly NUM_OF_MEASURES = 5;
+  private static readonly TERMINATION_TIMEOUT_SEC = 5;
   private readonly intervalMs: number;
   private readonly hostInfo: HostInfo;
-  private stopped = false;
   private responseTimeMs = Number.MAX_SAFE_INTEGER;
-  private checkTimestamp = Date.now();
 
   private readonly properties: Map<string, any>;
-  private pluginService: PluginService;
-  private telemetryFactory: TelemetryFactory;
+  private readonly servicesContainer: FullServicesContainer;
+  private readonly pluginService: PluginService;
+  private readonly telemetryFactory: TelemetryFactory;
   protected monitoringClient: ClientWrapper | null = null;
+  private abortSleep?: () => void;
 
-  constructor(pluginService: PluginService, hostInfo: HostInfo, properties: Map<string, any>, intervalMs: number) {
-    this.pluginService = pluginService;
+  constructor(servicesContainer: FullServicesContainer, hostInfo: HostInfo, properties: Map<string, any>, intervalMs: number) {
+    super(HostResponseTimeMonitor.TERMINATION_TIMEOUT_SEC);
+    this.servicesContainer = servicesContainer;
+    this.pluginService = servicesContainer.pluginService;
     this.hostInfo = hostInfo;
     this.properties = properties;
     this.intervalMs = intervalMs;
     this.telemetryFactory = this.pluginService.getTelemetryFactory();
 
-    const hostId: string = this.hostInfo.hostId ?? this.getHostInfo().host;
-    /**
-     * Report current response time (in milliseconds) to telemetry engine.
-     * Report -1 if response time couldn't be measured.
-     */
-    this.telemetryFactory.createGauge(`frt.response.time.${hostId}`, () => this.getResponseTime() == Number.MAX_SAFE_INTEGER);
-    this.run();
+    const hostId: string = this.hostInfo.hostId ?? this.hostInfo.host;
+    this.telemetryFactory.createGauge(`frt.response.time.${hostId}`, () =>
+      this.responseTimeMs === Number.MAX_SAFE_INTEGER ? -1 : this.responseTimeMs
+    );
   }
 
-  getResponseTime() {
+  getResponseTime(): number {
     return this.responseTimeMs;
   }
 
-  getCheckTimeStamp() {
-    return this.checkTimestamp;
-  }
-
-  getHostInfo() {
+  getHostInfo(): HostInfo {
     return this.hostInfo;
   }
 
   async close(): Promise<void> {
-    this.stopped = true;
-    await sleep(500);
-    logger.debug(Messages.get("HostResponseTimeMonitor.stopped", this.hostInfo.host));
+    if (this.abortSleep) {
+      try {
+        this.abortSleep();
+      } catch (error) {
+        // ignore
+      }
+      this.abortSleep = undefined;
+    }
+    if (this.monitoringClient) {
+      try {
+        await this.monitoringClient.abort();
+      } catch (error) {
+        // ignore
+      }
+      this.monitoringClient = null;
+    }
   }
 
-  async run(): Promise<void> {
-    const telemetryContext: TelemetryContext = this.telemetryFactory.openTelemetryContext("host response time task", TelemetryTraceLevel.TOP_LEVEL);
+  async monitor(): Promise<void> {
+    const telemetryContext = this.telemetryFactory.openTelemetryContext("host response time task", TelemetryTraceLevel.TOP_LEVEL);
     telemetryContext.setAttribute("url", this.hostInfo.host);
-    while (!this.stopped) {
+
+    while (!this._stop) {
+      this.lastActivityTimestampNanos = BigInt(Date.now() * 1_000_000);
       await telemetryContext.start(async () => {
         try {
           await this.openConnection();
@@ -84,33 +113,29 @@ export class HostResponseTimeMonitor {
             let responseTimeSum = 0;
             let count = 0;
             for (let i = 0; i < HostResponseTimeMonitor.NUM_OF_MEASURES; i++) {
-              if (this.stopped) {
+              if (this._stop) {
                 break;
               }
               const startTime = Date.now();
               if (await this.pluginService.isClientValid(this.monitoringClient)) {
-                const responseTime = Date.now() - startTime;
-                responseTimeSum += responseTime;
+                responseTimeSum += Date.now() - startTime;
                 count++;
               }
             }
             if (count > 0) {
               this.responseTimeMs = responseTimeSum / count;
+              this.servicesContainer.storageService.set(this.hostInfo.url, new ResponseTimeHolder(this.hostInfo.url, this.responseTimeMs));
             } else {
               this.responseTimeMs = Number.MAX_SAFE_INTEGER;
+              this.servicesContainer.storageService.remove(ResponseTimeHolder, this.hostInfo.url);
             }
-            this.checkTimestamp = Date.now();
             logger.debug(Messages.get("HostResponseTimeMonitor.responseTime", this.hostInfo.host, this.responseTimeMs.toString()));
           }
-          await sleep(this.intervalMs);
+          const [sleepPromise, abortFn] = sleepWithAbort(this.intervalMs);
+          this.abortSleep = abortFn as () => void;
+          await sleepPromise;
         } catch (error) {
           logger.debug(Messages.get("HostResponseTimeMonitor.interruptedErrorDuringMonitoring", this.hostInfo.host, error.message));
-        } finally {
-          this.stopped = true;
-          if (this.monitoringClient) {
-            await this.monitoringClient.abort();
-          }
-          this.monitoringClient = null;
         }
       });
     }
@@ -119,8 +144,7 @@ export class HostResponseTimeMonitor {
   async openConnection(): Promise<void> {
     try {
       if (this.monitoringClient) {
-        const clientIsValid = await this.pluginService.isClientValid(this.monitoringClient);
-        if (clientIsValid) {
+        if (await this.pluginService.isClientValid(this.monitoringClient)) {
           return;
         }
       }

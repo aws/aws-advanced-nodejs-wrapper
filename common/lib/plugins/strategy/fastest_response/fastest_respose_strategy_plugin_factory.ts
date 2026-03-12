@@ -28,10 +28,7 @@ export class FastestResponseStrategyPluginFactory extends ConnectionPluginFactor
       if (!FastestResponseStrategyPluginFactory.fastestResponseStrategyPlugin) {
         FastestResponseStrategyPluginFactory.fastestResponseStrategyPlugin = await import("./fastest_response_strategy_plugin");
       }
-      return new FastestResponseStrategyPluginFactory.fastestResponseStrategyPlugin.FastestResponseStrategyPlugin(
-        servicesContainer.pluginService,
-        properties
-      );
+      return new FastestResponseStrategyPluginFactory.fastestResponseStrategyPlugin.FastestResponseStrategyPlugin(servicesContainer, properties);
     } catch (error: any) {
       throw new AwsWrapperError(
         Messages.get("ConnectionPluginChainBuilder.errorImportingPlugin", error.message, "FastestResponseStrategyPluginFactory")
