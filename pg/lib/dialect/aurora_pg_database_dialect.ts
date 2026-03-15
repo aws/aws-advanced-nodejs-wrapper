@@ -137,7 +137,7 @@ export class AuroraPgDatabaseDialect extends PgDatabaseDialect implements Topolo
   }
 
   getDialectUpdateCandidates(): string[] {
-    return [DatabaseDialectCodes.RDS_MULTI_AZ_PG];
+    return [DatabaseDialectCodes.GLOBAL_AURORA_PG, DatabaseDialectCodes.RDS_MULTI_AZ_PG];
   }
 
   getLimitlessRoutersQuery(): string {

@@ -25,7 +25,9 @@ export class RandomHostSelector implements HostSelector {
   public static STRATEGY_NAME = "random";
 
   getHost(hosts: HostInfo[], role: HostRole, props?: Map<string, any>): HostInfo {
-    const eligibleHosts = hosts.filter((hostInfo: HostInfo) => hostInfo.role === role && hostInfo.getAvailability() === HostAvailability.AVAILABLE);
+    const eligibleHosts = hosts.filter(
+      (hostInfo: HostInfo) => (role === null || hostInfo.role === role) && hostInfo.getAvailability() === HostAvailability.AVAILABLE
+    );
     if (eligibleHosts.length === 0) {
       throw new AwsWrapperError(Messages.get("HostSelector.noHostsMatchingRole", role));
     }

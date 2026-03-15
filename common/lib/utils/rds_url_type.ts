@@ -20,6 +20,7 @@ export class RdsUrlType {
   public static readonly RDS_READER_CLUSTER = new RdsUrlType(true, true, true);
   public static readonly RDS_CUSTOM_CLUSTER = new RdsUrlType(true, false, true);
   public static readonly RDS_PROXY = new RdsUrlType(true, false, true);
+  public static readonly RDS_PROXY_ENDPOINT = new RdsUrlType(true, false, true);
   public static readonly RDS_INSTANCE = new RdsUrlType(true, false, true);
   public static readonly RDS_AURORA_LIMITLESS_DB_SHARD_GROUP = new RdsUrlType(true, false, true);
   public static readonly RDS_GLOBAL_WRITER_CLUSTER = new RdsUrlType(true, true, false);

@@ -23,13 +23,14 @@ import { Messages } from "../../utils/messages";
 import { RdsUtils } from "../../utils/rds_utils";
 import { lookup, LookupAddress } from "dns";
 import { promisify } from "util";
-import { AwsWrapperError } from "../../utils/errors";
 import { HostChangeOptions } from "../../host_change_options";
 import { WrapperProperties } from "../../wrapper_property";
 import { ClientWrapper } from "../../client_wrapper";
-import { getWriter, logTopology } from "../../utils/utils";
+import { containsHostAndPort, getWriter, logTopology } from "../../utils/utils";
 import { TelemetryFactory } from "../../utils/telemetry/telemetry_factory";
 import { TelemetryCounter } from "../../utils/telemetry/telemetry_counter";
+import { RdsUrlType } from "../../utils/rds_url_type";
+import { AwsWrapperError } from "../../utils/errors";
 
 export class StaleDnsHelper {
   private readonly pluginService: PluginService;
@@ -53,33 +54,38 @@ export class StaleDnsHelper {
     props: Map<string, any>,
     connectFunc: () => Promise<ClientWrapper>
   ): Promise<ClientWrapper> {
-    if (!this.rdsUtils.isWriterClusterDns(host)) {
+    const type: RdsUrlType = this.rdsUtils.identifyRdsType(host);
+
+    if (type !== RdsUrlType.RDS_WRITER_CLUSTER && type !== RdsUrlType.RDS_GLOBAL_WRITER_CLUSTER) {
       return connectFunc();
+    }
+
+    if (type === RdsUrlType.RDS_WRITER_CLUSTER) {
+      const writer = getWriter(this.pluginService.getAllHosts());
+      if (writer != null && this.rdsUtils.isRdsInstance(writer.host)) {
+        if (
+          isInitialConnection &&
+          WrapperProperties.SKIP_INACTIVE_WRITER_CLUSTER_CHECK.get(props) &&
+          !this.rdsUtils.isSameRegion(writer.host, host)
+        ) {
+          // The cluster writer endpoint belongs to a different region than the current writer region.
+          // It means that the cluster is Aurora Global Database and cluster writer endpoint is in secondary region.
+          // In this case the cluster writer endpoint is in inactive state and doesn't represent the current writer
+          // so any connection check should be skipped.
+          // Continue with a normal workflow.
+          return connectFunc();
+        }
+      } else {
+        // No writer is available. It could be the case with the first connection when topology isn't yet available.
+        // Continue with a normal workflow.
+        return connectFunc();
+      }
     }
 
     const currentTargetClient = await connectFunc();
 
-    let clusterInetAddress = "";
-    try {
-      const lookupResult = await this.lookupResult(host);
-      clusterInetAddress = lookupResult.address;
-    } catch (error) {
-      // ignore
-    }
-
-    const hostInetAddress = clusterInetAddress;
-    logger.debug(Messages.get("StaleDnsHelper.clusterEndpointDns", hostInetAddress));
-
-    if (!clusterInetAddress) {
-      return currentTargetClient;
-    }
-
-    const currentHostInfo = this.pluginService.getCurrentHostInfo();
-    if (!currentHostInfo) {
-      throw new AwsWrapperError("Stale DNS Helper: Current hostInfo was null.");
-    }
-
-    if (currentHostInfo && currentHostInfo.role === HostRole.READER) {
+    const isConnectedToReader: boolean = (await this.pluginService.getHostRole(currentTargetClient)) === HostRole.READER;
+    if (isConnectedToReader) {
       // This is if-statement is only reached if the connection url is a writer cluster endpoint.
       // If the new connection resolves to a reader instance, this means the topology is outdated.
       // Force refresh to update the topology.
@@ -104,26 +110,17 @@ export class StaleDnsHelper {
       return currentTargetClient;
     }
 
-    if (!this.writerHostAddress) {
-      try {
-        const lookupResult = await this.lookupResult(this.writerHostInfo.host);
-        this.writerHostAddress = lookupResult.address;
-      } catch (error) {
-        // ignore
-      }
-    }
+    if (isConnectedToReader) {
+      // Reconnect to writer host if current connection is reader.
 
-    logger.debug(Messages.get("StaleDnsHelper.writerInetAddress", this.writerHostAddress));
-
-    if (!this.writerHostAddress) {
-      return currentTargetClient;
-    }
-
-    if (this.writerHostAddress !== clusterInetAddress) {
-      // DNS resolves a cluster endpoint to a wrong writer
-      // opens a connection to a proper writer host
       logger.debug(Messages.get("StaleDnsHelper.staleDnsDetected", this.writerHostInfo.host));
       this.staleDNSDetectedCounter.inc();
+
+      const allowedHosts: HostInfo[] = this.pluginService.getHosts();
+
+      if (!containsHostAndPort(allowedHosts, this.writerHostInfo.hostAndPort)) {
+        throw new AwsWrapperError(Messages.get("StaleDnsHelper.currentWriterNotAllowed", this.writerHostInfo.host, logTopology(allowedHosts, "")));
+      }
 
       let targetClient = null;
       try {
@@ -164,9 +161,5 @@ export class StaleDnsHelper {
       }
     }
     return Promise.resolve();
-  }
-
-  lookupResult(host: string): Promise<LookupAddress> {
-    return promisify(lookup)(host, {});
   }
 }
