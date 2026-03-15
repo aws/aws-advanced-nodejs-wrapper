@@ -257,14 +257,9 @@ export class RdsHostListProvider implements DynamicHostListProvider {
     return topology == null ? null : topology.hosts;
   }
 
-  static clearAll(): void {
-    // No-op
-    // TODO: remove if still not used after full service container refactoring
-  }
-
   clear(): void {
     if (this.clusterId) {
-      CoreServicesContainer.getInstance().getStorageService().remove(Topology, this.clusterId);
+      this.servicesContainers.getStorageService().remove(Topology, this.clusterId);
     }
   }
 

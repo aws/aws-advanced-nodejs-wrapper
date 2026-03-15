@@ -64,6 +64,10 @@ describe("notificationPipelineTest", () => {
     pluginManager["_plugins"] = [plugin];
   });
 
+  afterEach(async () => {
+    await PluginManager.releaseResources();
+  });
+
   it("test_notifyConnectionChanged", async () => {
     const result: Set<OldConnectionSuggestionAction> = await pluginManager.notifyConnectionChanged(connectionChanges, null);
     expect(plugin.counter).toBe(1);

@@ -18,6 +18,10 @@ import { AuroraPgDatabaseDialect } from "./aurora_pg_database_dialect";
 import { GlobalAuroraTopologyDialect } from "../../../common/lib/database_dialect/topology_aware_database_dialect";
 import { ClientWrapper } from "../../../common/lib/client_wrapper";
 import { TopologyQueryResult } from "../../../common/lib/host_list_provider/topology_utils";
+import { FullServicesContainer } from "../../../common/lib/utils/full_services_container";
+import { HostListProvider } from "../../../common/lib/host_list_provider/host_list_provider";
+import { GlobalAuroraHostListProvider } from "../../../common/lib/host_list_provider/global_aurora_host_list_provider";
+import { GlobalTopologyUtils } from "../../../common/lib/host_list_provider/global_topology_utils";
 
 export class GlobalAuroraPgDatabaseDialect extends AuroraPgDatabaseDialect implements GlobalAuroraTopologyDialect {
   private static readonly GLOBAL_STATUS_FUNC_EXISTS_QUERY = "select 'aurora_global_db_status'::regproc";
@@ -77,7 +81,14 @@ export class GlobalAuroraPgDatabaseDialect extends AuroraPgDatabaseDialect imple
     return [];
   }
 
-  // TODO: implement GetHostListProvider once GDBHostListProvider is implemented
+  getHostListProvider(props: Map<string, any>, originalUrl: string, servicesContainer: FullServicesContainer): HostListProvider {
+    return new GlobalAuroraHostListProvider(
+      props,
+      originalUrl,
+      new GlobalTopologyUtils(this, servicesContainer.getPluginService().getHostInfoBuilder()),
+      servicesContainer
+    );
+  }
 
   async queryForTopology(targetClient: ClientWrapper): Promise<TopologyQueryResult[]> {
     const res = await targetClient.queryWithTimeout(GlobalAuroraPgDatabaseDialect.GLOBAL_TOPOLOGY_QUERY);

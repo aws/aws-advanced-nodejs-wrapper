@@ -20,54 +20,29 @@ import { DatabaseDialect } from "../database_dialect/database_dialect";
 import { HostInfo } from "../host_info";
 import { isDialectTopologyAware } from "../utils/utils";
 import { Messages } from "../utils/messages";
-import { AwsWrapperError } from "../utils/errors";
 
-export interface GdbTopologyUtils {
-  getRegion(instanceId: string, targetClient: ClientWrapper, dialect: DatabaseDialect): Promise<string | null>;
-}
-
-export class GlobalTopologyUtils extends TopologyUtils implements GdbTopologyUtils {
+/**
+ * TopologyUtils implementation for Aurora clusters using a single HostInfo template.
+ */
+export class AuroraTopologyUtils extends TopologyUtils {
   async queryForTopology(
     targetClient: ClientWrapper,
     dialect: DatabaseDialect,
     initialHost: HostInfo,
-    instanceTemplateByRegion: Map<string, HostInfo>
+    clusterInstanceTemplate: HostInfo
   ): Promise<HostInfo[]> {
     if (!isDialectTopologyAware(dialect)) {
-      throw new AwsWrapperError(Messages.get("RdsHostListProvider.incorrectDialect"));
+      throw new TypeError(Messages.get("RdsHostListProvider.incorrectDialect"));
     }
 
     return await dialect
       .queryForTopology(targetClient)
-      .then((res: TopologyQueryResult[]) => this.verifyWriter(this.createHostsWithTemplateMap(res, initialHost, instanceTemplateByRegion)));
+      .then((res: TopologyQueryResult[]) => this.verifyWriter(this.createHosts(res, initialHost, clusterInstanceTemplate)));
   }
 
-  async getRegion(instanceId: string, targetClient: ClientWrapper, dialect: DatabaseDialect): Promise<string | null> {
-    if (!isDialectTopologyAware(dialect)) {
-      throw new AwsWrapperError(Messages.get("RdsHostListProvider.incorrectDialect"));
-    }
-
-    const results = await dialect.queryForTopology(targetClient);
-    const match = results.find((row) => row.id === instanceId);
-    return match?.awsRegion ?? null;
-  }
-
-  private createHostsWithTemplateMap(
-    topologyQueryResults: TopologyQueryResult[],
-    initialHost: HostInfo,
-    instanceTemplateByRegion: Map<string, HostInfo>
-  ): HostInfo[] {
+  public createHosts(topologyQueryResults: TopologyQueryResult[], initialHost: HostInfo, clusterInstanceTemplate: HostInfo): HostInfo[] {
     const hostsMap = new Map<string, HostInfo>();
     topologyQueryResults.forEach((row) => {
-      if (!row.awsRegion) {
-        throw new AwsWrapperError(Messages.get("GlobalTopologyUtils.missingRegion", row.host));
-      }
-      const clusterInstanceTemplate = instanceTemplateByRegion.get(row.awsRegion);
-
-      if (!clusterInstanceTemplate) {
-        throw new AwsWrapperError(Messages.get("GlobalTopologyUtils.missingTemplateForRegion", row.awsRegion, row.host));
-      }
-
       const lastUpdateTime = row.lastUpdateTime ?? Date.now();
 
       const host = this.createHost(

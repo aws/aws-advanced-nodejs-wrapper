@@ -23,7 +23,8 @@ import { ClientWrapper } from "../../../common/lib/client_wrapper";
 import { DatabaseDialectCodes } from "../../../common/lib/database_dialect/database_dialect_codes";
 import { LimitlessDatabaseDialect } from "../../../common/lib/database_dialect/limitless_database_dialect";
 import { BlueGreenDialect, BlueGreenResult } from "../../../common/lib/database_dialect/blue_green_dialect";
-import { TopologyQueryResult, TopologyUtils } from "../../../common/lib/host_list_provider/topology_utils";
+import { TopologyQueryResult } from "../../../common/lib/host_list_provider/topology_utils";
+import { AuroraTopologyUtils } from "../../../common/lib/host_list_provider/aurora_topology_utils";
 import { FullServicesContainer } from "../../../common/lib/utils/full_services_container";
 
 export class AuroraPgDatabaseDialect extends PgDatabaseDialect implements TopologyAwareDatabaseDialect, LimitlessDatabaseDialect, BlueGreenDialect {
@@ -51,7 +52,7 @@ export class AuroraPgDatabaseDialect extends PgDatabaseDialect implements Topolo
   private static readonly TOPOLOGY_TABLE_EXIST_QUERY: string = "SELECT pg_catalog.'get_blue_green_fast_switchover_metadata'::regproc";
 
   getHostListProvider(props: Map<string, any>, originalUrl: string, servicesContainer: FullServicesContainer): HostListProvider {
-    const topologyUtils: TopologyUtils = new TopologyUtils(this, servicesContainer.getHostListProviderService().getHostInfoBuilder());
+    const topologyUtils = new AuroraTopologyUtils(this, servicesContainer.getHostListProviderService().getHostInfoBuilder());
     return new RdsHostListProvider(props, originalUrl, topologyUtils, servicesContainer);
   }
 
@@ -137,7 +138,7 @@ export class AuroraPgDatabaseDialect extends PgDatabaseDialect implements Topolo
   }
 
   getDialectUpdateCandidates(): string[] {
-    return [DatabaseDialectCodes.RDS_MULTI_AZ_PG];
+    return [DatabaseDialectCodes.GLOBAL_AURORA_PG, DatabaseDialectCodes.RDS_MULTI_AZ_PG];
   }
 
   getLimitlessRoutersQuery(): string {
