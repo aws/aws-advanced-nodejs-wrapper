@@ -27,9 +27,12 @@ export class GdbReadWriteSplittingPluginFactory extends ConnectionPluginFactory 
   async getInstance(servicesContainer: FullServicesContainer, properties: Map<string, any>): Promise<ConnectionPlugin> {
     try {
       if (!GdbReadWriteSplittingPluginFactory.gdbReadWriteSplittingPlugin) {
-        GdbReadWriteSplittingPluginFactory.gdbReadWriteSplittingPlugin = await import("./gdb_read_writer_splitting_plugin");
+        GdbReadWriteSplittingPluginFactory.gdbReadWriteSplittingPlugin = await import("./gdb_read_write_splitting_plugin");
       }
-      return new GdbReadWriteSplittingPluginFactory.gdbReadWriteSplittingPlugin.GdbReadWriteSplittingPlugin(servicesContainer, properties);
+      return new GdbReadWriteSplittingPluginFactory.gdbReadWriteSplittingPlugin.GdbReadWriteSplittingPlugin(
+        servicesContainer.getPluginService(),
+        properties
+      );
     } catch (error: any) {
       throw new AwsWrapperError(Messages.get("ConnectionPluginChainBuilder.errorImportingPlugin", error.message, "gdbReadWriteSplittingPlugin"));
     }

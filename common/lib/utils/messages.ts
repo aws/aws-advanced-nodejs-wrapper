@@ -418,7 +418,6 @@ const MESSAGES: Record<string, string> = {
   "GlobalDbFailoverPlugin.failoverElapsed": "Global DB failover elapsed time: %s ms",
   "GlobalDbFailoverPlugin.candidateNull": "Candidate host is null for role: %s",
   "GlobalDbFailoverPlugin.unableToConnect": "Unable to establish a connection during Global DB failover.",
-  "GlobalDbFailoverPlugin.unableToConnect": "Unable to establish a connection during failover.",
   "GdbReadWriteSplittingPlugin.missingHomeRegion":
     "Unable to parse home region from endpoint '%s'. Please ensure you have set the 'gdbRwHomeRegion' connection parameter.",
   "GdbReadWriteSplittingPlugin.cantConnectWriterOutOfHomeRegion":

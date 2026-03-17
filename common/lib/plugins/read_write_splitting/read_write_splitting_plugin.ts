@@ -24,27 +24,26 @@ import { AbstractReadWriteSplittingPlugin } from "./abstract_read_write_splittin
 import { WrapperProperties } from "../../wrapper_property";
 import { logger } from "../../../logutils";
 import { CacheItem } from "../../utils/cache_map";
-import { FullServicesContainer } from "../../utils/full_services_container";
 
 export class ReadWriteSplittingPlugin extends AbstractReadWriteSplittingPlugin {
   protected hosts: HostInfo[] = [];
 
-  constructor(serviceContainer: FullServicesContainer, properties: Map<string, any>);
+  constructor(pluginService: PluginService, properties: Map<string, any>);
   constructor(
-    serviceContainer: FullServicesContainer,
+    pluginService: PluginService,
     properties: Map<string, any>,
     hostListProviderService: HostListProviderService,
     writerClient: ClientWrapper,
     readerClient: ClientWrapper
   );
   constructor(
-    serviceContainer: FullServicesContainer,
+    pluginService: PluginService,
     properties: Map<string, any>,
     hostListProviderService?: HostListProviderService,
     writerClient?: ClientWrapper,
     readerClient?: ClientWrapper
   ) {
-    super(serviceContainer, properties);
+    super(pluginService, properties);
     this._hostListProviderService = hostListProviderService;
     this.writerTargetClient = writerClient;
     this.readerCacheItem = new CacheItem(readerClient, BigInt(0));
@@ -65,7 +64,7 @@ export class ReadWriteSplittingPlugin extends AbstractReadWriteSplittingPlugin {
     if (!isInitialConnection || this._hostListProviderService?.isStaticHostListProvider()) {
       return result;
     }
-    const currentRole = this.pluginService.getCurrentHostInfo()?.role;
+    const currentRole = await this.pluginService.getHostRole(result);
 
     if (currentRole == HostRole.UNKNOWN) {
       logAndThrowError(Messages.get("ReadWriteSplittingPlugin.errorVerifyingInitialHostRole"));
@@ -182,7 +181,7 @@ export class ReadWriteSplittingPlugin extends AbstractReadWriteSplittingPlugin {
     }
   }
 
-  protected getReaderHostCandidates(): HostInfo[] | undefined {
+  protected getReaderHostCandidates(): HostInfo[] {
     return this.pluginService.getHosts();
   }
 }

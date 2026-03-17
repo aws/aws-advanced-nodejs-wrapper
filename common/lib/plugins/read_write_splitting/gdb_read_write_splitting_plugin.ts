@@ -15,7 +15,6 @@
 */
 
 import { ReadWriteSplittingPlugin } from "./read_write_splitting_plugin";
-import { PluginService } from "../../plugin_service";
 import { WrapperProperties } from "../../wrapper_property";
 import { HostInfo } from "../../host_info";
 import { RdsUtils } from "../../utils/rds_utils";
@@ -24,29 +23,22 @@ import { Messages } from "../../utils/messages";
 import { logger } from "../../../logutils";
 import { ClientWrapper } from "../../client_wrapper";
 import { equalsIgnoreCase } from "../../utils/utils";
-import { FullServicesContainer } from "../../utils/full_services_container";
 
 export class GdbReadWriteSplittingPlugin extends ReadWriteSplittingPlugin {
   protected readonly rdsUtils: RdsUtils = new RdsUtils();
 
-  protected readonly restrictWriterToHomeRegion: boolean;
-  protected readonly restrictReaderToHomeRegion: boolean;
+  protected restrictWriterToHomeRegion: boolean;
+  protected restrictReaderToHomeRegion: boolean;
 
   protected isInitialized: boolean = false;
   protected homeRegion: string;
-
-  constructor(serviceContainer: FullServicesContainer, properties: Map<string, any>) {
-    super(serviceContainer, properties);
-    this.restrictWriterToHomeRegion = WrapperProperties.GDB_RW_RESTRICT_WRITER_TO_HOME_REGION.get(properties);
-    this.restrictReaderToHomeRegion = WrapperProperties.GDB_RW_RESTRICT_READER_TO_HOME_REGION.get(properties);
-  }
 
   protected initSettings(initHostInfo: HostInfo, properties: Map<string, any>): void {
     if (this.isInitialized) {
       return;
     }
-
-    this.isInitialized = true;
+    this.restrictWriterToHomeRegion = WrapperProperties.GDB_RW_RESTRICT_WRITER_TO_HOME_REGION.get(properties);
+    this.restrictReaderToHomeRegion = WrapperProperties.GDB_RW_RESTRICT_READER_TO_HOME_REGION.get(properties);
 
     this.homeRegion = WrapperProperties.GDB_RW_HOME_REGION.get(properties);
     if (!this.homeRegion) {
@@ -61,6 +53,8 @@ export class GdbReadWriteSplittingPlugin extends ReadWriteSplittingPlugin {
     }
 
     logger.debug(Messages.get("GdbReadWriteSplittingPlugin.parameterValue", "gdbRwHomeRegion", this.homeRegion));
+
+    this.isInitialized = true;
   }
 
   override async connect(
@@ -76,8 +70,8 @@ export class GdbReadWriteSplittingPlugin extends ReadWriteSplittingPlugin {
   override setWriterClient(writerTargetClient: ClientWrapper | undefined, writerHostInfo: HostInfo) {
     if (
       this.restrictWriterToHomeRegion &&
-      this.writerHostInfo != null &&
-      !equalsIgnoreCase(this.rdsUtils.getRdsRegion(this.writerHostInfo.host), this.homeRegion)
+      writerHostInfo != null &&
+      !equalsIgnoreCase(this.rdsUtils.getRdsRegion(writerHostInfo.host), this.homeRegion)
     ) {
       throw new ReadWriteSplittingError(
         Messages.get("GdbReadWriteSplittingPlugin.cantConnectWriterOutOfHomeRegion", writerHostInfo.host, this.homeRegion)
