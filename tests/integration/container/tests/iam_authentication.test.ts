@@ -73,7 +73,7 @@ describe("iam authentication", () => {
   beforeEach(async () => {
     logger.info(`Test started: ${expect.getState().currentTestName}`);
     jest.useFakeTimers({
-      doNotFake: ["nextTick"]
+      doNotFake: ["nextTick", "setTimeout", "setInterval", "clearTimeout", "clearInterval", "setImmediate", "clearImmediate"]
     });
     client = null;
     env = await TestEnvironment.getCurrent();

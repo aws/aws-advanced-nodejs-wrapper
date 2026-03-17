@@ -14,8 +14,7 @@
   limitations under the License.
 */
 
-import { AbstractConnectionPlugin } from "../../abstract_connection_plugin";
-import { HostInfo, FailoverError, HostRole } from "../../index";
+import { HostInfo, HostRole } from "../../index";
 import { PluginService } from "../../plugin_service";
 import { HostListProviderService } from "../../host_list_provider_service";
 import { Messages } from "../../utils/messages";
@@ -65,7 +64,7 @@ export class ReadWriteSplittingPlugin extends AbstractReadWriteSplittingPlugin {
     if (!isInitialConnection || this._hostListProviderService?.isStaticHostListProvider()) {
       return result;
     }
-    const currentRole = this.pluginService.getCurrentHostInfo()?.role;
+    const currentRole = await this.pluginService.getHostRole(result);
 
     if (currentRole == HostRole.UNKNOWN) {
       logAndThrowError(Messages.get("ReadWriteSplittingPlugin.errorVerifyingInitialHostRole"));
@@ -182,7 +181,7 @@ export class ReadWriteSplittingPlugin extends AbstractReadWriteSplittingPlugin {
     }
   }
 
-  protected getReaderHostCandidates(): HostInfo[] | undefined {
+  protected getReaderHostCandidates(): HostInfo[] {
     return this.pluginService.getHosts();
   }
 }
