@@ -15,20 +15,22 @@
 */
 
 import { ConnectionPluginFactory } from "../../plugin_factory";
-import { PluginService } from "../../plugin_service";
 import { ConnectionPlugin } from "../../connection_plugin";
 import { AwsWrapperError } from "../../utils/errors";
 import { Messages } from "../../utils/messages";
+import { FullServicesContainer } from "../../utils/full_services_container";
 
 export class AuroraConnectionTrackerPluginFactory extends ConnectionPluginFactory {
   private static auroraConnectionTrackerPlugin: any;
 
-  async getInstance(pluginService: PluginService, props: Map<string, any>): Promise<ConnectionPlugin> {
+  async getInstance(servicesContainer: FullServicesContainer, props: Map<string, any>): Promise<ConnectionPlugin> {
     try {
       if (!AuroraConnectionTrackerPluginFactory.auroraConnectionTrackerPlugin) {
         AuroraConnectionTrackerPluginFactory.auroraConnectionTrackerPlugin = await import("./aurora_connection_tracker_plugin");
       }
-      return new AuroraConnectionTrackerPluginFactory.auroraConnectionTrackerPlugin.AuroraConnectionTrackerPlugin(pluginService);
+      return new AuroraConnectionTrackerPluginFactory.auroraConnectionTrackerPlugin.AuroraConnectionTrackerPlugin(
+        servicesContainer.pluginService
+      );
     } catch (error: any) {
       throw new AwsWrapperError(Messages.get("ConnectionPluginChainBuilder.errorImportingPlugin", error.message, "AuroraConnectionTrackerPlugin"));
     }

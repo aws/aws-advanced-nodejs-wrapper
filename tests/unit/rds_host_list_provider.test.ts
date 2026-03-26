@@ -14,11 +14,10 @@
   limitations under the License.
 */
 
-import { RdsHostListProvider } from "../../common/lib/host_list_provider/rds_host_list_provider";
 import { anything, instance, mock, reset, spy, verify, when } from "ts-mockito";
 import { PluginServiceImpl } from "../../common/lib/plugin_service";
 import { AwsClient } from "../../common/lib/aws_client";
-import { AwsWrapperError, HostInfo, HostInfoBuilder } from "../../common/lib";
+import { AwsWrapperError, HostInfo, HostInfoBuilder, PluginManager } from "../../common/lib";
 import { SimpleHostAvailabilityStrategy } from "../../common/lib/host_availability/simple_host_availability_strategy";
 import { ConnectionUrlParser } from "../../common/lib/utils/connection_url_parser";
 import { AwsPGClient } from "../../pg/lib";
@@ -30,13 +29,17 @@ import { PgClientWrapper } from "../../common/lib/pg_client_wrapper";
 import { CoreServicesContainer } from "../../common/lib/utils/core_services_container";
 import { StorageService } from "../../common/lib/utils/storage/storage_service";
 import { Topology } from "../../common/lib/host_list_provider/topology";
+import { RdsHostListProvider } from "../../common/lib/host_list_provider/rds_host_list_provider";
 import { TopologyQueryResult, TopologyUtils } from "../../common/lib/host_list_provider/topology_utils";
+import { FullServicesContainerImpl } from "../../common/lib/utils/full_services_container";
 
 const mockClient: AwsClient = mock(AwsPGClient);
 const mockDialect: AuroraPgDatabaseDialect = mock(AuroraPgDatabaseDialect);
+const mockServiceContainer: FullServicesContainerImpl = mock(FullServicesContainerImpl);
 const mockPluginService: PluginServiceImpl = mock(PluginServiceImpl);
 const connectionUrlParser: ConnectionUrlParser = new PgConnectionUrlParser();
 const mockTopologyUtils: TopologyUtils = mock(TopologyUtils);
+const storageService: StorageService = CoreServicesContainer.getInstance().storageService;
 
 const hosts: HostInfo[] = [
   createHost({
@@ -56,12 +59,7 @@ const currentHostInfo = createHost({
 });
 
 const clientWrapper: ClientWrapper = new PgClientWrapper(undefined, currentHostInfo, new Map<string, any>());
-
 const mockClientWrapper: ClientWrapper = mock(clientWrapper);
-
-const storageService: StorageService = CoreServicesContainer.getInstance().getStorageService();
-
-const defaultRefreshRateNano: number = 5 * 1_000_000_000;
 
 function createHost(config: any): HostInfo {
   const info = new HostInfoBuilder(config);
@@ -69,7 +67,7 @@ function createHost(config: any): HostInfo {
 }
 
 function getRdsHostListProvider(originalHost: string): RdsHostListProvider {
-  const provider = new RdsHostListProvider(new Map<string, any>(), originalHost, instance(mockTopologyUtils), instance(mockPluginService));
+  const provider = new RdsHostListProvider(new Map<string, any>(), originalHost, instance(mockTopologyUtils), instance(mockServiceContainer));
   provider.init();
   return provider;
 }
@@ -86,9 +84,8 @@ describe("testRdsHostListProvider", () => {
     when(mockPluginService.getHostInfoBuilder()).thenReturn(new HostInfoBuilder({ hostAvailabilityStrategy: new SimpleHostAvailabilityStrategy() }));
   });
 
-  afterEach(() => {
-    RdsHostListProvider.clearAll();
-    CoreServicesContainer.getInstance().getStorageService().clearAll();
+  afterEach(async () => {
+    await PluginManager.releaseResources();
 
     reset(mockDialect);
     reset(mockClientWrapper);
@@ -103,7 +100,7 @@ describe("testRdsHostListProvider", () => {
     const expected: HostInfo[] = hosts;
     storageService.set(rdsHostListProvider.clusterId, new Topology(expected));
 
-    const result = await rdsHostListProvider.getTopology(mockClientWrapper, false);
+    const result = await rdsHostListProvider.getTopology();
     expect(result.hosts.length).toEqual(2);
     expect(result.hosts).toEqual(expected);
 
@@ -128,7 +125,7 @@ describe("testRdsHostListProvider", () => {
     when(mockClient.isValid()).thenResolve(true);
     when(spiedProvider.getCurrentTopology(mockClientWrapper, anything())).thenReturn(Promise.resolve(newHosts));
 
-    const result = await rdsHostListProvider.getTopology(mockClientWrapper, true);
+    const result = await rdsHostListProvider.getTopology();
     expect(result.hosts.length).toEqual(1);
     expect(result.hosts).toEqual(newHosts);
 
@@ -145,7 +142,7 @@ describe("testRdsHostListProvider", () => {
     storageService.set(rdsHostListProvider.clusterId, new Topology(expected));
     when(spiedProvider.getCurrentTopology(mockClientWrapper, anything())).thenReturn(Promise.resolve([]));
 
-    const result = await rdsHostListProvider.getTopology(mockClientWrapper, false);
+    const result = await rdsHostListProvider.getTopology();
     expect(result.hosts.length).toEqual(2);
     expect(result.hosts).toEqual(expected);
     verify(spiedProvider.getCurrentTopology(anything(), anything())).atMost(1);
@@ -165,7 +162,7 @@ describe("testRdsHostListProvider", () => {
 
     when(spiedProvider.getCurrentTopology(mockClientWrapper, anything())).thenReturn(Promise.resolve([]));
 
-    const result = await rdsHostListProvider.getTopology(mockClientWrapper, true);
+    const result = await rdsHostListProvider.getTopology();
     expect(result.hosts).toBeTruthy();
     for (let i = 0; i < result.hosts.length; i++) {
       expect(result.hosts[i].equals(initialHosts[i])).toBeTruthy();

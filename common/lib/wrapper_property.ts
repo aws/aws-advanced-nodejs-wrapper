@@ -18,16 +18,19 @@ import { ConnectionProvider } from "./connection_provider";
 import { DatabaseDialect } from "./database_dialect/database_dialect";
 import { ClusterTopologyMonitorImpl } from "./host_list_provider/monitoring/cluster_topology_monitor";
 import { BlueGreenStatusProvider } from "./plugins/bluegreen/blue_green_status_provider";
+import { AwsWrapperError } from "./utils/errors";
 
 export class WrapperProperty<T> {
   name: string;
   description: string;
   defaultValue: any;
+  allowedValues?: T[];
 
-  constructor(name: string, description: string, defaultValue?: any) {
+  constructor(name: string, description: string, defaultValue?: any, allowedValues?: T[]) {
     this.name = name;
     this.description = description;
     this.defaultValue = defaultValue;
+    this.allowedValues = allowedValues;
   }
 
   get(props: Map<string, any>): T {
@@ -36,10 +39,25 @@ export class WrapperProperty<T> {
       return this.defaultValue;
     }
 
+    if (val != null && this.allowedValues?.length > 0) {
+      if (!this.allowedValues.includes(val)) {
+        throw new AwsWrapperError(
+          `Invalid value '${val}' for property '${this.name}'. Allowed values: ${this.allowedValues.join(", ")}`
+        );
+      }
+    }
+
     return val;
   }
 
   set(props: Map<string, any>, val: T) {
+    if (val != null && this.allowedValues?.length > 0) {
+      if (!this.allowedValues.includes(val)) {
+        throw new AwsWrapperError(
+          `Invalid value '${val}' for property '${this.name}'. Allowed values: ${this.allowedValues.join(", ")}`
+        );
+      }
+    }
     props.set(this.name, val);
   }
 }
@@ -210,6 +228,38 @@ export class WrapperProperties {
   );
   static readonly FAILOVER_MODE = new WrapperProperty<string>("failoverMode", "Set host role to follow during failover.", "");
 
+  static readonly FAILOVER_HOME_REGION = new WrapperProperty<string>("failoverHomeRegion", "Set home region for GDB failover.", null);
+
+  static readonly ACTIVE_HOME_FAILOVER_MODE = new WrapperProperty<string>(
+    "activeHomeFailoverMode",
+    "Set host role to follow during failover when GDB primary region is in home region.",
+    null,
+    [
+      "strict-writer",
+      "strict-home-reader",
+      "strict-out-of-home-reader",
+      "strict-any-reader",
+      "home-reader-or-writer",
+      "out-of-home-reader-or-writer",
+      "any-reader-or-writer"
+    ]
+  );
+
+  static readonly INACTIVE_HOME_FAILOVER_MODE = new WrapperProperty<string>(
+    "inactiveHomeFailoverMode",
+    "Set host role to follow during failover when GDB primary region is not in home region.",
+    null,
+    [
+      "strict-writer",
+      "strict-home-reader",
+      "strict-out-of-home-reader",
+      "strict-any-reader",
+      "home-reader-or-writer",
+      "out-of-home-reader-or-writer",
+      "any-reader-or-writer"
+    ]
+  );
+
   static readonly FAILOVER_READER_HOST_SELECTOR_STRATEGY = new WrapperProperty<string>(
     "failoverReaderHostSelectorStrategy",
     "The strategy that should be used to select a new reader host while opening a new connection.",
@@ -242,6 +292,16 @@ export class WrapperProperties {
       'A "?" character in this pattern should be used as a placeholder for cluster instance names. ' +
       "This pattern is required to be specified for IP address or custom domain connections to AWS RDS " +
       "clusters. Otherwise, if unspecified, the pattern will be automatically created for AWS RDS clusters."
+  );
+
+  static readonly GLOBAL_CLUSTER_INSTANCE_HOST_PATTERNS = new WrapperProperty<string>(
+    "globalClusterInstanceHostPatterns",
+    "Comma-separated list of the cluster instance DNS patterns that will be used to " +
+      "build complete instance endpoints. " +
+      'A "?" character in these patterns should be used as a placeholder for cluster instance names. ' +
+      "This parameter is required for Global Aurora Databases. " +
+      "Each region in the Global Aurora Database should be specified in the list. " +
+      "Format: region1:pattern1,region2:pattern2"
   );
 
   static readonly SINGLE_WRITER_CONNECTION_STRING = new WrapperProperty<boolean>(
@@ -476,6 +536,32 @@ export class WrapperProperties {
     "The time in milliseconds to keep a reader connection alive in the cache. " +
       "Default value 0 means the Wrapper will keep reusing the same cached reader connection.",
     0
+  );
+  static readonly SKIP_INACTIVE_WRITER_CLUSTER_CHECK = new WrapperProperty<boolean>(
+    "skipInactiveWriterClusterEndpointCheck",
+    "Allows to avoid connection check for inactive cluster writer endpoint.",
+    false
+  );
+
+  static readonly INACTIVE_CLUSTER_WRITER_SUBSTITUTION_ROLE = new WrapperProperty<string>(
+    "inactiveClusterWriterEndpointSubstitutionRole",
+    "Defines whether or not the inactive cluster writer endpoint in the initial connection URL should be replaced with a writer instance URL from the topology info when available.",
+    "writer",
+    ["writer", "none"]
+  );
+
+  static readonly VERIFY_OPENED_CONNECTION_ROLE = new WrapperProperty<string>(
+    "verifyOpenedConnectionType",
+    "Defines whether an opened connection should be verified to be a writer or reader, or if no role verification should be performed.",
+    null,
+    ["writer", "reader", "none"]
+  );
+
+  static readonly VERIFY_INACTIVE_CLUSTER_WRITER_CONNECTION_ROLE = new WrapperProperty<string>(
+    "verifyInactiveClusterWriterEndpointConnectionType",
+    "Defines whether inactive cluster writer connection should be verified to be a writer, or if no role verification should be performed.",
+    "writer",
+    ["writer", "none"]
   );
 
   private static readonly PREFIXES = [

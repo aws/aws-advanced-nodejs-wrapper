@@ -38,46 +38,47 @@ import { ClientWrapper } from "../../client_wrapper";
 import { HostAvailability } from "../../host_availability/host_availability";
 import { TelemetryTraceLevel } from "../../utils/telemetry/telemetry_trace_level";
 import { HostRole } from "../../host_role";
-import { CanReleaseResources } from "../../can_release_resources";
 import { ReaderFailoverResult } from "../failover/reader_failover_result";
-import { BlockingHostListProvider, HostListProvider } from "../../host_list_provider/host_list_provider";
 import { logTopology } from "../../utils/utils";
+import { FullServicesContainer } from "../../utils/full_services_container";
 
-export class Failover2Plugin extends AbstractConnectionPlugin implements CanReleaseResources {
+export class Failover2Plugin extends AbstractConnectionPlugin {
   private static readonly TELEMETRY_WRITER_FAILOVER = "failover to writer instance";
   private static readonly TELEMETRY_READER_FAILOVER = "failover to reader";
   private static readonly METHOD_END = "end";
   private static readonly SUBSCRIBED_METHODS: Set<string> = new Set(["initHostProvider", "connect", "query"]);
   private readonly _staleDnsHelper: StaleDnsHelper;
-  private readonly _properties: Map<string, any>;
-  private readonly pluginService: PluginService;
-  private readonly _rdsHelper: RdsUtils;
-  private readonly failoverWriterTriggeredCounter: TelemetryCounter;
-  private readonly failoverWriterSuccessCounter: TelemetryCounter;
-  private readonly failoverWriterFailedCounter: TelemetryCounter;
-  private readonly failoverReaderTriggeredCounter: TelemetryCounter;
-  private readonly failoverReaderSuccessCounter: TelemetryCounter;
-  private readonly failoverReaderFailedCounter: TelemetryCounter;
-  private telemetryFailoverAdditionalTopTraceSetting: boolean = false;
-  private _rdsUrlType: RdsUrlType | null = null;
-  private _isInTransaction: boolean = false;
+  protected readonly properties: Map<string, any>;
+  private readonly servicesContainer: FullServicesContainer;
+  protected readonly pluginService: PluginService;
+  protected readonly rdsHelper: RdsUtils;
+  protected readonly failoverWriterTriggeredCounter: TelemetryCounter;
+  protected readonly failoverWriterSuccessCounter: TelemetryCounter;
+  protected readonly failoverWriterFailedCounter: TelemetryCounter;
+  protected readonly failoverReaderTriggeredCounter: TelemetryCounter;
+  protected readonly failoverReaderSuccessCounter: TelemetryCounter;
+  protected readonly failoverReaderFailedCounter: TelemetryCounter;
+  protected telemetryFailoverAdditionalTopTraceSetting: boolean = false;
+  protected rdsUrlType: RdsUrlType | null = null;
+  protected _isInTransaction: boolean = false;
   private _lastError: any;
   failoverMode: FailoverMode = FailoverMode.UNKNOWN;
 
-  private hostListProviderService?: HostListProviderService;
+  protected hostListProviderService?: HostListProviderService;
   protected enableFailoverSetting: boolean = WrapperProperties.ENABLE_CLUSTER_AWARE_FAILOVER.defaultValue;
-  private readonly failoverTimeoutSettingMs: number = WrapperProperties.FAILOVER_TIMEOUT_MS.defaultValue;
-  private readonly failoverReaderHostSelectorStrategy: string = WrapperProperties.FAILOVER_READER_HOST_SELECTOR_STRATEGY.defaultValue;
+  protected readonly failoverTimeoutSettingMs: number = WrapperProperties.FAILOVER_TIMEOUT_MS.defaultValue;
+  protected readonly failoverReaderHostSelectorStrategy: string = WrapperProperties.FAILOVER_READER_HOST_SELECTOR_STRATEGY.defaultValue;
 
-  constructor(pluginService: PluginService, properties: Map<string, any>, rdsHelper: RdsUtils) {
+  constructor(servicesContainer: FullServicesContainer, properties: Map<string, any>, rdsHelper: RdsUtils) {
     super();
-    this._properties = properties;
-    this.pluginService = pluginService;
-    this._rdsHelper = rdsHelper;
+    this.properties = properties;
+    this.servicesContainer = servicesContainer;
+    this.pluginService = servicesContainer.pluginService;
+    this.rdsHelper = rdsHelper;
     this._staleDnsHelper = new StaleDnsHelper(this.pluginService);
-    this.enableFailoverSetting = WrapperProperties.ENABLE_CLUSTER_AWARE_FAILOVER.get(this._properties);
-    this.failoverTimeoutSettingMs = WrapperProperties.FAILOVER_TIMEOUT_MS.get(this._properties);
-    this.failoverReaderHostSelectorStrategy = WrapperProperties.FAILOVER_READER_HOST_SELECTOR_STRATEGY.get(this._properties);
+    this.enableFailoverSetting = WrapperProperties.ENABLE_CLUSTER_AWARE_FAILOVER.get(this.properties);
+    this.failoverTimeoutSettingMs = WrapperProperties.FAILOVER_TIMEOUT_MS.get(this.properties);
+    this.failoverReaderHostSelectorStrategy = WrapperProperties.FAILOVER_READER_HOST_SELECTOR_STRATEGY.get(this.properties);
 
     const telemetryFactory = this.pluginService.getTelemetryFactory();
     this.failoverWriterTriggeredCounter = telemetryFactory.createCounter("writerFailover.triggered.count");
@@ -104,21 +105,13 @@ export class Failover2Plugin extends AbstractConnectionPlugin implements CanRele
     }
 
     initHostProviderFunc();
-
-    this.failoverMode = failoverModeFromValue(WrapperProperties.FAILOVER_MODE.get(props));
-    this._rdsUrlType = this._rdsHelper.identifyRdsType(hostInfo.host);
-
-    if (this.failoverMode === FailoverMode.UNKNOWN) {
-      this.failoverMode = this._rdsUrlType === RdsUrlType.RDS_READER_CLUSTER ? FailoverMode.READER_OR_WRITER : FailoverMode.STRICT_WRITER;
-    }
-
-    logger.debug(Messages.get("Failover.parameterValue", "failoverMode", FailoverMode[this.failoverMode]));
   }
 
-  private isFailoverEnabled(): boolean {
+  protected isFailoverEnabled(): boolean {
     return (
       this.enableFailoverSetting &&
-      this._rdsUrlType !== RdsUrlType.RDS_PROXY &&
+      this.rdsUrlType !== RdsUrlType.RDS_PROXY &&
+      this.rdsUrlType !== RdsUrlType.RDS_PROXY_ENDPOINT &&
       this.pluginService.getAllHosts() &&
       this.pluginService.getAllHosts().length > 0
     );
@@ -130,6 +123,8 @@ export class Failover2Plugin extends AbstractConnectionPlugin implements CanRele
     isInitialConnection: boolean,
     connectFunc: () => Promise<ClientWrapper>
   ): Promise<ClientWrapper> {
+    this.initFailoverMode();
+
     if (
       // Failover is not enabled, does not require additional processing.
       !this.enableFailoverSetting ||
@@ -188,7 +183,7 @@ export class Failover2Plugin extends AbstractConnectionPlugin implements CanRele
     }
 
     if (isInitialConnection) {
-      await this.pluginService.refreshHostList(client);
+      await this.pluginService.refreshHostList();
     }
 
     return client;
@@ -231,6 +226,10 @@ export class Failover2Plugin extends AbstractConnectionPlugin implements CanRele
       await this.failoverReader();
     }
 
+    this.throwFailoverSuccessException();
+  }
+
+  protected throwFailoverSuccessException(): void {
     if (this._isInTransaction || this.pluginService.isInTransaction()) {
       // "Transaction resolution unknown. Please re-configure session state if required and try
       // restarting transaction."
@@ -243,7 +242,7 @@ export class Failover2Plugin extends AbstractConnectionPlugin implements CanRele
     }
   }
 
-  async failoverReader() {
+  private async failoverReader() {
     const telemetryFactory = this.pluginService.getTelemetryFactory();
     const telemetryContext = telemetryFactory.openTelemetryContext(Failover2Plugin.TELEMETRY_READER_FAILOVER, TelemetryTraceLevel.NESTED);
     this.failoverReaderTriggeredCounter.inc();
@@ -367,7 +366,7 @@ export class Failover2Plugin extends AbstractConnectionPlugin implements CanRele
     throw new InternalQueryTimeoutError(Messages.get("Failover.timeoutError"));
   }
 
-  async failoverWriter() {
+  private async failoverWriter() {
     const telemetryFactory = this.pluginService.getTelemetryFactory();
     const telemetryContext = telemetryFactory.openTelemetryContext(Failover2Plugin.TELEMETRY_WRITER_FAILOVER, TelemetryTraceLevel.NESTED);
     this.failoverWriterTriggeredCounter.inc();
@@ -430,7 +429,7 @@ export class Failover2Plugin extends AbstractConnectionPlugin implements CanRele
   }
 
   private async createConnectionForHost(hostInfo: HostInfo): Promise<ClientWrapper> {
-    const copyProps = new Map<string, any>(this._properties);
+    const copyProps = new Map<string, any>(this.properties);
     copyProps.set(WrapperProperties.HOST.name, hostInfo.host);
     return await this.pluginService.connect(hostInfo, copyProps, this);
   }
@@ -464,6 +463,22 @@ export class Failover2Plugin extends AbstractConnectionPlugin implements CanRele
     return methodName === Failover2Plugin.METHOD_END;
   }
 
+  protected initFailoverMode(): void {
+    if (this.rdsUrlType) {
+      return;
+    }
+
+    this.failoverMode = failoverModeFromValue(WrapperProperties.FAILOVER_MODE.get(this.properties));
+    const initialHostInfo: HostInfo = this.hostListProviderService.getInitialConnectionHostInfo();
+    this.rdsUrlType = this.rdsHelper.identifyRdsType(initialHostInfo.host);
+
+    if (this.failoverMode === FailoverMode.UNKNOWN) {
+      this.failoverMode = this.rdsUrlType === RdsUrlType.RDS_READER_CLUSTER ? FailoverMode.READER_OR_WRITER : FailoverMode.STRICT_WRITER;
+    }
+
+    logger.debug(Messages.get("Failover.parameterValue", "failoverMode", String(this.failoverMode)));
+  }
+
   private shouldErrorTriggerClientSwitch(error: any): boolean {
     if (!this.isFailoverEnabled()) {
       logger.debug(Messages.get("Failover.failoverDisabled"));
@@ -485,12 +500,5 @@ export class Failover2Plugin extends AbstractConnectionPlugin implements CanRele
     logger.error(errorMessage);
     this.failoverWriterFailedCounter.inc();
     throw new FailoverFailedError(errorMessage);
-  }
-
-  async releaseResources(): Promise<void> {
-    const hostListProvider: HostListProvider = this.pluginService.getHostListProvider();
-    if (this.hostListProviderService.isBlockingHostListProvider(hostListProvider)) {
-      await (hostListProvider as BlockingHostListProvider).clearAll();
-    }
   }
 }

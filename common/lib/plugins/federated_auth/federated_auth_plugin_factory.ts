@@ -15,16 +15,16 @@
 */
 
 import { ConnectionPluginFactory } from "../../plugin_factory";
-import { PluginService } from "../../plugin_service";
 import { ConnectionPlugin } from "../../connection_plugin";
 import { AwsWrapperError } from "../../utils/errors";
 import { Messages } from "../../utils/messages";
+import { FullServicesContainer } from "../../utils/full_services_container";
 
 export class FederatedAuthPluginFactory extends ConnectionPluginFactory {
   private static federatedAuthPlugin: any;
   private static adfsCredentialsProvider: any;
 
-  async getInstance(pluginService: PluginService, properties: Map<string, any>): Promise<ConnectionPlugin> {
+  async getInstance(servicesContainer: FullServicesContainer, properties: Map<string, any>): Promise<ConnectionPlugin> {
     try {
       if (!FederatedAuthPluginFactory.federatedAuthPlugin) {
         FederatedAuthPluginFactory.federatedAuthPlugin = await import("./federated_auth_plugin");
@@ -34,6 +34,7 @@ export class FederatedAuthPluginFactory extends ConnectionPluginFactory {
         FederatedAuthPluginFactory.adfsCredentialsProvider = await import("./adfs_credentials_provider_factory");
       }
 
+      const pluginService = servicesContainer.pluginService;
       const adfsCredentialsProviderFactory = new FederatedAuthPluginFactory.adfsCredentialsProvider.AdfsCredentialsProviderFactory(pluginService);
       return new FederatedAuthPluginFactory.federatedAuthPlugin.FederatedAuthPlugin(pluginService, adfsCredentialsProviderFactory);
     } catch (error: any) {

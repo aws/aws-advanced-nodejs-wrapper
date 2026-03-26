@@ -30,7 +30,7 @@ export interface DriverDialect {
 
   setConnectTimeout(props: Map<string, any>, wrapperConnectTimeout?: any): void;
 
-  setQueryTimeout(props: Map<string, any>, sql?: any, wrapperConnectTimeout?: any): void;
+  setQueryTimeout(props: Map<string, any>, sql?: any, wrapperQueryTimeout?: any): void;
 
   setKeepAliveProperties(props: Map<string, any>, keepAliveProps: any): void;
 

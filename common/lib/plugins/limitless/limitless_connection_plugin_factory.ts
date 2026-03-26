@@ -15,20 +15,20 @@
 */
 
 import { ConnectionPluginFactory } from "../../plugin_factory";
-import { PluginService } from "../../plugin_service";
 import { ConnectionPlugin } from "../../connection_plugin";
 import { AwsWrapperError } from "../../utils/errors";
 import { Messages } from "../../utils/messages";
+import { FullServicesContainer } from "../../utils/full_services_container";
 
 export class LimitlessConnectionPluginFactory implements ConnectionPluginFactory {
   private static limitlessPlugin: any;
 
-  async getInstance(pluginService: PluginService, properties: Map<string, any>): Promise<ConnectionPlugin> {
+  async getInstance(servicesContainer: FullServicesContainer, properties: Map<string, any>): Promise<ConnectionPlugin> {
     try {
       if (!LimitlessConnectionPluginFactory.limitlessPlugin) {
         LimitlessConnectionPluginFactory.limitlessPlugin = await import("./limitless_connection_plugin");
       }
-      return new LimitlessConnectionPluginFactory.limitlessPlugin.LimitlessConnectionPlugin(pluginService, properties);
+      return new LimitlessConnectionPluginFactory.limitlessPlugin.LimitlessConnectionPlugin(servicesContainer.pluginService, properties);
     } catch (error: any) {
       throw new AwsWrapperError(Messages.get("ConnectionPluginChainBuilder.errorImportingPlugin", error.message, "LimitlessConnectionPlugin"));
     }

@@ -30,6 +30,7 @@ import { ConnectionProviderManager } from "../../common/lib/connection_provider_
 import { NullTelemetryFactory } from "../../common/lib/utils/telemetry/null_telemetry_factory";
 import { AbstractConnectionPlugin } from "../../common/lib/abstract_connection_plugin";
 import { ConnectionPluginFactory } from "../../common/lib/plugin_factory";
+import { FullServicesContainer } from "../../common/lib/utils/full_services_container";
 
 const mockPluginService: PluginServiceImpl = mock(PluginServiceImpl);
 const mockPluginServiceInstance: PluginService = instance(mockPluginService);
@@ -39,6 +40,10 @@ const mockEffectiveConnProvider: ConnectionProvider = mock(DriverConnectionProvi
 describe("testConnectionPluginChainBuilder", () => {
   beforeAll(() => {
     when(mockPluginService.getTelemetryFactory()).thenReturn(new NullTelemetryFactory());
+  });
+
+  afterEach(async () => {
+    await PluginManager.releaseResources();
   });
 
   it.each([["iam,staleDns,failover"], ["iam,  staleDns,    failover"]])("sort plugins", async (plugins) => {
@@ -133,8 +138,8 @@ describe("testConnectionPluginChainBuilder", () => {
 });
 
 class TestPluginFactory extends ConnectionPluginFactory {
-  async getInstance(pluginService: PluginService, properties: Map<string, any>): Promise<TestPlugin> {
-    return new TestPlugin(pluginService, properties);
+  async getInstance(servicesContainer: FullServicesContainer, properties: Map<string, any>): Promise<TestPlugin> {
+    return new TestPlugin(servicesContainer.pluginService, properties);
   }
 }
 
