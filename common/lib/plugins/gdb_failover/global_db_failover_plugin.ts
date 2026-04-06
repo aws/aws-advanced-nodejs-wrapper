@@ -242,6 +242,8 @@ export class GlobalDbFailoverPlugin extends Failover2Plugin {
       this.failoverWriterSuccessCounter.inc();
     } catch (ex) {
       if (!(ex instanceof FailoverFailedError)) {
+        // Counter has already been incremented in Failover2Plugin before throwing the FailoverFailedError.
+        // So no need to increment again here.
         this.failoverWriterFailedCounter.inc();
       }
       throw ex;
@@ -316,7 +318,12 @@ export class GlobalDbFailoverPlugin extends Failover2Plugin {
         }
 
         if (!candidateHost) {
-          logger.debug(logTopology(remainingAllowedHosts, `${Messages.get("GlobalDbFailoverPlugin.candidateNull", String(verifyRole))} `));
+          logger.debug(
+            logTopology(
+              remainingAllowedHosts,
+              `${Messages.get("GlobalDbFailoverPlugin.unableToFindCandidateWithMatchingRole", String(verifyRole), this.failoverReaderHostSelectorStrategy)}`
+            )
+          );
           await sleep(100);
           break;
         }

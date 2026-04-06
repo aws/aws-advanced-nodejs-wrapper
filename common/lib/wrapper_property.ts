@@ -19,6 +19,7 @@ import { DatabaseDialect } from "./database_dialect/database_dialect";
 import { ClusterTopologyMonitorImpl } from "./host_list_provider/monitoring/cluster_topology_monitor";
 import { BlueGreenStatusProvider } from "./plugins/bluegreen/blue_green_status_provider";
 import { AwsWrapperError } from "./utils/errors";
+import { Messages } from "./utils/messages";
 
 export class WrapperProperty<T> {
   name: string;
@@ -41,9 +42,7 @@ export class WrapperProperty<T> {
 
     if (val != null && this.allowedValues?.length > 0) {
       if (!this.allowedValues.includes(val)) {
-        throw new AwsWrapperError(
-          `Invalid value '${val}' for property '${this.name}'. Allowed values: ${this.allowedValues.join(", ")}`
-        );
+        throw new AwsWrapperError(Messages.get("WrapperProperty.invalidValue", String(val), this.name, this.allowedValues.join(", ")));
       }
     }
 
@@ -53,9 +52,7 @@ export class WrapperProperty<T> {
   set(props: Map<string, any>, val: T) {
     if (val != null && this.allowedValues?.length > 0) {
       if (!this.allowedValues.includes(val)) {
-        throw new AwsWrapperError(
-          `Invalid value '${val}' for property '${this.name}'. Allowed values: ${this.allowedValues.join(", ")}`
-        );
+        throw new AwsWrapperError(Messages.get("WrapperProperty.invalidValue", String(val), this.name, this.allowedValues.join(", ")));
       }
     }
     props.set(this.name, val);

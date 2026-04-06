@@ -406,8 +406,7 @@ const MESSAGES: Record<string, string> = {
   "TopologyUtils.errorGettingHostRole": "An error occurred while trying to get the host role.",
   "GlobalTopologyUtils.missingRegion": "Host '%s' is missing region information in the topology query result.",
   "GlobalTopologyUtils.missingTemplateForRegion": "No cluster instance template found for region '%s' when processing host '%s'.",
-  "Utils.globalClusterInstanceHostPatternsRequired":
-    "The 'globalClusterInstanceHostPatterns' property is required for Global Aurora Databases.",
+  "Utils.globalClusterInstanceHostPatternsRequired": "The 'globalClusterInstanceHostPatterns' property is required for Global Aurora Databases.",
   "Utils.invalidPatternFormat":
     "Invalid pattern format '%s'. Expected format: 'region:host-pattern' (e.g., 'us-east-1:?.cluster-xyz.us-east-1.rds.amazonaws.com').",
   "GlobalAuroraTopologyMonitor.cannotFindRegionTemplate": "Cannot find cluster instance template for region '%s'.",
@@ -419,9 +418,11 @@ const MESSAGES: Record<string, string> = {
   "GlobalDbFailoverPlugin.isHomeRegion": "Is home region: %s",
   "GlobalDbFailoverPlugin.currentFailoverMode": "Current Global DB failover mode: %s",
   "GlobalDbFailoverPlugin.failoverElapsed": "Global DB failover elapsed time: %s ms",
-  "GlobalDbFailoverPlugin.candidateNull": "Candidate host is null for role: %s",
+  "GlobalDbFailoverPlugin.unableToFindCandidateWithMatchingRole":
+    "Unable to find a candidate host with the expected role (%s) based on the given host selection strategy: %s",
   "GlobalDbFailoverPlugin.unableToConnect": "Unable to establish a connection during Global DB failover.",
-  "BatchingEventPublisher.errorDeliveringImmediateEvent": "Error delivering immediate event: %s"
+  "BatchingEventPublisher.errorDeliveringImmediateEvent": "Error delivering immediate event: %s",
+  "WrapperProperty.invalidValue": "Invalid value '%s' for property '%s'. Allowed values: %s"
 };
 
 export class Messages {

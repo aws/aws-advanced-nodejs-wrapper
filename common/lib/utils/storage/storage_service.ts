@@ -207,7 +207,7 @@ export class StorageServiceImpl implements StorageService {
     }
 
     const value = cache.get(key);
-    if (!value) {
+    if (value === null || value === undefined) {
       return null;
     }
 

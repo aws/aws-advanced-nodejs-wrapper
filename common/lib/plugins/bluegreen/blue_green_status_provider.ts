@@ -274,10 +274,10 @@ export class BlueGreenStatusProvider {
 
       if (blueClusterHost !== null && greenClusterHost !== null) {
         if (!this.correspondingHosts.has(blueClusterHost)) {
-          this.correspondingHosts.set(
-            blueClusterHost,
-            [this.hostInfoBuilder.withHost(blueClusterHost).build(), this.hostInfoBuilder.withHost(greenClusterHost).build()]
-          );
+          this.correspondingHosts.set(blueClusterHost, [
+            this.hostInfoBuilder.withHost(blueClusterHost).build(),
+            this.hostInfoBuilder.withHost(greenClusterHost).build()
+          ]);
         }
       }
 
@@ -294,10 +294,10 @@ export class BlueGreenStatusProvider {
 
       if (blueClusterReaderHost !== null && greenClusterReaderHost !== null) {
         if (!this.correspondingHosts.has(blueClusterReaderHost)) {
-          this.correspondingHosts.set(
-            blueClusterReaderHost,
-            [this.hostInfoBuilder.withHost(blueClusterReaderHost).build(), this.hostInfoBuilder.withHost(greenClusterReaderHost).build()]
-          );
+          this.correspondingHosts.set(blueClusterReaderHost, [
+            this.hostInfoBuilder.withHost(blueClusterReaderHost).build(),
+            this.hostInfoBuilder.withHost(greenClusterReaderHost).build()
+          ]);
         }
       }
 
@@ -314,10 +314,10 @@ export class BlueGreenStatusProvider {
             });
             if (greenHost) {
               if (!this.correspondingHosts.has(blueHost)) {
-                this.correspondingHosts.set(
-                  blueHost,
-                  [this.hostInfoBuilder.withHost(blueHost).build(), this.hostInfoBuilder.withHost(greenHost).build()]
-                );
+                this.correspondingHosts.set(blueHost, [
+                  this.hostInfoBuilder.withHost(blueHost).build(),
+                  this.hostInfoBuilder.withHost(greenHost).build()
+                ]);
               }
             }
           }

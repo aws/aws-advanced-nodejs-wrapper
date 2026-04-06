@@ -55,9 +55,13 @@ export class GlobalAuroraHostListProvider extends RdsHostListProvider {
       }
     };
 
-    return await this.servicesContainers
-      .monitorService
-      .runIfAbsent(ClusterTopologyMonitorImpl, this.clusterId, this.servicesContainers, this.properties, initializer);
+    return await this.servicesContainers.monitorService.runIfAbsent(
+      ClusterTopologyMonitorImpl,
+      this.clusterId,
+      this.servicesContainers,
+      this.properties,
+      initializer
+    );
   }
 
   override async getCurrentTopology(targetClient: ClientWrapper, dialect: DatabaseDialect): Promise<HostInfo[]> {

@@ -389,6 +389,7 @@ export class ClusterTopologyMonitorImpl extends AbstractMonitor implements Clust
             await this.closeHostMonitors();
 
             if (!(hosts !== null && !this.isVerifiedWriterConnection)) {
+              await this.delay(true);
               continue;
             }
 
@@ -417,7 +418,7 @@ export class ClusterTopologyMonitorImpl extends AbstractMonitor implements Clust
               this.monitoringClient = writerClient;
               this.writerHostInfo = writerClientHostInfo;
               this.isVerifiedWriterConnection = true;
-              this.highRefreshRateEndTimeNs = getTimeInNanos() + this.highRefreshRateEndTimeNs;
+              this.highRefreshRateEndTimeNs = getTimeInNanos() + BigInt(this.highRefreshRateNs);
 
               this.hostMonitorsStop = true;
               await this.closeHostMonitors();
@@ -426,6 +427,7 @@ export class ClusterTopologyMonitorImpl extends AbstractMonitor implements Clust
               this.readerTopologiesById.clear();
               this.completedOneCycle.clear();
 
+              await this.delay(true);
               continue;
             } else {
               // Update host monitors with the new instances in the topology.
@@ -433,7 +435,12 @@ export class ClusterTopologyMonitorImpl extends AbstractMonitor implements Clust
               if (hosts && !this.hostMonitorsStop) {
                 hosts.forEach((hostInfo) => {
                   if (!this.submittedHosts.get(hostInfo.host)) {
-                    const hostMonitor = new HostMonitor(this.servicesContainer, this, hostInfo, this.writerHostInfo);
+                    const minimalServiceContainer = ServiceUtils.instance.createMinimalServiceContainerFrom(
+                      this.servicesContainer,
+                      this._monitoringProperties
+                    );
+                    minimalServiceContainer.pluginManager.init();
+                    const hostMonitor = new HostMonitor(minimalServiceContainer, this, hostInfo, this.writerHostInfo);
                     const promise = hostMonitor.run();
                     this.submittedHosts.set(hostInfo.host, promise);
                   }
@@ -462,6 +469,7 @@ export class ClusterTopologyMonitorImpl extends AbstractMonitor implements Clust
             await this.closeConnection(clientToClose);
             this.isVerifiedWriterConnection = false;
             this.writerHostInfo = null;
+            await this.delay(false);
             continue;
           }
 
@@ -725,9 +733,9 @@ export class HostMonitor {
               // Successfully updated the host monitor writer connection.
               logger.debug(Messages.get("HostMonitor.detectedWriter", this.hostInfo.hostId, this.hostInfo.url));
 
-              this.servicesContainer
-                .importantEventService
-                .registerEvent(() => Messages.get("HostMonitor.detectedWriter", this.hostInfo.hostId, this.hostInfo.url));
+              this.servicesContainer.importantEventService.registerEvent(() =>
+                Messages.get("HostMonitor.detectedWriter", this.hostInfo.hostId, this.hostInfo.url)
+              );
 
               await this.monitor.fetchTopologyAndUpdateCache(this.client);
               this.hostInfo.setAvailability(HostAvailability.AVAILABLE);

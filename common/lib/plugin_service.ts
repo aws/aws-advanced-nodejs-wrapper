@@ -18,7 +18,7 @@ import { ErrorHandler } from "./error_handler";
 import { HostInfo } from "./host_info";
 import { AwsClient } from "./aws_client";
 import { HostListProviderService } from "./host_list_provider_service";
-import { HostListProvider } from "./host_list_provider/host_list_provider";
+import { DynamicHostListProvider, HostListProvider } from "./host_list_provider/host_list_provider";
 import { ConnectionUrlParser } from "./utils/connection_url_parser";
 import { DatabaseDialect, DatabaseType } from "./database_dialect/database_dialect";
 import { HostInfoBuilder } from "./host_info_builder";
@@ -315,7 +315,7 @@ export class PluginServiceImpl implements PluginService, HostListProviderService
     }
 
     try {
-      const updatedHostList: HostInfo[] = await (hostListProvider as any).forceMonitoringRefresh(shouldVerifyWriter, timeoutMs);
+      const updatedHostList: HostInfo[] = await (hostListProvider as DynamicHostListProvider).forceMonitoringRefresh(shouldVerifyWriter, timeoutMs);
       if (updatedHostList) {
         this.updateHostAvailability(updatedHostList);
         await this.setHostList(this.hosts, updatedHostList);

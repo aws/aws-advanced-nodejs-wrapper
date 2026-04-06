@@ -28,9 +28,7 @@ export class AuroraConnectionTrackerPluginFactory extends ConnectionPluginFactor
       if (!AuroraConnectionTrackerPluginFactory.auroraConnectionTrackerPlugin) {
         AuroraConnectionTrackerPluginFactory.auroraConnectionTrackerPlugin = await import("./aurora_connection_tracker_plugin");
       }
-      return new AuroraConnectionTrackerPluginFactory.auroraConnectionTrackerPlugin.AuroraConnectionTrackerPlugin(
-        servicesContainer.pluginService
-      );
+      return new AuroraConnectionTrackerPluginFactory.auroraConnectionTrackerPlugin.AuroraConnectionTrackerPlugin(servicesContainer.pluginService);
     } catch (error: any) {
       throw new AwsWrapperError(Messages.get("ConnectionPluginChainBuilder.errorImportingPlugin", error.message, "AuroraConnectionTrackerPlugin"));
     }
