@@ -442,7 +442,7 @@ export class PluginManager {
 
     for (const p of this._plugins) {
       if (p instanceof iface) {
-        return p as any;
+        return p as T;
       }
     }
     return null;

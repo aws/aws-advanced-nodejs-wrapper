@@ -433,18 +433,19 @@ export class ClusterTopologyMonitorImpl extends AbstractMonitor implements Clust
               // Update host monitors with the new instances in the topology.
               const hosts: HostInfo[] | null = this.hostMonitorsLatestTopology;
               if (hosts && !this.hostMonitorsStop) {
-                hosts.forEach((hostInfo) => {
+                for (const hostInfo of hosts) {
                   if (!this.submittedHosts.get(hostInfo.host)) {
                     const minimalServiceContainer = ServiceUtils.instance.createMinimalServiceContainerFrom(
                       this.servicesContainer,
                       this._monitoringProperties
                     );
-                    minimalServiceContainer.pluginManager.init();
+                    await minimalServiceContainer.pluginManager.init();
+                    // Intentionally not calling await on hostMonitor.run().
                     const hostMonitor = new HostMonitor(minimalServiceContainer, this, hostInfo, this.writerHostInfo);
                     const promise = hostMonitor.run();
                     this.submittedHosts.set(hostInfo.host, promise);
                   }
-                });
+                }
               }
             }
           }

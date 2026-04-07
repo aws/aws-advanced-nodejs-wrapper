@@ -469,8 +469,8 @@ export class Failover2Plugin extends AbstractConnectionPlugin {
     }
 
     this.failoverMode = failoverModeFromValue(WrapperProperties.FAILOVER_MODE.get(this.properties));
-    const initialHostInfo: HostInfo = this.hostListProviderService.getInitialConnectionHostInfo();
-    this.rdsUrlType = this.rdsHelper.identifyRdsType(initialHostInfo.host);
+    const initialHostInfo: HostInfo | undefined | null = this.hostListProviderService?.getInitialConnectionHostInfo();
+    this.rdsUrlType = this.rdsHelper.identifyRdsType(initialHostInfo?.host);
 
     if (this.failoverMode === FailoverMode.UNKNOWN) {
       this.failoverMode = this.rdsUrlType === RdsUrlType.RDS_READER_CLUSTER ? FailoverMode.READER_OR_WRITER : FailoverMode.STRICT_WRITER;

@@ -17,7 +17,7 @@
 import { PluginService } from "./plugin_service";
 import { HostInfo } from "./host_info";
 import { AwsClient } from "./aws_client";
-import { HostListProvider } from "./host_list_provider/host_list_provider";
+import { DynamicHostListProvider, HostListProvider } from "./host_list_provider/host_list_provider";
 import { ConnectionUrlParser } from "./utils/connection_url_parser";
 import { DatabaseDialect } from "./database_dialect/database_dialect";
 import { HostInfoBuilder } from "./host_info_builder";
@@ -296,7 +296,7 @@ export class PartialPluginService implements PluginService, HostListProviderServ
     }
 
     try {
-      const updatedHostList = await (hostListProvider as any).forceMonitoringRefresh(shouldVerifyWriter, timeoutMs);
+      const updatedHostList = await (hostListProvider as DynamicHostListProvider).forceMonitoringRefresh(shouldVerifyWriter, timeoutMs);
       if (updatedHostList) {
         this.updateHostAvailability(updatedHostList);
         this.setHostList(this.hosts, updatedHostList);
