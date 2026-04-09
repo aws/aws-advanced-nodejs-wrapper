@@ -38,7 +38,7 @@ import { ClientWrapper } from "../../common/lib/client_wrapper";
 import { RdsMultiAZClusterPgDatabaseDialect } from "./dialect/rds_multi_az_pg_database_dialect";
 import { TelemetryTraceLevel } from "../../common/lib/utils/telemetry/telemetry_trace_level";
 import { NodePostgresDriverDialect } from "./dialect/node_postgres_driver_dialect";
-import { isDialectTopologyAware } from "../../common/lib/utils/utils";
+import { isDialectTopologyAware } from "../../common/lib/database_dialect/topology_aware_database_dialect";
 import { PGClient, PGPoolClient } from "./pg_client";
 import { DriverConnectionProvider } from "../../common/lib/driver_connection_provider";
 import { GlobalAuroraPgDatabaseDialect } from "./dialect/global_aurora_pg_database_dialect";

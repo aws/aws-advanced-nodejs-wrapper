@@ -25,7 +25,7 @@ import { AwsTimeoutError, AwsWrapperError } from "../utils/errors";
 import { Messages } from "../utils/messages";
 import { WrapperProperties } from "../wrapper_property";
 import { logger } from "../../logutils";
-import { isDialectTopologyAware } from "../utils/utils";
+import { isDialectTopologyAware } from "../database_dialect/topology_aware_database_dialect";
 import { DatabaseDialect } from "../database_dialect/database_dialect";
 import { ClientWrapper } from "../client_wrapper";
 import { CoreServicesContainer } from "../utils/core_services_container";

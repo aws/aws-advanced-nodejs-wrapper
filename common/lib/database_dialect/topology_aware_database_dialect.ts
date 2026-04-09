@@ -34,3 +34,7 @@ export interface TopologyAwareDatabaseDialect {
 export interface GlobalAuroraTopologyDialect extends TopologyAwareDatabaseDialect {
   getRegionByInstanceId(targetClient: ClientWrapper, instanceId: string): Promise<string | null>;
 }
+
+export function isDialectTopologyAware(dialect: any): dialect is TopologyAwareDatabaseDialect {
+  return dialect;
+}

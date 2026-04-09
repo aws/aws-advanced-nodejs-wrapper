@@ -45,7 +45,6 @@ import { FullServicesContainer } from "../../utils/full_services_container";
 import { StorageService } from "../../utils/storage/storage_service";
 
 export class BlueGreenStatusProvider {
-  static readonly MONITORING_PROPERTY_PREFIX = "blue_green_monitoring_";
   private static readonly DEFAULT_CONNECT_TIMEOUT_MS = 10_000; // 10 seconds
   private static readonly DEFAULT_QUERY_TIMEOUT_MS = 10_000; // 10 seconds
 
@@ -134,7 +133,7 @@ export class BlueGreenStatusProvider {
     const monitoringConnProperties: Map<string, any> = new Map(this.properties);
 
     for (const key of monitoringConnProperties.keys()) {
-      if (!key.startsWith(BlueGreenStatusProvider.MONITORING_PROPERTY_PREFIX)) {
+      if (!key.startsWith(WrapperProperties.BG_MONITORING_PROPERTY_PREFIX)) {
         continue;
       }
 

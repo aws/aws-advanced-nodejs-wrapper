@@ -16,8 +16,6 @@
 
 import { ConnectionProvider } from "./connection_provider";
 import { DatabaseDialect } from "./database_dialect/database_dialect";
-import { ClusterTopologyMonitorImpl } from "./host_list_provider/monitoring/cluster_topology_monitor";
-import { BlueGreenStatusProvider } from "./plugins/bluegreen/blue_green_status_provider";
 import { AwsWrapperError } from "./utils/errors";
 import { Messages } from "./utils/messages";
 
@@ -61,6 +59,8 @@ export class WrapperProperty<T> {
 
 export class WrapperProperties {
   static readonly MONITORING_PROPERTY_PREFIX: string = "monitoring_";
+  static readonly TOPOLOGY_MONITORING_PROPERTY_PREFIX: string = "topology_monitoring_";
+  static readonly BG_MONITORING_PROPERTY_PREFIX: string = "blue_green_monitoring_";
   static readonly DEFAULT_PLUGINS = "auroraConnectionTracker,failover,efm2";
   static readonly DEFAULT_TOKEN_EXPIRATION_SEC = 15 * 60;
 
@@ -563,8 +563,8 @@ export class WrapperProperties {
 
   private static readonly PREFIXES = [
     WrapperProperties.MONITORING_PROPERTY_PREFIX,
-    ClusterTopologyMonitorImpl.MONITORING_PROPERTY_PREFIX,
-    BlueGreenStatusProvider.MONITORING_PROPERTY_PREFIX
+    WrapperProperties.TOPOLOGY_MONITORING_PROPERTY_PREFIX,
+    WrapperProperties.BG_MONITORING_PROPERTY_PREFIX
   ];
 
   private static startsWithPrefix(key: string): boolean {

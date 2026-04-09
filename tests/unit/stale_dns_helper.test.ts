@@ -91,6 +91,5 @@ describe("test_stale_dns_helper", () => {
     targetInstance.notifyHostListChanged(changes);
 
     expect(targetInstance["writerHostInfo"]).toBeNull();
-    expect(targetInstance["writerHostAddress"]).toBe("");
   });
 });

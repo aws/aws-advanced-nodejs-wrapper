@@ -141,6 +141,7 @@ export class AwsSecretsManagerPlugin extends AbstractConnectionPlugin implements
         }
       }
       logger.debug(Messages.get("AwsSecretsManagerConnectionPlugin.unhandledError", error.name, error.message));
+      throw error;
     }
   }
 

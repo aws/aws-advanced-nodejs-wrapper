@@ -22,7 +22,7 @@ import { DynamicHostListProvider, HostListProvider } from "./host_list_provider/
 import { ConnectionUrlParser } from "./utils/connection_url_parser";
 import { DatabaseDialect, DatabaseType } from "./database_dialect/database_dialect";
 import { HostInfoBuilder } from "./host_info_builder";
-import { AwsTimeoutError, AwsWrapperError, UnsupportedMethodError } from "./";
+import { AwsTimeoutError, AwsWrapperError, UnsupportedMethodError } from "./utils/errors";
 import { HostAvailability } from "./host_availability/host_availability";
 import { HostAvailabilityCacheItem } from "./host_availability/host_availability_cache_item";
 import { StatusCacheItem } from "./utils/status_cache_item";

@@ -39,7 +39,7 @@ import { ClientUtils } from "../../common/lib/utils/client_utils";
 import { RdsMultiAZClusterMySQLDatabaseDialect } from "./dialect/rds_multi_az_mysql_database_dialect";
 import { TelemetryTraceLevel } from "../../common/lib/utils/telemetry/telemetry_trace_level";
 import { MySQL2DriverDialect } from "./dialect/mysql2_driver_dialect";
-import { isDialectTopologyAware } from "../../common/lib/utils/utils";
+import { isDialectTopologyAware } from "../../common/lib/database_dialect/topology_aware_database_dialect";
 import { MySQLClient, MySQLPoolClient } from "./mysql_client";
 import { DriverConnectionProvider } from "../../common/lib/driver_connection_provider";
 import { GlobalAuroraMySQLDatabaseDialect } from "./dialect/global_aurora_mysql_database_dialect";

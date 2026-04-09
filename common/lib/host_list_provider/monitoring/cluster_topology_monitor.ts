@@ -62,8 +62,6 @@ export class ClusterTopologyMonitorImpl extends AbstractMonitor implements Clust
   protected static readonly DEFAULT_CONNECTION_TIMEOUT_MS: number = 5000;
   protected static readonly DEFAULT_QUERY_TIMEOUT_MS: number = 5000;
 
-  static readonly MONITORING_PROPERTY_PREFIX: string = "topology_monitoring_";
-
   private readonly clusterId: string;
   protected readonly initialHostInfo: HostInfo;
   private readonly servicesContainer: FullServicesContainer;
@@ -129,8 +127,8 @@ export class ClusterTopologyMonitorImpl extends AbstractMonitor implements Clust
 
     this._monitoringProperties = new Map<string, any>(props);
     for (const [key, val] of props) {
-      if (key.startsWith(ClusterTopologyMonitorImpl.MONITORING_PROPERTY_PREFIX)) {
-        this._monitoringProperties.set(key.substring(ClusterTopologyMonitorImpl.MONITORING_PROPERTY_PREFIX.length), val);
+      if (key.startsWith(WrapperProperties.TOPOLOGY_MONITORING_PROPERTY_PREFIX)) {
+        this._monitoringProperties.set(key.substring(WrapperProperties.TOPOLOGY_MONITORING_PROPERTY_PREFIX.length), val);
         this._monitoringProperties.delete(key);
       }
     }

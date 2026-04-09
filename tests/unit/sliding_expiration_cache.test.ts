@@ -15,8 +15,8 @@
 */
 
 import { SlidingExpirationCache } from "../../common/lib/utils/sliding_expiration_cache";
-import { convertMsToNanos, convertNanosToMs, sleep } from "../../common/lib/utils/utils";
 import { SlidingExpirationCacheWithCleanupTask } from "../../common/lib/utils/sliding_expiration_cache_with_cleanup_task";
+import { convertMsToNanos, convertNanosToMs, sleep } from "../../common/lib/utils/utils";
 
 class DisposableItem {
   shouldDispose: boolean;

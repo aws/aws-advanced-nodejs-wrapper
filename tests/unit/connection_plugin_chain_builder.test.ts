@@ -37,6 +37,11 @@ const mockPluginServiceInstance: PluginService = instance(mockPluginService);
 const mockDefaultConnProvider: ConnectionProvider = mock(DriverConnectionProvider);
 const mockEffectiveConnProvider: ConnectionProvider = mock(DriverConnectionProvider);
 
+const mockServicesContainer: FullServicesContainer = {
+  pluginService: mockPluginServiceInstance,
+  telemetryFactory: new NullTelemetryFactory()
+} as unknown as FullServicesContainer;
+
 describe("testConnectionPluginChainBuilder", () => {
   beforeAll(() => {
     when(mockPluginService.getTelemetryFactory()).thenReturn(new NullTelemetryFactory());
@@ -51,7 +56,7 @@ describe("testConnectionPluginChainBuilder", () => {
     props.set(WrapperProperties.PLUGINS.name, plugins);
 
     const result = await ConnectionPluginChainBuilder.getPlugins(
-      mockPluginServiceInstance,
+      mockServicesContainer,
       props,
       new ConnectionProviderManager(mockDefaultConnProvider, mockEffectiveConnProvider),
       null
@@ -70,7 +75,7 @@ describe("testConnectionPluginChainBuilder", () => {
     props.set(WrapperProperties.AUTO_SORT_PLUGIN_ORDER.name, false);
 
     const result = await ConnectionPluginChainBuilder.getPlugins(
-      mockPluginServiceInstance,
+      mockServicesContainer,
       props,
       new ConnectionProviderManager(mockDefaultConnProvider, mockEffectiveConnProvider),
       null
@@ -89,7 +94,7 @@ describe("testConnectionPluginChainBuilder", () => {
     props.set(WrapperProperties.PLUGINS.name, "executeTime,connectTime,iam");
 
     let result = await ConnectionPluginChainBuilder.getPlugins(
-      mockPluginServiceInstance,
+      mockServicesContainer,
       props,
       new ConnectionProviderManager(mockDefaultConnProvider, mockEffectiveConnProvider),
       null
@@ -104,7 +109,7 @@ describe("testConnectionPluginChainBuilder", () => {
     props.set(WrapperProperties.PLUGINS.name, "iam,executeTime,connectTime,failover");
 
     result = await ConnectionPluginChainBuilder.getPlugins(
-      mockPluginServiceInstance,
+      mockServicesContainer,
       props,
       new ConnectionProviderManager(mockDefaultConnProvider, mockEffectiveConnProvider),
       null
@@ -125,7 +130,7 @@ describe("testConnectionPluginChainBuilder", () => {
     props.set(WrapperProperties.PLUGINS.name, "test");
 
     const result = await ConnectionPluginChainBuilder.getPlugins(
-      mockPluginServiceInstance,
+      mockServicesContainer,
       props,
       new ConnectionProviderManager(mockDefaultConnProvider, mockEffectiveConnProvider),
       null

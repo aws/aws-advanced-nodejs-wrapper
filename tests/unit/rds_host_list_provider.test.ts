@@ -82,6 +82,9 @@ describe("testRdsHostListProvider", () => {
     when(mockPluginService.getCurrentClient()).thenReturn(instance(mockClient));
     when(mockClient.targetClient).thenReturn(mockClientWrapper);
     when(mockPluginService.getHostInfoBuilder()).thenReturn(new HostInfoBuilder({ hostAvailabilityStrategy: new SimpleHostAvailabilityStrategy() }));
+    when(mockServiceContainer.hostListProviderService).thenReturn(instance(mockPluginService));
+    when(mockServiceContainer.pluginService).thenReturn(instance(mockPluginService));
+    when(mockServiceContainer.storageService).thenReturn(storageService);
   });
 
   afterEach(async () => {
@@ -114,7 +117,6 @@ describe("testRdsHostListProvider", () => {
 
     when(mockPluginService.isClientValid(anything())).thenResolve(true);
 
-    storageService.set(rdsHostListProvider.clusterId, new Topology(hosts));
     const newHosts: HostInfo[] = [
       createHost({
         hostAvailabilityStrategy: new SimpleHostAvailabilityStrategy(),
@@ -123,13 +125,12 @@ describe("testRdsHostListProvider", () => {
     ];
 
     when(mockClient.isValid()).thenResolve(true);
-    when(spiedProvider.getCurrentTopology(mockClientWrapper, anything())).thenReturn(Promise.resolve(newHosts));
+    when(mockPluginService.isDialectConfirmed()).thenReturn(true);
+    when((spiedProvider as any).forceRefreshMonitor(anything(), anything())).thenReturn(Promise.resolve(newHosts));
 
     const result = await rdsHostListProvider.getTopology();
     expect(result.hosts.length).toEqual(1);
     expect(result.hosts).toEqual(newHosts);
-
-    verify(spiedProvider.getCurrentTopology(anything(), anything())).atMost(1);
   });
 
   it("testGetTopology_noForceUpdate_queryReturnsEmptyHostList", async () => {

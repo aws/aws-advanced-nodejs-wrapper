@@ -35,8 +35,8 @@ class TestableEventPublisher extends BatchingEventPublisher {
     return this.pendingEvents.size;
   }
 
-  triggerSendMessages(): void {
-    this.sendMessages();
+  async triggerSendMessages(): Promise<void> {
+    await this.sendMessages();
   }
 }
 
@@ -52,7 +52,7 @@ describe("BatchingEventPublisher", () => {
     publisher = new TestableEventPublisher();
     processEventCalls = [];
     mockSubscriber = {
-      processEvent: (event: Event) => {
+      processEvent: async (event: Event) => {
         processEventCalls.push(event);
       }
     };
@@ -62,7 +62,7 @@ describe("BatchingEventPublisher", () => {
     publisher.releaseResources();
   });
 
-  it("should publish events to subscribers and deduplicate", () => {
+  it("should publish events to subscribers and deduplicate", async () => {
     const eventSubscriptions = new Set([DataAccessEvent]);
 
     publisher.subscribe(mockSubscriber, eventSubscriptions);
@@ -73,7 +73,7 @@ describe("BatchingEventPublisher", () => {
     publisher.publish(event);
     publisher.publish(event);
 
-    publisher.triggerSendMessages();
+    await publisher.triggerSendMessages();
 
     expect(publisher.pendingEventCount).toBe(0);
 
@@ -82,7 +82,7 @@ describe("BatchingEventPublisher", () => {
 
     publisher.unsubscribe(mockSubscriber, eventSubscriptions);
     publisher.publish(event);
-    publisher.triggerSendMessages();
+    await publisher.triggerSendMessages();
 
     expect(publisher.pendingEventCount).toBe(0);
 
@@ -105,7 +105,7 @@ describe("BatchingEventPublisher", () => {
     expect(publisher.pendingEventCount).toBe(0);
   });
 
-  it("should not deliver events to unsubscribed subscribers", () => {
+  it("should not deliver events to unsubscribed subscribers", async () => {
     const eventSubscriptions = new Set([DataAccessEvent]);
 
     publisher.subscribe(mockSubscriber, eventSubscriptions);
@@ -113,15 +113,15 @@ describe("BatchingEventPublisher", () => {
 
     const event = new DataAccessEvent(TestDataClass, "key");
     publisher.publish(event);
-    publisher.triggerSendMessages();
+    await publisher.triggerSendMessages();
 
     expect(processEventCalls.length).toBe(0);
   });
 
-  it("should handle multiple subscribers", () => {
+  it("should handle multiple subscribers", async () => {
     const processEventCalls2: Event[] = [];
     const mockSubscriber2: EventSubscriber = {
-      processEvent: (event: Event) => {
+      processEvent: async (event: Event) => {
         processEventCalls2.push(event);
       }
     };
@@ -133,7 +133,7 @@ describe("BatchingEventPublisher", () => {
 
     const event = new DataAccessEvent(TestDataClass, "key");
     publisher.publish(event);
-    publisher.triggerSendMessages();
+    await publisher.triggerSendMessages();
 
     expect(processEventCalls.length).toBe(1);
     expect(processEventCalls2.length).toBe(1);

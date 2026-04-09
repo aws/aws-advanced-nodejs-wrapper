@@ -18,7 +18,7 @@ import { TopologyQueryResult, TopologyUtils } from "./topology_utils";
 import { ClientWrapper } from "../client_wrapper";
 import { DatabaseDialect } from "../database_dialect/database_dialect";
 import { HostInfo } from "../host_info";
-import { isDialectTopologyAware } from "../utils/utils";
+import { isDialectTopologyAware } from "../database_dialect/topology_aware_database_dialect";
 import { Messages } from "../utils/messages";
 import { AwsWrapperError } from "../utils/errors";
 
