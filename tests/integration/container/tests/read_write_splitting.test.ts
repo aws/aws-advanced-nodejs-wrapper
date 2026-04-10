@@ -34,8 +34,6 @@ import { ProxyHelper } from "./utils/proxy_helper";
 import { logger } from "../../../../common/logutils";
 import { TestEnvironmentFeatures } from "./utils/test_environment_features";
 import { features, instanceCount } from "./config";
-import { RdsHostListProvider } from "../../../../common/lib/host_list_provider/rds_host_list_provider";
-import { PluginServiceImpl } from "../../../../common/lib/plugin_service";
 
 const itIf =
   !features.includes(TestEnvironmentFeatures.PERFORMANCE) &&
@@ -64,6 +62,8 @@ async function initConfig(host: string, port: number, connectToProxy: boolean, p
     port: port,
     plugins: plugins,
     enableTelemetry: true,
+    wrapperQueryTimeout: 10000,
+    wrapperConnectTimeout: 3000,
     telemetryTracesBackend: "OTLP",
     telemetryMetricsBackend: "OTLP"
   };
@@ -107,8 +107,7 @@ describe("aurora read write splitting", () => {
     await TestEnvironment.verifyAllInstancesHasRightState("available");
     await TestEnvironment.verifyAllInstancesUp();
 
-    RdsHostListProvider.clearAll();
-    PluginServiceImpl.clearHostAvailabilityCache();
+    await PluginManager.releaseResources();
   }, 1320000);
 
   afterEach(async () => {
@@ -609,9 +608,9 @@ describe("aurora read write splitting", () => {
           connectionsSet.add(client);
         }
       } finally {
-        for (const connection of connectionsSet) {
+        connectionsSet.forEach(async (connection) => {
           await connection.end();
-        }
+        });
       }
     },
     1000000
@@ -663,9 +662,9 @@ describe("aurora read write splitting", () => {
           connectionsSet.add(client);
         }
       } finally {
-        for (const connection of connectionsSet) {
+        connectionsSet.forEach(async (connection) => {
           await connection.end();
-        }
+        });
       }
     },
     1000000

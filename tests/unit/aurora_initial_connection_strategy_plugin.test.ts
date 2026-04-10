@@ -109,7 +109,7 @@ describe("Aurora initial connection strategy plugin", () => {
     when(mockPluginService.connect(anything(), anything(), anything())).thenResolve(writerClient);
 
     expect(await plugin.connect(hostInfo, props, true, mockFunc)).toBe(writerClient);
-    verify(mockPluginService.forceRefreshHostList(writerClient)).never();
+    verify(mockPluginService.forceRefreshHostList()).never();
   });
 
   it("test reader - not found", async () => {
@@ -128,7 +128,7 @@ describe("Aurora initial connection strategy plugin", () => {
     when(mockPluginService.getHostInfoByStrategy(anything(), anything())).thenReturn(instance(mockReaderHostInfo));
 
     expect(await plugin.connect(hostInfo, props, true, mockFunc)).toBe(readerClient);
-    verify(mockPluginService.forceRefreshHostList(readerClient)).never();
+    verify(mockPluginService.forceRefreshHostList()).never();
   });
 
   it("test reader - resolves to writer", async () => {

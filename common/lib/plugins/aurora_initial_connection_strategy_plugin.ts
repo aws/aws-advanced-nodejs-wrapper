@@ -110,7 +110,7 @@ export class AuroraInitialConnectionStrategyPlugin extends AbstractConnectionPlu
         if (writerCandidate === null || this.rdsUtils.isRdsClusterDns(writerCandidate.host)) {
           // Writer is not found. It seems that topology is outdated.
           writerCandidateClient = await connectFunc();
-          await this.pluginService.forceRefreshHostList(writerCandidateClient);
+          await this.pluginService.forceRefreshHostList();
           writerCandidate = await this.pluginService.identifyConnection(writerCandidateClient);
 
           if (writerCandidate) {
@@ -132,7 +132,7 @@ export class AuroraInitialConnectionStrategyPlugin extends AbstractConnectionPlu
         if ((await this.pluginService.getHostRole(writerCandidateClient)) !== HostRole.WRITER) {
           // If the new connection resolves to a reader instance, this means the topology is outdated.
           // Force refresh to update the topology.
-          await this.pluginService.forceRefreshHostList(writerCandidateClient);
+          await this.pluginService.forceRefreshHostList();
           await this.pluginService.abortTargetClient(writerCandidateClient);
           await sleep(retryDelayMs);
           continue;
@@ -177,7 +177,7 @@ export class AuroraInitialConnectionStrategyPlugin extends AbstractConnectionPlu
         if (readerCandidate === null || this.rdsUtils.isRdsClusterDns(readerCandidate.host)) {
           // Reader is not found. It seems that topology is outdated.
           readerCandidateClient = await connectFunc();
-          await this.pluginService.forceRefreshHostList(readerCandidateClient);
+          await this.pluginService.forceRefreshHostList();
           readerCandidate = await this.pluginService.identifyConnection(readerCandidateClient);
 
           if (readerCandidate) {
@@ -209,7 +209,7 @@ export class AuroraInitialConnectionStrategyPlugin extends AbstractConnectionPlu
         if ((await this.pluginService.getHostRole(readerCandidateClient)) !== HostRole.READER) {
           // If the new connection resolves to a writer instance, this means the topology is outdated.
           // Force refresh to update the topology.
-          await this.pluginService.forceRefreshHostList(readerCandidateClient);
+          await this.pluginService.forceRefreshHostList();
 
           if (this.hasNoReaders()) {
             // It seems that cluster has no readers. Simulate Aurora reader cluster endpoint logic

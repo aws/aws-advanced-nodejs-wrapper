@@ -18,5 +18,5 @@ import { HostInfo } from "./host_info";
 import { HostRole } from "./host_role";
 
 export interface HostSelector {
-  getHost(hosts: HostInfo[], role: HostRole, props?: Map<string, any>): HostInfo;
+  getHost(hosts: HostInfo[], role: HostRole | null, props?: Map<string, any>): HostInfo;
 }

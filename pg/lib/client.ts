@@ -38,15 +38,17 @@ import { ClientWrapper } from "../../common/lib/client_wrapper";
 import { RdsMultiAZClusterPgDatabaseDialect } from "./dialect/rds_multi_az_pg_database_dialect";
 import { TelemetryTraceLevel } from "../../common/lib/utils/telemetry/telemetry_trace_level";
 import { NodePostgresDriverDialect } from "./dialect/node_postgres_driver_dialect";
-import { isDialectTopologyAware } from "../../common/lib/utils/utils";
+import { isDialectTopologyAware } from "../../common/lib/database_dialect/topology_aware_database_dialect";
 import { PGClient, PGPoolClient } from "./pg_client";
 import { DriverConnectionProvider } from "../../common/lib/driver_connection_provider";
+import { GlobalAuroraPgDatabaseDialect } from "./dialect/global_aurora_pg_database_dialect";
 
 class BaseAwsPgClient extends AwsClient implements PGClient {
   private static readonly knownDialectsByCode: Map<string, DatabaseDialect> = new Map([
     [DatabaseDialectCodes.PG, new PgDatabaseDialect()],
     [DatabaseDialectCodes.RDS_PG, new RdsPgDatabaseDialect()],
     [DatabaseDialectCodes.AURORA_PG, new AuroraPgDatabaseDialect()],
+    [DatabaseDialectCodes.GLOBAL_AURORA_PG, new GlobalAuroraPgDatabaseDialect()],
     [DatabaseDialectCodes.RDS_MULTI_AZ_PG, new RdsMultiAZClusterPgDatabaseDialect()]
   ]);
 
@@ -82,7 +84,7 @@ class BaseAwsPgClient extends AwsClient implements PGClient {
     return result;
   }
 
-  isReadOnly(): boolean {
+  isReadOnly(): boolean | undefined {
     return this.pluginService.getSessionStateService().getReadOnly();
   }
 
@@ -120,7 +122,7 @@ class BaseAwsPgClient extends AwsClient implements PGClient {
     this.pluginService.getSessionStateService().setTransactionIsolation(level);
   }
 
-  getTransactionIsolation(): TransactionIsolationLevel {
+  getTransactionIsolation(): TransactionIsolationLevel | undefined {
     return this.pluginService.getSessionStateService().getTransactionIsolation();
   }
 
@@ -147,7 +149,7 @@ class BaseAwsPgClient extends AwsClient implements PGClient {
     return result;
   }
 
-  getSchema(): string {
+  getSchema(): string | undefined {
     return this.pluginService.getSessionStateService().getSchema();
   }
 
@@ -399,7 +401,7 @@ export class AwsPgPoolClient implements PGPoolClient {
       await awsPGPooledConnection.connect();
       const res = await awsPGPooledConnection.query(queryTextOrConfig as any, values);
       await awsPGPooledConnection.end();
-      return res;
+      return res as any;
     } catch (error: any) {
       if (!(error instanceof FailoverSuccessError)) {
         // Release pooled connection.

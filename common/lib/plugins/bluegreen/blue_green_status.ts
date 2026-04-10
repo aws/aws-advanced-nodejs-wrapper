@@ -19,7 +19,6 @@ import { ConnectRouting } from "./routing/connect_routing";
 import { ExecuteRouting } from "./routing/execute_routing";
 import { BlueGreenRole } from "./blue_green_role";
 import { HostInfo } from "../../host_info";
-import { Pair } from "../../utils/utils";
 
 export class BlueGreenStatus {
   private readonly bgdId: string;
@@ -28,7 +27,7 @@ export class BlueGreenStatus {
   private readonly _unmodifiableExecuteRouting: readonly ExecuteRouting[];
 
   private readonly _roleByHost: Map<string, BlueGreenRole>;
-  private readonly _correspondingHosts: Map<string, Pair<HostInfo, HostInfo>>;
+  private readonly _correspondingHosts: Map<string, [HostInfo, HostInfo]>;
 
   constructor(
     bgdId: string,
@@ -36,7 +35,7 @@ export class BlueGreenStatus {
     unmodifiableConnectRouting?: ConnectRouting[],
     unmodifiableExecuteRouting?: ExecuteRouting[],
     roleByHost?: Map<string, BlueGreenRole>,
-    correspondingHosts?: Map<string, Pair<HostInfo, HostInfo>>
+    correspondingHosts?: Map<string, [HostInfo, HostInfo]>
   ) {
     this.bgdId = bgdId;
     this._currentPhase = phase;
@@ -62,7 +61,7 @@ export class BlueGreenStatus {
     return this._roleByHost;
   }
 
-  get correspondingHosts(): Map<string, Pair<HostInfo, HostInfo>> {
+  get correspondingHosts(): Map<string, [HostInfo, HostInfo]> {
     return this._correspondingHosts;
   }
 

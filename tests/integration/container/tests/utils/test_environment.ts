@@ -37,6 +37,7 @@ import { ATTR_SERVICE_NAME } from "@opentelemetry/semantic-conventions";
 import { PeriodicExportingMetricReader } from "@opentelemetry/sdk-metrics";
 import { OTLPMetricExporter } from "@opentelemetry/exporter-metrics-otlp-grpc";
 import { logger } from "../../../../../common/logutils";
+import { RdsUtils } from "../../../../../common/lib/utils/rds_utils";
 import pkgPg from "pg";
 import { ConnectionOptions, createConnection } from "mysql2/promise";
 import { readFileSync } from "fs";
@@ -237,6 +238,14 @@ export class TestEnvironment {
     if (env.features.includes(TestEnvironmentFeatures.NETWORK_OUTAGES_ENABLED)) {
       await TestEnvironment.initProxies(env);
     }
+
+    // Helps to eliminate problem with proxied endpoints.
+    RdsUtils.setPrepareHostFunc((host: string) => {
+      if (host.endsWith(".proxied")) {
+        return host.substring(0, host.length - ".proxied".length);
+      }
+      return host;
+    });
 
     const contextManager = new AsyncHooksContextManager();
     contextManager.enable();

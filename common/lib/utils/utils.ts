@@ -20,16 +20,26 @@ import { WrapperProperties } from "../wrapper_property";
 import { HostRole } from "../host_role";
 import { logger } from "../../logutils";
 import { AwsWrapperError, InternalQueryTimeoutError } from "./errors";
-import { TopologyAwareDatabaseDialect } from "../database_dialect/topology_aware_database_dialect";
 
 export function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+/**
+ * Creates a sleep promise that can be aborted before completion.
+ *
+ * @param ms - Duration to sleep in milliseconds
+ * @param message - Error message when aborted
+ * @returns A tuple of [sleepPromise, abortFunction]
+ *          - sleepPromise: Resolves after ms milliseconds, or rejects if aborted
+ *          - abortFunction: Call to cancel the sleep and reject the promise
+ */
 export function sleepWithAbort(ms: number, message?: string) {
   let abortSleep;
   const promise = new Promise((resolve, reject) => {
     const timeout = setTimeout(resolve, ms);
+    // Unref the timer to prevent this background task from blocking the application from gracefully exiting.
+    timeout.unref();
     abortSleep = () => {
       clearTimeout(timeout);
       reject(new AwsWrapperError(message));
@@ -65,7 +75,7 @@ export function logTopology(hosts: HostInfo[], msgPrefix: string) {
   return `${msgPrefix}${Messages.get("Utils.topology", msg)}`;
 }
 
-export function getTimeInNanos() {
+export function getTimeInNanos(): bigint {
   return process.hrtime.bigint();
 }
 
@@ -113,32 +123,47 @@ export function equalsIgnoreCase(value1: string | null, value2: string | null): 
   return value1 != null && value2 != null && value1.localeCompare(value2, undefined, { sensitivity: "accent" }) === 0;
 }
 
-export function isDialectTopologyAware(dialect: any): dialect is TopologyAwareDatabaseDialect {
-  return dialect;
-}
-
 export function containsHostAndPort(hosts: HostInfo[] | null | undefined, hostAndPort: string): boolean {
-  if (hosts?.length === 0) {
+  if (!hosts || hosts.length === 0) {
     return false;
   }
 
   return hosts.some((host) => host.hostAndPort === hostAndPort);
 }
 
-export class Pair<K, V> {
-  private readonly _left: K;
-  private readonly _right: V;
-
-  constructor(value1: K, value2: V) {
-    this._left = value1;
-    this._right = value2;
+export function parseInstanceTemplates(
+  instanceTemplatesString: string | null,
+  hostValidator: (hostPattern: string) => void,
+  hostInfoBuilderFunc: () => { withHost(host: string): { build(): HostInfo } }
+): Map<string, HostInfo> {
+  if (!instanceTemplatesString) {
+    throw new AwsWrapperError(Messages.get("Utils.globalClusterInstanceHostPatternsRequired"));
   }
 
-  get left(): K {
-    return this._left;
+  const instanceTemplates = new Map<string, HostInfo>();
+  const patterns = instanceTemplatesString.split(",");
+
+  for (const pattern of patterns) {
+    const trimmedPattern = pattern.trim();
+    const colonIndex = trimmedPattern.indexOf(":");
+    if (colonIndex === -1) {
+      throw new AwsWrapperError(Messages.get("Utils.invalidPatternFormat", trimmedPattern));
+    }
+
+    const region = trimmedPattern.substring(0, colonIndex).trim();
+    const hostPattern = trimmedPattern.substring(colonIndex + 1).trim();
+
+    if (!region || !hostPattern) {
+      throw new AwsWrapperError(Messages.get("Utils.invalidPatternFormat", trimmedPattern));
+    }
+
+    hostValidator(hostPattern);
+
+    const hostInfo = hostInfoBuilderFunc().withHost(hostPattern).build();
+    instanceTemplates.set(region, hostInfo);
   }
 
-  get right(): V {
-    return this._right;
-  }
+  logger.debug(`Detected Global Database patterns: ${JSON.stringify(Array.from(instanceTemplates.entries()))}`);
+
+  return instanceTemplates;
 }

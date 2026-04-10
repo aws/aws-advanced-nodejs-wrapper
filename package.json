@@ -39,7 +39,7 @@
     "format": "prettier . --write --config .prettierrc",
     "integration": "cross-env NODE_OPTIONS=\"$NODE_OPTIONS --experimental-vm-modules\" npx jest --config=jest.integration.config.json --runInBand --verbose",
     "debug-integration": "cross-env NODE_OPTIONS=\"$NODE_OPTIONS --experimental-vm-modules --inspect-brk=0.0.0.0:5005\" npx jest --config=jest.integration.config.json --runInBand",
-    "lint": "eslint --fix --ext .ts .",
+    "lint": "eslint --ext .ts .",
     "test": "cross-env NODE_OPTIONS=\"$NODE_OPTIONS --experimental-vm-modules\" npx jest --config=jest.unit.config.json",
     "fix-imports": "babel --extensions \".js\" dist -d dist",
     "build": "tsc",

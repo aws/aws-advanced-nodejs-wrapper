@@ -15,19 +15,16 @@
 */
 
 export enum FailoverMode {
-  STRICT_WRITER,
-  STRICT_READER,
-  READER_OR_WRITER,
-  UNKNOWN
+  STRICT_WRITER = "strict-writer",
+  STRICT_READER = "strict-reader",
+  READER_OR_WRITER = "reader-or-writer",
+  UNKNOWN = "unknown"
 }
 
-const nameToValue = new Map([
-  ["strict-writer", FailoverMode.STRICT_WRITER],
-  ["strict-reader", FailoverMode.STRICT_READER],
-  ["reader-or-writer", FailoverMode.READER_OR_WRITER],
-  ["unknown", FailoverMode.UNKNOWN]
-]);
-
-export function failoverModeFromValue(name: string): FailoverMode {
-  return nameToValue.get(name.toLowerCase()) ?? FailoverMode.UNKNOWN;
+export function failoverModeFromValue(value: string | null | undefined): FailoverMode {
+  if (!value) {
+    return FailoverMode.UNKNOWN;
+  }
+  const normalized = value.toLowerCase();
+  return Object.values(FailoverMode).find((v) => v === normalized) ?? FailoverMode.UNKNOWN;
 }
