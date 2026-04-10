@@ -15,7 +15,6 @@
 */
 
 import { PgDatabaseDialect } from "./pg_database_dialect";
-import { HostListProviderService } from "../../../common/lib/host_list_provider_service";
 import { HostListProvider } from "../../../common/lib/host_list_provider/host_list_provider";
 import { RdsHostListProvider } from "../../../common/lib/host_list_provider/rds_host_list_provider";
 import { TopologyAwareDatabaseDialect } from "../../../common/lib/database_dialect/topology_aware_database_dialect";
@@ -23,11 +22,10 @@ import { HostRole } from "../../../common/lib";
 import { ClientWrapper } from "../../../common/lib/client_wrapper";
 import { DatabaseDialectCodes } from "../../../common/lib/database_dialect/database_dialect_codes";
 import { LimitlessDatabaseDialect } from "../../../common/lib/database_dialect/limitless_database_dialect";
-import { WrapperProperties } from "../../../common/lib/wrapper_property";
-import { MonitoringRdsHostListProvider } from "../../../common/lib/host_list_provider/monitoring/monitoring_host_list_provider";
-import { PluginService } from "../../../common/lib/plugin_service";
 import { BlueGreenDialect, BlueGreenResult } from "../../../common/lib/database_dialect/blue_green_dialect";
-import { TopologyQueryResult, TopologyUtils } from "../../../common/lib/host_list_provider/topology_utils";
+import { TopologyQueryResult } from "../../../common/lib/host_list_provider/topology_utils";
+import { AuroraTopologyUtils } from "../../../common/lib/host_list_provider/aurora_topology_utils";
+import { FullServicesContainer } from "../../../common/lib/utils/full_services_container";
 
 export class AuroraPgDatabaseDialect extends PgDatabaseDialect implements TopologyAwareDatabaseDialect, LimitlessDatabaseDialect, BlueGreenDialect {
   private static readonly VERSION = process.env.npm_package_version;
@@ -53,22 +51,13 @@ export class AuroraPgDatabaseDialect extends PgDatabaseDialect implements Topolo
 
   private static readonly TOPOLOGY_TABLE_EXIST_QUERY: string = "SELECT pg_catalog.'get_blue_green_fast_switchover_metadata'::regproc";
 
-  getHostListProvider(props: Map<string, any>, originalUrl: string, hostListProviderService: HostListProviderService): HostListProvider {
-    const topologyUtils: TopologyUtils = new TopologyUtils(this, hostListProviderService.getHostInfoBuilder());
-    if (WrapperProperties.PLUGINS.get(props).includes("failover2")) {
-      return new MonitoringRdsHostListProvider(
-        props,
-        originalUrl,
-        topologyUtils,
-        hostListProviderService,
-        <PluginService>(<unknown>hostListProviderService)
-      );
-    }
-    return new RdsHostListProvider(props, originalUrl, topologyUtils, hostListProviderService);
+  getHostListProvider(props: Map<string, any>, originalUrl: string, servicesContainer: FullServicesContainer): HostListProvider {
+    const topologyUtils = new AuroraTopologyUtils(this, servicesContainer.hostListProviderService.getHostInfoBuilder());
+    return new RdsHostListProvider(props, originalUrl, topologyUtils, servicesContainer);
   }
 
   async queryForTopology(targetClient: ClientWrapper): Promise<TopologyQueryResult[]> {
-    const res = await targetClient.query(AuroraPgDatabaseDialect.TOPOLOGY_QUERY);
+    const res = await targetClient.queryWithTimeout(AuroraPgDatabaseDialect.TOPOLOGY_QUERY);
     const results: TopologyQueryResult[] = [];
     const rows: any[] = res.rows;
     rows.forEach((row) => {
@@ -149,7 +138,7 @@ export class AuroraPgDatabaseDialect extends PgDatabaseDialect implements Topolo
   }
 
   getDialectUpdateCandidates(): string[] {
-    return [DatabaseDialectCodes.RDS_MULTI_AZ_PG];
+    return [DatabaseDialectCodes.GLOBAL_AURORA_PG, DatabaseDialectCodes.RDS_MULTI_AZ_PG];
   }
 
   getLimitlessRoutersQuery(): string {

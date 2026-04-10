@@ -14,9 +14,10 @@
   limitations under the License.
 */
 
-import { TopologyQueryResult, TopologyUtils } from "../../common/lib/host_list_provider/topology_utils";
+import { TopologyQueryResult } from "../../common/lib/host_list_provider/topology_utils";
+import { AuroraTopologyUtils } from "../../common/lib/host_list_provider/aurora_topology_utils";
 import { anything, instance, mock, reset, when } from "ts-mockito";
-import { HostInfo, HostInfoBuilder } from "../../common/lib";
+import { HostInfo, HostInfoBuilder, PluginManager } from "../../common/lib";
 import { SimpleHostAvailabilityStrategy } from "../../common/lib/host_availability/simple_host_availability_strategy";
 import { AuroraPgDatabaseDialect } from "../../pg/lib/dialect/aurora_pg_database_dialect";
 import { ClientWrapper } from "../../common/lib/client_wrapper";
@@ -43,8 +44,8 @@ function createHost(config: any): HostInfo {
   return info.build();
 }
 
-function getTopologyUtils(): TopologyUtils {
-  return new TopologyUtils(instance(mockDialect), hostInfoBuilder);
+function getTopologyUtils(): AuroraTopologyUtils {
+  return new AuroraTopologyUtils(instance(mockDialect), hostInfoBuilder);
 }
 
 describe("testTopologyUtils", () => {
@@ -54,9 +55,13 @@ describe("testTopologyUtils", () => {
     reset(mockNonTopologyDialect);
   });
 
+  afterEach(async () => {
+    await PluginManager.releaseResources();
+  });
+
   it("testQueryForTopology_withNonTopologyAwareDialect_throwsError", async () => {
     const hostInfoBuilder = new HostInfoBuilder({ hostAvailabilityStrategy: new SimpleHostAvailabilityStrategy() });
-    const topologyUtils = new TopologyUtils(instance(mockNonTopologyDialect) as any, hostInfoBuilder);
+    const topologyUtils = new AuroraTopologyUtils(instance(mockNonTopologyDialect) as any, hostInfoBuilder);
 
     const initialHost = createHost({
       host: "initial-host",

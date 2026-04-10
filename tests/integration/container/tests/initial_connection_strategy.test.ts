@@ -73,8 +73,7 @@ describe("aurora initial connection strategy", () => {
     await TestEnvironment.verifyAllInstancesHasRightState("available");
     await TestEnvironment.verifyAllInstancesUp();
 
-    RdsHostListProvider.clearAll();
-    PluginServiceImpl.clearHostAvailabilityCache();
+    await PluginManager.releaseResources();
     numReaders = env.databaseInfo.instances.length - 1;
   }, 1320000);
 

@@ -14,26 +14,20 @@
   limitations under the License.
 */
 
-import { PluginService } from "./plugin_service";
-import { PluginManager } from "./plugin_manager";
+import { Event } from "./event";
+import { Monitor } from "../monitoring/monitor";
 
-export class PluginServiceManagerContainer {
-  private _pluginService?: PluginService | null;
-  private _pluginManager?: PluginManager | null;
+/**
+ * Event indicating that a monitor should be stopped.
+ * Used by MonitorService to stop and remove monitors.
+ */
+export class MonitorStopEvent implements Event {
+  readonly isImmediateDelivery = true;
+  readonly monitorClass: new (...args: any[]) => Monitor;
+  readonly key: unknown;
 
-  get pluginService(): PluginService | null {
-    return this._pluginService ?? null;
-  }
-
-  set pluginService(service: PluginService | null) {
-    this._pluginService = service;
-  }
-
-  get pluginManager(): PluginManager | null {
-    return this._pluginManager ?? null;
-  }
-
-  set pluginManager(service: PluginManager | null) {
-    this._pluginManager = service;
+  constructor(monitorClass: new (...args: any[]) => Monitor, key: unknown) {
+    this.monitorClass = monitorClass;
+    this.key = key;
   }
 }

@@ -211,7 +211,7 @@ describe("writer failover handler", () => {
     expect(result.topology.length).toBe(4);
     expect(result.topology[0].host).toBe("new-writer-host");
 
-    verify(mockPluginService.forceRefreshHostList(anything())).atLeast(1);
+    verify(mockPluginService.forceRefreshHostList()).atLeast(1);
     verify(mockPluginService.setAvailability(newWriterHost.allAliases, HostAvailability.AVAILABLE)).once();
     clearTimeout(timeoutId);
   }, 10000);

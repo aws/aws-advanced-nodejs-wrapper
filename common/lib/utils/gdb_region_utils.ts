@@ -66,10 +66,8 @@ export class GDBRegionUtils extends RegionUtils {
       const response = await rdsClient.send(command);
       return this.extractWriterClusterArn(response.GlobalClusters);
     } catch (error) {
-      if (error instanceof Error) {
-        logger.debug(Messages.get("GDBRegionUtils.unableToRetrieveGlobalClusterARN"));
-        throw new AwsWrapperError(Messages.get("GDBRegionUtils.unableToRetrieveGlobalClusterARN"));
-      }
+      logger.debug(Messages.get("GDBRegionUtils.unableToRetrieveGlobalClusterARN"));
+      throw new AwsWrapperError(Messages.get("GDBRegionUtils.unableToRetrieveGlobalClusterARN"));
     } finally {
       rdsClient.destroy();
     }

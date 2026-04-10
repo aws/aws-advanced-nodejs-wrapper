@@ -66,7 +66,7 @@ export class MySQLClientWrapper implements ClientWrapper {
 
   async abort(): Promise<void> {
     try {
-      return await ClientUtils.queryWithTimeout(this.client?.destroy(), this.properties);
+      this.client?.destroy();
     } catch (error: any) {
       // ignore
     }

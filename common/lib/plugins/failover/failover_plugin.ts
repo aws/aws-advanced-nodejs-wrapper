@@ -205,6 +205,7 @@ export class FailoverPlugin extends AbstractConnectionPlugin {
     return (
       this.enableFailoverSetting &&
       this._rdsUrlType !== RdsUrlType.RDS_PROXY &&
+      this._rdsUrlType !== RdsUrlType.RDS_PROXY_ENDPOINT &&
       this.pluginService.getAllHosts() &&
       this.pluginService.getAllHosts().length > 0
     );
@@ -541,7 +542,7 @@ export class FailoverPlugin extends AbstractConnectionPlugin {
 
       this._readerFailoverHandler.setEnableFailoverStrictReader(this.failoverMode === FailoverMode.STRICT_READER);
 
-      logger.debug(Messages.get("Failover.parameterValue", "failoverMode", FailoverMode[this.failoverMode]));
+      logger.debug(Messages.get("Failover.parameterValue", "failoverMode", String(this.failoverMode)));
     }
   }
 }

@@ -15,20 +15,20 @@
 */
 
 import { ConnectionPluginFactory } from "../../plugin_factory";
-import { PluginService } from "../../plugin_service";
 import { ConnectionPlugin } from "../../connection_plugin";
 import { AwsWrapperError } from "../../utils/errors";
 import { Messages } from "../../utils/messages";
+import { FullServicesContainer } from "../../utils/full_services_container";
 
 export class BlueGreenPluginFactory extends ConnectionPluginFactory {
   private static blueGreenPlugin: any;
 
-  async getInstance(pluginService: PluginService, props: Map<string, any>): Promise<ConnectionPlugin> {
+  async getInstance(servicesContainer: FullServicesContainer, props: Map<string, any>): Promise<ConnectionPlugin> {
     try {
       if (!BlueGreenPluginFactory.blueGreenPlugin) {
         BlueGreenPluginFactory.blueGreenPlugin = await import("./blue_green_plugin");
       }
-      return new BlueGreenPluginFactory.blueGreenPlugin.BlueGreenPlugin(pluginService, props);
+      return new BlueGreenPluginFactory.blueGreenPlugin.BlueGreenPlugin(servicesContainer.pluginService, props);
     } catch (error: any) {
       throw new AwsWrapperError(Messages.get("ConnectionPluginChainBuilder.errorImportingPlugin", error.message, "BlueGreenPluginFactory"));
     }

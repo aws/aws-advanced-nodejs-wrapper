@@ -15,17 +15,16 @@
 */
 
 export enum CustomEndpointRoleType {
-  ANY,
-  WRITER,
-  READER
+  ANY = "ANY",
+  WRITER = "WRITER",
+  READER = "READER",
+  UNKNOWN = "UNKNOWN"
 }
 
-const nameToValue = new Map([
-  ["ANY", CustomEndpointRoleType.ANY],
-  ["WRITER", CustomEndpointRoleType.WRITER],
-  ["READER", CustomEndpointRoleType.READER]
-]);
-
-export function customEndpointRoleTypeFromValue(name: string): CustomEndpointRoleType {
-  return nameToValue.get(name.toUpperCase()) ?? CustomEndpointRoleType.ANY;
+export function customEndpointRoleTypeFromValue(value: string | null | undefined): CustomEndpointRoleType {
+  if (!value) {
+    return CustomEndpointRoleType.UNKNOWN;
+  }
+  const normalized = value.toUpperCase();
+  return Object.values(CustomEndpointRoleType).find((v) => v === normalized) ?? CustomEndpointRoleType.UNKNOWN;
 }

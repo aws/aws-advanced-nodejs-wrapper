@@ -282,7 +282,6 @@ export abstract class AbstractReadWriteSplittingPlugin extends AbstractConnectio
   }
 
   async closeIdleClients() {
-    logger.debug(Messages.get("ReadWriteSplittingPlugin.closingInternalClients"));
     await this.closeReaderClientIfIdle();
     await this.closeWriterClientIfIdle();
   }
