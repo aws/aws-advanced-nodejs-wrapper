@@ -15,20 +15,16 @@
 */
 
 import { MySQLDatabaseDialect } from "./mysql_database_dialect";
-import { HostListProviderService } from "../../../common/lib/host_list_provider_service";
 import { HostListProvider } from "../../../common/lib/host_list_provider/host_list_provider";
 import { RdsHostListProvider } from "../../../common/lib/host_list_provider/rds_host_list_provider";
 import { TopologyAwareDatabaseDialect } from "../../../common/lib/database_dialect/topology_aware_database_dialect";
 import { HostRole } from "../../../common/lib/host_role";
 import { ClientWrapper } from "../../../common/lib/client_wrapper";
 import { DatabaseDialectCodes } from "../../../common/lib/database_dialect/database_dialect_codes";
-import { WrapperProperties } from "../../../common/lib/wrapper_property";
-import {
-  MonitoringRdsHostListProvider
-} from "../../../common/lib/host_list_provider/monitoring/monitoring_host_list_provider";
-import { PluginService } from "../../../common/lib/plugin_service";
 import { BlueGreenDialect, BlueGreenResult } from "../../../common/lib/database_dialect/blue_green_dialect";
-import { TopologyQueryResult, TopologyUtils } from "../../../common/lib/host_list_provider/topology_utils";
+import { TopologyQueryResult } from "../../../common/lib/host_list_provider/topology_utils";
+import { AuroraTopologyUtils } from "../../../common/lib/host_list_provider/aurora_topology_utils";
+import { FullServicesContainer } from "../../../common/lib/utils/full_services_container";
 
 export class AuroraMySQLDatabaseDialect extends MySQLDatabaseDialect implements TopologyAwareDatabaseDialect, BlueGreenDialect {
   private static readonly TOPOLOGY_QUERY: string =
@@ -50,18 +46,9 @@ export class AuroraMySQLDatabaseDialect extends MySQLDatabaseDialect implements 
   private static readonly TOPOLOGY_TABLE_EXIST_QUERY: string =
     "SELECT 1 AS tmp FROM information_schema.tables WHERE table_schema = 'mysql' AND table_name = 'rds_topology'";
 
-  getHostListProvider(props: Map<string, any>, originalUrl: string, hostListProviderService: HostListProviderService): HostListProvider {
-    const topologyUtils: TopologyUtils = new TopologyUtils(this, hostListProviderService.getHostInfoBuilder());
-    if (WrapperProperties.PLUGINS.get(props).includes("failover2")) {
-      return new MonitoringRdsHostListProvider(
-        props,
-        originalUrl,
-        topologyUtils,
-        hostListProviderService,
-        <PluginService>(<unknown>hostListProviderService)
-      );
-    }
-    return new RdsHostListProvider(props, originalUrl, topologyUtils, hostListProviderService);
+  getHostListProvider(props: Map<string, any>, originalUrl: string, servicesContainer: FullServicesContainer): HostListProvider {
+    const topologyUtils = new AuroraTopologyUtils(this, servicesContainer.hostListProviderService.getHostInfoBuilder());
+    return new RdsHostListProvider(props, originalUrl, topologyUtils, servicesContainer);
   }
 
   async queryForTopology(targetClient: ClientWrapper): Promise<TopologyQueryResult[]> {
@@ -142,7 +129,7 @@ export class AuroraMySQLDatabaseDialect extends MySQLDatabaseDialect implements 
   }
 
   getDialectUpdateCandidates(): string[] {
-    return [DatabaseDialectCodes.RDS_MULTI_AZ_MYSQL];
+    return [DatabaseDialectCodes.GLOBAL_AURORA_MYSQL, DatabaseDialectCodes.RDS_MULTI_AZ_MYSQL];
   }
 
   async isBlueGreenStatusAvailable(clientWrapper: ClientWrapper): Promise<boolean> {

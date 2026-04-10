@@ -110,6 +110,7 @@ describe("testIamAuth", () => {
 
   afterEach(() => {
     reset(spyIamAuthUtils);
+    PluginManager.releaseResources();
   });
 
   it("testPostgresConnectValidTokenInCache", async () => {

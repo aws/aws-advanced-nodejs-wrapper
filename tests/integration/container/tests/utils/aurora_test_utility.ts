@@ -42,6 +42,7 @@ import { TestInstanceInfo } from "./test_instance_info";
 import { TestEnvironmentInfo } from "./test_environment_info";
 import { DatabaseEngine } from "./database_engine";
 import { DatabaseEngineDeployment } from "./database_engine_deployment";
+import { ProxyHelper } from "./proxy_helper";
 
 const instanceClass: string = "db.r5.large";
 
@@ -491,5 +492,39 @@ export class AuroraTestUtility {
     if (response.BlueGreenDeployment !== undefined) {
       logger.debug("switchoverBlueGreenDeployment request is sent.");
     }
+  }
+
+  async simulateTemporaryFailure(instanceName: string, delayMs: number = 0, failureDurationMs: number = 5000): Promise<void> {
+    const env = await TestEnvironment.getCurrent();
+    const deployment = env.deployment;
+    const clusterEndpoint = env.proxyDatabaseInfo.clusterEndpoint;
+    const clusterReadOnlyEndpoint = env.proxyDatabaseInfo.clusterReadOnlyEndpoint;
+
+    (async () => {
+      try {
+        if (delayMs > 0) {
+          await sleep(delayMs);
+        }
+
+        await ProxyHelper.disableConnectivity(env.engine, instanceName);
+
+        if (deployment === DatabaseEngineDeployment.RDS_MULTI_AZ_CLUSTER) {
+          await ProxyHelper.disableConnectivity(env.engine, clusterEndpoint);
+          await ProxyHelper.disableConnectivity(env.engine, clusterReadOnlyEndpoint);
+        }
+
+        await sleep(failureDurationMs);
+
+        await ProxyHelper.enableConnectivity(instanceName);
+        if (deployment === DatabaseEngineDeployment.RDS_MULTI_AZ_CLUSTER) {
+          await ProxyHelper.enableConnectivity(clusterEndpoint);
+          await ProxyHelper.enableConnectivity(clusterReadOnlyEndpoint);
+        }
+      } catch (e: any) {
+        logger.error(`Error during simulateTemporaryFailure: ${e.message}`);
+      }
+    })();
+
+    await sleep(500);
   }
 }

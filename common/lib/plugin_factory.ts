@@ -16,9 +16,10 @@
 
 import { PluginService } from "./plugin_service";
 import { ConnectionPlugin } from "./connection_plugin";
+import { FullServicesContainer } from "./utils/full_services_container";
 
 export class ConnectionPluginFactory {
-  getInstance(pluginService: PluginService, properties: Map<string, any>): Promise<ConnectionPlugin> {
+  getInstance(servicesContainer: FullServicesContainer, properties: Map<string, any>): Promise<ConnectionPlugin> {
     return;
   }
 }

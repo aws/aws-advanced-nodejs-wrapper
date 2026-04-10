@@ -40,6 +40,7 @@ import { MySQLClientWrapper } from "../../common/lib/mysql_client_wrapper";
 import { MySQL2DriverDialect } from "../../mysql/lib/dialect/mysql2_driver_dialect";
 import { DriverDialect } from "../../common/lib/driver_dialect/driver_dialect";
 import { Failover2Plugin } from "../../common/lib/plugins/failover2/failover2_plugin";
+import { FullServicesContainer } from "../../common/lib/utils/full_services_container";
 
 const builder = new HostInfoBuilder({ hostAvailabilityStrategy: new SimpleHostAvailabilityStrategy() });
 
@@ -57,7 +58,10 @@ const properties: Map<string, any> = new Map();
 let plugin: Failover2Plugin;
 
 function initializePlugin(mockPluginServiceInstance: PluginService): void {
-  plugin = new Failover2Plugin(mockPluginServiceInstance, properties, new RdsUtils());
+  const mockContainer = {
+    pluginService: mockPluginServiceInstance
+  } as unknown as FullServicesContainer;
+  plugin = new Failover2Plugin(mockContainer, properties, new RdsUtils());
 }
 
 describe("reader failover handler", () => {

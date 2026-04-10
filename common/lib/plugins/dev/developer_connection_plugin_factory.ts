@@ -15,21 +15,25 @@
 */
 
 import { ConnectionPluginFactory } from "../../plugin_factory";
-import { PluginService } from "../../plugin_service";
 import { ConnectionPlugin } from "../../connection_plugin";
 import { RdsUtils } from "../../utils/rds_utils";
 import { Messages } from "../../utils/messages";
 import { AwsWrapperError } from "../../utils/errors";
+import { FullServicesContainer } from "../../utils/full_services_container";
 
 export class DeveloperConnectionPluginFactory extends ConnectionPluginFactory {
   private static developerPlugin: any;
 
-  async getInstance(pluginService: PluginService, properties: Map<string, any>): Promise<ConnectionPlugin> {
+  async getInstance(servicesContainer: FullServicesContainer, properties: Map<string, any>): Promise<ConnectionPlugin> {
     try {
       if (!DeveloperConnectionPluginFactory.developerPlugin) {
         DeveloperConnectionPluginFactory.developerPlugin = await import("./developer_connection_plugin");
       }
-      return new DeveloperConnectionPluginFactory.developerPlugin.DeveloperConnectionPlugin(pluginService, properties, new RdsUtils());
+      return new DeveloperConnectionPluginFactory.developerPlugin.DeveloperConnectionPlugin(
+        servicesContainer.pluginService,
+        properties,
+        new RdsUtils()
+      );
     } catch (error: any) {
       throw new AwsWrapperError(Messages.get("ConnectionPluginChainBuilder.errorImportingPlugin", error.message, "DeveloperConnectionPlugin"));
     }

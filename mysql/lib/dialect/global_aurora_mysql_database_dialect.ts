@@ -1,23 +1,27 @@
 /*
- * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License").
- * You may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ 
+  Licensed under the Apache License, Version 2.0 (the "License").
+  You may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+ 
+  http://www.apache.org/licenses/LICENSE-2.0
+ 
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+*/
 
 import { AuroraMySQLDatabaseDialect } from "./aurora_mysql_database_dialect";
 import { GlobalAuroraTopologyDialect } from "../../../common/lib/database_dialect/topology_aware_database_dialect";
 import { ClientWrapper } from "../../../common/lib/client_wrapper";
 import { TopologyQueryResult } from "../../../common/lib/host_list_provider/topology_utils";
+import { FullServicesContainer } from "../../../common/lib/utils/full_services_container";
+import { HostListProvider } from "../../../common/lib/host_list_provider/host_list_provider";
+import { GlobalAuroraHostListProvider } from "../../../common/lib/host_list_provider/global_aurora_host_list_provider";
+import { GlobalTopologyUtils } from "../../../common/lib/host_list_provider/global_topology_utils";
 
 export class GlobalAuroraMySQLDatabaseDialect extends AuroraMySQLDatabaseDialect implements GlobalAuroraTopologyDialect {
   private static readonly GLOBAL_STATUS_TABLE_EXISTS_QUERY =
@@ -29,8 +33,8 @@ export class GlobalAuroraMySQLDatabaseDialect extends AuroraMySQLDatabaseDialect
     " upper(table_schema) = 'INFORMATION_SCHEMA' AND upper(table_name) = 'AURORA_GLOBAL_DB_INSTANCE_STATUS'";
 
   private static readonly GLOBAL_TOPOLOGY_QUERY =
-    "SELECT SERVER_ID, CASE WHEN SESSION_ID = 'MASTER_SESSION_ID' THEN TRUE ELSE FALSE END AS IS_WRITER, " +
-    "VISIBILITY_LAG_IN_MSEC, AWS_REGION " +
+    "SELECT server_id, CASE WHEN SESSION_ID = 'MASTER_SESSION_ID' THEN TRUE ELSE FALSE END AS is_writer, " +
+    "visibility_lag_in_msec, aws_region " +
     "FROM information_schema.aurora_global_db_instance_status";
 
   private static readonly REGION_COUNT_QUERY = "SELECT count(1) FROM information_schema.aurora_global_db_status";
@@ -68,7 +72,14 @@ export class GlobalAuroraMySQLDatabaseDialect extends AuroraMySQLDatabaseDialect
     return [];
   }
 
-  // TODO: implement GetHostListProvider once GDBHostListProvider is implemented
+  getHostListProvider(props: Map<string, any>, originalUrl: string, servicesContainer: FullServicesContainer): HostListProvider {
+    return new GlobalAuroraHostListProvider(
+      props,
+      originalUrl,
+      new GlobalTopologyUtils(this, servicesContainer.pluginService.getHostInfoBuilder()),
+      servicesContainer
+    );
+  }
 
   async queryForTopology(targetClient: ClientWrapper): Promise<TopologyQueryResult[]> {
     const res = await targetClient.query(GlobalAuroraMySQLDatabaseDialect.GLOBAL_TOPOLOGY_QUERY);

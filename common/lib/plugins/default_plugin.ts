@@ -30,15 +30,18 @@ import { HostAvailability } from "../host_availability/host_availability";
 import { ClientWrapper } from "../client_wrapper";
 import { TelemetryTraceLevel } from "../utils/telemetry/telemetry_trace_level";
 import { ConnectionInfo } from "../connection_info";
+import { FullServicesContainer } from "../utils/full_services_container";
 
 export class DefaultPlugin extends AbstractConnectionPlugin {
   id: string = uniqueId("_defaultPlugin");
+  private readonly servicesContainer: FullServicesContainer;
   private readonly pluginService: PluginService;
   private readonly connectionProviderManager: ConnectionProviderManager;
 
-  constructor(pluginService: PluginService, connectionProviderManager: ConnectionProviderManager) {
+  constructor(servicesContainer: FullServicesContainer, connectionProviderManager: ConnectionProviderManager) {
     super();
-    this.pluginService = pluginService;
+    this.servicesContainer = servicesContainer;
+    this.pluginService = servicesContainer.pluginService;
     this.connectionProviderManager = connectionProviderManager;
   }
 

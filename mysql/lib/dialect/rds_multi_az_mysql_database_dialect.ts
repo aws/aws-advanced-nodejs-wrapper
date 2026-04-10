@@ -15,7 +15,6 @@
 */
 
 import { MySQLDatabaseDialect } from "./mysql_database_dialect";
-import { HostListProviderService } from "../../../common/lib/host_list_provider_service";
 import { HostListProvider } from "../../../common/lib/host_list_provider/host_list_provider";
 import { ClientWrapper } from "../../../common/lib/client_wrapper";
 import { HostRole } from "../../../common/lib/host_role";
@@ -24,10 +23,9 @@ import { AwsWrapperError } from "../../../common/lib/utils/errors";
 import { TopologyAwareDatabaseDialect } from "../../../common/lib/database_dialect/topology_aware_database_dialect";
 import { RdsHostListProvider } from "../../../common/lib/host_list_provider/rds_host_list_provider";
 import { FailoverRestriction } from "../../../common/lib/plugins/failover/failover_restriction";
-import { WrapperProperties } from "../../../common/lib/wrapper_property";
-import { PluginService } from "../../../common/lib/plugin_service";
-import { MonitoringRdsHostListProvider } from "../../../common/lib/host_list_provider/monitoring/monitoring_host_list_provider";
-import { TopologyQueryResult, TopologyUtils } from "../../../common/lib/host_list_provider/topology_utils";
+import { TopologyQueryResult } from "../../../common/lib/host_list_provider/topology_utils";
+import { AuroraTopologyUtils } from "../../../common/lib/host_list_provider/aurora_topology_utils";
+import { FullServicesContainer } from "../../../common/lib/utils/full_services_container";
 
 export class RdsMultiAZClusterMySQLDatabaseDialect extends MySQLDatabaseDialect implements TopologyAwareDatabaseDialect {
   private static readonly TOPOLOGY_QUERY: string = "SELECT id, endpoint, port FROM mysql.rds_topology";
@@ -71,18 +69,9 @@ export class RdsMultiAZClusterMySQLDatabaseDialect extends MySQLDatabaseDialect 
       .catch(() => false);
   }
 
-  getHostListProvider(props: Map<string, any>, originalUrl: string, hostListProviderService: HostListProviderService): HostListProvider {
-    const topologyUtils: TopologyUtils = new TopologyUtils(this, hostListProviderService.getHostInfoBuilder());
-    if (WrapperProperties.PLUGINS.get(props).includes("failover2")) {
-      return new MonitoringRdsHostListProvider(
-        props,
-        originalUrl,
-        topologyUtils,
-        hostListProviderService,
-        <PluginService>(<unknown>hostListProviderService)
-      );
-    }
-    return new RdsHostListProvider(props, originalUrl, topologyUtils, hostListProviderService);
+  getHostListProvider(props: Map<string, any>, originalUrl: string, servicesContainer: FullServicesContainer): HostListProvider {
+    const topologyUtils = new AuroraTopologyUtils(this, servicesContainer.hostListProviderService.getHostInfoBuilder());
+    return new RdsHostListProvider(props, originalUrl, topologyUtils, servicesContainer);
   }
 
   async queryForTopology(targetClient: ClientWrapper): Promise<TopologyQueryResult[]> {

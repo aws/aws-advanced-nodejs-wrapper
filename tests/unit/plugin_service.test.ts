@@ -26,7 +26,7 @@ import { HostInfoBuilder } from "../../common/lib";
 import { PluginServiceImpl } from "../../common/lib/plugin_service";
 import { DatabaseDialectCodes } from "../../common/lib/database_dialect/database_dialect_codes";
 import { AwsClient } from "../../common/lib/aws_client";
-import { PluginServiceManagerContainer } from "../../common/lib/plugin_service_manager_container";
+import { FullServicesContainer, FullServicesContainerImpl } from "../../common/lib/utils/full_services_container";
 import { AllowedAndBlockedHosts } from "../../common/lib/allowed_and_blocked_hosts";
 import { DatabaseType } from "../../common/lib/database_dialect/database_dialect";
 
@@ -64,7 +64,7 @@ let pluginService: TestPluginService;
 describe("testCustomEndpoint", () => {
   beforeEach(() => {
     pluginService = new TestPluginService(
-      new PluginServiceManagerContainer(),
+      mock(FullServicesContainerImpl),
       mockAwsClient,
       DatabaseType.MYSQL,
       knownDialectsByCode,

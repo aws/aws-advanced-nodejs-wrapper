@@ -15,20 +15,20 @@
 */
 
 import { ConnectionPluginFactory } from "../plugin_factory";
-import { PluginService } from "../plugin_service";
 import { ConnectionPlugin } from "../connection_plugin";
 import { AwsWrapperError } from "../utils/errors";
 import { Messages } from "../utils/messages";
+import { FullServicesContainer } from "../utils/full_services_container";
 
 export class IamAuthenticationPluginFactory extends ConnectionPluginFactory {
   private static iamAuthenticationPlugin: any;
 
-  async getInstance(pluginService: PluginService, properties: object): Promise<ConnectionPlugin> {
+  async getInstance(servicesContainer: FullServicesContainer, properties: object): Promise<ConnectionPlugin> {
     try {
       if (!IamAuthenticationPluginFactory.iamAuthenticationPlugin) {
         IamAuthenticationPluginFactory.iamAuthenticationPlugin = await import("./iam_authentication_plugin");
       }
-      return new IamAuthenticationPluginFactory.iamAuthenticationPlugin.IamAuthenticationPlugin(pluginService);
+      return new IamAuthenticationPluginFactory.iamAuthenticationPlugin.IamAuthenticationPlugin(servicesContainer.pluginService);
     } catch (error: any) {
       throw new AwsWrapperError(Messages.get("ConnectionPluginChainBuilder.errorImportingPlugin", error.message, "IamAuthenticationPlugin"));
     }
