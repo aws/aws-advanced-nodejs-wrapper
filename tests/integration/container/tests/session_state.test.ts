@@ -119,7 +119,7 @@ describe("session state", () => {
           expect(autoCommit[0][0].autocommit).toEqual(1);
           expect(transactionIsolation[0][0].level).toEqual("REPEATABLE-READ");
 
-          await client.getPluginService().setCurrentClient(newClient.targetClient);
+          await client.pluginService.setCurrentClient(newClient.targetClient);
 
           expect(client.targetClient).not.toEqual(targetClient);
           expect(client.targetClient).toEqual(newTargetClient);
@@ -154,7 +154,7 @@ describe("session state", () => {
           expect(schema.rows[0]["search_path"]).not.toEqual("testSessionState");
           expect(transactionIsolation.rows[0]["transaction_isolation"]).toEqual("read committed");
 
-          await client.getPluginService().setCurrentClient(newClient.targetClient);
+          await client.pluginService.setCurrentClient(newClient.targetClient);
           expect(client.targetClient).not.toEqual(targetClient);
           expect(client.targetClient).toEqual(newTargetClient);
 

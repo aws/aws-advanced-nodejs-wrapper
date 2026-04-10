@@ -129,20 +129,18 @@ export class AwsSecretsManagerPlugin extends AbstractConnectionPlugin implements
       this.pluginService.updateConfigWithProperties(props);
       return await connectFunc();
     } catch (error) {
-      if (error instanceof Error) {
-        if ((error.message.includes("password authentication failed") || error.message.includes("Access denied")) && !secretWasFetched) {
-          // Login unsuccessful with cached credentials
-          // Try to re-fetch credentials and try again
+      if ((error.message.includes("password authentication failed") || error.message.includes("Access denied")) && !secretWasFetched) {
+        // Login unsuccessful with cached credentials
+        // Try to re-fetch credentials and try again
 
-          secretWasFetched = await this.updateSecret(true);
-          if (secretWasFetched) {
-            WrapperProperties.USER.set(props, this.secret?.username ?? "");
-            WrapperProperties.PASSWORD.set(props, this.secret?.password ?? "");
-            return await connectFunc();
-          }
+        secretWasFetched = await this.updateSecret(true);
+        if (secretWasFetched) {
+          WrapperProperties.USER.set(props, this.secret?.username ?? "");
+          WrapperProperties.PASSWORD.set(props, this.secret?.password ?? "");
+          return await connectFunc();
         }
-        logger.debug(Messages.get("AwsSecretsManagerConnectionPlugin.unhandledError", error.name, error.message));
       }
+      logger.debug(Messages.get("AwsSecretsManagerConnectionPlugin.unhandledError", error.name, error.message));
       throw error;
     }
   }

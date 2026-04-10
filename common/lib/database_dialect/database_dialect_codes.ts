@@ -15,11 +15,13 @@
 */
 
 export class DatabaseDialectCodes {
+  static readonly GLOBAL_AURORA_MYSQL: string = "global-aurora-mysql";
   static readonly AURORA_MYSQL: string = "aurora-mysql";
   static readonly RDS_MYSQL: string = "rds-mysql";
   static readonly MYSQL: string = "mysql";
   // https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/multi-az-db-clusters-concepts.html
   static readonly RDS_MULTI_AZ_MYSQL: string = "rds-multi-az-mysql";
+  static readonly GLOBAL_AURORA_PG: string = "global-aurora-pg";
   static readonly AURORA_PG: string = "aurora-pg";
   static readonly RDS_PG: string = "rds-pg";
   // https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/multi-az-db-clusters-concepts.html

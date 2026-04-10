@@ -17,7 +17,6 @@
 import { AwsClient } from "../../common/lib/aws_client";
 import { SimpleHostAvailabilityStrategy } from "../../common/lib/host_availability/simple_host_availability_strategy";
 import { HostInfoBuilder } from "../../common/lib/host_info_builder";
-import { RdsHostListProvider } from "../../common/lib/host_list_provider/rds_host_list_provider";
 import { PluginService, PluginServiceImpl } from "../../common/lib/plugin_service";
 import { FailoverMode } from "../../common/lib/plugins/failover/failover_mode";
 import { FailoverPlugin } from "../../common/lib/plugins/failover/failover_plugin";
@@ -44,6 +43,7 @@ import { MySQLClientWrapper } from "../../common/lib/mysql_client_wrapper";
 import { NullTelemetryFactory } from "../../common/lib/utils/telemetry/null_telemetry_factory";
 import { HostChangeOptions } from "../../common/lib/host_change_options";
 import { Messages } from "../../common/lib/utils/messages";
+import { RdsHostListProvider } from "../../common/lib/host_list_provider/rds_host_list_provider";
 
 const builder = new HostInfoBuilder({ hostAvailabilityStrategy: new SimpleHostAvailabilityStrategy() });
 

@@ -61,7 +61,7 @@ export class ReadWriteSplittingPlugin extends AbstractReadWriteSplittingPlugin {
     }
 
     const result = await connectFunc();
-    if (!isInitialConnection || this._hostListProviderService?.isStaticHostListProvider()) {
+    if (!isInitialConnection || !this._hostListProviderService?.isDynamicHostListProvider()) {
       return result;
     }
     const currentRole = this.pluginService.getCurrentHostInfo()?.role;

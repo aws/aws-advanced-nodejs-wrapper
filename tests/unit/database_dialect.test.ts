@@ -23,7 +23,6 @@ import { RdsPgDatabaseDialect } from "../../pg/lib/dialect/rds_pg_database_diale
 import { DatabaseDialect, DatabaseType } from "../../common/lib/database_dialect/database_dialect";
 import { DatabaseDialectCodes } from "../../common/lib/database_dialect/database_dialect_codes";
 import { PluginServiceImpl } from "../../common/lib/plugin_service";
-import { PluginServiceManagerContainer } from "../../common/lib/plugin_service_manager_container";
 import { AwsPGClient } from "../../pg/lib";
 import { WrapperProperties } from "../../common/lib/wrapper_property";
 import { HostInfoBuilder } from "../../common/lib/host_info_builder";
@@ -31,10 +30,18 @@ import { SimpleHostAvailabilityStrategy } from "../../common/lib/host_availabili
 import { ClientWrapper } from "../../common/lib/client_wrapper";
 import { RdsMultiAZClusterMySQLDatabaseDialect } from "../../mysql/lib/dialect/rds_multi_az_mysql_database_dialect";
 import { RdsMultiAZClusterPgDatabaseDialect } from "../../pg/lib/dialect/rds_multi_az_pg_database_dialect";
+import { GlobalAuroraMySQLDatabaseDialect } from "../../mysql/lib/dialect/global_aurora_mysql_database_dialect";
+import { GlobalAuroraPgDatabaseDialect } from "../../pg/lib/dialect/global_aurora_pg_database_dialect";
 import { DatabaseDialectManager } from "../../common/lib/database_dialect/database_dialect_manager";
 import { NodePostgresDriverDialect } from "../../pg/lib/dialect/node_postgres_driver_dialect";
 import { mock } from "ts-mockito";
 import { PgClientWrapper } from "../../common/lib/pg_client_wrapper";
+import { StorageService } from "../../common/lib/utils/storage/storage_service";
+import { ConnectionProvider } from "../../common/lib";
+import { TelemetryFactory } from "../../common/lib/utils/telemetry/telemetry_factory";
+import { MonitorService } from "../../common/lib/utils/monitoring/monitor_service";
+import { FullServicesContainerImpl } from "../../common/lib/utils/full_services_container";
+import { EventPublisher } from "../../common/lib/utils/events/event";
 
 const LOCALHOST = "localhost";
 const RDS_DATABASE = "database-1.xyz.us-east-2.rds.amazonaws.com";
@@ -44,14 +51,16 @@ const mysqlDialects: Map<DatabaseDialectCodes, DatabaseDialect> = new Map([
   [DatabaseDialectCodes.MYSQL, new MySQLDatabaseDialect()],
   [DatabaseDialectCodes.RDS_MYSQL, new RdsMySQLDatabaseDialect()],
   [DatabaseDialectCodes.AURORA_MYSQL, new AuroraMySQLDatabaseDialect()],
-  [DatabaseDialectCodes.RDS_MULTI_AZ_MYSQL, new RdsMultiAZClusterMySQLDatabaseDialect()]
+  [DatabaseDialectCodes.RDS_MULTI_AZ_MYSQL, new RdsMultiAZClusterMySQLDatabaseDialect()],
+  [DatabaseDialectCodes.GLOBAL_AURORA_MYSQL, new GlobalAuroraMySQLDatabaseDialect()]
 ]);
 
 const pgDialects: Map<DatabaseDialectCodes, DatabaseDialect> = new Map([
   [DatabaseDialectCodes.PG, new PgDatabaseDialect()],
   [DatabaseDialectCodes.RDS_PG, new RdsPgDatabaseDialect()],
   [DatabaseDialectCodes.AURORA_PG, new AuroraPgDatabaseDialect()],
-  [DatabaseDialectCodes.RDS_MULTI_AZ_PG, new RdsMultiAZClusterPgDatabaseDialect()]
+  [DatabaseDialectCodes.RDS_MULTI_AZ_PG, new RdsMultiAZClusterPgDatabaseDialect()],
+  [DatabaseDialectCodes.GLOBAL_AURORA_PG, new GlobalAuroraPgDatabaseDialect()]
 ]);
 
 const MYSQL_QUERY = "SHOW VARIABLES LIKE 'version_comment'";
@@ -180,7 +189,13 @@ const expectedDialectMapping: Map<DatabaseDialectCodes, DialectInputOutput> = ne
   ]
 ]);
 
-const pluginServiceManagerContainer = new PluginServiceManagerContainer();
+const fullServicesContainer = new FullServicesContainerImpl(
+  mock<StorageService>(),
+  mock<MonitorService>(),
+  mock<EventPublisher>(),
+  mock<ConnectionProvider>(),
+  mock<TelemetryFactory>()
+);
 const mockClient = new AwsPGClient({});
 const mockDriverDialect = mock(NodePostgresDriverDialect);
 
@@ -275,14 +290,9 @@ describe("test database dialects", () => {
     }).build();
 
     const mockClientWrapper: ClientWrapper = new PgClientWrapper(mockTargetClient, currentHostInfo, new Map<string, any>());
-    const pluginService = new PluginServiceImpl(
-      pluginServiceManagerContainer,
-      mockClient,
-      databaseType,
-      expectedDialect!.dialects,
-      props,
-      mockDriverDialect
-    );
+    const pluginService = new PluginServiceImpl(fullServicesContainer, mockClient, databaseType, expectedDialect!.dialects, props, mockDriverDialect);
+    fullServicesContainer.hostListProviderService = pluginService;
+    fullServicesContainer.pluginService = pluginService;
     await pluginService.updateDialect(mockClientWrapper);
     expect(pluginService.getDialect()).toBe(expectedDialectClass);
   });

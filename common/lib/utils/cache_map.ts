@@ -17,7 +17,7 @@
 import { getTimeInNanos } from "./utils";
 
 export class CacheItem<V> {
-  private readonly item: V;
+  readonly item: V;
   private _expirationTimeNs: bigint;
 
   constructor(item: V, expirationTime: bigint) {

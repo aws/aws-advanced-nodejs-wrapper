@@ -25,6 +25,7 @@ import { FailoverRestriction } from "../../../common/lib/plugins/failover/failov
 import { ErrorHandler } from "../../../common/lib/error_handler";
 import { PgErrorHandler } from "../pg_error_handler";
 import { Messages } from "../../../common/lib/utils/messages";
+import { FullServicesContainer } from "../../../common/lib/utils/full_services_container";
 
 export class PgDatabaseDialect implements DatabaseDialect {
   protected dialectName: string = this.constructor.name;
@@ -105,8 +106,8 @@ export class PgDatabaseDialect implements DatabaseDialect {
       });
   }
 
-  getHostListProvider(props: Map<string, any>, originalUrl: string, hostListProviderService: HostListProviderService): HostListProvider {
-    return new ConnectionStringHostListProvider(props, originalUrl, this.getDefaultPort(), hostListProviderService);
+  getHostListProvider(props: Map<string, any>, originalUrl: string, servicesContainer: FullServicesContainer): HostListProvider {
+    return new ConnectionStringHostListProvider(props, originalUrl, this.getDefaultPort(), servicesContainer.hostListProviderService);
   }
 
   getErrorHandler(): ErrorHandler {

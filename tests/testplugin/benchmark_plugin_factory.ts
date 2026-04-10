@@ -14,13 +14,14 @@
   limitations under the License.
 */
 
-import { ConnectionPlugin, PluginService, AwsWrapperError } from "../../index";
+import { ConnectionPlugin, AwsWrapperError } from "../../index";
 import { Messages } from "../../common/lib/utils/messages";
 import { BenchmarkPlugin } from "./benchmark_plugin";
 import { ConnectionPluginFactory } from "../../common/lib/plugin_factory";
+import { FullServicesContainer } from "../../common/lib/utils/full_services_container";
 
 export class BenchmarkPluginFactory extends ConnectionPluginFactory {
-  async getInstance(pluginService: PluginService, properties: object): Promise<ConnectionPlugin> {
+  async getInstance(servicesContainer: FullServicesContainer, properties: object): Promise<ConnectionPlugin> {
     try {
       return new BenchmarkPlugin();
     } catch (error: any) {

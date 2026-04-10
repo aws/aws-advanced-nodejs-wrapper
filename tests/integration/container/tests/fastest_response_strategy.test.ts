@@ -89,8 +89,7 @@ describe("aurora fastest response strategy", () => {
     await TestEnvironment.verifyAllInstancesHasRightState("available");
     await TestEnvironment.verifyAllInstancesUp();
 
-    RdsHostListProvider.clearAll();
-    PluginServiceImpl.clearHostAvailabilityCache();
+    await PluginManager.releaseResources();
   }, 1320000);
 
   afterEach(async () => {
