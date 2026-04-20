@@ -2,7 +2,7 @@
 The AWS Advanced NodeJS Wrapper uses the GDB Failover Plugin to provide minimal downtime in the event of a DB instance failure. The plugin is based on [Failover Plugin v2](./UsingTheFailover2Plugin.md) and unless explicitly stated otherwise, most of the information and suggestions for the [Failover Plugin](./UsingTheFailoverPlugin.md) and [Failover Plugin v2](./UsingTheFailover2Plugin.md) are applicable to the GDB Failover Plugin.
 
 ## Plugin Availability
-The plugin is available since version 3.2.0.
+The plugin is available since version 3.0.0.
 
 ## Differences between the GDB Failover Plugin and the Failover Plugin v2
 
@@ -35,7 +35,7 @@ The GDB Failover Plugin will not be enabled by default if the [`plugins`](../Usi
 Please refer to the [failover configuration guide](../FailoverConfigurationGuide.md) for tips to keep in mind when using the failover plugin.
 
 > [!WARNING]
-> Do not use the `gdbFailover`, `failover` and/or `failover2` plugins (or their combination) at the same time for the same connection!
+> Do not use the `gdbFailover`, `failover` and/or `failover2` plugins in any combination at the same time for the same connection!
 
 Verify plugin compatibility within your driver configuration using the [compatibility guide](../Compatibility.md).
 

@@ -7,7 +7,7 @@ The GDB Read/Write Splitting plugin adds the notion of a home region and allows 
 Unless otherwise stated, all recommendations, configurations and code examples made for the [read/write splitting plugin](./UsingTheReadWriteSplittingPlugin.md) are applicable to the current GDB Read/Write Splitting plugin.
 
 ## Plugin Availability
-The plugin is available since version 2.1.0.
+The plugin is available since version 3.0.0.
 
 ## Loading the Global Database Read/Write Splitting Plugin
 
@@ -38,13 +38,11 @@ const params = {
 ```
 
 > [!WARNING]
-> Do not use the `readWriteSplitting` and `gdbReadWriteSplitting` plugins (or their combination) at the same time for the same connection!
+> Do not use the `readWriteSplitting` and `gdbReadWriteSplitting` plugins at the same time for the same connection!
 
 ## Using the GDB Read/Write Splitting Plugin against non-GDB clusters
 
-The GDB read/write splitting plugin can be used against Aurora clusters and RDS clusters. However, since these cluster types are single-region clusters, setting a home region does not make much sense. 
-
-Verify plugin compatibility within your driver configuration using the [compatibility guide](../Compatibility.md).
+The GDB Read/Write Splitting plugin can be used against Aurora clusters and RDS clusters. However, since these cluster types are single-region clusters, setting a home region does not make much sense. In these cases, use the original [Read/Write Splitting](./UsingTheReadWriteSplittingPlugin.md) plugin instead.
 
 ## Configuration Parameters
 
