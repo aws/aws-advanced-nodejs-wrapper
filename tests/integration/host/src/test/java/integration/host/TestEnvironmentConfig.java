@@ -13,6 +13,7 @@ import software.amazon.awssdk.services.rds.model.BlueGreenDeployment;
 import software.amazon.awssdk.services.rds.model.DBCluster;
 import software.amazon.awssdk.services.rds.model.DBInstance;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.UnknownHostException;
@@ -1072,6 +1073,9 @@ public class TestEnvironmentConfig implements AutoCloseable {
           .withEnv("AWS_SECRET_ACCESS_KEY", env.awsSecretAccessKey)
           .withEnv("AWS_SESSION_TOKEN", env.awsSessionToken);
     }
+
+    // Ensure the reports directory exists before mounting it into the container.
+    new File("../../../tests/integration/container/reports").mkdirs();
 
     env.testContainer.start();
   }

@@ -15,6 +15,7 @@
 */
 
 import { CustomConsole, LogMessage, LogType } from "@jest/console";
+import { TestEnvironment } from "./utils/test_environment";
 
 function simpleFormatter(type: LogType, message: LogMessage): string {
   return message
@@ -34,3 +35,7 @@ const testInfo = JSON.parse(infoJson);
 const request = testInfo.request;
 export const features = request.features;
 export const instanceCount = request.numOfInstances;
+
+afterAll(async () => {
+  await TestEnvironment.shutdownTelemetry();
+});

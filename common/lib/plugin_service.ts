@@ -281,7 +281,28 @@ export class PluginServiceImpl implements PluginService, HostListProviderService
     return this.dialect;
   }
 
+  private static readonly DIALECT_CONFIRMED_STATUS_KEY = "DialectConfirmed";
+
+  private getDialectConfirmedCacheKey(): string {
+    let clusterId = WrapperProperties.CLUSTER_ID.defaultValue;
+    try {
+      clusterId = this._hostListProvider?.getClusterId() ?? WrapperProperties.CLUSTER_ID.defaultValue;
+    } catch (e) {
+      // May fail if the host list provider does not support getClusterId. In this case use the default value.
+    }
+    return `${clusterId}::${PluginServiceImpl.DIALECT_CONFIRMED_STATUS_KEY}`;
+  }
+
   isDialectConfirmed(): boolean {
+    if (this._isDialectConfirmed) {
+      return true;
+    }
+
+    const cacheItem = this.storageService.get(StatusCacheItem, this.getDialectConfirmedCacheKey());
+    if (cacheItem && cacheItem.status === true) {
+      this._isDialectConfirmed = true;
+    }
+
     return this._isDialectConfirmed;
   }
 
@@ -634,6 +655,8 @@ export class PluginServiceImpl implements PluginService, HostListProviderService
     this.dialect = await this.dbDialectProvider.getDialectForUpdate(targetClient, this.initialHost, this.props.get(WrapperProperties.HOST.name));
 
     this._isDialectConfirmed = true;
+    this.storageService.set(this.getDialectConfirmedCacheKey(), new StatusCacheItem(true));
+
     if (originalDialect === this.dialect) {
       return;
     }

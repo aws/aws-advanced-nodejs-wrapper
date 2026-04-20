@@ -43,6 +43,7 @@ import { ClientWrapper } from "../../client_wrapper";
 import { getWriter, logTopology } from "../../utils/utils";
 import { TelemetryCounter } from "../../utils/telemetry/telemetry_counter";
 import { TelemetryTraceLevel } from "../../utils/telemetry/telemetry_trace_level";
+import { FullServicesContainer } from "../../utils/full_services_container";
 
 export class FailoverPlugin extends AbstractConnectionPlugin {
   private static readonly TELEMETRY_WRITER_FAILOVER = "failover to writer instance";
@@ -79,18 +80,19 @@ export class FailoverPlugin extends AbstractConnectionPlugin {
 
   private hostListProviderService?: HostListProviderService;
   private readonly pluginService: PluginService;
+  private readonly servicesContainer: FullServicesContainer;
   protected enableFailoverSetting: boolean = WrapperProperties.ENABLE_CLUSTER_AWARE_FAILOVER.defaultValue;
 
-  constructor(pluginService: PluginService, properties: Map<string, any>, rdsHelper: RdsUtils);
+  constructor(servicesContainer: FullServicesContainer, properties: Map<string, any>, rdsHelper: RdsUtils);
   constructor(
-    pluginService: PluginService,
+    servicesContainer: FullServicesContainer,
     properties: Map<string, any>,
     rdsHelper: RdsUtils,
     readerFailoverHandler: ClusterAwareReaderFailoverHandler,
     writerFailoverHandler: ClusterAwareWriterFailoverHandler
   );
   constructor(
-    pluginService: PluginService,
+    servicesContainer: FullServicesContainer,
     properties: Map<string, any>,
     rdsHelper: RdsUtils,
     readerFailoverHandler?: ClusterAwareReaderFailoverHandler,
@@ -98,7 +100,8 @@ export class FailoverPlugin extends AbstractConnectionPlugin {
   ) {
     super();
     this._properties = properties;
-    this.pluginService = pluginService;
+    this.pluginService = servicesContainer.pluginService;
+    this.servicesContainer = servicesContainer;
     this._rdsHelper = rdsHelper;
 
     this.initSettings();
@@ -106,7 +109,7 @@ export class FailoverPlugin extends AbstractConnectionPlugin {
     this._readerFailoverHandler = readerFailoverHandler
       ? readerFailoverHandler
       : new ClusterAwareReaderFailoverHandler(
-          pluginService,
+          this.pluginService,
           properties,
           this.failoverTimeoutMsSetting,
           this.failoverReaderConnectTimeoutMsSetting,
@@ -115,7 +118,8 @@ export class FailoverPlugin extends AbstractConnectionPlugin {
     this._writerFailoverHandler = writerFailoverHandler
       ? writerFailoverHandler
       : new ClusterAwareWriterFailoverHandler(
-          pluginService,
+          this.pluginService,
+          this.servicesContainer,
           this._readerFailoverHandler,
           properties,
           this.failoverTimeoutMsSetting,

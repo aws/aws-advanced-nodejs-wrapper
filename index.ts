@@ -44,7 +44,7 @@ export type { ConnectionProvider } from "./common/lib/connection_provider";
 export type { HostSelector } from "./common/lib/host_selector";
 export type { DatabaseDialect } from "./common/lib/database_dialect/database_dialect";
 export type { PluginService } from "./common/lib/plugin_service";
-export type { HostListProvider, BlockingHostListProvider } from "./common/lib/host_list_provider/host_list_provider";
+export type { HostListProvider } from "./common/lib/host_list_provider/host_list_provider";
 export type { ErrorHandler } from "./common/lib/error_handler";
 export type { SessionStateService } from "./common/lib/session_state_service";
 export type { DriverDialect } from "./common/lib/driver_dialect/driver_dialect";
