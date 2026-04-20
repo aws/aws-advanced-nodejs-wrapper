@@ -44,6 +44,7 @@ import { NullTelemetryFactory } from "../../common/lib/utils/telemetry/null_tele
 import { HostChangeOptions } from "../../common/lib/host_change_options";
 import { Messages } from "../../common/lib/utils/messages";
 import { RdsHostListProvider } from "../../common/lib/host_list_provider/rds_host_list_provider";
+import { FullServicesContainer } from "../../common/lib/utils/full_services_container";
 
 const builder = new HostInfoBuilder({ hostAvailabilityStrategy: new SimpleHostAvailabilityStrategy() });
 
@@ -61,6 +62,9 @@ const mockWriterResult: WriterFailoverResult = mock(WriterFailoverResult);
 
 const mockClientWrapper = new MySQLClientWrapper(undefined, mockHostInfo, new Map<string, any>(), new MySQL2DriverDialect());
 
+const mockServicesContainer: FullServicesContainer = mock<FullServicesContainer>();
+const mockServicesContainerInstance = instance(mockServicesContainer);
+
 const properties: Map<string, any> = new Map();
 
 let plugin: FailoverPlugin;
@@ -76,10 +80,11 @@ function initializePlugin(
   readerFailoverHandler?: ClusterAwareReaderFailoverHandler,
   writerFailoverHandler?: ClusterAwareWriterFailoverHandler
 ): void {
+  when(mockServicesContainer.pluginService).thenReturn(mockPluginServiceInstance);
   plugin =
     readerFailoverHandler && writerFailoverHandler
-      ? new FailoverPlugin(mockPluginServiceInstance, properties, new RdsUtils(), readerFailoverHandler, writerFailoverHandler)
-      : new FailoverPlugin(mockPluginServiceInstance, properties, new RdsUtils());
+      ? new FailoverPlugin(mockServicesContainerInstance, properties, new RdsUtils(), readerFailoverHandler, writerFailoverHandler)
+      : new FailoverPlugin(mockServicesContainerInstance, properties, new RdsUtils());
 }
 
 describe("reader failover handler", () => {

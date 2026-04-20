@@ -27,9 +27,10 @@ import { IamAuthenticationPlugin } from "../../authentication/iam_authentication
 import { BlueGreenRole } from "./blue_green_role";
 import { ExecuteRouting, RoutingResultHolder } from "./routing/execute_routing";
 import { CanReleaseResources } from "../../can_release_resources";
+import { FullServicesContainer } from "../../utils/full_services_container";
 
 export interface BlueGreenProviderSupplier {
-  create(pluginService: PluginService, props: Map<string, any>, bgdId: string): BlueGreenStatusProvider;
+  create(servicesContainer: FullServicesContainer, props: Map<string, any>, bgdId: string): BlueGreenStatusProvider;
 }
 
 export class BlueGreenPlugin extends AbstractConnectionPlugin implements CanReleaseResources {
@@ -42,6 +43,7 @@ export class BlueGreenPlugin extends AbstractConnectionPlugin implements CanRele
 
   private static readonly CLOSED_METHOD_NAMES: Set<string> = new Set(["end", "abort"]);
   protected readonly pluginService: PluginService;
+  protected readonly servicesContainer: FullServicesContainer;
   protected readonly properties: Map<string, any>;
   protected bgProviderSupplier: BlueGreenProviderSupplier;
   protected bgStatus: BlueGreenStatus = null;
@@ -53,18 +55,19 @@ export class BlueGreenPlugin extends AbstractConnectionPlugin implements CanRele
   protected endTimeNano: bigint = BigInt(0);
   private static provider: Map<string, BlueGreenStatusProvider> = new Map();
 
-  constructor(pluginService: PluginService, properties: Map<string, any>, bgProviderSupplier: BlueGreenProviderSupplier = null) {
+  constructor(servicesContainer: FullServicesContainer, properties: Map<string, any>, bgProviderSupplier: BlueGreenProviderSupplier = null) {
     super();
     if (!bgProviderSupplier) {
       bgProviderSupplier = {
-        create: (pluginService: PluginService, props: Map<string, any>, bgdId: string): BlueGreenStatusProvider => {
-          return new BlueGreenStatusProvider(pluginService, props, bgdId);
+        create: (servicesContainer: FullServicesContainer, props: Map<string, any>, bgdId: string): BlueGreenStatusProvider => {
+          return new BlueGreenStatusProvider(servicesContainer, props, bgdId);
         }
       };
     }
 
     this.properties = properties;
-    this.pluginService = pluginService;
+    this.servicesContainer = servicesContainer;
+    this.pluginService = servicesContainer.pluginService;
     this.bgProviderSupplier = bgProviderSupplier;
     this.bgdId = WrapperProperties.BGD_ID.get(this.properties).trim().toLowerCase();
   }
@@ -215,7 +218,7 @@ export class BlueGreenPlugin extends AbstractConnectionPlugin implements CanRele
   private initProvider() {
     const provider = BlueGreenPlugin.provider.get(this.bgdId);
     if (!provider) {
-      const provider = this.bgProviderSupplier.create(this.pluginService, this.properties, this.bgdId);
+      const provider = this.bgProviderSupplier.create(this.servicesContainer, this.properties, this.bgdId);
       BlueGreenPlugin.provider.set(this.bgdId, provider);
     }
   }

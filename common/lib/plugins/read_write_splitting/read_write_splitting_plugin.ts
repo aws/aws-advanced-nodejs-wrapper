@@ -64,7 +64,7 @@ export class ReadWriteSplittingPlugin extends AbstractReadWriteSplittingPlugin {
     if (!isInitialConnection || !this._hostListProviderService?.isDynamicHostListProvider()) {
       return result;
     }
-    const currentRole = this.pluginService.getCurrentHostInfo()?.role;
+    const currentRole = await this.pluginService.getHostRole(result);
 
     if (currentRole == HostRole.UNKNOWN) {
       logAndThrowError(Messages.get("ReadWriteSplittingPlugin.errorVerifyingInitialHostRole"));
@@ -181,7 +181,7 @@ export class ReadWriteSplittingPlugin extends AbstractReadWriteSplittingPlugin {
     }
   }
 
-  protected getReaderHostCandidates(): HostInfo[] | undefined {
+  protected getReaderHostCandidates(): HostInfo[] {
     return this.pluginService.getHosts();
   }
 }

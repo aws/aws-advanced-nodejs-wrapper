@@ -405,6 +405,7 @@ describe("reader write splitting test", () => {
 
     when(mockPluginService.getCurrentHostInfo()).thenReturn(writerHostUnknownRole);
     when(mockPluginService.acceptsStrategy(anything(), anything())).thenReturn(true);
+    when(mockPluginService.getHostRole(anything())).thenResolve(HostRole.UNKNOWN);
     when(mockHostListProviderService.isDynamicHostListProvider()).thenReturn(true);
 
     const target = new TestReadWriteSplitting(

@@ -156,6 +156,12 @@ describe("pg pool integration tests", () => {
 
       itIfPGTwoInstances("failover writer during multi-statement transaction", async () => {
         client = await factory();
+        try {
+          await client.query("DROP TABLE IF EXISTS test_table");
+        } catch {
+          // Ignore
+        }
+
         const initialWriterId = await auroraTestUtility.queryInstanceId(client);
         expect(await auroraTestUtility.isDbInstanceWriter(initialWriterId)).toStrictEqual(true);
 

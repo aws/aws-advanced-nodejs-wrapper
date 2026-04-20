@@ -15,80 +15,65 @@
 */
 
 import { HostInfo } from "../../../host_info";
-import { PluginService } from "../../../plugin_service";
-import { TelemetryFactory } from "../../../utils/telemetry/telemetry_factory";
-import { SlidingExpirationCache } from "../../../utils/sliding_expiration_cache";
-import { HostResponseTimeMonitor } from "./host_response_time_monitor";
+import { HostResponseTimeMonitor, ResponseTimeHolder } from "./host_response_time_monitor";
+import { FullServicesContainer } from "../../../utils/full_services_container";
+import { MonitorErrorResponse } from "../../../utils/monitoring/monitor";
 
 export interface HostResponseTimeService {
-  /**
-   * Return a response time in milliseconds to the host.
-   * Return Number.MAX_SAFE_INTEGER if response time is not available.
-   *
-   * @param hostInfo the host details
-   * @return response time in milliseconds for a desired host.
-   */
   getResponseTime(hostInfo: HostInfo): number;
-
-  /**
-   * Provides an updated host list to a service.
-   */
   setHosts(hosts: HostInfo[]): void;
 }
 
 export class HostResponseTimeServiceImpl implements HostResponseTimeService {
-  static readonly CACHE_EXPIRATION_NANOS: bigint = BigInt(10 * 60_000_000_000); // 10 minutes
-  static readonly CACHE_CLEANUP_NANOS: bigint = BigInt(60_000_000_000); // 1 minute
+  private static readonly MONITOR_DISPOSAL_TIME_NANOS: bigint = BigInt(10 * 60_000_000_000); // 10 minutes
+  private static readonly INACTIVE_TIMEOUT_NANOS: bigint = BigInt(3 * 60_000_000_000); // 3 minutes
 
-  private readonly pluginService: PluginService;
-  readonly properties: Map<string, string>;
-  readonly intervalMs: number;
-  protected hosts: HostInfo[];
-  private readonly telemetryFactory: TelemetryFactory;
-  protected static monitoringHosts: SlidingExpirationCache<string, HostResponseTimeMonitor> = new SlidingExpirationCache(
-    HostResponseTimeServiceImpl.CACHE_CLEANUP_NANOS,
-    undefined,
-    async (monitor: HostResponseTimeMonitor) => {
-      {
-        try {
-          await monitor.close();
-        } catch (error) {
-          // ignore
-        }
-      }
-    }
-  );
+  private readonly servicesContainer: FullServicesContainer;
+  private readonly properties: Map<string, any>;
+  private readonly intervalMs: number;
+  private hosts: HostInfo[] = [];
 
-  constructor(pluginService: PluginService, properties: Map<string, any>, intervalMs: number) {
-    this.pluginService = pluginService;
+  constructor(servicesContainer: FullServicesContainer, properties: Map<string, any>, intervalMs: number) {
+    this.servicesContainer = servicesContainer;
     this.properties = properties;
     this.intervalMs = intervalMs;
-    this.telemetryFactory = this.pluginService.getTelemetryFactory();
-    HostResponseTimeServiceImpl.monitoringHosts.cleanupIntervalNs = BigInt(intervalMs) ?? HostResponseTimeServiceImpl.CACHE_CLEANUP_NANOS;
-    this.telemetryFactory.createGauge("frt.hosts.count", () => HostResponseTimeServiceImpl.monitoringHosts.size);
+
+    this.servicesContainer.storageService.registerItemClassIfAbsent(
+      ResponseTimeHolder,
+      true,
+      HostResponseTimeServiceImpl.MONITOR_DISPOSAL_TIME_NANOS,
+      null,
+      null
+    );
+
+    this.servicesContainer.monitorService.registerMonitorTypeIfAbsent(
+      HostResponseTimeMonitor,
+      HostResponseTimeServiceImpl.MONITOR_DISPOSAL_TIME_NANOS,
+      HostResponseTimeServiceImpl.INACTIVE_TIMEOUT_NANOS,
+      new Set([MonitorErrorResponse.RECREATE]),
+      ResponseTimeHolder
+    );
   }
 
   getResponseTime(hostInfo: HostInfo): number {
-    const monitor: HostResponseTimeMonitor = HostResponseTimeServiceImpl.monitoringHosts.get(
-      hostInfo.url,
-      HostResponseTimeServiceImpl.CACHE_EXPIRATION_NANOS
-    );
-    if (!monitor) {
-      return Number.MAX_SAFE_INTEGER;
-    }
-    return monitor.getResponseTime();
+    const holder: ResponseTimeHolder | null = this.servicesContainer.storageService.get(ResponseTimeHolder, hostInfo.url);
+    return holder === null ? Number.MAX_SAFE_INTEGER : holder.getResponseTime();
   }
 
   setHosts(hosts: HostInfo[]): void {
-    const oldHostMap: string[] = hosts.flatMap((host) => host.url);
+    const oldHostUrls: Set<string> = new Set(this.hosts.map((host) => host.url));
+    this.hosts = hosts;
+
+    const servicesContainer = this.servicesContainer;
+    const properties = this.properties;
+    const intervalMs = this.intervalMs;
+
     hosts
-      .filter((hostInfo: HostInfo) => !(hostInfo.url in oldHostMap))
-      .forEach((hostInfo: HostInfo) => {
-        HostResponseTimeServiceImpl.monitoringHosts.computeIfAbsent(
-          hostInfo.url,
-          (key) => new HostResponseTimeMonitor(this.pluginService, hostInfo, this.properties, this.intervalMs),
-          HostResponseTimeServiceImpl.CACHE_EXPIRATION_NANOS
-        );
+      .filter((hostInfo) => !oldHostUrls.has(hostInfo.url))
+      .forEach((hostInfo) => {
+        servicesContainer.monitorService.runIfAbsent(HostResponseTimeMonitor, hostInfo.url, servicesContainer, properties, {
+          createMonitor: (sc: FullServicesContainer) => new HostResponseTimeMonitor(sc, hostInfo, properties, intervalMs)
+        });
       });
   }
 }
