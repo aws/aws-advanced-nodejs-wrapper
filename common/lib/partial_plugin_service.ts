@@ -264,7 +264,7 @@ export class PartialPluginService implements PluginService, HostListProviderServ
   }
 
   isDialectConfirmed(): boolean {
-    throw new AwsWrapperError(Messages.get("PartialPluginService.unexpectedMethodCall", "isDialectConfirmed"));
+    return true;
   }
 
   setInTransaction(inTransaction: boolean): void {

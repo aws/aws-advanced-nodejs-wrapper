@@ -28,6 +28,10 @@ import { PgDatabaseDialect } from "../../pg/lib/dialect/pg_database_dialect";
 import { MySQLClientWrapper } from "../../common/lib/mysql_client_wrapper";
 import { DriverDialect } from "../../common/lib/driver_dialect/driver_dialect";
 import { MySQL2DriverDialect } from "../../mysql/lib/dialect/mysql2_driver_dialect";
+import { FullServicesContainer } from "../../common/lib/utils/full_services_container";
+import { PluginManager } from "../../common/lib/plugin_manager";
+import { ServiceUtils } from "../../common/lib/utils/service_utils";
+import { HostListProviderService } from "../../common/lib/host_list_provider_service";
 
 const builder = new HostInfoBuilder({ hostAvailabilityStrategy: new SimpleHostAvailabilityStrategy() });
 
@@ -45,6 +49,7 @@ const mockClientInstance = instance(mockClient);
 const mockPluginService = mock(PluginServiceImpl);
 const mockReaderFailover = mock(ClusterAwareReaderFailoverHandler);
 const mockDriverDialect: DriverDialect = mock(MySQL2DriverDialect);
+const mockPluginManager = mock(PluginManager);
 
 const mockTargetClient = { client: 123 };
 const mockClientWrapper: ClientWrapper = new MySQLClientWrapper(
@@ -62,7 +67,23 @@ const mockClientWrapperB: ClientWrapper = new MySQLClientWrapper(
   mockDriverDialect
 );
 
+const mockServicesContainer = {
+  pluginService: null as any,
+  storageService: null as any,
+  monitorService: null as any,
+  eventPublisher: null as any,
+  defaultConnectionProvider: null as any,
+  telemetryFactory: null as any,
+  pluginManager: null as any,
+  hostListProviderService: null as any,
+  importantEventService: null as any
+} as FullServicesContainer;
+
 describe("writer failover handler", () => {
+  const originalServiceUtils = ServiceUtils.instance;
+  const mockServiceUtils = mock(ServiceUtils);
+  const mockHostListProviderService = mock<HostListProviderService>();
+
   beforeEach(() => {
     writer.addAlias("writer-host");
     newWriterHost.addAlias("new-writer-host");
@@ -70,11 +91,30 @@ describe("writer failover handler", () => {
     readerB.addAlias("reader-b-host");
 
     when(mockPluginService.getDialect()).thenReturn(new PgDatabaseDialect());
+
+    // Mock ServiceUtils.createMinimalServiceContainerFrom to return a container
+    // that uses the same mock plugin service for both TaskA and TaskB.
+    const mockPluginManagerInstance = instance(mockPluginManager);
+    when(mockPluginManager.init()).thenResolve();
+    when(mockServiceUtils.createMinimalServiceContainerFrom(anything(), anything())).thenReturn({
+      pluginService: instance(mockPluginService),
+      pluginManager: mockPluginManagerInstance,
+      hostListProviderService: instance(mockHostListProviderService)
+    } as unknown as FullServicesContainer);
+
+    // Replace the singleton instance with the mock.
+    Object.defineProperty(ServiceUtils, "instance", { get: () => instance(mockServiceUtils) });
   });
 
   afterEach(() => {
     reset(mockPluginService);
     reset(mockReaderFailover);
+    reset(mockPluginManager);
+    reset(mockServiceUtils);
+    reset(mockHostListProviderService);
+
+    // Restore the original singleton instance.
+    Object.defineProperty(ServiceUtils, "instance", { get: () => originalServiceUtils });
   });
 
   it("test reconnect to writer - task B reader error", async () => {
@@ -86,7 +126,15 @@ describe("writer failover handler", () => {
     const mockReaderFailoverInstance = instance(mockReaderFailover);
     const mockPluginServiceInstance = instance(mockPluginService);
 
-    const target = new ClusterAwareWriterFailoverHandler(mockPluginServiceInstance, mockReaderFailoverInstance, properties, 5000, 2000, 2000);
+    const target = new ClusterAwareWriterFailoverHandler(
+      mockPluginServiceInstance,
+      mockServicesContainer,
+      mockReaderFailoverInstance,
+      properties,
+      5000,
+      2000,
+      2000
+    );
     const result = await target.failover(topology);
 
     expect(result.isConnected).toBe(true);
@@ -111,7 +159,15 @@ describe("writer failover handler", () => {
     const mockReaderFailoverInstance = instance(mockReaderFailover);
     const mockPluginServiceInstance = instance(mockPluginService);
 
-    const target = new ClusterAwareWriterFailoverHandler(mockPluginServiceInstance, mockReaderFailoverInstance, properties, 60000, 5000, 5000);
+    const target = new ClusterAwareWriterFailoverHandler(
+      mockPluginServiceInstance,
+      mockServicesContainer,
+      mockReaderFailoverInstance,
+      properties,
+      60000,
+      5000,
+      5000
+    );
     const result = await target.failover(topology);
 
     expect(result.isConnected).toBe(true);
@@ -138,7 +194,15 @@ describe("writer failover handler", () => {
     const mockReaderFailoverInstance = instance(mockReaderFailover);
     const mockPluginServiceInstance = instance(mockPluginService);
 
-    const target = new ClusterAwareWriterFailoverHandler(mockPluginServiceInstance, mockReaderFailoverInstance, properties, 60000, 2000, 2000);
+    const target = new ClusterAwareWriterFailoverHandler(
+      mockPluginServiceInstance,
+      mockServicesContainer,
+      mockReaderFailoverInstance,
+      properties,
+      60000,
+      2000,
+      2000
+    );
     const result: WriterFailoverResult = await target.failover(topology);
 
     expect(result.isConnected).toBe(true);
@@ -168,6 +232,7 @@ describe("writer failover handler", () => {
 
     const target: ClusterAwareWriterFailoverHandler = new ClusterAwareWriterFailoverHandler(
       mockPluginServiceInstance,
+      mockServicesContainer,
       mockReaderFailoverInstance,
       properties,
       60000,
@@ -202,7 +267,15 @@ describe("writer failover handler", () => {
     const mockReaderFailoverInstance = instance(mockReaderFailover);
     const mockPluginServiceInstance = instance(mockPluginService);
 
-    const target = new ClusterAwareWriterFailoverHandler(mockPluginServiceInstance, mockReaderFailoverInstance, properties, 60000, 5000, 2000);
+    const target = new ClusterAwareWriterFailoverHandler(
+      mockPluginServiceInstance,
+      mockServicesContainer,
+      mockReaderFailoverInstance,
+      properties,
+      60000,
+      5000,
+      2000
+    );
     const result: WriterFailoverResult = await target.failover(topology);
 
     expect(result.isConnected).toBe(true);
@@ -238,7 +311,15 @@ describe("writer failover handler", () => {
     const mockReaderFailoverInstance = instance(mockReaderFailover);
     const mockPluginServiceInstance = instance(mockPluginService);
 
-    const target = new ClusterAwareWriterFailoverHandler(mockPluginServiceInstance, mockReaderFailoverInstance, properties, 5000, 2000, 2000);
+    const target = new ClusterAwareWriterFailoverHandler(
+      mockPluginServiceInstance,
+      mockServicesContainer,
+      mockReaderFailoverInstance,
+      properties,
+      5000,
+      2000,
+      2000
+    );
 
     const startTime = Date.now();
     const result = await target.failover(topology);
@@ -264,7 +345,15 @@ describe("writer failover handler", () => {
     const mockReaderFailoverInstance = instance(mockReaderFailover);
     const mockPluginServiceInstance = instance(mockPluginService);
 
-    const target = new ClusterAwareWriterFailoverHandler(mockPluginServiceInstance, mockReaderFailoverInstance, properties, 5000, 2000, 2000);
+    const target = new ClusterAwareWriterFailoverHandler(
+      mockPluginServiceInstance,
+      mockServicesContainer,
+      mockReaderFailoverInstance,
+      properties,
+      5000,
+      2000,
+      2000
+    );
     const result = await target.failover(topology);
 
     expect(result.isConnected).toBe(false);

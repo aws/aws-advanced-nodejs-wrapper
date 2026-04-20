@@ -28,7 +28,7 @@ export class BlueGreenPluginFactory extends ConnectionPluginFactory {
       if (!BlueGreenPluginFactory.blueGreenPlugin) {
         BlueGreenPluginFactory.blueGreenPlugin = await import("./blue_green_plugin");
       }
-      return new BlueGreenPluginFactory.blueGreenPlugin.BlueGreenPlugin(servicesContainer.pluginService, props);
+      return new BlueGreenPluginFactory.blueGreenPlugin.BlueGreenPlugin(servicesContainer, props);
     } catch (error: any) {
       throw new AwsWrapperError(Messages.get("ConnectionPluginChainBuilder.errorImportingPlugin", error.message, "BlueGreenPluginFactory"));
     }

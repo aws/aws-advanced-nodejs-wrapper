@@ -144,11 +144,21 @@ export class RdsHostListProvider implements DynamicHostListProvider {
 
     if (!this.pluginService.isDialectConfirmed()) {
       // We need to confirm the dialect before creating a topology monitor so that it uses the correct SQL queries.
-      // We will return the original hosts parsed from the connections string until the dialect has been confirmed.
+      // Return the original hosts parsed from the connection string.
       return this.initialHostList;
     }
 
-    return await this.forceRefreshMonitor(verifyTopology, timeoutMs);
+    const hosts = await this.forceRefreshMonitor(verifyTopology, timeoutMs);
+    if (hosts && hosts.length > 0) {
+      return hosts;
+    }
+
+    // Check for cached topology as a fallback.
+    const storedTopology = this.getStoredTopology();
+    if (storedTopology && storedTopology.length > 0) {
+      return storedTopology;
+    }
+    return this.initialHostList;
   }
 
   async getHostRole(client: ClientWrapper, _dialect: DatabaseDialect): Promise<HostRole> {
@@ -236,6 +246,7 @@ export class RdsHostListProvider implements DynamicHostListProvider {
   }
 
   async getCurrentTopology(targetClient: ClientWrapper, dialect: DatabaseDialect): Promise<HostInfo[]> {
+    this.init();
     return await this.topologyUtils.queryForTopology(targetClient, dialect, this.initialHost, this.clusterInstanceTemplate);
   }
 

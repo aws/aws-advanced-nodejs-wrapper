@@ -60,7 +60,7 @@ export class PgClientWrapper implements ClientWrapper {
 
   async abort(): Promise<void> {
     try {
-      return await ClientUtils.queryWithTimeout(this.end(), this.properties);
+      this.client?.connection?.stream?.destroy();
     } catch (error: any) {
       // Ignore
     }

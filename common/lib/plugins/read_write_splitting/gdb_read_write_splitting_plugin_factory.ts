@@ -16,22 +16,24 @@
 
 import { ConnectionPluginFactory } from "../../plugin_factory";
 import { ConnectionPlugin } from "../../connection_plugin";
-import { RdsUtils } from "../../utils/rds_utils";
 import { AwsWrapperError } from "../../utils/errors";
 import { Messages } from "../../utils/messages";
 import { FullServicesContainer } from "../../utils/full_services_container";
 
-export class FailoverPluginFactory extends ConnectionPluginFactory {
-  private static failoverPlugin: any;
+export class GdbReadWriteSplittingPluginFactory extends ConnectionPluginFactory {
+  private static gdbReadWriteSplittingPlugin: any;
 
   async getInstance(servicesContainer: FullServicesContainer, properties: Map<string, any>): Promise<ConnectionPlugin> {
     try {
-      if (!FailoverPluginFactory.failoverPlugin) {
-        FailoverPluginFactory.failoverPlugin = await import("./failover_plugin");
+      if (!GdbReadWriteSplittingPluginFactory.gdbReadWriteSplittingPlugin) {
+        GdbReadWriteSplittingPluginFactory.gdbReadWriteSplittingPlugin = await import("./gdb_read_write_splitting_plugin");
       }
-      return new FailoverPluginFactory.failoverPlugin.FailoverPlugin(servicesContainer, properties, new RdsUtils());
+      return new GdbReadWriteSplittingPluginFactory.gdbReadWriteSplittingPlugin.GdbReadWriteSplittingPlugin(
+        servicesContainer.pluginService,
+        properties
+      );
     } catch (error: any) {
-      throw new AwsWrapperError(Messages.get("ConnectionPluginChainBuilder.errorImportingPlugin", error.message, "FailoverPlugin"));
+      throw new AwsWrapperError(Messages.get("ConnectionPluginChainBuilder.errorImportingPlugin", error.message, "gdbReadWriteSplittingPlugin"));
     }
   }
 }
