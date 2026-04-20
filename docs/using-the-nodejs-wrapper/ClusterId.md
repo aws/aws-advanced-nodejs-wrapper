@@ -48,6 +48,7 @@ The following diagram shows how connections with the same `clusterId` share cach
 ![Single Cluster Example](../images/cluster_id_one_cluster_example.png)
 
 **Key Points:**
+
 - Three connections use different connection strings (custom endpoint, IP address, cluster endpoint) but all specify **`clusterId: "foo"`**
 - All three connections share the same Topology Cache and Monitor Threads in the driver
 - The Topology Cache stores a key-value mapping where `"foo"` maps to `["instance-1", "instance-2", "instance-3"]`
@@ -63,6 +64,7 @@ The following diagram shows how different `clusterId` values maintain separate c
 ![Two Cluster Example](../images/cluster_id_two_cluster_example.png)
 
 **Key Points:**
+
 - Connection 1 and 3 use **`clusterId: "foo"`** and share the same cache entries
 - Connection 2 uses **`clusterId: "bar"`** and has completely separate cache entries
 - Each `clusterId` acts as a key in the cache Map structure: `Map<String, CacheValue>`
@@ -98,7 +100,7 @@ const destParams = {
   user: "admin",
   password: "***",
   database: "mydb",
-  clusterId: "destination-cluster"  // Different clusterId!
+  clusterId: "destination-cluster" // Different clusterId!
 };
 const destClient = new AwsPGClient(destParams);
 await destClient.connect();
@@ -114,7 +116,7 @@ const sourceIpParams = {
   user: "admin",
   password: "***",
   database: "mydb",
-  clusterId: "source-cluster"  // Same ID as sourceClient
+  clusterId: "source-cluster" // Same ID as sourceClient
 };
 const sourceIpClient = new AwsPGClient(sourceIpParams);
 await sourceIpClient.connect();
@@ -174,27 +176,29 @@ Using the same `clusterId` for different database clusters will cause serious is
 // ❌ WRONG - Same clusterId for different clusters
 const sourceParams = {
   host: "source-db.us-east-1.rds.amazonaws.com",
-  clusterId: "shared-id"  // ← BAD!
+  clusterId: "shared-id" // ← BAD!
   // ...
 };
 
 const destParams = {
   host: "dest-db.us-west-2.rds.amazonaws.com",
-  clusterId: "shared-id"  // ← BAD! Same ID for different cluster
+  clusterId: "shared-id" // ← BAD! Same ID for different cluster
   // ...
 };
 ```
 
 **Problems this causes:**
+
 - Topology cache collision (dest-db's topology could overwrite source-db's)
 - Incorrect failover behavior (driver may try to failover to wrong cluster)
 - Monitor conflicts (Only one monitor instance for both clusters will lead to undefined results)
 
 **Correct approach:**
+
 ```typescript
 // ✅ CORRECT - Unique clusterId for each cluster
-const sourceParams = { clusterId: "source-cluster", /* ... */ };
-const destParams = { clusterId: "destination-cluster", /* ... */ };
+const sourceParams = { clusterId: "source-cluster" /* ... */ };
+const destParams = { clusterId: "destination-cluster" /* ... */ };
 ```
 
 ### Always Use Same clusterId for Same Cluster
@@ -211,21 +215,23 @@ const params1 = {
 
 const params2 = {
   host: "my-cluster.us-east-1.rds.amazonaws.com",
-  clusterId: "my-cluster-2"  // Different ID for same cluster
+  clusterId: "my-cluster-2" // Different ID for same cluster
   // ...
 };
 ```
 
 **Problems this causes:**
+
 - Duplication of caches
 - Multiple monitoring threads for the same cluster
 
 **Best practice:**
+
 ```typescript
 // ✅ BEST - Same clusterId for same cluster
 const CLUSTER_ID = "my-cluster";
-const params1 = { clusterId: CLUSTER_ID, /* ... */ };
-const params2 = { clusterId: CLUSTER_ID, /* ... */ };  // Shared cache and resources
+const params1 = { clusterId: CLUSTER_ID /* ... */ };
+const params2 = { clusterId: CLUSTER_ID /* ... */ }; // Shared cache and resources
 ```
 
 ## Summary
