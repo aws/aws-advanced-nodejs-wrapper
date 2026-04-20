@@ -26,6 +26,7 @@ import { HostChangeOptions } from "../../../host_change_options";
 import { RandomHostSelector } from "../../../random_host_selector";
 import { Messages } from "../../../utils/messages";
 import { equalsIgnoreCase, logAndThrowError } from "../../../utils/utils";
+import { FullServicesContainer } from "../../../utils/full_services_container";
 
 export class FastestResponseStrategyPlugin extends AbstractConnectionPlugin {
   static readonly FASTEST_RESPONSE_STRATEGY_NAME: string = "fastestResponse";
@@ -43,13 +44,13 @@ export class FastestResponseStrategyPlugin extends AbstractConnectionPlugin {
   private pluginService: PluginService;
   private randomHostSelector: RandomHostSelector = new RandomHostSelector();
 
-  constructor(pluginService: PluginService, properties: Map<string, any>, hostResponseTimeService?: HostResponseTimeService) {
+  constructor(servicesContainer: FullServicesContainer, properties: Map<string, any>, hostResponseTimeService?: HostResponseTimeService) {
     super();
-    this.pluginService = pluginService;
+    this.pluginService = servicesContainer.pluginService;
     this.properties = properties;
     this.hostResponseTimeService =
       hostResponseTimeService ??
-      new HostResponseTimeServiceImpl(pluginService, properties, WrapperProperties.RESPONSE_MEASUREMENT_INTERVAL_MILLIS.get(this.properties));
+      new HostResponseTimeServiceImpl(servicesContainer, properties, WrapperProperties.RESPONSE_MEASUREMENT_INTERVAL_MILLIS.get(this.properties));
     this.cacheExpirationNanos = BigInt(WrapperProperties.RESPONSE_MEASUREMENT_INTERVAL_MILLIS.get(this.properties) * 1_000_000);
   }
 
@@ -91,18 +92,13 @@ export class FastestResponseStrategyPlugin extends AbstractConnectionPlugin {
     if (!this.acceptsStrategy(role, strategy)) {
       logAndThrowError(Messages.get("FastestResponseStrategyPlugin.unsupportedHostSelectorStrategy", strategy));
     }
-    // The cache holds a host with the fastest response time.
-    // If the cache doesn't have a host for a role, it's necessary to find the fastest host in the topology.
     const fastestResponseHost: HostInfo = FastestResponseStrategyPlugin.cachedFastestResponseHostByRole.get(role);
     if (fastestResponseHost) {
-      // Found the fastest host. Find the host in the latest topology.
       const foundHost = this.pluginService.getHosts().find((host) => host === fastestResponseHost);
       if (foundHost) {
-        // Found a host in the topology.
         return foundHost;
       }
     }
-    // Cached result isn't available. Need to find the fastest response time host.
     const calculatedFastestResponseHost: ResponseTimeTuple[] = this.pluginService
       .getHosts()
       .filter((host) => role === host.role)
@@ -113,8 +109,6 @@ export class FastestResponseStrategyPlugin extends AbstractConnectionPlugin {
     const calculatedHost = calculatedFastestResponseHost.length === 0 ? null : calculatedFastestResponseHost[0];
 
     if (!calculatedHost) {
-      // Unable to identify the fastest response host.
-      // As a last resort, let's use a random host selector.
       return this.randomHostSelector.getHost(hosts, role, this.properties);
     }
     FastestResponseStrategyPlugin.cachedFastestResponseHostByRole.put(role, calculatedHost.hostInfo, Number(this.cacheExpirationNanos));

@@ -166,6 +166,7 @@ describe("gdb failover", () => {
         const config = await initDefaultConfig(initialWriterHost, initialWriterPort, true);
         config["activeHomeFailoverMode"] = "home-reader-or-writer";
         config["inactiveHomeFailoverMode"] = "home-reader-or-writer";
+        config["wrapperQueryTimeout"] = 2000;
 
         client = initClientFunc(config);
         await client.connect();

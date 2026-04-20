@@ -413,6 +413,7 @@ export class ClusterTopologyMonitorImpl extends AbstractMonitor implements Clust
             if (writerClient && writerClientHostInfo) {
               logger.debug(Messages.get("ClusterTopologyMonitor.writerPickedUpFromHostMonitors", writerClientHostInfo.toString()));
 
+              const oldMonitoringClient = this.monitoringClient;
               this.monitoringClient = writerClient;
               this.writerHostInfo = writerClientHostInfo;
               this.isVerifiedWriterConnection = true;
@@ -424,6 +425,11 @@ export class ClusterTopologyMonitorImpl extends AbstractMonitor implements Clust
               this.stableTopologiesStartNs = BigInt(0);
               this.readerTopologiesById.clear();
               this.completedOneCycle.clear();
+
+              // Close the old monitoring client that was replaced by the new writer client.
+              if (oldMonitoringClient && oldMonitoringClient !== this.monitoringClient) {
+                await this.closeConnection(oldMonitoringClient);
+              }
 
               await this.delay(true);
               continue;

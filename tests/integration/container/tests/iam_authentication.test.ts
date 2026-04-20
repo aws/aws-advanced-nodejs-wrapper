@@ -23,7 +23,6 @@ import { readFileSync } from "fs";
 import { logger } from "../../../../common/logutils";
 import { TestEnvironmentFeatures } from "./utils/test_environment_features";
 import { features } from "./config";
-import { jest } from "@jest/globals";
 
 const itIf =
   !features.includes(TestEnvironmentFeatures.PERFORMANCE) &&
@@ -72,9 +71,6 @@ async function validateConnection() {
 describe("iam authentication", () => {
   beforeEach(async () => {
     logger.info(`Test started: ${expect.getState().currentTestName}`);
-    jest.useFakeTimers({
-      doNotFake: ["nextTick"]
-    });
     client = null;
     env = await TestEnvironment.getCurrent();
     driver = DriverHelper.getDriverForDatabaseEngine(env.engine);
@@ -92,11 +88,6 @@ describe("iam authentication", () => {
     await TestEnvironment.verifyClusterStatus();
     logger.info(`Test finished: ${expect.getState().currentTestName}`);
   }, 1320000);
-
-  afterAll(async () => {
-    jest.runOnlyPendingTimers();
-    jest.useRealTimers();
-  });
 
   itIf(
     "iam wrong database username",

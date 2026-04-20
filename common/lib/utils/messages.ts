@@ -421,6 +421,11 @@ const MESSAGES: Record<string, string> = {
   "GlobalDbFailoverPlugin.unableToFindCandidateWithMatchingRole":
     "Unable to find a candidate host with the expected role (%s) based on the given host selection strategy: %s",
   "GlobalDbFailoverPlugin.unableToConnect": "Unable to establish a connection during Global DB failover.",
+  "GdbReadWriteSplittingPlugin.missingHomeRegion":
+    "Unable to parse home region from endpoint '%s'. Please ensure you have set the 'gdbRwHomeRegion' connection parameter.",
+  "GdbReadWriteSplittingPlugin.cantConnectWriterOutOfHomeRegion": "Writer connection to '%s' is not allowed since it is out of home region '%s'.",
+  "GdbReadWriteSplittingPlugin.noAvailableReadersInHomeRegion": "No available reader nodes in home region '%s'.",
+  "GdbReadWriteSplittingPlugin.parameterValue": "%s=%s",
   "BatchingEventPublisher.errorDeliveringImmediateEvent": "Error delivering immediate event: %s",
   "WrapperProperty.invalidValue": "Invalid value '%s' for property '%s'. Allowed values: %s"
 };

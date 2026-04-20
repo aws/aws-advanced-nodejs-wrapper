@@ -27,6 +27,9 @@ import { logger } from "../../../logutils";
 import { WrapperProperties } from "../../wrapper_property";
 import { ClientWrapper } from "../../client_wrapper";
 import { FailoverRestriction } from "./failover_restriction";
+import { FullServicesContainer } from "../../utils/full_services_container";
+import { ServiceUtils } from "../../utils/service_utils";
+import { DatabaseDialect } from "../../database_dialect/database_dialect";
 
 export interface WriterFailoverHandler {
   failover(currentTopology: HostInfo[]): Promise<WriterFailoverResult>;
@@ -47,6 +50,7 @@ export class ClusterAwareWriterFailoverHandler implements WriterFailoverHandler 
   static readonly RECONNECT_WRITER_TASK = "TaskA";
   static readonly WAIT_NEW_WRITER_TASK = "TaskB";
   private readonly pluginService: PluginService;
+  private readonly servicesContainer: FullServicesContainer;
   private readonly readerFailoverHandler: ClusterAwareReaderFailoverHandler;
   private readonly initialConnectionProps: Map<string, any>;
   maxFailoverTimeoutMs = 60000; // 60 sec
@@ -55,6 +59,7 @@ export class ClusterAwareWriterFailoverHandler implements WriterFailoverHandler 
 
   constructor(
     pluginService: PluginService,
+    servicesContainer: FullServicesContainer,
     readerFailoverHandler: ClusterAwareReaderFailoverHandler,
     initialConnectionProps: Map<string, any>,
     failoverTimeoutMs?: number,
@@ -62,11 +67,22 @@ export class ClusterAwareWriterFailoverHandler implements WriterFailoverHandler 
     reconnectWriterIntervalMs?: number
   ) {
     this.pluginService = pluginService;
+    this.servicesContainer = servicesContainer;
     this.readerFailoverHandler = readerFailoverHandler;
     this.initialConnectionProps = initialConnectionProps;
     this.maxFailoverTimeoutMs = failoverTimeoutMs ?? this.maxFailoverTimeoutMs;
     this.readTopologyIntervalMs = readTopologyIntervalMs ?? this.readTopologyIntervalMs;
     this.reconnectionWriterIntervalMs = reconnectWriterIntervalMs ?? this.reconnectionWriterIntervalMs;
+  }
+
+  protected async newServicesContainer(): Promise<FullServicesContainer> {
+    const container = ServiceUtils.instance.createMinimalServiceContainerFrom(this.servicesContainer, this.initialConnectionProps);
+    await container.pluginManager.init();
+    const initialHostInfo = this.pluginService.getInitialConnectionHostInfo();
+    if (initialHostInfo) {
+      container.hostListProviderService.setInitialConnectionHostInfo(initialHostInfo);
+    }
+    return container;
   }
 
   async failover(currentTopology: HostInfo[]): Promise<WriterFailoverResult> {
@@ -75,10 +91,13 @@ export class ClusterAwareWriterFailoverHandler implements WriterFailoverHandler 
       return ClusterAwareWriterFailoverHandler.DEFAULT_RESULT;
     }
 
+    const taskAContainer = await this.newServicesContainer();
+    const taskBContainer = await this.newServicesContainer();
+
     const reconnectToWriterHandlerTask = new ReconnectToWriterHandlerTask(
       currentTopology,
       getWriter(currentTopology),
-      this.pluginService,
+      taskAContainer.pluginService,
       this.initialConnectionProps,
       this.reconnectionWriterIntervalMs,
       Date.now() + this.maxFailoverTimeoutMs
@@ -88,7 +107,7 @@ export class ClusterAwareWriterFailoverHandler implements WriterFailoverHandler 
       currentTopology,
       getWriter(currentTopology),
       this.readerFailoverHandler,
-      this.pluginService,
+      taskBContainer.pluginService,
       this.initialConnectionProps,
       this.readTopologyIntervalMs,
       Date.now() + this.maxFailoverTimeoutMs
@@ -379,7 +398,7 @@ class WaitForNewWriterHandlerTask {
   async refreshTopologyAndConnectToNewWriter(): Promise<boolean> {
     const allowOldWriter: boolean = this.pluginService.getDialect().getFailoverRestrictions().includes(FailoverRestriction.ENABLE_WRITER_IN_TASK_B);
 
-    while (this.pluginService.getCurrentClient() && Date.now() < this.endTime && !this.failoverCompleted) {
+    while (Date.now() < this.endTime && !this.failoverCompleted) {
       try {
         if (this.currentReaderTargetClient) {
           await this.pluginService.forceRefreshHostList();
