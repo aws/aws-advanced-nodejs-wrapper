@@ -48,3 +48,22 @@ Note: AWS IAM database authentication is needed to use the Federated Authenticat
 | `iamDefaultPort`     | `Number` |    No    | This property overrides the default port that is used to generate the IAM token. The default port is determined based on the underlying driver protocol. Target drivers with different protocols will require users to provide a default port.                                                                                                                     | `null`                   | `1234`                                                 |
 | `iamTokenExpiration` | `Number` |    No    | Overrides the default IAM token cache expiration in seconds.                                                                                                                                                                                                                                                                                                       | `900`                    | `123`                                                  |
 | `httpsAgentOptions`  | `Object` |    No    | This property adds parameters to the httpsAgent that connects to the hosting URL. <br>For more information on the parameters, see this [documentation](https://nodejs.org/api/https.html#class-httpsagent).                                                                                                                                                        | `null`                   | `{ timeout: 5000 }`                                    |
+
+## Using Federated Authentication with Global Databases
+
+When using Federated authentication with [Amazon Aurora Global Databases](https://aws.amazon.com/rds/aurora/global-database/), the IAM user or role requires the additional `rds:DescribeGlobalClusters` permission. This permission allows the driver to resolve the Global Database endpoint to the appropriate regional cluster for IAM token generation.
+
+Example IAM policy:
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": ["rds-db:connect", "rds:DescribeGlobalClusters"],
+      "Resource": "*"
+    }
+  ]
+}
+```
