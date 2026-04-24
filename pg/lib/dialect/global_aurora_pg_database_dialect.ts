@@ -24,18 +24,18 @@ import { GlobalAuroraHostListProvider } from "../../../common/lib/host_list_prov
 import { GlobalTopologyUtils } from "../../../common/lib/host_list_provider/global_topology_utils";
 
 export class GlobalAuroraPgDatabaseDialect extends AuroraPgDatabaseDialect implements GlobalAuroraTopologyDialect {
-  private static readonly GLOBAL_STATUS_FUNC_EXISTS_QUERY = "select 'aurora_global_db_status'::regproc";
+  private static readonly GLOBAL_STATUS_FUNC_EXISTS_QUERY = "select 'pg_catalog.aurora_global_db_status'::regproc";
 
-  private static readonly GLOBAL_INSTANCE_STATUS_FUNC_EXISTS_QUERY = "select 'aurora_global_db_instance_status'::regproc";
+  private static readonly GLOBAL_INSTANCE_STATUS_FUNC_EXISTS_QUERY = "select 'pg_catalog.aurora_global_db_instance_status'::regproc";
 
   private static readonly GLOBAL_TOPOLOGY_QUERY =
     "SELECT SERVER_ID, CASE WHEN SESSION_ID = 'MASTER_SESSION_ID' THEN TRUE ELSE FALSE END AS IS_WRITER, " +
     "VISIBILITY_LAG_IN_MSEC, AWS_REGION " +
-    "FROM aurora_global_db_instance_status()";
+    "FROM pg_catalog.aurora_global_db_instance_status()";
 
-  private static readonly REGION_COUNT_QUERY = "SELECT count(1) FROM aurora_global_db_status()";
+  private static readonly REGION_COUNT_QUERY = "SELECT count(1) FROM pg_catalog.aurora_global_db_status()";
 
-  private static readonly REGION_BY_INSTANCE_ID_QUERY = "SELECT AWS_REGION FROM aurora_global_db_instance_status() WHERE SERVER_ID = $1";
+  private static readonly REGION_BY_INSTANCE_ID_QUERY = "SELECT AWS_REGION FROM pg_catalog.aurora_global_db_instance_status() WHERE SERVER_ID = $1";
 
   async isDialect(targetClient: ClientWrapper): Promise<boolean> {
     try {
