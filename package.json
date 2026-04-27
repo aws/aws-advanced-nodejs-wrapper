@@ -56,7 +56,7 @@
     "dist"
   ],
   "devDependencies": {
-    "@aws-sdk/client-rds": "^3.1033.0",
+    "@aws-sdk/client-rds": "^3.1038.0",
     "@aws-sdk/client-secrets-manager": "^3.1033.0",
     "@aws-sdk/client-sts": "^3.1036.0",
     "@aws-sdk/client-xray": "^3.1033.0",
@@ -123,7 +123,7 @@
     "winston": "^3.19.0"
   },
   "peerDependencies": {
-    "@aws-sdk/client-rds": "^3.1033.0",
+    "@aws-sdk/client-rds": "^3.1038.0",
     "@aws-sdk/client-secrets-manager": "^3.1033.0",
     "@aws-sdk/client-sts": "^3.1036.0",
     "@aws-sdk/client-xray": "^3.1033.0",
