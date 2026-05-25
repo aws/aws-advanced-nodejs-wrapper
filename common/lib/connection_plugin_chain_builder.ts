@@ -123,9 +123,12 @@ export class ConnectionPluginChainBuilder {
     } else {
       let pluginCodes: string = props.get(WrapperProperties.PLUGINS.name);
       if (pluginCodes == null) {
-        pluginCodes = WrapperProperties.DEFAULT_PLUGINS;
+        pluginCodes =
+          pluginService.getDriverDialect().getDialectName() === "MySQL2DriverDialect"
+            ? WrapperProperties.MYSQL_DEFAULT_PLUGINS
+            : WrapperProperties.DEFAULT_PLUGINS;
       }
-      usingDefault = pluginCodes === WrapperProperties.DEFAULT_PLUGINS;
+      usingDefault = pluginCodes === WrapperProperties.DEFAULT_PLUGINS || pluginCodes === WrapperProperties.MYSQL_DEFAULT_PLUGINS;
 
       pluginCodes = pluginCodes.trim();
       if (pluginCodes !== "") {

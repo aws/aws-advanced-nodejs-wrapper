@@ -358,11 +358,7 @@ class AwsPGPooledConnection extends BaseAwsPgClient {
           throw new UndefinedClientError();
         }
         this.pluginService.removeErrorListener(this.targetClient);
-        // After failover, the new target client may not have a release() method
-        // (e.g., a direct connection instead of a pooled connection).
-        if (typeof this.targetClient.client?.release === "function") {
-          return await this.targetClient.client.release();
-        }
+        return await this.targetClient.end();
       },
       null
     );
