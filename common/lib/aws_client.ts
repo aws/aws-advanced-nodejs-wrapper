@@ -154,23 +154,23 @@ export abstract class AwsClient extends EventEmitter implements SessionStateClie
 
   abstract setReadOnly(readOnly: boolean): Promise<any | void>;
 
-  abstract isReadOnly(): boolean;
+  abstract isReadOnly(): boolean | undefined;
 
   abstract setAutoCommit(autoCommit: boolean): Promise<any | void>;
 
-  abstract getAutoCommit(): boolean;
+  abstract getAutoCommit(): boolean | undefined;
 
   abstract setTransactionIsolation(level: TransactionIsolationLevel): Promise<any | void>;
 
-  abstract getTransactionIsolation(): TransactionIsolationLevel;
+  abstract getTransactionIsolation(): TransactionIsolationLevel | undefined;
 
   abstract setSchema(schema: any): Promise<any | void>;
 
-  abstract getSchema(): string;
+  abstract getSchema(): string | undefined;
 
   abstract setCatalog(catalog: string): Promise<any | void>;
 
-  abstract getCatalog(): string;
+  abstract getCatalog(): string | undefined;
 
   abstract end(): Promise<any>;
 
