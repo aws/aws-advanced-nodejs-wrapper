@@ -15,11 +15,7 @@
 */
 
 import { AbstractConnectionPlugin } from "../abstract_connection_plugin";
-import {
-  HostInfo,
-  FailoverError,
-  HostRole
-} from "../";
+import { HostInfo, FailoverError, HostRole } from "../";
 import { PluginService } from "../plugin_service";
 import { HostListProviderService } from "../host_list_provider_service";
 import { OldConnectionSuggestionAction } from "../old_connection_suggestion_action";
