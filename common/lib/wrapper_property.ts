@@ -47,7 +47,7 @@ export class WrapperProperty<T> {
 export class WrapperProperties {
   static readonly MONITORING_PROPERTY_PREFIX: string = "monitoring_";
   static readonly DEFAULT_PLUGINS = "initialConnection,auroraConnectionTracker,failover2,efm2";
-  static readonly MYSQL_DEFAULT_PLUGINS = "initialConnection,auroraConnectionTracker,failover2";
+  static readonly MYSQL2_DEFAULT_PLUGINS = "initialConnection,auroraConnectionTracker,failover2";
   static readonly DEFAULT_TOKEN_EXPIRATION_SEC = 15 * 60;
 
   static readonly PLUGINS = new WrapperProperty<string>(
