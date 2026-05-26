@@ -38,9 +38,7 @@ import { SubstituteConnectRouting } from "./routing/substitute_connect_routing";
 import { SuspendConnectRouting } from "./routing/suspend_connect_routing";
 import { ExecuteRouting } from "./routing/execute_routing";
 import { SuspendExecuteRouting } from "./routing/suspend_execute_routing";
-import {
-  SuspendUntilCorrespondingHostFoundConnectRouting
-} from "./routing/suspend_until_corresponding_host_found_connect_routing";
+import { SuspendUntilCorrespondingHostFoundConnectRouting } from "./routing/suspend_until_corresponding_host_found_connect_routing";
 import { RejectConnectRouting } from "./routing/reject_connect_routing";
 import { getValueHash } from "./blue_green_utils";
 

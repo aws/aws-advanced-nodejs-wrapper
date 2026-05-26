@@ -17,12 +17,7 @@
 import { TestEnvironment } from "./utils/test_environment";
 import { DriverHelper } from "./utils/driver_helper";
 import { AuroraTestUtility } from "./utils/aurora_test_utility";
-import {
-  FailoverSuccessError,
-  PluginManager,
-  TransactionIsolationLevel,
-  TransactionResolutionUnknownError
-} from "../../../../index";
+import { FailoverSuccessError, PluginManager, TransactionIsolationLevel, TransactionResolutionUnknownError } from "../../../../index";
 import { DatabaseEngine } from "./utils/database_engine";
 import { QueryResult } from "pg";
 import { ProxyHelper } from "./utils/proxy_helper";
