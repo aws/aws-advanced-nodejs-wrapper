@@ -577,6 +577,22 @@ class AwsMySQLPooledConnection extends BaseAwsMySQLClient {
   constructor(config: any, provider: ConnectionProvider) {
     super(config, provider);
   }
+
+  async release(): Promise<void> {
+    return this.pluginManager.execute(
+      this.pluginService.getCurrentHostInfo(),
+      this.properties,
+      "release",
+      async () => {
+        if (!this.targetClient) {
+          throw new UndefinedClientError();
+        }
+        this.pluginService.removeErrorListener(this.targetClient);
+        return await this.targetClient.end();
+      },
+      null
+    );
+  }
 }
 
 export type { AwsMySQLPooledConnection };
