@@ -23,7 +23,7 @@ on:
       - '**/LICENSE.txt'
       - 'docs/**'
       - 'ISSUE_TEMPLATE/**'
-      - '**/remove-old-artifacts.yml's
+      - '**/remove-old-artifacts.yml'
 
 permissions:
   id-token: write   # This is required for requesting the JWT
