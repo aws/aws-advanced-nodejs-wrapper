@@ -588,7 +588,7 @@ class AwsMySQLPooledConnection extends BaseAwsMySQLClient {
           throw new UndefinedClientError();
         }
         this.pluginService.removeErrorListener(this.targetClient);
-        return await this.targetClient.end();
+        return await ClientUtils.queryWithTimeout(this.targetClient.end(), this.properties);
       },
       null
     );
