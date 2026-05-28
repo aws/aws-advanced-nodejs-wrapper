@@ -71,7 +71,7 @@ export class IamAuthenticationPlugin extends AbstractConnectionPlugin implements
   ): Promise<ClientWrapper> {
     const user = WrapperProperties.USER.get(props);
     if (!user) {
-      throw new AwsWrapperError(`${WrapperProperties.USER} is null or empty`);
+      throw new AwsWrapperError(`${WrapperProperties.USER.name} is null or empty`);
     }
 
     const host = IamAuthUtils.getIamHost(props, hostInfo);
