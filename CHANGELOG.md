@@ -6,9 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [2.1.1] - 2026-05-28
 
+### :magic_wand: Added
+
+- Added Aurora Initial Connection Strategy Plugin as one of default plugins enabled. To learn more about the plugin, [see the documentation here.](https://github.com/aws/aws-advanced-nodejs-wrapper/blob/main/docs/using-the-nodejs-wrapper/using-plugins/UsingTheAuroraInitialConnectionStrategyPlugin.md)
+
 ### :bug: Fixed
 
-- Use a MySQL-specific default plugin chain when the driver dialect is MySQL2, excluding the `efm2` plugin from the defaults.
 - Prevent process crash during Aurora failover when using the PostgreSQL client, addresses [issue #620](https://github.com/aws/aws-advanced-nodejs-wrapper/issues/620) ([PR #621](https://github.com/aws/aws-advanced-nodejs-wrapper/pull/621)).
 
 ## [2.1.0] - 2026-01-15
