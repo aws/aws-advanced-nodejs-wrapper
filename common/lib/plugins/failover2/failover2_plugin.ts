@@ -150,7 +150,7 @@ export class Failover2Plugin extends AbstractConnectionPlugin {
           throw error;
         }
 
-        this.pluginService.setAvailability(hostInfo.allAliases, HostAvailability.NOT_AVAILABLE);
+        this.pluginService.setAvailability(hostInfo, HostAvailability.NOT_AVAILABLE);
 
         try {
           // Unable to directly connect, attempt failover.
@@ -209,7 +209,7 @@ export class Failover2Plugin extends AbstractConnectionPlugin {
         await this.invalidateCurrentClient();
         const currentHostInfo: HostInfo = this.pluginService.getCurrentHostInfo();
         if (currentHostInfo !== null) {
-          this.pluginService.setAvailability(currentHostInfo.allAliases ?? new Set(), HostAvailability.NOT_AVAILABLE);
+          this.pluginService.setAvailability(currentHostInfo, HostAvailability.NOT_AVAILABLE);
         }
         await this.failover();
         this._lastError = error;
@@ -247,7 +247,6 @@ export class Failover2Plugin extends AbstractConnectionPlugin {
     const telemetryContext = telemetryFactory.openTelemetryContext(Failover2Plugin.TELEMETRY_READER_FAILOVER, TelemetryTraceLevel.NESTED);
     this.failoverReaderTriggeredCounter.inc();
 
-    const oldAliases = this.pluginService.getCurrentHostInfo()?.allAliases ?? new Set();
     const failoverEndTimeMs = Date.now() + this.failoverTimeoutSettingMs;
 
     try {
@@ -265,7 +264,6 @@ export class Failover2Plugin extends AbstractConnectionPlugin {
           this.failoverReaderSuccessCounter.inc();
           await this.pluginService.abortCurrentClient();
           await this.pluginService.setCurrentClient(result.client, result.newHost);
-          this.pluginService.getCurrentHostInfo()?.removeAlias(Array.from(oldAliases));
           await this.pluginService.forceRefreshHostList();
         } catch (error) {
           this.failoverReaderFailedCounter.inc();

@@ -16,7 +16,6 @@
 
 import { AbstractConnectionPlugin } from "../../abstract_connection_plugin";
 import { CanReleaseResources } from "../../can_release_resources";
-import { SubscribedMethodHelper } from "../../utils/subscribed_method_helper";
 import { PluginService } from "../../plugin_service";
 import { RdsUtils } from "../../utils/rds_utils";
 import { HostInfo } from "../../host_info";
@@ -56,14 +55,18 @@ export class AuroraConnectionTrackerPlugin extends AbstractConnectionPlugin impl
     connectFunc: () => Promise<ClientWrapper>
   ): Promise<ClientWrapper> {
     const targetClient = await connectFunc();
+    let connectionHostInfo: HostInfo = this.pluginService.getRoutedHostInfo() ?? hostInfo;
 
     if (targetClient) {
-      const type: RdsUrlType = this.rdsUtils.identifyRdsType(hostInfo.host);
+      const type: RdsUrlType = this.rdsUtils.identifyRdsType(connectionHostInfo.host);
       if (type.isRdsCluster) {
-        hostInfo.resetAliases();
-        await this.pluginService.fillAliases(targetClient, hostInfo);
+        const identifiedHostInfo: HostInfo | null = await this.pluginService.identifyConnection(targetClient, connectionHostInfo);
+        if (identifiedHostInfo) {
+          connectionHostInfo = identifiedHostInfo;
+          await this.pluginService.setRoutedHostInfo(connectionHostInfo);
+        }
       }
-      await this.tracker.populateOpenedConnectionQueue(hostInfo, targetClient);
+      await this.tracker.populateOpenedConnectionQueue(connectionHostInfo, targetClient);
     }
     return targetClient;
   }

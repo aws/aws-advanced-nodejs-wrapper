@@ -32,7 +32,9 @@ export class OpenedConnectionTracker {
   }
 
   async populateOpenedConnectionQueue(hostInfo: HostInfo, client: ClientWrapper): Promise<void> {
-    const aliases = hostInfo.aliases;
+    if (!hostInfo || !client) {
+      return;
+    }
 
     // Check if the connection was established using an instance endpoint
     if (OpenedConnectionTracker.rdsUtils.isRdsInstance(hostInfo.host)) {
@@ -40,21 +42,20 @@ export class OpenedConnectionTracker {
       return;
     }
 
-    const instanceEndpoint = [...aliases]
-      .filter((x) => OpenedConnectionTracker.rdsUtils.isRdsInstance(OpenedConnectionTracker.rdsUtils.removePort(x)))
-      .reduce((max, s) => (s > max ? s : max), "");
-
-    if (!instanceEndpoint) {
-      logger.debug(Messages.get("OpenedConnectionTracker.unableToPopulateOpenedConnectionQueue", hostInfo.host));
-      return;
+    // It might be a custom domain name. Let's track by hostId and custom domain name
+    if (hostInfo.hostId) {
+      this.trackConnection(hostInfo.hostId, client);
     }
-
-    this.trackConnection(instanceEndpoint, client);
+    if (hostInfo.hostAndPort) {
+      this.trackConnection(hostInfo.hostAndPort, client);
+    }
   }
 
   async invalidateAllConnections(hostInfo: HostInfo): Promise<void> {
-    await this.invalidateAllConnectionsMultipleHosts(hostInfo.asAlias);
-    await this.invalidateAllConnectionsMultipleHosts(...Array.from(hostInfo.aliases));
+    if (!hostInfo) {
+      return;
+    }
+    await this.invalidateAllConnectionsMultipleHosts(hostInfo.hostAndPort, hostInfo.host, hostInfo.hostId);
   }
 
   async invalidateAllConnectionsMultipleHosts(...hosts: string[]): Promise<void> {

@@ -84,7 +84,7 @@ export class DefaultPlugin extends AbstractConnectionPlugin {
     );
 
     const result: ConnectionInfo = await telemetryContext.start(async () => await connProvider.connect(hostInfo, this.pluginService, props));
-    this.pluginService.setAvailability(hostInfo.allAliases, HostAvailability.AVAILABLE);
+    this.pluginService.setAvailability(hostInfo, HostAvailability.AVAILABLE);
     this.pluginService.setIsPooledClient(result.isPooled);
     await this.pluginService.updateDialect(result.client);
     return result.client;

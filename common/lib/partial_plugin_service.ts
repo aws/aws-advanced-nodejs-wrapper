@@ -221,15 +221,11 @@ export class PartialPluginService implements PluginService, HostListProviderServ
     return hosts;
   }
 
-  setAvailability(hostAliases: Set<string>, availability: HostAvailability): void {
-    if (hostAliases.size === 0) {
-      return;
-    }
-
+  setAvailability(hostInfo: HostInfo, availability: HostAvailability): void {
     const hostsToChange = [
       ...new Set(
         this.getAllHosts().filter(
-          (host: HostInfo) => hostAliases.has(host.asAlias) || [...host.aliases].some((hostAlias: string) => hostAliases.has(hostAlias))
+          (host: HostInfo) => (hostInfo.hostId != null && hostInfo.hostId === host.hostId) || (hostInfo.host != null && hostInfo.host === host.host)
         )
       )
     ];
@@ -430,36 +426,12 @@ export class PartialPluginService implements PluginService, HostListProviderServ
     return provider.identifyConnection(targetClient);
   }
 
-  async fillAliases(targetClient: ClientWrapper, hostInfo: HostInfo): Promise<void> {
-    if (!hostInfo) {
-      return;
-    }
+  getRoutedHostInfo(): HostInfo | null {
+    throw new AwsWrapperError(Messages.get("PartialPluginService.unexpectedMethodCall", "getRoutedHostInfo"));
+  }
 
-    if (hostInfo.aliases.size > 0) {
-      logger.debug(Messages.get("PluginService.nonEmptyAliases", [...hostInfo.aliases].join(", ")));
-      return;
-    }
-
-    hostInfo.addAlias(hostInfo.asAlias);
-
-    try {
-      const res = await this.dialect.getHostAliasAndParseResults(targetClient);
-      if (res) {
-        hostInfo.addAlias(res);
-      }
-    } catch (error) {
-      logger.debug(Messages.get("PluginService.failedToRetrieveHostPort"));
-    }
-
-    try {
-      const host = await this.identifyConnection(targetClient);
-      if (host && host.allAliases) {
-        hostInfo.addAlias(...host.allAliases);
-      }
-    } catch (error) {
-      // Ignore errors from identifyConnection
-      logger.debug(Messages.get("PluginService.failedToRetrieveHostPort"));
-    }
+  setRoutedHostInfo(routedHostInfo: HostInfo | null) {
+    throw new AwsWrapperError(Messages.get("PartialPluginService.unexpectedMethodCall", "setRoutedHostInfo"));
   }
 
   getHostInfoBuilder(): HostInfoBuilder {
