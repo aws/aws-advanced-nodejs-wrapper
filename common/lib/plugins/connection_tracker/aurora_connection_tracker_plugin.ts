@@ -76,7 +76,8 @@ export class AuroraConnectionTrackerPlugin extends AbstractConnectionPlugin impl
         }
       }
       const host = this.tracker.populateOpenedConnectionQueue(connectionHostInfo, targetClient);
-      this.pluginService.setTrackedConnectionHost(host);    }
+      this.pluginService.setTrackedConnectionHost(host);
+    }
     return targetClient;
   }
 

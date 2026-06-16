@@ -98,11 +98,7 @@ export class OpenedConnectionTracker {
   }
 
   private trackConnection(instanceEndpoint: string, client: ClientWrapper): TrackedConnectionListHost {
-    const connectionList = MapUtils.computeIfAbsent(
-      OpenedConnectionTracker.openedConnections,
-      instanceEndpoint,
-      (_) => new TrackedConnectionList()
-    );
+    const connectionList = MapUtils.computeIfAbsent(OpenedConnectionTracker.openedConnections, instanceEndpoint, (_) => new TrackedConnectionList());
     return connectionList!.add(client);
   }
 
