@@ -28,6 +28,7 @@ import {
   AwsWrapperError,
   ConnectionProvider,
   FailoverSuccessError,
+  HostInfo,
   InternalPooledConnectionProvider,
   TransactionIsolationLevel,
   UndefinedClientError,
@@ -86,7 +87,9 @@ class BaseAwsMySQLClient extends AwsClient implements MySQLClient {
           // Ignore
         }
       }
-      await this.pluginService.setCurrentClient(result, result.hostInfo);
+      const connectedHostInfo: HostInfo | null = this.pluginService.getRoutedHostInfo() ?? this.pluginService.getInitialConnectionHostInfo();
+      await this.pluginService.setCurrentClient(result, connectedHostInfo);
+      this.pluginService.setRoutedHostInfo(null);
       await this.internalPostConnect();
     });
   }

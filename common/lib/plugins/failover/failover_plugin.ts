@@ -184,12 +184,6 @@ export class FailoverPlugin extends AbstractConnectionPlugin {
       if (this.isHostStillValid(url, changes)) {
         return Promise.resolve();
       }
-
-      for (const alias of currentHost.allAliases) {
-        if (this.isHostStillValid(alias + "/", changes)) {
-          return Promise.resolve();
-        }
-      }
     }
     logger.info(Messages.get("Failover.invalidHost", currentHost?.host ?? "empty host"));
     return Promise.resolve();
@@ -279,7 +273,7 @@ export class FailoverPlugin extends AbstractConnectionPlugin {
         await this.invalidateCurrentClient();
         const currentHostInfo = this.pluginService.getCurrentHostInfo();
         if (currentHostInfo !== null) {
-          this.pluginService.setAvailability(currentHostInfo.allAliases ?? new Set(), HostAvailability.NOT_AVAILABLE);
+          this.pluginService.setAvailability(currentHostInfo, HostAvailability.NOT_AVAILABLE);
         }
 
         this._lastError = e;
@@ -291,7 +285,7 @@ export class FailoverPlugin extends AbstractConnectionPlugin {
   }
 
   async failover(failedHost: HostInfo) {
-    this.pluginService.setAvailability(failedHost.allAliases, HostAvailability.NOT_AVAILABLE);
+    this.pluginService.setAvailability(failedHost, HostAvailability.NOT_AVAILABLE);
 
     if (this.failoverMode === FailoverMode.STRICT_WRITER) {
       await this.failoverWriter();
@@ -307,8 +301,6 @@ export class FailoverPlugin extends AbstractConnectionPlugin {
     const telemetryFactory = this.pluginService.getTelemetryFactory();
     const telemetryContext = telemetryFactory.openTelemetryContext(FailoverPlugin.TELEMETRY_READER_FAILOVER, TelemetryTraceLevel.NESTED);
     this.failoverReaderTriggeredCounter.inc();
-
-    const oldAliases = this.pluginService.getCurrentHostInfo()?.allAliases ?? new Set();
 
     let failedHost = null;
     if (failedHostInfo && failedHostInfo.getRawAvailability() === HostAvailability.AVAILABLE) {
@@ -334,7 +326,6 @@ export class FailoverPlugin extends AbstractConnectionPlugin {
 
           await this.pluginService.abortCurrentClient();
           await this.pluginService.setCurrentClient(result.client, result.newHost);
-          this.pluginService.getCurrentHostInfo()?.removeAlias(Array.from(oldAliases));
           await this.updateTopology(true);
           this.failoverWriterSuccessCounter.inc();
         } catch (error: any) {

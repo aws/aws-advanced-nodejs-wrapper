@@ -59,10 +59,13 @@ export class HostMonitoringConnectionPlugin extends AbstractConnectionPlugin imp
   ): Promise<ClientWrapper> {
     const targetClient = await connectFunc();
     if (targetClient != null) {
-      const type: RdsUrlType = this.rdsUtils.identifyRdsType(hostInfo.host);
+      const connectionHostInfo: HostInfo = this.pluginService.getRoutedHostInfo() ?? hostInfo;
+      const type: RdsUrlType = this.rdsUtils.identifyRdsType(connectionHostInfo.host);
       if (type.isRdsCluster) {
-        hostInfo.resetAliases();
-        await this.pluginService.fillAliases(targetClient, hostInfo);
+        const identifiedHostInfo: HostInfo | null = await this.pluginService.identifyConnection(targetClient, connectionHostInfo);
+        if (identifiedHostInfo) {
+          this.pluginService.setRoutedHostInfo(identifiedHostInfo);
+        }
       }
     }
     return targetClient;
@@ -110,10 +113,6 @@ export class HostMonitoringConnectionPlugin extends AbstractConnectionPlugin imp
 
         if (monitorContext.isHostUnhealthy) {
           const monitoringHostInfo = await this.getMonitoringHostInfo();
-          if (monitoringHostInfo) {
-            this.pluginService.setAvailability(monitoringHostInfo.allAliases, HostAvailability.NOT_AVAILABLE);
-          }
-
           const targetClient = this.pluginService.getCurrentClient().targetClient;
           let isClientValid = false;
           if (targetClient) {
@@ -125,7 +124,9 @@ export class HostMonitoringConnectionPlugin extends AbstractConnectionPlugin imp
               await this.pluginService.abortTargetClient(targetClient);
             }
             // eslint-disable-next-line no-unsafe-finally
-            throw new UnavailableHostError(Messages.get("HostMonitoringConnectionPlugin.unavailableHost", monitoringHostInfo.host));
+            throw new UnavailableHostError(
+              Messages.get("HostMonitoringConnectionPlugin.unavailableHost", monitoringHostInfo?.host ?? "Unknown host")
+            );
           }
         }
       }
@@ -149,7 +150,7 @@ export class HostMonitoringConnectionPlugin extends AbstractConnectionPlugin imp
     if (this.monitoringHostInfo) {
       return this.monitoringHostInfo;
     }
-    this.monitoringHostInfo = this.pluginService.getCurrentHostInfo();
+    this.monitoringHostInfo = this.pluginService.getRoutedHostInfo() ?? this.pluginService.getCurrentHostInfo();
     if (this.monitoringHostInfo == null) {
       this.throwUnableToIdentifyConnection(null);
     }
@@ -158,12 +159,16 @@ export class HostMonitoringConnectionPlugin extends AbstractConnectionPlugin imp
     try {
       if (rdsUrlType.isRdsCluster) {
         logger.debug(Messages.get("HostMonitoringConnectionPlugin.identifyClusterConnection"));
-        this.monitoringHostInfo = await this.pluginService.identifyConnection(this.pluginService.getCurrentClient().targetClient!);
+        this.monitoringHostInfo = await this.pluginService.identifyConnection(
+          this.pluginService.getCurrentClient().targetClient!,
+          this.pluginService.getCurrentHostInfo()
+        );
         if (this.monitoringHostInfo == null) {
           const host: HostInfo | null = this.pluginService.getCurrentHostInfo();
           this.throwUnableToIdentifyConnection(host);
         }
-        await this.pluginService.fillAliases(this.pluginService.getCurrentClient().targetClient!, this.monitoringHostInfo);
+        // Update identified HostInfo for the current connection
+        await this.pluginService.setCurrentClient(this.pluginService.getCurrentClient().targetClient!, this.monitoringHostInfo);
       }
     } catch (error: any) {
       if (!(error instanceof AwsWrapperError)) {

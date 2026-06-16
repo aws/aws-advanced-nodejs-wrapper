@@ -37,12 +37,14 @@ export interface WriterFailoverHandler {
 
 function isCurrentHostWriter(topology: HostInfo[], originalWriterHost: HostInfo): boolean {
   const latestWriter = getWriter(topology);
-  const latestWriterAllAliases = latestWriter?.allAliases;
-  const currentAliases = originalWriterHost.allAliases;
-  if (currentAliases && latestWriterAllAliases) {
-    return [...currentAliases].filter((alias) => latestWriterAllAliases.has(alias)).length > 0;
+  if (!latestWriter || !originalWriterHost) {
+    return false;
   }
-  return false;
+
+  return (
+    (!!latestWriter.hostId && latestWriter.hostId === originalWriterHost.hostId) ||
+    (!!latestWriter.hostAndPort && latestWriter.hostAndPort.toLowerCase() === originalWriterHost.hostAndPort.toLowerCase())
+  );
 }
 
 export class ClusterAwareWriterFailoverHandler implements WriterFailoverHandler {
@@ -273,7 +275,7 @@ class ReconnectToWriterHandlerTask {
       }
       success = isCurrentHostWriter(latestTopology, this.originalWriterHost);
 
-      this.pluginService.setAvailability(this.originalWriterHost.allAliases, HostAvailability.AVAILABLE);
+      this.pluginService.setAvailability(this.originalWriterHost, HostAvailability.AVAILABLE);
       return new WriterFailoverResult(
         success,
         false,
@@ -454,13 +456,13 @@ class WaitForNewWriterHandlerTask {
       let targetClient = null;
       try {
         targetClient = await this.pluginService.forceConnect(writerCandidate, props);
-        this.pluginService.setAvailability(writerCandidate.allAliases, HostAvailability.AVAILABLE);
+        this.pluginService.setAvailability(writerCandidate, HostAvailability.AVAILABLE);
         await this.callCloseClient(this.currentReaderTargetClient);
         await this.callCloseClient(this.currentClient);
         this.currentClient = targetClient;
         return true;
       } catch (error) {
-        this.pluginService.setAvailability(writerCandidate.allAliases, HostAvailability.NOT_AVAILABLE);
+        this.pluginService.setAvailability(writerCandidate, HostAvailability.NOT_AVAILABLE);
         await this.pluginService.abortTargetClient(targetClient);
         return false;
       }

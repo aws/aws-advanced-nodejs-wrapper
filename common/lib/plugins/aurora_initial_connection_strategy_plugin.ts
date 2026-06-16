@@ -121,9 +121,7 @@ export class AuroraInitialConnectionStrategyPlugin extends AbstractConnectionPlu
               continue;
             }
 
-            if (isInitialConnection) {
-              this.hostListProviderService.setInitialConnectionHostInfo(writerCandidate);
-            }
+            this.pluginService.setRoutedHostInfo(writerCandidate);
           }
           return writerCandidateClient;
         }
@@ -139,16 +137,14 @@ export class AuroraInitialConnectionStrategyPlugin extends AbstractConnectionPlu
         }
 
         // Writer connection is valid and verified.
-        if (isInitialConnection) {
-          this.hostListProviderService.setInitialConnectionHostInfo(writerCandidate);
-        }
+        this.pluginService.setRoutedHostInfo(writerCandidate);
         return writerCandidateClient;
       } catch (error: any) {
         await this.pluginService.abortTargetClient(writerCandidateClient);
         if (this.pluginService.isLoginError(error) || !writerCandidate) {
           throw error;
         } else if (writerCandidate) {
-          this.pluginService.setAvailability(writerCandidate.allAliases, HostAvailability.NOT_AVAILABLE);
+          this.pluginService.setAvailability(writerCandidate, HostAvailability.NOT_AVAILABLE);
         }
       }
     }
@@ -185,9 +181,7 @@ export class AuroraInitialConnectionStrategyPlugin extends AbstractConnectionPlu
               if (this.hasNoReaders()) {
                 // It seems that cluster has no readers. Simulate Aurora reader cluster endpoint logic
                 // and return the current (writer) client.
-                if (isInitialConnection) {
-                  this.hostListProviderService.setInitialConnectionHostInfo(readerCandidate);
-                }
+                this.pluginService.setRoutedHostInfo(readerCandidate);
                 return readerCandidateClient;
               }
               await this.pluginService.abortTargetClient(readerCandidateClient);
@@ -196,9 +190,7 @@ export class AuroraInitialConnectionStrategyPlugin extends AbstractConnectionPlu
             }
 
             // Reader connection is valid and verified.
-            if (isInitialConnection) {
-              this.hostListProviderService.setInitialConnectionHostInfo(readerCandidate);
-            }
+            this.pluginService.setRoutedHostInfo(readerCandidate);
           } else {
             logger.debug("Reader candidate not found");
           }
@@ -233,7 +225,7 @@ export class AuroraInitialConnectionStrategyPlugin extends AbstractConnectionPlu
         if (this.pluginService.isLoginError(error) || !readerCandidate) {
           throw error;
         } else if (readerCandidate) {
-          this.pluginService.setAvailability(readerCandidate.allAliases, HostAvailability.NOT_AVAILABLE);
+          this.pluginService.setAvailability(readerCandidate, HostAvailability.NOT_AVAILABLE);
         }
       }
     }
