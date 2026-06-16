@@ -40,6 +40,7 @@ import { FullServicesContainer } from "./utils/full_services_container";
 import { HostListProviderService } from "./host_list_provider_service";
 import { StorageService } from "./utils/storage/storage_service";
 import { CoreServicesContainer } from "./utils/core_services_container";
+import type { TrackedConnectionListHost } from "./plugins/connection_tracker/tracked_connection_list";
 
 /**
  * A PluginService containing some methods that are not intended to be called. This class is intended to be used
@@ -62,6 +63,7 @@ export class PartialPluginService implements PluginService, HostListProviderServ
   protected readonly driverDialect: DriverDialect;
   protected allowedAndBlockedHosts: AllowedAndBlockedHosts | null = null;
   private _isPooledClient: boolean = false;
+  private _trackedConnectionHost: TrackedConnectionListHost | null = null;
   private connectionUrlParser: ConnectionUrlParser;
 
   constructor(
@@ -518,5 +520,13 @@ export class PartialPluginService implements PluginService, HostListProviderServ
 
   setIsPooledClient(isPooledClient: boolean): void {
     this._isPooledClient = isPooledClient;
+  }
+
+  getTrackedConnectionHost(): TrackedConnectionListHost | null {
+    return this._trackedConnectionHost;
+  }
+
+  setTrackedConnectionHost(host: TrackedConnectionListHost | null): void {
+    this._trackedConnectionHost = host;
   }
 }

@@ -16,6 +16,7 @@
 
 import { AbstractConnectionPlugin } from "../../abstract_connection_plugin";
 import { CanReleaseResources } from "../../can_release_resources";
+import { SubscribedMethodHelper } from "../../utils/subscribed_method_helper";
 import { PluginService } from "../../plugin_service";
 import { RdsUtils } from "../../utils/rds_utils";
 import { HostInfo } from "../../host_info";
@@ -27,7 +28,15 @@ import { HostRole } from "../../host_role";
 import { OpenedConnectionTracker } from "./opened_connection_tracker";
 
 export class AuroraConnectionTrackerPlugin extends AbstractConnectionPlugin implements CanReleaseResources {
-  private static readonly subscribedMethods = new Set<string>(["notifyHostListChanged", "connect", "query", "rollback"]);
+  private static readonly subscribedMethods = new Set<string>([
+    ...SubscribedMethodHelper.NETWORK_BOUND_METHODS,
+    "end",
+    "abort",
+    "notifyHostListChanged"
+  ]);
+  private static readonly CLOSING_METHODS = new Set<string>(["end", "abort"]);
+  private static readonly TOPOLOGY_CHANGES_EXPECTED_TIME_NS = BigInt(3 * 60 * 1_000_000_000);
+  private static hostListRefreshEndTimeNs: bigint = 0n;
 
   private readonly pluginService: PluginService;
   private readonly rdsUtils: RdsUtils;
@@ -57,48 +66,89 @@ export class AuroraConnectionTrackerPlugin extends AbstractConnectionPlugin impl
     const targetClient = await connectFunc();
     let connectionHostInfo: HostInfo = this.pluginService.getRoutedHostInfo() ?? hostInfo;
 
-    if (targetClient) {
+    if (targetClient && !this.pluginService.isPooledClient()) {
       const type: RdsUrlType = this.rdsUtils.identifyRdsType(connectionHostInfo.host);
-      if (type.isRdsCluster) {
+      if (type.isRdsCluster || type === RdsUrlType.OTHER || type === RdsUrlType.IP_ADDRESS) {
         const identifiedHostInfo: HostInfo | null = await this.pluginService.identifyConnection(targetClient, connectionHostInfo);
         if (identifiedHostInfo) {
           connectionHostInfo = identifiedHostInfo;
           await this.pluginService.setRoutedHostInfo(connectionHostInfo);
         }
       }
-      await this.tracker.populateOpenedConnectionQueue(connectionHostInfo, targetClient);
-    }
+      const host = this.tracker.populateOpenedConnectionQueue(connectionHostInfo, targetClient);
+      this.pluginService.setTrackedConnectionHost(host);    }
     return targetClient;
   }
 
   override async execute<T>(methodName: string, methodFunc: () => Promise<T>, methodArgs: any[]): Promise<T> {
+    const currentHostInfo = this.pluginService.getCurrentHostInfo();
     this.rememberWriter();
 
+    const isClosing = AuroraConnectionTrackerPlugin.CLOSING_METHODS.has(methodName);
+
     try {
+      if (!isClosing) {
+        let needRefreshHostList = false;
+        const localRefreshEndTimeNs = AuroraConnectionTrackerPlugin.hostListRefreshEndTimeNs;
+        if (localRefreshEndTimeNs > 0n) {
+          if (localRefreshEndTimeNs > process.hrtime.bigint()) {
+            needRefreshHostList = true;
+          } else {
+            AuroraConnectionTrackerPlugin.hostListRefreshEndTimeNs = 0n;
+          }
+        }
+        if (this.needUpdateCurrentWriter || needRefreshHostList) {
+          await this.checkWriterChanged(needRefreshHostList);
+        }
+      }
+
       const result = await methodFunc();
-      if (this.needUpdateCurrentWriter) {
-        await this.checkWriterChanged();
+
+      if (isClosing) {
+        const host = this.pluginService.getTrackedConnectionHost();
+        if (host) {
+          this.tracker.removeConnectionTracking(host);
+          this.pluginService.setTrackedConnectionHost(null);
+        } else if (currentHostInfo) {
+          this.tracker.removeConnectionTrackingByHost(currentHostInfo, this.pluginService.getCurrentClient()?.targetClient);
+        }
       }
       return result;
     } catch (error) {
       if (error instanceof FailoverError) {
-        await this.checkWriterChanged();
+        AuroraConnectionTrackerPlugin.hostListRefreshEndTimeNs =
+          process.hrtime.bigint() + AuroraConnectionTrackerPlugin.TOPOLOGY_CHANGES_EXPECTED_TIME_NS;
+        // This call may effectively close/abort the current connection.
+        await this.checkWriterChanged(true);
       }
       throw error;
     }
   }
 
-  private async checkWriterChanged(): Promise<void> {
+  private async checkWriterChanged(needRefreshHostList: boolean): Promise<void> {
+    if (needRefreshHostList) {
+      try {
+        await this.pluginService.refreshHostList();
+      } catch (error) {
+        // Ignore: continue with whatever topology is currently available.
+      }
+    }
+
     const hostInfoAfterFailover = this.getWriter(this.pluginService.getAllHosts());
+    if (hostInfoAfterFailover === null) {
+      return;
+    }
+
     if (this.currentWriter === null) {
       this.currentWriter = hostInfoAfterFailover;
       this.needUpdateCurrentWriter = false;
-    } else if (!this.currentWriter.equals(hostInfoAfterFailover!)) {
-      // writer changed
+    } else if (this.currentWriter.hostAndPort !== hostInfoAfterFailover.hostAndPort) {
+      // The writer changed.
       await this.tracker.invalidateAllConnections(this.currentWriter);
       this.tracker.logOpenedConnections();
       this.currentWriter = hostInfoAfterFailover;
       this.needUpdateCurrentWriter = false;
+      AuroraConnectionTrackerPlugin.hostListRefreshEndTimeNs = 0n;
     }
   }
 
