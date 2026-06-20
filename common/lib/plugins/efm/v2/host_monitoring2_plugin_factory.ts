@@ -1,12 +1,12 @@
 /*
   Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
- 
+
   Licensed under the Apache License, Version 2.0 (the "License").
   You may not use this file except in compliance with the License.
   You may obtain a copy of the License at
- 
+
   http://www.apache.org/licenses/LICENSE-2.0
- 
+
   Unless required by applicable law or agreed to in writing, software
   distributed under the License is distributed on an "AS IS" BASIS,
   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -14,12 +14,11 @@
   limitations under the License.
 */
 
-import { ConnectionPluginFactory } from "../../plugin_factory";
-import { ConnectionPlugin } from "../../connection_plugin";
-import { RdsUtils } from "../../utils/rds_utils";
-import { AwsWrapperError } from "../../utils/errors";
-import { Messages } from "../../utils/messages";
-import { FullServicesContainer } from "../../utils/full_services_container";
+import { ConnectionPluginFactory } from "../../../plugin_factory";
+import { ConnectionPlugin } from "../../../connection_plugin";
+import { AwsWrapperError } from "../../../utils/errors";
+import { Messages } from "../../../utils/messages";
+import { FullServicesContainer } from "../../../utils/full_services_container";
 
 export class HostMonitoring2PluginFactory extends ConnectionPluginFactory {
   private static hostMonitoring2Plugin: any;
@@ -29,11 +28,7 @@ export class HostMonitoring2PluginFactory extends ConnectionPluginFactory {
       if (!HostMonitoring2PluginFactory.hostMonitoring2Plugin) {
         HostMonitoring2PluginFactory.hostMonitoring2Plugin = await import("./host_monitoring2_connection_plugin");
       }
-      return new HostMonitoring2PluginFactory.hostMonitoring2Plugin.HostMonitoring2ConnectionPlugin(
-        servicesContainer.pluginService,
-        properties,
-        new RdsUtils()
-      );
+      return new HostMonitoring2PluginFactory.hostMonitoring2Plugin.HostMonitoring2ConnectionPlugin(servicesContainer, properties);
     } catch (error: any) {
       throw new AwsWrapperError(Messages.get("ConnectionPluginChainBuilder.errorImportingPlugin", error.message, "HostMonitoringPlugin"));
     }

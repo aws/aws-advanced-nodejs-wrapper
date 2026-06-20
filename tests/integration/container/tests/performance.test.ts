@@ -25,7 +25,7 @@ import { WrapperProperties, PluginManager } from "../../../../index";
 import { features } from "./config";
 import { PerfStat } from "./utils/perf_stat";
 import { PerfTestUtility } from "./utils/perf_util";
-import { MonitorServiceImpl } from "../../../../common/lib/plugins/efm/monitor_service";
+import { MonitorServiceImpl } from "../../../../common/lib/plugins/efm/v1/monitor_service";
 
 const itIf =
   features.includes(TestEnvironmentFeatures.FAILOVER_SUPPORTED) &&

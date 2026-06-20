@@ -15,12 +15,12 @@
 */
 
 import { WrapperProperties } from "../../common/lib/wrapper_property";
-import { HostMonitoringConnectionPlugin } from "../../common/lib/plugins/efm/host_monitoring_connection_plugin";
+import { HostMonitoringConnectionPlugin } from "../../common/lib/plugins/efm/v1/host_monitoring_connection_plugin";
 import { DatabaseDialect } from "../../common/lib/database_dialect/database_dialect";
 import { PgDatabaseDialect } from "../../pg/lib/dialect/pg_database_dialect";
 import { anything, instance, mock, reset, verify, when } from "ts-mockito";
 import { RdsUtils } from "../../common/lib/utils/rds_utils";
-import { MonitorServiceImpl } from "../../common/lib/plugins/efm/monitor_service";
+import { MonitorServiceImpl } from "../../common/lib/plugins/efm/v1/monitor_service";
 import { PluginServiceImpl } from "../../common/lib/plugin_service";
 import { MonitorConnectionContext } from "../../common/lib/plugins/efm/monitor_connection_context";
 import { AwsWrapperError, HostAvailability, HostInfo } from "../../common/lib";

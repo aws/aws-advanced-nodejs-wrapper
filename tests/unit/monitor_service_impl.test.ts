@@ -16,7 +16,7 @@
 
 import { anything, capture, instance, mock, reset, verify, when } from "ts-mockito";
 import { MonitorImpl } from "../../common/lib/plugins/efm/monitor";
-import { MonitorServiceImpl } from "../../common/lib/plugins/efm/monitor_service";
+import { MonitorServiceImpl } from "../../common/lib/plugins/efm/v1/monitor_service";
 import { PluginService, PluginServiceImpl } from "../../common/lib/plugin_service";
 import { HostInfo, HostInfoBuilder } from "../../common/lib";
 import { SimpleHostAvailabilityStrategy } from "../../common/lib/host_availability/simple_host_availability_strategy";
