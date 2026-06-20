@@ -14,37 +14,42 @@
   limitations under the License.
 */
 
-import { HostInfo, AwsWrapperError, UnavailableHostError, HostAvailability } from "../../";
-import { PluginService } from "../../plugin_service";
-import { HostChangeOptions } from "../../host_change_options";
-import { OldConnectionSuggestionAction } from "../../old_connection_suggestion_action";
-import { RdsUtils } from "../../utils/rds_utils";
-import { AbstractConnectionPlugin } from "../../abstract_connection_plugin";
-import { RdsUrlType } from "../../utils/rds_url_type";
-import { WrapperProperties } from "../../wrapper_property";
-import { MonitorConnectionContext } from "./monitor_connection_context";
-import { logger, uniqueId } from "../../../logutils";
-import { Messages } from "../../utils/messages";
-import { MonitorService, MonitorServiceImpl } from "./monitor_service";
-import { HostListProvider } from "../../host_list_provider/host_list_provider";
-import { CanReleaseResources } from "../../can_release_resources";
-import { SubscribedMethodHelper } from "../../utils/subscribed_method_helper";
-import { ClientWrapper } from "../../client_wrapper";
+import { HostInfo } from "../../../host_info";
+import { AwsWrapperError, UnavailableHostError } from "../../../utils/errors";
+import { PluginService } from "../../../plugin_service";
+import { HostChangeOptions } from "../../../host_change_options";
+import { OldConnectionSuggestionAction } from "../../../old_connection_suggestion_action";
+import { RdsUtils } from "../../../utils/rds_utils";
+import { AbstractConnectionPlugin } from "../../../abstract_connection_plugin";
+import { RdsUrlType } from "../../../utils/rds_url_type";
+import { WrapperProperties } from "../../../wrapper_property";
+import { ConnectionContext } from "../base/connection_context";
+import { HostMonitorService, HostMonitorServiceImpl } from "../base/host_monitor_service";
+import { logger, uniqueId } from "../../../../logutils";
+import { Messages } from "../../../utils/messages";
+import { HostListProvider } from "../../../host_list_provider/host_list_provider";
+import { CanReleaseResources } from "../../../can_release_resources";
+import { SubscribedMethodHelper } from "../../../utils/subscribed_method_helper";
+import { ClientWrapper } from "../../../client_wrapper";
+import { FullServicesContainer } from "../../../utils/full_services_container";
+import { sleep } from "../../../utils/utils";
 
 export class HostMonitoringConnectionPlugin extends AbstractConnectionPlugin implements CanReleaseResources {
-  id: string = uniqueId("_efmPlugin");
-  private readonly properties: Map<string, any>;
-  private pluginService: PluginService;
-  private rdsUtils: RdsUtils;
-  private monitoringHostInfo: HostInfo | null = null;
-  private monitorService: MonitorService;
+  private static readonly UNHEALTHY_STATE = Symbol("unhealthy");
 
-  constructor(pluginService: PluginService, properties: Map<string, any>, rdsUtils: RdsUtils = new RdsUtils(), monitorService?: MonitorServiceImpl) {
+  id: string = uniqueId("_efmPlugin");
+  protected readonly properties: Map<string, any>;
+  protected readonly pluginService: PluginService;
+  protected readonly rdsUtils: RdsUtils;
+  protected readonly monitorService: HostMonitorService;
+  private monitoringHostInfo: HostInfo | null = null;
+
+  constructor(servicesContainer: FullServicesContainer, properties: Map<string, any>, monitorService?: HostMonitorService) {
     super();
-    this.pluginService = pluginService;
+    this.pluginService = servicesContainer.pluginService;
     this.properties = properties;
-    this.rdsUtils = rdsUtils;
-    this.monitorService = monitorService ?? new MonitorServiceImpl(pluginService);
+    this.rdsUtils = new RdsUtils();
+    this.monitorService = monitorService ?? new HostMonitorServiceImpl(servicesContainer);
   }
 
   getSubscribedMethods(): Set<string> {
@@ -78,20 +83,19 @@ export class HostMonitoringConnectionPlugin extends AbstractConnectionPlugin imp
       return methodFunc();
     }
 
-    const failureDetectionTimeMillis: number = WrapperProperties.FAILURE_DETECTION_TIME_MS.get(this.properties) as number;
-    const failureDetectionIntervalMillis: number = WrapperProperties.FAILURE_DETECTION_INTERVAL_MS.get(this.properties) as number;
-    const failureDetectionCount: number = WrapperProperties.FAILURE_DETECTION_COUNT.get(this.properties) as number;
+    const failureDetectionTimeMillis: number = WrapperProperties.FAILURE_DETECTION_TIME_MS.get(this.properties);
+    const failureDetectionIntervalMillis: number = WrapperProperties.FAILURE_DETECTION_INTERVAL_MS.get(this.properties);
+    const failureDetectionCount: number = WrapperProperties.FAILURE_DETECTION_COUNT.get(this.properties);
 
     let result: T;
-    let monitorContext: MonitorConnectionContext | null = null;
+    let context: ConnectionContext | null = null;
 
     try {
       logger.debug(Messages.get("HostMonitoringConnectionPlugin.activatedMonitoring", methodName));
       const monitoringHostInfo: HostInfo = await this.getMonitoringHostInfo();
 
-      monitorContext = await this.monitorService.startMonitoring(
+      context = await this.monitorService.startMonitoring(
         this.pluginService.getCurrentClient().targetClient,
-        monitoringHostInfo.allAliases,
         monitoringHostInfo,
         this.properties,
         failureDetectionTimeMillis,
@@ -99,19 +103,17 @@ export class HostMonitoringConnectionPlugin extends AbstractConnectionPlugin imp
         failureDetectionCount
       );
 
-      result = await Promise.race([monitorContext.trackHealthStatus(), methodFunc()])
-        .then((result: any) => {
-          return result;
-        })
-        .catch((error: any) => {
-          throw error;
-        });
+      const raceResult = await Promise.race([this.waitForUnhealthy(context), methodFunc()]);
+      if (raceResult === HostMonitoringConnectionPlugin.UNHEALTHY_STATE) {
+        throw new AwsWrapperError("Host monitoring detected unhealthy host");
+      }
+      result = raceResult as T;
     } finally {
-      if (monitorContext != null) {
-        await this.monitorService.stopMonitoring(monitorContext);
+      if (context != null) {
+        this.monitorService.stopMonitoring(context);
         logger.debug(Messages.get("HostMonitoringConnectionPlugin.monitoringDeactivated", methodName));
 
-        if (monitorContext.isHostUnhealthy) {
+        if (context.isHostUnhealthy()) {
           const monitoringHostInfo = await this.getMonitoringHostInfo();
           const targetClient = this.pluginService.getCurrentClient().targetClient;
           let isClientValid = false;
@@ -133,6 +135,13 @@ export class HostMonitoringConnectionPlugin extends AbstractConnectionPlugin imp
     }
 
     return result;
+  }
+
+  private async waitForUnhealthy(context: ConnectionContext): Promise<symbol> {
+    while (!context.isHostUnhealthy() && context.isActiveContext()) {
+      await sleep(100);
+    }
+    return HostMonitoringConnectionPlugin.UNHEALTHY_STATE;
   }
 
   private throwUnableToIdentifyConnection(host: HostInfo | null): never {
@@ -167,7 +176,6 @@ export class HostMonitoringConnectionPlugin extends AbstractConnectionPlugin imp
           const host: HostInfo | null = this.pluginService.getCurrentHostInfo();
           this.throwUnableToIdentifyConnection(host);
         }
-        // Update identified HostInfo for the current connection
         await this.pluginService.setCurrentClient(this.pluginService.getCurrentClient().targetClient!, this.monitoringHostInfo);
       }
     } catch (error: any) {
@@ -180,15 +188,9 @@ export class HostMonitoringConnectionPlugin extends AbstractConnectionPlugin imp
   }
 
   async notifyConnectionChanged(changes: Set<HostChangeOptions>): Promise<OldConnectionSuggestionAction> {
-    if (changes.has(HostChangeOptions.WENT_DOWN) || changes.has(HostChangeOptions.HOST_DELETED)) {
-      const aliases = (await this.getMonitoringHostInfo())?.allAliases;
-      if (aliases && aliases.size > 0) {
-        this.monitorService.stopMonitoringForAllConnections(aliases);
-      }
+    if (changes.has(HostChangeOptions.HOSTNAME) || changes.has(HostChangeOptions.HOST_CHANGED)) {
+      this.monitoringHostInfo = null;
     }
-
-    // Reset monitoring host info since the associated connection has changed.
-    this.monitoringHostInfo = null;
     return OldConnectionSuggestionAction.NO_OPINION;
   }
 
