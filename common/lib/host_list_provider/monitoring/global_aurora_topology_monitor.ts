@@ -15,13 +15,19 @@
 */
 
 import { ClusterTopologyMonitorImpl } from "./cluster_topology_monitor";
-import { GdbTopologyUtils, GlobalTopologyUtils } from "../global_topology_utils";
+import { GdbTopologyUtils } from "../global_topology_utils";
 import { FullServicesContainer } from "../../utils/full_services_container";
 import { HostInfo } from "../../host_info";
 import { ClientWrapper } from "../../client_wrapper";
 import { AwsWrapperError } from "../../utils/errors";
 import { Messages } from "../../utils/messages";
 import { TopologyUtils } from "../topology_utils";
+import { AccessibleRegions } from "../../utils/accessible_regions";
+import { MonitoringConnectionHandler } from "./monitoring_connection_handler";
+import { GdbMonitoringConnectionHandler } from "./gdb_monitoring_connection_handler";
+import { WrapperProperties } from "../../wrapper_property";
+import { RdsUtils } from "../../utils/rds_utils";
+import { logger } from "../../../logutils";
 
 function isGdbTopologyUtils(utils: TopologyUtils): utils is TopologyUtils & GdbTopologyUtils {
   return "getRegion" in utils && typeof (utils as unknown as GdbTopologyUtils).getRegion === "function";
@@ -29,6 +35,8 @@ function isGdbTopologyUtils(utils: TopologyUtils): utils is TopologyUtils & GdbT
 
 export class GlobalAuroraTopologyMonitor extends ClusterTopologyMonitorImpl {
   protected readonly instanceTemplatesByRegion: Map<string, HostInfo>;
+  protected readonly accessibleRegions: string[] | null;
+  protected readonly gdbRdsUtils: RdsUtils = new RdsUtils();
   declare public readonly topologyUtils: TopologyUtils;
 
   constructor(
@@ -46,6 +54,45 @@ export class GlobalAuroraTopologyMonitor extends ClusterTopologyMonitorImpl {
 
     this.instanceTemplatesByRegion = instanceTemplatesByRegion;
     this.topologyUtils = topologyUtils;
+    this.accessibleRegions = AccessibleRegions.parse(properties);
+
+    if (this.accessibleRegions) {
+      logger.debug(`GlobalAuroraTopologyMonitor: accessible regions = ${this.accessibleRegions.join(",")}`);
+    }
+  }
+
+  protected override createConnectionHandler(): MonitoringConnectionHandler {
+    const homeRegion = WrapperProperties.FAILOVER_HOME_REGION.get(this.monitoringProperties) ?? this.gdbRdsUtils.getRdsRegion(this.initialHostInfo.host);
+    return new GdbMonitoringConnectionHandler(
+      this.pluginService,
+      this.monitoringProperties,
+      this.accessibleRegions,
+      homeRegion,
+      () => this.monitoringClient,
+      (client) => { this.monitoringClient = client; }
+    );
+  }
+
+  protected override filterHostsForHostMonitoring(hosts: HostInfo[]): HostInfo[] {
+    if (!this.accessibleRegions) {
+      return hosts;
+    }
+    return hosts.filter((host) => {
+      const region = this.gdbRdsUtils.getRdsRegion(host.host);
+      return region !== null && this.accessibleRegions!.includes(region.toLowerCase());
+    });
+  }
+
+  protected override async openAnyClientAndUpdateTopology(): Promise<HostInfo[] | null> {
+    if (this.accessibleRegions) {
+      const region = this.gdbRdsUtils.getRdsRegion(this.initialHostInfo.host);
+      if (region && !this.accessibleRegions.includes(region.toLowerCase())) {
+        const msg = Messages.get("GlobalAuroraTopologyMonitor.initialHostNotInAccessibleRegion", this.initialHostInfo.host, region);
+        throw new AwsWrapperError(msg);
+      }
+    }
+
+    return super.openAnyClientAndUpdateTopology();
   }
 
   protected override async getInstanceTemplate(hostId: string, targetClient: ClientWrapper): Promise<HostInfo> {

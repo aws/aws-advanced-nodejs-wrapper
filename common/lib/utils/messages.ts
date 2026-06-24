@@ -315,12 +315,16 @@ const MESSAGES: Record<string, string> = {
   "ClusterTopologyMonitor.errorDuringMonitoring": "Error thrown during cluster topology monitoring: '%s'.",
   "ClusterTopologyMonitor.endMonitoring": "Stop cluster topology monitoring.",
   "ClusterTopologyMonitor.matchingReaderTopologies": "Reader topologies have been consistent for '%s' ms. Updating topology cache.",
+  "ClusterTopologyMonitor.exitPanicModeViaReaderConsensus":
+    "Exiting panic mode by adopting harvested reader connection to '%s' as the monitoring connection. The writer is likely in an inaccessible region, so a verified writer connection cannot be established.",
   "ClusterTopologyMonitor.reset": "[clusterId: '%s'] Resetting cluster topology monitor for '%s'.",
   "ClusterTopologyMonitor.resetEventReceived": "MonitorResetEvent received.",
   "HostMonitor.startMonitoring": "Host monitor '%s' started.",
   "HostMonitor.detectedWriter": "Detected writer: '%s'.",
   "HostMonitor.endMonitoring": "Host monitor '%s' completed in '%s' ms.",
   "HostMonitor.writerHostChanged": "Writer host has changed from '%s' to '%s'.",
+  "HostMonitor.writerChangeExitTriggered":
+    "A reader observed that the writer changed to '%s'. Since some regions are inaccessible, signalling the topology monitor to exit panic mode via reader consensus.",
   "HostMonitor.writerIsStale": "Connected writer instance '%s' is stale.",
   "HostMonitor.loginErrorDuringMonitoring": "Login error detected during monitoring.",
   "SlidingExpirationCacheWithCleanupTask.cleaningUp": "Cleanup interval of '%s' minutes has passed, cleaning up sliding expiration cache '%s'.",
@@ -408,7 +412,13 @@ const MESSAGES: Record<string, string> = {
   "Utils.globalClusterInstanceHostPatternsRequired": "The 'globalClusterInstanceHostPatterns' property is required for Global Aurora Databases.",
   "Utils.invalidPatternFormat":
     "Invalid pattern format '%s'. Expected format: 'region:host-pattern' (e.g., 'us-east-1:?.cluster-xyz.us-east-1.rds.amazonaws.com').",
+  "AuroraMonitoringConnectionHandler.initialized": "AuroraMonitoringConnectionHandler initialized with priorities: '%s'.",
+  "GdbMonitoringConnectionHandler.initialized": "GdbMonitoringConnectionHandler initialized with priorities: '%s'.",
+  "GdbMonitoringConnectionHandler.unrecognizedPriority":
+    "Unrecognized 'gdbMonitoringConnectionPriority' value '%s'. It does not match a known priority variant and does not look like an AWS region, so it will be treated as a region literal that never matches. This is likely a typo.",
   "GlobalAuroraTopologyMonitor.cannotFindRegionTemplate": "Cannot find cluster instance template for region '%s'.",
+  "GlobalAuroraTopologyMonitor.initialHostNotInAccessibleRegion":
+    "Initial host '%s' in region '%s' is not within the list of accessible regions.",
   "GlobalAuroraTopologyMonitor.invalidTopologyUtils": "TopologyUtils must implement GdbTopologyUtils for GlobalAuroraTopologyMonitor.",
   "GlobalDbFailoverPlugin.missingHomeRegion":
     "The 'failoverHomeRegion' property is required when connecting to a Global Aurora Database without a region in the URL.",
@@ -420,11 +430,17 @@ const MESSAGES: Record<string, string> = {
   "GlobalDbFailoverPlugin.unableToFindCandidateWithMatchingRole":
     "Unable to find a candidate host with the expected role (%s) based on the given host selection strategy: %s",
   "GlobalDbFailoverPlugin.unableToConnect": "Unable to establish a connection during Global DB failover.",
+  "GlobalDbFailoverPlugin.writerInInaccessibleRegion":
+    "Writer host '%s' from region '%s' is not within the list of accessible regions. Failover cannot proceed.",
   "GdbReadWriteSplittingPlugin.missingHomeRegion":
     "Unable to parse home region from endpoint '%s'. Please ensure you have set the 'gdbRwHomeRegion' connection parameter.",
   "GdbReadWriteSplittingPlugin.cantConnectWriterOutOfHomeRegion": "Writer connection to '%s' is not allowed since it is out of home region '%s'.",
-  "GdbReadWriteSplittingPlugin.noAvailableReadersInHomeRegion": "No available reader nodes in home region '%s'.",
+  "GdbReadWriteSplittingPlugin.writerInInaccessibleRegion": "Writer host '%s' from region '%s' is not within the list of accessible regions.",
+  "GdbReadWriteSplittingPlugin.noAvailableReadersInHomeRegion": "No available reader hosts in home region '%s'.",
+  "GdbReadWriteSplittingPlugin.noAvailableReadersInAccessibleRegions": "No available reader hosts in accessible regions '%s'.",
   "GdbReadWriteSplittingPlugin.parameterValue": "%s=%s",
+  "Gdb.homeRegionNotAccessible":
+    "The home region '%s' must be included in the accessible regions '%s'. Please add the home region to 'gdbAccessibleRegions' or adjust the configured home region.",
   "BatchingEventPublisher.errorDeliveringImmediateEvent": "Error delivering immediate event: %s",
   "WrapperProperty.invalidValue": "Invalid value '%s' for property '%s'. Allowed values: %s"
 };

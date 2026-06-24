@@ -47,7 +47,7 @@ import { AllowedAndBlockedHosts } from "./allowed_and_blocked_hosts";
 import { ConnectionPlugin } from "./connection_plugin";
 import { FullServicesContainer } from "./utils/full_services_container";
 import { StorageService } from "./utils/storage/storage_service";
-import type { TrackedConnectionListHost } from "./plugins/connection_tracker/tracked_connection_list";
+import type { TrackedConnection } from "./plugins/connection_tracker/tracked_connection_list";
 
 export interface PluginService extends ErrorHandler {
   isInTransaction(): boolean;
@@ -158,9 +158,9 @@ export interface PluginService extends ErrorHandler {
 
   setIsPooledClient(isPooledClient: boolean): void;
 
-  getTrackedConnectionHost(): TrackedConnectionListHost | null;
+  getTrackedConnectionHost(): TrackedConnection | null;
 
-  setTrackedConnectionHost(host: TrackedConnectionListHost | null): void;
+  setTrackedConnectionHost(host: TrackedConnection | null): void;
 }
 
 export class PluginServiceImpl implements PluginService, HostListProviderService {
@@ -184,7 +184,7 @@ export class PluginServiceImpl implements PluginService, HostListProviderService
   private allowedAndBlockedHosts: AllowedAndBlockedHosts | null = null;
 
   protected _isPooledClient: boolean = false;
-  protected _trackedConnectionHost: TrackedConnectionListHost | null = null;
+  protected _trackedConnectionHost: TrackedConnection | null = null;
 
   constructor(
     container: FullServicesContainer,
@@ -808,11 +808,11 @@ export class PluginServiceImpl implements PluginService, HostListProviderService
     this._isPooledClient = isPooledClient;
   }
 
-  getTrackedConnectionHost(): TrackedConnectionListHost | null {
+  getTrackedConnectionHost(): TrackedConnection | null {
     return this._trackedConnectionHost;
   }
 
-  setTrackedConnectionHost(host: TrackedConnectionListHost | null): void {
+  setTrackedConnectionHost(host: TrackedConnection | null): void {
     this._trackedConnectionHost = host;
   }
 }

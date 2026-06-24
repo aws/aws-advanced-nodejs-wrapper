@@ -20,10 +20,14 @@ import { ClientWrapper } from "../../../common/lib/client_wrapper";
 import { TopologyQueryResult } from "../../../common/lib/host_list_provider/topology_utils";
 import { FullServicesContainer } from "../../../common/lib/utils/full_services_container";
 import { HostListProvider } from "../../../common/lib/host_list_provider/host_list_provider";
+import { HostInfo } from "../../../common/lib/host_info";
 import { GlobalAuroraHostListProvider } from "../../../common/lib/host_list_provider/global_aurora_host_list_provider";
 import { GlobalTopologyUtils } from "../../../common/lib/host_list_provider/global_topology_utils";
+import { RdsUtils } from "../../../common/lib/utils/rds_utils";
 
 export class GlobalAuroraMySQLDatabaseDialect extends AuroraMySQLDatabaseDialect implements GlobalAuroraTopologyDialect {
+  private readonly rdsUtils: RdsUtils = new RdsUtils();
+
   private static readonly GLOBAL_STATUS_TABLE_EXISTS_QUERY =
     "SELECT 1 AS tmp FROM information_schema.tables WHERE" +
     " upper(table_schema) = 'INFORMATION_SCHEMA' AND upper(table_name) = 'AURORA_GLOBAL_DB_STATUS'";
@@ -79,6 +83,17 @@ export class GlobalAuroraMySQLDatabaseDialect extends AuroraMySQLDatabaseDialect
       new GlobalTopologyUtils(this, servicesContainer.pluginService.getHostInfoBuilder()),
       servicesContainer
     );
+  }
+
+  async filterAvailableHosts(hosts: HostInfo[], accessibleRegions: string[]): Promise<HostInfo[]> {
+    if (!accessibleRegions || accessibleRegions.length === 0) {
+      return hosts;
+    }
+    const lowerRegions = accessibleRegions.map((r) => r.toLowerCase());
+    return hosts.filter((host) => {
+      const region = this.rdsUtils.getRdsRegion(host.host);
+      return region !== null && lowerRegions.includes(region.toLowerCase());
+    });
   }
 
   async queryForTopology(targetClient: ClientWrapper): Promise<TopologyQueryResult[]> {

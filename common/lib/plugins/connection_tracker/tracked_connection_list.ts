@@ -21,7 +21,7 @@ import { ClientWrapper } from "../../client_wrapper";
  * Holding onto a host allows the tracked connection to be removed later without
  * having to search the entire list.
  */
-export class TrackedConnectionListHost {
+export class TrackedConnection {
   private readonly list: TrackedConnectionList;
   private readonly ref: WeakRef<ClientWrapper>;
 
@@ -49,10 +49,10 @@ export class TrackedConnectionList {
   /**
    * Track a new connection and return a handle that can be used to stop tracking it.
    */
-  add(client: ClientWrapper): TrackedConnectionListHost {
+  add(client: ClientWrapper): TrackedConnection {
     const ref = new WeakRef(client);
     this.connections.push(ref);
-    return new TrackedConnectionListHost(this, ref);
+    return new TrackedConnection(this, ref);
   }
 
   /**

@@ -30,6 +30,7 @@ import { ReaderFailoverResult } from "../failover/reader_failover_result";
 import { containsHostAndPort, convertNanosToMs, equalsIgnoreCase, getTimeInNanos, getWriter, logTopology, sleep } from "../../utils/utils";
 import { Failover2Plugin } from "../failover2/failover2_plugin";
 import { FullServicesContainer } from "../../utils/full_services_container";
+import { AccessibleRegions } from "../../utils/accessible_regions";
 
 export class GlobalDbFailoverPlugin extends Failover2Plugin {
   private static readonly TELEMETRY_FAILOVER = "failover";
@@ -37,6 +38,7 @@ export class GlobalDbFailoverPlugin extends Failover2Plugin {
   protected activeHomeFailoverMode: GlobalDbFailoverMode = GlobalDbFailoverMode.UNKNOWN;
   protected inactiveHomeFailoverMode: GlobalDbFailoverMode = GlobalDbFailoverMode.UNKNOWN;
   protected homeRegion: string | null = null;
+  protected accessibleRegions: string[] | null = null;
 
   constructor(servicesContainer: FullServicesContainer, properties: Map<string, any>, rdsHelper: RdsUtils) {
     super(servicesContainer, properties, rdsHelper);
@@ -95,6 +97,17 @@ export class GlobalDbFailoverPlugin extends Failover2Plugin {
       }
     }
 
+    this.accessibleRegions = AccessibleRegions.parse(this.properties);
+    if (this.accessibleRegions) {
+      logger.debug(Messages.get("Failover.parameterValue", "gdbAccessibleRegions", this.accessibleRegions.join(",")));
+
+      // The home region must be reachable. If it is excluded from the accessible regions, failover
+      // candidate filtering would always drop it, so fail loudly at configuration time.
+      if (this.homeRegion && !this.accessibleRegions.includes(this.homeRegion.toLowerCase())) {
+        throw new AwsWrapperError(Messages.get("Gdb.homeRegionNotAccessible", this.homeRegion, this.accessibleRegions.join(",")));
+      }
+    }
+
     logger.debug(Messages.get("Failover.parameterValue", "activeHomeFailoverMode", this.activeHomeFailoverMode));
     logger.debug(Messages.get("Failover.parameterValue", "inactiveHomeFailoverMode", this.inactiveHomeFailoverMode));
   }
@@ -119,15 +132,24 @@ export class GlobalDbFailoverPlugin extends Failover2Plugin {
           throw new FailoverFailedError(Messages.get("Failover.unableToRefreshHostList"));
         }
 
-        const updatedHosts = this.pluginService.getAllHosts();
+        const allHosts = this.pluginService.getAllHosts();
+        const updatedHosts = await this.filterByAccessibleRegions(allHosts);
         const writerCandidate = getWriter(updatedHosts);
 
         if (!writerCandidate) {
           this.failoverWriterTriggeredCounter.inc();
           this.failoverWriterFailedCounter.inc();
-          const message = logTopology(updatedHosts, Messages.get("Failover.unableToDetermineWriter"));
+          const message = logTopology(allHosts, Messages.get("Failover.unableToDetermineWriter"));
           logger.error(message);
           throw new FailoverFailedError(message);
+        }
+
+        if (this.accessibleRegions && !this.isHostInAccessibleRegion(writerCandidate)) {
+          this.failoverWriterTriggeredCounter.inc();
+          this.failoverWriterFailedCounter.inc();
+          const writerRegion = this.rdsHelper.getRdsRegion(writerCandidate.host) ?? "unknown";
+          logger.error(Messages.get("GlobalDbFailoverPlugin.writerInInaccessibleRegion", writerCandidate.host, writerRegion));
+          throw new FailoverFailedError(Messages.get("GlobalDbFailoverPlugin.writerInInaccessibleRegion", writerCandidate.host, writerRegion));
         }
 
         // Check writer region to determine failover mode
@@ -144,29 +166,28 @@ export class GlobalDbFailoverPlugin extends Failover2Plugin {
             break;
           case GlobalDbFailoverMode.STRICT_HOME_READER:
             await this.failoverToAllowedHost(
-              () => this.pluginService.getHosts().filter((x) => x.role === HostRole.READER && this.isHostInHomeRegion(x)),
+              () => this.getAccessibleHosts().filter((x) => x.role === HostRole.READER && this.isHostInHomeRegion(x)),
               HostRole.READER,
               failoverEndTimeNs
             );
             break;
           case GlobalDbFailoverMode.STRICT_OUT_OF_HOME_READER:
             await this.failoverToAllowedHost(
-              () => this.pluginService.getHosts().filter((x) => x.role === HostRole.READER && !this.isHostInHomeRegion(x)),
+              () => this.getAccessibleHosts().filter((x) => x.role === HostRole.READER && !this.isHostInHomeRegion(x)),
               HostRole.READER,
               failoverEndTimeNs
             );
             break;
           case GlobalDbFailoverMode.STRICT_ANY_READER:
             await this.failoverToAllowedHost(
-              () => this.pluginService.getHosts().filter((x) => x.role === HostRole.READER),
+              () => this.getAccessibleHosts().filter((x) => x.role === HostRole.READER),
               HostRole.READER,
               failoverEndTimeNs
             );
             break;
           case GlobalDbFailoverMode.HOME_READER_OR_WRITER:
             await this.failoverToAllowedHost(
-              () =>
-                this.pluginService.getHosts().filter((x) => x.role === HostRole.WRITER || (x.role === HostRole.READER && this.isHostInHomeRegion(x))),
+              () => this.getAccessibleHosts().filter((x) => x.role === HostRole.WRITER || (x.role === HostRole.READER && this.isHostInHomeRegion(x))),
               null,
               failoverEndTimeNs
             );
@@ -174,15 +195,13 @@ export class GlobalDbFailoverPlugin extends Failover2Plugin {
           case GlobalDbFailoverMode.OUT_OF_HOME_READER_OR_WRITER:
             await this.failoverToAllowedHost(
               () =>
-                this.pluginService
-                  .getHosts()
-                  .filter((x) => x.role === HostRole.WRITER || (x.role === HostRole.READER && !this.isHostInHomeRegion(x))),
+                this.getAccessibleHosts().filter((x) => x.role === HostRole.WRITER || (x.role === HostRole.READER && !this.isHostInHomeRegion(x))),
               null,
               failoverEndTimeNs
             );
             break;
           case GlobalDbFailoverMode.ANY_READER_OR_WRITER:
-            await this.failoverToAllowedHost(() => [...this.pluginService.getHosts()], null, failoverEndTimeNs);
+            await this.failoverToAllowedHost(() => this.getAccessibleHosts(), null, failoverEndTimeNs);
             break;
           case GlobalDbFailoverMode.UNKNOWN:
           default:
@@ -202,8 +221,33 @@ export class GlobalDbFailoverPlugin extends Failover2Plugin {
   }
 
   private isHostInHomeRegion(host: HostInfo): boolean {
+    const hostRegion: string | null = this.rdsHelper.getRdsRegion(host.host);
+    return hostRegion !== null && equalsIgnoreCase(hostRegion, this.homeRegion);
+  }
+
+  private isHostInAccessibleRegion(host: HostInfo): boolean {
+    if (!this.accessibleRegions) {
+      return true;
+    }
     const hostRegion = this.rdsHelper.getRdsRegion(host.host);
-    return equalsIgnoreCase(hostRegion, this.homeRegion);
+    return hostRegion !== null && this.accessibleRegions.includes(hostRegion.toLowerCase());
+  }
+
+  private getAccessibleHosts(): HostInfo[] {
+    const hosts = this.pluginService.getHosts();
+    if (!this.accessibleRegions) {
+      return hosts;
+    }
+    return hosts.filter((x) => this.isHostInAccessibleRegion(x));
+  }
+
+  private async filterByAccessibleRegions(hosts: HostInfo[]): Promise<HostInfo[]> {
+    if (!this.accessibleRegions) {
+      return hosts;
+    }
+    const dialect = this.pluginService.getDialect();
+    // filterAvailableHosts is an optional SPI method; non-region-aware dialects don't implement it.
+    return dialect.filterAvailableHosts ? dialect.filterAvailableHosts(hosts, this.accessibleRegions) : hosts;
   }
 
   protected async failoverToWriter(writerCandidate: HostInfo): Promise<void> {

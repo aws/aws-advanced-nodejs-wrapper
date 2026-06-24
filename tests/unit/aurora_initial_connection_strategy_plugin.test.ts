@@ -125,7 +125,7 @@ describe("Aurora initial connection strategy plugin", () => {
     when(mockPluginService.connect(anything(), anything(), anything())).thenResolve(readerClient);
     when(mockPluginService.acceptsStrategy(anything(), anything())).thenReturn(true);
     when(mockPluginService.getHostRole(readerClient)).thenReturn(Promise.resolve(HostRole.READER));
-    when(mockPluginService.getHostInfoByStrategy(anything(), anything())).thenReturn(instance(mockReaderHostInfo));
+    when(mockPluginService.getHostInfoByStrategy(anything(), anything(), anything())).thenReturn(instance(mockReaderHostInfo));
 
     expect(await plugin.connect(hostInfo, props, true, mockFunc)).toBe(readerClient);
     verify(mockPluginService.forceRefreshHostList()).never();
@@ -142,13 +142,13 @@ describe("Aurora initial connection strategy plugin", () => {
 
   it("test reader - return writer", async () => {
     when(mockRdsUtils.identifyRdsType(anything())).thenReturn(RdsUrlType.RDS_READER_CLUSTER);
-    when(mockPluginService.getAllHosts())
-      .thenReturn([hostInfoBuilder.withRole(HostRole.READER).build()])
-      .thenReturn([hostInfoBuilder.withRole(HostRole.WRITER).build()]);
+    // The cluster has no reader instances, so hasNoReaders() is true and the plugin falls back to
+    // returning the writer connection (simulating Aurora reader-cluster-endpoint behavior).
+    when(mockPluginService.getAllHosts()).thenReturn([hostInfoBuilder.withRole(HostRole.WRITER).build()]);
     when(mockPluginService.connect(anything(), anything(), anything())).thenResolve(writerClient);
     when(mockPluginService.acceptsStrategy(anything(), anything())).thenReturn(true);
     when(mockPluginService.getHostRole(writerClient)).thenReturn(Promise.resolve(HostRole.WRITER));
-    when(mockPluginService.getHostInfoByStrategy(anything(), anything())).thenReturn(instance(mockReaderHostInfo));
+    when(mockPluginService.getHostInfoByStrategy(anything(), anything(), anything())).thenReturn(instance(mockReaderHostInfo));
 
     expect(await plugin.connect(hostInfo, props, true, mockFunc)).toBe(writerClient);
   });
