@@ -21,7 +21,7 @@ import { logger } from "../../../logutils";
 import { MapUtils } from "../../utils/map_utils";
 import { Messages } from "../../utils/messages";
 import { PluginService } from "../../plugin_service";
-import { TrackedConnectionList, TrackedConnectionListHost } from "./tracked_connection_list";
+import { TrackedConnectionList, TrackedConnection } from "./tracked_connection_list";
 
 export class OpenedConnectionTracker {
   static readonly openedConnections: Map<string, TrackedConnectionList> = new Map<string, TrackedConnectionList>();
@@ -32,7 +32,7 @@ export class OpenedConnectionTracker {
     this.pluginService = pluginService;
   }
 
-  populateOpenedConnectionQueue(hostInfo: HostInfo, client: ClientWrapper): TrackedConnectionListHost | null {
+  populateOpenedConnectionQueue(hostInfo: HostInfo, client: ClientWrapper): TrackedConnection | null {
     if (!hostInfo || !client) {
       return null;
     }
@@ -45,7 +45,7 @@ export class OpenedConnectionTracker {
     }
 
     // It might be a custom domain name. Let's track by hostId and custom domain name.
-    let lastHost: TrackedConnectionListHost | null = null;
+    let lastHost: TrackedConnection | null = null;
     if (hostInfo.hostId) {
       lastHost = this.trackConnection(hostInfo.hostId, client);
     }
@@ -78,7 +78,7 @@ export class OpenedConnectionTracker {
     }
   }
 
-  removeConnectionTracking(host: TrackedConnectionListHost | null): void {
+  removeConnectionTracking(host: TrackedConnection | null): void {
     host?.remove();
   }
 
@@ -97,7 +97,7 @@ export class OpenedConnectionTracker {
     }
   }
 
-  private trackConnection(instanceEndpoint: string, client: ClientWrapper): TrackedConnectionListHost {
+  private trackConnection(instanceEndpoint: string, client: ClientWrapper): TrackedConnection {
     const connectionList = MapUtils.computeIfAbsent(OpenedConnectionTracker.openedConnections, instanceEndpoint, (_) => new TrackedConnectionList());
     return connectionList!.add(client);
   }

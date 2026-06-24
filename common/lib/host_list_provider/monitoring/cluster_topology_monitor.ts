@@ -34,6 +34,8 @@ import { Event, EventSubscriber } from "../../utils/events/event";
 import { MonitorResetEvent } from "../../utils/events/monitor_reset_event";
 import { ServiceUtils } from "../../utils/service_utils";
 import { WrapperProperties } from "../../wrapper_property";
+import { MonitoringConnectionHandler } from "./monitoring_connection_handler";
+import { AuroraMonitoringConnectionHandler } from "./aurora_monitoring_connection_handler";
 
 export interface ClusterTopologyMonitor extends Monitor, EventSubscriber {
   forceRefresh(client: ClientWrapper, timeoutMs: number): Promise<HostInfo[]>;
@@ -73,10 +75,11 @@ export class ClusterTopologyMonitorImpl extends AbstractMonitor implements Clust
   private readonly storageService: StorageService;
   private readonly rdsUtils: RdsUtils = new RdsUtils();
   protected readonly instanceTemplate: HostInfo;
+  protected connectionHandler: MonitoringConnectionHandler | null = null;
 
-  private writerHostInfo: HostInfo | null = null;
-  private isVerifiedWriterConnection: boolean = false;
-  private monitoringClient: ClientWrapper | null = null;
+  protected writerHostInfo: HostInfo | null = null;
+  protected lastKnownWriterHostInfo: HostInfo | null = null;
+  protected monitoringClient: ClientWrapper | null = null;
   private highRefreshRateEndTimeNs: bigint = BigInt(0);
 
   public readonly topologyUtils: TopologyUtils;
@@ -89,11 +92,25 @@ export class ClusterTopologyMonitorImpl extends AbstractMonitor implements Clust
   };
 
   // Tracking of the host monitors.
-  private hostMonitors: Map<string, HostMonitor> = new Map();
   public hostMonitorsWriterClient = null;
   public hostMonitorsWriterInfo: HostInfo = null;
   public hostMonitorsReaderClient = null;
   public hostMonitorsLatestTopology: HostInfo[] = [];
+
+  // Connections harvested from host monitors as they stop, keyed by host. When the writer resides in
+  // an inaccessible region (someRegionsInaccessible), no host monitor can obtain a verified writer
+  // connection, so the main loop adopts one of these (reader) connections as the monitoring connection
+  // to exit panic mode. Populated by HostMonitor.run()'s finally block via harvestConnection().
+  public hostMonitorsHarvestedConnections: Map<HostInfo, ClientWrapper> = new Map();
+  // True when the most recently submitted set of host monitors excluded one or more hosts because they
+  // fell outside the accessible regions. Gates reader-consensus panic exit so the standard writer
+  // detection path is left untouched when all regions are accessible.
+  public hostMonitorsSomeRegionsInaccessible: boolean = false;
+  // Set by a HostMonitor when, with some regions inaccessible, a reader observes that the writer has
+  // changed. No host monitor can connect to the new writer to verify it, so a reader-observed change is
+  // the only fast signal to exit panic mode. Prompts the main loop to adopt a harvested reader connection
+  // without waiting for the full stable-topology window.
+  public hostMonitorsReaderConsensusRequested: boolean = false;
 
   // Controls for stopping asynchronous monitoring tasks.
   public hostMonitorsStop: boolean = false;
@@ -142,6 +159,24 @@ export class ClusterTopologyMonitorImpl extends AbstractMonitor implements Clust
     driverDialect.setQueryTimeout(this._monitoringProperties, undefined, queryTimeout);
   }
 
+  protected getConnectionHandler(): MonitoringConnectionHandler {
+    if (this.connectionHandler === null) {
+      this.connectionHandler = this.createConnectionHandler();
+    }
+    return this.connectionHandler;
+  }
+
+  protected createConnectionHandler(): MonitoringConnectionHandler {
+    return new AuroraMonitoringConnectionHandler(
+      this._pluginService,
+      this._monitoringProperties,
+      () => this.monitoringClient,
+      (client) => {
+        this.monitoringClient = client;
+      }
+    );
+  }
+
   get pluginService(): PluginService {
     return this._pluginService;
   }
@@ -175,17 +210,15 @@ export class ClusterTopologyMonitorImpl extends AbstractMonitor implements Clust
       await this.closeConnection(hostMonitorsReaderClientToClose);
     }
 
+    await this.cleanUpHarvestedConnections();
     this.submittedHosts.clear();
-    this.hostMonitors.clear();
   }
 
   async forceMonitoringRefresh(shouldVerifyWriter: boolean, timeoutMs: number): Promise<HostInfo[] | null> {
     if (shouldVerifyWriter) {
-      this.isVerifiedWriterConnection = false;
-      if (this.monitoringClient) {
-        const client = this.monitoringClient;
-        this.monitoringClient = null;
-        // Abort needed for MySQLClientWrapper in case client already closed.
+      const client = this.monitoringClient;
+      this.monitoringClient = null;
+      if (client) {
         await this.closeConnection(client);
       }
     }
@@ -194,12 +227,12 @@ export class ClusterTopologyMonitorImpl extends AbstractMonitor implements Clust
   }
 
   async forceRefresh(client: ClientWrapper, timeoutMs: number): Promise<HostInfo[] | null> {
-    if (this.isVerifiedWriterConnection) {
-      // Get the monitoring task to refresh the topology using a verified connection.
+    if (this.monitoringClient) {
+      // Get the monitoring task to refresh the topology using the monitoring connection.
       return await this.waitTillTopologyGetsUpdated(timeoutMs);
     }
 
-    // Otherwise, use the provided unverified connection to update the topology.
+    // Otherwise, use the provided connection to update the topology.
     return await this.fetchTopologyAndUpdateCache(client);
   }
 
@@ -244,39 +277,45 @@ export class ClusterTopologyMonitorImpl extends AbstractMonitor implements Clust
     return null;
   }
 
-  private async openAnyClientAndUpdateTopology(): Promise<HostInfo[] | null> {
+  protected async openAnyClientAndUpdateTopology(): Promise<HostInfo[] | null> {
     if (!this.monitoringClient) {
       let client: ClientWrapper;
       try {
         client = await this.servicesContainer.pluginService.forceConnect(this.initialHostInfo, this._monitoringProperties);
       } catch (connectError) {
-        // Unable to connect to host;
+        // Unable to connect to host.
         return null;
       }
 
-      if (client && this.monitoringClient === null) {
-        this.monitoringClient = client;
-        logger.debug(Messages.get("ClusterTopologyMonitor.openedMonitoringConnection", this.initialHostInfo.host));
-        try {
-          if (await this.topologyUtils.isWriterInstance(this.monitoringClient)) {
-            this.isVerifiedWriterConnection = true;
+      logger.debug(Messages.get("ClusterTopologyMonitor.openedMonitoringConnection", this.initialHostInfo.host));
 
-            if (this.rdsUtils.isRdsInstance(this.initialHostInfo.host)) {
-              this.writerHostInfo = this.initialHostInfo;
-              logger.info(Messages.get("ClusterTopologyMonitor.writerMonitoringConnection", this.writerHostInfo.host));
-            } else {
-              const pair: [string, string] = await this.topologyUtils.getInstanceId(this.monitoringClient);
-              const instanceTemplate: HostInfo = await this.getInstanceTemplate(pair[1], this.monitoringClient);
-              this.writerHostInfo = this.topologyUtils.createHost(pair[0], pair[1], true, 0, Date.now(), this.initialHostInfo, instanceTemplate);
-              logger.debug(Messages.get("ClusterTopologyMonitor.writerMonitoringConnection", this.writerHostInfo.host));
-            }
+      let isWriter = false;
+      try {
+        isWriter = await this.topologyUtils.isWriterInstance(client);
+      } catch (error) {
+        // Do nothing — assume not a writer.
+      }
+
+      if (isWriter) {
+        try {
+          if (this.rdsUtils.isRdsInstance(this.initialHostInfo.host)) {
+            this.writerHostInfo = this.initialHostInfo;
+            this.lastKnownWriterHostInfo = this.initialHostInfo;
+            logger.info(Messages.get("ClusterTopologyMonitor.writerMonitoringConnection", this.writerHostInfo.host));
+          } else {
+            const pair: [string, string] = await this.topologyUtils.getInstanceId(client);
+            const instanceTemplate: HostInfo = await this.getInstanceTemplate(pair[1], client);
+            this.writerHostInfo = this.topologyUtils.createHost(pair[0], pair[1], true, 0, Date.now(), this.initialHostInfo, instanceTemplate);
+            this.lastKnownWriterHostInfo = this.writerHostInfo;
+            logger.debug(Messages.get("ClusterTopologyMonitor.writerMonitoringConnection", this.writerHostInfo.host));
           }
         } catch (error) {
           // Do nothing.
-          logger.error(Messages.get("ClusterTopologyMonitor.invalidWriterQuery", error?.message));
         }
-      } else if (client) {
-        // Monitoring connection already set by another task, close the new connection.
+      }
+
+      // Offer the connection to the handler. If rejected, close it.
+      if (!this.getConnectionHandler().acceptConnection(client, isWriter, this.initialHostInfo)) {
         await this.closeConnection(client);
       }
     }
@@ -284,7 +323,6 @@ export class ClusterTopologyMonitorImpl extends AbstractMonitor implements Clust
     const hosts: HostInfo[] = await this.fetchTopologyAndUpdateCache(this.monitoringClient);
 
     if (hosts === null) {
-      this.isVerifiedWriterConnection = false;
       await this.updateMonitoringClient(null);
     }
     return hosts;
@@ -321,6 +359,31 @@ export class ClusterTopologyMonitorImpl extends AbstractMonitor implements Clust
     await client?.abort();
   }
 
+  isMonitoringClient(client: ClientWrapper): boolean {
+    return client === this.monitoringClient;
+  }
+
+  get isStopped(): boolean {
+    return this._stop;
+  }
+
+  /**
+   * Adopts ownership of a live connection handed off by a stopping HostMonitor, storing it in the harvest map
+   * so the main loop can promote one as the monitoring connection during reader-consensus panic exit. If an
+   * entry already exists for the host, the previous connection is closed to avoid a leak.
+   *
+   * @param hostInfo the host the connection belongs to
+   * @param client the live connection being handed off
+   */
+  harvestConnection(hostInfo: HostInfo, client: ClientWrapper): void {
+    const previous = this.hostMonitorsHarvestedConnections.get(hostInfo);
+    this.hostMonitorsHarvestedConnections.set(hostInfo, client);
+    if (previous && previous !== client) {
+      // Should not normally happen, but clean up any previous entry to avoid leaks.
+      void this.closeConnection(previous);
+    }
+  }
+
   async updateMonitoringClient(newClient: ClientWrapper | null): Promise<void> {
     const clientToClose = this.monitoringClient;
     this.monitoringClient = newClient;
@@ -355,6 +418,7 @@ export class ClusterTopologyMonitorImpl extends AbstractMonitor implements Clust
       await this.closeConnection(monitoringClientToClose);
     }
 
+    await this.cleanUpHarvestedConnections();
     this.submittedHosts.clear();
 
     return super.stop();
@@ -386,19 +450,23 @@ export class ClusterTopologyMonitorImpl extends AbstractMonitor implements Clust
 
             await this.closeHostMonitors();
 
-            if (!(hosts !== null && !this.isVerifiedWriterConnection)) {
+            if (hosts === null || this.monitoringClient !== null) {
               await this.delay(true);
               continue;
             }
 
-            for (const hostInfo of hosts) {
+            const monitoredHosts = this.filterHostsForHostMonitoring(hosts);
+            const someRegionsInaccessible: boolean = monitoredHosts.length < hosts.length;
+            this.hostMonitorsSomeRegionsInaccessible = someRegionsInaccessible;
+            const baselineWriter: HostInfo = this.lastKnownWriterHostInfo;
+            for (const hostInfo of monitoredHosts) {
               if (!this.submittedHosts.get(hostInfo.host)) {
                 const minimalServiceContainer = ServiceUtils.instance.createMinimalServiceContainerFrom(
                   this.servicesContainer,
                   this._monitoringProperties
                 );
                 await minimalServiceContainer.pluginManager.init();
-                const hostMonitor = new HostMonitor(minimalServiceContainer, this, hostInfo, this.writerHostInfo);
+                const hostMonitor = new HostMonitor(minimalServiceContainer, this, hostInfo, baselineWriter, someRegionsInaccessible);
                 const promise = hostMonitor.run();
                 this.submittedHosts.set(hostInfo.host, promise);
               }
@@ -414,13 +482,27 @@ export class ClusterTopologyMonitorImpl extends AbstractMonitor implements Clust
               logger.debug(Messages.get("ClusterTopologyMonitor.writerPickedUpFromHostMonitors", writerClientHostInfo.toString()));
 
               const oldMonitoringClient = this.monitoringClient;
-              this.monitoringClient = writerClient;
+
+              this.hostMonitorsWriterClient = null;
+              this.hostMonitorsWriterInfo = null;
+              this.monitoringClient = null;
+              if (!this.getConnectionHandler().acceptConnection(writerClient, true, writerClientHostInfo)) {
+                // Should not happen — the handler always accepts when there is no current monitoring client.
+                // Fall back to the writer connection so we still exit panic mode.
+                this.monitoringClient = writerClient;
+              }
               this.writerHostInfo = writerClientHostInfo;
-              this.isVerifiedWriterConnection = true;
+              this.lastKnownWriterHostInfo = writerClientHostInfo;
               this.highRefreshRateEndTimeNs = getTimeInNanos() + BigInt(this.highRefreshRateNs);
 
               this.hostMonitorsStop = true;
               await this.closeHostMonitors();
+
+              // A verified writer connection was promoted, so any connections harvested from host monitors
+              // during this panic cycle are no longer needed. Close them (skipping the current monitoring
+              // client) to avoid leaking sockets.
+              await this.cleanUpHarvestedConnections();
+
               this.submittedHosts.clear();
               this.stableTopologiesStartNs = BigInt(0);
               this.readerTopologiesById.clear();
@@ -433,19 +515,31 @@ export class ClusterTopologyMonitorImpl extends AbstractMonitor implements Clust
 
               await this.delay(true);
               continue;
+            } else if (
+              this.hostMonitorsReaderConsensusRequested &&
+              (await this.adoptHarvestedMonitoringConnection(this.hostMonitorsLatestTopology ?? this.getStoredHosts() ?? []))
+            ) {
+              // A reader observed a writer change while the writer is in an inaccessible region. We adopted a
+              // harvested reader connection as the monitoring connection to exit panic mode.
+              await this.delay(true);
+              continue;
             } else {
               // Update host monitors with the new instances in the topology.
               const hosts: HostInfo[] | null = this.hostMonitorsLatestTopology;
               if (hosts && !this.hostMonitorsStop) {
-                for (const hostInfo of hosts) {
+                const monitoredHosts = this.filterHostsForHostMonitoring(hosts);
+                const someRegionsInaccessible: boolean = monitoredHosts.length < hosts.length;
+                this.hostMonitorsSomeRegionsInaccessible = someRegionsInaccessible;
+                const baselineWriter: HostInfo = this.lastKnownWriterHostInfo;
+
+                for (const hostInfo of monitoredHosts) {
                   if (!this.submittedHosts.get(hostInfo.host)) {
                     const minimalServiceContainer = ServiceUtils.instance.createMinimalServiceContainerFrom(
                       this.servicesContainer,
                       this._monitoringProperties
                     );
                     await minimalServiceContainer.pluginManager.init();
-                    // Intentionally not calling await on hostMonitor.run().
-                    const hostMonitor = new HostMonitor(minimalServiceContainer, this, hostInfo, this.writerHostInfo);
+                    const hostMonitor = new HostMonitor(minimalServiceContainer, this, hostInfo, baselineWriter, someRegionsInaccessible);
                     const promise = hostMonitor.run();
                     this.submittedHosts.set(hostInfo.host, promise);
                   }
@@ -454,7 +548,7 @@ export class ClusterTopologyMonitorImpl extends AbstractMonitor implements Clust
             }
           }
 
-          this.checkForStableReaderTopologies();
+          await this.checkForStableReaderTopologies();
           await this.delay(true);
         } else {
           // We are in regular mode.
@@ -469,14 +563,24 @@ export class ClusterTopologyMonitorImpl extends AbstractMonitor implements Clust
           const hosts: HostInfo[] = await this.fetchTopologyAndUpdateCache(this.monitoringClient);
           if (hosts === null) {
             // Attempt to fetch topology failed, so we switch to panic mode.
+            // Clear writerHostInfo but keep lastKnownWriterHostInfo so host monitors
+            // can use it as a baseline for writer-change detection.
             const clientToClose = this.monitoringClient;
             this.monitoringClient = null;
             await this.closeConnection(clientToClose);
-            this.isVerifiedWriterConnection = false;
             this.writerHostInfo = null;
             await this.delay(false);
             continue;
           }
+
+          // Refresh lastKnownWriterHostInfo from topology so that if the monitoring
+          // connection later breaks, panic-mode host monitors have an accurate baseline.
+          const topologyWriter = hosts.find((h) => h.role === HostRole.WRITER);
+          if (topologyWriter) {
+            this.lastKnownWriterHostInfo = topologyWriter;
+          }
+
+          await this.getConnectionHandler().attemptConnectionUpgrade(this.filterHostsForHostMonitoring(hosts));
 
           if (this.highRefreshRateEndTimeNs > 0 && getTimeInNanos() > this.highRefreshRateEndTimeNs) {
             this.highRefreshRateEndTimeNs = BigInt(0);
@@ -503,14 +607,14 @@ export class ClusterTopologyMonitorImpl extends AbstractMonitor implements Clust
     return Promise.resolve();
   }
 
-  protected checkForStableReaderTopologies(): void {
+  protected async checkForStableReaderTopologies(): Promise<void> {
     const latestHosts: HostInfo[] = this.getStoredHosts();
     if (!latestHosts || latestHosts.length === 0) {
       this.stableTopologiesStartNs = BigInt(0);
       return;
     }
 
-    const readerIds: string[] = latestHosts.map((host) => host.hostId);
+    const readerIds: string[] = this.filterHostsForHostMonitoring(latestHosts).map((host) => host.hostId);
     for (const id of readerIds) {
       const completedCycle = this.completedOneCycle.get(id) ?? false;
       if (!completedCycle) {
@@ -561,7 +665,77 @@ export class ClusterTopologyMonitorImpl extends AbstractMonitor implements Clust
         )
       );
       this.updateTopologyCache(readerTopology);
+
+      // Reader topology is stable. Even though no writer was detected by the host monitors (e.g. the writer may
+      // live in a region we don't monitor), the readers we did probe have established connections we can use as
+      // the monitoring connection. Adopt one so we can exit panic mode. This is only attempted when some regions
+      // are inaccessible; otherwise we let the standard writer-detection path run, which also verifies a working
+      // writer connection and is more reliable.
+      await this.adoptHarvestedMonitoringConnection(readerTopology);
     }
+  }
+
+  /**
+   * Attempts to exit panic mode by adopting one of the connections harvested from the host monitors as the
+   * monitoring connection. Used when the writer resides in an inaccessible region, so no host monitor can obtain
+   * a verified writer connection. The connection handler picks the best harvested connection according to its
+   * priority; unselected connections are closed. No-op unless we are in panic mode with some regions inaccessible
+   * and at least one harvested connection is available.
+   *
+   * @param readerTopology the reader-observed topology used to inform the handler's selection
+   * @returns true if a harvested connection was adopted as the monitoring connection
+   */
+  protected async adoptHarvestedMonitoringConnection(readerTopology: HostInfo[]): Promise<boolean> {
+    if (this.monitoringClient !== null || !this.hostMonitorsSomeRegionsInaccessible) {
+      return false;
+    }
+
+    this.hostMonitorsStop = true;
+    await this.closeHostMonitors();
+
+    if (this.hostMonitorsHarvestedConnections.size === 0) {
+      return false;
+    }
+
+    const selected: HostInfo | null = this.getConnectionHandler().acceptConnections(
+      this.hostMonitorsHarvestedConnections,
+      this.writerHostInfo,
+      readerTopology
+    );
+
+    if (selected) {
+      this.lastKnownWriterHostInfo = readerTopology.find((h) => h.role === HostRole.WRITER) ?? this.lastKnownWriterHostInfo;
+      this.highRefreshRateEndTimeNs = getTimeInNanos() + BigInt(this.highRefreshRateNs);
+      logger.debug(Messages.get("ClusterTopologyMonitor.exitPanicModeViaReaderConsensus", selected.host));
+    }
+
+    // Close any harvested connections that were not adopted as the monitoring connection.
+    await this.cleanUpHarvestedConnections();
+
+    this.submittedHosts.clear();
+    this.stableTopologiesStartNs = BigInt(0);
+    this.readerTopologiesById.clear();
+    this.completedOneCycle.clear();
+    this.hostMonitorsReaderConsensusRequested = false;
+
+    return selected !== null;
+  }
+
+  /**
+   * Closes every harvested host-monitor connection except the one currently in use as the monitoring
+   * connection, then clears the harvest map.
+   */
+  protected async cleanUpHarvestedConnections(): Promise<void> {
+    for (const [, client] of this.hostMonitorsHarvestedConnections) {
+      if (client && client !== this.monitoringClient) {
+        try {
+          await this.closeConnection(client);
+        } catch (e: any) {
+          // Ignore.
+        }
+      }
+    }
+    this.hostMonitorsHarvestedConnections.clear();
   }
 
   protected async reset(): Promise<void> {
@@ -570,7 +744,10 @@ export class ClusterTopologyMonitorImpl extends AbstractMonitor implements Clust
     this.hostMonitorsStop = true;
     await this.closeHostMonitors();
     await this.hostMonitorClientCleanUp();
+    await this.cleanUpHarvestedConnections();
     this.hostMonitorsStop = false;
+    this.hostMonitorsSomeRegionsInaccessible = false;
+    this.hostMonitorsReaderConsensusRequested = false;
     this.submittedHosts.clear();
     this.stableTopologiesStartNs = BigInt(0);
     this.readerTopologiesById.clear();
@@ -580,8 +757,8 @@ export class ClusterTopologyMonitorImpl extends AbstractMonitor implements Clust
     this.hostMonitorsLatestTopology = [];
 
     await this.updateMonitoringClient(null);
-    this.isVerifiedWriterConnection = false;
     this.writerHostInfo = null;
+    this.lastKnownWriterHostInfo = null;
     this.highRefreshRateEndTimeNs = BigInt(0);
     this.requestToUpdateTopology = false;
     this.clearTopologyCache();
@@ -630,8 +807,12 @@ export class ClusterTopologyMonitorImpl extends AbstractMonitor implements Clust
     await this.hostMonitorClientCleanUp();
   }
 
+  protected filterHostsForHostMonitoring(hosts: HostInfo[]): HostInfo[] {
+    return hosts;
+  }
+
   private isInPanicMode(): boolean {
-    return !this.monitoringClient || !this.isVerifiedWriterConnection;
+    return !this.monitoringClient;
   }
 
   private getStoredHosts(): HostInfo[] | null {
@@ -659,15 +840,23 @@ export class HostMonitor {
   protected readonly monitor: ClusterTopologyMonitorImpl;
   protected readonly hostInfo: HostInfo;
   protected readonly writerHostInfo: HostInfo | null;
+  protected readonly someRegionsInaccessible: boolean;
   protected writerChanged: boolean = false;
   protected connectionAttempts: number = 0;
   protected client: ClientWrapper | null = null;
 
-  constructor(servicesContainer: FullServicesContainer, monitor: ClusterTopologyMonitorImpl, hostInfo: HostInfo, writerHostInfo: HostInfo | null) {
+  constructor(
+    servicesContainer: FullServicesContainer,
+    monitor: ClusterTopologyMonitorImpl,
+    hostInfo: HostInfo,
+    writerHostInfo: HostInfo | null,
+    someRegionsInaccessible: boolean
+  ) {
     this.servicesContainer = servicesContainer;
     this.monitor = monitor;
     this.hostInfo = hostInfo;
     this.writerHostInfo = writerHostInfo;
+    this.someRegionsInaccessible = someRegionsInaccessible;
   }
 
   async run() {
@@ -780,7 +969,18 @@ export class HostMonitor {
       this.monitor.completedOneCycle.set(this.hostInfo.hostId, true);
       this.monitor.readerTopologiesById.delete(this.hostInfo.hostId);
 
-      await this.monitor.closeConnection(this.client);
+      if (this.client && !this.monitor.isMonitoringClient(this.client)) {
+        // When some regions are inaccessible, the writer may be unreachable and no host monitor can promote a
+        // verified writer connection. Hand off this live (reader) connection to the monitor so the main loop can
+        // adopt it as the monitoring connection to exit panic mode. Otherwise close it as usual.
+        if (this.someRegionsInaccessible && !this.monitor.isStopped && !this.monitor.hostMonitorsWriterClient) {
+          this.monitor.harvestConnection(this.hostInfo, this.client);
+        } else {
+          await this.monitor.closeConnection(this.client);
+        }
+        // Ownership transferred (or connection closed); don't touch it again.
+        this.client = null;
+      }
       logger.debug(Messages.get("HostMonitor.endMonitoring", this.hostInfo.hostId, (Date.now() - startTime).toString()));
     }
   }
@@ -818,6 +1018,15 @@ export class HostMonitor {
       this.monitor.updateHostsAvailability(hosts);
       this.monitor.updateTopologyCache(hosts);
       logger.debug(logTopology(hosts, `[hostMonitor ${this.hostInfo.hostId}] `));
+
+      // With some regions inaccessible, no host monitor may be able to connect to the new writer to verify it,
+      // so a reader-observed writer change is the only fast way to exit panic mode. Signal the main loop to adopt
+      // a harvested reader connection as the monitoring connection.
+      if (this.someRegionsInaccessible) {
+        logger.debug(Messages.get("HostMonitor.writerChangeExitTriggered", latestWriterHostInfo.host));
+        this.monitor.hostMonitorsReaderConsensusRequested = true;
+        this.monitor.hostMonitorsStop = true;
+      }
     }
   }
 

@@ -575,6 +575,33 @@ export class WrapperProperties {
     true
   );
 
+  static readonly GDB_ACCESSIBLE_REGIONS = new WrapperProperty<string>(
+    "gdbAccessibleRegions",
+    "Comma-separated list of AWS regions that are accessible from this application. " +
+      "When specified, the wrapper restricts Global Aurora Database operations to the listed regions only. " +
+      "Regions not included in this list will be filtered out from topology information, " +
+      "failover candidates, and read/write splitting targets.",
+    null
+  );
+
+  static readonly MONITORING_CONNECTION_PRIORITY = new WrapperProperty<string>(
+    "monitoringConnectionPriority",
+    "Defines the priority for monitoring connections. " +
+      "Determines which type of node the topology monitor should connect to for monitoring purposes.",
+    "strict-writer",
+    ["strict-writer", "strict-reader", "writer-or-reader"]
+  );
+
+  static readonly GDB_MONITORING_CONNECTION_PRIORITY = new WrapperProperty<string>(
+    "gdbMonitoringConnectionPriority",
+    "Defines the priority for monitoring connections in a Global Aurora Database context. " +
+      "Supports region-aware variants that direct the topology monitor to connect to preferred node types " +
+      "or specific regions. Possible values include: strict-writer-primary, strict-writer-secondary, " +
+      "strict-reader-primary, strict-reader-secondary, writer-or-reader-primary, writer-or-reader-secondary, " +
+      "or a specific AWS region name.",
+    null
+  );
+
   private static readonly PREFIXES = [
     WrapperProperties.MONITORING_PROPERTY_PREFIX,
     WrapperProperties.TOPOLOGY_MONITORING_PROPERTY_PREFIX,
