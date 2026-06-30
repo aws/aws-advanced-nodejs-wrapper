@@ -103,8 +103,12 @@ export class HostMonitoringConnectionPlugin extends AbstractConnectionPlugin imp
         failureDetectionCount
       );
 
-      const raceResult = await Promise.race([this.waitForUnhealthy(context), methodFunc()]);
+      const methodPromise = methodFunc();
+      const raceResult = await Promise.race([this.waitForUnhealthy(context), methodPromise]);
       if (raceResult === HostMonitoringConnectionPlugin.UNHEALTHY_STATE) {
+        methodPromise.catch(() => {
+          // Attach a no-op rejection handler to prevent it from throwing an unhandled promise rejection error when waitForUnhealthy times out first.
+        });
         throw new AwsWrapperError("Host monitoring detected unhealthy host");
       }
       result = raceResult as T;
@@ -176,6 +180,8 @@ export class HostMonitoringConnectionPlugin extends AbstractConnectionPlugin imp
           const host: HostInfo | null = this.pluginService.getCurrentHostInfo();
           this.throwUnableToIdentifyConnection(host);
         }
+
+        // Update identified HostInfo for the current connection
         await this.pluginService.setCurrentClient(this.pluginService.getCurrentClient().targetClient!, this.monitoringHostInfo);
       }
     } catch (error: any) {

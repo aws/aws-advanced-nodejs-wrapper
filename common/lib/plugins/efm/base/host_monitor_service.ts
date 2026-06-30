@@ -15,7 +15,6 @@
 */
 
 import { ConnectionContext, ConnectionContextImpl } from "./connection_context";
-import { ContextPool, ContextPoolImpl } from "./context_pool";
 import { HostMonitor, HostMonitorImpl } from "./host_monitor";
 import { HostInfo } from "../../../host_info";
 import { ClientWrapper } from "../../../client_wrapper";
@@ -48,13 +47,11 @@ export class HostMonitorServiceImpl implements HostMonitorService {
 
   private readonly servicesContainer: FullServicesContainer;
   private readonly coreMonitorService: MonitorService;
-  private readonly contextPool: ContextPool;
   private readonly abortedConnectionsCounter: TelemetryCounter;
 
-  constructor(servicesContainer: FullServicesContainer, contextPool?: ContextPool) {
+  constructor(servicesContainer: FullServicesContainer) {
     this.servicesContainer = servicesContainer;
     this.coreMonitorService = servicesContainer.monitorService;
-    this.contextPool = contextPool ?? new ContextPoolImpl();
     const telemetryFactory = servicesContainer.telemetryFactory;
     this.abortedConnectionsCounter = telemetryFactory.createCounter("efm.connections.aborted");
 
@@ -103,8 +100,8 @@ export class HostMonitorServiceImpl implements HostMonitorService {
     const monitorDisposalTimeMillis = WrapperProperties.MONITOR_DISPOSAL_TIME_MS.get(properties);
 
     const initializer: MonitorInitializer = {
-      createMonitor: () =>
-        new HostMonitorImpl(this.servicesContainer.pluginService, hostInfo, properties, monitorDisposalTimeMillis, this.contextPool)
+      createMonitor: (_servicesContainer) =>
+        new HostMonitorImpl(this.servicesContainer.pluginService, hostInfo, properties, monitorDisposalTimeMillis)
     };
 
     return await this.coreMonitorService.runIfAbsent(HostMonitorImpl, monitorKey, this.servicesContainer, properties, initializer);
@@ -112,7 +109,6 @@ export class HostMonitorServiceImpl implements HostMonitorService {
 
   async releaseResources(): Promise<void> {
     await this.coreMonitorService.stopAndRemoveMonitors(HostMonitorImpl);
-    this.contextPool.clearAll();
   }
 
   static async clearMonitors(monitorService: MonitorService): Promise<void> {

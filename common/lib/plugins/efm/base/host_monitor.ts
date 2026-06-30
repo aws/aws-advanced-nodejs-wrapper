@@ -15,7 +15,6 @@
 */
 
 import { ConnectionContext } from "./connection_context";
-import { ContextPool } from "./context_pool";
 import { HostInfo } from "../../../host_info";
 import { PluginService } from "../../../plugin_service";
 import { ClientWrapper } from "../../../client_wrapper";
@@ -43,12 +42,7 @@ export interface HostMonitor {
   releaseResources(): Promise<void>;
 }
 
-class ConnectionStatus {
-  constructor(
-    readonly isValid: boolean,
-    readonly elapsedTimeNano: number
-  ) {}
-}
+type ConnectionStatus = [isValid: boolean, elapsedTimeNano: number];
 
 export class HostMonitorImpl extends AbstractMonitor implements HostMonitor {
   private static readonly SLEEP_WHEN_INACTIVE_MILLIS = 100;
@@ -61,30 +55,21 @@ export class HostMonitorImpl extends AbstractMonitor implements HostMonitor {
   private readonly properties: Map<string, any>;
   private readonly hostInfo: HostInfo;
   private readonly monitorDisposalTimeMillis: number;
-  private readonly contextPool: ContextPool;
-  private readonly hostKey: string;
+  private contexts: ConnectionContext[] = [];
 
   private contextLastUsedTimestampNano: number;
   private monitoringClient: ClientWrapper | null = null;
   private delayTimeoutId: ReturnType<typeof setTimeout> | undefined;
   private sleepTimeoutId: ReturnType<typeof setTimeout> | undefined;
 
-  constructor(
-    pluginService: PluginService,
-    hostInfo: HostInfo,
-    properties: Map<string, any>,
-    monitorDisposalTimeMillis: number,
-    contextPool: ContextPool
-  ) {
+  constructor(pluginService: PluginService, hostInfo: HostInfo, properties: Map<string, any>, monitorDisposalTimeMillis: number) {
     super(HostMonitorImpl.MONITOR_TERMINATION_TIMEOUT_SEC);
     this.pluginService = pluginService;
     this.telemetryFactory = this.pluginService.getTelemetryFactory();
     this.hostInfo = hostInfo;
     this.properties = properties;
     this.monitorDisposalTimeMillis = monitorDisposalTimeMillis;
-    this.contextPool = contextPool;
-    this.hostKey = hostInfo.hostId || hostInfo.host;
-    this.hostInvalidCounter = this.telemetryFactory.createCounter(`efm.nodeUnhealthy.count.${this.hostKey}`);
+    this.hostInvalidCounter = this.telemetryFactory.createCounter(`efm.nodeUnhealthy.count.${hostInfo.hostId || hostInfo.host}`);
     this.contextLastUsedTimestampNano = getCurrentTimeNano();
   }
 
@@ -95,11 +80,11 @@ export class HostMonitorImpl extends AbstractMonitor implements HostMonitor {
 
     this.contextLastUsedTimestampNano = getCurrentTimeNano();
     this.lastActivityTimestampNanos = getTimeInNanos();
-    this.contextPool.addContext(this.hostKey, context);
+    this.contexts.push(context);
   }
 
   stopMonitoring(context: ConnectionContext): void {
-    if (context == null) {
+    if (!context) {
       logger.warn(Messages.get("MonitorImpl.contextNullWarning"));
       return;
     }
@@ -110,7 +95,7 @@ export class HostMonitorImpl extends AbstractMonitor implements HostMonitor {
   }
 
   clearContexts(): void {
-    this.contextPool.clear(this.hostKey);
+    this.contexts.length = 0;
   }
 
   isStopped(): boolean {
@@ -118,7 +103,7 @@ export class HostMonitorImpl extends AbstractMonitor implements HostMonitor {
   }
 
   canDispose(): boolean {
-    return !this.contextPool.hasContexts(this.hostKey);
+    return this.contexts.length === 0;
   }
 
   async monitor(): Promise<void> {
@@ -128,16 +113,14 @@ export class HostMonitorImpl extends AbstractMonitor implements HostMonitor {
       while (!this._stop) {
         try {
           this.lastActivityTimestampNanos = getTimeInNanos();
-          const currentTimeNano = getCurrentTimeNano();
-          this.contextPool.promoteReadyContexts(this.hostKey, currentTimeNano);
 
-          const activeContexts = this.contextPool.getActiveContexts(this.hostKey);
+          const activeContexts = this.contexts.filter((ctx) => ctx.isActiveContext());
 
           if (activeContexts.length > 0) {
             this.contextLastUsedTimestampNano = getCurrentTimeNano();
 
             const statusCheckStartTimeNano = getCurrentTimeNano();
-            const status = await this.checkConnectionStatus();
+            const [isValid, elapsedTimeNano] = await this.checkConnectionStatus();
 
             let delayMillis = -1;
 
@@ -146,26 +129,25 @@ export class HostMonitorImpl extends AbstractMonitor implements HostMonitor {
                 continue;
               }
 
-              await context.updateConnectionStatus(
-                this.hostInfo.url,
-                statusCheckStartTimeNano,
-                statusCheckStartTimeNano + status.elapsedTimeNano,
-                status.isValid
-              );
+              await context.updateConnectionStatus(this.hostInfo.url, statusCheckStartTimeNano, statusCheckStartTimeNano + elapsedTimeNano, isValid);
 
-              if (context.isActiveContext() && !context.isHostUnhealthy()) {
+              if (
+                context.isActiveContext() &&
+                !context.isHostUnhealthy() &&
+                statusCheckStartTimeNano >= context.expectedActiveMonitoringStartTimeNano
+              ) {
                 if (delayMillis === -1 || delayMillis > context.failureDetectionIntervalMillis) {
                   delayMillis = context.failureDetectionIntervalMillis;
                 }
               }
             }
 
-            this.contextPool.removeInactiveContexts(this.hostKey);
+            this.contexts = this.contexts.filter((ctx) => ctx.isActiveContext() && !ctx.isHostUnhealthy());
 
             if (delayMillis === -1) {
               delayMillis = HostMonitorImpl.SLEEP_WHEN_INACTIVE_MILLIS;
             } else {
-              delayMillis -= Math.round(status.elapsedTimeNano / 1_000_000);
+              delayMillis -= Math.round(elapsedTimeNano / 1_000_000);
               if (delayMillis <= 0) {
                 delayMillis = HostMonitorImpl.MIN_CONNECTION_CHECK_TIMEOUT_MILLIS;
               }
@@ -194,7 +176,7 @@ export class HostMonitorImpl extends AbstractMonitor implements HostMonitor {
   }
 
   async close(): Promise<void> {
-    this.contextPool.clear(this.hostKey);
+    this.contexts.length = 0;
     await this.closeMonitoringClient();
   }
 
@@ -204,18 +186,14 @@ export class HostMonitorImpl extends AbstractMonitor implements HostMonitor {
     await this.stop();
   }
 
-  async run(): Promise<void> {
-    await super.run();
-  }
-
-  private async checkConnectionStatus(): Promise<ConnectionStatus> {
+  protected async checkConnectionStatus(): Promise<ConnectionStatus> {
     const connectContext = this.telemetryFactory.openTelemetryContext("Connection status check", TelemetryTraceLevel.FORCE_TOP_LEVEL);
     connectContext.setAttribute("url", this.hostInfo.host);
     return await connectContext.start(async () => {
       const startNanos = getCurrentTimeNano();
       try {
         if (this.monitoringClient != null && (await this.pluginService.isClientValid(this.monitoringClient))) {
-          return new ConnectionStatus(true, getCurrentTimeNano() - startNanos);
+          return [true, getCurrentTimeNano() - startNanos];
         }
 
         await this.closeMonitoringClient();
@@ -230,11 +208,11 @@ export class HostMonitorImpl extends AbstractMonitor implements HostMonitor {
         }
 
         this.monitoringClient = await this.pluginService.forceConnect(this.hostInfo, monitoringConnProperties);
-        return new ConnectionStatus(true, getCurrentTimeNano() - startNanos);
+        return [true, getCurrentTimeNano() - startNanos];
       } catch (error: any) {
         this.hostInvalidCounter.inc();
         await this.closeMonitoringClient();
-        return new ConnectionStatus(false, getCurrentTimeNano() - startNanos);
+        return [false, getCurrentTimeNano() - startNanos];
       }
     });
   }
