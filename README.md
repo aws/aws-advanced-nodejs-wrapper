@@ -94,4 +94,3 @@ The `aws-advanced-nodejs-wrapper` has a regular monthly release cadence. A new r
 ## License
 
 This software is released under the Apache 2.0 license.
-
