@@ -34,3 +34,6 @@ const testInfo = JSON.parse(infoJson);
 const request = testInfo.request;
 export const features = request.features;
 export const instanceCount = request.numOfInstances;
+
+// CI trigger test - no functional changes
+// test for BB
