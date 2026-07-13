@@ -78,7 +78,7 @@ export abstract class AbstractMonitor implements Monitor {
     this.monitorPromise = this.run();
   }
 
-  protected async run(): Promise<void> {
+  async run(): Promise<void> {
     try {
       this.state = MonitorState.RUNNING;
       this.lastActivityTimestampNanos = BigInt(Date.now() * 1_000_000);
