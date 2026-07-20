@@ -26,6 +26,7 @@ import { CreateSecretCommand, CreateSecretCommandOutput, DeleteSecretCommand, Se
 import { RDSClient } from "@aws-sdk/client-rds";
 import { AuroraTestUtility } from "./utils/aurora_test_utility";
 import { ProxyHelper } from "./utils/proxy_helper";
+import { getResourceTags } from "./utils/test_tags";
 
 const itIf =
   !features.includes(TestEnvironmentFeatures.PERFORMANCE) &&
@@ -84,7 +85,8 @@ async function createCommand(secretName: string) {
   const input = {
     Name: secretName,
     ForceOverwriteReplicaSecret: true,
-    SecretString: JSON.stringify(secretObj)
+    SecretString: JSON.stringify(secretObj),
+    Tags: getResourceTags()
   };
 
   const command = new CreateSecretCommand(input);
