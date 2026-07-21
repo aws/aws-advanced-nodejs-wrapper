@@ -35,6 +35,7 @@ import { logger } from "../../../../common/logutils";
 import { ProxyHelper } from "./utils/proxy_helper";
 import { PluginManager } from "../../../../index";
 import { TestDriver } from "./utils/test_driver";
+import { getResourceTags } from "./utils/test_tags";
 
 const itIf =
   features.includes(TestEnvironmentFeatures.FAILOVER_SUPPORTED) &&
@@ -97,7 +98,8 @@ async function createEndpoint(clusterId: string, instances: TestInstanceInfo[], 
     DBClusterEndpointIdentifier: endpointId,
     DBClusterIdentifier: clusterId,
     EndpointType: endpointType,
-    StaticMembers: instanceIds
+    StaticMembers: instanceIds,
+    Tags: getResourceTags()
   };
   const createEndpointCommand = new CreateDBClusterEndpointCommand(input);
   await rdsClient.send(createEndpointCommand);

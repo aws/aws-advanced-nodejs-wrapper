@@ -42,6 +42,7 @@ import { TestInstanceInfo } from "./test_instance_info";
 import { TestEnvironmentInfo } from "./test_environment_info";
 import { DatabaseEngine } from "./database_engine";
 import { DatabaseEngineDeployment } from "./database_engine_deployment";
+import { getResourceTags } from "./test_tags";
 
 const instanceClass: string = "db.r5.large";
 
@@ -367,7 +368,8 @@ export class AuroraTestUtility {
       DBInstanceClass: instanceClass,
       PubliclyAccessible: true,
       Engine: info.databaseEngine,
-      EngineVersion: info.databaseEngineVersion
+      EngineVersion: info.databaseEngineVersion,
+      Tags: getResourceTags()
     });
     try {
       await this.client.send(command);
