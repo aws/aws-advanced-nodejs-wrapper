@@ -325,4 +325,56 @@ describe("reader failover handler", () => {
     expect(count).toStrictEqual(2);
     verify(mockRdsHostListProvider.getRdsUrlType()).never();
   });
+
+  it("test execute - read-only error triggers failover in strict-writer mode", async () => {
+    properties.set(WrapperProperties.ENABLE_CLUSTER_AWARE_FAILOVER.name, true);
+    when(mockPluginService.getAllHosts()).thenReturn([builder.withHost("hostA").build()]);
+    when(mockPluginService.getCurrentHostInfo()).thenReturn(null);
+    when(mockPluginService.isNetworkError(anything())).thenReturn(false);
+    when(mockPluginService.isReadOnlyConnectionError(anything())).thenReturn(true);
+
+    initializePlugin(instance(mockPluginService));
+    const spyPlugin: Failover2Plugin = spy(plugin);
+    when(spyPlugin.failover()).thenResolve();
+    plugin.failoverMode = FailoverMode.STRICT_WRITER;
+
+    const readOnlyError = new Error("read only");
+    await expect(plugin.execute("query", () => Promise.reject(readOnlyError))).rejects.toBe(readOnlyError);
+
+    verify(spyPlugin.failover()).once();
+  });
+
+  it("test execute - read-only error does not trigger failover outside strict-writer mode", async () => {
+    properties.set(WrapperProperties.ENABLE_CLUSTER_AWARE_FAILOVER.name, true);
+    when(mockPluginService.getAllHosts()).thenReturn([builder.withHost("hostA").build()]);
+    when(mockPluginService.isNetworkError(anything())).thenReturn(false);
+    when(mockPluginService.isReadOnlyConnectionError(anything())).thenReturn(true);
+
+    initializePlugin(instance(mockPluginService));
+    const spyPlugin: Failover2Plugin = spy(plugin);
+    when(spyPlugin.failover()).thenResolve();
+    plugin.failoverMode = FailoverMode.READER_OR_WRITER;
+
+    const readOnlyError = new Error("read only");
+    await expect(plugin.execute("query", () => Promise.reject(readOnlyError))).rejects.toBe(readOnlyError);
+
+    verify(spyPlugin.failover()).never();
+  });
+
+  it("test execute - network error triggers failover regardless of mode", async () => {
+    properties.set(WrapperProperties.ENABLE_CLUSTER_AWARE_FAILOVER.name, true);
+    when(mockPluginService.getAllHosts()).thenReturn([builder.withHost("hostA").build()]);
+    when(mockPluginService.getCurrentHostInfo()).thenReturn(null);
+    when(mockPluginService.isNetworkError(anything())).thenReturn(true);
+
+    initializePlugin(instance(mockPluginService));
+    const spyPlugin: Failover2Plugin = spy(plugin);
+    when(spyPlugin.failover()).thenResolve();
+    plugin.failoverMode = FailoverMode.READER_OR_WRITER;
+
+    const networkError = new Error("network");
+    await expect(plugin.execute("query", () => Promise.reject(networkError))).rejects.toBe(networkError);
+
+    verify(spyPlugin.failover()).once();
+  });
 });
