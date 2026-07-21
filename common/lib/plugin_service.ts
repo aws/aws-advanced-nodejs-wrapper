@@ -702,6 +702,10 @@ export class PluginServiceImpl implements PluginService, HostListProviderService
     return this.getDialect().getErrorHandler().isSyntaxError(e);
   }
 
+  isReadOnlyConnectionError(e: Error): boolean {
+    return this.getDialect().getErrorHandler().isReadOnlyConnectionError(e);
+  }
+
   hasLoginError(): boolean {
     return this.getDialect().getErrorHandler().hasLoginError();
   }

@@ -475,7 +475,13 @@ export class Failover2Plugin extends AbstractConnectionPlugin implements CanRele
     }
 
     if (error instanceof Error) {
-      return this.pluginService.isNetworkError(error);
+      if (this.pluginService.isNetworkError(error)) {
+        return true;
+      }
+      // A demoted writer returns read-only errors on writes, which must trigger failover.
+      if (this.failoverMode === FailoverMode.STRICT_WRITER) {
+        return this.pluginService.isReadOnlyConnectionError(error);
+      }
     }
 
     return false;

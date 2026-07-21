@@ -23,6 +23,9 @@ export interface ErrorHandler {
 
   isSyntaxError(e: Error): boolean;
 
+  // True when a write was attempted on a read-only connection, e.g. a writer demoted after failover.
+  isReadOnlyConnectionError(e: Error): boolean;
+
   /**
    * Checks whether there has been an unexpected error emitted and if the error is a type of login error.
    */

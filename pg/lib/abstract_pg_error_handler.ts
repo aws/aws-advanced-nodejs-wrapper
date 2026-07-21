@@ -23,6 +23,7 @@ export abstract class AbstractPgErrorHandler implements ErrorHandler {
   protected unexpectedError: Error | null = null;
   protected static readonly SYNTAX_ERROR_CODE = "42601";
   protected static readonly SYNTAX_ERROR_MESSAGE = "syntax error";
+  protected static readonly READ_ONLY_CONNECTION_SQLSTATE = "25006";
   protected isNoOpListenerAttached = false;
   protected isTrackingListenerAttached = false;
 
@@ -70,6 +71,14 @@ export abstract class AbstractPgErrorHandler implements ErrorHandler {
       return AbstractPgErrorHandler.SYNTAX_ERROR_CODE === e["code"];
     }
     return e.message.includes(AbstractPgErrorHandler.SYNTAX_ERROR_MESSAGE);
+  }
+
+  isReadOnlyConnectionError(e: Error): boolean {
+    if (Object.prototype.hasOwnProperty.call(e, "code")) {
+      // @ts-ignore
+      return AbstractPgErrorHandler.READ_ONLY_CONNECTION_SQLSTATE === e["code"];
+    }
+    return false;
   }
 
   hasLoginError(): boolean {
