@@ -522,7 +522,13 @@ export class FailoverPlugin extends AbstractConnectionPlugin {
     }
 
     if (error instanceof Error) {
-      return this.pluginService.isNetworkError(error);
+      if (this.pluginService.isNetworkError(error)) {
+        return true;
+      }
+      // A demoted writer returns read-only errors on writes, which must trigger failover.
+      if (this.failoverMode === FailoverMode.STRICT_WRITER) {
+        return this.pluginService.isReadOnlyConnectionError(error);
+      }
     }
 
     return false;
