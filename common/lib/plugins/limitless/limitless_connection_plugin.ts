@@ -65,6 +65,9 @@ export class LimitlessConnectionPlugin extends AbstractConnectionPlugin {
     await this.limitlessRouterService.establishConnection(context);
 
     if (context.getConnection() != null) {
+      if (context.getConnectionHostInfo() != null) {
+        this.pluginService.setRoutedHostInfo(context.getConnectionHostInfo());
+      }
       return context.getConnection();
     }
     throw new AwsWrapperError(Messages.get("LimitlessConnectionPlugin.failedToConnectToHost", hostInfo.host));

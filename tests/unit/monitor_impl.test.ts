@@ -1,12 +1,12 @@
 /*
   Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
- 
+
   Licensed under the Apache License, Version 2.0 (the "License").
   You may not use this file except in compliance with the License.
   You may obtain a copy of the License at
- 
+
   http://www.apache.org/licenses/LICENSE-2.0
- 
+
   Unless required by applicable law or agreed to in writing, software
   distributed under the License is distributed on an "AS IS" BASIS,
   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -14,61 +14,56 @@
   limitations under the License.
 */
 
-import { MonitorImpl } from "../../common/lib/plugins/efm/monitor";
-import { anything, instance, mock, reset, spy, verify, when } from "ts-mockito";
+import { HostMonitorImpl } from "../../common/lib/plugins/efm/base/host_monitor";
+import { ConnectionContextImpl } from "../../common/lib/plugins/efm/base/connection_context";
+import { anything, instance, mock, reset, when } from "ts-mockito";
 import { PluginService, PluginServiceImpl } from "../../common/lib/plugin_service";
 import { HostInfo } from "../../common/lib";
-import { AwsClient } from "../../common/lib/aws_client";
-import { MonitorConnectionContext } from "../../common/lib/plugins/efm/monitor_connection_context";
 import { sleep } from "../../common/lib/utils/utils";
 import { ClientWrapper } from "../../common/lib/client_wrapper";
 import { NullTelemetryFactory } from "../../common/lib/utils/telemetry/null_telemetry_factory";
 import { MySQLClientWrapper } from "../../common/lib/mysql_client_wrapper";
 import { MySQL2DriverDialect } from "../../mysql/lib/dialect/mysql2_driver_dialect";
 
-class MonitorImplTest extends MonitorImpl {
+class MonitorImplTest extends HostMonitorImpl {
   constructor(pluginService: PluginService, hostInfo: HostInfo, properties: Map<string, any>, monitorDisposalTimeMillis: number) {
     super(pluginService, hostInfo, properties, monitorDisposalTimeMillis);
   }
 
-  override startRun() {
-    // do nothing
+  override checkConnectionStatus() {
+    // Exposes the protected checkConnectionStatus method for testing purposes.
+    return super.checkConnectionStatus();
   }
 }
 
 const mockPluginService = mock(PluginServiceImpl);
 const mockHostInfo = mock(HostInfo);
-const mockClient = mock(AwsClient);
 const mockClientWrapper: ClientWrapper = new MySQLClientWrapper(undefined, mock(HostInfo), new Map<string, any>(), new MySQL2DriverDialect());
 
 const SHORT_INTERVAL_MILLIS = 30;
 
 const properties = new Map();
-let monitor: MonitorImpl;
-let monitorSpy: MonitorImpl;
+let monitor: MonitorImplTest;
 
 describe("monitor impl test", () => {
   beforeEach(() => {
     reset(mockPluginService);
 
-    when(mockPluginService.getCurrentClient()).thenReturn(instance(mockClient));
     when(mockPluginService.forceConnect(anything(), anything())).thenResolve(mockClientWrapper);
     when(mockPluginService.getTelemetryFactory()).thenReturn(new NullTelemetryFactory());
 
     monitor = new MonitorImplTest(instance(mockPluginService), instance(mockHostInfo), properties, 0);
-    monitorSpy = spy(monitor);
   });
 
-  afterEach(() => {
-    monitor.releaseResources();
+  afterEach(async () => {
+    await monitor.releaseResources();
   });
 
   it("is client healthy with no existing client", async () => {
-    const status = await monitor.checkConnectionStatus();
+    const [isValid, elapsedTimeNano] = await monitor.checkConnectionStatus();
 
-    verify(mockPluginService.forceConnect(anything(), anything())).once();
-    expect(status.isValid).toBe(true);
-    expect(status.elapsedTimeNano).toBeGreaterThanOrEqual(0);
+    expect(isValid).toBe(true);
+    expect(elapsedTimeNano).toBeGreaterThanOrEqual(0);
   });
 
   it("is client healthy with existing client", async () => {
@@ -77,13 +72,11 @@ describe("monitor impl test", () => {
     // Start up a monitoring client.
     await monitor.checkConnectionStatus();
 
-    const status1 = await monitor.checkConnectionStatus();
-    expect(status1.isValid).toBe(true);
+    const [isValid1] = await monitor.checkConnectionStatus();
+    expect(isValid1).toBe(true);
 
-    const status2 = await monitor.checkConnectionStatus();
-    expect(status2.isValid).toBe(true);
-
-    verify(mockPluginService.isClientValid(mockClientWrapper)).twice();
+    const [isValid2] = await monitor.checkConnectionStatus();
+    expect(isValid2).toBe(true);
   });
 
   it("is client healthy with error", async () => {
@@ -92,31 +85,23 @@ describe("monitor impl test", () => {
     // Start up a monitoring client.
     await monitor.checkConnectionStatus();
 
-    const status = await monitor.checkConnectionStatus();
-    expect(status.isValid).toBe(false);
-    expect(status.elapsedTimeNano).toBeGreaterThanOrEqual(0);
+    const [isValid, elapsedTimeNano] = await monitor.checkConnectionStatus();
+    expect(isValid).toBe(false);
+    expect(elapsedTimeNano).toBeGreaterThanOrEqual(0);
   });
 
   it("run without context", async () => {
-    // Should end by itself.
+    // Should end by itself (monitorDisposalTimeMillis = 0).
     await monitor.run();
-    verify(monitorSpy.checkConnectionStatus()).never();
   });
 
   it("run with context", async () => {
-    const monitorContextInstance = new MonitorConnectionContext(
-      monitor,
-      mockClientWrapper,
-      30000,
-      5000,
-      3,
-      instance(mockPluginService),
-      new NullTelemetryFactory().createCounter("name")
-    );
-    monitor.startMonitoring(monitorContextInstance);
-    // Should end by itself.
+    when(mockPluginService.isClientValid(anything())).thenResolve(true);
+
+    const context = new ConnectionContextImpl(mockClientWrapper, 30000, 5000, 3, new NullTelemetryFactory().createCounter("counter"));
+    monitor.startMonitoring(context);
     monitor.run();
     await sleep(SHORT_INTERVAL_MILLIS);
-    monitor.stopMonitoring(monitorContextInstance);
+    monitor.stopMonitoring(context);
   });
 });

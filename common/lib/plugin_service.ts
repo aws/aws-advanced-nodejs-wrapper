@@ -47,7 +47,7 @@ import { AllowedAndBlockedHosts } from "./allowed_and_blocked_hosts";
 import { ConnectionPlugin } from "./connection_plugin";
 import { FullServicesContainer } from "./utils/full_services_container";
 import { StorageService } from "./utils/storage/storage_service";
-import { CoreServicesContainer } from "./utils/core_services_container";
+import type { TrackedConnectionListHost } from "./plugins/connection_tracker/tracked_connection_list";
 
 export interface PluginService extends ErrorHandler {
   isInTransaction(): boolean;
@@ -96,13 +96,19 @@ export interface PluginService extends ErrorHandler {
 
   getHosts(): HostInfo[];
 
-  setAvailability(hostAliases: Set<string>, availability: HostAvailability): void;
+  setAvailability(hostInfo: HostInfo, availability: HostAvailability): void;
 
   updateConfigWithProperties(props: Map<string, any>): void;
 
-  fillAliases(targetClient: ClientWrapper, hostInfo: HostInfo): Promise<void>;
+  getRoutedHostInfo(): HostInfo | null;
+
+  setRoutedHostInfo(routedHostInfo: HostInfo | null);
 
   identifyConnection(targetClient: ClientWrapper): Promise<HostInfo | null>;
+
+  identifyConnection(targetClient: ClientWrapper, connectionHostInfo: HostInfo | null): Promise<HostInfo | null>;
+
+  identifyConnection(targetClient: ClientWrapper, connectionHostInfo?: HostInfo | null): Promise<HostInfo | null>;
 
   connect(hostInfo: HostInfo, props: Map<string, any>): Promise<ClientWrapper>;
 
@@ -151,6 +157,10 @@ export interface PluginService extends ErrorHandler {
   isPooledClient(): boolean;
 
   setIsPooledClient(isPooledClient: boolean): void;
+
+  getTrackedConnectionHost(): TrackedConnectionListHost | null;
+
+  setTrackedConnectionHost(host: TrackedConnectionListHost | null): void;
 }
 
 export class PluginServiceImpl implements PluginService, HostListProviderService {
@@ -162,6 +172,7 @@ export class PluginServiceImpl implements PluginService, HostListProviderService
   private _isInTransaction: boolean = false;
   private servicesContainer: FullServicesContainer;
   protected hosts: HostInfo[] = [];
+  protected routedHostInfo: HostInfo | null;
   private dbDialectProvider: DatabaseDialectProvider;
   private readonly initialHost: string;
   private dialect: DatabaseDialect;
@@ -173,6 +184,7 @@ export class PluginServiceImpl implements PluginService, HostListProviderService
   private allowedAndBlockedHosts: AllowedAndBlockedHosts | null = null;
 
   protected _isPooledClient: boolean = false;
+  protected _trackedConnectionHost: TrackedConnectionListHost | null = null;
 
   constructor(
     container: FullServicesContainer,
@@ -459,15 +471,11 @@ export class PluginServiceImpl implements PluginService, HostListProviderService
     return hosts;
   }
 
-  setAvailability(hostAliases: Set<string>, availability: HostAvailability) {
-    if (hostAliases.size === 0) {
-      return;
-    }
-
+  setAvailability(hostInfo: HostInfo, availability: HostAvailability) {
     const hostsToChange = [
       ...new Set(
         this.getAllHosts().filter(
-          (host: HostInfo) => hostAliases.has(host.asAlias) || [...host.aliases].some((hostAlias: string) => hostAliases.has(hostAlias))
+          (host: HostInfo) => (hostInfo.hostId != null && hostInfo.hostId === host.hostId) || (hostInfo.host != null && hostInfo.host === host.host)
         )
       )
     ];
@@ -496,30 +504,12 @@ export class PluginServiceImpl implements PluginService, HostListProviderService
     this._currentClient.config = Object.fromEntries(props.entries());
   }
 
-  async fillAliases(targetClient: ClientWrapper, hostInfo: HostInfo) {
-    if (hostInfo == null) {
-      return;
-    }
+  getRoutedHostInfo(): HostInfo | null {
+    return this.routedHostInfo;
+  }
 
-    if (hostInfo.aliases.size > 0) {
-      logger.debug(Messages.get("PluginService.nonEmptyAliases", [...hostInfo.aliases].join(", ")));
-      return;
-    }
-
-    hostInfo.addAlias(hostInfo.asAlias);
-
-    // Add the host name and port, this host name is usually the internal IP address.
-    try {
-      const res: string = await this.dialect.getHostAliasAndParseResults(targetClient);
-      hostInfo.addAlias(res);
-    } catch (error) {
-      logger.debug(Messages.get("PluginService.failedToRetrieveHostPort"));
-    }
-
-    const host: HostInfo | void | null = await this.identifyConnection(targetClient);
-    if (host) {
-      hostInfo.addAlias(...host.allAliases);
-    }
+  setRoutedHostInfo(routedHostInfo: HostInfo | null) {
+    this.routedHostInfo = routedHostInfo;
   }
 
   identifyConnection(targetClient: ClientWrapper): Promise<HostInfo | null> {
@@ -805,5 +795,13 @@ export class PluginServiceImpl implements PluginService, HostListProviderService
 
   setIsPooledClient(isPooledClient: boolean): void {
     this._isPooledClient = isPooledClient;
+  }
+
+  getTrackedConnectionHost(): TrackedConnectionListHost | null {
+    return this._trackedConnectionHost;
+  }
+
+  setTrackedConnectionHost(host: TrackedConnectionListHost | null): void {
+    this._trackedConnectionHost = host;
   }
 }

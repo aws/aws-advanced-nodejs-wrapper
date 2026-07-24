@@ -21,9 +21,10 @@ import { logger } from "../../../logutils";
 import { MapUtils } from "../../utils/map_utils";
 import { Messages } from "../../utils/messages";
 import { PluginService } from "../../plugin_service";
+import { TrackedConnectionList, TrackedConnectionListHost } from "./tracked_connection_list";
 
 export class OpenedConnectionTracker {
-  static readonly openedConnections: Map<string, Array<WeakRef<ClientWrapper>>> = new Map<string, Array<WeakRef<ClientWrapper>>>();
+  static readonly openedConnections: Map<string, TrackedConnectionList> = new Map<string, TrackedConnectionList>();
   readonly pluginService: PluginService;
   private static readonly rdsUtils = new RdsUtils();
 
@@ -31,101 +32,113 @@ export class OpenedConnectionTracker {
     this.pluginService = pluginService;
   }
 
-  async populateOpenedConnectionQueue(hostInfo: HostInfo, client: ClientWrapper): Promise<void> {
-    const aliases = hostInfo.aliases;
+  populateOpenedConnectionQueue(hostInfo: HostInfo, client: ClientWrapper): TrackedConnectionListHost | null {
+    if (!hostInfo || !client) {
+      return null;
+    }
 
-    // Check if the connection was established using an instance endpoint
+    // Check if the connection was established using an instance endpoint.
     if (OpenedConnectionTracker.rdsUtils.isRdsInstance(hostInfo.host)) {
-      this.trackConnection(hostInfo.hostAndPort, client);
-      return;
+      const host = this.trackConnection(hostInfo.hostAndPort, client);
+      this.logOpenedConnections();
+      return host;
     }
 
-    const instanceEndpoint = [...aliases]
-      .filter((x) => OpenedConnectionTracker.rdsUtils.isRdsInstance(OpenedConnectionTracker.rdsUtils.removePort(x)))
-      .reduce((max, s) => (s > max ? s : max), "");
-
-    if (!instanceEndpoint) {
-      logger.debug(Messages.get("OpenedConnectionTracker.unableToPopulateOpenedConnectionQueue", hostInfo.host));
-      return;
+    // It might be a custom domain name. Let's track by hostId and custom domain name.
+    let lastHost: TrackedConnectionListHost | null = null;
+    if (hostInfo.hostId) {
+      lastHost = this.trackConnection(hostInfo.hostId, client);
     }
-
-    this.trackConnection(instanceEndpoint, client);
+    if (hostInfo.hostAndPort) {
+      lastHost = this.trackConnection(hostInfo.hostAndPort, client);
+    }
+    this.logOpenedConnections();
+    return lastHost;
   }
 
   async invalidateAllConnections(hostInfo: HostInfo): Promise<void> {
-    await this.invalidateAllConnectionsMultipleHosts(hostInfo.asAlias);
-    await this.invalidateAllConnectionsMultipleHosts(...Array.from(hostInfo.aliases));
+    if (!hostInfo) {
+      return;
+    }
+    await this.invalidateAllConnectionsMultipleHosts(hostInfo.hostAndPort, hostInfo.host, hostInfo.hostId);
   }
 
-  async invalidateAllConnectionsMultipleHosts(...hosts: string[]): Promise<void> {
-    try {
-      const instanceEndpoint = hosts
-        .filter((x) => OpenedConnectionTracker.rdsUtils.isRdsInstance(OpenedConnectionTracker.rdsUtils.removePort(x)))
-        .at(0);
-      if (!instanceEndpoint) {
-        return;
+  async invalidateAllConnectionsMultipleHosts(...keys: string[]): Promise<void> {
+    for (const key of keys) {
+      if (!key) {
+        continue;
       }
-      const connectionQueue = OpenedConnectionTracker.openedConnections.get(instanceEndpoint);
-      this.logConnectionQueue(instanceEndpoint, connectionQueue!);
-      await this.invalidateConnections(connectionQueue!);
-    } catch (error) {
-      // ignore
+      try {
+        const connectionList = OpenedConnectionTracker.openedConnections.get(key);
+        this.logConnectionList(key, connectionList);
+        await this.invalidateConnections(connectionList);
+      } catch (error) {
+        // Ignore and continue with the remaining keys.
+      }
     }
   }
 
-  private trackConnection(instanceEndpoint: string, client: ClientWrapper): void {
-    const connectionQueue = MapUtils.computeIfAbsent(
-      OpenedConnectionTracker.openedConnections,
-      instanceEndpoint,
-      (k) => new Array<WeakRef<ClientWrapper>>()
-    );
-    connectionQueue!.push(new WeakRef<ClientWrapper>(client));
-    this.logOpenedConnections();
+  removeConnectionTracking(host: TrackedConnectionListHost | null): void {
+    host?.remove();
   }
 
-  private async invalidateConnections(connectionQueue: Array<WeakRef<ClientWrapper>>): Promise<void> {
-    let clientRef: WeakRef<ClientWrapper> | undefined;
-    while ((clientRef = connectionQueue?.shift()) != null) {
-      const client = clientRef?.deref() ?? null;
-      if (!client) {
-        continue;
-      }
+  removeConnectionTrackingByHost(hostInfo: HostInfo, client: ClientWrapper | undefined | null): void {
+    const hostAndPort = OpenedConnectionTracker.rdsUtils.isRdsInstance(hostInfo.host) ? hostInfo.hostAndPort : null;
+    if (!hostAndPort) {
+      return;
+    }
+
+    const connectionList = OpenedConnectionTracker.openedConnections.get(hostAndPort);
+    if (connectionList) {
+      connectionList.removeIf((ref) => {
+        const conn = ref.deref();
+        return !conn || conn === client;
+      });
+    }
+  }
+
+  private trackConnection(instanceEndpoint: string, client: ClientWrapper): TrackedConnectionListHost {
+    const connectionList = MapUtils.computeIfAbsent(OpenedConnectionTracker.openedConnections, instanceEndpoint, (_) => new TrackedConnectionList());
+    return connectionList!.add(client);
+  }
+
+  private async invalidateConnections(connectionList: TrackedConnectionList | undefined): Promise<void> {
+    if (!connectionList || connectionList.isEmpty()) {
+      return;
+    }
+
+    const connections = connectionList.drainAll();
+    for (const client of connections) {
       await this.pluginService.abortTargetClient(client);
     }
   }
 
   logOpenedConnections(): void {
-    let str = "";
-    const hostList = [];
-
-    for (const queue of OpenedConnectionTracker.openedConnections.values()) {
-      if (queue.length !== 0) {
-        for (const connRef of queue) {
-          const conn = connRef?.deref() ?? null;
-          if (conn) {
-            hostList.push(`${conn.id} - ${conn.hostInfo.toString()}`);
-          }
-        }
-        str = hostList.join("\n\t");
+    const hostList: string[] = [];
+    for (const connectionList of OpenedConnectionTracker.openedConnections.values()) {
+      for (const conn of connectionList.getConnections()) {
+        hostList.push(`${conn.id} - ${conn.hostInfo.toString()}`);
       }
     }
-    logger.debug(`Opened Connections Tracked: \n\t${str}`);
+    logger.debug(`Opened Connections Tracked: \n\t${hostList.join("\n\t")}`);
   }
 
-  private logConnectionQueue(host: string, queue: Array<WeakRef<ClientWrapper>>): void {
-    if (!queue || queue.length === 0) {
+  private logConnectionList(host: string, connectionList: TrackedConnectionList | undefined): void {
+    if (!connectionList || connectionList.isEmpty()) {
       return;
     }
 
-    logger.debug(Messages.get("OpenedConnectionTracker.invalidatingConnections", `${host}\n[${queue.map((x) => x.deref()!.hostInfo).join()}\n]`));
+    const connections = connectionList.getConnections().map((conn) => conn.hostInfo);
+    logger.debug(Messages.get("OpenedConnectionTracker.invalidatingConnections", `${host}\n[${connections.join()}\n]`));
   }
 
   pruneNullConnections(): void {
-    for (const [key, queue] of OpenedConnectionTracker.openedConnections) {
-      OpenedConnectionTracker.openedConnections.set(
-        key,
-        queue.filter((connWeakRef: WeakRef<ClientWrapper>) => connWeakRef?.deref() ?? null)
-      );
+    for (const connectionList of OpenedConnectionTracker.openedConnections.values()) {
+      connectionList.removeIf((ref) => !ref.deref());
     }
+  }
+
+  static clearCache(): void {
+    OpenedConnectionTracker.openedConnections.clear();
   }
 }

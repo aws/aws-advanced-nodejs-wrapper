@@ -118,6 +118,7 @@ export class LimitlessRouterServiceImpl implements LimitlessRouterService {
 
     try {
       context.setConnection(await this.pluginService.connect(selectedHostSpec, context.getProperties(), context.getPlugin()));
+      context.setConnectionHostInfo(selectedHostSpec);
     } catch (e) {
       logger.debug(Messages.get("LimitlessRouterServiceImpl.failedToConnectToHost", selectedHostSpec.host));
       selectedHostSpec.setAvailability(HostAvailability.NOT_AVAILABLE);
@@ -161,12 +162,12 @@ export class LimitlessRouterServiceImpl implements LimitlessRouterService {
         }
       }
 
-      let selectedHostSpec: HostInfo | undefined = undefined;
+      let selectedHostInfo: HostInfo | undefined = undefined;
       try {
         // Select healthiest router for best chance of connection over load-balancing with round-robin
-        selectedHostSpec = this.pluginService.getHostInfoByStrategy(HostRole.WRITER, HighestWeightHostSelector.STRATEGY_NAME, context.getRouters());
-        logger.debug(Messages.get("LimitlessRouterServiceImpl.selectedHostForRetry", selectedHostSpec ? selectedHostSpec.host : "undefined"));
-        if (!selectedHostSpec) {
+        selectedHostInfo = this.pluginService.getHostInfoByStrategy(HostRole.WRITER, HighestWeightHostSelector.STRATEGY_NAME, context.getRouters());
+        logger.debug(Messages.get("LimitlessRouterServiceImpl.selectedHostForRetry", selectedHostInfo ? selectedHostInfo.host : "undefined"));
+        if (!selectedHostInfo) {
           continue;
         }
       } catch (e) {
@@ -179,13 +180,14 @@ export class LimitlessRouterServiceImpl implements LimitlessRouterService {
       }
 
       try {
-        context.setConnection(await this.pluginService.connect(selectedHostSpec, context.getProperties(), context.getPlugin()));
+        context.setConnection(await this.pluginService.connect(selectedHostInfo, context.getProperties(), context.getPlugin()));
         if (context.getConnection()) {
+          context.setConnectionHostInfo(selectedHostInfo);
           return;
         }
       } catch (error) {
-        selectedHostSpec.setAvailability(HostAvailability.NOT_AVAILABLE);
-        logger.debug(Messages.get("LimitlessRouterServiceImpl.failedToConnectToHost", selectedHostSpec.host));
+        selectedHostInfo.setAvailability(HostAvailability.NOT_AVAILABLE);
+        logger.debug(Messages.get("LimitlessRouterServiceImpl.failedToConnectToHost", selectedHostInfo.host));
       }
     }
     throw new AwsWrapperError(Messages.get("LimitlessRouterServiceImpl.maxRetriesExceeded"));

@@ -59,6 +59,7 @@ const MESSAGES: Record<string, string> = {
   "RdsHostListProvider.noClusterId": "No clusterId found. Please ensure clusterId parameter is set to a non-empty string.",
   "ConnectionStringHostListProvider.parsedListEmpty": "Can't parse connection string: '%s'.",
   "ConnectionStringHostListProvider.errorIdentifyConnection": "An error occurred while obtaining the connection's host ID.",
+  "HostIdCacheService.errorIdentifyConnection": "An error occurred while identifying the connection's host ID.",
   "ExecuteTimePlugin.executeTime": "Executed method '%s' in %s milliseconds.",
   "ConnectTimePlugin.connectTime": "Connected to '%s' in %s milliseconds.",
   "ClusterAwareWriterFailoverHandler.failoverCalledWithInvalidTopology": "Failover was called with an invalid (null or empty) topology.",
