@@ -206,9 +206,7 @@ export class AuroraInitialConnectionStrategyPlugin extends AbstractConnectionPlu
           if (this.hasNoReaders()) {
             // It seems that cluster has no readers. Simulate Aurora reader cluster endpoint logic
             // and return the current (writer) client.
-            if (isInitialConnection) {
-              this.hostListProviderService.setInitialConnectionHostInfo(readerCandidate);
-            }
+            this.pluginService.setRoutedHostInfo(readerCandidate);
             return readerCandidateClient;
           }
           await this.pluginService.abortTargetClient(readerCandidateClient);
@@ -216,9 +214,7 @@ export class AuroraInitialConnectionStrategyPlugin extends AbstractConnectionPlu
           continue;
         }
         // Reader connection is valid and verified.
-        if (isInitialConnection) {
-          this.hostListProviderService.setInitialConnectionHostInfo(readerCandidate);
-        }
+        this.pluginService.setRoutedHostInfo(readerCandidate);
         return readerCandidateClient;
       } catch (error: any) {
         await this.pluginService.abortTargetClient(readerCandidateClient);

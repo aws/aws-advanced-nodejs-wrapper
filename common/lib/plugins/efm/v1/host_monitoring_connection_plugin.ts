@@ -22,6 +22,7 @@ import { OldConnectionSuggestionAction } from "../../../old_connection_suggestio
 import { RdsUtils } from "../../../utils/rds_utils";
 import { AbstractConnectionPlugin } from "../../../abstract_connection_plugin";
 import { RdsUrlType } from "../../../utils/rds_url_type";
+import { HostAvailability } from "../../../host_availability/host_availability";
 import { WrapperProperties } from "../../../wrapper_property";
 import { ConnectionContext } from "../base/connection_context";
 import { HostMonitorService, HostMonitorServiceImpl } from "../base/host_monitor_service";
@@ -119,6 +120,7 @@ export class HostMonitoringConnectionPlugin extends AbstractConnectionPlugin imp
 
         if (context.isHostUnhealthy()) {
           const monitoringHostInfo = await this.getMonitoringHostInfo();
+          this.pluginService.setAvailability(monitoringHostInfo, HostAvailability.NOT_AVAILABLE);
           const targetClient = this.pluginService.getCurrentClient().targetClient;
           let isClientValid = false;
           if (targetClient) {
@@ -167,10 +169,10 @@ export class HostMonitoringConnectionPlugin extends AbstractConnectionPlugin imp
     if (this.monitoringHostInfo == null) {
       this.throwUnableToIdentifyConnection(null);
     }
-    const rdsUrlType: RdsUrlType = this.rdsUtils.identifyRdsType(this.monitoringHostInfo.url);
+    const rdsUrlType: RdsUrlType = this.rdsUtils.identifyRdsType(this.monitoringHostInfo.host);
 
     try {
-      if (rdsUrlType.isRdsCluster) {
+      if (rdsUrlType !== RdsUrlType.RDS_INSTANCE) {
         logger.debug(Messages.get("HostMonitoringConnectionPlugin.identifyClusterConnection"));
         this.monitoringHostInfo = await this.pluginService.identifyConnection(
           this.pluginService.getCurrentClient().targetClient!,

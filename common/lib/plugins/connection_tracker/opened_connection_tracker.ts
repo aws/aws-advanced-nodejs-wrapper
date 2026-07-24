@@ -133,8 +133,11 @@ export class OpenedConnectionTracker {
   }
 
   pruneNullConnections(): void {
-    for (const connectionList of OpenedConnectionTracker.openedConnections.values()) {
+    for (const [key, connectionList] of OpenedConnectionTracker.openedConnections.entries()) {
       connectionList.removeIf((ref) => !ref.deref());
+      if (connectionList.isEmpty()) {
+        OpenedConnectionTracker.openedConnections.delete(key);
+      }
     }
   }
 

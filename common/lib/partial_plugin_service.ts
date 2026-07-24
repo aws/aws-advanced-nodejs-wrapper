@@ -420,7 +420,14 @@ export class PartialPluginService implements PluginService, HostListProviderServ
     // constructor should already be updated and verified.
   }
 
-  async identifyConnection(targetClient: ClientWrapper): Promise<HostInfo | null> {
+  identifyConnection(targetClient: ClientWrapper): Promise<HostInfo | null>;
+  identifyConnection(targetClient: ClientWrapper, connectionHostInfo: HostInfo | null): Promise<HostInfo | null>;
+  async identifyConnection(targetClient: ClientWrapper, connectionHostInfo?: HostInfo | null): Promise<HostInfo | null> {
+    const hostIdCacheService = this.servicesContainer.hostIdCacheService;
+    if (hostIdCacheService && connectionHostInfo) {
+      return hostIdCacheService.identifyConnection(targetClient, connectionHostInfo, this);
+    }
+
     const provider = this.getHostListProvider();
     if (!provider) {
       return Promise.reject(new AwsWrapperError(Messages.get("PluginService.errorIdentifyConnection")));

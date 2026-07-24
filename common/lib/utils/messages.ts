@@ -193,7 +193,6 @@ const MESSAGES: Record<string, string> = {
   "MonitorImpl.startMonitoringTaskNewContext": "Start monitoring task for checking new contexts for '%s'",
   "MonitorImpl.stopMonitoringTaskNewContext": "Stop monitoring task for checking new contexts for '%s'",
   "MonitorService.startMonitoringNullMonitor": "Start monitoring called but could not find monitor for host: '%s'.",
-  "MonitorService.emptyAliasSet": "Empty alias set passed for '%s'. Set should not be empty.",
   "MonitorService.monitorClassMismatch":
     "The monitor stored at '%s' did not have the expected type. The expected type was '%s', but the monitor '%s' had a type of '%s'.",
   "MonitorService.monitorStuck": "Monitor '%s' has not been updated within the inactive timeout of %s milliseconds. The monitor will be stopped.",
@@ -210,7 +209,6 @@ const MESSAGES: Record<string, string> = {
   "PluginService.hostListEmpty": "Current host list is empty.",
   "PluginService.releaseResources": "Releasing resources.",
   "PluginService.failedToRetrieveHostPort": "Could not retrieve Host:Port for connection.",
-  "PluginService.nonEmptyAliases": "fillAliases called when HostInfo already contains the following aliases: '%s'.",
   "PluginService.forceMonitoringRefreshTimeout": "A timeout error occurred after waiting '%s' ms for refreshed topology.",
   "PluginService.requiredBlockingHostListProvider":
     "The detected host list provider is not a BlockingHostListProvider. A BlockingHostListProvider is required to force refresh the host list. Detected host list provider: '%s'.",

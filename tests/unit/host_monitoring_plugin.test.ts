@@ -69,6 +69,9 @@ function initDefaultMockReturns() {
   when(mockPluginService.getRoutedHostInfo()).thenReturn(instance(mockHostInfo1));
   when(mockPluginService.getCurrentClient()).thenReturn(instance(mockClient));
   when(mockClient.targetClient).thenReturn(mockClientWrapper);
+  // The monitoring host ("host") is a non-instance endpoint, so getMonitoringHostInfo identifies the
+  // underlying instance. Return the same host so identification succeeds in these tests.
+  when(mockPluginService.identifyConnection(mockClientWrapper, instance(mockHostInfo1))).thenResolve(instance(mockHostInfo1));
 
   properties.set(WrapperProperties.FAILURE_DETECTION_ENABLED.name, true);
   properties.set(WrapperProperties.FAILURE_DETECTION_TIME_MS.name, FAILURE_DETECTION_TIME);

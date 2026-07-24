@@ -327,7 +327,7 @@ export class FailoverPlugin extends AbstractConnectionPlugin {
           await this.pluginService.abortCurrentClient();
           await this.pluginService.setCurrentClient(result.client, result.newHost);
           await this.updateTopology(true);
-          this.failoverWriterSuccessCounter.inc();
+          this.failoverReaderSuccessCounter.inc();
         } catch (error: any) {
           this.failoverReaderFailedCounter.inc();
           throw error;
