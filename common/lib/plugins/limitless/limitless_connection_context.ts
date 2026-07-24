@@ -17,7 +17,6 @@
 import { HostInfo } from "../../host_info";
 import { ClientWrapper } from "../../client_wrapper";
 import { ConnectionPlugin } from "../../connection_plugin";
-import Map from "@arrows/array/src/map";
 
 export class LimitlessConnectionContext {
   private readonly hostInfo: HostInfo;

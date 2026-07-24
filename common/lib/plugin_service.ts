@@ -498,6 +498,10 @@ export class PluginServiceImpl implements PluginService, HostListProviderService
         changes.set(host.url, hostChanges);
       }
     }
+
+    if (changes.size > 0) {
+      this.servicesContainer.pluginManager?.notifyHostListChanged(changes);
+    }
   }
 
   updateConfigWithProperties(props: Map<string, any>) {
@@ -512,7 +516,14 @@ export class PluginServiceImpl implements PluginService, HostListProviderService
     this.routedHostInfo = routedHostInfo;
   }
 
-  identifyConnection(targetClient: ClientWrapper): Promise<HostInfo | null> {
+  identifyConnection(targetClient: ClientWrapper): Promise<HostInfo | null>;
+  identifyConnection(targetClient: ClientWrapper, connectionHostInfo: HostInfo | null): Promise<HostInfo | null>;
+  identifyConnection(targetClient: ClientWrapper, connectionHostInfo?: HostInfo | null): Promise<HostInfo | null> {
+    const hostIdCacheService = this.servicesContainer.hostIdCacheService;
+    if (hostIdCacheService && connectionHostInfo) {
+      return hostIdCacheService.identifyConnection(targetClient, connectionHostInfo, this);
+    }
+
     const provider: HostListProvider | null = this.getHostListProvider();
     if (!provider) {
       return Promise.reject();

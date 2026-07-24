@@ -87,7 +87,8 @@ class BaseAwsMySQLClient extends AwsClient implements MySQLClient {
           // Ignore
         }
       }
-      const connectedHostInfo: HostInfo | null = this.pluginService.getRoutedHostInfo() ?? this.pluginService.getInitialConnectionHostInfo();
+      const connectedHostInfo: HostInfo =
+        this.pluginService.getRoutedHostInfo() ?? this.pluginService.getInitialConnectionHostInfo() ?? result.hostInfo;
       await this.pluginService.setCurrentClient(result, connectedHostInfo);
       this.pluginService.setRoutedHostInfo(null);
       await this.internalPostConnect();
