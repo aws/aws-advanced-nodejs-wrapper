@@ -64,14 +64,14 @@ const TAZ_MYSQL_QUERIES: string[] = [
 ];
 const PG_QUERY = "SELECT 1 FROM pg_catalog.pg_proc LIMIT 1";
 const RDS_PG_QUERY =
-  "SELECT (setting LIKE '%rds_tools%') AS rds_tools, (setting LIKE '%aurora_stat_utils%') AS aurora_stat_utils " +
+  "SELECT (setting OPERATOR(pg_catalog.~~) '%rds_tools%') AS rds_tools, (setting OPERATOR(pg_catalog.~~) '%aurora_stat_utils%') AS aurora_stat_utils " +
   "FROM pg_catalog.pg_settings WHERE name OPERATOR(pg_catalog.=) 'rds.extensions'";
 const AURORA_PG_QUERY =
-  "SELECT (setting LIKE '%aurora_stat_utils%') AS aurora_stat_utils FROM pg_catalog.pg_settings WHERE name OPERATOR(pg_catalog.=) 'rds.extensions'";
+  "SELECT (setting OPERATOR(pg_catalog.~~) '%aurora_stat_utils%') AS aurora_stat_utils FROM pg_catalog.pg_settings WHERE name OPERATOR(pg_catalog.=) 'rds.extensions'";
 const TAZ_PG_QUERIES: string[] = [
   "SELECT 1 AS tmp FROM information_schema.routines WHERE routine_schema OPERATOR(pg_catalog.=) 'rds_tools' AND routine_name OPERATOR(pg_catalog.=) 'multi_az_db_cluster_source_dbi_resource_id'",
   "SELECT multi_az_db_cluster_source_dbi_resource_id FROM rds_tools.multi_az_db_cluster_source_dbi_resource_id()",
-  "SELECT 'rds_tools.show_topology'::regproc"
+  "SELECT 'rds_tools.show_topology'::pg_catalog.regproc"
 ];
 
 const mysqlResult = [

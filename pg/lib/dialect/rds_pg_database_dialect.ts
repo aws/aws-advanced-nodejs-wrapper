@@ -23,12 +23,12 @@ export class RdsPgDatabaseDialect extends PgDatabaseDialect implements BlueGreen
   private static readonly VERSION = process.env.npm_package_version;
 
   private static readonly EXTENSIONS_SQL: string =
-    "SELECT (setting LIKE '%rds_tools%') AS rds_tools, (setting LIKE '%aurora_stat_utils%') AS aurora_stat_utils " +
+    "SELECT (setting OPERATOR(pg_catalog.~~) '%rds_tools%') AS rds_tools, (setting OPERATOR(pg_catalog.~~) '%aurora_stat_utils%') AS aurora_stat_utils " +
     "FROM pg_catalog.pg_settings WHERE name OPERATOR(pg_catalog.=) 'rds.extensions'";
 
   private static readonly BG_STATUS_QUERY: string = `SELECT * FROM rds_tools.show_topology('aws_advanced_nodejs_wrapper-${RdsPgDatabaseDialect.VERSION}')`;
 
-  private static readonly TOPOLOGY_TABLE_EXIST_QUERY: string = "SELECT 'rds_tools.show_topology'::regproc";
+  private static readonly TOPOLOGY_TABLE_EXIST_QUERY: string = "SELECT 'rds_tools.show_topology'::pg_catalog.regproc";
 
   getDialectUpdateCandidates(): string[] {
     return [DatabaseDialectCodes.RDS_MULTI_AZ_PG, DatabaseDialectCodes.AURORA_PG];
