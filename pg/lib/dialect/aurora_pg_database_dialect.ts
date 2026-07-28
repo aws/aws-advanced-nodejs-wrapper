@@ -38,7 +38,7 @@ export class AuroraPgDatabaseDialect extends PgDatabaseDialect implements Topolo
     "WHERE EXTRACT(EPOCH FROM(pg_catalog.NOW() OPERATOR(pg_catalog.-) LAST_UPDATE_TIMESTAMP)) OPERATOR(pg_catalog.<=) 300 OR SESSION_ID OPERATOR(pg_catalog.=) 'MASTER_SESSION_ID' " +
     "OR LAST_UPDATE_TIMESTAMP IS NULL";
   private static readonly EXTENSIONS_SQL: string =
-    "SELECT (setting LIKE '%aurora_stat_utils%') AS aurora_stat_utils FROM pg_catalog.pg_settings WHERE name OPERATOR(pg_catalog.=) 'rds.extensions'";
+    "SELECT (setting OPERATOR(pg_catalog.~~) '%aurora_stat_utils%') AS aurora_stat_utils FROM pg_catalog.pg_settings WHERE name OPERATOR(pg_catalog.=) 'rds.extensions'";
   private static readonly HOST_ID_QUERY: string = "SELECT pg_catalog.aurora_db_instance_identifier() as host";
   private static readonly IS_READER_QUERY: string = "SELECT pg_catalog.pg_is_in_recovery() as is_reader";
   private static readonly IS_WRITER_QUERY: string =
@@ -48,7 +48,8 @@ export class AuroraPgDatabaseDialect extends PgDatabaseDialect implements Topolo
 
   private static readonly BG_STATUS_QUERY: string = `SELECT * FROM pg_catalog.get_blue_green_fast_switchover_metadata('aws_advanced_nodejs_wrapper-${AuroraPgDatabaseDialect.VERSION}')`;
 
-  private static readonly TOPOLOGY_TABLE_EXIST_QUERY: string = "SELECT pg_catalog.'get_blue_green_fast_switchover_metadata'::regproc";
+  private static readonly TOPOLOGY_TABLE_EXIST_QUERY: string =
+    "SELECT 'pg_catalog.get_blue_green_fast_switchover_metadata'::pg_catalog.regproc";
 
   getHostListProvider(props: Map<string, any>, originalUrl: string, hostListProviderService: HostListProviderService): HostListProvider {
     if (WrapperProperties.PLUGINS.get(props).includes("failover2")) {
@@ -123,7 +124,7 @@ export class AuroraPgDatabaseDialect extends PgDatabaseDialect implements Topolo
   }
 
   getLimitlessRoutersQuery(): string {
-    return "select router_endpoint, load from aurora_limitless_router_endpoints()";
+    return "SELECT router_endpoint, load FROM pg_catalog.aurora_limitless_router_endpoints()";
   }
 
   async isBlueGreenStatusAvailable(clientWrapper: ClientWrapper): Promise<boolean> {
