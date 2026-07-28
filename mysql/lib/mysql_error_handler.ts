@@ -24,6 +24,7 @@ export class MySQLErrorHandler implements ErrorHandler {
   private unexpectedError: Error | null = null;
   protected static readonly SYNTAX_ERROR_CODES = ["42000", "42S02"];
   protected static readonly SYNTAX_ERROR_MESSAGE = "You have an error in your SQL syntax";
+  protected static readonly READ_ONLY_ERROR_CODES = [1290, 1836];
   protected isNoOpListenerAttached = false;
   protected isTrackingListenerAttached = false;
 
@@ -67,6 +68,14 @@ export class MySQLErrorHandler implements ErrorHandler {
       }
     }
     return e.message.includes(MySQLErrorHandler.SYNTAX_ERROR_MESSAGE);
+  }
+
+  isReadOnlyConnectionError(e: Error): boolean {
+    if (Object.prototype.hasOwnProperty.call(e, "errno")) {
+      // @ts-ignore
+      return MySQLErrorHandler.READ_ONLY_ERROR_CODES.includes(e["errno"]);
+    }
+    return false;
   }
 
   hasLoginError(): boolean {
