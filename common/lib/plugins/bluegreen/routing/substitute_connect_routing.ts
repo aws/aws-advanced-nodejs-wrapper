@@ -73,7 +73,6 @@ export class SubstituteConnectRouting extends BaseConnectRouting {
         .withHostId(iamHost.hostId)
         .withAvailability(HostAvailability.AVAILABLE)
         .build();
-      reroutedHostInfo.addAlias(iamHost.host);
 
       const reroutedProperties: Map<string, any> = new Map<string, any>(properties);
       reroutedProperties.set(WrapperProperties.HOST.name, iamHost.host);

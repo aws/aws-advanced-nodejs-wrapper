@@ -25,15 +25,13 @@ export class HostInfo {
   public static readonly NO_PORT: number = -1;
   public static readonly DEFAULT_WEIGHT: number = 100;
 
-  readonly host: string;
+  readonly host: string; // full domain name
   readonly port: number;
   role: HostRole;
   readonly weight: number; // Greater or equal 0. Lesser the weight, the healthier host.
   readonly lastUpdateTime: number;
   availability: HostAvailability;
-  aliases: Set<string> = new Set<string>();
-  allAliases: Set<string> = new Set<string>();
-  hostId: string;
+  hostId: string; // id; could be a host name, host domain name, or a unique string
   hostAvailabilityStrategy: HostAvailabilityStrategy;
 
   constructor(
@@ -57,44 +55,11 @@ export class HostInfo {
     this.weight = weight;
     this.lastUpdateTime = lastUpdateTime;
     this.hostAvailabilityStrategy = hostAvailabilityStrategy;
-    this.allAliases.add(this.asAlias).add(this.host);
     this.hostId = hostId;
   }
 
   isPortSpecified(): boolean {
     return this.port != HostInfo.NO_PORT;
-  }
-
-  addAlias(...alias: string[]) {
-    if (!alias || alias.length < 1) {
-      return;
-    }
-
-    alias.forEach((x) => {
-      this.aliases.add(x);
-      this.allAliases.add(x);
-    });
-  }
-
-  removeAlias(aliases: string[]) {
-    if (!aliases || aliases.length < 1) {
-      return;
-    }
-
-    aliases.forEach((x) => {
-      this.aliases.delete(x);
-      this.allAliases.delete(x);
-    });
-  }
-
-  resetAliases() {
-    this.aliases.clear();
-    this.allAliases.clear();
-    this.allAliases.add(this.asAlias);
-  }
-
-  get asAlias() {
-    return this.isPortSpecified() ? `${this.host}:${this.port}` : this.host;
   }
 
   get url() {

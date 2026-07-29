@@ -18,25 +18,25 @@ jobs:
 
     steps:
       - name: Clone repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10  # v6
         with:
           fetch-depth: 50
 
       - name: "Set up JDK 8"
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654  # v5
         with:
           distribution: "corretto"
           java-version: 8
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e  # v6.4.0
         with:
-          node-version: "20.x"
+          node-version: "22.x"
       - name: Install dependencies
         run: npm install --no-save
 
       - name: Configure AWS Credentials
         id: creds
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@e7f100cf4c008499ea8adda475de1042d6975c7b  # v6
         with:
           role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/${{ secrets.AWS_DEPLOY_ROLE }}
           role-session-name: nodejs_aurora_perf_tests
@@ -59,7 +59,7 @@ jobs:
       - name: "Get Github Action IP"
         if: always()
         id: ip
-        uses: haythem/public-ip@v1.3
+        uses: haythem/public-ip@bdddd92c198b0955f0b494a8ebeac529754262ff  # v1.3
 
       - name: "Remove Github Action IP"
         if: always()
@@ -73,7 +73,7 @@ jobs:
 
       - name: Archive Performance results
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7.0.1
         with:
           name: ${{ matrix.db }}-performance-results
           path: ./tests/integration/container/reports

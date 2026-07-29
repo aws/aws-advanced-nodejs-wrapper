@@ -31,7 +31,7 @@ import { StaleDnsPluginFactory } from "./plugins/stale_dns/stale_dns_plugin_fact
 import { FederatedAuthPluginFactory } from "./plugins/federated_auth/federated_auth_plugin_factory";
 import { ReadWriteSplittingPluginFactory } from "./plugins/read_write_splitting/read_write_splitting_plugin_factory";
 import { OktaAuthPluginFactory } from "./plugins/federated_auth/okta_auth_plugin_factory";
-import { HostMonitoringPluginFactory } from "./plugins/efm/host_monitoring_plugin_factory";
+import { HostMonitoringPluginFactory } from "./plugins/efm/v1/host_monitoring_plugin_factory";
 import { AuroraInitialConnectionStrategyFactory } from "./plugins/aurora_initial_connection_strategy_plugin_factory";
 import { AuroraConnectionTrackerPluginFactory } from "./plugins/connection_tracker/aurora_connection_tracker_plugin_factory";
 import { ConnectionProviderManager } from "./connection_provider_manager";
@@ -41,7 +41,7 @@ import { LimitlessConnectionPluginFactory } from "./plugins/limitless/limitless_
 import { FastestResponseStrategyPluginFactory } from "./plugins/strategy/fastest_response/fastest_respose_strategy_plugin_factory";
 import { CustomEndpointPluginFactory } from "./plugins/custom_endpoint/custom_endpoint_plugin_factory";
 import { ConfigurationProfile } from "./profile/configuration_profile";
-import { HostMonitoring2PluginFactory } from "./plugins/efm2/host_monitoring2_plugin_factory";
+import { HostMonitoring2PluginFactory } from "./plugins/efm/v2/host_monitoring2_plugin_factory";
 import { BlueGreenPluginFactory } from "./plugins/bluegreen/blue_green_plugin_factory";
 import { GlobalDbFailoverPluginFactory } from "./plugins/gdb_failover/global_db_failover_plugin_factory";
 import { FullServicesContainer } from "./utils/full_services_container";
