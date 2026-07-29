@@ -141,7 +141,7 @@ export class ClusterAwareReaderFailoverHandler implements ReaderFailoverHandler 
 
   async failoverInternal(hosts: HostInfo[], currentHost: HostInfo | null): Promise<ReaderFailoverResult> {
     if (currentHost) {
-      this.pluginService.setAvailability(currentHost.allAliases, HostAvailability.NOT_AVAILABLE);
+      this.pluginService.setAvailability(currentHost, HostAvailability.NOT_AVAILABLE);
     }
     const hostsByPriority = this.getHostsByPriority(hosts);
     return this.getConnectionFromHostGroup(hostsByPriority);
@@ -336,7 +336,7 @@ class ConnectionAttemptTask {
     try {
       this.targetClient = await this.pluginService.forceConnect(this.newHost, copy);
 
-      this.pluginService.setAvailability(this.newHost.allAliases, HostAvailability.AVAILABLE);
+      this.pluginService.setAvailability(this.newHost, HostAvailability.AVAILABLE);
       logger.info(Messages.get("ClusterAwareReaderFailoverHandler.successfulReaderConnection", this.newHost.host));
       if (this.taskHandler.getSelectedConnectionAttemptTask(this.failoverTaskId) === -1) {
         this.taskHandler.setSelectedConnectionAttemptTask(this.failoverTaskId, this.taskId);
@@ -344,7 +344,7 @@ class ConnectionAttemptTask {
       }
       throw new AwsWrapperError(Messages.get("ClusterAwareReaderFailoverHandler.selectedTaskChosen", this.newHost.host));
     } catch (error) {
-      this.pluginService.setAvailability(this.newHost.allAliases, HostAvailability.NOT_AVAILABLE);
+      this.pluginService.setAvailability(this.newHost, HostAvailability.NOT_AVAILABLE);
       throw error;
     } finally {
       await this.performFinalCleanup();

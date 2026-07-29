@@ -14,26 +14,21 @@
   limitations under the License.
 */
 
-import { ConnectionPluginFactory } from "../../plugin_factory";
-import { ConnectionPlugin } from "../../connection_plugin";
-import { RdsUtils } from "../../utils/rds_utils";
-import { AwsWrapperError } from "../../utils/errors";
-import { Messages } from "../../utils/messages";
-import { FullServicesContainer } from "../../utils/full_services_container";
+import { ConnectionPluginFactory } from "../../../plugin_factory";
+import { ConnectionPlugin } from "../../../connection_plugin";
+import { AwsWrapperError } from "../../../utils/errors";
+import { Messages } from "../../../utils/messages";
+import { FullServicesContainer } from "../../../utils/full_services_container";
 
-export class HostMonitoringPluginFactory extends ConnectionPluginFactory {
-  private static hostMonitoringPlugin: any;
+export class HostMonitoring2PluginFactory extends ConnectionPluginFactory {
+  private static hostMonitoring2Plugin: any;
 
   async getInstance(servicesContainer: FullServicesContainer, properties: Map<string, any>): Promise<ConnectionPlugin> {
     try {
-      if (!HostMonitoringPluginFactory.hostMonitoringPlugin) {
-        HostMonitoringPluginFactory.hostMonitoringPlugin = await import("./host_monitoring_connection_plugin");
+      if (!HostMonitoring2PluginFactory.hostMonitoring2Plugin) {
+        HostMonitoring2PluginFactory.hostMonitoring2Plugin = await import("./host_monitoring2_connection_plugin");
       }
-      return new HostMonitoringPluginFactory.hostMonitoringPlugin.HostMonitoringConnectionPlugin(
-        servicesContainer.pluginService,
-        properties,
-        new RdsUtils()
-      );
+      return new HostMonitoring2PluginFactory.hostMonitoring2Plugin.HostMonitoring2ConnectionPlugin(servicesContainer, properties);
     } catch (error: any) {
       throw new AwsWrapperError(Messages.get("ConnectionPluginChainBuilder.errorImportingPlugin", error.message, "HostMonitoringPlugin"));
     }

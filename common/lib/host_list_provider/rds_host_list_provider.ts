@@ -185,30 +185,17 @@ export class RdsHostListProvider implements DynamicHostListProvider {
     }
 
     let topology = await this.refresh();
-    let isForcedRefresh = false;
-
     if (!topology) {
       topology = await this.forceRefresh();
-      isForcedRefresh = true;
     }
 
     if (!topology) {
       return null;
     }
 
+    const instanceId = instanceIds[0];
     const instanceName = instanceIds[1];
-    let matches = topology.filter((host) => host.hostId === instanceName);
-    const foundHost = matches.length === 0 ? null : matches[0];
-
-    if (!foundHost && !isForcedRefresh) {
-      topology = await this.forceRefresh();
-      if (!topology) {
-        return null;
-      }
-    }
-
-    matches = topology.filter((host) => host.hostId === instanceName);
-    return matches.length === 0 ? null : matches[0];
+    return topology.find((host) => instanceId === host.hostId || instanceName === host.host) ?? null;
   }
 
   async refresh(): Promise<HostInfo[]> {

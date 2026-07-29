@@ -215,7 +215,11 @@ class BaseAwsPgClient extends AwsClient implements PGClient {
           // Ignore
         }
       }
-      await this.pluginService.setCurrentClient(result, result.hostInfo);
+
+      const connectedHostInfo: HostInfo =
+        this.pluginService.getRoutedHostInfo() ?? this.pluginService.getInitialConnectionHostInfo() ?? result.hostInfo;
+      await this.pluginService.setCurrentClient(result, connectedHostInfo);
+      this.pluginService.setRoutedHostInfo(null);
       await this.internalPostConnect();
     });
   }

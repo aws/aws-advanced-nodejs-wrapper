@@ -130,7 +130,6 @@ export abstract class TopologyUtils {
       .withLastUpdateTime(lastUpdateTime)
       .withHostId(finalInstanceId)
       .build();
-    host.addAlias(finalEndpoint);
     return host;
   }
 

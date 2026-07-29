@@ -23,6 +23,7 @@ import { StorageService } from "./storage/storage_service";
 import { MonitorService } from "./monitoring/monitor_service";
 import { EventPublisher } from "./events/event";
 import { ImportantEventService } from "./important_event_service";
+import { HostIdCacheService } from "./host_id_cache_service";
 
 /**
  * Container for services used throughout the wrapper.
@@ -37,6 +38,7 @@ export interface FullServicesContainer {
   hostListProviderService: HostListProviderService;
   pluginService: PluginService;
   importantEventService: ImportantEventService;
+  hostIdCacheService: HostIdCacheService;
 }
 
 export class FullServicesContainerImpl implements FullServicesContainer {
@@ -49,6 +51,7 @@ export class FullServicesContainerImpl implements FullServicesContainer {
   hostListProviderService!: HostListProviderService;
   pluginService!: PluginService;
   importantEventService: ImportantEventService;
+  hostIdCacheService: HostIdCacheService;
 
   constructor(
     storageService: StorageService,

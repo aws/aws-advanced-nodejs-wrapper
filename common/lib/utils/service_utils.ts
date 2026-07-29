@@ -31,6 +31,7 @@ import { TelemetryFactory } from "./telemetry/telemetry_factory";
 import { EventPublisher } from "./events/event";
 import { PartialPluginService } from "../partial_plugin_service";
 import { ConnectionUrlParser } from "./connection_url_parser";
+import { HostIdCacheServiceImpl } from "./host_id_cache_service";
 
 export class ServiceUtils {
   private static readonly _instance: ServiceUtils = new ServiceUtils();
@@ -70,6 +71,7 @@ export class ServiceUtils {
     servicesContainer.pluginService = pluginService;
     servicesContainer.pluginManager = pluginManager;
     servicesContainer.hostListProviderService = pluginService;
+    servicesContainer.hostIdCacheService = new HostIdCacheServiceImpl();
 
     return servicesContainer;
   }
@@ -104,6 +106,7 @@ export class ServiceUtils {
     servicesContainer.pluginService = pluginService;
     servicesContainer.pluginManager = pluginManager;
     servicesContainer.hostListProviderService = pluginService;
+    servicesContainer.hostIdCacheService = new HostIdCacheServiceImpl();
 
     return servicesContainer;
   }

@@ -114,7 +114,6 @@ describe("reader failover handler", () => {
     const hostInfo = builder.withHost("hostA").withRole(HostRole.READER).build();
     const hosts = [hostInfo];
 
-    when(mockHostInfo.allAliases).thenReturn(new Set<string>(["alias1", "alias2"]));
     when(mockHostInfo.getRawAvailability()).thenReturn(HostAvailability.AVAILABLE);
     when(mockPluginService.getHosts()).thenReturn(hosts);
     when(mockPluginService.getHostInfoByStrategy(HostRole.READER, anything(), anything())).thenReturn(mockHostInfo);
@@ -139,7 +138,6 @@ describe("reader failover handler", () => {
     const hosts = [hostInfo];
     const test = new AwsWrapperError("test");
 
-    when(mockHostInfo.allAliases).thenReturn(new Set<string>(["alias1", "alias2"]));
     when(mockHostInfo.getRawAvailability()).thenReturn(HostAvailability.AVAILABLE);
     when(mockPluginService.getHosts()).thenReturn(hosts);
     when(mockPluginService.getAllHosts()).thenReturn(hosts);
@@ -166,7 +164,6 @@ describe("reader failover handler", () => {
     const hostInfo = builder.withHost("hostA").build();
     const hosts = [hostInfo];
 
-    when(mockHostInfo.allAliases).thenReturn(new Set<string>(["alias1", "alias2"]));
     when(mockPluginService.getHosts()).thenReturn(hosts);
     when(mockPluginService.forceMonitoringRefresh(true, anything())).thenResolve(false);
 
@@ -190,7 +187,6 @@ describe("reader failover handler", () => {
     const hostInfo = builder.withHost("hostA").build();
     const hosts = [hostInfo];
 
-    when(mockHostInfo.allAliases).thenReturn(new Set<string>(["alias1", "alias2"]));
     when(mockPluginService.getHosts()).thenReturn(hosts);
     when(mockPluginService.getAllHosts()).thenReturn(hosts);
     when(mockPluginService.forceMonitoringRefresh(true, anything())).thenResolve(true);
@@ -219,7 +215,6 @@ describe("reader failover handler", () => {
     const hostInfo = builder.withHost("hostA").withRole(HostRole.WRITER).build();
     const hosts = [hostInfo];
 
-    when(mockHostInfo.allAliases).thenReturn(new Set<string>(["alias1", "alias2"]));
     when(mockPluginService.getHosts()).thenReturn(hosts);
     when(mockPluginService.getAllHosts()).thenReturn(hosts);
     when(mockPluginService.forceMonitoringRefresh(true, anything())).thenResolve(true);

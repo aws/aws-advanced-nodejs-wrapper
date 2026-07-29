@@ -85,11 +85,6 @@ describe("writer failover handler", () => {
   const mockHostListProviderService = mock<HostListProviderService>();
 
   beforeEach(() => {
-    writer.addAlias("writer-host");
-    newWriterHost.addAlias("new-writer-host");
-    readerA.addAlias("reader-a-host");
-    readerB.addAlias("reader-b-host");
-
     when(mockPluginService.getDialect()).thenReturn(new PgDatabaseDialect());
 
     // Mock ServiceUtils.createMinimalServiceContainerFrom to return a container
@@ -141,7 +136,7 @@ describe("writer failover handler", () => {
     expect(result.isNewHost).toBe(false);
     expect(result.client).toBe(mockClientWrapper);
 
-    verify(mockPluginService.setAvailability(writer.allAliases, HostAvailability.AVAILABLE)).called();
+    verify(mockPluginService.setAvailability(writer, HostAvailability.AVAILABLE)).called();
   });
 
   it("test reconnect to writer - slow reader A", async () => {
@@ -174,7 +169,7 @@ describe("writer failover handler", () => {
     expect(result.isNewHost).toBe(false);
     expect(result.client).toBe(mockClientWrapper);
 
-    verify(mockPluginService.setAvailability(writer.allAliases, HostAvailability.AVAILABLE)).called();
+    verify(mockPluginService.setAvailability(writer, HostAvailability.AVAILABLE)).called();
     clearTimeout(timeoutId);
   }, 10000);
 
@@ -209,7 +204,7 @@ describe("writer failover handler", () => {
     expect(result.isNewHost).toBe(false);
     expect(result.client).toBe(mockClientWrapper);
 
-    verify(mockPluginService.setAvailability(writer.allAliases, HostAvailability.AVAILABLE)).called();
+    verify(mockPluginService.setAvailability(writer, HostAvailability.AVAILABLE)).called();
     clearTimeout(timeoutId);
   }, 10000);
 
@@ -247,7 +242,7 @@ describe("writer failover handler", () => {
     expect(result.topology.length).toBe(3);
     expect(result.topology[0].host).toBe("new-writer-host");
 
-    verify(mockPluginService.setAvailability(newWriterHost.allAliases, HostAvailability.AVAILABLE)).once();
+    verify(mockPluginService.setAvailability(newWriterHost, HostAvailability.AVAILABLE)).once();
     clearTimeout(timeoutId);
   }, 10000);
 
@@ -285,7 +280,7 @@ describe("writer failover handler", () => {
     expect(result.topology[0].host).toBe("new-writer-host");
 
     verify(mockPluginService.forceRefreshHostList()).atLeast(1);
-    verify(mockPluginService.setAvailability(newWriterHost.allAliases, HostAvailability.AVAILABLE)).once();
+    verify(mockPluginService.setAvailability(newWriterHost, HostAvailability.AVAILABLE)).once();
     clearTimeout(timeoutId);
   }, 10000);
 
@@ -359,6 +354,6 @@ describe("writer failover handler", () => {
     expect(result.isConnected).toBe(false);
     expect(result.isNewHost).toBe(false);
 
-    verify(mockPluginService.setAvailability(newWriterHost.allAliases, HostAvailability.NOT_AVAILABLE)).atLeast(1);
+    verify(mockPluginService.setAvailability(newWriterHost, HostAvailability.NOT_AVAILABLE)).atLeast(1);
   }, 10000);
 });
