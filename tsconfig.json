@@ -14,6 +14,6 @@
     "declaration": true,
     "outDir": "dist"
   },
-  "exclude": ["tests", "examples"],
+  "exclude": ["tests", "examples", "dist", "node_modules"],
   "include": ["**/*.ts", "index.ts", "mysql.ts", "pg.ts"]
 }

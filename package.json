@@ -43,6 +43,7 @@
     "test": "cross-env NODE_OPTIONS=\"$NODE_OPTIONS --experimental-vm-modules\" npx jest --config=jest.unit.config.json",
     "fix-imports": "babel --extensions \".js\" dist -d dist",
     "build": "tsc",
+    "typecheck": "tsc --noEmit",
     "clean": "rimraf --preserve-root dist",
     "prepublishOnly": "npm run clean && npm run build && npm run fix-imports && npm pack --pack-destination ./build"
   },
