@@ -57,7 +57,7 @@ export class GlobalAuroraTopologyMonitor extends ClusterTopologyMonitorImpl {
     this.accessibleRegions = AccessibleRegions.parse(properties);
 
     if (this.accessibleRegions) {
-      logger.debug(`GlobalAuroraTopologyMonitor: accessible regions = ${this.accessibleRegions.join(",")}`);
+      logger.debug(Messages.get("GlobalAuroraTopologyMonitor.accessibleRegions", this.accessibleRegions.join(",")));
     }
   }
 
@@ -77,17 +77,13 @@ export class GlobalAuroraTopologyMonitor extends ClusterTopologyMonitorImpl {
   }
 
   protected override filterHostsForHostMonitoring(hosts: HostInfo[]): HostInfo[] {
-    if (!this.accessibleRegions) {
-      return hosts;
-    }
-    return hosts.filter((host) => {
-      const region = this.gdbRdsUtils.getRdsRegion(host.host);
-      return region !== null && this.accessibleRegions!.includes(region.toLowerCase());
-    });
+    return AccessibleRegions.filterHosts(hosts, this.accessibleRegions);
   }
 
   protected override async openAnyClientAndUpdateTopology(): Promise<HostInfo[] | null> {
     if (this.accessibleRegions) {
+      // Only fail loud when the initial host's region is known and excluded. If the region can't be
+      // determined, defer to the normal workflow rather than blocking the connection.
       const region = this.gdbRdsUtils.getRdsRegion(this.initialHostInfo.host);
       if (region && !this.accessibleRegions.includes(region.toLowerCase())) {
         const msg = Messages.get("GlobalAuroraTopologyMonitor.initialHostNotInAccessibleRegion", this.initialHostInfo.host, region);

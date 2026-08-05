@@ -15,8 +15,12 @@
 */
 
 import { WrapperProperties } from "../wrapper_property";
+import { HostInfo } from "../host_info";
+import { RdsUtils } from "./rds_utils";
 
 export class AccessibleRegions {
+  private static readonly rdsUtils = new RdsUtils();
+
   static parse(props: Map<string, any>): string[] | null {
     const value = WrapperProperties.GDB_ACCESSIBLE_REGIONS.get(props);
     if (!value || value.trim().length === 0) {
@@ -29,5 +33,32 @@ export class AccessibleRegions {
       .filter((r: string) => r.length > 0);
 
     return regions.length > 0 ? regions : null;
+  }
+
+  /**
+   * Returns whether the given host resides in one of the accessible regions. When no accessible
+   * regions are configured (null or empty), every host is considered accessible.
+   *
+   * `accessibleRegions` is expected to be lowercased (as produced by {@link parse}).
+   */
+  static isHostAccessible(host: HostInfo, accessibleRegions: string[] | null): boolean {
+    if (!accessibleRegions || accessibleRegions.length === 0) {
+      return true;
+    }
+    const region = AccessibleRegions.rdsUtils.getRdsRegion(host.host);
+    return region !== null && accessibleRegions.includes(region.toLowerCase());
+  }
+
+  /**
+   * Filters the given hosts down to those reachable from the configured accessible regions.
+   * When no accessible regions are configured (null or empty), the list is returned unchanged.
+   *
+   * `accessibleRegions` is expected to be lowercased (as produced by {@link parse}).
+   */
+  static filterHosts(hosts: HostInfo[], accessibleRegions: string[] | null): HostInfo[] {
+    if (!accessibleRegions || accessibleRegions.length === 0) {
+      return hosts;
+    }
+    return hosts.filter((host) => AccessibleRegions.isHostAccessible(host, accessibleRegions));
   }
 }

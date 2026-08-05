@@ -416,6 +416,7 @@ const MESSAGES: Record<string, string> = {
   "GdbMonitoringConnectionHandler.initialized": "GdbMonitoringConnectionHandler initialized with priorities: '%s'.",
   "GdbMonitoringConnectionHandler.unrecognizedPriority":
     "Unrecognized 'gdbMonitoringConnectionPriority' value '%s'. It does not match a known priority variant and does not look like an AWS region, so it will be treated as a region literal that never matches. This is likely a typo.",
+  "GlobalAuroraTopologyMonitor.accessibleRegions": "GlobalAuroraTopologyMonitor: accessible regions = '%s'.",
   "GlobalAuroraTopologyMonitor.cannotFindRegionTemplate": "Cannot find cluster instance template for region '%s'.",
   "GlobalAuroraTopologyMonitor.initialHostNotInAccessibleRegion": "Initial host '%s' in region '%s' is not within the list of accessible regions.",
   "GlobalAuroraTopologyMonitor.invalidTopologyUtils": "TopologyUtils must implement GdbTopologyUtils for GlobalAuroraTopologyMonitor.",

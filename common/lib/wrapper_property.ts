@@ -599,7 +599,7 @@ export class WrapperProperties {
       "or specific regions. Possible values include: strict-writer-primary, strict-writer-secondary, " +
       "strict-reader-primary, strict-reader-secondary, writer-or-reader-primary, writer-or-reader-secondary, " +
       "or a specific AWS region name.",
-    null
+    "strict-writer-primary"
   );
 
   private static readonly PREFIXES = [

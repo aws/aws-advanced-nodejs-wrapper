@@ -252,7 +252,7 @@ export class AuroraInitialConnectionStrategyPlugin extends AbstractConnectionPlu
   }
 
   private hasNoReaders(): boolean {
-    return this.getAccessibleHosts().find((x) => x.role === HostRole.READER) === undefined;
+    return !this.getAccessibleHosts().some((x) => x.role === HostRole.READER);
   }
 
   /**
@@ -262,13 +262,6 @@ export class AuroraInitialConnectionStrategyPlugin extends AbstractConnectionPlu
    * unreachable region.
    */
   private getAccessibleHosts(): HostInfo[] {
-    const hosts = this.pluginService.getAllHosts();
-    if (!this.accessibleRegions) {
-      return hosts;
-    }
-    return hosts.filter((host) => {
-      const region = this.rdsUtils.getRdsRegion(host.host);
-      return region !== null && this.accessibleRegions!.includes(region.toLowerCase());
-    });
+    return AccessibleRegions.filterHosts(this.pluginService.getAllHosts(), this.accessibleRegions);
   }
 }

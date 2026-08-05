@@ -25,7 +25,6 @@ import { FailoverRestriction } from "../../../common/lib/plugins/failover/failov
 import { ErrorHandler } from "../../../common/lib/error_handler";
 import { PgErrorHandler } from "../pg_error_handler";
 import { Messages } from "../../../common/lib/utils/messages";
-import { HostInfo } from "../../../common/lib/host_info";
 import { FullServicesContainer } from "../../../common/lib/utils/full_services_container";
 
 export class PgDatabaseDialect implements DatabaseDialect {
@@ -188,10 +187,6 @@ export class PgDatabaseDialect implements DatabaseDialect {
     }
 
     return undefined;
-  }
-
-  async filterAvailableHosts(hosts: HostInfo[], accessibleRegions: string[]): Promise<HostInfo[]> {
-    return hosts;
   }
 
   async getHostRole(targetClient: ClientWrapper): Promise<HostRole> {

@@ -28,7 +28,6 @@ import { ErrorHandler } from "../../../common/lib/error_handler";
 import { MySQLErrorHandler } from "../mysql_error_handler";
 import { Messages } from "../../../common/lib/utils/messages";
 import { HostRole } from "../../../common/lib/host_role";
-import { HostInfo } from "../../../common/lib/host_info";
 import { FullServicesContainer } from "../../../common/lib/utils/full_services_container";
 
 export class MySQLDatabaseDialect implements DatabaseDialect {
@@ -207,10 +206,6 @@ export class MySQLDatabaseDialect implements DatabaseDialect {
 
   doesStatementSetSchema(statement: string): string | undefined {
     return undefined;
-  }
-
-  async filterAvailableHosts(hosts: HostInfo[], accessibleRegions: string[]): Promise<HostInfo[]> {
-    return hosts;
   }
 
   async getHostRole(targetClient: ClientWrapper): Promise<HostRole> {

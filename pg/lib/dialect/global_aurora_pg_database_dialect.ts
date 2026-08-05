@@ -23,11 +23,9 @@ import { HostListProvider } from "../../../common/lib/host_list_provider/host_li
 import { HostInfo } from "../../../common/lib/host_info";
 import { GlobalAuroraHostListProvider } from "../../../common/lib/host_list_provider/global_aurora_host_list_provider";
 import { GlobalTopologyUtils } from "../../../common/lib/host_list_provider/global_topology_utils";
-import { RdsUtils } from "../../../common/lib/utils/rds_utils";
+import { AccessibleRegions } from "../../../common/lib/utils/accessible_regions";
 
 export class GlobalAuroraPgDatabaseDialect extends AuroraPgDatabaseDialect implements GlobalAuroraTopologyDialect {
-  private readonly rdsUtils: RdsUtils = new RdsUtils();
-
   private static readonly GLOBAL_STATUS_FUNC_EXISTS_QUERY = "select 'pg_catalog.aurora_global_db_status'::regproc";
 
   private static readonly GLOBAL_INSTANCE_STATUS_FUNC_EXISTS_QUERY = "select 'pg_catalog.aurora_global_db_instance_status'::regproc";
@@ -95,14 +93,7 @@ export class GlobalAuroraPgDatabaseDialect extends AuroraPgDatabaseDialect imple
   }
 
   async filterAvailableHosts(hosts: HostInfo[], accessibleRegions: string[]): Promise<HostInfo[]> {
-    if (!accessibleRegions || accessibleRegions.length === 0) {
-      return hosts;
-    }
-    const lowerRegions = accessibleRegions.map((r) => r.toLowerCase());
-    return hosts.filter((host) => {
-      const region = this.rdsUtils.getRdsRegion(host.host);
-      return region !== null && lowerRegions.includes(region.toLowerCase());
-    });
+    return AccessibleRegions.filterHosts(hosts, accessibleRegions);
   }
 
   async queryForTopology(targetClient: ClientWrapper): Promise<TopologyQueryResult[]> {
