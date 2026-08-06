@@ -458,7 +458,7 @@ export class BlueGreenStatusProvider {
 
   // New connect requests: go to blue or green hosts; default behaviour; no routing
   // Existing connections: default behaviour; no action
-  // Execute JDBC calls: default behaviour; no action
+  // Execute database calls: default behaviour; no action
   protected getStatusOfCreated(): BlueGreenStatus {
     return new BlueGreenStatus(this.bgdId, BlueGreenPhase.CREATED, [], [], this.roleByHost, this.correspondingHosts);
   }
