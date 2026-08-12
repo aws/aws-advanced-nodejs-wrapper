@@ -42,7 +42,7 @@ Please refer to the [failover configuration guide](../FailoverConfigurationGuide
 > [!WARNING]
 > Do not use the `gdbFailover`, `failover` and/or `failover2` plugins in any combination at the same time for the same connection!
 
-Verify plugin compatibility within your driver configuration using the [compatibility guide](../Compatibility.md).
+Verify plugin compatibility within your driver configuration using the [compatibility guide](../compatibility/Compatibility.md).
 
 ### GDB Failover Plugin Configuration Parameters
 
