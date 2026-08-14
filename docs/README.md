@@ -20,6 +20,8 @@
     - [Host Monitoring Plugin](./using-the-nodejs-wrapper/using-plugins/UsingTheHostMonitoringPlugin.md)
     - [Read-Write Splitting Plugin](./using-the-nodejs-wrapper/using-plugins/UsingTheReadWriteSplittingPlugin.md)
     - [GDB Read-Write Splitting Plugin](./using-the-nodejs-wrapper/using-plugins/UsingTheGdbReadWriteSplittingPlugin.md)
+    - [Global Aurora Accessible Regions](./using-the-nodejs-wrapper/using-plugins/UsingGlobalAuroraAccessibleRegions.md)
+    - [Monitoring Connection Priority](./using-the-nodejs-wrapper/using-plugins/UsingMonitoringConnectionPriority.md)
     - [Fastest Response Strategy Plugin](./using-the-nodejs-wrapper/using-plugins/UsingTheFastestResponseStrategyPlugin.md)
     - [Okta Authentication Plugin](./using-the-nodejs-wrapper/using-plugins/UsingTheOktaAuthPlugin.md)
     - [Federated Authentication Plugin](./using-the-nodejs-wrapper/using-plugins/UsingTheFederatedAuthPlugin.md)

@@ -205,6 +205,10 @@ export class DatabaseDialectManager implements DatabaseDialectProvider {
     return this.dialect;
   }
 
+  isConfirmedDialect(): boolean {
+    return !this.canUpdate;
+  }
+
   logCurrentDialect() {
     logger.debug(`Current dialect: ${this.dialectCode}, ${this.dialect.getDialectName()}, canUpdate: ${this.canUpdate}`);
   }

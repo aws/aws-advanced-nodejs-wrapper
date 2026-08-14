@@ -20,8 +20,10 @@ import { ClientWrapper } from "../../../common/lib/client_wrapper";
 import { TopologyQueryResult } from "../../../common/lib/host_list_provider/topology_utils";
 import { FullServicesContainer } from "../../../common/lib/utils/full_services_container";
 import { HostListProvider } from "../../../common/lib/host_list_provider/host_list_provider";
+import { HostInfo } from "../../../common/lib/host_info";
 import { GlobalAuroraHostListProvider } from "../../../common/lib/host_list_provider/global_aurora_host_list_provider";
 import { GlobalTopologyUtils } from "../../../common/lib/host_list_provider/global_topology_utils";
+import { AccessibleRegions } from "../../../common/lib/utils/accessible_regions";
 
 export class GlobalAuroraPgDatabaseDialect extends AuroraPgDatabaseDialect implements GlobalAuroraTopologyDialect {
   private static readonly GLOBAL_STATUS_FUNC_EXISTS_QUERY = "select 'pg_catalog.aurora_global_db_status'::regproc";
@@ -88,6 +90,10 @@ export class GlobalAuroraPgDatabaseDialect extends AuroraPgDatabaseDialect imple
       new GlobalTopologyUtils(this, servicesContainer.pluginService.getHostInfoBuilder()),
       servicesContainer
     );
+  }
+
+  async filterAvailableHosts(hosts: HostInfo[], accessibleRegions: string[]): Promise<HostInfo[]> {
+    return AccessibleRegions.filterHosts(hosts, accessibleRegions);
   }
 
   async queryForTopology(targetClient: ClientWrapper): Promise<TopologyQueryResult[]> {

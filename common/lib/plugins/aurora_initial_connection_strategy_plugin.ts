@@ -28,12 +28,14 @@ import { sleep } from "../utils/utils";
 import { HostAvailability } from "../host_availability/host_availability";
 import { logger } from "../../logutils";
 import { ClientWrapper } from "../client_wrapper";
+import { AccessibleRegions } from "../utils/accessible_regions";
 
 export class AuroraInitialConnectionStrategyPlugin extends AbstractConnectionPlugin {
   private static readonly subscribedMethods = new Set<string>(["initHostProvider", "connect"]);
   private pluginService: PluginService;
   private hostListProviderService?: HostListProviderService;
   private rdsUtils = new RdsUtils();
+  private accessibleRegions: string[] | null = null;
 
   constructor(pluginService: PluginService) {
     super();
@@ -60,6 +62,8 @@ export class AuroraInitialConnectionStrategyPlugin extends AbstractConnectionPlu
     isInitialConnection: boolean,
     connectFunc: () => Promise<ClientWrapper>
   ): Promise<ClientWrapper> {
+    this.accessibleRegions = AccessibleRegions.parse(props);
+
     const type = this.rdsUtils.identifyRdsType(hostInfo.host);
 
     if (!type.isRdsCluster) {
@@ -228,14 +232,17 @@ export class AuroraInitialConnectionStrategyPlugin extends AbstractConnectionPlu
   }
 
   private getWriter(): HostInfo | null {
-    return this.pluginService.getAllHosts().find((x) => x.role === HostRole.WRITER) ?? null;
+    return this.getAccessibleHosts().find((x) => x.role === HostRole.WRITER) ?? null;
   }
 
   private getReader(props: Map<string, any>): HostInfo | undefined {
     const strategy = WrapperProperties.READER_HOST_SELECTOR_STRATEGY.get(props);
     if (this.pluginService.acceptsStrategy(HostRole.READER, strategy)) {
       try {
-        return this.pluginService.getHostInfoByStrategy(HostRole.READER, strategy);
+        // Restrict strategy-based selection to accessible regions so the initial connection never
+        // targets a host we can't reach. When no regions are configured, the full host list is used.
+        const accessibleReaders = this.accessibleRegions ? this.getAccessibleHosts().filter((x) => x.role === HostRole.READER) : undefined;
+        return this.pluginService.getHostInfoByStrategy(HostRole.READER, strategy, accessibleReaders);
       } catch (error: any) {
         // Host isn't found
         logger.error(error.message);
@@ -245,6 +252,16 @@ export class AuroraInitialConnectionStrategyPlugin extends AbstractConnectionPlu
   }
 
   private hasNoReaders(): boolean {
-    return this.pluginService.getAllHosts().find((x) => x.role === HostRole.READER) !== undefined;
+    return !this.getAccessibleHosts().some((x) => x.role === HostRole.READER);
+  }
+
+  /**
+   * Returns the current host list filtered to the configured accessible regions. When no accessible
+   * regions are configured, the full host list is returned unchanged. Region filtering is applied
+   * before any strategy or role-based selection so the initial connection never targets an
+   * unreachable region.
+   */
+  private getAccessibleHosts(): HostInfo[] {
+    return AccessibleRegions.filterHosts(this.pluginService.getAllHosts(), this.accessibleRegions);
   }
 }

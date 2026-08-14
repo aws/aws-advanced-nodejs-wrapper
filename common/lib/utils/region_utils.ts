@@ -88,8 +88,8 @@ export class RegionUtils {
     }
 
     const region = regionString.toLowerCase().trim();
-    if (!RegionUtils.REGIONS.includes(regionString)) {
-      throw new AwsWrapperError(Messages.get("AwsSdk.unsupportedRegion", regionString));
+    if (!RegionUtils.REGIONS.includes(region)) {
+      throw new AwsWrapperError(Messages.get("AwsSdk.unsupportedRegion", region));
     }
 
     return region;

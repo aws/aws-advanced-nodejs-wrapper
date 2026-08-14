@@ -20,4 +20,5 @@ import { ClientWrapper } from "../client_wrapper";
 export interface DatabaseDialectProvider {
   getDialect(props: Map<string, any>): DatabaseDialect;
   getDialectForUpdate(targetClient: ClientWrapper, originalHost: string, newHost: string): Promise<DatabaseDialect>;
+  isConfirmedDialect(): boolean;
 }
