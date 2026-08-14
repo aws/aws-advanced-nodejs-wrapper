@@ -49,8 +49,7 @@ export class AuroraPgDatabaseDialect extends PgDatabaseDialect implements Topolo
 
   private static readonly BG_STATUS_QUERY: string = `SELECT * FROM pg_catalog.get_blue_green_fast_switchover_metadata('aws_advanced_nodejs_wrapper-${AuroraPgDatabaseDialect.VERSION}')`;
 
-  private static readonly TOPOLOGY_TABLE_EXIST_QUERY: string =
-    "SELECT 'pg_catalog.get_blue_green_fast_switchover_metadata'::pg_catalog.regproc";
+  private static readonly TOPOLOGY_TABLE_EXIST_QUERY: string = "SELECT 'pg_catalog.get_blue_green_fast_switchover_metadata'::pg_catalog.regproc";
 
   getHostListProvider(props: Map<string, any>, originalUrl: string, servicesContainer: FullServicesContainer): HostListProvider {
     const topologyUtils = new AuroraTopologyUtils(this, servicesContainer.hostListProviderService.getHostInfoBuilder());

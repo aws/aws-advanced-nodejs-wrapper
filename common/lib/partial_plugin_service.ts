@@ -383,6 +383,10 @@ export class PartialPluginService implements PluginService, HostListProviderServ
     return this.dialect.getErrorHandler().isNetworkError(e);
   }
 
+  isReadOnlyConnectionError(e: Error): boolean {
+    return this.dialect.getErrorHandler().isReadOnlyConnectionError(e);
+  }
+
   isSyntaxError(e: Error): boolean {
     return this.dialect.getErrorHandler().isSyntaxError(e);
   }
