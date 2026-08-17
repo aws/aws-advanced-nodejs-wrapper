@@ -27,7 +27,7 @@ export interface SessionStateClient {
 
   setTransactionIsolation(level: TransactionIsolationLevel): Promise<any | void>;
 
-  getTransactionIsolation(): TransactionIsolationLevel;
+  getTransactionIsolation(): TransactionIsolationLevel | undefined;
 
   setSchema(schema: any): Promise<any | void>;
 

@@ -44,6 +44,9 @@ import { isDialectTopologyAware } from "../../common/lib/database_dialect/topolo
 import { MySQLClient, MySQLPoolClient } from "./mysql_client";
 import { DriverConnectionProvider } from "../../common/lib/driver_connection_provider";
 import { GlobalAuroraMySQLDatabaseDialect } from "./dialect/global_aurora_mysql_database_dialect";
+import { AwsClientConfig } from "../../common/lib/wrapper_property";
+
+export interface AwsMySQLClientConfig extends ConnectionOptions, AwsClientConfig {}
 
 class BaseAwsMySQLClient extends AwsClient implements MySQLClient {
   private static readonly knownDialectsByCode: Map<string, DatabaseDialect> = new Map([
@@ -54,7 +57,7 @@ class BaseAwsMySQLClient extends AwsClient implements MySQLClient {
     [DatabaseDialectCodes.RDS_MULTI_AZ_MYSQL, new RdsMultiAZClusterMySQLDatabaseDialect()]
   ]);
 
-  constructor(config: any, connectionProvider?: ConnectionProvider) {
+  constructor(config: AwsMySQLClientConfig, connectionProvider?: ConnectionProvider) {
     super(
       config,
       DatabaseType.MYSQL,
@@ -578,13 +581,13 @@ class BaseAwsMySQLClient extends AwsClient implements MySQLClient {
 }
 
 export class AwsMySQLClient extends BaseAwsMySQLClient {
-  constructor(config: any) {
+  constructor(config: AwsMySQLClientConfig) {
     super(config, new DriverConnectionProvider());
   }
 }
 
 class AwsMySQLPooledConnection extends BaseAwsMySQLClient {
-  constructor(config: any, provider: ConnectionProvider) {
+  constructor(config: AwsMySQLClientConfig, provider: ConnectionProvider) {
     super(config, provider);
   }
 
@@ -609,10 +612,10 @@ export type { AwsMySQLPooledConnection };
 
 export class AwsMySQLPoolClient implements MySQLPoolClient {
   private readonly connectionProvider: InternalPooledConnectionProvider;
-  private readonly config;
-  private readonly poolConfig;
+  private readonly config: AwsMySQLClientConfig;
+  private readonly poolConfig?: AwsPoolConfig;
 
-  constructor(config: any, poolConfig?: AwsPoolConfig) {
+  constructor(config: AwsMySQLClientConfig, poolConfig?: AwsPoolConfig) {
     this.connectionProvider = new InternalPooledConnectionProvider(poolConfig);
     this.config = config;
     this.poolConfig = poolConfig;
