@@ -51,7 +51,7 @@ With the `failover2` plugin:
 
 ## Using the Failover Plugin v2
 
-The Failover Plugin v2 will **NOT** be enabled by default. It must be explicitly included by adding the plugin code `failover2` to the [`plugins`](../UsingTheNodejsWrapper.md#plugins) parameter, or by adding it to the current [Configuration Profile](../UsingTheNodejsWrapper.md#configuration-profiles). After you load the plugin, the failover2 feature will be enabled.
+Since version 2.1.1, the Failover Plugin v2 will be enabled by default if the [`plugins`](../UsingTheNodejsWrapper.md#plugins) value is not specified. In earlier versions the [Failover Plugin](./UsingTheFailoverPlugin.md) (`failover`) was the one enabled by default. The Failover Plugin v2 can also be explicitly included by adding the plugin code `failover2` to the [`plugins`](../UsingTheNodejsWrapper.md#plugins) parameter, or by adding it to the current [Configuration Profile](../UsingTheNodejsWrapper.md#configuration-profiles). After you load the plugin, the failover2 feature will be enabled.
 
 Please refer to the [failover configuration guide](../FailoverConfigurationGuide.md) for tips to keep in mind when using the failover plugin.
 

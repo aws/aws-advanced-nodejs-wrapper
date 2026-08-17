@@ -18,7 +18,7 @@ At this point, the NodeJS Wrapper will connect to the new primary DB instance an
 
 ## Using the Failover Plugin
 
-The failover plugin will be enabled by default if the [`plugins`](../UsingTheNodejsWrapper.md#plugins) value is not specified. The failover plugin can also be explicitly included by adding the plugin code `failover` to the [`plugins`](../UsingTheNodejsWrapper.md#plugins) value. After you load the plugin, the failover feature will be enabled by default and the `enableClusterAwareFailover` parameter will be set to true. <br> <br> Please refer to the [failover configuration guide](../FailoverConfigurationGuide.md) for tips to keep in mind when using the failover plugin.
+Since version 2.1.1, the failover plugin will **NOT** be enabled by default. The default [`plugins`](../UsingTheNodejsWrapper.md#plugins) value contains the [Failover Plugin v2](./UsingTheFailover2Plugin.md) (`failover2`) instead. In earlier versions the failover plugin was enabled by default. The failover plugin must be explicitly included by adding the plugin code `failover` to the [`plugins`](../UsingTheNodejsWrapper.md#plugins) value. After you load the plugin, the failover feature will be enabled by default and the `enableClusterAwareFailover` parameter will be set to true. <br> <br> Please refer to the [failover configuration guide](../FailoverConfigurationGuide.md) for tips to keep in mind when using the failover plugin.
 
 ### Failover Parameters
 
