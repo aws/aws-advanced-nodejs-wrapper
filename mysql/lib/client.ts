@@ -15,7 +15,7 @@
 */
 
 import { AwsClient } from "../../common/lib/aws_client";
-import { ErrorPacketParams, OkPacketParams, Query, QueryOptions, QueryResult } from "mysql2";
+import { ErrorPacketParams, FieldPacket, OkPacketParams, Query, QueryOptions, QueryResult } from "mysql2";
 import { ConnectionOptions, Prepare, PrepareStatementInfo } from "mysql2/promise";
 import { MySQLConnectionUrlParser } from "./mysql_connection_url_parser";
 import { DatabaseDialect, DatabaseType } from "../../common/lib/database_dialect/database_dialect";
@@ -510,10 +510,10 @@ class BaseAwsMySQLClient extends AwsClient implements MySQLClient {
     );
   }
 
-  query<T extends QueryResult>(sql: string): Promise<[T, any]>;
-  query<T extends QueryResult>(sql: string, values: any): Promise<[T, any]>;
-  query<T extends QueryResult>(options: QueryOptions): Promise<[T, any]>;
-  query<T extends QueryResult>(options: QueryOptions, values: any): Promise<[T, any]>;
+  query<T extends QueryResult>(sql: string): Promise<[T, FieldPacket[]]>;
+  query<T extends QueryResult>(sql: string, values: any): Promise<[T, FieldPacket[]]>;
+  query<T extends QueryResult>(options: QueryOptions): Promise<[T, FieldPacket[]]>;
+  query<T extends QueryResult>(options: QueryOptions, values: any): Promise<[T, FieldPacket[]]>;
   async query(options: string | QueryOptions, values?: any): Promise<[any, any]> {
     if (!this.isConnected) {
       await this.connect(); // client.connect is not required for MySQL clients
@@ -540,9 +540,9 @@ class BaseAwsMySQLClient extends AwsClient implements MySQLClient {
     });
   }
 
-  execute<T extends QueryResult>(sql: string): Promise<[T, any]>;
-  execute<T extends QueryResult>(sql: string, values: any): Promise<[T, any]>;
-  execute<T extends QueryResult>(options: QueryOptions): Promise<[T, any]>;
+  execute<T extends QueryResult>(sql: string): Promise<[T, FieldPacket[]]>;
+  execute<T extends QueryResult>(sql: string, values: any): Promise<[T, FieldPacket[]]>;
+  execute<T extends QueryResult>(options: QueryOptions): Promise<[T, FieldPacket[]]>;
   async execute(options: string | QueryOptions, values?: any): Promise<[any, any]> {
     if (!this.isConnected) {
       await this.connect(); // client.connect is not required for MySQL clients
@@ -635,10 +635,10 @@ export class AwsMySQLPoolClient implements MySQLPoolClient {
     return connection.end();
   }
 
-  query<T extends QueryResult>(sql: string): Promise<[T, any]>;
-  query<T extends QueryResult>(sql: string, values: any): Promise<[T, any]>;
-  query<T extends QueryResult>(options: QueryOptions): Promise<[T, any]>;
-  query<T extends QueryResult>(options: QueryOptions, values: any): Promise<[T, any]>;
+  query<T extends QueryResult>(sql: string): Promise<[T, FieldPacket[]]>;
+  query<T extends QueryResult>(sql: string, values: any): Promise<[T, FieldPacket[]]>;
+  query<T extends QueryResult>(options: QueryOptions): Promise<[T, FieldPacket[]]>;
+  query<T extends QueryResult>(options: QueryOptions, values: any): Promise<[T, FieldPacket[]]>;
   async query(options: string | QueryOptions, values?: any): Promise<[any, any]> {
     const awsMySQLPooledConnection: AwsMySQLPooledConnection = new AwsMySQLPooledConnection(this.config, this.connectionProvider);
     try {

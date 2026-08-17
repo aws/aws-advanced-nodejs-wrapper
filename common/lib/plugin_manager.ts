@@ -410,7 +410,7 @@ export class PluginManager {
     return this.telemetryFactory;
   }
 
-  getPluginInstance<T>(iface: any): T {
+  getPluginInstance<T>(iface: new (...args: any[]) => T): T {
     for (const p of this._plugins) {
       if (p instanceof iface) {
         return p as T;

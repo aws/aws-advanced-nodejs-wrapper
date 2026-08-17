@@ -17,23 +17,23 @@
 import { TransactionIsolationLevel } from "./utils/transaction_isolation_level";
 
 export interface SessionStateClient {
-  setReadOnly(readOnly: boolean): Promise<any | void>;
+  setReadOnly(readOnly: boolean): Promise<unknown>;
 
   isReadOnly(): boolean | undefined;
 
-  setAutoCommit(autoCommit: boolean): Promise<any | void>;
+  setAutoCommit(autoCommit: boolean): Promise<unknown>;
 
   getAutoCommit(): boolean | undefined;
 
-  setTransactionIsolation(level: TransactionIsolationLevel): Promise<any | void>;
+  setTransactionIsolation(level: TransactionIsolationLevel): Promise<unknown>;
 
   getTransactionIsolation(): TransactionIsolationLevel | undefined;
 
-  setSchema(schema: any): Promise<any | void>;
+  setSchema(schema: string): Promise<unknown>;
 
   getSchema(): string | undefined;
 
-  setCatalog(catalog: string): Promise<any | void>;
+  setCatalog(catalog: string): Promise<unknown>;
 
   getCatalog(): string | undefined;
 }
