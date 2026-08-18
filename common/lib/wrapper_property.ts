@@ -14,8 +14,10 @@
   limitations under the License.
 */
 
+import type { AgentOptions } from "node:https";
 import { ConnectionProvider } from "./connection_provider";
 import { DatabaseDialect } from "./database_dialect/database_dialect";
+import type { AwsCredentialsProviderHandler } from "./authentication/aws_credentials_manager";
 import { AwsWrapperError } from "./utils/errors";
 import { Messages } from "./utils/messages";
 
@@ -75,7 +77,7 @@ export interface AwsClientConfig {
   /** The IAM user used to access the database */
   dbUser?: string;
   /** The options to be passed into the httpsAgent */
-  httpsAgentOptions?: Record<string, any>;
+  httpsAgentOptions?: AgentOptions;
   /** The name or the ARN of the secret to retrieve. */
   secretId?: string;
   /** The region of the secret to retrieve. */
@@ -153,7 +155,7 @@ export interface AwsClientConfig {
   /** A reference to a custom database dialect object. */
   customDatabaseDialect?: DatabaseDialect;
   /** A reference to a custom AwsCredentialsProviderHandler object. */
-  customAwsCredentialProviderHandler?: any;
+  customAwsCredentialProviderHandler?: AwsCredentialsProviderHandler;
   /** Name of the AWS Profile to use for IAM or SecretsManager auth. */
   awsProfile?: string;
   /** Driver configuration profile name */
@@ -377,11 +379,7 @@ export class WrapperProperties {
 
   static readonly DB_USER = new WrapperProperty<string>("dbUser", "The IAM user used to access the database", null);
 
-  static readonly HTTPS_AGENT_OPTIONS = new WrapperProperty<Record<string, any>>(
-    "httpsAgentOptions",
-    "The options to be passed into the httpsAgent",
-    null
-  );
+  static readonly HTTPS_AGENT_OPTIONS = new WrapperProperty<AgentOptions>("httpsAgentOptions", "The options to be passed into the httpsAgent", null);
 
   static readonly SECRET_ID = new WrapperProperty<string>("secretId", "The name or the ARN of the secret to retrieve.", null);
   static readonly SECRET_REGION = new WrapperProperty<string>("secretRegion", "The region of the secret to retrieve.", null);
@@ -650,7 +648,7 @@ export class WrapperProperties {
     null
   );
 
-  static readonly CUSTOM_AWS_CREDENTIAL_PROVIDER_HANDLER = new WrapperProperty<any>(
+  static readonly CUSTOM_AWS_CREDENTIAL_PROVIDER_HANDLER = new WrapperProperty<AwsCredentialsProviderHandler>(
     "customAwsCredentialProviderHandler",
     "A reference to a custom AwsCredentialsProviderHandler object.",
     null
