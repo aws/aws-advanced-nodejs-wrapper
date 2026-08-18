@@ -33,7 +33,7 @@ export class GdbReadWriteSplittingPluginFactory extends ConnectionPluginFactory 
         properties
       );
     } catch (error: any) {
-      throw new AwsWrapperError(Messages.get("ConnectionPluginChainBuilder.errorImportingPlugin", error.message, "gdbReadWriteSplittingPlugin"));
+      throw new AwsWrapperError(Messages.get("ConnectionPluginChainBuilder.errorImportingPlugin", error.message, "GdbReadWriteSplittingPlugin"));
     }
   }
 }

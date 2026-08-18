@@ -31,6 +31,7 @@ import { HostAvailabilityStrategyFactory } from "./host_availability/host_availa
 import { ClientWrapper } from "./client_wrapper";
 import { logger } from "../logutils";
 import { Messages } from "./utils/messages";
+import { WrapperProperties } from "./wrapper_property";
 import { getWriter, logTopology } from "./utils/utils";
 import { TelemetryFactory } from "./utils/telemetry/telemetry_factory";
 import { DriverDialect } from "./driver_dialect/driver_dialect";
@@ -83,7 +84,7 @@ export class PartialPluginService implements PluginService, HostListProviderServ
     this.driverDialect = driverDialect;
     this.connectionUrlParser = connectionUrlParser;
 
-    this.hostListProvider = this.dialect.getHostListProvider(this.props, this.props.get("host"), this.servicesContainer);
+    this.hostListProvider = this.dialect.getHostListProvider(this.props, WrapperProperties.HOST.get(this.props), this.servicesContainer);
   }
 
   getCurrentClient(): AwsClient {

@@ -275,8 +275,8 @@ export class GlobalDbFailoverPlugin extends Failover2Plugin {
         await writerCandidateConn?.abort();
         writerCandidateConn = null;
         this.failoverWriterFailedCounter.inc();
-        logger.error(Messages.get("Failover.unexpectedReaderRole", writerCandidate.host));
-        throw new FailoverFailedError(Messages.get("Failover.unexpectedReaderRole", writerCandidate.host));
+        logger.error(Messages.get("Failover.unexpectedReaderRole", writerCandidate.host, role));
+        throw new FailoverFailedError(Messages.get("Failover.unexpectedReaderRole", writerCandidate.host, role));
       }
 
       await this.pluginService.setCurrentClient(writerCandidateConn, writerCandidate);

@@ -26,24 +26,25 @@ import { GlobalTopologyUtils } from "../../../common/lib/host_list_provider/glob
 import { AccessibleRegions } from "../../../common/lib/utils/accessible_regions";
 
 export class GlobalAuroraPgDatabaseDialect extends AuroraPgDatabaseDialect implements GlobalAuroraTopologyDialect {
-  private static readonly GLOBAL_STATUS_FUNC_EXISTS_QUERY = "select 'pg_catalog.aurora_global_db_status'::regproc";
+  private static readonly GLOBAL_STATUS_FUNC_EXISTS_QUERY = "select 'pg_catalog.aurora_global_db_status'::pg_catalog.regproc";
 
-  private static readonly GLOBAL_INSTANCE_STATUS_FUNC_EXISTS_QUERY = "select 'pg_catalog.aurora_global_db_instance_status'::regproc";
+  private static readonly GLOBAL_INSTANCE_STATUS_FUNC_EXISTS_QUERY = "select 'pg_catalog.aurora_global_db_instance_status'::pg_catalog.regproc";
 
   private static readonly GLOBAL_TOPOLOGY_QUERY =
-    "SELECT SERVER_ID, CASE WHEN SESSION_ID = 'MASTER_SESSION_ID' THEN TRUE ELSE FALSE END AS IS_WRITER, " +
+    "SELECT SERVER_ID, CASE WHEN SESSION_ID OPERATOR(pg_catalog.=) 'MASTER_SESSION_ID' THEN TRUE ELSE FALSE END AS IS_WRITER, " +
     "VISIBILITY_LAG_IN_MSEC, AWS_REGION " +
     "FROM pg_catalog.aurora_global_db_instance_status()";
 
   private static readonly REGION_COUNT_QUERY = "SELECT count(1) FROM pg_catalog.aurora_global_db_status()";
 
-  private static readonly REGION_BY_INSTANCE_ID_QUERY = "SELECT AWS_REGION FROM pg_catalog.aurora_global_db_instance_status() WHERE SERVER_ID = $1";
+  private static readonly REGION_BY_INSTANCE_ID_QUERY =
+    "SELECT AWS_REGION FROM pg_catalog.aurora_global_db_instance_status() WHERE SERVER_ID OPERATOR(pg_catalog.=) $1";
 
   async isDialect(targetClient: ClientWrapper): Promise<boolean> {
     try {
       // First check if aurora_stat_utils extension is available
       const extensionsResult = await targetClient.query(
-        "SELECT (setting LIKE '%aurora_stat_utils%') AS aurora_stat_utils FROM pg_catalog.pg_settings WHERE name OPERATOR(pg_catalog.=) 'rds.extensions'"
+        "SELECT (setting OPERATOR(pg_catalog.~~) '%aurora_stat_utils%') AS aurora_stat_utils FROM pg_catalog.pg_settings WHERE name OPERATOR(pg_catalog.=) 'rds.extensions'"
       );
 
       if (!extensionsResult.rows?.[0]) {

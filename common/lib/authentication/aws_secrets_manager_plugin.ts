@@ -140,7 +140,7 @@ export class AwsSecretsManagerPlugin extends AbstractConnectionPlugin implements
           return await connectFunc();
         }
       }
-      logger.debug(Messages.get("AwsSecretsManagerConnectionPlugin.unhandledError", error.name, error.message));
+      logger.debug(Messages.get("AwsSecretsManagerConnectionPlugin.unhandledError", `${error.name}: ${error.message}`));
       throw error;
     }
   }

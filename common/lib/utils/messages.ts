@@ -57,6 +57,13 @@ const MESSAGES: Record<string, string> = {
   "Utils.topology": "Topology: %s",
   "RdsHostListProvider.incorrectDialect": "Dialect needs to be a topology aware dialect.",
   "RdsHostListProvider.noClusterId": "No clusterId found. Please ensure clusterId parameter is set to a non-empty string.",
+  "RdsHostListProvider.parsedListEmpty": "The connection string '%s' parsed to an empty host list.",
+  "RdsHostListProvider.invalidPattern.suggestedClusterId":
+    "The provided value for the 'clusterInstanceHostPattern' configuration is not a valid host pattern.",
+  "RdsHostListProvider.clusterInstanceHostPatternNotSupportedForRDSProxy":
+    "The 'clusterInstanceHostPattern' configuration is not supported for RDS Proxy.",
+  "RdsHostListProvider.clusterInstanceHostPatternNotSupportedForRdsCustom":
+    "The 'clusterInstanceHostPattern' configuration is not supported for RDS Custom.",
   "ConnectionStringHostListProvider.parsedListEmpty": "Can't parse connection string: '%s'.",
   "ConnectionStringHostListProvider.errorIdentifyConnection": "An error occurred while obtaining the connection's host ID.",
   "HostIdCacheService.errorIdentifyConnection": "An error occurred while identifying the connection's host ID.",
@@ -148,7 +155,7 @@ const MESSAGES: Record<string, string> = {
     "Unsupported host selection strategy '%s' specified in plugin configuration parameter 'readerHostSelectorStrategy'. Please visit the Read/Write Splitting Plugin documentation for all supported strategies.",
   "ReadWriteSplittingPlugin.errorVerifyingInitialHostRole":
     "An error occurred while obtaining the connected host's role. This could occur if the client is broken or if you are not connected to an Aurora database.",
-  "ReadWriteSplittingPlugin.unavailableHostInfo": "ReadWriteSplittingPlugin.unavailableHostInfo",
+  "ReadWriteSplittingPlugin.unavailableHostInfo": "Host information for the selected host is unavailable.",
   "AdfsCredentialsProviderFactory.failedLogin": "Failed login. Could not obtain SAML Assertion from ADFS SignOn Page POST response: \n '%s'",
   "AdfsCredentialsProviderFactory.invalidHttpsUrl": "Invalid HTTPS URL: '%s'",
   "AdfsCredentialsProviderFactory.signOnPagePostActionUrl": "ADFS SignOn Action URL: '%s'",
@@ -193,8 +200,7 @@ const MESSAGES: Record<string, string> = {
   "MonitorImpl.startMonitoringTaskNewContext": "Start monitoring task for checking new contexts for '%s'",
   "MonitorImpl.stopMonitoringTaskNewContext": "Stop monitoring task for checking new contexts for '%s'",
   "MonitorService.startMonitoringNullMonitor": "Start monitoring called but could not find monitor for host: '%s'.",
-  "MonitorService.monitorClassMismatch":
-    "The monitor stored at '%s' did not have the expected type. The expected type was '%s', but the monitor '%s' had a type of '%s'.",
+  "MonitorService.monitorClassMismatch": "The monitor stored at '%s' did not have the expected type '%s'. The actual monitor was '%s'.",
   "MonitorService.monitorStuck": "Monitor '%s' has not been updated within the inactive timeout of %s milliseconds. The monitor will be stopped.",
   "MonitorService.monitorTypeNotRegistered":
     "The given monitor class '%s' is not registered. Please register the monitor class before running monitors of that class with the monitor service.",
@@ -207,6 +213,7 @@ const MESSAGES: Record<string, string> = {
     "The monitor service received a request to stop all monitors with type '%s', but the monitor service does not have any monitors registered under the given type. Please ensure monitors are registered under the correct type.",
   "MonitorService.cleanupTaskInterrupted": "Monitor service cleanup task interrupted.",
   "PluginService.hostListEmpty": "Current host list is empty.",
+  "PluginService.errorIdentifyConnection": "Unable to identify the connection because a host list provider is not available.",
   "PluginService.releaseResources": "Releasing resources.",
   "PluginService.failedToRetrieveHostPort": "Could not retrieve Host:Port for connection.",
   "PluginService.forceMonitoringRefreshTimeout": "A timeout error occurred after waiting '%s' ms for refreshed topology.",
@@ -248,14 +255,15 @@ const MESSAGES: Record<string, string> = {
   "InternalPooledConnectionProvider.pooledConnectionFailed": "Internal pooled connection failed with message: '%s'",
   "ErrorHandler.NoOpListener": "[%s] NoOp error event listener caught error: '%s'",
   "ErrorHandler.TrackerListener": "[%s] Tracker error event listener caught error: '%s'",
+  "LimitlessConnectionPlugin.failedToConnectToHost": "Failed to connect to host '%s'.",
   "LimitlessConnectionPlugin.unsupportedDialectOrDatabase":
     "Unsupported dialect '%s' encountered. Please ensure connection parameters are correct, and refer to the documentation to ensure that the connecting database is compatible with the Limitless Connection Plugin.",
   "LimitlessRouterMonitor.stopped": "Limitless Router Monitor task stopped on instance '%s'.",
   "LimitlessRouterMonitor.running": "Limitless Router Monitor task running on instance '%s'.",
-  "LimitlessRouterMonitor.errorDuringMonitoringStop": "Unhandled error was thrown in Limitless Router Monitoring task for instance '%s'.",
+  "LimitlessRouterMonitor.errorDuringMonitoringStop": "Unhandled error was thrown in Limitless Router Monitoring task for instance '%s': '%s'.",
   "LimitlessRouterMonitor.openingConnection": "Opening Limitless Router Monitor connection to '%s'.",
   "LimitlessRouterMonitor.openedConnection": "Opened Limitless Router Monitor connection to '%s'.",
-  "LimitlessRouterServiceImpl.nullLimitlessRouterMonitor": "Limitless Router Monitor can't be instantiated.",
+  "LimitlessRouterServiceImpl.nullLimitlessRouterMonitor": "Limitless Router Monitor for cluster '%s' can't be instantiated.",
   "LimitlessQueryHelper.unsupportedDialectOrDatabase":
     "Unsupported dialect '%s' encountered. Please ensure connection parameters are correct, and refer to the documentation to ensure that the connecting database is compatible with the Limitless Connection Plugin.",
   "LimitlessQueryHelper.invalidRouterLoad":
@@ -280,7 +288,7 @@ const MESSAGES: Record<string, string> = {
   "AwsCredentialsManager.wrongHandler": "Provided AWS credential provider handler should implement AwsCredentialsProviderHandler.",
   "HostResponseTimeMonitor.stopped": "Host Response Time Monitor task stopped on instance '%s'.",
   "HostResponseTimeMonitor.responseTime": "Response time for '%s': '%s' ms.",
-  "HostResponseTimeMonitor.interruptedErrorDuringMonitoring": "Response time task for host '%s' was interrupted.",
+  "HostResponseTimeMonitor.interruptedErrorDuringMonitoring": "Response time task for host '%s' was interrupted: '%s'.",
   "HostResponseTimeMonitor.openingConnection": "Opening a Response time connection to '%s'.",
   "HostResponseTimeMonitor.openedConnection": "Opened Response time connection: '%s'.",
   "FastestResponseStrategyPlugin.unsupportedHostSelectorStrategy":
@@ -293,6 +301,7 @@ const MESSAGES: Record<string, string> = {
   "Failover2.failoverReaderNotConnectedToReader": "Unable to establish SQL connection to the instance '%s' as a reader.",
   "Failover2.failoverWriterConnectedToReader": "The new writer was identified to be '%s', but querying the instance for its role returned a reader.",
   "Failover2.unableToFetchTopology": "Unable to establish SQL connection and fetch topology.",
+  "Failover2.unableToConnect": "Unable to establish a connection to any host during the failover process.",
   "Failover2.errorSelectingReaderHost": "An error occurred while attempting to select a reader host candidate: '%s'.",
   "Failover2.readerCandidateNull": "Reader candidate unable to be selected.",
   "Failover2.strictReaderUnknownHostRole": "Unknown host role of reader candidate in strict reader failoverMode.",
@@ -320,7 +329,7 @@ const MESSAGES: Record<string, string> = {
   "ClusterTopologyMonitor.reset": "[clusterId: '%s'] Resetting cluster topology monitor for '%s'.",
   "ClusterTopologyMonitor.resetEventReceived": "MonitorResetEvent received.",
   "HostMonitor.startMonitoring": "Host monitor '%s' started.",
-  "HostMonitor.detectedWriter": "Detected writer: '%s'.",
+  "HostMonitor.detectedWriter": "Detected writer: '%s' ('%s').",
   "HostMonitor.endMonitoring": "Host monitor '%s' completed in '%s' ms.",
   "HostMonitor.writerHostChanged": "Writer host has changed from '%s' to '%s'.",
   "HostMonitor.writerChangeExitTriggered":
@@ -361,7 +370,7 @@ const MESSAGES: Record<string, string> = {
   "Bgd.switchoverCompleteContinueWithConnect":
     "Blue/Green Deployment switchover is completed. Continue with connect call. The call was suspended for %s ms.",
   "Bgd.inProgressSuspendMethod": "Blue/Green Deployment switchover is in progress. Suspend '%s' call until switchover is completed.",
-  "Bgd.stillInProgressTryMethodLater": "Blue/Green Deployment switchover is still in progress after %s ms. Try '%s' again later.",
+  "Bgd.stillInProgressTryMethodLater": "Blue/Green Deployment switchover is still in progress after %s ms. Please try again later.",
   "Bgd.switchoverCompletedContinueWithMethod":
     "Blue/Green Deployment switchover is completed. Continue with '%s' call. The call was suspended for %s ms.",
   "Bgd.inProgressCantConnect": "Blue/Green Deployment switchover is in progress. New connection can't be opened.",
@@ -405,7 +414,7 @@ const MESSAGES: Record<string, string> = {
   "Bgd.completedContinueWithConnect": "Blue/Green Deployment status is completed. Continue with 'connect' call. The call was suspended for %s ms.",
   "StorageService.itemClassNotRegistered": "[StorageService] Item class not registered: %s",
   "StorageService.unexpectedValueMismatch": "[StorageService] Unexpected value mismatch for %s: %s",
-  "TopologyUtils.instanceIdRequired": "InstanceId must not be en empty string.",
+  "TopologyUtils.instanceIdRequired": "InstanceId must not be an empty string.",
   "TopologyUtils.errorGettingHostRole": "An error occurred while trying to get the host role.",
   "GlobalTopologyUtils.missingRegion": "Host '%s' is missing region information in the topology query result.",
   "GlobalTopologyUtils.missingTemplateForRegion": "No cluster instance template found for region '%s' when processing host '%s'.",
