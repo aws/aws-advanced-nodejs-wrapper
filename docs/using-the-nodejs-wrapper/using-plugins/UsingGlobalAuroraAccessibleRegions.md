@@ -19,7 +19,7 @@ When specified, the `gdbAccessibleRegions` parameter filters out hosts from inac
 
 | Parameter              |  Value   | Required | Description                                                                                                                                                                                                                                                                                 | Default Value |
 | ---------------------- | :------: | :------: | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------- |
-| `gdbAccessibleRegions` | `String` |    No    | Comma-separated list of AWS regions that are accessible from this application. When specified, the wrapper restricts Global Aurora Database operations to the listed regions only. Regions not included in this list will be filtered out from topology information and connection targets. | `null`        |
+| `gdbAccessibleRegions` | `string` |    No    | Comma-separated list of AWS regions that are accessible from this application. When specified, the wrapper restricts Global Aurora Database operations to the listed regions only. Regions not included in this list will be filtered out from topology information and connection targets. | `null`        |
 
 ## Usage
 

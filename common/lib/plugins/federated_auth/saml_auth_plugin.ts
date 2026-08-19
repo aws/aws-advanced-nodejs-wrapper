@@ -161,7 +161,7 @@ export class BaseSamlAuthPlugin extends AbstractConnectionPlugin {
     this.tokenCacheInstance.set(cacheKey, new TokenInfo(token, tokenExpiry));
   }
 
-  static releaseResources(): void {
+  static clearCache(): void {
     BaseSamlAuthPlugin.tokenCache.clear();
   }
 }

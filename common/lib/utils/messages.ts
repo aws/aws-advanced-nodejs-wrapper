@@ -25,7 +25,6 @@ const MESSAGES: Record<string, string> = {
     "The plugin could not be imported due to error '%s'. Please ensure the required dependencies have been installed. Plugin: '%s'",
   "ClientUtils.queryTaskTimeout":
     "Client query task timed out, if a network error did not occur, please review the usage of the 'wrapperQueryTimeout' connection parameter.",
-  "ClientUtils.connectTimeout": "Client connect timed out.",
   "Client.undefinedTargetClient": "targetClient is undefined, this code should not be reachable.",
   "DatabaseDialectManager.unknownDialectCode": "Unknown dialect code: '%s'.",
   "DatabaseDialectManager.getDialectError": "Was not able to get a database dialect.",
@@ -51,21 +50,18 @@ const MESSAGES: Record<string, string> = {
   "ClusterAwareReaderFailoverHandler.invalidTopology": "'%s' was called with an invalid (null or empty) topology",
   "ClusterAwareReaderFailoverHandler.attemptingReaderConnection": "Trying to connect to reader: '%s', with properties '%s'",
   "ClusterAwareReaderFailoverHandler.successfulReaderConnection": "Connected to reader: '%s'",
-  "ClusterAwareReaderFailoverHandler.failedReaderConnection": "Failed to connect to reader: '%s'",
   "ClusterAwareReaderFailoverHandler.batchFailed": "Reader connections for hosts [%s] failed with the following errors: %s",
   "ClusterAwareReaderFailoverHandler.selectedTaskChosen": "Selected task has already been chosen. Abort client for host: %s",
   "Utils.topology": "Topology: %s",
   "RdsHostListProvider.incorrectDialect": "Dialect needs to be a topology aware dialect.",
-  "RdsHostListProvider.noClusterId": "No clusterId found. Please ensure clusterId parameter is set to a non-empty string.",
-  "RdsHostListProvider.parsedListEmpty": "The connection string '%s' parsed to an empty host list.",
+  "RdsHostListProvider.parsedListEmpty": "Can't parse connection string: '%s'.",
   "RdsHostListProvider.invalidPattern.suggestedClusterId":
-    "The provided value for the 'clusterInstanceHostPattern' configuration is not a valid host pattern.",
+    "Invalid value for the 'clusterInstanceHostPattern' configuration setting - the host pattern must contain a '?' character as a placeholder for the DB instance identifiers of the instances in the cluster.",
   "RdsHostListProvider.clusterInstanceHostPatternNotSupportedForRDSProxy":
-    "The 'clusterInstanceHostPattern' configuration is not supported for RDS Proxy.",
+    "An RDS Proxy url can't be used as the 'clusterInstanceHostPattern' configuration setting.",
   "RdsHostListProvider.clusterInstanceHostPatternNotSupportedForRdsCustom":
-    "The 'clusterInstanceHostPattern' configuration is not supported for RDS Custom.",
+    "A custom RDS url can't be used as the 'clusterInstanceHostPattern' configuration setting.",
   "ConnectionStringHostListProvider.parsedListEmpty": "Can't parse connection string: '%s'.",
-  "ConnectionStringHostListProvider.errorIdentifyConnection": "An error occurred while obtaining the connection's host ID.",
   "HostIdCacheService.errorIdentifyConnection": "An error occurred while identifying the connection's host ID.",
   "ExecuteTimePlugin.executeTime": "Executed method '%s' in %s milliseconds.",
   "ConnectTimePlugin.connectTime": "Connected to '%s' in %s milliseconds.",
@@ -73,8 +69,6 @@ const MESSAGES: Record<string, string> = {
   "ClusterAwareWriterFailoverHandler.failedToConnectToWriterInstance": "Failed to connect to the writer instance.",
   "ClusterAwareWriterFailoverHandler.successfulConnectionInvalidTopology":
     "'%s' successfully established a connection but doesn't contain a valid topology.",
-  "ClusterAwareWriterFailoverHandler.successfullyConnectedToNewWriterInstance": "Successfully connected to the new writer instance: '%s'- '%s'",
-  "ClusterAwareWriterFailoverHandler.successfullyReconnectedToWriterInstance": "Successfully re-connected to the current writer instance: '%s'- '%s'",
   "ClusterAwareWriterFailoverHandler.taskAAttemptReconnectToWriterInstance":
     "[TaskA] Attempting to re-connect to the current writer instance: '%s', with properties '%s'",
   "ClusterAwareWriterFailoverHandler.taskAEncounteredError": "[TaskA] encountered an error: '%s'",
@@ -89,8 +83,6 @@ const MESSAGES: Record<string, string> = {
   "ClusterAwareWriterFailoverHandler.taskBAttemptConnectionToNewWriter": "[TaskB] Trying to connect to a new writer: '%s'",
   "ClusterAwareWriterFailoverHandler.alreadyWriter": "Current reader connection is actually a new writer connection.",
   "ClusterAwareReaderFailoverHandler.errorGettingHostRole": "An error occurred while trying to determine the role of the reader candidate: %s.",
-  "Failover.TransactionResolutionUnknownError":
-    "Transaction resolution unknown. Please re-configure session state if required and try restarting the transaction.",
   "Failover.connectionChangedError":
     "The active SQL connection has changed due to a connection failure. Please re-configure session state if required.",
   "Failover.parameterValue": "%s = %s",
@@ -100,28 +92,21 @@ const MESSAGES: Record<string, string> = {
   "Failover.unableToRefreshHostList": "The request to discover the new topology timed out or was unsuccessful.",
   "Failover.unableToDetermineWriter": "Unable to determine the current writer instance.",
   "Failover.unexpectedReaderRole": "The new writer was identified to be '%s', but querying the instance for its role returned a role of %s.",
-  "Failover.strictReaderUnknownHostRole":
-    "Unable to determine host role for '%s'. Since failover mode is set to STRICT_READER and the host may be a writer, it will not be selected for reader failover.",
   "Failover.detectedError": "[Failover] Detected an error while executing a command: %s",
   "Failover.failoverDisabled": "Cluster-aware failover is disabled.",
   "Failover.establishedConnection": "[Failover] Connected to %s",
   "Failover.startWriterFailover": "Starting writer failover procedure.",
   "Failover.startReaderFailover": "Starting reader failover procedure.",
   "Failover.invalidHost": "Host is no longer available in the topology: %s",
-  "Failover.noOperationsAfterConnectionClosed": "No operations allowed after client ended.",
   "Failover.transactionResolutionUnknownError": "Unknown transaction resolution error occurred during failover.",
-  "Failover.connectionExplicitlyClosed": "Unable to failover on an explicitly closed connection.",
   "Failover.failoverReaderTimeout": "The reader failover process was not able to establish a connection before timing out.",
   "Failover.timeoutError": "Internal failover task has timed out.",
   "Failover.newWriterNotAllowed":
     "The failover process identified the new writer but the host is not in the list of allowed hosts. New writer host: '%s'. Allowed hosts: '%s'.",
   "GDBRegionUtils.unableToRetrieveGlobalClusterARN": "Unable to retrieve the primary global region for the provided global database cluster.",
-  "StaleDnsHelper.clusterEndpointDns": "Cluster endpoint resolves to '%s'.",
   "StaleDnsHelper.writerHostInfo": "Writer host: '%s'.",
-  "StaleDnsHelper.writerInetAddress": "Writer host address: '%s'",
   "StaleDnsHelper.staleDnsDetected": "Stale DNS data detected. Opening a connection to '%s'.",
   "StaleDnsHelper.reset": "Reset stored writer host.",
-  "StaleDnsPlugin.requireDynamicProvider": "Dynamic host list provider is required.",
   "StaleDnsHelper.currentWriterNotAllowed": "The current writer is not in the list of allowed hosts. Current host: '%s'. Allowed hosts: %s",
   "Client.methodNotSupported": "Method '%s' not supported.",
   "Client.invalidTransactionIsolationLevel": "An invalid transaction isolation level was provided: '%s'.",
@@ -130,10 +115,8 @@ const MESSAGES: Record<string, string> = {
     "An error occurred while trying to switch to a cached reader client: '%s'. Error message: '%s'. The driver will attempt to establish a new reader client.",
   "ReadWriteSplittingPlugin.errorSwitchingToReader": "An error occurred while trying to switch to a reader client: '%s'.",
   "ReadWriteSplittingPlugin.errorSwitchingToWriter": "An error occurred while trying to switch to a writer client: '%s'.",
-  "ReadWriteSplittingPlugin.closingInternalClients": "Closing all internal clients except for the current one.",
   "ReadWriteSplittingPlugin.setReaderClient": "Reader client set to '%s'",
   "ReadWriteSplittingPlugin.setWriterClient": "Writer client set to '%s'",
-  "ReadWriteSplittingPlugin.failedToConnectToWriter": "Failed to connect to the writer instance: '%s'",
   "ReadWriteSplittingPlugin.setReadOnlyFalseInTransaction":
     "setReadOnly(false) was called on a read-only client inside a transaction. Please complete the transaction before calling setReadOnly(false).",
   "ReadWriteSplittingPlugin.fallbackToWriter": "Failed to switch to a reader; the current writer will be used as a fallback: '%s'",
@@ -164,8 +147,6 @@ const MESSAGES: Record<string, string> = {
   "AdfsCredentialsProviderFactory.signOnPageRequestFailed":
     "ADFS SignOn Page Request Failed with HTTP status '%s', reason phrase '%s', and response '%s'",
   "AdfsCredentialsProviderFactory.signOnPageUrl": "ADFS SignOn URL: '%s'",
-  "Authentication.unsupportedHostname":
-    "Unsupported AWS hostname '%s'. Amazon domain name in format *.AWS-Region.rds.amazonaws.com or *.rds.AWS-Region.amazonaws.com.cn is expected.",
   "Authentication.connectError": "Error occurred while opening a connection: %s",
   "Authentication.invalidPort": "Port number: %s is not valid. Port number should be greater than zero. Falling back to default port.",
   "AuthenticationToken.tokenExpirationLessThanZero": "Authentication token expiration time must be a non-negative value.",
@@ -194,11 +175,8 @@ const MESSAGES: Record<string, string> = {
   "MonitorImpl.errorDuringMonitoringContinue": "Continuing monitoring after unhandled error was thrown in monitoring for host %s.",
   "MonitorImpl.errorDuringMonitoringStop": "Stopping monitoring after unhandled error was thrown during monitoring for host %s.",
   "MonitorImpl.monitorIsStopped": "Monitoring was already stopped for host %s.",
-  "MonitorImpl.stopped": "Stopped monitoring for host '%s'.",
   "MonitorImpl.startMonitoring": "Start monitoring for %s.",
   "MonitorImpl.stopMonitoring": "Stop monitoring for %s.",
-  "MonitorImpl.startMonitoringTaskNewContext": "Start monitoring task for checking new contexts for '%s'",
-  "MonitorImpl.stopMonitoringTaskNewContext": "Stop monitoring task for checking new contexts for '%s'",
   "MonitorService.startMonitoringNullMonitor": "Start monitoring called but could not find monitor for host: '%s'.",
   "MonitorService.monitorClassMismatch": "The monitor stored at '%s' did not have the expected type '%s'. The actual monitor was '%s'.",
   "MonitorService.monitorStuck": "Monitor '%s' has not been updated within the inactive timeout of %s milliseconds. The monitor will be stopped.",
@@ -213,12 +191,8 @@ const MESSAGES: Record<string, string> = {
     "The monitor service received a request to stop all monitors with type '%s', but the monitor service does not have any monitors registered under the given type. Please ensure monitors are registered under the correct type.",
   "MonitorService.cleanupTaskInterrupted": "Monitor service cleanup task interrupted.",
   "PluginService.hostListEmpty": "Current host list is empty.",
-  "PluginService.errorIdentifyConnection": "Unable to identify the connection because a host list provider is not available.",
-  "PluginService.releaseResources": "Releasing resources.",
-  "PluginService.failedToRetrieveHostPort": "Could not retrieve Host:Port for connection.",
+  "PluginService.errorIdentifyConnection": "An error occurred while obtaining the connection's host ID.",
   "PluginService.forceMonitoringRefreshTimeout": "A timeout error occurred after waiting '%s' ms for refreshed topology.",
-  "PluginService.requiredBlockingHostListProvider":
-    "The detected host list provider is not a BlockingHostListProvider. A BlockingHostListProvider is required to force refresh the host list. Detected host list provider: '%s'.",
   "PluginService.requiredDynamicHostListProvider":
     "The forceMonitoringRefresh method requires a DynamicHostListProvider. The current host list provider '%s' does not support this operation.",
   "PluginService.currentHostNotAllowed": "The current host is not in the list of allowed hosts. Current host: '%s'. Allowed hosts: '%s'.",
@@ -231,11 +205,7 @@ const MESSAGES: Record<string, string> = {
   "HostMonitoringConnectionPlugin.unavailableHost": "Host '%s' is unavailable.",
   "HostMonitoringConnectionPlugin.identifyClusterConnection":
     "Monitoring host info is associated with a cluster endpoint, plugin needs to identify the cluster connection.",
-  "PluginServiceImpl.failedToRetrieveHostPort": "PluginServiceImpl.failedToRetrieveHostPort",
   "AuroraInitialConnectionStrategyPlugin.unsupportedStrategy": "Unsupported host selection strategy '%s'.",
-  "AuroraInitialConnectionStrategyPlugin.requireDynamicProvider": "Dynamic host list provider is required.",
-  "OpenedConnectionTracker.unableToPopulateOpenedConnectionQueue":
-    "The driver is unable to track this opened connection because the instance endpoint is unknown: '%s'",
   "OpenedConnectionTracker.invalidatingConnections": "Invalidating opened connections to host: '%s'",
   "HostSelector.roundRobinInvalidDefaultWeight":
     "The provided default weight value is not valid. Weight values must be an integer greater than or equal to the default weight value of 1.",
@@ -246,7 +216,6 @@ const MESSAGES: Record<string, string> = {
     "Error obtaining host list: %s. Provided database might not be a Multi-AZ RDS MySQL database cluster.",
   "RdsMultiAZPgDatabaseDialect.invalidQuery":
     "Error obtaining host list: %s. Provided database might not be a Multi-AZ RDS PostgreSQL database cluster.",
-  "RdsMultiAzDatabaseDialect.invalidTopology": "Error retrieving a valid topology using the current database dialect: %s",
   "DefaultTelemetryFactory.invalidBackend":
     "%s is not a valid %s backend. Available options for tracing are: OTLP, XRAY, NONE. Available options for metrics are: OTLP, NONE.",
   "DefaultTelemetryFactory.importFailure": "A tracing backend could not be found.",
@@ -286,7 +255,6 @@ const MESSAGES: Record<string, string> = {
   "LimitlessRouterServiceImpl.fetchedEmptyRouterList": "Empty router list was fetched.",
   "LimitlessRouterServiceImpl.errorStartingMonitor": "An error occurred while starting Limitless Router Monitor. %s",
   "AwsCredentialsManager.wrongHandler": "Provided AWS credential provider handler should implement AwsCredentialsProviderHandler.",
-  "HostResponseTimeMonitor.stopped": "Host Response Time Monitor task stopped on instance '%s'.",
   "HostResponseTimeMonitor.responseTime": "Response time for '%s': '%s' ms.",
   "HostResponseTimeMonitor.interruptedErrorDuringMonitoring": "Response time task for host '%s' was interrupted: '%s'.",
   "HostResponseTimeMonitor.openingConnection": "Opening a Response time connection to '%s'.",
@@ -298,7 +266,6 @@ const MESSAGES: Record<string, string> = {
   "ConfigurationProfileBuilder.canNotUpdateKnownPreset": "Can't add or update a built-in preset configuration profile '%s'.",
   "AwsClient.configurationProfileNotFound": "Configuration profile '%s' not found.",
   "AwsClient.targetClientNotDefined": "AwsClient targetClient not defined.",
-  "Failover2.failoverReaderNotConnectedToReader": "Unable to establish SQL connection to the instance '%s' as a reader.",
   "Failover2.failoverWriterConnectedToReader": "The new writer was identified to be '%s', but querying the instance for its role returned a reader.",
   "Failover2.unableToFetchTopology": "Unable to establish SQL connection and fetch topology.",
   "Failover2.unableToConnect": "Unable to establish a connection to any host during the failover process.",
@@ -307,22 +274,17 @@ const MESSAGES: Record<string, string> = {
   "Failover2.strictReaderUnknownHostRole": "Unknown host role of reader candidate in strict reader failoverMode.",
   "ClusterTopologyMonitor.timeoutError": "ClusterTopologyMonitor topology update timed out in '%s' ms.",
   "ClusterTopologyMonitor.errorFetchingTopology": "[ClusterTopologyMonitor] Error fetching topology: '%s'.",
-  "ClusterTopologyMonitoring.ignoringNewTopologyRequest": "Previous failover has just completed, ignoring new topology request.",
   "ClusterTopologyMonitoring.timeoutSetToZero":
     "A topology refresh was requested, but the given timeout for the request was 0 ms. Returning cached hosts: ",
-  "ClusterTopologyMonitor.startingHostMonitors": "Starting host monitoring tasks.",
   "ClusterTopologyMonitor.writerPickedUpFromHostMonitors":
     "The writer host detected by the host monitors was picked up by the topology monitor: '%s'.",
   "ClusterTopologyMonitor.writerMonitoringConnection": "The monitoring connection is connected to a writer: '%s'.",
   "ClusterTopologyMonitor.invalidWriterQuery":
     "An error occurred while attempting to obtain the writer id because the query was invalid. Please ensure you are connecting to an Aurora or RDS DB cluster. Error: '%s'",
-  "ClusterTopologyMonitor.unableToConnect": "Could not connect to initial host: '%s'.",
   "ClusterTopologyMonitor.openedMonitoringConnection": "Opened monitoring connection to: '%s'.",
   "ClusterTopologyMonitor.startMonitoring": "[clusterId: '%s'] Start cluster topology monitoring for '%s'.",
   "ClusterTopologyMonitor.startingHostMonitoringTasks": "Starting host monitoring tasks.",
   "ClusterTopologyMonitor.stopHostMonitoringTask": "Stop cluster topology monitoring task for '%s'.",
-  "ClusterTopologyMonitor.errorDuringMonitoring": "Error thrown during cluster topology monitoring: '%s'.",
-  "ClusterTopologyMonitor.endMonitoring": "Stop cluster topology monitoring.",
   "ClusterTopologyMonitor.matchingReaderTopologies": "Reader topologies have been consistent for '%s' ms. Updating topology cache.",
   "ClusterTopologyMonitor.exitPanicModeViaReaderConsensus":
     "Exiting panic mode by adopting harvested reader connection to '%s' as the monitoring connection. The writer is likely in an inaccessible region, so a verified writer connection cannot be established.",
@@ -334,7 +296,6 @@ const MESSAGES: Record<string, string> = {
   "HostMonitor.writerHostChanged": "Writer host has changed from '%s' to '%s'.",
   "HostMonitor.writerChangeExitTriggered":
     "A reader observed that the writer changed to '%s'. Since some regions are inaccessible, signalling the topology monitor to exit panic mode via reader consensus.",
-  "HostMonitor.writerIsStale": "Connected writer instance '%s' is stale.",
   "HostMonitor.loginErrorDuringMonitoring": "Login error detected during monitoring.",
   "SlidingExpirationCacheWithCleanupTask.cleaningUp": "Cleanup interval of '%s' minutes has passed, cleaning up sliding expiration cache '%s'.",
   "SlidingExpirationCacheWithCleanupTask.cleanUpTaskInterrupted": "Sliding expiration cache '%s' cleanup task has been interrupted and is exiting.",
@@ -363,7 +324,6 @@ const MESSAGES: Record<string, string> = {
     "Unable to find any custom endpoints. When connecting with a custom endpoint, at least one custom endpoint should be detected.",
   "AwsSdk.unsupportedRegion":
     "Unsupported AWS region '%s'. For supported regions please read https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/Concepts.RegionsAndAvailabilityZones.html",
-  "Bgd.inProgressConnectionClosed": "Connection has been closed since Blue/Green switchover is in progress.",
   "Bgd.inProgressSuspendConnect":
     "Blue/Green Deployment switchover is in progress. The  'connect' call will be delayed until switchover is completed.",
   "Bgd.inProgressTryConnectLater": "Blue/Green Deployment switchover is still in progress after %s ms. Try to connect again later.",
@@ -380,14 +340,11 @@ const MESSAGES: Record<string, string> = {
   "Bgd.unknownVersion": "Unknown blue/green version '%s'.",
   "Bgd.unknownStatus": "Unknown blue/green status '%s'.",
   "Bgd.statusChanged": "[%s] Status changed to: %s",
-  "Bgd.interrupted": "[%s] Interrupted.",
   "Bgd.monitoringUnhandledError": "[%s] Unhandled exception while monitoring blue/green status: %s",
   "Bgd.monitoringCompleted": "[%s] Blue/green status monitoring loop is completed.",
   "Bgd.statusNotAvailable": "[%s] (status not available) currentPhase: %s.",
-  "Bgd.usesVersion": "[%s] Blue/Green deployment uses version '%s' which the driver doesn't support. Version '%s' will be used instead.",
   "Bgd.noEntriesInStatusTable": "[%s] No entries in status table.",
   "Bgd.error": "[%s] currentPhase: %s, error while querying for blue/green status: %s.",
-  "Bgd.unhandledNetworkError": "[%s] Unhandled network error: %s.",
   "Bgd.unhandledError": "[%s] Unhandled error: %s.",
   "Bgd.openingConnectionWithIp": "[%s] Opening monitoring connection (IP) to %s.",
   "Bgd.openedConnectionWithIp": "[%s] Opened monitoring connection (IP) to %s.",
@@ -438,7 +395,6 @@ const MESSAGES: Record<string, string> = {
   "GlobalDbFailoverPlugin.failoverElapsed": "Global DB failover elapsed time: %s ms",
   "GlobalDbFailoverPlugin.unableToFindCandidateWithMatchingRole":
     "Unable to find a candidate host with the expected role (%s) based on the given host selection strategy: %s",
-  "GlobalDbFailoverPlugin.unableToConnect": "Unable to establish a connection during Global DB failover.",
   "GlobalDbFailoverPlugin.writerInInaccessibleRegion":
     "Writer host '%s' from region '%s' is not within the list of accessible regions. Failover cannot proceed.",
   "GdbReadWriteSplittingPlugin.missingHomeRegion":

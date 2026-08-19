@@ -38,11 +38,11 @@ If a more aggressive approach to failure checking is necessary, all of these par
 
 | Parameter                  |  Value  | Required | Description                                                                                                      | Default Value |
 | -------------------------- | :-----: | :------: | :--------------------------------------------------------------------------------------------------------------- | ------------- |
-| `failureDetectionCount`    | Integer |    No    | Number of failed connection checks before considering the database instance as unhealthy.                        | `3`           |
-| `failureDetectionEnabled`  | Boolean |    No    | Set to `true` to enable Enhanced Failure Monitoring. Set to `false` to disable it.                               | `true`        |
-| `failureDetectionInterval` | Integer |    No    | Interval in milliseconds between probes to the database instance.                                                | `5000`        |
-| `failureDetectionTime`     | Integer |    No    | Interval in milliseconds between sending a SQL query to the server and the first probe to the database instance. | `30000`       |
-| `monitorDisposalTime`      | Integer |    No    | Interval in milliseconds for a monitor to be considered inactive and to be disposed.                             | `60000`       |
+| `failureDetectionCount`    | number  |    No    | Number of failed connection checks before considering the database instance as unhealthy.                        | `3`           |
+| `failureDetectionEnabled`  | boolean |    No    | Set to `true` to enable Enhanced Failure Monitoring. Set to `false` to disable it.                               | `true`        |
+| `failureDetectionInterval` | number  |    No    | Interval in milliseconds between probes to the database instance.                                                | `5000`        |
+| `failureDetectionTime`     | number  |    No    | Interval in milliseconds between sending a SQL query to the server and the first probe to the database instance. | `30000`       |
+| `monitorDisposalTime`      | number  |    No    | Interval in milliseconds for a monitor to be considered inactive and to be disposed.                             | `60000`       |
 
 The Host Monitoring Connection Plugin may create new monitoring connections to check the database instance's availability. You can configure these connection with driver-specific configurations by adding the `monitoring_` prefix to the configuration parameters, like the following example:
 

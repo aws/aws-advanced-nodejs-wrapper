@@ -127,7 +127,7 @@ export class RdsMultiAZClusterMySQLDatabaseDialect extends MySQLDatabaseDialect 
   async getHostRole(client: ClientWrapper): Promise<HostRole> {
     return (await this.executeTopologyRelatedQuery(
       client,
-      RdsMultiAZClusterMySQLDatabaseDialect.INSTANCE_ID_QUERY,
+      RdsMultiAZClusterMySQLDatabaseDialect.IS_READER_QUERY,
       RdsMultiAZClusterMySQLDatabaseDialect.IS_READER_QUERY_COLUMN_NAME
     )) == "0"
       ? HostRole.WRITER

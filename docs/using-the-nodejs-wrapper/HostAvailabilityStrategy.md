@@ -12,9 +12,9 @@ Different strategies can be swapped out for different behaviors. The default Hos
 
 | Parameter                                       |  Value   | Required | Description                                                                                                                                                                    | Default Value |
 | :---------------------------------------------- | :------: | :------: | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :-----------: |
-| `defaultHostAvailabilityStrategy`               | `String` |    No    | This overrides the driver's default host availability strategy. Possible values are listed in the [Host Availability Strategy Options](#host-availability-strategies) section. |    `null`     |
-| `hostAvailabilityStrategyMaxRetries`            | `Number` |    No    | Maximum number of times a host availability strategy will retry a host that is not available.                                                                                  |      `5`      |
-| `hostAvailabilityStrategyInitialBackoffTimeSec` | `Number` |    No    | The initial wait time in seconds. This parameter is only applicable for host availability strategies employing a time-based backoff.                                           |     `30`      |
+| `defaultHostAvailabilityStrategy`               | `string` |    No    | This overrides the driver's default host availability strategy. Possible values are listed in the [Host Availability Strategy Options](#host-availability-strategies) section. |    `null`     |
+| `hostAvailabilityStrategyMaxRetries`            | `number` |    No    | Maximum number of times a host availability strategy will retry a host that is not available.                                                                                  |      `5`      |
+| `hostAvailabilityStrategyInitialBackoffTimeSec` | `number` |    No    | The initial wait time in seconds. This parameter is only applicable for host availability strategies employing a time-based backoff.                                           |     `30`      |
 
 ## Host Availability Strategies
 

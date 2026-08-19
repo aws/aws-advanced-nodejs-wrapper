@@ -73,7 +73,7 @@ describe.each([
   });
 
   afterEach(() => {
-    BaseSamlAuthPlugin.releaseResources();
+    BaseSamlAuthPlugin.clearCache();
     reset(spyIamAuthUtils);
   });
 
