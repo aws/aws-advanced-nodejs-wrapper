@@ -91,7 +91,7 @@ const sourceParams = {
   database: "mydb",
   clusterId: "source-cluster"
 };
-const sourceClient = new AwsPGClient(sourceParams);
+const sourceClient = new AwsPgClient(sourceParams);
 await sourceClient.connect();
 
 const destParams = {
@@ -102,7 +102,7 @@ const destParams = {
   database: "mydb",
   clusterId: "destination-cluster" // Different clusterId!
 };
-const destClient = new AwsPGClient(destParams);
+const destClient = new AwsPgClient(destParams);
 await destClient.connect();
 
 // Read from source, write to destination
@@ -118,7 +118,7 @@ const sourceIpParams = {
   database: "mydb",
   clusterId: "source-cluster" // Same ID as sourceClient
 };
-const sourceIpClient = new AwsPGClient(sourceIpParams);
+const sourceIpClient = new AwsPgClient(sourceIpParams);
 await sourceIpClient.connect();
 ```
 
@@ -135,7 +135,7 @@ const params = {
   password: "***",
   database: "mydb"
 };
-const client = new AwsPGClient(params);
+const client = new AwsPgClient(params);
 await client.connect();
 ```
 
@@ -150,7 +150,7 @@ const params = {
   database: "mydb"
   // clusterId defaults to "1"
 };
-const urlClient = new AwsPGClient(params);
+const urlClient = new AwsPgClient(params);
 await urlClient.connect();
 
 // "10.0.0.1" -> IP address of source-db. So it is the same cluster.
@@ -162,7 +162,7 @@ const ipParams = {
   database: "mydb"
   // clusterId defaults to "1"
 };
-const ipClient = new AwsPGClient(ipParams);
+const ipClient = new AwsPgClient(ipParams);
 await ipClient.connect();
 ```
 

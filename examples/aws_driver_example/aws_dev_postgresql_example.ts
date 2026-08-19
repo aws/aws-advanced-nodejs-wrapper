@@ -14,7 +14,7 @@
   limitations under the License.
 */
 
-import { AwsPGClient } from "../../pg";
+import { AwsPgClient } from "../../pg";
 import { ErrorSimulatorManager, DeveloperConnectionPlugin, ErrorSimulator, ErrorSimulatorMethodCallback } from "../../index";
 
 const postgresHost = "db-identifier.XYZ.us-east-2.rds.amazonaws.com";
@@ -25,7 +25,7 @@ const port = 5432;
 
 const errorToRaise = new Error("test");
 
-const client = new AwsPGClient({
+const client = new AwsPgClient({
   // Configure connection parameters.
   host: postgresHost,
   port: port,

@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/#semantic-versioning-200).
 
+## [Unreleased]
+
+### :crab: Changed
+
+- Renamed the PostgreSQL client to `AwsPgClient` and its pooled connection type to `AwsPgPooledConnection` for consistent `Pg` casing across the `pg` module. This is a non-breaking change.
+
+### :warning: Deprecated
+
+- `AwsPGClient` and `AwsPGPooledConnection` are now deprecated. They remain exported as backwards-compatible aliases of `AwsPgClient` and `AwsPgPooledConnection` and behave identically, so existing code continues to work without modification. Update imports to the new names; the deprecated aliases are scheduled for removal in the next major release.
+
 ## [2.1.1] - 2026-05-28
 
 ### :magic_wand: Added

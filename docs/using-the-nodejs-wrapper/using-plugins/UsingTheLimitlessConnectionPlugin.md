@@ -43,7 +43,7 @@ params = {
   limitless_router_monitor_query_timeout: 1000 // timeout for limitless monitoring connections
 };
 
-const client = new AwsPGClient(params);
+const client = new AwsPgClient(params);
 await client.connect();
 ```
 

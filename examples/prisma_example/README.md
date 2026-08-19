@@ -109,11 +109,11 @@ Finally, when you instantiate your Prisma Client, you need to pass an instance o
 
 ```ts
 // src/index.ts
-import { AwsPGClient } from "aws-advanced-nodejs-wrapper/pg";
+import { AwsPgClient } from "aws-advanced-nodejs-wrapper/pg";
 import { PrismaAws } from "../adapter";
 import { PrismaClient } from "@prisma/client";
 
-const client = new AwsPGClient({
+const client = new AwsPgClient({
   user: "username",
   password: "password",
   host: "db-identifier.XYZ.us-east-2.rds.amazonaws.com",

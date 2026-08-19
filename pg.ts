@@ -14,7 +14,10 @@
   limitations under the License.
 */
 
-export { AwsPGClient, AwsPgPoolClient } from "./pg/lib/index";
-export type { AwsPGPooledConnection, AwsPgClientConfig } from "./pg/lib/index";
+// `AwsPGClient` / `AwsPGPooledConnection` are deprecated aliases kept for backwards
+// compatibility. Prefer `AwsPgClient` / `AwsPgPooledConnection`. See the deprecation
+// notes on the declarations in ./pg/lib/client.
+export { AwsPgClient, AwsPGClient, AwsPgPoolClient } from "./pg/lib/index";
+export type { AwsPgPooledConnection, AwsPGPooledConnection, AwsPgClientConfig } from "./pg/lib/index";
 export type { AwsClientConfig } from "./common/lib/wrapper_property";
 export type { AwsCredentialsProviderHandler } from "./common/lib/authentication/aws_credentials_manager";

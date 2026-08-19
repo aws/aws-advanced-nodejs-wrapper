@@ -86,7 +86,7 @@ params = {
   blue_green_monitoring_wrapperConnectTimeout: 10000
 };
 
-const client = new AwsPGClient(params);
+const client = new AwsPgClient(params);
 await client.connect();
 ```
 

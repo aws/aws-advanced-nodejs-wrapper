@@ -14,12 +14,12 @@
   limitations under the License.
 */
 
-import { AwsPGClient } from "aws-advanced-nodejs-wrapper/pg"; // the AWS client
+import { AwsPgClient } from "aws-advanced-nodejs-wrapper/pg"; // the AWS client
 import { PrismaAws } from "../adapter"; // the custom adapter
 import { PrismaClient } from "@prisma/client"; // the prisma client
 
 // Init Prisma client.
-const client = new AwsPGClient({
+const client = new AwsPgClient({
   user: "username",
   password: "password",
   host: "db-identifier.XYZ.us-east-2.rds.amazonaws.com",

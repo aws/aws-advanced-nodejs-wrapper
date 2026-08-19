@@ -66,7 +66,7 @@ params = {
   connectionTimeoutMillis: 1000
 };
 
-const client = new AwsPGClient(params);
+const client = new AwsPgClient(params);
 await client.connect();
 ```
 

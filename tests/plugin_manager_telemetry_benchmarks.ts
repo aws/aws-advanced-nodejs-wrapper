@@ -41,14 +41,14 @@ import { PgDatabaseDialect } from "../pg/lib/dialect/pg_database_dialect";
 import { NodePostgresDriverDialect } from "../pg/lib/dialect/node_postgres_driver_dialect";
 import { ConnectionPluginFactory } from "../common/lib/plugin_factory";
 import { ConfigurationProfileBuilder } from "../common/lib/profile/configuration_profile_builder";
-import { AwsPGClient } from "../pg/lib";
+import { AwsPgClient } from "../pg/lib";
 import { resourceFromAttributes } from "@opentelemetry/resources";
 import { FullServicesContainerImpl } from "../common/lib/utils/full_services_container";
 
 const mockConnectionProvider = mock<ConnectionProvider>();
 const mockHostListProviderService = mock<HostListProviderService>();
 const mockPluginService = mock(PluginServiceImpl);
-const mockClient = mock(AwsPGClient);
+const mockClient = mock(AwsPgClient);
 const telemetryFactory = new OpenTelemetryFactory();
 when(mockPluginService.getTelemetryFactory()).thenReturn(telemetryFactory);
 when(mockPluginService.getDialect()).thenReturn(new PgDatabaseDialect());
