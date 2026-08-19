@@ -32,10 +32,10 @@ The AWS Advanced NodeJS Wrapper supports Amazon AWS Identity and Access Manageme
 
 | Parameter            | Value    |                 Required                  | Description                                                                                                                                                                                                                                | Default Value                                    | Example Value                                       |
 | :------------------- | :------- | :---------------------------------------: | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :----------------------------------------------- | :-------------------------------------------------- |
-| `iamDefaultPort`     | `String` |                    No                     | This property will override the default port that is used to generate the IAM token. The default port is determined based on the underlying database.                                                                                      | `null`                                           | `1234`                                              |
-| `iamHost`            | `String` | Only required when using custom endpoints | This property will override the default hostname that is used to generate the IAM token.                                                                                                                                                   | The host value from the connection configuration | `database.cluster-hash.us-east-1.rds.amazonaws.com` |
-| `iamRegion`          | `String` |                    No                     | This property will override the default region that is used to generate the IAM token. If the property is not set, the wrapper will attempt to parse the region from the host provided in the configuration parameters.                    | `null`                                           | `us-east-2`                                         |
-| `iamTokenExpiration` | `Number` |                    No                     | This property determines how long an IAM token is kept in the driver cache before a new one is generated. The default expiration time is set to be 15 minutes. Note that IAM database authentication tokens have a lifetime of 15 minutes. | `900`                                            | `600`                                               |
+| `iamDefaultPort`     | `string` |                    No                     | This property will override the default port that is used to generate the IAM token. The default port is determined based on the underlying database.                                                                                      | `null`                                           | `1234`                                              |
+| `iamHost`            | `string` | Only required when using custom endpoints | This property will override the default hostname that is used to generate the IAM token.                                                                                                                                                   | The host value from the connection configuration | `database.cluster-hash.us-east-1.rds.amazonaws.com` |
+| `iamRegion`          | `string` |                    No                     | This property will override the default region that is used to generate the IAM token. If the property is not set, the wrapper will attempt to parse the region from the host provided in the configuration parameters.                    | `null`                                           | `us-east-2`                                         |
+| `iamTokenExpiration` | `number` |                    No                     | This property determines how long an IAM token is kept in the driver cache before a new one is generated. The default expiration time is set to be 15 minutes. Note that IAM database authentication tokens have a lifetime of 15 minutes. | `900`                                            | `600`                                               |
 
 This plugin requires a valid set of AWS credentials to retrieve the database credentials from AWS Secrets Manager. The AWS credentials must be located in [one of these locations](https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/Package/-aws-sdk-credential-providers/#fromNodeProviderChain) supported by the AWS SDK's default credentials provider. See also at [AWS Credentials Configuration](../custom-configuration/AwsCredentialsConfiguration.md)
 
@@ -76,3 +76,22 @@ You can learn more about `clusterInstanceHostPattern` [here](../UsingTheNodejsWr
 
 [IAM Authentication Plugin example for PostgreSQL](../../../examples/aws_driver_example/aws_iam_authentication_postgresql_example.ts)<br>
 [IAM Authentication Plugin example for MySQL](../../../examples/aws_driver_example/aws_iam_authentication_mysql_example.ts)
+
+## Using IAM Authentication with Global Databases
+
+When using IAM authentication with [Amazon Aurora Global Databases](https://aws.amazon.com/rds/aurora/global-database/), the IAM user or role requires the additional `rds:DescribeGlobalClusters` permission. This permission allows the driver to resolve the Global Database endpoint to the appropriate regional cluster for IAM token generation.
+
+Example IAM policy:
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": ["rds-db:connect", "rds:DescribeGlobalClusters"],
+      "Resource": "*"
+    }
+  ]
+}
+```

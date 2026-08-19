@@ -26,7 +26,7 @@ import { TelemetryFactory } from "../../../utils/telemetry/telemetry_factory";
 import { TelemetryContext } from "../../../utils/telemetry/telemetry_context";
 import { TelemetryTraceLevel } from "../../../utils/telemetry/telemetry_trace_level";
 import { BlueGreenStatus } from "../blue_green_status";
-import { convertMsToNanos, convertNanosToMs, getTimeInNanos, Pair } from "../../../utils/utils";
+import { convertMsToNanos, convertNanosToMs, getTimeInNanos } from "../../../utils/utils";
 import { WrapperProperties } from "../../../wrapper_property";
 import { BlueGreenPhase } from "../blue_green_phase";
 import { AwsWrapperError } from "../../../utils/errors";
@@ -60,7 +60,7 @@ export class SuspendUntilCorrespondingHostFoundConnectRouting extends BaseConnec
 
     return await telemetryContext.start(async () => {
       let bgStatus: BlueGreenStatus = pluginService.getStatus<BlueGreenStatus>(BlueGreenStatus, this.bgdId);
-      let correspondingPair: Pair<HostInfo, HostInfo> = bgStatus?.correspondingHosts.get(hostInfo.host);
+      let correspondingPair: [HostInfo, HostInfo] | undefined = bgStatus?.correspondingHosts.get(hostInfo.host);
 
       const timeoutNanos: bigint = convertMsToNanos(WrapperProperties.BG_CONNECT_TIMEOUT_MS.get(properties));
       const suspendStartTime: bigint = getTimeInNanos();
@@ -70,7 +70,7 @@ export class SuspendUntilCorrespondingHostFoundConnectRouting extends BaseConnec
         getTimeInNanos() <= endTime &&
         bgStatus != null &&
         bgStatus.currentPhase !== BlueGreenPhase.COMPLETED &&
-        (!correspondingPair || !correspondingPair.right)
+        (!correspondingPair || !correspondingPair[1])
       ) {
         await this.delay(SuspendUntilCorrespondingHostFoundConnectRouting.SLEEP_TIME_MS, bgStatus, pluginService, this.bgdId);
 

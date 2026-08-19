@@ -65,17 +65,12 @@ export class ConnectionStringHostListProvider implements StaticHostListProvider 
     this.isInitialized = true;
   }
 
-  refresh(): Promise<HostInfo[]>;
-  refresh(client: ClientWrapper): Promise<HostInfo[]>;
-  refresh(client?: ClientWrapper): Promise<HostInfo[]>;
-  refresh(client?: ClientWrapper | undefined): Promise<HostInfo[]> {
+  refresh(): Promise<HostInfo[]> {
     this.init();
     return Promise.resolve(this.hostList);
   }
 
-  forceRefresh(): Promise<HostInfo[]>;
-  forceRefresh(client: ClientWrapper): Promise<HostInfo[]>;
-  forceRefresh(client?: ClientWrapper): Promise<HostInfo[]> {
+  forceRefresh(): Promise<HostInfo[]> {
     this.init();
     return Promise.resolve(this.hostList);
   }
@@ -89,25 +84,12 @@ export class ConnectionStringHostListProvider implements StaticHostListProvider 
       return null;
     }
     const instance = await this.hostListProviderService.getDialect().getHostAliasAndParseResults(client.client);
-    const topology = await this.refresh(client.client);
+    const topology = await this.refresh();
     if (!topology || topology.length == 0) {
       return null;
     }
 
     return topology.filter((hostInfo) => instance === hostInfo.hostId)[0];
-  }
-
-  createHost(host: string, isWriter: boolean, weight: number, lastUpdateTime: number, port?: number): HostInfo {
-    return this.hostListProviderService
-      .getHostInfoBuilder()
-      .withHost(host ?? "")
-      .withPort(port ?? this.initialPort)
-      .withRole(isWriter ? HostRole.WRITER : HostRole.READER)
-      .withAvailability(HostAvailability.AVAILABLE)
-      .withWeight(weight)
-      .withLastUpdateTime(lastUpdateTime)
-      .withHostId(host)
-      .build();
   }
 
   getHostProviderType(): string {

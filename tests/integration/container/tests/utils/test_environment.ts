@@ -37,12 +37,14 @@ import { ATTR_SERVICE_NAME } from "@opentelemetry/semantic-conventions";
 import { PeriodicExportingMetricReader } from "@opentelemetry/sdk-metrics";
 import { OTLPMetricExporter } from "@opentelemetry/exporter-metrics-otlp-grpc";
 import { logger } from "../../../../../common/logutils";
+import { RdsUtils } from "../../../../../common/lib/utils/rds_utils";
 import pkgPg from "pg";
 import { ConnectionOptions, createConnection } from "mysql2/promise";
 import { readFileSync } from "fs";
 
 export class TestEnvironment {
   private static env?: TestEnvironment;
+  private static sdk?: NodeSDK;
 
   private readonly _info: TestEnvironmentInfo;
   private proxies?: { [s: string]: ProxyInfo };
@@ -238,6 +240,14 @@ export class TestEnvironment {
       await TestEnvironment.initProxies(env);
     }
 
+    // Helps to eliminate problem with proxied endpoints.
+    RdsUtils.setPrepareHostFunc((host: string) => {
+      if (host.endsWith(".proxied")) {
+        return host.substring(0, host.length - ".proxied".length);
+      }
+      return host;
+    });
+
     const contextManager = new AsyncHooksContextManager();
     contextManager.enable();
     context.setGlobalContextManager(contextManager);
@@ -272,6 +282,7 @@ export class TestEnvironment {
 
     // this enables the API to record telemetry
     sdk.start();
+    TestEnvironment.sdk = sdk;
     // gracefully shut down the SDK on process exit
     process.on("SIGTERM", () => {
       sdk
@@ -282,6 +293,17 @@ export class TestEnvironment {
     });
 
     return env;
+  }
+
+  static async shutdownTelemetry(): Promise<void> {
+    if (TestEnvironment.sdk) {
+      try {
+        await TestEnvironment.sdk.shutdown();
+      } catch (error) {
+        // ignore
+      }
+      TestEnvironment.sdk = undefined;
+    }
   }
 
   static async initProxies(environment: TestEnvironment) {

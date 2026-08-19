@@ -17,14 +17,14 @@
 import { AbstractConnectionPlugin } from "../../abstract_connection_plugin";
 import { logger } from "../../../logutils";
 import {
-  HostInfo,
   AwsWrapperError,
   FailoverFailedError,
   FailoverSuccessError,
-  TransactionResolutionUnknownError,
-  UnavailableHostError,
+  HostAvailability,
+  HostInfo,
   HostRole,
-  HostAvailability
+  TransactionResolutionUnknownError,
+  UnavailableHostError
 } from "../../";
 import { PluginService } from "../../plugin_service";
 import { OldConnectionSuggestionAction } from "../../old_connection_suggestion_action";
@@ -43,6 +43,7 @@ import { ClientWrapper } from "../../client_wrapper";
 import { getWriter, logTopology } from "../../utils/utils";
 import { TelemetryCounter } from "../../utils/telemetry/telemetry_counter";
 import { TelemetryTraceLevel } from "../../utils/telemetry/telemetry_trace_level";
+import { FullServicesContainer } from "../../utils/full_services_container";
 
 export class FailoverPlugin extends AbstractConnectionPlugin {
   private static readonly TELEMETRY_WRITER_FAILOVER = "failover to writer instance";
@@ -79,18 +80,19 @@ export class FailoverPlugin extends AbstractConnectionPlugin {
 
   private hostListProviderService?: HostListProviderService;
   private readonly pluginService: PluginService;
+  private readonly servicesContainer: FullServicesContainer;
   protected enableFailoverSetting: boolean = WrapperProperties.ENABLE_CLUSTER_AWARE_FAILOVER.defaultValue;
 
-  constructor(pluginService: PluginService, properties: Map<string, any>, rdsHelper: RdsUtils);
+  constructor(servicesContainer: FullServicesContainer, properties: Map<string, any>, rdsHelper: RdsUtils);
   constructor(
-    pluginService: PluginService,
+    servicesContainer: FullServicesContainer,
     properties: Map<string, any>,
     rdsHelper: RdsUtils,
     readerFailoverHandler: ClusterAwareReaderFailoverHandler,
     writerFailoverHandler: ClusterAwareWriterFailoverHandler
   );
   constructor(
-    pluginService: PluginService,
+    servicesContainer: FullServicesContainer,
     properties: Map<string, any>,
     rdsHelper: RdsUtils,
     readerFailoverHandler?: ClusterAwareReaderFailoverHandler,
@@ -98,7 +100,8 @@ export class FailoverPlugin extends AbstractConnectionPlugin {
   ) {
     super();
     this._properties = properties;
-    this.pluginService = pluginService;
+    this.pluginService = servicesContainer.pluginService;
+    this.servicesContainer = servicesContainer;
     this._rdsHelper = rdsHelper;
 
     this.initSettings();
@@ -106,7 +109,7 @@ export class FailoverPlugin extends AbstractConnectionPlugin {
     this._readerFailoverHandler = readerFailoverHandler
       ? readerFailoverHandler
       : new ClusterAwareReaderFailoverHandler(
-          pluginService,
+          this.pluginService,
           properties,
           this.failoverTimeoutMsSetting,
           this.failoverReaderConnectTimeoutMsSetting,
@@ -115,7 +118,8 @@ export class FailoverPlugin extends AbstractConnectionPlugin {
     this._writerFailoverHandler = writerFailoverHandler
       ? writerFailoverHandler
       : new ClusterAwareWriterFailoverHandler(
-          pluginService,
+          this.pluginService,
+          this.servicesContainer,
           this._readerFailoverHandler,
           properties,
           this.failoverTimeoutMsSetting,
@@ -180,12 +184,6 @@ export class FailoverPlugin extends AbstractConnectionPlugin {
       if (this.isHostStillValid(url, changes)) {
         return Promise.resolve();
       }
-
-      for (const alias of currentHost.allAliases) {
-        if (this.isHostStillValid(alias + "/", changes)) {
-          return Promise.resolve();
-        }
-      }
     }
     logger.info(Messages.get("Failover.invalidHost", currentHost?.host ?? "empty host"));
     return Promise.resolve();
@@ -205,6 +203,7 @@ export class FailoverPlugin extends AbstractConnectionPlugin {
     return (
       this.enableFailoverSetting &&
       this._rdsUrlType !== RdsUrlType.RDS_PROXY &&
+      this._rdsUrlType !== RdsUrlType.RDS_PROXY_ENDPOINT &&
       this.pluginService.getAllHosts() &&
       this.pluginService.getAllHosts().length > 0
     );
@@ -255,6 +254,7 @@ export class FailoverPlugin extends AbstractConnectionPlugin {
       // Verify there aren't any unexpected error emitted while the connection was idle.
       if (this.pluginService.hasNetworkError()) {
         // Throw the unexpected error directly to be handled.
+
         throw this.pluginService.getUnexpectedError();
       }
 
@@ -273,7 +273,7 @@ export class FailoverPlugin extends AbstractConnectionPlugin {
         await this.invalidateCurrentClient();
         const currentHostInfo = this.pluginService.getCurrentHostInfo();
         if (currentHostInfo !== null) {
-          this.pluginService.setAvailability(currentHostInfo.allAliases ?? new Set(), HostAvailability.NOT_AVAILABLE);
+          this.pluginService.setAvailability(currentHostInfo, HostAvailability.NOT_AVAILABLE);
         }
 
         this._lastError = e;
@@ -285,7 +285,7 @@ export class FailoverPlugin extends AbstractConnectionPlugin {
   }
 
   async failover(failedHost: HostInfo) {
-    this.pluginService.setAvailability(failedHost.allAliases, HostAvailability.NOT_AVAILABLE);
+    this.pluginService.setAvailability(failedHost, HostAvailability.NOT_AVAILABLE);
 
     if (this.failoverMode === FailoverMode.STRICT_WRITER) {
       await this.failoverWriter();
@@ -301,8 +301,6 @@ export class FailoverPlugin extends AbstractConnectionPlugin {
     const telemetryFactory = this.pluginService.getTelemetryFactory();
     const telemetryContext = telemetryFactory.openTelemetryContext(FailoverPlugin.TELEMETRY_READER_FAILOVER, TelemetryTraceLevel.NESTED);
     this.failoverReaderTriggeredCounter.inc();
-
-    const oldAliases = this.pluginService.getCurrentHostInfo()?.allAliases ?? new Set();
 
     let failedHost = null;
     if (failedHostInfo && failedHostInfo.getRawAvailability() === HostAvailability.AVAILABLE) {
@@ -328,9 +326,8 @@ export class FailoverPlugin extends AbstractConnectionPlugin {
 
           await this.pluginService.abortCurrentClient();
           await this.pluginService.setCurrentClient(result.client, result.newHost);
-          this.pluginService.getCurrentHostInfo()?.removeAlias(Array.from(oldAliases));
           await this.updateTopology(true);
-          this.failoverWriterSuccessCounter.inc();
+          this.failoverReaderSuccessCounter.inc();
         } catch (error: any) {
           this.failoverReaderFailedCounter.inc();
           throw error;
@@ -546,7 +543,7 @@ export class FailoverPlugin extends AbstractConnectionPlugin {
 
       this._readerFailoverHandler.setEnableFailoverStrictReader(this.failoverMode === FailoverMode.STRICT_READER);
 
-      logger.debug(Messages.get("Failover.parameterValue", "failoverMode", FailoverMode[this.failoverMode]));
+      logger.debug(Messages.get("Failover.parameterValue", "failoverMode", String(this.failoverMode)));
     }
   }
 }

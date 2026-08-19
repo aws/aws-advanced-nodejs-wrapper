@@ -48,8 +48,12 @@ export class FailoverFailedError extends FailoverError {}
 
 export class TransactionResolutionUnknownError extends FailoverError {}
 
+export class ReadWriteSplittingError extends AwsWrapperError {}
+
 export class LoginError extends AwsWrapperError {}
 
-export class InternalQueryTimeoutError extends AwsWrapperError {}
+export class AwsTimeoutError extends AwsWrapperError {}
+
+export class InternalQueryTimeoutError extends AwsTimeoutError {}
 
 export class UnavailableHostError extends AwsWrapperError {}

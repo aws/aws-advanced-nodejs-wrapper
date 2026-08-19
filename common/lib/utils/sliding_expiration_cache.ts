@@ -16,25 +16,7 @@
 
 import { getTimeInNanos } from "./utils";
 import { MapUtils } from "./map_utils";
-
-class CacheItem<V> {
-  readonly item: V;
-  private _expirationTimeNanos: bigint;
-
-  constructor(item: V, expirationTimeNanos: bigint) {
-    this.item = item;
-    this._expirationTimeNanos = expirationTimeNanos;
-  }
-
-  get expirationTimeNs(): bigint {
-    return this._expirationTimeNanos;
-  }
-
-  updateExpiration(expirationIntervalNanos: bigint): CacheItem<V> {
-    this._expirationTimeNanos = getTimeInNanos() + expirationIntervalNanos;
-    return this;
-  }
-}
+import { CacheItem } from "./cache_map";
 
 export class SlidingExpirationCache<K, V> {
   protected _cleanupIntervalNanos: bigint = BigInt(10 * 60_000_000_000); // 10 minutes
@@ -69,29 +51,29 @@ export class SlidingExpirationCache<K, V> {
   computeIfAbsent(key: K, mappingFunc: (key: K) => V, itemExpirationNanos: bigint): V | null {
     this.cleanUp();
     const cacheItem = MapUtils.computeIfAbsent(this.map, key, (k) => new CacheItem(mappingFunc(k), getTimeInNanos() + itemExpirationNanos));
-    return cacheItem?.updateExpiration(itemExpirationNanos).item ?? null;
+    return cacheItem?.updateExpiration(itemExpirationNanos).get() ?? null;
   }
 
   putIfAbsent(key: K, value: V, itemExpirationNanos: bigint): V | null {
     const cacheItem = MapUtils.putIfAbsent(this.map, key, new CacheItem(value, getTimeInNanos() + itemExpirationNanos));
-    return cacheItem?.item ?? null;
+    return cacheItem?.get(true) ?? null;
   }
 
   get(key: K, itemExpirationNanos?: bigint): V | undefined {
     this.cleanUp();
     const cacheItem = this.map.get(key);
-    if (cacheItem?.item && itemExpirationNanos) {
+    if (cacheItem?.get(true) && itemExpirationNanos) {
       cacheItem.updateExpiration(itemExpirationNanos);
-      return cacheItem.item;
+      return cacheItem.get();
     }
-    return cacheItem?.item;
+    return cacheItem?.get(true);
   }
 
   put(key: K, value: V, itemExpirationNanos: bigint): V | null {
     this.cleanUp();
     const cacheItem = new CacheItem(value, getTimeInNanos() + itemExpirationNanos);
     this.map.set(key, cacheItem);
-    return cacheItem.item;
+    return cacheItem.get(true);
   }
 
   remove(key: K): void {
@@ -102,7 +84,7 @@ export class SlidingExpirationCache<K, V> {
   removeAndDispose(key: K): void {
     const cacheItem = MapUtils.remove(this.map, key);
     if (cacheItem != null && this._itemDisposalFunc != null) {
-      this._itemDisposalFunc(cacheItem.item);
+      this._itemDisposalFunc(cacheItem.get(true));
     }
   }
 
@@ -110,7 +92,7 @@ export class SlidingExpirationCache<K, V> {
     let item;
     MapUtils.computeIfPresent(this.map, key, (key, cacheItem) => {
       if (this.shouldCleanupItem(cacheItem)) {
-        item = cacheItem.item;
+        item = cacheItem.get(true);
         return null;
       }
       return cacheItem;
@@ -123,15 +105,15 @@ export class SlidingExpirationCache<K, V> {
 
   shouldCleanupItem(cacheItem: CacheItem<V>): boolean {
     if (this._shouldDisposeFunc != null) {
-      return getTimeInNanos() > cacheItem.expirationTimeNs && this._shouldDisposeFunc(cacheItem.item);
+      return cacheItem.isExpired() && this._shouldDisposeFunc(cacheItem.get(true));
     }
-    return getTimeInNanos() > cacheItem.expirationTimeNs;
+    return cacheItem.isExpired();
   }
 
   clear(): void {
     for (const [key, val] of this.map.entries()) {
       if (val !== undefined && this._itemDisposalFunc !== undefined) {
-        this._itemDisposalFunc(val.item);
+        this._itemDisposalFunc(val.get());
       }
     }
     this.map.clear();

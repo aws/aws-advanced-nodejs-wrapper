@@ -221,7 +221,6 @@ public class ContainerHelper {
         .execCreateCmd(containerId)
         .withAttachStdout(true)
         .withAttachStderr(true)
-        .withEnv(Arrays.asList("JEST_HTML_REPORTER_OUTPUT_PATH", "./tests/integration/container/reports/hello.html"))
         .withCmd(command);
 
     if (!StringUtils.isNullOrEmpty(workingDir)) {

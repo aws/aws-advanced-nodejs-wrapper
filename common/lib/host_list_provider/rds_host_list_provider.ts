@@ -21,48 +21,71 @@ import { RdsUrlType } from "../utils/rds_url_type";
 import { RdsUtils } from "../utils/rds_utils";
 import { HostListProviderService } from "../host_list_provider_service";
 import { ConnectionUrlParser } from "../utils/connection_url_parser";
-import { AwsWrapperError } from "../utils/errors";
+import { AwsTimeoutError, AwsWrapperError } from "../utils/errors";
 import { Messages } from "../utils/messages";
 import { WrapperProperties } from "../wrapper_property";
 import { logger } from "../../logutils";
-import { HostAvailability } from "../host_availability/host_availability";
-import { CacheMap } from "../utils/cache_map";
-import { isDialectTopologyAware, logTopology } from "../utils/utils";
+import { isDialectTopologyAware } from "../database_dialect/topology_aware_database_dialect";
 import { DatabaseDialect } from "../database_dialect/database_dialect";
 import { ClientWrapper } from "../client_wrapper";
+import { CoreServicesContainer } from "../utils/core_services_container";
+import { StorageService } from "../utils/storage/storage_service";
+import { Topology } from "./topology";
+import { TopologyUtils } from "./topology_utils";
+import { FullServicesContainer } from "../utils/full_services_container";
+import { PluginService } from "../plugin_service";
+import { ClusterTopologyMonitor, ClusterTopologyMonitorImpl } from "./monitoring/cluster_topology_monitor";
+import { MonitorInitializer } from "../utils/monitoring/monitor";
 
 export class RdsHostListProvider implements DynamicHostListProvider {
+  private static readonly DEFAULT_TOPOLOGY_QUERY_TIMEOUT_MS: number = 5000;
   private readonly originalUrl: string;
-  private readonly rdsHelper: RdsUtils;
+  protected readonly rdsHelper: RdsUtils;
+  protected readonly servicesContainers: FullServicesContainer;
+  private readonly pluginService: PluginService;
+  private readonly storageService: StorageService;
+  protected readonly topologyUtils: TopologyUtils;
   protected readonly properties: Map<string, any>;
   private rdsUrlType: RdsUrlType;
   private initialHostList: HostInfo[];
   protected initialHost: HostInfo;
-  private refreshRateNano: number;
-  private suggestedClusterIdRefreshRateNano: number = 10 * 60 * 1_000_000_000; // 10 minutes
-  private hostList?: HostInfo[];
+  protected refreshRateNano: number;
+  protected highRefreshRateNano: number;
   protected readonly connectionUrlParser: ConnectionUrlParser;
   protected readonly hostListProviderService: HostListProviderService;
 
-  public static readonly suggestedPrimaryClusterIdCache: CacheMap<string, string> = new CacheMap<string, string>();
-
-  public static readonly primaryClusterIdCache: CacheMap<string, boolean> = new CacheMap<string, boolean>();
-  public static readonly topologyCache: CacheMap<string, HostInfo[]> = new CacheMap<string, HostInfo[]>();
   public clusterId: string = Date.now().toString();
   public isInitialized: boolean = false;
-  public isPrimaryClusterId?: boolean;
   public clusterInstanceTemplate?: HostInfo;
 
-  constructor(properties: Map<string, any>, originalUrl: string, hostListProviderService: HostListProviderService) {
+  constructor(properties: Map<string, any>, originalUrl: string, topologyUtils: TopologyUtils, servicesContainers: FullServicesContainer) {
     this.rdsHelper = new RdsUtils();
-    this.hostListProviderService = hostListProviderService;
-    this.connectionUrlParser = hostListProviderService.getConnectionUrlParser();
+    this.topologyUtils = topologyUtils;
+    this.servicesContainers = servicesContainers;
+    this.pluginService = this.servicesContainers.pluginService;
+    this.storageService = this.servicesContainers.storageService;
+    this.hostListProviderService = this.servicesContainers.hostListProviderService;
+    this.connectionUrlParser = this.hostListProviderService.getConnectionUrlParser();
     this.originalUrl = originalUrl;
     this.properties = properties;
+    this.refreshRateNano = WrapperProperties.CLUSTER_TOPOLOGY_REFRESH_RATE_MS.get(this.properties) * 1000000;
+    this.highRefreshRateNano = WrapperProperties.CLUSTER_TOPOLOGY_HIGH_REFRESH_RATE_MS.get(this.properties) * 1000000;
+  }
 
-    let port = WrapperProperties.PORT.get(properties);
+  init(): void {
+    if (this.isInitialized) {
+      return;
+    }
+
+    this.initSettings();
+
+    this.isInitialized = true;
+  }
+
+  protected initSettings(): void {
+    let port = WrapperProperties.PORT.get(this.properties);
     if (port == null) {
-      port = hostListProviderService.getDialect().getDefaultPort();
+      port = this.hostListProviderService.getDialect().getDefaultPort();
     }
 
     this.initialHostList = this.connectionUrlParser.getHostsFromConnectionUrl(this.originalUrl, false, port, () =>
@@ -74,17 +97,8 @@ export class RdsHostListProvider implements DynamicHostListProvider {
 
     this.initialHost = this.initialHostList[0];
     this.hostListProviderService.setInitialConnectionHostInfo(this.initialHost);
-    this.refreshRateNano = WrapperProperties.CLUSTER_TOPOLOGY_REFRESH_RATE_MS.get(this.properties) * 1000000;
-    this.rdsUrlType = this.rdsHelper.identifyRdsType(this.initialHost.host);
-  }
 
-  init(): void {
-    if (this.isInitialized) {
-      return;
-    }
-
-    this.isPrimaryClusterId = false;
-
+    this.clusterId = WrapperProperties.CLUSTER_ID.get(this.properties);
     const hostInfoBuilder = this.hostListProviderService.getHostInfoBuilder();
 
     this.clusterInstanceTemplate = hostInfoBuilder
@@ -93,58 +107,62 @@ export class RdsHostListProvider implements DynamicHostListProvider {
       .build();
 
     this.validateHostPatternSetting(this.clusterInstanceTemplate.host);
-
-    const clusterIdSetting: string = WrapperProperties.CLUSTER_ID.get(this.properties);
-    if (clusterIdSetting) {
-      this.clusterId = clusterIdSetting;
-    } else if (this.rdsUrlType === RdsUrlType.RDS_PROXY) {
-      // Each proxy is associated with a single cluster, so it's safe to use RDS Proxy Url as cluster
-      // identification
-      this.clusterId = this.initialHost.url;
-    } else if (this.rdsUrlType.isRds) {
-      const clusterSuggestedResult: ClusterSuggestedResult | null = this.getSuggestedClusterId(this.initialHost.hostAndPort);
-      if (clusterSuggestedResult && clusterSuggestedResult.clusterId) {
-        this.clusterId = clusterSuggestedResult.clusterId;
-        this.isPrimaryClusterId = clusterSuggestedResult.isPrimaryClusterId;
-      } else {
-        const clusterRdsHostUrl: string | null = this.rdsHelper.getRdsClusterHostUrl(this.initialHost.host);
-        if (clusterRdsHostUrl) {
-          this.clusterId = this.clusterInstanceTemplate.isPortSpecified()
-            ? `${clusterRdsHostUrl}:${this.clusterInstanceTemplate.port}`
-            : clusterRdsHostUrl;
-          this.isPrimaryClusterId = true;
-          RdsHostListProvider.primaryClusterIdCache.put(this.clusterId, true, this.suggestedClusterIdRefreshRateNano);
-        }
-      }
-    }
-
-    this.isInitialized = true;
+    this.rdsUrlType = this.rdsHelper.identifyRdsType(this.initialHost.host);
   }
 
-  async forceRefresh(): Promise<HostInfo[]>;
-  async forceRefresh(targetClient: ClientWrapper): Promise<HostInfo[]>;
-  async forceRefresh(targetClient?: ClientWrapper): Promise<HostInfo[]> {
+  protected async getOrCreateMonitor(): Promise<ClusterTopologyMonitor> {
+    const initializer: MonitorInitializer = {
+      createMonitor: (servicesContainer: FullServicesContainer): ClusterTopologyMonitor => {
+        return new ClusterTopologyMonitorImpl(
+          servicesContainer,
+          this.topologyUtils,
+          this.clusterId,
+          this.initialHost,
+          this.properties,
+          this.clusterInstanceTemplate,
+          this.refreshRateNano,
+          this.highRefreshRateNano
+        );
+      }
+    };
+
+    return await this.servicesContainers.monitorService.runIfAbsent(
+      ClusterTopologyMonitorImpl,
+      this.clusterId,
+      this.servicesContainers,
+      this.properties,
+      initializer
+    );
+  }
+
+  async forceRefresh(): Promise<HostInfo[]> {
+    return this.forceMonitoringRefresh(false, RdsHostListProvider.DEFAULT_TOPOLOGY_QUERY_TIMEOUT_MS);
+  }
+
+  async forceMonitoringRefresh(verifyTopology: boolean, timeoutMs: number): Promise<HostInfo[]> {
     this.init();
 
-    const currentClient = targetClient ?? this.hostListProviderService.getCurrentClient().targetClient;
-    if (currentClient) {
-      const results: FetchTopologyResult = await this.getTopology(currentClient, true);
-      this.hostList = results.hosts;
-      return Array.from(this.hostList);
+    if (!this.pluginService.isDialectConfirmed()) {
+      // We need to confirm the dialect before creating a topology monitor so that it uses the correct SQL queries.
+      // Return the original hosts parsed from the connection string.
+      return this.initialHostList;
     }
-    throw new AwsWrapperError("Could not retrieve targetClient.");
+
+    const hosts = await this.forceRefreshMonitor(verifyTopology, timeoutMs);
+    if (hosts && hosts.length > 0) {
+      return hosts;
+    }
+
+    // Check for cached topology as a fallback.
+    const storedTopology = this.getStoredTopology();
+    if (storedTopology && storedTopology.length > 0) {
+      return storedTopology;
+    }
+    return this.initialHostList;
   }
 
-  async getHostRole(client: ClientWrapper, dialect: DatabaseDialect): Promise<HostRole> {
-    if (!isDialectTopologyAware(dialect)) {
-      throw new TypeError(Messages.get("RdsHostListProvider.incorrectDialect"));
-    }
-
-    if (client) {
-      return await dialect.getHostRole(client);
-    } else {
-      throw new AwsWrapperError(Messages.get("AwsClient.targetClientNotDefined"));
-    }
+  async getHostRole(client: ClientWrapper, _dialect: DatabaseDialect): Promise<HostRole> {
+    return this.topologyUtils.getHostRole(client);
   }
 
   async getWriterId(client: ClientWrapper): Promise<string | null> {
@@ -155,214 +173,99 @@ export class RdsHostListProvider implements DynamicHostListProvider {
 
     if (client) {
       return await dialect.getWriterId(client);
-    } else {
-      throw new AwsWrapperError(Messages.get("AwsClient.targetClientNotDefined"));
     }
+
+    throw new AwsWrapperError(Messages.get("AwsClient.targetClientNotDefined"));
   }
 
-  async identifyConnection(targetClient: ClientWrapper, dialect: DatabaseDialect): Promise<HostInfo | null> {
-    if (!isDialectTopologyAware(dialect)) {
-      throw new TypeError(Messages.get("RdsHostListProvider.incorrectDialect"));
+  async identifyConnection(targetClient: ClientWrapper): Promise<HostInfo | null> {
+    const instanceIds: [string, string] = await this.topologyUtils.getInstanceId(targetClient);
+    if (instanceIds.some((id) => !id)) {
+      return null;
     }
-    const instanceName = await dialect.identifyConnection(targetClient);
 
-    return this.refresh(targetClient).then((topology) => {
-      const matches = topology.filter((host) => host.hostId === instanceName);
-      return matches.length === 0 ? null : matches[0];
-    });
+    let topology = await this.refresh();
+    if (!topology) {
+      topology = await this.forceRefresh();
+    }
+
+    if (!topology) {
+      return null;
+    }
+
+    const instanceId = instanceIds[0];
+    const instanceName = instanceIds[1];
+    return topology.find((host) => instanceId === host.hostId || instanceName === host.host) ?? null;
   }
 
-  async refresh(): Promise<HostInfo[]>;
-  async refresh(targetClient: ClientWrapper): Promise<HostInfo[]>;
-  async refresh(targetClient?: ClientWrapper): Promise<HostInfo[]> {
+  async refresh(): Promise<HostInfo[]> {
     this.init();
 
-    const currentClient = targetClient ?? this.hostListProviderService.getCurrentClient().targetClient;
-    const results: FetchTopologyResult = await this.getTopology(currentClient, false);
-    logger.debug(logTopology(results.hosts, results.isCachedData ? "[From cache] " : ""));
-    this.hostList = results.hosts;
-    return this.hostList;
+    const results: FetchTopologyResult = await this.getTopology();
+    return results.hosts;
   }
 
-  async getTopology(targetClient: ClientWrapper | undefined, forceUpdate: boolean): Promise<FetchTopologyResult> {
+  async getTopology(): Promise<FetchTopologyResult> {
     this.init();
 
-    if (!this.clusterId) {
-      throw new AwsWrapperError("no cluster id");
-    }
+    const storedTopology: HostInfo[] | null = this.getStoredTopology();
 
-    const suggestedPrimaryClusterId: string | null = RdsHostListProvider.suggestedPrimaryClusterIdCache.get(this.clusterId);
-    if (suggestedPrimaryClusterId && this.clusterId !== suggestedPrimaryClusterId) {
-      this.clusterId = suggestedPrimaryClusterId;
-      this.isPrimaryClusterId = true;
-    }
-
-    const cachedHosts: HostInfo[] | null = RdsHostListProvider.topologyCache.get(this.clusterId);
-
-    // This clusterId is a primary one and is about to create a new entry in the cache.
-    // When a primary entry is created it needs to be suggested for other (non-primary) entries.
-    // Remember a flag to do suggestion after cache is updated.
-    const needToSuggest: boolean = !cachedHosts && this.isPrimaryClusterId === true;
-    if (!cachedHosts || forceUpdate) {
+    if (!storedTopology) {
       // need to re-fetch the topology.
-      if (!targetClient || !(await this.hostListProviderService.isClientValid(targetClient))) {
+
+      if (!this.pluginService.isDialectConfirmed()) {
+        // We need to confirm the dialect before creating a topology monitor so that it uses the correct SQL queries.
+        // We will return the original hosts parsed from the connections string until the dialect has been confirmed.
         return new FetchTopologyResult(false, this.initialHostList);
       }
 
-      const hosts = await this.queryForTopology(targetClient, this.hostListProviderService.getDialect());
+      const hosts = await this.forceRefreshMonitor(false, RdsHostListProvider.DEFAULT_TOPOLOGY_QUERY_TIMEOUT_MS);
       if (hosts && hosts.length > 0) {
-        RdsHostListProvider.topologyCache.put(this.clusterId, hosts, this.refreshRateNano);
-        if (needToSuggest) {
-          this.suggestPrimaryCluster(hosts);
-        }
         return new FetchTopologyResult(false, hosts);
       }
     }
 
-    if (!cachedHosts) {
+    if (!storedTopology) {
       return new FetchTopologyResult(false, this.initialHostList);
     } else {
-      return new FetchTopologyResult(true, cachedHosts);
+      return new FetchTopologyResult(true, storedTopology);
     }
   }
 
-  private getSuggestedClusterId(hostAndPort: string): ClusterSuggestedResult | null {
-    for (const [key, hosts] of RdsHostListProvider.topologyCache.getEntries()) {
-      const isPrimaryCluster: boolean = RdsHostListProvider.primaryClusterIdCache.get(key, false, this.suggestedClusterIdRefreshRateNano) ?? false;
-      if (key === hostAndPort) {
-        return new ClusterSuggestedResult(hostAndPort, isPrimaryCluster);
+  async getCurrentTopology(targetClient: ClientWrapper, dialect: DatabaseDialect): Promise<HostInfo[]> {
+    this.init();
+    return await this.topologyUtils.queryForTopology(targetClient, dialect, this.initialHost, this.clusterInstanceTemplate);
+  }
+
+  protected async forceRefreshMonitor(verifyTopology: boolean, timeoutMs: number): Promise<HostInfo[] | null> {
+    const monitor = await this.getOrCreateMonitor();
+    try {
+      return await monitor.forceMonitoringRefresh(verifyTopology, timeoutMs);
+    } catch (error) {
+      if (error instanceof AwsTimeoutError) {
+        return null;
       }
-
-      if (hosts) {
-        for (const hostInfo of hosts) {
-          if (hostInfo.hostAndPort === hostAndPort) {
-            logger.debug(Messages.get("RdsHostListProvider.suggestedClusterId", key, hostAndPort));
-            return new ClusterSuggestedResult(key, isPrimaryCluster);
-          }
-        }
-      }
-    }
-    return null;
-  }
-
-  suggestPrimaryCluster(primaryClusterHosts: HostInfo[]): void {
-    if (!primaryClusterHosts) {
-      return;
-    }
-
-    const primaryClusterHostUrls: Set<string> = new Set<string>();
-    primaryClusterHosts.forEach((hostInfo) => {
-      primaryClusterHostUrls.add(hostInfo.url);
-    });
-
-    for (const [clusterId, clusterHosts] of RdsHostListProvider.topologyCache.getEntries()) {
-      const isPrimaryCluster: boolean | null = RdsHostListProvider.primaryClusterIdCache.get(
-        clusterId,
-        false,
-        this.suggestedClusterIdRefreshRateNano
-      );
-      const suggestedPrimaryClusterId: string | null = RdsHostListProvider.suggestedPrimaryClusterIdCache.get(clusterId);
-      if (isPrimaryCluster || suggestedPrimaryClusterId || !clusterHosts) {
-        continue;
-      }
-
-      for (const clusterHost of clusterHosts) {
-        if (primaryClusterHostUrls.has(clusterHost.url)) {
-          RdsHostListProvider.suggestedPrimaryClusterIdCache.put(clusterId, this.clusterId, this.suggestedClusterIdRefreshRateNano);
-          break;
-        }
-      }
+      throw error;
     }
   }
 
-  async queryForTopology(targetClient: ClientWrapper, dialect: DatabaseDialect): Promise<HostInfo[]> {
-    if (!isDialectTopologyAware(dialect)) {
-      throw new TypeError(Messages.get("RdsHostListProvider.incorrectDialect"));
-    }
-
-    return await dialect.queryForTopology(targetClient, this).then((res: any) => this.processQueryResults(res));
-  }
-
-  protected async processQueryResults(result: HostInfo[]): Promise<HostInfo[]> {
-    const hostMap: Map<string, HostInfo> = new Map<string, HostInfo>();
-
-    let hosts: HostInfo[] = [];
-    const writers: HostInfo[] = [];
-    result.forEach((host) => {
-      hostMap.set(host.host, host);
-    });
-
-    hostMap.forEach((host) => {
-      if (host.role !== HostRole.WRITER) {
-        hosts.push(host);
-      } else {
-        writers.push(host);
-      }
-    });
-
-    const writerCount: number = writers.length;
-    if (writerCount === 0) {
-      hosts = [];
-    } else if (writerCount === 1) {
-      hosts.push(writers[0]);
-    } else {
-      const sortedWriters: HostInfo[] = writers.sort((a, b) => {
-        return b.lastUpdateTime - a.lastUpdateTime; // reverse order
-      });
-
-      hosts.push(sortedWriters[0]);
-    }
-
-    return hosts;
-  }
-
-  createHost(host: string, isWriter: boolean, weight: number, lastUpdateTime: number, port?: number): HostInfo {
-    host = !host ? "?" : host;
-    const endpoint: string | null = this.getHostEndpoint(host);
-    if (!port) {
-      port = this.clusterInstanceTemplate?.isPortSpecified() ? this.clusterInstanceTemplate?.port : this.initialHost?.port;
-    }
-
-    return this.hostListProviderService
-      .getHostInfoBuilder()
-      .withHost(endpoint ?? "")
-      .withPort(port ?? -1)
-      .withRole(isWriter ? HostRole.WRITER : HostRole.READER)
-      .withAvailability(HostAvailability.AVAILABLE)
-      .withWeight(weight)
-      .withLastUpdateTime(lastUpdateTime)
-      .withHostId(host)
-      .build();
-  }
-
-  private getHostEndpoint(hostName: string): string | null {
-    if (!this.clusterInstanceTemplate || !this.clusterInstanceTemplate.host) {
-      return null;
-    }
-    const host = this.clusterInstanceTemplate.host;
-    return host.replace("?", hostName);
-  }
-
-  getCachedTopology(): HostInfo[] | null {
+  getStoredTopology(): HostInfo[] | null {
     if (!this.clusterId) {
       return null;
     }
-    return RdsHostListProvider.topologyCache.get(this.clusterId) ?? null;
-  }
 
-  static clearAll(): void {
-    RdsHostListProvider.topologyCache.clear();
-    RdsHostListProvider.primaryClusterIdCache.clear();
-    RdsHostListProvider.suggestedPrimaryClusterIdCache.clear();
+    const topology: Topology = this.storageService.get(Topology, this.clusterId);
+
+    return topology == null ? null : topology.hosts;
   }
 
   clear(): void {
     if (this.clusterId) {
-      RdsHostListProvider.topologyCache.delete(this.clusterId);
+      this.servicesContainers.storageService.remove(Topology, this.clusterId);
     }
   }
 
-  private validateHostPatternSetting(hostPattern: string) {
+  protected validateHostPatternSetting(hostPattern: string) {
     if (!this.rdsHelper.isDnsPatternValid(hostPattern)) {
       const message: string = Messages.get("RdsHostListProvider.invalidPattern.suggestedClusterId");
       logger.error(message);
@@ -370,7 +273,7 @@ export class RdsHostListProvider implements DynamicHostListProvider {
     }
 
     const rdsUrlType: RdsUrlType = this.rdsHelper.identifyRdsType(hostPattern);
-    if (rdsUrlType == RdsUrlType.RDS_PROXY) {
+    if (rdsUrlType == RdsUrlType.RDS_PROXY || rdsUrlType == RdsUrlType.RDS_PROXY_ENDPOINT) {
       const message: string = Messages.get("RdsHostListProvider.clusterInstanceHostPatternNotSupportedForRDSProxy");
       logger.error(message);
       throw new AwsWrapperError(message);
@@ -404,15 +307,5 @@ export class FetchTopologyResult {
   constructor(isCachedData: boolean, hosts: HostInfo[]) {
     this.hosts = hosts;
     this.isCachedData = isCachedData;
-  }
-}
-
-class ClusterSuggestedResult {
-  clusterId: string;
-  isPrimaryClusterId: boolean;
-
-  constructor(clusterId: string, isPrimaryClusterId: boolean) {
-    this.clusterId = clusterId;
-    this.isPrimaryClusterId = isPrimaryClusterId;
   }
 }

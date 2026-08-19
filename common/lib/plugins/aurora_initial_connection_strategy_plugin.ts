@@ -28,12 +28,14 @@ import { sleep } from "../utils/utils";
 import { HostAvailability } from "../host_availability/host_availability";
 import { logger } from "../../logutils";
 import { ClientWrapper } from "../client_wrapper";
+import { AccessibleRegions } from "../utils/accessible_regions";
 
 export class AuroraInitialConnectionStrategyPlugin extends AbstractConnectionPlugin {
   private static readonly subscribedMethods = new Set<string>(["initHostProvider", "connect"]);
   private pluginService: PluginService;
   private hostListProviderService?: HostListProviderService;
   private rdsUtils = new RdsUtils();
+  private accessibleRegions: string[] | null = null;
 
   constructor(pluginService: PluginService) {
     super();
@@ -60,6 +62,8 @@ export class AuroraInitialConnectionStrategyPlugin extends AbstractConnectionPlu
     isInitialConnection: boolean,
     connectFunc: () => Promise<ClientWrapper>
   ): Promise<ClientWrapper> {
+    this.accessibleRegions = AccessibleRegions.parse(props);
+
     const type = this.rdsUtils.identifyRdsType(hostInfo.host);
 
     if (!type.isRdsCluster) {
@@ -110,7 +114,7 @@ export class AuroraInitialConnectionStrategyPlugin extends AbstractConnectionPlu
         if (writerCandidate === null || this.rdsUtils.isRdsClusterDns(writerCandidate.host)) {
           // Writer is not found. It seems that topology is outdated.
           writerCandidateClient = await connectFunc();
-          await this.pluginService.forceRefreshHostList(writerCandidateClient);
+          await this.pluginService.forceRefreshHostList();
           writerCandidate = await this.pluginService.identifyConnection(writerCandidateClient);
 
           if (writerCandidate) {
@@ -121,9 +125,7 @@ export class AuroraInitialConnectionStrategyPlugin extends AbstractConnectionPlu
               continue;
             }
 
-            if (isInitialConnection) {
-              this.hostListProviderService.setInitialConnectionHostInfo(writerCandidate);
-            }
+            this.pluginService.setRoutedHostInfo(writerCandidate);
           }
           return writerCandidateClient;
         }
@@ -132,23 +134,21 @@ export class AuroraInitialConnectionStrategyPlugin extends AbstractConnectionPlu
         if ((await this.pluginService.getHostRole(writerCandidateClient)) !== HostRole.WRITER) {
           // If the new connection resolves to a reader instance, this means the topology is outdated.
           // Force refresh to update the topology.
-          await this.pluginService.forceRefreshHostList(writerCandidateClient);
+          await this.pluginService.forceRefreshHostList();
           await this.pluginService.abortTargetClient(writerCandidateClient);
           await sleep(retryDelayMs);
           continue;
         }
 
         // Writer connection is valid and verified.
-        if (isInitialConnection) {
-          this.hostListProviderService.setInitialConnectionHostInfo(writerCandidate);
-        }
+        this.pluginService.setRoutedHostInfo(writerCandidate);
         return writerCandidateClient;
       } catch (error: any) {
         await this.pluginService.abortTargetClient(writerCandidateClient);
         if (this.pluginService.isLoginError(error) || !writerCandidate) {
           throw error;
         } else if (writerCandidate) {
-          this.pluginService.setAvailability(writerCandidate.allAliases, HostAvailability.NOT_AVAILABLE);
+          this.pluginService.setAvailability(writerCandidate, HostAvailability.NOT_AVAILABLE);
         }
       }
     }
@@ -177,7 +177,7 @@ export class AuroraInitialConnectionStrategyPlugin extends AbstractConnectionPlu
         if (readerCandidate === null || this.rdsUtils.isRdsClusterDns(readerCandidate.host)) {
           // Reader is not found. It seems that topology is outdated.
           readerCandidateClient = await connectFunc();
-          await this.pluginService.forceRefreshHostList(readerCandidateClient);
+          await this.pluginService.forceRefreshHostList();
           readerCandidate = await this.pluginService.identifyConnection(readerCandidateClient);
 
           if (readerCandidate) {
@@ -185,9 +185,7 @@ export class AuroraInitialConnectionStrategyPlugin extends AbstractConnectionPlu
               if (this.hasNoReaders()) {
                 // It seems that cluster has no readers. Simulate Aurora reader cluster endpoint logic
                 // and return the current (writer) client.
-                if (isInitialConnection) {
-                  this.hostListProviderService.setInitialConnectionHostInfo(readerCandidate);
-                }
+                this.pluginService.setRoutedHostInfo(readerCandidate);
                 return readerCandidateClient;
               }
               await this.pluginService.abortTargetClient(readerCandidateClient);
@@ -196,9 +194,7 @@ export class AuroraInitialConnectionStrategyPlugin extends AbstractConnectionPlu
             }
 
             // Reader connection is valid and verified.
-            if (isInitialConnection) {
-              this.hostListProviderService.setInitialConnectionHostInfo(readerCandidate);
-            }
+            this.pluginService.setRoutedHostInfo(readerCandidate);
           } else {
             logger.debug("Reader candidate not found");
           }
@@ -209,14 +205,12 @@ export class AuroraInitialConnectionStrategyPlugin extends AbstractConnectionPlu
         if ((await this.pluginService.getHostRole(readerCandidateClient)) !== HostRole.READER) {
           // If the new connection resolves to a writer instance, this means the topology is outdated.
           // Force refresh to update the topology.
-          await this.pluginService.forceRefreshHostList(readerCandidateClient);
+          await this.pluginService.forceRefreshHostList();
 
           if (this.hasNoReaders()) {
             // It seems that cluster has no readers. Simulate Aurora reader cluster endpoint logic
             // and return the current (writer) client.
-            if (isInitialConnection) {
-              this.hostListProviderService.setInitialConnectionHostInfo(readerCandidate);
-            }
+            this.pluginService.setRoutedHostInfo(readerCandidate);
             return readerCandidateClient;
           }
           await this.pluginService.abortTargetClient(readerCandidateClient);
@@ -224,30 +218,31 @@ export class AuroraInitialConnectionStrategyPlugin extends AbstractConnectionPlu
           continue;
         }
         // Reader connection is valid and verified.
-        if (isInitialConnection) {
-          this.hostListProviderService.setInitialConnectionHostInfo(readerCandidate);
-        }
+        this.pluginService.setRoutedHostInfo(readerCandidate);
         return readerCandidateClient;
       } catch (error: any) {
         await this.pluginService.abortTargetClient(readerCandidateClient);
         if (this.pluginService.isLoginError(error) || !readerCandidate) {
           throw error;
         } else if (readerCandidate) {
-          this.pluginService.setAvailability(readerCandidate.allAliases, HostAvailability.NOT_AVAILABLE);
+          this.pluginService.setAvailability(readerCandidate, HostAvailability.NOT_AVAILABLE);
         }
       }
     }
   }
 
   private getWriter(): HostInfo | null {
-    return this.pluginService.getAllHosts().find((x) => x.role === HostRole.WRITER) ?? null;
+    return this.getAccessibleHosts().find((x) => x.role === HostRole.WRITER) ?? null;
   }
 
   private getReader(props: Map<string, any>): HostInfo | undefined {
     const strategy = WrapperProperties.READER_HOST_SELECTOR_STRATEGY.get(props);
     if (this.pluginService.acceptsStrategy(HostRole.READER, strategy)) {
       try {
-        return this.pluginService.getHostInfoByStrategy(HostRole.READER, strategy);
+        // Restrict strategy-based selection to accessible regions so the initial connection never
+        // targets a host we can't reach. When no regions are configured, the full host list is used.
+        const accessibleReaders = this.accessibleRegions ? this.getAccessibleHosts().filter((x) => x.role === HostRole.READER) : undefined;
+        return this.pluginService.getHostInfoByStrategy(HostRole.READER, strategy, accessibleReaders);
       } catch (error: any) {
         // Host isn't found
         logger.error(error.message);
@@ -257,6 +252,16 @@ export class AuroraInitialConnectionStrategyPlugin extends AbstractConnectionPlu
   }
 
   private hasNoReaders(): boolean {
-    return this.pluginService.getAllHosts().find((x) => x.role === HostRole.READER) !== undefined;
+    return !this.getAccessibleHosts().some((x) => x.role === HostRole.READER);
+  }
+
+  /**
+   * Returns the current host list filtered to the configured accessible regions. When no accessible
+   * regions are configured, the full host list is returned unchanged. Region filtering is applied
+   * before any strategy or role-based selection so the initial connection never targets an
+   * unreachable region.
+   */
+  private getAccessibleHosts(): HostInfo[] {
+    return AccessibleRegions.filterHosts(this.pluginService.getAllHosts(), this.accessibleRegions);
   }
 }

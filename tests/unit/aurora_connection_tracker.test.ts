@@ -74,8 +74,7 @@ describe("aurora connection tracker tests", () => {
     const client = await plugin.connect(hostInfo, props, isInitialConnection, mockConnectFunc);
     expect(client).toBe(mockClientWrapper);
     verify(mockTracker.populateOpenedConnectionQueue(hostInfo, mockClientWrapper)).called();
-    const aliases = hostInfo.aliases;
-    expect(aliases.size).toBe(0);
+    verify(mockPluginService.setTrackedConnectionHost(anything())).called();
   });
 
   it("test invalidate opened connections when writer host not changed", async () => {

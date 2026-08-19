@@ -17,10 +17,10 @@
 import { ConfigurationProfile } from "./configuration_profile";
 import { ConfigurationProfilePresetCodes } from "./configuration_profile_codes";
 import { WrapperProperties } from "../wrapper_property";
-import { HostMonitoringPluginFactory } from "../plugins/efm/host_monitoring_plugin_factory";
+import { HostMonitoringPluginFactory } from "../plugins/efm/v1/host_monitoring_plugin_factory";
 import { AuroraInitialConnectionStrategyFactory } from "../plugins/aurora_initial_connection_strategy_plugin_factory";
 import { AuroraConnectionTrackerPluginFactory } from "../plugins/connection_tracker/aurora_connection_tracker_plugin_factory";
-import { ReadWriteSplittingPluginFactory } from "../plugins/read_write_splitting_plugin_factory";
+import { ReadWriteSplittingPluginFactory } from "../plugins/read_write_splitting/read_write_splitting_plugin_factory";
 import { FailoverPluginFactory } from "../plugins/failover/failover_plugin_factory";
 import { InternalPooledConnectionProvider } from "../internal_pooled_connection_provider";
 import { AwsPoolConfig } from "../aws_pool_config";
