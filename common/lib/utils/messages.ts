@@ -103,7 +103,7 @@ const MESSAGES: Record<string, string> = {
   "Failover.timeoutError": "Internal failover task has timed out.",
   "Failover.newWriterNotAllowed":
     "The failover process identified the new writer but the host is not in the list of allowed hosts. New writer host: '%s'. Allowed hosts: '%s'.",
-  "GDBRegionUtils.unableToRetrieveGlobalClusterARN": "Unable to retrieve the primary global region for the provided global database cluster.",
+  "GlobalDbRegionUtils.unableToRetrieveGlobalClusterARN": "Unable to retrieve the primary global region for the provided global database cluster.",
   "StaleDnsHelper.writerHostInfo": "Writer host: '%s'.",
   "StaleDnsHelper.staleDnsDetected": "Stale DNS data detected. Opening a connection to '%s'.",
   "StaleDnsHelper.reset": "Reset stored writer host.",
@@ -379,13 +379,13 @@ const MESSAGES: Record<string, string> = {
   "Utils.invalidPatternFormat":
     "Invalid pattern format '%s'. Expected format: 'region:host-pattern' (e.g., 'us-east-1:?.cluster-xyz.us-east-1.rds.amazonaws.com').",
   "AuroraMonitoringConnectionHandler.initialized": "AuroraMonitoringConnectionHandler initialized with priorities: '%s'.",
-  "GdbMonitoringConnectionHandler.initialized": "GdbMonitoringConnectionHandler initialized with priorities: '%s'.",
-  "GdbMonitoringConnectionHandler.unrecognizedPriority":
+  "GlobalDbMonitoringConnectionHandler.initialized": "GlobalDbMonitoringConnectionHandler initialized with priorities: '%s'.",
+  "GlobalDbMonitoringConnectionHandler.unrecognizedPriority":
     "Unrecognized 'gdbMonitoringConnectionPriority' value '%s'. It does not match a known priority variant and does not look like an AWS region, so it will be treated as a region literal that never matches. This is likely a typo.",
   "GlobalAuroraTopologyMonitor.accessibleRegions": "GlobalAuroraTopologyMonitor: accessible regions = '%s'.",
   "GlobalAuroraTopologyMonitor.cannotFindRegionTemplate": "Cannot find cluster instance template for region '%s'.",
   "GlobalAuroraTopologyMonitor.initialHostNotInAccessibleRegion": "Initial host '%s' in region '%s' is not within the list of accessible regions.",
-  "GlobalAuroraTopologyMonitor.invalidTopologyUtils": "TopologyUtils must implement GdbTopologyUtils for GlobalAuroraTopologyMonitor.",
+  "GlobalAuroraTopologyMonitor.invalidTopologyUtils": "TopologyUtils must implement GlobalDbTopologyUtils for GlobalAuroraTopologyMonitor.",
   "GlobalDbFailoverPlugin.missingHomeRegion":
     "The 'failoverHomeRegion' property is required when connecting to a Global Aurora Database without a region in the URL.",
   "GlobalDbFailoverPlugin.missingInitialHost": "Unable to determine the initial connection host.",
@@ -397,14 +397,15 @@ const MESSAGES: Record<string, string> = {
     "Unable to find a candidate host with the expected role (%s) based on the given host selection strategy: %s",
   "GlobalDbFailoverPlugin.writerInInaccessibleRegion":
     "Writer host '%s' from region '%s' is not within the list of accessible regions. Failover cannot proceed.",
-  "GdbReadWriteSplittingPlugin.missingHomeRegion":
+  "GlobalDbReadWriteSplittingPlugin.missingHomeRegion":
     "Unable to parse home region from endpoint '%s'. Please ensure you have set the 'gdbRwHomeRegion' connection parameter.",
-  "GdbReadWriteSplittingPlugin.cantConnectWriterOutOfHomeRegion": "Writer connection to '%s' is not allowed since it is out of home region '%s'.",
-  "GdbReadWriteSplittingPlugin.writerInInaccessibleRegion": "Writer host '%s' from region '%s' is not within the list of accessible regions.",
-  "GdbReadWriteSplittingPlugin.noAvailableReadersInHomeRegion": "No available reader hosts in home region '%s'.",
-  "GdbReadWriteSplittingPlugin.noAvailableReadersInAccessibleRegions": "No available reader hosts in accessible regions '%s'.",
-  "GdbReadWriteSplittingPlugin.parameterValue": "%s=%s",
-  "Gdb.homeRegionNotAccessible":
+  "GlobalDbReadWriteSplittingPlugin.cantConnectWriterOutOfHomeRegion":
+    "Writer connection to '%s' is not allowed since it is out of home region '%s'.",
+  "GlobalDbReadWriteSplittingPlugin.writerInInaccessibleRegion": "Writer host '%s' from region '%s' is not within the list of accessible regions.",
+  "GlobalDbReadWriteSplittingPlugin.noAvailableReadersInHomeRegion": "No available reader hosts in home region '%s'.",
+  "GlobalDbReadWriteSplittingPlugin.noAvailableReadersInAccessibleRegions": "No available reader hosts in accessible regions '%s'.",
+  "GlobalDbReadWriteSplittingPlugin.parameterValue": "%s=%s",
+  "GlobalDb.homeRegionNotAccessible":
     "The home region '%s' must be included in the accessible regions '%s'. Please add the home region to 'gdbAccessibleRegions' or adjust the configured home region.",
   "BatchingEventPublisher.errorDeliveringImmediateEvent": "Error delivering immediate event: %s",
   "WrapperProperty.invalidValue": "Invalid value '%s' for property '%s'. Allowed values: %s"

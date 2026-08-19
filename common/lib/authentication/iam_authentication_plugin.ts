@@ -28,7 +28,7 @@ import { RegionUtils } from "../utils/region_utils";
 import { CanReleaseResources } from "../can_release_resources";
 import { RdsUrlType } from "../utils/rds_url_type";
 import { RdsUtils } from "../utils/rds_utils";
-import { GDBRegionUtils } from "../utils/gdb_region_utils";
+import { GlobalDbRegionUtils } from "../utils/global_db_region_utils";
 
 export class IamAuthenticationPlugin extends AbstractConnectionPlugin implements CanReleaseResources {
   private static readonly SUBSCRIBED_METHODS = new Set<string>(["connect", "forceConnect"]);
@@ -85,7 +85,7 @@ export class IamAuthenticationPlugin extends AbstractConnectionPlugin implements
     const port = this.iamAuthUtils.getIamPort(props, hostInfo, this.pluginService.getCurrentClient().defaultPort);
 
     const type: RdsUrlType = this.rdsUtils.identifyRdsType(host.host);
-    this.regionUtils = type == RdsUrlType.RDS_GLOBAL_WRITER_CLUSTER ? new GDBRegionUtils() : new RegionUtils();
+    this.regionUtils = type == RdsUrlType.RDS_GLOBAL_WRITER_CLUSTER ? new GlobalDbRegionUtils() : new RegionUtils();
     const region: string | null = await this.regionUtils.getRegion(WrapperProperties.IAM_REGION.name, host, props);
 
     if (!region) {

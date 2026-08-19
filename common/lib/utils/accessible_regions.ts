@@ -22,7 +22,7 @@ export class AccessibleRegions {
   private static readonly rdsUtils = new RdsUtils();
 
   static parse(props: Map<string, any>): string[] | null {
-    const value = WrapperProperties.GDB_ACCESSIBLE_REGIONS.get(props);
+    const value = WrapperProperties.GLOBAL_DB_ACCESSIBLE_REGIONS.get(props);
     if (!value || value.trim().length === 0) {
       return null;
     }

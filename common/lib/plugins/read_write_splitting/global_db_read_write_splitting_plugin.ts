@@ -25,7 +25,7 @@ import { ClientWrapper } from "../../client_wrapper";
 import { equalsIgnoreCase } from "../../utils/utils";
 import { AccessibleRegions } from "../../utils/accessible_regions";
 
-export class GdbReadWriteSplittingPlugin extends ReadWriteSplittingPlugin {
+export class GlobalDbReadWriteSplittingPlugin extends ReadWriteSplittingPlugin {
   protected readonly rdsUtils: RdsUtils = new RdsUtils();
 
   protected restrictWriterToHomeRegion: boolean;
@@ -39,10 +39,10 @@ export class GdbReadWriteSplittingPlugin extends ReadWriteSplittingPlugin {
     if (this.isInitialized) {
       return;
     }
-    this.restrictWriterToHomeRegion = WrapperProperties.GDB_RW_RESTRICT_WRITER_TO_HOME_REGION.get(properties);
-    this.restrictReaderToHomeRegion = WrapperProperties.GDB_RW_RESTRICT_READER_TO_HOME_REGION.get(properties);
+    this.restrictWriterToHomeRegion = WrapperProperties.GLOBAL_DB_RW_RESTRICT_WRITER_TO_HOME_REGION.get(properties);
+    this.restrictReaderToHomeRegion = WrapperProperties.GLOBAL_DB_RW_RESTRICT_READER_TO_HOME_REGION.get(properties);
 
-    this.homeRegion = WrapperProperties.GDB_RW_HOME_REGION.get(properties);
+    this.homeRegion = WrapperProperties.GLOBAL_DB_RW_HOME_REGION.get(properties);
     if (!this.homeRegion) {
       const rdsUrlType = this.rdsUtils.identifyRdsType(initHostInfo.host);
       if (rdsUrlType.hasRegion) {
@@ -51,22 +51,22 @@ export class GdbReadWriteSplittingPlugin extends ReadWriteSplittingPlugin {
     }
 
     if (!this.homeRegion) {
-      throw new ReadWriteSplittingError(Messages.get("GdbReadWriteSplittingPlugin.missingHomeRegion", initHostInfo.host));
+      throw new ReadWriteSplittingError(Messages.get("GlobalDbReadWriteSplittingPlugin.missingHomeRegion", initHostInfo.host));
     }
 
     this.accessibleRegions = AccessibleRegions.parse(properties);
     if (this.accessibleRegions) {
-      logger.debug(Messages.get("GdbReadWriteSplittingPlugin.parameterValue", "gdbAccessibleRegions", this.accessibleRegions.join(",")));
+      logger.debug(Messages.get("GlobalDbReadWriteSplittingPlugin.parameterValue", "gdbAccessibleRegions", this.accessibleRegions.join(",")));
 
       // The home region must be reachable. If it is excluded from the accessible regions, every
       // reader/writer selection would filter it out, so fail loudly at connect time rather than
       // surfacing confusing "no available hosts" errors later.
       if (!this.accessibleRegions.includes(this.homeRegion.toLowerCase())) {
-        throw new ReadWriteSplittingError(Messages.get("Gdb.homeRegionNotAccessible", this.homeRegion, this.accessibleRegions.join(",")));
+        throw new ReadWriteSplittingError(Messages.get("GlobalDb.homeRegionNotAccessible", this.homeRegion, this.accessibleRegions.join(",")));
       }
     }
 
-    logger.debug(Messages.get("GdbReadWriteSplittingPlugin.parameterValue", "gdbRwHomeRegion", this.homeRegion));
+    logger.debug(Messages.get("GlobalDbReadWriteSplittingPlugin.parameterValue", "gdbRwHomeRegion", this.homeRegion));
 
     this.isInitialized = true;
   }
@@ -84,7 +84,9 @@ export class GdbReadWriteSplittingPlugin extends ReadWriteSplittingPlugin {
   override setWriterClient(writerTargetClient: ClientWrapper | undefined, writerHostInfo: HostInfo) {
     if (writerHostInfo != null && !this.isHostInAccessibleRegion(writerHostInfo)) {
       const writerRegion = this.rdsUtils.getRdsRegion(writerHostInfo.host) ?? "unknown";
-      throw new ReadWriteSplittingError(Messages.get("GdbReadWriteSplittingPlugin.writerInInaccessibleRegion", writerHostInfo.host, writerRegion));
+      throw new ReadWriteSplittingError(
+        Messages.get("GlobalDbReadWriteSplittingPlugin.writerInInaccessibleRegion", writerHostInfo.host, writerRegion)
+      );
     }
 
     if (
@@ -93,7 +95,7 @@ export class GdbReadWriteSplittingPlugin extends ReadWriteSplittingPlugin {
       !equalsIgnoreCase(this.rdsUtils.getRdsRegion(writerHostInfo.host), this.homeRegion)
     ) {
       throw new ReadWriteSplittingError(
-        Messages.get("GdbReadWriteSplittingPlugin.cantConnectWriterOutOfHomeRegion", writerHostInfo.host, this.homeRegion)
+        Messages.get("GlobalDbReadWriteSplittingPlugin.cantConnectWriterOutOfHomeRegion", writerHostInfo.host, this.homeRegion)
       );
     }
     super.setWriterClient(writerTargetClient, writerHostInfo);
@@ -110,14 +112,14 @@ export class GdbReadWriteSplittingPlugin extends ReadWriteSplittingPlugin {
       const hostsInRegion = candidates.filter((x) => equalsIgnoreCase(this.rdsUtils.getRdsRegion(x.host), this.homeRegion));
 
       if (hostsInRegion.length === 0) {
-        throw new ReadWriteSplittingError(Messages.get("GdbReadWriteSplittingPlugin.noAvailableReadersInHomeRegion", this.homeRegion));
+        throw new ReadWriteSplittingError(Messages.get("GlobalDbReadWriteSplittingPlugin.noAvailableReadersInHomeRegion", this.homeRegion));
       }
       return hostsInRegion;
     }
 
     if (this.accessibleRegions && candidates.length === 0) {
       throw new ReadWriteSplittingError(
-        Messages.get("GdbReadWriteSplittingPlugin.noAvailableReadersInAccessibleRegions", this.accessibleRegions.join(","))
+        Messages.get("GlobalDbReadWriteSplittingPlugin.noAvailableReadersInAccessibleRegions", this.accessibleRegions.join(","))
       );
     }
 

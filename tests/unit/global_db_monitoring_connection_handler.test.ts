@@ -20,7 +20,7 @@ import { HostInfoBuilder } from "../../common/lib/host_info_builder";
 import { SimpleHostAvailabilityStrategy } from "../../common/lib/host_availability/simple_host_availability_strategy";
 import { PluginService } from "../../common/lib/plugin_service";
 import { WrapperProperties } from "../../common/lib/wrapper_property";
-import { GdbMonitoringConnectionHandler } from "../../common/lib/host_list_provider/monitoring/gdb_monitoring_connection_handler";
+import { GlobalDbMonitoringConnectionHandler } from "../../common/lib/host_list_provider/monitoring/global_db_monitoring_connection_handler";
 import { ClientWrapper } from "../../common/lib/client_wrapper";
 import { instance, mock, when, anything } from "ts-mockito";
 
@@ -38,7 +38,7 @@ const readerEuWest = hostInRegion("reader-instance.cluster-xyz.eu-west-1.rds.ama
 
 const allCandidates = [writerPrimary, readerPrimary, writerSecondary, readerSecondary, readerEuWest];
 
-describe("GdbMonitoringConnectionHandler", () => {
+describe("GlobalDbMonitoringConnectionHandler", () => {
   let mockPluginService: PluginService;
   let props: Map<string, any>;
   let monitoringClient: ClientWrapper | null;
@@ -49,11 +49,15 @@ describe("GdbMonitoringConnectionHandler", () => {
     monitoringClient = null;
   });
 
-  function createHandler(priority: string | null, accessibleRegions: string[] | null, homeRegion: string | null): GdbMonitoringConnectionHandler {
+  function createHandler(
+    priority: string | null,
+    accessibleRegions: string[] | null,
+    homeRegion: string | null
+  ): GlobalDbMonitoringConnectionHandler {
     if (priority) {
-      props.set(WrapperProperties.GDB_MONITORING_CONNECTION_PRIORITY.name, priority);
+      props.set(WrapperProperties.GLOBAL_DB_MONITORING_CONNECTION_PRIORITY.name, priority);
     }
-    return new GdbMonitoringConnectionHandler(
+    return new GlobalDbMonitoringConnectionHandler(
       instance(mockPluginService),
       props,
       accessibleRegions,

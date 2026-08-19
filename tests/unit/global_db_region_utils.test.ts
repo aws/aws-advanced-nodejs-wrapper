@@ -14,13 +14,13 @@
   limitations under the License.
 */
 
-import { GDBRegionUtils } from "../../common/lib/utils/gdb_region_utils";
+import { GlobalDbRegionUtils } from "../../common/lib/utils/global_db_region_utils";
 
-describe("GDBRegionUtils", () => {
-  let gdbRegionUtils: GDBRegionUtils;
+describe("GlobalDbRegionUtils", () => {
+  let globalDbRegionUtils: GlobalDbRegionUtils;
 
   beforeEach(() => {
-    gdbRegionUtils = new GDBRegionUtils();
+    globalDbRegionUtils = new GlobalDbRegionUtils();
   });
 
   describe("getRegionFromClusterArn", () => {
@@ -35,12 +35,12 @@ describe("GDBRegionUtils", () => {
       ["arn:aws-iso:rds:us-iso-east-1:123456789012:cluster:my-cluster", "us-iso-east-1"],
       ["arn:aws-iso-b:rds:us-isob-east-1:123456789012:cluster:my-cluster", "us-isob-east-1"]
     ])("should extract region from partition-agnostic ARN: %s", (arn, expectedRegion) => {
-      const region = gdbRegionUtils.getRegionFromClusterArn(arn);
+      const region = globalDbRegionUtils.getRegionFromClusterArn(arn);
       expect(region).toBe(expectedRegion);
     });
 
     it.each(["invalid-arn", "arn:aws:s3:::my-bucket", "arn:aws:rds", ""])("should return null for invalid ARN: %s", (invalidArn) => {
-      const region = gdbRegionUtils.getRegionFromClusterArn(invalidArn);
+      const region = globalDbRegionUtils.getRegionFromClusterArn(invalidArn);
       expect(region).toBeNull();
     });
   });

@@ -1,10 +1,10 @@
-# Global Database (GDB) Read/Write Splitting Plugin
+# Global Database (GlobalDb) Read/Write Splitting Plugin
 
-The GDB Read/Write Splitting plugin extends the functionality of the [read/write splitting plugin](./UsingTheReadWriteSplittingPlugin.md) and adopts some additional settings to improve support for Global Databases.
+The GlobalDb Read/Write Splitting plugin extends the functionality of the [read/write splitting plugin](./UsingTheReadWriteSplittingPlugin.md) and adopts some additional settings to improve support for Global Databases.
 
-The GDB Read/Write Splitting plugin adds the notion of a home region and allows users to constrain new connections to this region. Such restrictions may be helpful to prevent opening new connections in environments where remote AWS regions add substantial latency that cannot be tolerated.
+The GlobalDb Read/Write Splitting plugin adds the notion of a home region and allows users to constrain new connections to this region. Such restrictions may be helpful to prevent opening new connections in environments where remote AWS regions add substantial latency that cannot be tolerated.
 
-Unless otherwise stated, all recommendations, configurations and code examples made for the [read/write splitting plugin](./UsingTheReadWriteSplittingPlugin.md) are applicable to the current GDB Read/Write Splitting plugin.
+Unless otherwise stated, all recommendations, configurations and code examples made for the [read/write splitting plugin](./UsingTheReadWriteSplittingPlugin.md) are applicable to the current GlobalDb Read/Write Splitting plugin.
 
 ## Plugin Availability
 
@@ -12,7 +12,7 @@ The plugin is available since version 3.0.0.
 
 ## Loading the Global Database Read/Write Splitting Plugin
 
-The GDB Read/Write Splitting plugin is not loaded by default. To load the plugin, include it in the `plugins` connection parameter. See the example below to properly load the GDB read/write splitting plugin with these plugins.
+The GlobalDb Read/Write Splitting plugin is not loaded by default. To load the plugin, include it in the `plugins` connection parameter. See the example below to properly load the GlobalDb read/write splitting plugin with these plugins.
 
 ```typescript
 const params = {
@@ -29,7 +29,7 @@ const client = new AwsPGClient(params);
 await client.connect();
 ```
 
-If you would like to use the GDB read/write splitting plugin without the failover plugin, make sure you have the `gdbReadWriteSplitting` plugin in the `plugins` property, and that the failover plugin is not part of it.
+If you would like to use the GlobalDb read/write splitting plugin without the failover plugin, make sure you have the `gdbReadWriteSplitting` plugin in the `plugins` property, and that the failover plugin is not part of it.
 
 ```typescript
 const params = {
@@ -41,9 +41,9 @@ const params = {
 > [!WARNING]
 > Do not use the `readWriteSplitting` and `gdbReadWriteSplitting` plugins at the same time for the same connection!
 
-## Using the GDB Read/Write Splitting Plugin against non-GDB clusters
+## Using the GlobalDb Read/Write Splitting Plugin against non-GlobalDb clusters
 
-The GDB Read/Write Splitting plugin can be used against Aurora clusters and RDS clusters. However, since these cluster types are single-region clusters, setting a home region does not make much sense. In these cases, use the original [Read/Write Splitting](./UsingTheReadWriteSplittingPlugin.md) plugin instead.
+The GlobalDb Read/Write Splitting plugin can be used against Aurora clusters and RDS clusters. However, since these cluster types are single-region clusters, setting a home region does not make much sense. In these cases, use the original [Read/Write Splitting](./UsingTheReadWriteSplittingPlugin.md) plugin instead.
 
 ## Configuration Parameters
 

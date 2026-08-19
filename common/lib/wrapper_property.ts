@@ -210,9 +210,9 @@ export interface AwsClientConfig {
   gdbRwRestrictWriterToHomeRegion?: boolean;
   /** Home region for Global Aurora Database failover. */
   failoverHomeRegion?: string;
-  /** Host role to follow during failover when the GDB primary region is in the home region. */
+  /** Host role to follow during failover when the GlobalDb primary region is in the home region. */
   activeHomeFailoverMode?: string;
-  /** Host role to follow during failover when the GDB primary region is not in the home region. */
+  /** Host role to follow during failover when the GlobalDb primary region is not in the home region. */
   inactiveHomeFailoverMode?: string;
   /** Defines whether the inactive cluster writer endpoint in the initial connection URL should be replaced with a writer instance URL from the topology info when available (writer, none). */
   inactiveClusterWriterEndpointSubstitutionRole?: string;
@@ -426,11 +426,11 @@ export class WrapperProperties {
   );
   static readonly FAILOVER_MODE = new WrapperProperty<string>("failoverMode", "Set host role to follow during failover.", "");
 
-  static readonly FAILOVER_HOME_REGION = new WrapperProperty<string>("failoverHomeRegion", "Set home region for GDB failover.", null);
+  static readonly FAILOVER_HOME_REGION = new WrapperProperty<string>("failoverHomeRegion", "Set home region for GlobalDb failover.", null);
 
   static readonly ACTIVE_HOME_FAILOVER_MODE = new WrapperProperty<string>(
     "activeHomeFailoverMode",
-    "Set host role to follow during failover when GDB primary region is in home region.",
+    "Set host role to follow during failover when GlobalDb primary region is in home region.",
     null,
     [
       "strict-writer",
@@ -445,7 +445,7 @@ export class WrapperProperties {
 
   static readonly INACTIVE_HOME_FAILOVER_MODE = new WrapperProperty<string>(
     "inactiveHomeFailoverMode",
-    "Set host role to follow during failover when GDB primary region is not in home region.",
+    "Set host role to follow during failover when GlobalDb primary region is not in home region.",
     null,
     [
       "strict-writer",
@@ -762,21 +762,25 @@ export class WrapperProperties {
     ["writer", "none"]
   );
 
-  static readonly GDB_RW_HOME_REGION = new WrapperProperty<string>("gdbRwHomeRegion", "Specifies the home region for read/write splitting.", null);
+  static readonly GLOBAL_DB_RW_HOME_REGION = new WrapperProperty<string>(
+    "gdbRwHomeRegion",
+    "Specifies the home region for read/write splitting.",
+    null
+  );
 
-  static readonly GDB_RW_RESTRICT_WRITER_TO_HOME_REGION = new WrapperProperty<boolean>(
+  static readonly GLOBAL_DB_RW_RESTRICT_WRITER_TO_HOME_REGION = new WrapperProperty<boolean>(
     "gdbRwRestrictWriterToHomeRegion",
     "Prevents connections to a writer node outside of the defined home region.",
     true
   );
 
-  static readonly GDB_RW_RESTRICT_READER_TO_HOME_REGION = new WrapperProperty<boolean>(
+  static readonly GLOBAL_DB_RW_RESTRICT_READER_TO_HOME_REGION = new WrapperProperty<boolean>(
     "gdbRwRestrictReaderToHomeRegion",
     "Prevents connections to a reader node outside of the defined home region.",
     true
   );
 
-  static readonly GDB_ACCESSIBLE_REGIONS = new WrapperProperty<string>(
+  static readonly GLOBAL_DB_ACCESSIBLE_REGIONS = new WrapperProperty<string>(
     "gdbAccessibleRegions",
     "Comma-separated list of AWS regions that are accessible from this application. " +
       "When specified, the wrapper restricts Global Aurora Database operations to the listed regions only. " +
@@ -793,7 +797,7 @@ export class WrapperProperties {
     ["strict-writer", "strict-reader", "writer-or-reader"]
   );
 
-  static readonly GDB_MONITORING_CONNECTION_PRIORITY = new WrapperProperty<string>(
+  static readonly GLOBAL_DB_MONITORING_CONNECTION_PRIORITY = new WrapperProperty<string>(
     "gdbMonitoringConnectionPriority",
     "Defines the priority for monitoring connections in a Global Aurora Database context. " +
       "Supports region-aware variants that direct the topology monitor to connect to preferred node types " +

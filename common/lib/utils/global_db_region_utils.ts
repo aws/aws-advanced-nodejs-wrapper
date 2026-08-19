@@ -23,8 +23,8 @@ import { logger } from "../../logutils";
 import { Messages } from "./messages";
 import { AwsWrapperError } from "./errors";
 
-export class GDBRegionUtils extends RegionUtils {
-  private static readonly GDB_CLUSTER_ARN_PATTERN = /^arn:aws[^:]*:rds:(?<region>[^:\n]*):([^:\n]*):([^:/\n]*[:/])?(.*)$/;
+export class GlobalDbRegionUtils extends RegionUtils {
+  private static readonly GLOBAL_DB_CLUSTER_ARN_PATTERN = /^arn:aws[^:]*:rds:(?<region>[^:\n]*):([^:\n]*):([^:/\n]*[:/])?(.*)$/;
   private static readonly REGION_GROUP = "region";
   private credentialsProvider: AwsCredentialIdentity | AwsCredentialIdentityProvider | undefined;
 
@@ -42,7 +42,7 @@ export class GDBRegionUtils extends RegionUtils {
       return this.getRegionFromRegionString(props.get(regionKey));
     }
 
-    const clusterId = GDBRegionUtils.rdsUtils.getRdsClusterId(hostInfo.host);
+    const clusterId = GlobalDbRegionUtils.rdsUtils.getRdsClusterId(hostInfo.host);
     if (!clusterId) {
       return null;
     }
@@ -67,8 +67,8 @@ export class GDBRegionUtils extends RegionUtils {
       const response = await rdsClient.send(command);
       return this.extractWriterClusterArn(response.GlobalClusters);
     } catch (error) {
-      logger.debug(Messages.get("GDBRegionUtils.unableToRetrieveGlobalClusterARN"));
-      throw new AwsWrapperError(Messages.get("GDBRegionUtils.unableToRetrieveGlobalClusterARN"));
+      logger.debug(Messages.get("GlobalDbRegionUtils.unableToRetrieveGlobalClusterARN"));
+      throw new AwsWrapperError(Messages.get("GlobalDbRegionUtils.unableToRetrieveGlobalClusterARN"));
     } finally {
       rdsClient.destroy();
     }
@@ -90,8 +90,8 @@ export class GDBRegionUtils extends RegionUtils {
   }
 
   getRegionFromClusterArn(clusterArn: string): string | null {
-    const match = clusterArn.match(GDBRegionUtils.GDB_CLUSTER_ARN_PATTERN);
-    return match?.groups?.[GDBRegionUtils.REGION_GROUP] ?? null;
+    const match = clusterArn.match(GlobalDbRegionUtils.GLOBAL_DB_CLUSTER_ARN_PATTERN);
+    return match?.groups?.[GlobalDbRegionUtils.REGION_GROUP] ?? null;
   }
 
   private findWriterMemberArn(members?: GlobalClusterMember[]): string | null {
