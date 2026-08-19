@@ -17,7 +17,7 @@
 import { RegionUtils } from "./region_utils";
 import { HostInfo } from "../host_info";
 import { AwsCredentialsManager } from "../authentication/aws_credentials_manager";
-import { DescribeGlobalClustersCommand, GlobalCluster, GlobalClusterMember, RDSClient } from "@aws-sdk/client-rds";
+import type { GlobalCluster, GlobalClusterMember } from "@aws-sdk/client-rds";
 import { AwsCredentialIdentity, AwsCredentialIdentityProvider } from "@smithy/types/dist-types/identity/awsCredentialIdentity";
 import { logger } from "../../logutils";
 import { Messages } from "./messages";
@@ -56,7 +56,8 @@ export class GDBRegionUtils extends RegionUtils {
       this.credentialsProvider = AwsCredentialsManager.getProvider(hostInfo, props);
     }
 
-    const rdsClient = this.getRdsClient();
+    const { RDSClient, DescribeGlobalClustersCommand } = await import("@aws-sdk/client-rds");
+    const rdsClient = new RDSClient({ credentials: this.credentialsProvider });
 
     try {
       const command = new DescribeGlobalClustersCommand({
@@ -100,9 +101,5 @@ export class GDBRegionUtils extends RegionUtils {
 
     const writerMember = members.find((member) => member.IsWriter);
     return writerMember?.DBClusterArn ?? null;
-  }
-
-  private getRdsClient(): RDSClient {
-    return new RDSClient({ credentials: this.credentialsProvider });
   }
 }
