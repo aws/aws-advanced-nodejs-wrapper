@@ -17,10 +17,10 @@ Two parameters are available:
 
 ## Configuration Parameters
 
-| Parameter                         |  Value   | Required | Description                                                                                                                                                                                                                                             | Default Value   |
-| --------------------------------- | :------: | :------: | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------- |
-| `monitoringConnectionPriority`    | `string` |    No    | Defines the priority for monitoring connections. Determines which type of host the topology monitor should connect to.<br><br>Possible values: `strict-writer`, `strict-reader`, `writer-or-reader`.                                                    | `strict-writer` |
-| `gdbMonitoringConnectionPriority` | `string` |    No    | Defines the priority for monitoring connections in a Global Aurora Database context. Supports region-aware variants and specific region names.<br><br>See [GlobalDb Monitoring Connection Priority Values](#gdb-monitoring-connection-priority-values). | `null`          |
+| Parameter                         |  Value   | Required | Description                                                                                                                                                                                                                                                                 | Default Value   |
+| --------------------------------- | :------: | :------: | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------- |
+| `monitoringConnectionPriority`    | `string` |    No    | Defines the priority for monitoring connections. Determines which type of host the topology monitor should connect to.<br><br>Possible values: `strict-writer`, `strict-reader`, `writer-or-reader`.                                                                        | `strict-writer` |
+| `gdbMonitoringConnectionPriority` | `string` |    No    | Defines the priority for monitoring connections in a Global Aurora Database context. Supports region-aware variants and specific region names.<br><br>See [Global Database Monitoring Connection Priority Values](#global-database-values-gdbmonitoringconnectionpriority). | `null`          |
 
 ## Monitoring Connection Priority Values
 
@@ -32,7 +32,7 @@ Two parameters are available:
 | `strict-reader`    | The topology monitor connects exclusively to a reader host. If no reader is available, monitoring will fail.  |
 | `writer-or-reader` | The topology monitor connects to a writer host if available; otherwise falls back to a reader host.           |
 
-### GlobalDb Values (`gdbMonitoringConnectionPriority`)
+### Global Database Values (`gdbMonitoringConnectionPriority`)
 
 | Value                        | Description                                                                                                                                       |
 | ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |

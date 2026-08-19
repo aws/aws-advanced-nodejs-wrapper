@@ -76,7 +76,7 @@ describe("globalDb failover", () => {
     })
   );
 
-  // GlobalDb-specific tests (overrides from Java GlobalDbFailoverTest)
+  // GlobalDb-specific tests
   describe("globalDb-specific tests", () => {
     beforeEach(async () => {
       logger.info(`Test started: ${expect.getState().currentTestName}`);

@@ -59,7 +59,7 @@ The `gdbAccessibleRegions` parameter works alongside the `failoverHomeRegion` pa
 > [!WARNING]
 > Ensure that `failoverHomeRegion` is included in the `gdbAccessibleRegions` list. Otherwise, home region failover logic will not function correctly.
 
-### Interaction with GlobalDb Read/Write Splitting
+### Interaction with Global Database Read/Write Splitting
 
 When using the `gdbReadWriteSplitting` plugin, accessible regions filtering is applied before reader/writer host selection. The `gdbRwHomeRegion` should also be included in the accessible regions list.
 
