@@ -16,6 +16,10 @@
 
 import { RdsUrlType } from "./rds_url_type";
 import { equalsIgnoreCase } from "./utils";
+import { HostInfo } from "../host_info";
+import { AwsWrapperError } from "./errors";
+import { Messages } from "./messages";
+import { logger } from "../../logutils";
 
 export class RdsUtils {
   // Aurora DB clusters support different endpoints. More details about Aurora RDS endpoints
@@ -238,6 +242,78 @@ export class RdsUtils {
     );
     const group = this.getRegexGroup(matcher, RdsUtils.DOMAIN_GROUP);
     return group ? `?.${group}` : "?";
+  }
+
+  /**
+   * Split one `globalClusterInstanceHostPatterns` entry into its AWS region and host pattern.
+   *
+   * Three forms are accepted:
+   *   - `?.abc123.us-east-2.rds.amazonaws.com`   region read from the endpoint
+   *   - `[us-east-2]?.customHost`                region given explicitly, for custom domains
+   *   - `us-east-2:?.customHost`                 region given explicitly, colon separated
+   *
+   * Region extraction for the bare form delegates to `getRdsRegion`, so every endpoint shape that
+   * class already understands works here too -- including the China partition, where the region and
+   * `rds` labels are transposed (`...rds.cn-north-1.amazonaws.com.cn`), and GovCloud/ISO regions whose
+   * identifiers have four segments.
+   *
+   * Disambiguating the colon: a bare pattern may carry a port (`?.customHost:9999`). The colon is
+   * treated as a region separator only when the text after it is not purely numeric, which is
+   * partition-agnostic -- it needs no list or shape of valid region identifiers.
+   */
+  public parseInstanceTemplateEntry(entry: string): { region: string | null; hostPattern: string | null } {
+    if (!entry) {
+      return { region: null, hostPattern: null };
+    }
+
+    const bracketed = /^\[([^\]]*)]\s*(.*)$/.exec(entry);
+    if (bracketed) {
+      return { region: bracketed[1].trim().toLowerCase(), hostPattern: bracketed[2].trim() };
+    }
+
+    const colonIndex = entry.indexOf(":");
+    if (colonIndex > 0 && !/^\d+$/.test(entry.substring(colonIndex + 1).trim())) {
+      return { region: entry.substring(0, colonIndex).trim().toLowerCase(), hostPattern: entry.substring(colonIndex + 1).trim() };
+    }
+
+    // A bare pattern may still carry a port, which has to come off before the region can be read from
+    // the endpoint -- but stays on the host pattern itself.
+    const withoutPort = entry.replace(/:\d+$/, "");
+    return { region: this.getRdsRegion(withoutPort)?.toLowerCase() ?? null, hostPattern: entry };
+  }
+
+  /**
+   * Parse the `globalClusterInstanceHostPatterns` property into one instance template per AWS region.
+   *
+   * The caller supplies the host-pattern validator and the HostInfo builder so this stays free of any
+   * host-list-provider concerns.
+   */
+  public parseInstanceTemplates(
+    instanceTemplatesString: string | null,
+    hostValidator: (hostPattern: string) => void,
+    hostInfoBuilderFunc: () => { withHost(host: string): { build(): HostInfo } }
+  ): Map<string, HostInfo> {
+    if (!instanceTemplatesString) {
+      throw new AwsWrapperError(Messages.get("Utils.globalClusterInstanceHostPatternsRequired"));
+    }
+
+    const instanceTemplates = new Map<string, HostInfo>();
+
+    for (const pattern of instanceTemplatesString.split(",")) {
+      const trimmedPattern = pattern.trim();
+      const { region, hostPattern } = this.parseInstanceTemplateEntry(trimmedPattern);
+
+      if (!region || !hostPattern) {
+        throw new AwsWrapperError(Messages.get("Utils.invalidPatternFormat", trimmedPattern));
+      }
+
+      hostValidator(hostPattern);
+      instanceTemplates.set(region, hostInfoBuilderFunc().withHost(hostPattern).build());
+    }
+
+    logger.debug(`Detected Global Database patterns: ${JSON.stringify(Array.from(instanceTemplates.entries()))}`);
+
+    return instanceTemplates;
   }
 
   public getRdsRegion(host: string): string | null {

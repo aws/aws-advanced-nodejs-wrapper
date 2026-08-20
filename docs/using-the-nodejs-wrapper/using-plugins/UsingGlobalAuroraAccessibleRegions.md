@@ -28,7 +28,7 @@ Set the `gdbAccessibleRegions` parameter to a comma-separated list of AWS region
 ```typescript
 const params = {
   plugins: "initialConnection,gdbFailover,efm2",
-  wrapperDialect: "global-aurora-pg",
+  dialect: "global-aurora-pg",
   failoverHomeRegion: "us-west-2",
   globalClusterInstanceHostPatterns: "?.XYZ1.us-east-1.rds.amazonaws.com,?.XYZ2.us-east-2.rds.amazonaws.com,?.XYZ3.us-west-2.rds.amazonaws.com",
   gdbAccessibleRegions: "us-west-2,us-east-1"
@@ -72,7 +72,7 @@ When using the `gdbReadWriteSplitting` plugin, accessible regions filtering is a
 ```typescript
 const params = {
   plugins: "initialConnection,gdbFailover,efm2",
-  wrapperDialect: "global-aurora-pg",
+  dialect: "global-aurora-pg",
   failoverHomeRegion: "us-west-2",
   globalClusterInstanceHostPatterns: "?.XYZ1.us-east-1.rds.amazonaws.com,?.XYZ2.us-east-2.rds.amazonaws.com,?.XYZ3.us-west-2.rds.amazonaws.com",
   gdbAccessibleRegions: "us-west-2,us-east-1",
@@ -88,7 +88,7 @@ const params = {
 ```typescript
 const params = {
   plugins: "initialConnection,gdbFailover,efm2",
-  wrapperDialect: "global-aurora-mysql",
+  dialect: "global-aurora-mysql",
   failoverHomeRegion: "eu-west-1",
   globalClusterInstanceHostPatterns: "?.XYZ1.us-east-1.rds.amazonaws.com,?.XYZ2.eu-west-1.rds.amazonaws.com,?.XYZ3.ap-southeast-1.rds.amazonaws.com",
   gdbAccessibleRegions: "eu-west-1",

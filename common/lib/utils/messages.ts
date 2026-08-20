@@ -377,7 +377,7 @@ const MESSAGES: Record<string, string> = {
   "GlobalTopologyUtils.missingTemplateForRegion": "No cluster instance template found for region '%s' when processing host '%s'.",
   "Utils.globalClusterInstanceHostPatternsRequired": "The 'globalClusterInstanceHostPatterns' property is required for Global Aurora Databases.",
   "Utils.invalidPatternFormat":
-    "Invalid pattern format '%s'. Expected format: 'region:host-pattern' (e.g., 'us-east-1:?.cluster-xyz.us-east-1.rds.amazonaws.com').",
+    "Invalid pattern format '%s'. Expected an instance endpoint pattern whose region can be determined, for example '?.cluster-xyz.us-east-1.rds.amazonaws.com'. For a custom domain, prefix the region: '[us-east-1]?.customHost' or 'us-east-1:?.customHost'.",
   "AuroraMonitoringConnectionHandler.initialized": "AuroraMonitoringConnectionHandler initialized with priorities: '%s'.",
   "GlobalDbMonitoringConnectionHandler.initialized": "GlobalDbMonitoringConnectionHandler initialized with priorities: '%s'.",
   "GlobalDbMonitoringConnectionHandler.unrecognizedPriority":
@@ -405,6 +405,8 @@ const MESSAGES: Record<string, string> = {
   "GlobalDbReadWriteSplittingPlugin.noAvailableReadersInHomeRegion": "No available reader hosts in home region '%s'.",
   "GlobalDbReadWriteSplittingPlugin.noAvailableReadersInAccessibleRegions": "No available reader hosts in accessible regions '%s'.",
   "GlobalDbReadWriteSplittingPlugin.parameterValue": "%s=%s",
+  "MySQL2DriverDialect.cleartextPluginRequiresEncryption":
+    "Token-based authentication requires the 'mysql_clear_password' authentication plugin, which sends the token in plaintext at the protocol level. It has not been enabled because the connection is not encrypted. Configure the 'ssl' connection property, or set 'enableCleartextPlugin' explicitly if you accept sending the token unencrypted.",
   "GlobalDb.homeRegionNotAccessible":
     "The home region '%s' must be included in the accessible regions '%s'. Please add the home region to 'gdbAccessibleRegions' or adjust the configured home region.",
   "BatchingEventPublisher.errorDeliveringImmediateEvent": "Error delivering immediate event: %s",

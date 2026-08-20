@@ -86,7 +86,7 @@ This sample code uses the original `failover` plugin, but it can also be used wi
 - `activeHomeFailoverMode=strict-writer`
 - `inactiveHomeFailoverMode=strict-writer`
 - `globalClusterInstanceHostPatterns=?.XYZ1.us-east-1.rds.amazonaws.com,?.XYZ2.us-east-2.rds.amazonaws.com,?.XYZ3.us-west-1.rds.amazonaws.com` (make sure you replace `XYZ1`, `XYZ2`, `XYZ3` with actual values that correspond to your database)
-- `wrapperDialect=global-aurora-mysql` (or `global-aurora-pg`)
+- `dialect=global-aurora-mysql` (or `global-aurora-pg`)
 - `plugins=initialConnection,gdbFailover,efm2`
 - use Global Database endpoint in your connection string
 
@@ -100,7 +100,7 @@ This sample code uses the original `failover` plugin, but it can also be used wi
 - `activeHomeFailoverMode=strict-home-reader`
 - `inactiveHomeFailoverMode=strict-home-reader`
 - `globalClusterInstanceHostPatterns=?.XYZ1.us-east-1.rds.amazonaws.com,?.XYZ2.us-east-2.rds.amazonaws.com,?.XYZ3.us-west-1.rds.amazonaws.com` (make sure you replace `XYZ1`, `XYZ2`, `XYZ3` with actual values that correspond to your database)
-- `wrapperDialect=global-aurora-mysql` (or `global-aurora-pg`)
+- `dialect=global-aurora-mysql` (or `global-aurora-pg`)
 - `plugins=initialConnection,gdbFailover,efm2`
 - use cluster reader endpoint in region `us-west-1` in your connection string (`<cluster-name>.cluster-ro-XYZ3.us-west-1.rds.amazonaws.com`)
 
@@ -114,7 +114,7 @@ This sample code uses the original `failover` plugin, but it can also be used wi
 - `activeHomeFailoverMode=strict-writer`
 - `inactiveHomeFailoverMode=strict-any-reader`
 - `globalClusterInstanceHostPatterns=?.XYZ1.us-east-1.rds.amazonaws.com,?.XYZ2.us-east-2.rds.amazonaws.com,?.XYZ3.us-west-1.rds.amazonaws.com` (make sure you replace `XYZ1`, `XYZ2`, `XYZ3` with actual values that correspond to your database)
-- `wrapperDialect=global-aurora-mysql` (or `global-aurora-pg`)
+- `dialect=global-aurora-mysql` (or `global-aurora-pg`)
 - `plugins=initialConnection,gdbFailover,efm2`
 - use cluster writer endpoint in region `us-west-1` in your connection string (`<cluster-name>.cluster-XYZ3.us-west-1.rds.amazonaws.com`)
 

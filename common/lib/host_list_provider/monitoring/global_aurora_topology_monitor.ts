@@ -94,6 +94,16 @@ export class GlobalAuroraTopologyMonitor extends ClusterTopologyMonitorImpl {
     return super.openAnyClientAndUpdateTopology();
   }
 
+  /**
+   * A Global Database needs one instance template per region: hosts in each region are built from
+   * that region's endpoint suffix. The inherited implementation passes the single
+   * `instanceTemplate`, which for a Global Database endpoint resolves to the global endpoint's
+   * suffix and cannot address any instance.
+   */
+  override queryForTopology(client: ClientWrapper): Promise<HostInfo[]> {
+    return this.topologyUtils.queryForTopology(client, this.pluginService.getDialect(), this.initialHostInfo, this.instanceTemplatesByRegion);
+  }
+
   protected override async getInstanceTemplate(hostId: string, targetClient: ClientWrapper): Promise<HostInfo> {
     if (!isGlobalDbTopologyUtils(this.topologyUtils)) {
       throw new AwsWrapperError(Messages.get("GlobalAuroraTopologyMonitor.invalidTopologyUtils"));

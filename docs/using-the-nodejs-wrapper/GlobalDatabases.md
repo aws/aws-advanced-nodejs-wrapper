@@ -33,7 +33,7 @@ Use the global cluster endpoint:
 | Parameter                           | Value                                                                                                                         | Notes                                                           |
 | ----------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------- |
 | `clusterId`                         | `1`                                                                                                                           | See [clusterId parameter documentation](./ClusterId.md)         |
-| `wrapperDialect`                    | `global-aurora-mysql` or `global-aurora-pg`                                                                                   |                                                                 |
+| `dialect`                           | `global-aurora-mysql` or `global-aurora-pg`                                                                                   |                                                                 |
 | `plugins`                           | `initialConnection,failover2,efm2` or<br>`initialConnection,gdbFailover,efm2`                                                 | Without connection pooling                                      |
 |                                     | `auroraConnectionTracker,initialConnection,failover2,efm2` or<br>`auroraConnectionTracker,initialConnection,gdbFailover,efm2` | With connection pooling                                         |
 | `globalClusterInstanceHostPatterns` | `?.XYZ1.us-east-2.rds.amazonaws.com,?.XYZ2.us-west-2.rds.amazonaws.com`                                                       | See [documentation](./using-plugins/UsingTheFailover2Plugin.md) |
@@ -54,7 +54,7 @@ Use the cluster reader endpoint:
 | Parameter                           | Value                                                                                                                         | Notes                                    |
 | ----------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------- |
 | `clusterId`                         | `1`                                                                                                                           | Use the same value as writer connections |
-| `wrapperDialect`                    | `global-aurora-mysql` or `global-aurora-pg`                                                                                   |                                          |
+| `dialect`                           | `global-aurora-mysql` or `global-aurora-pg`                                                                                   |                                          |
 | `plugins`                           | `initialConnection,failover2,efm2` or<br>`initialConnection,gdbFailover,efm2`                                                 | Without connection pooling               |
 |                                     | `auroraConnectionTracker,initialConnection,failover2,efm2` or<br>`auroraConnectionTracker,initialConnection,gdbFailover,efm2` | With connection pooling                  |
 | `globalClusterInstanceHostPatterns` | Same as writer configuration                                                                                                  |                                          |
@@ -73,7 +73,7 @@ const writerParams = {
   user: "username",
   password: "password",
   clusterId: "1",
-  wrapperDialect: "global-aurora-mysql",
+  dialect: "global-aurora-mysql",
   plugins: "initialConnection,failover2,efm2",
   globalClusterInstanceHostPatterns: "?.abc123.us-east-1.rds.amazonaws.com,?.def456.us-west-2.rds.amazonaws.com"
 };
@@ -89,7 +89,7 @@ const readerParams = {
   user: "username",
   password: "password",
   clusterId: "1",
-  wrapperDialect: "global-aurora-mysql",
+  dialect: "global-aurora-mysql",
   plugins: "initialConnection,failover2,efm2",
   globalClusterInstanceHostPatterns: "?.abc123.us-east-1.rds.amazonaws.com,?.def456.us-west-2.rds.amazonaws.com",
   failoverMode: "strict-reader"
@@ -99,7 +99,7 @@ const readerClient = new AwsMySQLClient(readerParams);
 await readerClient.connect();
 ```
 
-> For PostgreSQL, use `new AwsPgClient(params)` with `wrapperDialect: "global-aurora-pg"` and port `5432`.
+> For PostgreSQL, use `new AwsPgClient(params)` with `dialect: "global-aurora-pg"` and port `5432`.
 
 ## Important Considerations
 
