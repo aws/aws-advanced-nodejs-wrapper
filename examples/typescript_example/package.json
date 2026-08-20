@@ -10,7 +10,7 @@
     "dev": "ts-node src/index.ts"
   },
   "dependencies": {
-    "aws-advanced-nodejs-wrapper": "^2.1.1",
+    "aws-advanced-nodejs-wrapper": "^3.0.0",
     "mysql2": "^3.6.0"
   },
   "devDependencies": {

@@ -8,7 +8,7 @@
     "start": "node index.js"
   },
   "dependencies": {
-    "aws-advanced-nodejs-wrapper": "^2.1.1",
+    "aws-advanced-nodejs-wrapper": "^3.0.0",
     "pg": "^8.11.0"
   }
 }
