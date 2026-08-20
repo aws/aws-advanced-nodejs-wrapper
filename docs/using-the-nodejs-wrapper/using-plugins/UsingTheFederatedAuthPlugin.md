@@ -53,6 +53,21 @@ Note: AWS IAM database authentication is needed to use the Federated Authenticat
 | `iamTokenExpiration` | `number` |    No    | Overrides the default IAM token cache expiration in seconds.                                                                                                                                                                                                                                                                                                       | `900`                    | `123`                                                  |
 | `httpsAgentOptions`  | `object` |    No    | This property adds parameters to the httpsAgent that connects to the hosting URL. <br>For more information on the parameters, see this [documentation](https://nodejs.org/api/https.html#class-httpsagent).                                                                                                                                                        | `null`                   | `{ timeout: 5000 }`                                    |
 
+## MySQL requires an encrypted connection
+
+The Federated Authentication Plugin authenticates with a generated token, which Aurora MySQL asks the client to send using the
+server's `mysql_clear_password` authentication plugin. The underlying MySQL driver refuses that plugin
+unless `enableCleartextPlugin` is enabled, so **set the `ssl` connection property when using
+`federatedAuth` with MySQL** — the wrapper then enables the option for you, and the token is only ever
+sent over an encrypted connection.
+
+Without `ssl` the wrapper logs a warning, leaves the option unset, and the connection attempt fails; it
+will not send an authentication token unencrypted implicitly. PostgreSQL is unaffected.
+
+For the full explanation, including how to opt out, see
+[MySQL requires an encrypted connection](./UsingTheIamAuthenticationPlugin.md#mysql-requires-an-encrypted-connection)
+in the IAM Authentication Plugin documentation.
+
 ## Using Federated Authentication with Global Databases
 
 When using Federated authentication with [Amazon Aurora Global Databases](https://aws.amazon.com/rds/aurora/global-database/), the IAM user or role requires the additional `rds:DescribeGlobalClusters` permission. This permission allows the driver to resolve the Global Database endpoint to the appropriate regional cluster for IAM token generation.

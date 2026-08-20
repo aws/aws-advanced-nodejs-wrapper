@@ -60,7 +60,7 @@ const client = new AwsMySQLClient({
 
 If `ssl` is not configured, the wrapper logs a warning and leaves `enableCleartextPlugin` unset, and the connection attempt fails — sending an authentication token unencrypted is not something the wrapper will do implicitly. Set `enableCleartextPlugin: true` yourself only if you have accepted that risk. An explicit value always takes precedence over the wrapper's default.
 
-The same applies to the `federatedAuth` and `okta` plugins, which also authenticate with a generated token. PostgreSQL is unaffected.
+The same applies to the [`federatedAuth`](./UsingTheFederatedAuthPlugin.md) and [`okta`](./UsingTheOktaAuthPlugin.md) plugins, which also authenticate with a generated token. PostgreSQL is unaffected.
 
 ### Connecting with Multi-AZ or Blue/Green Deployments
 
