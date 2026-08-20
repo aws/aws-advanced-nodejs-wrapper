@@ -14,7 +14,7 @@
   limitations under the License.
 */
 
-import { AwsPGClient } from "../../pg";
+import { AwsPgClient } from "../../pg";
 import {
   AwsPoolConfig,
   FailoverFailedError,
@@ -56,7 +56,7 @@ const poolConfig = new AwsPoolConfig({
 });
 const provider = new InternalPooledConnectionProvider(poolConfig, myPoolKeyFunc);
 
-const client = new AwsPGClient({
+const client = new AwsPgClient({
   // Configure connection parameters. Enable readWriteSplitting, failover, and efm plugins.
   host: postgresHost,
   port: port,
@@ -123,12 +123,12 @@ try {
   await provider.releaseResources();
 }
 
-async function setInitialSessionSettings(client: AwsPGClient) {
+async function setInitialSessionSettings(client: AwsPgClient) {
   // User can edit settings.
   await client.query("SET TIME ZONE UTC");
 }
 
-async function queryWithFailoverHandling(client: AwsPGClient, query: string) {
+async function queryWithFailoverHandling(client: AwsPgClient, query: string) {
   try {
     const result = await client.query(query);
     return result;

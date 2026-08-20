@@ -14,20 +14,227 @@
   limitations under the License.
 */
 
+import type { AgentOptions } from "node:https";
 import { ConnectionProvider } from "./connection_provider";
 import { DatabaseDialect } from "./database_dialect/database_dialect";
-import { ClusterTopologyMonitorImpl } from "./host_list_provider/monitoring/cluster_topology_monitor";
-import { BlueGreenStatusProvider } from "./plugins/bluegreen/blue_green_status_provider";
+import type { AwsCredentialsProviderHandler } from "./authentication/aws_credentials_manager";
+import { AwsWrapperError } from "./utils/errors";
+import { Messages } from "./utils/messages";
+
+export interface AwsClientConfig {
+  /** Comma separated list of connection plugin codes */
+  plugins?: string;
+  /** This flag is enabled by default, meaning that the plugins order will be automatically adjusted. Disable it at your own risk or if you really need plugins to be executed in a particular order. */
+  autoSortWrapperPluginOrder?: boolean;
+  /** A unique identifier for the supported database dialect. */
+  dialect?: string;
+  /** The connection provider used to create connections. */
+  connectionProvider?: ConnectionProvider;
+  /** Timeout in milliseconds for the wrapper to execute queries against MySQL database engines */
+  mysqlQueryTimeout?: number;
+  /** Timeout in milliseconds for the wrapper to create a connection. */
+  wrapperConnectTimeout?: number;
+  /** Timeout in milliseconds for the wrapper to execute queries. */
+  wrapperQueryTimeout?: number;
+  /** Enables session state transfer to a new connection. */
+  transferSessionStateOnSwitch?: boolean;
+  /** Enables resetting a connection's session state before closing it. */
+  resetSessionStateOnClose?: boolean;
+  /** Enables to rollback a current transaction being in progress when switching to a new connection. */
+  rollbackOnSwitch?: boolean;
+  /** An override for specifying the default host availability change strategy. */
+  defaultHostAvailabilityStrategy?: string;
+  /** Max number of retries for checking a host's availability. */
+  hostAvailabilityStrategyMaxRetries?: number;
+  /** The initial backoff time in seconds. */
+  hostAvailabilityStrategyInitialBackoffTimeSec?: number;
+  /** Interval in millis between measuring response time to a database host. */
+  responseMeasurementIntervalMs?: number;
+  /** Overrides the host that is used to generate the IAM token */
+  iamHost?: string;
+  /** Overrides default port that is used to generate the IAM token */
+  iamDefaultPort?: number;
+  /** Overrides AWS region that is used to generate the IAM token */
+  iamRegion?: string;
+  /** The ARN of the IAM Role that is to be assumed. */
+  iamRoleArn?: string;
+  /** The ARN of the identity provider */
+  iamIdpArn?: string;
+  /** IAM token cache expiration in seconds */
+  iamTokenExpiration?: number;
+  /** The federated user name */
+  idpUsername?: string;
+  /** The federated user password */
+  idpPassword?: string;
+  /** The hosting URL of the Identity Provider */
+  idpEndpoint?: string;
+  /** The hosting port of the Identity Provider */
+  idpPort?: number;
+  /** The ID of the AWS application configured on Okta */
+  appId?: string;
+  /** The relaying party identifier */
+  rpIdentifier?: string;
+  /** The IAM user used to access the database */
+  dbUser?: string;
+  /** The options to be passed into the httpsAgent */
+  httpsAgentOptions?: AgentOptions;
+  /** The name or the ARN of the secret to retrieve. */
+  secretId?: string;
+  /** The region of the secret to retrieve. */
+  secretRegion?: string;
+  /** The endpoint of the secret to retrieve. */
+  secretEndpoint?: string;
+  /** Cluster topology refresh rate in millis during a writer failover process. During the writer failover process, cluster topology may be refreshed at a faster pace than normal to speed up discovery of the newly promoted writer. */
+  failoverClusterTopologyRefreshRateMs?: number;
+  /** Maximum allowed time for the failover process. */
+  failoverTimeoutMs?: number;
+  /** Interval of time to wait between attempts to reconnect to a failed writer during a writer failover process. */
+  failoverWriterReconnectIntervalMs?: number;
+  /** Reader connection attempt timeout during a reader failover process. */
+  failoverReaderConnectTimeoutMs?: number;
+  /** Enable/disable cluster-aware failover logic. */
+  enableClusterAwareFailover?: boolean;
+  /** Set host role to follow during failover. */
+  failoverMode?: string;
+  /** The strategy that should be used to select a new reader host while opening a new connection. */
+  failoverReaderHostSelectorStrategy?: string;
+  /** Cluster topology refresh rate in millis. The cached topology for the cluster will be invalidated after the specified time, after which it will be updated during the next interaction with the connection. */
+  clusterTopologyRefreshRateMs?: number;
+  /** Cluster topology high refresh rate in millis. */
+  clusterTopologyHighRefreshRateMs?: number;
+  /** A unique identifier for the cluster. Connections with the same cluster id share a cluster topology cache. If unspecified, a cluster id is automatically created for AWS RDS clusters. */
+  clusterId?: string;
+  /** The cluster instance DNS pattern that will be used to build a complete instance endpoint. A "?" character in this pattern should be used as a placeholder for cluster instance names. This pattern is required to be specified for IP address or custom domain connections to AWS RDS clusters. Otherwise, if unspecified, the pattern will be automatically created for AWS RDS clusters. */
+  clusterInstanceHostPattern?: string;
+  /** Set to true if you are providing a connection string with multiple comma-delimited hosts and your cluster has only one writer. The writer must be the first host in the connection string */
+  singleWriterConnectionString?: boolean;
+  /** The strategy that should be used to select a new reader host. */
+  readerHostSelectorStrategy?: string;
+  /** Maximum allowed time for the retries opening a connection. */
+  openConnectionRetryTimeoutMs?: number;
+  /** Time between each retry of opening a connection. */
+  openConnectionRetryIntervalMs?: number;
+  /** Interval in millis between sending SQL to the server and the first probe to database host. */
+  failureDetectionTime?: number;
+  /** Enable enhanced failure detection logic. */
+  failureDetectionEnabled?: boolean;
+  /** Interval in millis between probes to database host. */
+  failureDetectionInterval?: number;
+  /** Number of failed connection checks before considering database host unhealthy. */
+  failureDetectionCount?: number;
+  /** Interval in milliseconds for a monitor to be considered inactive and to be disposed. */
+  monitorDisposalTime?: number;
+  /** Comma separated list of database host-weight pairs in the format of `<host>:<weight>`. */
+  roundRobinHostWeightPairs?: string;
+  /** The default weight for any hosts that have not been configured with the `roundRobinHostWeightPairs` parameter. */
+  roundRobinDefaultWeight?: number;
+  /** Enables telemetry and observability of the wrapper */
+  enableTelemetry?: boolean;
+  /** Force submitting traces related to calls as top level traces. */
+  telemetrySubmitToplevel?: boolean;
+  /** Method to export telemetry traces of the wrapper. */
+  telemetryTracesBackend?: string;
+  /** Method to export telemetry metrics of the wrapper. */
+  telemetryMetricsBackend?: string;
+  /** Post an additional top-level trace for failover process. */
+  telemetryFailoverAdditionalTopTrace?: boolean;
+  /** If the cache of transaction router info is empty and a new connection is made, this property toggles whether the plugin will wait and synchronously fetch transaction router info before selecting a transaction router to connect to, or to fall back to using the provided DB Shard Group endpoint URL. */
+  limitlessWaitForTransactionRouterInfo?: boolean;
+  /** Interval in millis between retries fetching Limitless Transaction Router information. */
+  limitlessGetTransactionRouterInfoRetryIntervalMs?: number;
+  /** Max number of connection retries fetching Limitless Transaction Router information. */
+  limitlessGetTransactionRouterInfoMaxRetries?: number;
+  /** Interval in millis between polling for Limitless Transaction Routers to the database. */
+  limitlessTransactionRouterMonitorIntervalMs?: number;
+  /** Max number of connection retries the Limitless Connection Plugin will attempt. */
+  limitlessConnectMaxRetries?: number;
+  /** Interval in milliseconds for an Limitless router monitor to be considered inactive and to be disposed. */
+  limitlessTransactionRouterMonitorDisposalTimeMs?: number;
+  /** Map containing any keepAlive properties that the target driver accepts in the client configuration. */
+  wrapperKeepAliveProperties?: Map<string, any>;
+  /** A reference to a custom database dialect object. */
+  customDatabaseDialect?: DatabaseDialect;
+  /** A reference to a custom AwsCredentialsProviderHandler object. */
+  customAwsCredentialProviderHandler?: AwsCredentialsProviderHandler;
+  /** Name of the AWS Profile to use for IAM or SecretsManager auth. */
+  awsProfile?: string;
+  /** Driver configuration profile name */
+  profileName?: string;
+  /** Controls how frequently custom endpoint monitors fetch custom endpoint info, in milliseconds. */
+  customEndpointInfoRefreshRateMs?: number;
+  /** Controls whether to wait for custom endpoint info to become available before connecting or executing a method. Waiting is only necessary if a connection to a given custom endpoint has not been opened or used recently. Note that disabling this may result in occasional connections to instances outside of the custom endpoint. */
+  waitForCustomEndpointInfo?: boolean;
+  /** Controls the maximum amount of time that the plugin will wait for custom endpoint info to be made available by the custom endpoint monitor, in milliseconds. */
+  waitForCustomEndpointInfoTimeoutMs?: number;
+  /** Controls how long a monitor should run without use before expiring and being removed, in milliseconds. */
+  customEndpointMonitorExpirationMs?: number;
+  /** The region of the cluster's custom endpoints. If not specified, the region will be parsed from the URL. */
+  customEndpointRegion?: string;
+  /** Enables replacing a green host name with the original hostname after a blue/green switchover and the green name no longer resolves. */
+  enableGreenHostReplacement?: boolean;
+  /** Connect timeout in milliseconds during Blue/Green Deployment switchover. */
+  bgConnectTimeoutMs?: number;
+  /** Blue/Green Deployment ID */
+  bgdId?: string;
+  /** Baseline Blue/Green Deployment status checking interval in milliseconds. */
+  bgBaselineMs?: number;
+  /** Increased Blue/Green Deployment status checking interval in milliseconds. */
+  bgIncreasedMs?: number;
+  /** High Blue/Green Deployment status checking interval in milliseconds. */
+  bgHighMs?: number;
+  /** Blue/Green Deployment switchover timeout in milliseconds. */
+  bgSwitchoverTimeoutMs?: number;
+  /** Enables Blue/Green Deployment switchover to suspend new blue connection requests while the switchover process is in progress. */
+  bgSuspendNewBlueConnections?: boolean;
+  /** Secrets Manager credentials' expiration time in seconds. */
+  secretExpirationSec?: number;
+  /** The key in the JSON secret that contains the username for the database connection. */
+  secretUsernameProperty?: string;
+  /** The key in the JSON secret that contains the password for the database connection. */
+  secretPasswordProperty?: string;
+  /** The time in milliseconds to keep a reader connection alive in the cache. A value of 0 means the same cached reader connection is reused indefinitely. */
+  cachedReaderKeepAliveTimeoutMs?: number;
+  /** Defines the priority for monitoring connections. Determines which type of node the topology monitor connects to (strict-writer, strict-reader, writer-or-reader). */
+  monitoringConnectionPriority?: string;
+  /** Comma-separated list of cluster instance DNS patterns used to build complete instance endpoints for Global Aurora Databases. A "?" is a placeholder for cluster instance names. Format: region1:pattern1,region2:pattern2 */
+  globalClusterInstanceHostPatterns?: string;
+  /** Comma-separated list of AWS regions accessible from this application. Restricts Global Aurora Database operations (topology, failover candidates, read/write splitting) to the listed regions. */
+  gdbAccessibleRegions?: string;
+  /** Defines the priority for monitoring connections in a Global Aurora Database context (e.g. strict-writer-primary, strict-reader-secondary, or a specific AWS region name). */
+  gdbMonitoringConnectionPriority?: string;
+  /** The home region for read/write splitting. */
+  gdbRwHomeRegion?: string;
+  /** Prevents connections to a reader node outside of the defined home region. */
+  gdbRwRestrictReaderToHomeRegion?: boolean;
+  /** Prevents connections to a writer node outside of the defined home region. */
+  gdbRwRestrictWriterToHomeRegion?: boolean;
+  /** Home region for Global Aurora Database failover. */
+  failoverHomeRegion?: string;
+  /** Host role to follow during failover when the GlobalDb primary region is in the home region. */
+  activeHomeFailoverMode?: string;
+  /** Host role to follow during failover when the GlobalDb primary region is not in the home region. */
+  inactiveHomeFailoverMode?: string;
+  /** Defines whether the inactive cluster writer endpoint in the initial connection URL should be replaced with a writer instance URL from the topology info when available (writer, none). */
+  inactiveClusterWriterEndpointSubstitutionRole?: string;
+  /** Allows avoiding the connection check for an inactive cluster writer endpoint. */
+  skipInactiveWriterClusterEndpointCheck?: boolean;
+  /** Defines whether the inactive cluster writer connection should be verified to be a writer, or if no role verification should be performed (writer, none). */
+  verifyInactiveClusterWriterEndpointConnectionType?: string;
+  /** Defines whether an opened connection should be verified to be a writer or reader, or if no role verification should be performed (writer, reader, none). */
+  verifyOpenedConnectionType?: string;
+}
 
 export class WrapperProperty<T> {
   name: string;
   description: string;
   defaultValue: any;
+  allowedValues?: T[];
 
-  constructor(name: string, description: string, defaultValue?: any) {
+  constructor(name: string, description: string, defaultValue?: any, allowedValues?: T[]) {
     this.name = name;
     this.description = description;
     this.defaultValue = defaultValue;
+    this.allowedValues = allowedValues;
   }
 
   get(props: Map<string, any>): T {
@@ -36,16 +243,29 @@ export class WrapperProperty<T> {
       return this.defaultValue;
     }
 
+    if (val != null && this.allowedValues?.length > 0) {
+      if (!this.allowedValues.includes(val)) {
+        throw new AwsWrapperError(Messages.get("WrapperProperty.invalidValue", String(val), this.name, this.allowedValues.join(", ")));
+      }
+    }
+
     return val;
   }
 
   set(props: Map<string, any>, val: T) {
+    if (val != null && this.allowedValues?.length > 0) {
+      if (!this.allowedValues.includes(val)) {
+        throw new AwsWrapperError(Messages.get("WrapperProperty.invalidValue", String(val), this.name, this.allowedValues.join(", ")));
+      }
+    }
     props.set(this.name, val);
   }
 }
 
 export class WrapperProperties {
   static readonly MONITORING_PROPERTY_PREFIX: string = "monitoring_";
+  static readonly TOPOLOGY_MONITORING_PROPERTY_PREFIX: string = "topology_monitoring_";
+  static readonly BG_MONITORING_PROPERTY_PREFIX: string = "blue_green_monitoring_";
   static readonly DEFAULT_PLUGINS = "initialConnection,auroraConnectionTracker,failover2,efm2";
   static readonly DEFAULT_TOKEN_EXPIRATION_SEC = 15 * 60;
 
@@ -159,11 +379,7 @@ export class WrapperProperties {
 
   static readonly DB_USER = new WrapperProperty<string>("dbUser", "The IAM user used to access the database", null);
 
-  static readonly HTTPS_AGENT_OPTIONS = new WrapperProperty<Record<string, any>>(
-    "httpsAgentOptions",
-    "The options to be passed into the httpsAgent",
-    null
-  );
+  static readonly HTTPS_AGENT_OPTIONS = new WrapperProperty<AgentOptions>("httpsAgentOptions", "The options to be passed into the httpsAgent", null);
 
   static readonly SECRET_ID = new WrapperProperty<string>("secretId", "The name or the ARN of the secret to retrieve.", null);
   static readonly SECRET_REGION = new WrapperProperty<string>("secretRegion", "The region of the secret to retrieve.", null);
@@ -210,6 +426,38 @@ export class WrapperProperties {
   );
   static readonly FAILOVER_MODE = new WrapperProperty<string>("failoverMode", "Set host role to follow during failover.", "");
 
+  static readonly FAILOVER_HOME_REGION = new WrapperProperty<string>("failoverHomeRegion", "Set home region for GlobalDb failover.", null);
+
+  static readonly ACTIVE_HOME_FAILOVER_MODE = new WrapperProperty<string>(
+    "activeHomeFailoverMode",
+    "Set host role to follow during failover when GlobalDb primary region is in home region.",
+    null,
+    [
+      "strict-writer",
+      "strict-home-reader",
+      "strict-out-of-home-reader",
+      "strict-any-reader",
+      "home-reader-or-writer",
+      "out-of-home-reader-or-writer",
+      "any-reader-or-writer"
+    ]
+  );
+
+  static readonly INACTIVE_HOME_FAILOVER_MODE = new WrapperProperty<string>(
+    "inactiveHomeFailoverMode",
+    "Set host role to follow during failover when GlobalDb primary region is not in home region.",
+    null,
+    [
+      "strict-writer",
+      "strict-home-reader",
+      "strict-out-of-home-reader",
+      "strict-any-reader",
+      "home-reader-or-writer",
+      "out-of-home-reader-or-writer",
+      "any-reader-or-writer"
+    ]
+  );
+
   static readonly FAILOVER_READER_HOST_SELECTOR_STRATEGY = new WrapperProperty<string>(
     "failoverReaderHostSelectorStrategy",
     "The strategy that should be used to select a new reader host while opening a new connection.",
@@ -232,10 +480,8 @@ export class WrapperProperties {
 
   static readonly CLUSTER_ID = new WrapperProperty<string>(
     "clusterId",
-    "A unique identifier for the cluster. " +
-      "Connections with the same cluster id share a cluster topology cache. " +
-      "If unspecified, a cluster id is automatically created for AWS RDS clusters.",
-    null
+    "A unique identifier for the cluster. Connections with the same cluster id share a cluster topology cache. If unspecified, cluster id will be '1'.",
+    "1"
   );
 
   static readonly CLUSTER_INSTANCE_HOST_PATTERN = new WrapperProperty<string>(
@@ -244,6 +490,16 @@ export class WrapperProperties {
       'A "?" character in this pattern should be used as a placeholder for cluster instance names. ' +
       "This pattern is required to be specified for IP address or custom domain connections to AWS RDS " +
       "clusters. Otherwise, if unspecified, the pattern will be automatically created for AWS RDS clusters."
+  );
+
+  static readonly GLOBAL_CLUSTER_INSTANCE_HOST_PATTERNS = new WrapperProperty<string>(
+    "globalClusterInstanceHostPatterns",
+    "Comma-separated list of the cluster instance DNS patterns that will be used to " +
+      "build complete instance endpoints. " +
+      'A "?" character in these patterns should be used as a placeholder for cluster instance names. ' +
+      "This parameter is required for Global Aurora Databases. " +
+      "Each region in the Global Aurora Database should be specified in the list. " +
+      "Format: region1:pattern1,region2:pattern2"
   );
 
   static readonly SINGLE_WRITER_CONNECTION_STRING = new WrapperProperty<boolean>(
@@ -392,7 +648,7 @@ export class WrapperProperties {
     null
   );
 
-  static readonly CUSTOM_AWS_CREDENTIAL_PROVIDER_HANDLER = new WrapperProperty<any>(
+  static readonly CUSTOM_AWS_CREDENTIAL_PROVIDER_HANDLER = new WrapperProperty<AwsCredentialsProviderHandler>(
     "customAwsCredentialProviderHandler",
     "A reference to a custom AwsCredentialsProviderHandler object.",
     null
@@ -473,10 +729,88 @@ export class WrapperProperties {
     false
   );
 
+  static readonly CACHED_READER_KEEP_ALIVE_TIMEOUT = new WrapperProperty<number>(
+    "cachedReaderKeepAliveTimeoutMs",
+    "The time in milliseconds to keep a reader connection alive in the cache. " +
+      "Default value 0 means the Wrapper will keep reusing the same cached reader connection.",
+    0
+  );
+  static readonly SKIP_INACTIVE_WRITER_CLUSTER_CHECK = new WrapperProperty<boolean>(
+    "skipInactiveWriterClusterEndpointCheck",
+    "Allows to avoid connection check for inactive cluster writer endpoint.",
+    false
+  );
+
+  static readonly INACTIVE_CLUSTER_WRITER_SUBSTITUTION_ROLE = new WrapperProperty<string>(
+    "inactiveClusterWriterEndpointSubstitutionRole",
+    "Defines whether or not the inactive cluster writer endpoint in the initial connection URL should be replaced with a writer instance URL from the topology info when available.",
+    "writer",
+    ["writer", "none"]
+  );
+
+  static readonly VERIFY_OPENED_CONNECTION_ROLE = new WrapperProperty<string>(
+    "verifyOpenedConnectionType",
+    "Defines whether an opened connection should be verified to be a writer or reader, or if no role verification should be performed.",
+    null,
+    ["writer", "reader", "none"]
+  );
+
+  static readonly VERIFY_INACTIVE_CLUSTER_WRITER_CONNECTION_ROLE = new WrapperProperty<string>(
+    "verifyInactiveClusterWriterEndpointConnectionType",
+    "Defines whether inactive cluster writer connection should be verified to be a writer, or if no role verification should be performed.",
+    "writer",
+    ["writer", "none"]
+  );
+
+  static readonly GLOBAL_DB_RW_HOME_REGION = new WrapperProperty<string>(
+    "gdbRwHomeRegion",
+    "Specifies the home region for read/write splitting.",
+    null
+  );
+
+  static readonly GLOBAL_DB_RW_RESTRICT_WRITER_TO_HOME_REGION = new WrapperProperty<boolean>(
+    "gdbRwRestrictWriterToHomeRegion",
+    "Prevents connections to a writer node outside of the defined home region.",
+    true
+  );
+
+  static readonly GLOBAL_DB_RW_RESTRICT_READER_TO_HOME_REGION = new WrapperProperty<boolean>(
+    "gdbRwRestrictReaderToHomeRegion",
+    "Prevents connections to a reader node outside of the defined home region.",
+    true
+  );
+
+  static readonly GLOBAL_DB_ACCESSIBLE_REGIONS = new WrapperProperty<string>(
+    "gdbAccessibleRegions",
+    "Comma-separated list of AWS regions that are accessible from this application. " +
+      "When specified, the wrapper restricts Global Aurora Database operations to the listed regions only. " +
+      "Regions not included in this list will be filtered out from topology information, " +
+      "failover candidates, and read/write splitting targets.",
+    null
+  );
+
+  static readonly MONITORING_CONNECTION_PRIORITY = new WrapperProperty<string>(
+    "monitoringConnectionPriority",
+    "Defines the priority for monitoring connections. " +
+      "Determines which type of node the topology monitor should connect to for monitoring purposes.",
+    "strict-writer",
+    ["strict-writer", "strict-reader", "writer-or-reader"]
+  );
+
+  static readonly GLOBAL_DB_MONITORING_CONNECTION_PRIORITY = new WrapperProperty<string>(
+    "gdbMonitoringConnectionPriority",
+    "Defines the priority for monitoring connections in a Global Aurora Database context. " +
+      "Supports region-aware variants that direct the topology monitor to connect to preferred node types " +
+      "or specific regions. Possible values include: strict-writer-primary, strict-writer-secondary, " +
+      "strict-reader-primary, strict-reader-secondary, writer-or-reader-primary, writer-or-reader-secondary, " +
+      "or a specific AWS region name.",
+    "strict-writer-primary"
+  );
+
   private static readonly PREFIXES = [
     WrapperProperties.MONITORING_PROPERTY_PREFIX,
-    ClusterTopologyMonitorImpl.MONITORING_PROPERTY_PREFIX,
-    BlueGreenStatusProvider.MONITORING_PROPERTY_PREFIX
+    WrapperProperties.TOPOLOGY_MONITORING_PROPERTY_PREFIX,
+    WrapperProperties.BG_MONITORING_PROPERTY_PREFIX
   ];
 
   private static startsWithPrefix(key: string): boolean {

@@ -39,7 +39,7 @@ export interface ConnectionPlugin {
     forceConnectFunc: () => Promise<ClientWrapper>
   ): Promise<ClientWrapper>;
 
-  execute<T>(methodName: string, methodFunc: () => Promise<T>, methodArgs: any): Promise<T>;
+  execute<T>(methodName: string, methodFunc: () => Promise<T>, methodArgs: any[]): Promise<T>;
 
   initHostProvider(
     hostInfo: HostInfo,

@@ -15,12 +15,13 @@
 */
 
 import { HostListProvider } from "../host_list_provider/host_list_provider";
-import { HostListProviderService } from "../host_list_provider_service";
 import { ClientWrapper } from "../client_wrapper";
 import { FailoverRestriction } from "../plugins/failover/failover_restriction";
 import { ErrorHandler } from "../error_handler";
 import { TransactionIsolationLevel } from "../utils/transaction_isolation_level";
 import { HostRole } from "../host_role";
+import { FullServicesContainer } from "../utils/full_services_container";
+import { HostInfo } from "../host_info";
 
 export enum DatabaseType {
   MYSQL,
@@ -40,8 +41,16 @@ export interface DatabaseDialect {
   getDialectUpdateCandidates(): string[];
   getErrorHandler(): ErrorHandler;
   getHostRole(targetClient: ClientWrapper): Promise<HostRole>;
+  /**
+   * Filters the given hosts down to those reachable from the configured accessible regions.
+   *
+   * Optional: dialects that are not region-aware (i.e. non-Global Aurora dialects) may omit this
+   * method, in which case callers should treat all hosts as available. Implementing this as an
+   * optional member avoids breaking out-of-tree custom dialects when the method is introduced.
+   */
+  filterAvailableHosts?(hosts: HostInfo[], accessibleRegions: string[]): Promise<HostInfo[]>;
   isDialect(targetClient: ClientWrapper): Promise<boolean>;
-  getHostListProvider(props: Map<string, any>, originalUrl: string, hostListProviderService: HostListProviderService): HostListProvider;
+  getHostListProvider(props: Map<string, any>, originalUrl: string, servicesContainer: FullServicesContainer): HostListProvider;
   isClientValid(targetClient: ClientWrapper): Promise<boolean>;
   getDatabaseType(): DatabaseType;
   getDialectName(): string;

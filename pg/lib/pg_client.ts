@@ -15,16 +15,16 @@
 */
 
 import { QueryArrayConfig, QueryArrayResult, QueryConfig, QueryConfigValues, QueryResult, QueryResultRow, Submittable } from "pg";
-import { AwsPGPooledConnection } from "./client";
+import { AwsPgPooledConnection } from "./client";
 
-export interface PGClient {
+export interface PgClient {
   connect(): Promise<void>;
 
   end(): Promise<void>;
 
-  query(text: string): Promise<any>;
+  query(text: string): Promise<QueryResult>;
 
-  query(text: string, values: any[]): Promise<any>;
+  query(text: string, values: any[]): Promise<QueryResult>;
 
   query<T extends Submittable>(queryStream: T): T;
 
@@ -48,8 +48,8 @@ export interface PGClient {
   escapeLiteral(str: string): Promise<string>;
 }
 
-export interface PGPoolClient {
-  connect(): Promise<AwsPGPooledConnection>;
+export interface PgPoolClient {
+  connect(): Promise<AwsPgPooledConnection>;
 
   end(): Promise<void>;
 
@@ -61,7 +61,7 @@ export interface PGPoolClient {
 
   query<R extends QueryResultRow = any, I = any[]>(queryConfig: QueryConfig<I>): Promise<QueryResult<R>>;
 
-  query(text: string): Promise<any>;
+  query(text: string): Promise<QueryResult>;
 
-  query(text: string, values: any[]): Promise<any>;
+  query(text: string, values: any[]): Promise<QueryResult>;
 }

@@ -14,7 +14,7 @@
   limitations under the License.
 */
 
-import { AwsPGClient } from "aws-advanced-nodejs-wrapper/pg";
+import { AwsPgClient } from "aws-advanced-nodejs-wrapper/pg";
 
 async function main() {
   const pgHost = "db-identifier.XYZ.us-east-2.rds.amazonaws.com";
@@ -31,7 +31,7 @@ async function main() {
     password: password
   };
 
-  const client = new AwsPGClient(config);
+  const client = new AwsPgClient(config);
 
   try {
     await client.connect();

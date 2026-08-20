@@ -59,10 +59,6 @@ public class DriverHelper {
     }
   }
 
-  public static void setConnectTimeout(Properties props, long timeout, TimeUnit timeUnit) {
-    setConnectTimeout(TestEnvironment.getCurrent().getCurrentDriver(), props, timeout, timeUnit);
-  }
-
   public static void setConnectTimeout(
       TestDriver testDriver, Properties props, long timeout, TimeUnit timeUnit) {
     switch (testDriver) {

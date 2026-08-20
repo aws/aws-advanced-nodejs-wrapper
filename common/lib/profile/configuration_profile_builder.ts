@@ -93,7 +93,7 @@ export class ConfigurationProfileBuilder {
 
   public build(): ConfigurationProfile {
     if (!this.name || this.name.length === 0) {
-      throw new AwsWrapperError(Messages.get("ConfigurationProfileBuilder.profileNameRequired", this.name));
+      throw new AwsWrapperError(Messages.get("ConfigurationProfileBuilder.profileNameRequired"));
     }
     if (ConfigurationProfilePresetCodes.isKnownPreset(this.name)) {
       throw new AwsWrapperError(Messages.get("ConfigurationProfileBuilder.canNotUpdateKnownPreset", this.name));

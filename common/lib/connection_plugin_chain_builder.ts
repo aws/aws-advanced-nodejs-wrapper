@@ -29,9 +29,9 @@ import { FailoverPluginFactory } from "./plugins/failover/failover_plugin_factor
 import { Failover2PluginFactory } from "./plugins/failover2/failover2_plugin_factory";
 import { StaleDnsPluginFactory } from "./plugins/stale_dns/stale_dns_plugin_factory";
 import { FederatedAuthPluginFactory } from "./plugins/federated_auth/federated_auth_plugin_factory";
-import { ReadWriteSplittingPluginFactory } from "./plugins/read_write_splitting_plugin_factory";
+import { ReadWriteSplittingPluginFactory } from "./plugins/read_write_splitting/read_write_splitting_plugin_factory";
 import { OktaAuthPluginFactory } from "./plugins/federated_auth/okta_auth_plugin_factory";
-import { HostMonitoringPluginFactory } from "./plugins/efm/host_monitoring_plugin_factory";
+import { HostMonitoringPluginFactory } from "./plugins/efm/v1/host_monitoring_plugin_factory";
 import { AuroraInitialConnectionStrategyFactory } from "./plugins/aurora_initial_connection_strategy_plugin_factory";
 import { AuroraConnectionTrackerPluginFactory } from "./plugins/connection_tracker/aurora_connection_tracker_plugin_factory";
 import { ConnectionProviderManager } from "./connection_provider_manager";
@@ -41,8 +41,11 @@ import { LimitlessConnectionPluginFactory } from "./plugins/limitless/limitless_
 import { FastestResponseStrategyPluginFactory } from "./plugins/strategy/fastest_response/fastest_respose_strategy_plugin_factory";
 import { CustomEndpointPluginFactory } from "./plugins/custom_endpoint/custom_endpoint_plugin_factory";
 import { ConfigurationProfile } from "./profile/configuration_profile";
-import { HostMonitoring2PluginFactory } from "./plugins/efm2/host_monitoring2_plugin_factory";
+import { HostMonitoring2PluginFactory } from "./plugins/efm/v2/host_monitoring2_plugin_factory";
 import { BlueGreenPluginFactory } from "./plugins/bluegreen/blue_green_plugin_factory";
+import { GlobalDbFailoverPluginFactory } from "./plugins/global_db_failover/global_db_failover_plugin_factory";
+import { FullServicesContainer } from "./utils/full_services_container";
+import { GlobalDbReadWriteSplittingPluginFactory } from "./plugins/read_write_splitting/global_db_read_write_splitting_plugin_factory";
 
 /*
   Type alias used for plugin factory sorting. It holds a reference to a plugin
@@ -63,8 +66,10 @@ export class ConnectionPluginChainBuilder {
     ["staleDns", { factory: StaleDnsPluginFactory, weight: 500 }],
     ["bg", { factory: BlueGreenPluginFactory, weight: 550 }],
     ["readWriteSplitting", { factory: ReadWriteSplittingPluginFactory, weight: 600 }],
+    ["gdbReadWriteSplitting", { factory: GlobalDbReadWriteSplittingPluginFactory, weight: 610 }],
     ["failover", { factory: FailoverPluginFactory, weight: 700 }],
     ["failover2", { factory: Failover2PluginFactory, weight: 710 }],
+    ["gdbFailover", { factory: GlobalDbFailoverPluginFactory, weight: 720 }],
     ["efm", { factory: HostMonitoringPluginFactory, weight: 800 }],
     ["efm2", { factory: HostMonitoring2PluginFactory, weight: 810 }],
     ["fastestResponseStrategy", { factory: FastestResponseStrategyPluginFactory, weight: 900 }],
@@ -84,8 +89,10 @@ export class ConnectionPluginChainBuilder {
     [StaleDnsPluginFactory, 500],
     [BlueGreenPluginFactory, 550],
     [ReadWriteSplittingPluginFactory, 600],
+    [GlobalDbReadWriteSplittingPluginFactory, 610],
     [FailoverPluginFactory, 700],
     [Failover2PluginFactory, 710],
+    [GlobalDbFailoverPluginFactory, 720],
     [HostMonitoringPluginFactory, 800],
     [HostMonitoring2PluginFactory, 810],
     [LimitlessConnectionPluginFactory, 950],
@@ -99,7 +106,7 @@ export class ConnectionPluginChainBuilder {
   ]);
 
   static async getPlugins(
-    pluginService: PluginService,
+    servicesContainer: FullServicesContainer,
     props: Map<string, any>,
     connectionProviderManager: ConnectionProviderManager,
     configurationProfile: ConfigurationProfile | null
@@ -162,10 +169,10 @@ export class ConnectionPluginChainBuilder {
 
     for (const pluginFactoryInfo of pluginFactoryInfoList) {
       const factoryObj = new pluginFactoryInfo.factory();
-      plugins.push(await factoryObj.getInstance(pluginService, props));
+      plugins.push(await factoryObj.getInstance(servicesContainer, props));
     }
 
-    plugins.push(new DefaultPlugin(pluginService, connectionProviderManager));
+    plugins.push(new DefaultPlugin(servicesContainer, connectionProviderManager));
 
     return plugins;
   }

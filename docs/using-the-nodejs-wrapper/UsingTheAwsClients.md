@@ -23,7 +23,7 @@ connection.query("SELECT NOW()", (error, results, fields) => {
 **Node-Postgres callback API (not supported):**
 
 ```typescript
-// ❌ This will NOT work with AwsPGClient
+// ❌ This will NOT work with AwsPgClient
 import { Client } from "pg";
 
 const client = new Client({
@@ -190,6 +190,12 @@ console.log(rows[0].status); // "active"
 
 ## Node-Postgres Migration Guide
 
+> [!NOTE]\
+> The PostgreSQL client and its pooled connection type were renamed to `AwsPgClient` and `AwsPgPooledConnection` for
+> consistent casing. The previous names `AwsPGClient` and `AwsPGPooledConnection` are still exported as **deprecated
+> aliases** that behave identically, so existing code continues to work without changes. Prefer `AwsPgClient` in new
+> code; the deprecated aliases are scheduled for removal in the next major release.
+
 ### Creating a Client
 
 **node-postgres:**
@@ -208,12 +214,12 @@ const client = new Client({
 await client.connect();
 ```
 
-**AwsPGClient:**
+**AwsPgClient:**
 
 ```typescript
-import { AwsPGClient } from "aws-advanced-nodejs-wrapper/pg";
+import { AwsPgClient } from "aws-advanced-nodejs-wrapper/pg";
 
-const client = new AwsPGClient({
+const client = new AwsPgClient({
   host: "cluster-endpoint",
   user: "database-user",
   password: "database-pwd",
@@ -235,7 +241,7 @@ const result = await client.query("SELECT NOW()");
 console.log(result.rows[0]); // { now: 2023-12-01T10:30:00.000Z }
 ```
 
-**AwsPGClient:**
+**AwsPgClient:**
 
 ```typescript
 const result = await client.query("SELECT NOW()");
@@ -251,7 +257,7 @@ const result = await client.query("SELECT $1::text as name, $2::int as age", ["J
 console.log(result.rows[0]); // { name: 'John', age: 25 }
 ```
 
-**AwsPGClient:**
+**AwsPgClient:**
 
 ```typescript
 const result = await client.query("SELECT $1::text as name, $2::int as age", ["John", 25]);
@@ -270,7 +276,7 @@ const result = await client.query({
 console.log(result.rows[0]); // { name: 'Jane', age: 30 }
 ```
 
-**AwsPGClient:**
+**AwsPgClient:**
 
 ```typescript
 const result = await client.query({
@@ -293,7 +299,7 @@ const result = await client.query({
 console.log(result[0]); // [1, 'active']
 ```
 
-**AwsPGClient:**
+**AwsPgClient:**
 
 ```typescript
 const result = await client.query({
@@ -317,7 +323,7 @@ const result = await client.query({
 console.log(result.rows[0]); // { id: 1, name: 'test' }
 ```
 
-**AwsPGClient:**
+**AwsPgClient:**
 
 ```typescript
 const result = await client.query({

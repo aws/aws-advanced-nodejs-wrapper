@@ -15,4 +15,6 @@
 */
 
 export { AwsMySQLClient, AwsMySQLPoolClient } from "./mysql/lib/index";
-export type { AwsMySQLPooledConnection } from "./mysql/lib/index";
+export type { AwsMySQLPooledConnection, AwsMySQLClientConfig } from "./mysql/lib/index";
+export type { AwsClientConfig } from "./common/lib/wrapper_property";
+export type { AwsCredentialsProviderHandler } from "./common/lib/authentication/aws_credentials_manager";

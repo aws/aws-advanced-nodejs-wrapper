@@ -27,10 +27,10 @@ import type {
   TransactionOptions
 } from "@prisma/driver-adapter-utils";
 import { Error, ok, err } from "@prisma/driver-adapter-utils";
-import { AwsPGClient } from "aws-advanced-nodejs-wrapper/dist/pg/lib/index.js";
+import { AwsPgClient } from "aws-advanced-nodejs-wrapper/dist/pg/lib/index.js";
 import { fieldToColumnType, UnsupportedNativeDataType } from "./conversion";
 
-class AwsQueryable<ClientT extends AwsPGClient> implements Queryable {
+class AwsQueryable<ClientT extends AwsPgClient> implements Queryable {
   readonly provider = "postgres";
 
   constructor(protected readonly client: ClientT) {}
@@ -95,9 +95,9 @@ class AwsQueryable<ClientT extends AwsPGClient> implements Queryable {
 }
 
 // The following are not fully implemented for desired behaviour.
-class AwsTransaction extends AwsQueryable<AwsPGClient> implements Transaction {
+class AwsTransaction extends AwsQueryable<AwsPgClient> implements Transaction {
   constructor(
-    client: AwsPGClient,
+    client: AwsPgClient,
     readonly options: TransactionOptions
   ) {
     super(client);
@@ -113,8 +113,8 @@ class AwsTransaction extends AwsQueryable<AwsPGClient> implements Transaction {
   }
 }
 
-class AwsTransactionContext extends AwsQueryable<AwsPGClient> implements TransactionContext {
-  constructor(readonly conn: AwsPGClient) {
+class AwsTransactionContext extends AwsQueryable<AwsPgClient> implements TransactionContext {
+  constructor(readonly conn: AwsPgClient) {
     super(conn);
   }
 
@@ -131,12 +131,12 @@ export type PrismaAwsOptions = {
   schema?: string;
 };
 
-export class PrismaAws extends AwsQueryable<AwsPGClient> implements DriverAdapter {
+export class PrismaAws extends AwsQueryable<AwsPgClient> implements DriverAdapter {
   constructor(
-    client: AwsPGClient,
+    client: AwsPgClient,
     private options?: PrismaAwsOptions
   ) {
-    if (!(client instanceof AwsPGClient)) {
+    if (!(client instanceof AwsPgClient)) {
       throw new TypeError("PrismaAws must be initialized with an AwsPgClient");
     }
     super(client);

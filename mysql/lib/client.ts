@@ -15,7 +15,7 @@
 */
 
 import { AwsClient } from "../../common/lib/aws_client";
-import { ErrorPacketParams, OkPacketParams, Query, QueryOptions, QueryResult } from "mysql2";
+import { ErrorPacketParams, FieldPacket, OkPacketParams, Query, QueryOptions, QueryResult } from "mysql2";
 import { ConnectionOptions, Prepare, PrepareStatementInfo } from "mysql2/promise";
 import { MySQLConnectionUrlParser } from "./mysql_connection_url_parser";
 import { DatabaseDialect, DatabaseType } from "../../common/lib/database_dialect/database_dialect";
@@ -28,6 +28,7 @@ import {
   AwsWrapperError,
   ConnectionProvider,
   FailoverSuccessError,
+  HostInfo,
   InternalPooledConnectionProvider,
   TransactionIsolationLevel,
   UndefinedClientError,
@@ -39,19 +40,24 @@ import { ClientUtils } from "../../common/lib/utils/client_utils";
 import { RdsMultiAZClusterMySQLDatabaseDialect } from "./dialect/rds_multi_az_mysql_database_dialect";
 import { TelemetryTraceLevel } from "../../common/lib/utils/telemetry/telemetry_trace_level";
 import { MySQL2DriverDialect } from "./dialect/mysql2_driver_dialect";
-import { isDialectTopologyAware } from "../../common/lib/utils/utils";
+import { isDialectTopologyAware } from "../../common/lib/database_dialect/topology_aware_database_dialect";
 import { MySQLClient, MySQLPoolClient } from "./mysql_client";
 import { DriverConnectionProvider } from "../../common/lib/driver_connection_provider";
+import { GlobalAuroraMySQLDatabaseDialect } from "./dialect/global_aurora_mysql_database_dialect";
+import { AwsClientConfig } from "../../common/lib/wrapper_property";
+
+export interface AwsMySQLClientConfig extends ConnectionOptions, AwsClientConfig {}
 
 class BaseAwsMySQLClient extends AwsClient implements MySQLClient {
   private static readonly knownDialectsByCode: Map<string, DatabaseDialect> = new Map([
     [DatabaseDialectCodes.MYSQL, new MySQLDatabaseDialect()],
     [DatabaseDialectCodes.RDS_MYSQL, new RdsMySQLDatabaseDialect()],
     [DatabaseDialectCodes.AURORA_MYSQL, new AuroraMySQLDatabaseDialect()],
+    [DatabaseDialectCodes.GLOBAL_AURORA_MYSQL, new GlobalAuroraMySQLDatabaseDialect()],
     [DatabaseDialectCodes.RDS_MULTI_AZ_MYSQL, new RdsMultiAZClusterMySQLDatabaseDialect()]
   ]);
 
-  constructor(config: any, connectionProvider?: ConnectionProvider) {
+  constructor(config: AwsMySQLClientConfig, connectionProvider?: ConnectionProvider) {
     super(
       config,
       DatabaseType.MYSQL,
@@ -84,7 +90,10 @@ class BaseAwsMySQLClient extends AwsClient implements MySQLClient {
           // Ignore
         }
       }
-      await this.pluginService.setCurrentClient(result, result.hostInfo);
+      const connectedHostInfo: HostInfo =
+        this.pluginService.getRoutedHostInfo() ?? this.pluginService.getInitialConnectionHostInfo() ?? result.hostInfo;
+      await this.pluginService.setCurrentClient(result, connectedHostInfo);
+      this.pluginService.setRoutedHostInfo(null);
       await this.internalPostConnect();
     });
   }
@@ -113,7 +122,7 @@ class BaseAwsMySQLClient extends AwsClient implements MySQLClient {
     return result;
   }
 
-  isReadOnly(): boolean {
+  isReadOnly(): boolean | undefined {
     return this.pluginService.getSessionStateService().getReadOnly();
   }
 
@@ -129,7 +138,7 @@ class BaseAwsMySQLClient extends AwsClient implements MySQLClient {
     return result;
   }
 
-  getAutoCommit(): boolean {
+  getAutoCommit(): boolean | undefined {
     return this.pluginService.getSessionStateService().getAutoCommit();
   }
 
@@ -142,7 +151,7 @@ class BaseAwsMySQLClient extends AwsClient implements MySQLClient {
     this.pluginService.getSessionStateService().setCatalog(catalog);
   }
 
-  getCatalog(): string {
+  getCatalog(): string | undefined {
     return this.pluginService.getSessionStateService().getCatalog();
   }
 
@@ -150,7 +159,7 @@ class BaseAwsMySQLClient extends AwsClient implements MySQLClient {
     throw new UnsupportedMethodError(Messages.get("Client.methodNotSupported", "setSchema"));
   }
 
-  getSchema(): string {
+  getSchema(): string | undefined {
     throw new UnsupportedMethodError(Messages.get("Client.methodNotSupported", "getSchema"));
   }
 
@@ -181,7 +190,7 @@ class BaseAwsMySQLClient extends AwsClient implements MySQLClient {
     this.pluginService.getSessionStateService().setTransactionIsolation(level);
   }
 
-  getTransactionIsolation(): TransactionIsolationLevel {
+  getTransactionIsolation(): TransactionIsolationLevel | undefined {
     return this.pluginService.getSessionStateService().getTransactionIsolation();
   }
 
@@ -197,6 +206,10 @@ class BaseAwsMySQLClient extends AwsClient implements MySQLClient {
       this.properties,
       "end",
       () => {
+        if (!this.targetClient) {
+          return Promise.resolve(undefined);
+        }
+
         this.pluginService.removeErrorListener(this.targetClient);
         const res = ClientUtils.queryWithTimeout(this.targetClient.end(), this.properties);
         this.targetClient = undefined;
@@ -497,10 +510,10 @@ class BaseAwsMySQLClient extends AwsClient implements MySQLClient {
     );
   }
 
-  query<T extends QueryResult>(sql: string): Promise<[T, any]>;
-  query<T extends QueryResult>(sql: string, values: any): Promise<[T, any]>;
-  query<T extends QueryResult>(options: QueryOptions): Promise<[T, any]>;
-  query<T extends QueryResult>(options: QueryOptions, values: any): Promise<[T, any]>;
+  query<T extends QueryResult>(sql: string): Promise<[T, FieldPacket[]]>;
+  query<T extends QueryResult>(sql: string, values: any): Promise<[T, FieldPacket[]]>;
+  query<T extends QueryResult>(options: QueryOptions): Promise<[T, FieldPacket[]]>;
+  query<T extends QueryResult>(options: QueryOptions, values: any): Promise<[T, FieldPacket[]]>;
   async query(options: string | QueryOptions, values?: any): Promise<[any, any]> {
     if (!this.isConnected) {
       await this.connect(); // client.connect is not required for MySQL clients
@@ -527,9 +540,9 @@ class BaseAwsMySQLClient extends AwsClient implements MySQLClient {
     });
   }
 
-  execute<T extends QueryResult>(sql: string): Promise<[T, any]>;
-  execute<T extends QueryResult>(sql: string, values: any): Promise<[T, any]>;
-  execute<T extends QueryResult>(options: QueryOptions): Promise<[T, any]>;
+  execute<T extends QueryResult>(sql: string): Promise<[T, FieldPacket[]]>;
+  execute<T extends QueryResult>(sql: string, values: any): Promise<[T, FieldPacket[]]>;
+  execute<T extends QueryResult>(options: QueryOptions): Promise<[T, FieldPacket[]]>;
   async execute(options: string | QueryOptions, values?: any): Promise<[any, any]> {
     if (!this.isConnected) {
       await this.connect(); // client.connect is not required for MySQL clients
@@ -568,13 +581,13 @@ class BaseAwsMySQLClient extends AwsClient implements MySQLClient {
 }
 
 export class AwsMySQLClient extends BaseAwsMySQLClient {
-  constructor(config: any) {
+  constructor(config: AwsMySQLClientConfig) {
     super(config, new DriverConnectionProvider());
   }
 }
 
 class AwsMySQLPooledConnection extends BaseAwsMySQLClient {
-  constructor(config: any, provider: ConnectionProvider) {
+  constructor(config: AwsMySQLClientConfig, provider: ConnectionProvider) {
     super(config, provider);
   }
 
@@ -599,10 +612,10 @@ export type { AwsMySQLPooledConnection };
 
 export class AwsMySQLPoolClient implements MySQLPoolClient {
   private readonly connectionProvider: InternalPooledConnectionProvider;
-  private readonly config;
-  private readonly poolConfig;
+  private readonly config: AwsMySQLClientConfig;
+  private readonly poolConfig?: AwsPoolConfig;
 
-  constructor(config: any, poolConfig?: AwsPoolConfig) {
+  constructor(config: AwsMySQLClientConfig, poolConfig?: AwsPoolConfig) {
     this.connectionProvider = new InternalPooledConnectionProvider(poolConfig);
     this.config = config;
     this.poolConfig = poolConfig;
@@ -622,10 +635,10 @@ export class AwsMySQLPoolClient implements MySQLPoolClient {
     return connection.end();
   }
 
-  query<T extends QueryResult>(sql: string): Promise<[T, any]>;
-  query<T extends QueryResult>(sql: string, values: any): Promise<[T, any]>;
-  query<T extends QueryResult>(options: QueryOptions): Promise<[T, any]>;
-  query<T extends QueryResult>(options: QueryOptions, values: any): Promise<[T, any]>;
+  query<T extends QueryResult>(sql: string): Promise<[T, FieldPacket[]]>;
+  query<T extends QueryResult>(sql: string, values: any): Promise<[T, FieldPacket[]]>;
+  query<T extends QueryResult>(options: QueryOptions): Promise<[T, FieldPacket[]]>;
+  query<T extends QueryResult>(options: QueryOptions, values: any): Promise<[T, FieldPacket[]]>;
   async query(options: string | QueryOptions, values?: any): Promise<[any, any]> {
     const awsMySQLPooledConnection: AwsMySQLPooledConnection = new AwsMySQLPooledConnection(this.config, this.connectionProvider);
     try {

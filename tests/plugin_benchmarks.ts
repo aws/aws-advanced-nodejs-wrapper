@@ -18,19 +18,19 @@ import { anything, instance, mock, when } from "ts-mockito";
 import { ConnectionProvider, DriverDialect, PluginManager, WrapperProperties } from "../index";
 import { add, complete, configure, cycle, save, suite } from "benny";
 import { TestConnectionWrapper } from "./testplugin/test_connection_wrapper";
-import { AwsPGClient } from "../pg";
+import { AwsPgClient } from "../pg";
 import { NodePostgresDriverDialect } from "../pg/lib/dialect/node_postgres_driver_dialect";
 import { PluginServiceImpl } from "../common/lib/plugin_service";
 import { SimpleHostAvailabilityStrategy } from "../common/lib/host_availability/simple_host_availability_strategy";
 import { HostInfoBuilder } from "../common/lib";
 import { PgClientWrapper } from "../common/lib/pg_client_wrapper";
 import { NullTelemetryFactory } from "../common/lib/utils/telemetry/null_telemetry_factory";
-import { PluginServiceManagerContainer } from "../common/lib/plugin_service_manager_container";
 import { ConnectionProviderManager } from "../common/lib/connection_provider_manager";
+import { FullServicesContainerImpl } from "../common/lib/utils/full_services_container";
 
 const mockConnectionProvider = mock<ConnectionProvider>();
 const mockPluginService = mock(PluginServiceImpl);
-const mockClient = mock(AwsPGClient);
+const mockClient = mock(AwsPgClient);
 
 const hostInfo = new HostInfoBuilder({ hostAvailabilityStrategy: new SimpleHostAvailabilityStrategy() }).withHost("host").build();
 
@@ -47,8 +47,8 @@ when(mockPluginService.getCurrentClient()).thenReturn(mockClientWrapper.client);
 when(mockPluginService.getDriverDialect()).thenReturn(mockDialect);
 
 const connectionString = "my.domain.com";
-const pluginServiceManagerContainer = new PluginServiceManagerContainer();
-pluginServiceManagerContainer.pluginService = instance(mockPluginService);
+const servicesContainer = mock(FullServicesContainerImpl);
+when(servicesContainer.pluginService).thenReturn(instance(mockPluginService));
 
 function getProps(plugins: string) {
   const props = new Map();
@@ -59,7 +59,7 @@ function getProps(plugins: string) {
 
 function getPluginManager(props: Map<string, any>) {
   return new PluginManager(
-    pluginServiceManagerContainer,
+    servicesContainer,
     props,
     new ConnectionProviderManager(instance(mockConnectionProvider), null),
     new NullTelemetryFactory()

@@ -18,7 +18,7 @@ class MyCustomAwsCredentialProvider implements AwsCredentialsProviderHandler {
 }
 myProvider: MyCustomAwsCredentialProvider = new MyCustomAwsCredentialProvider();
 
-const client = new AwsPGClient({
+const client = new AwsPgClient({
   ...
   customAwsCredentialProviderHandler: myProvider
   ...

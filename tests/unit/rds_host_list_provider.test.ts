@@ -14,24 +14,32 @@
   limitations under the License.
 */
 
-import { RdsHostListProvider } from "../../common/lib/host_list_provider/rds_host_list_provider";
 import { anything, instance, mock, reset, spy, verify, when } from "ts-mockito";
 import { PluginServiceImpl } from "../../common/lib/plugin_service";
 import { AwsClient } from "../../common/lib/aws_client";
-import { AwsWrapperError, HostInfo, HostInfoBuilder, HostRole } from "../../common/lib";
+import { AwsWrapperError, HostInfo, HostInfoBuilder, PluginManager } from "../../common/lib";
 import { SimpleHostAvailabilityStrategy } from "../../common/lib/host_availability/simple_host_availability_strategy";
 import { ConnectionUrlParser } from "../../common/lib/utils/connection_url_parser";
 import { AwsPGClient } from "../../pg/lib";
-import { sleep } from "../../common/lib/utils/utils";
+import { convertMsToNanos, sleep } from "../../common/lib/utils/utils";
 import { AuroraPgDatabaseDialect } from "../../pg/lib/dialect/aurora_pg_database_dialect";
 import { ClientWrapper } from "../../common/lib/client_wrapper";
 import { PgConnectionUrlParser } from "../../pg/lib/pg_connection_url_parser";
 import { PgClientWrapper } from "../../common/lib/pg_client_wrapper";
+import { CoreServicesContainer } from "../../common/lib/utils/core_services_container";
+import { StorageService } from "../../common/lib/utils/storage/storage_service";
+import { Topology } from "../../common/lib/host_list_provider/topology";
+import { RdsHostListProvider } from "../../common/lib/host_list_provider/rds_host_list_provider";
+import { TopologyQueryResult, TopologyUtils } from "../../common/lib/host_list_provider/topology_utils";
+import { FullServicesContainerImpl } from "../../common/lib/utils/full_services_container";
 
 const mockClient: AwsClient = mock(AwsPGClient);
 const mockDialect: AuroraPgDatabaseDialect = mock(AuroraPgDatabaseDialect);
+const mockServiceContainer: FullServicesContainerImpl = mock(FullServicesContainerImpl);
 const mockPluginService: PluginServiceImpl = mock(PluginServiceImpl);
 const connectionUrlParser: ConnectionUrlParser = new PgConnectionUrlParser();
+const mockTopologyUtils: TopologyUtils = mock(TopologyUtils);
+const storageService: StorageService = CoreServicesContainer.getInstance().storageService;
 
 const hosts: HostInfo[] = [
   createHost({
@@ -51,10 +59,7 @@ const currentHostInfo = createHost({
 });
 
 const clientWrapper: ClientWrapper = new PgClientWrapper(undefined, currentHostInfo, new Map<string, any>());
-
 const mockClientWrapper: ClientWrapper = mock(clientWrapper);
-
-const defaultRefreshRateNano: number = 5 * 1_000_000_000;
 
 function createHost(config: any): HostInfo {
   const info = new HostInfoBuilder(config);
@@ -62,7 +67,7 @@ function createHost(config: any): HostInfo {
 }
 
 function getRdsHostListProvider(originalHost: string): RdsHostListProvider {
-  const provider = new RdsHostListProvider(new Map<string, any>(), originalHost, instance(mockPluginService));
+  const provider = new RdsHostListProvider(new Map<string, any>(), originalHost, instance(mockTopologyUtils), instance(mockServiceContainer));
   provider.init();
   return provider;
 }
@@ -75,11 +80,15 @@ describe("testRdsHostListProvider", () => {
     when(mockPluginService.getCurrentHostInfo()).thenReturn(currentHostInfo);
     when(mockPluginService.getConnectionUrlParser()).thenReturn(connectionUrlParser);
     when(mockPluginService.getCurrentClient()).thenReturn(instance(mockClient));
+    when(mockClient.targetClient).thenReturn(mockClientWrapper);
     when(mockPluginService.getHostInfoBuilder()).thenReturn(new HostInfoBuilder({ hostAvailabilityStrategy: new SimpleHostAvailabilityStrategy() }));
+    when(mockServiceContainer.hostListProviderService).thenReturn(instance(mockPluginService));
+    when(mockServiceContainer.pluginService).thenReturn(instance(mockPluginService));
+    when(mockServiceContainer.storageService).thenReturn(storageService);
   });
 
-  afterEach(() => {
-    RdsHostListProvider.clearAll();
+  afterEach(async () => {
+    await PluginManager.releaseResources();
 
     reset(mockDialect);
     reset(mockClientWrapper);
@@ -92,13 +101,13 @@ describe("testRdsHostListProvider", () => {
     const spiedProvider = spy(rdsHostListProvider);
 
     const expected: HostInfo[] = hosts;
-    RdsHostListProvider.topologyCache.put(rdsHostListProvider.clusterId, expected, defaultRefreshRateNano);
+    storageService.set(rdsHostListProvider.clusterId, new Topology(expected));
 
-    const result = await rdsHostListProvider.getTopology(mockClientWrapper, false);
+    const result = await rdsHostListProvider.getTopology();
     expect(result.hosts.length).toEqual(2);
     expect(result.hosts).toEqual(expected);
 
-    verify(spiedProvider.queryForTopology(anything(), anything())).never();
+    verify(spiedProvider.getCurrentTopology(anything(), anything())).never();
   });
 
   it("testGetTopology_withForceUpdate_returnsUpdatedTopology", async () => {
@@ -108,7 +117,6 @@ describe("testRdsHostListProvider", () => {
 
     when(mockPluginService.isClientValid(anything())).thenResolve(true);
 
-    RdsHostListProvider.topologyCache.put(rdsHostListProvider.clusterId, hosts, defaultRefreshRateNano);
     const newHosts: HostInfo[] = [
       createHost({
         hostAvailabilityStrategy: new SimpleHostAvailabilityStrategy(),
@@ -117,13 +125,12 @@ describe("testRdsHostListProvider", () => {
     ];
 
     when(mockClient.isValid()).thenResolve(true);
-    when(spiedProvider.queryForTopology(mockClientWrapper, anything())).thenReturn(Promise.resolve(newHosts));
+    when(mockPluginService.isDialectConfirmed()).thenReturn(true);
+    when((spiedProvider as any).forceRefreshMonitor(anything(), anything())).thenReturn(Promise.resolve(newHosts));
 
-    const result = await rdsHostListProvider.getTopology(mockClientWrapper, true);
+    const result = await rdsHostListProvider.getTopology();
     expect(result.hosts.length).toEqual(1);
     expect(result.hosts).toEqual(newHosts);
-
-    verify(spiedProvider.queryForTopology(anything(), anything())).atMost(1);
   });
 
   it("testGetTopology_noForceUpdate_queryReturnsEmptyHostList", async () => {
@@ -133,13 +140,13 @@ describe("testRdsHostListProvider", () => {
     spiedProvider.isInitialized = true;
 
     const expected: HostInfo[] = hosts;
-    RdsHostListProvider.topologyCache.put(rdsHostListProvider.clusterId, expected, defaultRefreshRateNano);
-    when(spiedProvider.queryForTopology(mockClientWrapper, anything())).thenReturn(Promise.resolve([]));
+    storageService.set(rdsHostListProvider.clusterId, new Topology(expected));
+    when(spiedProvider.getCurrentTopology(mockClientWrapper, anything())).thenReturn(Promise.resolve([]));
 
-    const result = await rdsHostListProvider.getTopology(mockClientWrapper, false);
+    const result = await rdsHostListProvider.getTopology();
     expect(result.hosts.length).toEqual(2);
     expect(result.hosts).toEqual(expected);
-    verify(spiedProvider.queryForTopology(anything(), anything())).atMost(1);
+    verify(spiedProvider.getCurrentTopology(anything(), anything())).atMost(1);
   });
 
   it("testGetTopology_withForceUpdate_returnsInitialHostList", async () => {
@@ -154,253 +161,58 @@ describe("testRdsHostListProvider", () => {
     const spiedProvider = spy(rdsHostListProvider);
     spiedProvider.clear();
 
-    when(spiedProvider.queryForTopology(mockClientWrapper, anything())).thenReturn(Promise.resolve([]));
+    when(spiedProvider.getCurrentTopology(mockClientWrapper, anything())).thenReturn(Promise.resolve([]));
 
-    const result = await rdsHostListProvider.getTopology(mockClientWrapper, true);
+    const result = await rdsHostListProvider.getTopology();
     expect(result.hosts).toBeTruthy();
     for (let i = 0; i < result.hosts.length; i++) {
       expect(result.hosts[i].equals(initialHosts[i])).toBeTruthy();
     }
-    verify(spiedProvider.queryForTopology(anything(), anything())).atMost(1);
-  });
-
-  it("testQueryForTopology_queryResultsInError", async () => {
-    const rdsHostListProvider = getRdsHostListProvider("someUrl");
-    when(mockDialect.queryForTopology(anything(), anything())).thenThrow(new AwsWrapperError("bad things"));
-
-    await expect(rdsHostListProvider.queryForTopology(instance(mockClientWrapper), instance(mockDialect))).rejects.toThrow(AwsWrapperError);
+    verify(spiedProvider.getCurrentTopology(anything(), anything())).atMost(1);
   });
 
   it("testGetCachedTopology_returnCachedTopology", () => {
     const rdsHostListProvider = getRdsHostListProvider("foo");
 
     const expected: HostInfo[] = hosts;
-    RdsHostListProvider.topologyCache.put(rdsHostListProvider.clusterId, expected, defaultRefreshRateNano);
+    storageService.set(rdsHostListProvider.clusterId, new Topology(expected));
 
-    const result = rdsHostListProvider.getCachedTopology();
+    const result = rdsHostListProvider.getStoredTopology();
     expect(result).toEqual(expected);
   });
 
   it("testGetCachedTopology_returnNull", async () => {
     let rdsHostListProvider = getRdsHostListProvider("foo");
-    expect(rdsHostListProvider.getCachedTopology()).toBeNull();
+    expect(rdsHostListProvider.getStoredTopology()).toBeNull();
     rdsHostListProvider.clear();
 
     rdsHostListProvider = getRdsHostListProvider("foo");
-    RdsHostListProvider.topologyCache.put(rdsHostListProvider.clusterId, hosts, 1_000_000);
+
+    storageService.registerItemClassIfAbsent(Topology, true, convertMsToNanos(1));
+    storageService.set(rdsHostListProvider.clusterId, new Topology(hosts));
     await sleep(2);
 
-    expect(rdsHostListProvider.getCachedTopology()).toBeNull();
-  });
-
-  it("testTopologyCache_noSuggestedClusterId", async () => {
-    RdsHostListProvider.clearAll();
-
-    when(mockPluginService.isClientValid(anything())).thenResolve(true);
-
-    const provider1 = getRdsHostListProvider("cluster-a.xyz.us-east-2.rds.amazonaws.com");
-    const spiedProvider1 = spy(provider1);
-
-    const topologyClusterA: HostInfo[] = [
-      createHost({
-        hostAvailabilityStrategy: new SimpleHostAvailabilityStrategy(),
-        host: "instance-a-1.xyz.us-east-2.rds.amazonaws.com",
-        role: HostRole.WRITER
-      }),
-      createHost({
-        hostAvailabilityStrategy: new SimpleHostAvailabilityStrategy(),
-        host: "instance-a-2.xyz.us-east-2.rds.amazonaws.com",
-        role: HostRole.READER
-      }),
-      createHost({
-        hostAvailabilityStrategy: new SimpleHostAvailabilityStrategy(),
-        host: "instance-a-3.xyz.us-east-2.rds.amazonaws.com",
-        role: HostRole.READER
-      })
-    ];
-
-    when(spiedProvider1.queryForTopology(mockClientWrapper, anything())).thenReturn(Promise.resolve(topologyClusterA));
-    expect(RdsHostListProvider.topologyCache.size()).toEqual(0);
-
-    const topologyProvider1: HostInfo[] = await provider1.refresh(mockClientWrapper);
-    expect(topologyProvider1).toEqual(topologyClusterA);
-
-    const provider2 = getRdsHostListProvider("cluster-b.xyz.us-east-2.rds.amazonaws.com");
-    const spiedProvider2 = spy(provider2);
-
-    const topologyClusterB: HostInfo[] = [
-      createHost({
-        hostAvailabilityStrategy: new SimpleHostAvailabilityStrategy(),
-        host: "instance-b-1.xyz.us-east-2.rds.amazonaws.com",
-        role: HostRole.WRITER
-      }),
-      createHost({
-        hostAvailabilityStrategy: new SimpleHostAvailabilityStrategy(),
-        host: "instance-b-2.xyz.us-east-2.rds.amazonaws.com",
-        role: HostRole.READER
-      }),
-      createHost({
-        hostAvailabilityStrategy: new SimpleHostAvailabilityStrategy(),
-        host: "instance-b-3.xyz.us-east-2.rds.amazonaws.com",
-        role: HostRole.READER
-      })
-    ];
-    when(spiedProvider2.queryForTopology(instance(mockClientWrapper), anything())).thenReturn(Promise.resolve(topologyClusterB));
-
-    expect(await provider2.refresh(instance(mockClientWrapper))).toEqual(topologyClusterB);
-    expect(RdsHostListProvider.topologyCache.size()).toEqual(2);
-  });
-
-  it("testTopologyCache_suggestedClusterIdForRds", async () => {
-    RdsHostListProvider.clearAll();
-
-    when(mockPluginService.isClientValid(anything())).thenResolve(true);
-
-    const topologyClusterA: HostInfo[] = [
-      createHost({
-        hostAvailabilityStrategy: new SimpleHostAvailabilityStrategy(),
-        host: "instance-a-1.xyz.us-east-2.rds.amazonaws.com",
-        role: HostRole.WRITER
-      }),
-      createHost({
-        hostAvailabilityStrategy: new SimpleHostAvailabilityStrategy(),
-        host: "instance-a-2.xyz.us-east-2.rds.amazonaws.com",
-        role: HostRole.READER
-      }),
-      createHost({
-        hostAvailabilityStrategy: new SimpleHostAvailabilityStrategy(),
-        host: "instance-a-3.xyz.us-east-2.rds.amazonaws.com",
-        role: HostRole.READER
-      })
-    ];
-
-    const provider1 = getRdsHostListProvider("cluster-a.cluster-xyz.us-east-2.rds.amazonaws.com");
-    const spiedProvider1 = spy(provider1);
-
-    when(spiedProvider1.queryForTopology(mockClientWrapper, anything())).thenReturn(Promise.resolve(topologyClusterA));
-    expect(RdsHostListProvider.topologyCache.size()).toEqual(0);
-
-    const topologyProvider1: HostInfo[] = await provider1.refresh(mockClientWrapper);
-    expect(topologyProvider1).toEqual(topologyClusterA);
-
-    const provider2 = getRdsHostListProvider("cluster-a.cluster-xyz.us-east-2.rds.amazonaws.com");
-
-    expect(provider2.clusterId).toEqual(provider1.clusterId);
-    expect(provider1.isPrimaryClusterId).toBeTruthy();
-    expect(provider2.isPrimaryClusterId).toBeTruthy();
-
-    expect(await provider2.refresh(mockClientWrapper)).toEqual(topologyClusterA);
-    expect(RdsHostListProvider.topologyCache.size()).toEqual(1);
-  });
-
-  it("testTopologyCache_suggestedClusterIdForInstance", async () => {
-    RdsHostListProvider.clearAll();
-
-    when(mockPluginService.isClientValid(anything())).thenResolve(true);
-
-    const topologyClusterA: HostInfo[] = [
-      createHost({
-        hostAvailabilityStrategy: new SimpleHostAvailabilityStrategy(),
-        host: "instance-a-1.xyz.us-east-2.rds.amazonaws.com",
-        role: HostRole.WRITER
-      }),
-      createHost({
-        hostAvailabilityStrategy: new SimpleHostAvailabilityStrategy(),
-        host: "instance-a-2.xyz.us-east-2.rds.amazonaws.com",
-        role: HostRole.READER
-      }),
-      createHost({
-        hostAvailabilityStrategy: new SimpleHostAvailabilityStrategy(),
-        host: "instance-a-3.xyz.us-east-2.rds.amazonaws.com",
-        role: HostRole.READER
-      })
-    ];
-
-    const provider1 = getRdsHostListProvider("cluster-a.cluster-xyz.us-east-2.rds.amazonaws.com");
-    const spiedProvider1 = spy(provider1);
-
-    when(spiedProvider1.queryForTopology(mockClientWrapper, anything())).thenReturn(Promise.resolve(topologyClusterA));
-    expect(RdsHostListProvider.topologyCache.size()).toEqual(0);
-
-    const topologyProvider1: HostInfo[] = await provider1.refresh(mockClientWrapper);
-    expect(topologyProvider1).toEqual(topologyClusterA);
-
-    const provider2 = getRdsHostListProvider("instance-a-3.xyz.us-east-2.rds.amazonaws.com");
-
-    expect(provider2.clusterId).toEqual(provider1.clusterId);
-    expect(provider1.isPrimaryClusterId).toBeTruthy();
-    expect(provider2.isPrimaryClusterId).toBeTruthy();
-
-    expect(await provider2.refresh(mockClientWrapper)).toEqual(topologyClusterA);
-    expect(RdsHostListProvider.topologyCache.size()).toEqual(1);
-  });
-
-  it("testTopologyCache_acceptSuggestion", async () => {
-    RdsHostListProvider.clearAll();
-
-    when(mockPluginService.isClientValid(anything())).thenResolve(true);
-
-    const topologyClusterA: HostInfo[] = [
-      createHost({
-        hostAvailabilityStrategy: new SimpleHostAvailabilityStrategy(),
-        host: "instance-a-1.xyz.us-east-2.rds.amazonaws.com",
-        role: HostRole.WRITER
-      }),
-      createHost({
-        hostAvailabilityStrategy: new SimpleHostAvailabilityStrategy(),
-        host: "instance-a-2.xyz.us-east-2.rds.amazonaws.com",
-        role: HostRole.READER
-      }),
-      createHost({
-        hostAvailabilityStrategy: new SimpleHostAvailabilityStrategy(),
-        host: "instance-a-3.xyz.us-east-2.rds.amazonaws.com",
-        role: HostRole.READER
-      })
-    ];
-
-    const provider1 = getRdsHostListProvider("instance-a-2.xyz.us-east-2.rds.amazonaws.com");
-    const spiedProvider1 = spy(provider1);
-
-    when(spiedProvider1.queryForTopology(anything(), anything())).thenReturn(Promise.resolve(topologyClusterA));
-    expect(RdsHostListProvider.topologyCache.size()).toEqual(0);
-
-    const topologyProvider1: HostInfo[] = await provider1.refresh(mockClientWrapper);
-    expect(topologyProvider1).toEqual(topologyClusterA);
-
-    const provider2 = getRdsHostListProvider("cluster-a.cluster-xyz.us-east-2.rds.amazonaws.com");
-    const spiedProvider2 = spy(provider2);
-
-    when(spiedProvider2.queryForTopology(anything(), anything())).thenReturn(Promise.resolve(topologyClusterA));
-    expect(provider2.clusterId).not.toEqual(provider1.clusterId);
-    expect(provider1.isPrimaryClusterId).toBeFalsy();
-    expect(provider2.isPrimaryClusterId).toBeTruthy();
-
-    expect(await provider2.refresh(instance(mockClientWrapper))).toEqual(topologyClusterA);
-    expect(RdsHostListProvider.topologyCache.size()).toEqual(2);
-    expect(RdsHostListProvider.suggestedPrimaryClusterIdCache.get(provider1.clusterId)).toEqual("cluster-a.cluster-xyz.us-east-2.rds.amazonaws.com");
-
-    expect(await provider1.forceRefresh(instance(mockClientWrapper))).toEqual(topologyClusterA);
-    expect(provider2.clusterId).toEqual(provider1.clusterId);
-    expect(RdsHostListProvider.topologyCache.size()).toEqual(2);
-    expect(provider1.isPrimaryClusterId).toBeTruthy();
-    expect(provider2.isPrimaryClusterId).toBeTruthy();
+    expect(rdsHostListProvider.getStoredTopology()).toBeNull();
   });
 
   it("testIdentifyConnectionWithInvalidHostIdQuery", async () => {
-    when(mockDialect.identifyConnection(anything())).thenThrow(new AwsWrapperError("bad things"));
+    when(mockTopologyUtils.getInstanceId(anything())).thenThrow(new AwsWrapperError("bad things"));
 
     const rdsHostListProvider = getRdsHostListProvider("foo");
-    await expect(rdsHostListProvider.identifyConnection(instance(mockClientWrapper), instance(mockDialect))).rejects.toThrow(AwsWrapperError);
+    await expect(rdsHostListProvider.identifyConnection(instance(mockClientWrapper))).rejects.toThrow(AwsWrapperError);
   });
 
   it("testIdentifyConnectionHostInTopology", async () => {
-    when(mockDialect.queryForTopology(anything(), anything())).thenResolve([
-      createHost({
-        hostAvailabilityStrategy: new SimpleHostAvailabilityStrategy(),
-        host: "instance-1"
+    when(mockDialect.queryForTopology(anything())).thenResolve([
+      new TopologyQueryResult({
+        host: "instance-1",
+        isWriter: true,
+        weight: HostInfo.DEFAULT_WEIGHT,
+        lastUpdateTime: Date.now()
       })
     ]);
 
+    when(await mockTopologyUtils.getInstanceId(anything())).thenReturn(["instance1", "instance1"]);
     const rdsHostListProvider = getRdsHostListProvider("foo");
     const spiedProvider = spy(rdsHostListProvider);
 
@@ -410,55 +222,7 @@ describe("testRdsHostListProvider", () => {
     });
 
     when(spiedProvider.refresh()).thenReturn(Promise.resolve([]));
-    const res = await rdsHostListProvider.identifyConnection(instance(mockClientWrapper), instance(mockDialect));
+    const res = await rdsHostListProvider.identifyConnection(instance(mockClientWrapper));
     expect(res).toBeNull();
-  });
-
-  it("testGetTopology_staleRecord", async () => {
-    const hostName1: string = "hostName1";
-    const hostName2: string = "hostName2";
-    const cpuUtilization: number = 11.1;
-    const lag: number = 0.123;
-    const firstTimestamp: number = Date.now();
-    const secondTimestamp: number = firstTimestamp + 100;
-    const weight = Math.round(lag) * 100 + Math.round(cpuUtilization);
-
-    const expectedWriter: HostInfo = createHost({
-      hostAvailabilityStrategy: new SimpleHostAvailabilityStrategy(),
-      host: hostName2,
-      weight: weight,
-      lastUpdateTime: secondTimestamp
-    });
-
-    when(mockDialect.queryForTopology(anything(), anything())).thenResolve([
-      createHost({
-        hostAvailabilityStrategy: new SimpleHostAvailabilityStrategy(),
-        host: hostName1,
-        role: HostRole.WRITER,
-        weight: Math.round(lag) * 100 + Math.round(cpuUtilization),
-        lastUpdateTime: firstTimestamp
-      }),
-      createHost({
-        hostAvailabilityStrategy: new SimpleHostAvailabilityStrategy(),
-        host: hostName2,
-        role: HostRole.WRITER,
-        weight: Math.round(lag) * 100 + Math.round(cpuUtilization),
-        lastUpdateTime: secondTimestamp
-      })
-    ]);
-
-    when(mockPluginService.isClientValid(anything())).thenResolve(true);
-    when(mockPluginService.getDialect()).thenReturn(instance(mockDialect));
-
-    const rdsHostListProvider = getRdsHostListProvider("foo");
-    const spiedProvider = spy(rdsHostListProvider);
-    rdsHostListProvider.isInitialized = false;
-
-    when(spiedProvider.queryForTopology(mockClientWrapper, anything())).thenReturn(Promise.resolve([]));
-
-    const result = await rdsHostListProvider.getTopology(instance(mockClientWrapper), true);
-    verify(spiedProvider.queryForTopology(anything(), anything())).atMost(1);
-    expect(result.hosts.length).toEqual(1);
-    expect(result.hosts[0].equals(expectedWriter)).toBeTruthy();
   });
 });

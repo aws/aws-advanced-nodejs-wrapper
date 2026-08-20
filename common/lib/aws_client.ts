@@ -14,8 +14,7 @@
   limitations under the License.
 */
 
-import { PluginServiceManagerContainer } from "./plugin_service_manager_container";
-import { PluginService, PluginServiceImpl } from "./plugin_service";
+import { PluginService } from "./plugin_service";
 import { DatabaseDialect, DatabaseType } from "./database_dialect/database_dialect";
 import { ConnectionUrlParser } from "./utils/connection_url_parser";
 import { HostListProvider } from "./host_list_provider/host_list_provider";
@@ -23,23 +22,31 @@ import { PluginManager } from "./plugin_manager";
 
 import pkgStream from "stream";
 import { ClientWrapper } from "./client_wrapper";
-import { ConnectionProviderManager } from "./connection_provider_manager";
 import { DefaultTelemetryFactory } from "./utils/telemetry/default_telemetry_factory";
 import { TelemetryFactory } from "./utils/telemetry/telemetry_factory";
 import { DriverDialect } from "./driver_dialect/driver_dialect";
-import { WrapperProperties } from "./wrapper_property";
+import { AwsClientConfig, WrapperProperties } from "./wrapper_property";
 import { DriverConfigurationProfiles } from "./profile/driver_configuration_profiles";
 import { ConfigurationProfile } from "./profile/configuration_profile";
-import { AwsWrapperError, TransactionIsolationLevel, ConnectionProvider } from "./";
+import { AwsWrapperError, ConnectionProvider, TransactionIsolationLevel } from "./";
 import { Messages } from "./utils/messages";
 import { HostListProviderService } from "./host_list_provider_service";
 import { SessionStateClient } from "./session_state_client";
-import { DriverConnectionProvider } from "./driver_connection_provider";
+import { ServiceUtils } from "./utils/service_utils";
+import { StorageService } from "./utils/storage/storage_service";
+import { MonitorService } from "./utils/monitoring/monitor_service";
+import { CoreServicesContainer } from "./utils/core_services_container";
+import { FullServicesContainer } from "./utils/full_services_container";
+import { EventPublisher } from "./utils/events/event";
 
 const { EventEmitter } = pkgStream;
 
 export abstract class AwsClient extends EventEmitter implements SessionStateClient {
   private _defaultPort: number = -1;
+  private readonly fullServiceContainer: FullServicesContainer;
+  private readonly storageService: StorageService;
+  private readonly monitorService: MonitorService;
+  private readonly eventPublisher: EventPublisher;
   protected telemetryFactory: TelemetryFactory;
   protected pluginManager: PluginManager;
   protected pluginService: PluginService;
@@ -47,11 +54,11 @@ export abstract class AwsClient extends EventEmitter implements SessionStateClie
   protected _connectionUrlParser: ConnectionUrlParser;
   protected _configurationProfile: ConfigurationProfile | null = null;
   readonly properties: Map<string, any>;
-  config: any;
+  config: AwsClientConfig;
   targetClient?: ClientWrapper;
 
   protected constructor(
-    config: any,
+    config: AwsClientConfig,
     dbType: DatabaseType,
     knownDialectsByCode: Map<string, DatabaseDialect>,
     parser: ConnectionUrlParser,
@@ -63,6 +70,8 @@ export abstract class AwsClient extends EventEmitter implements SessionStateClie
     this._connectionUrlParser = parser;
 
     this.properties = new Map<string, any>(Object.entries(config));
+
+    this.storageService = CoreServicesContainer.getInstance().storageService;
 
     const profileName = WrapperProperties.PROFILE_NAME.get(this.properties);
     if (profileName && profileName.length > 0) {
@@ -98,22 +107,27 @@ export abstract class AwsClient extends EventEmitter implements SessionStateClie
       }
     }
 
+    const coreServicesContainer: CoreServicesContainer = CoreServicesContainer.getInstance();
+    this.storageService = coreServicesContainer.storageService;
+    this.monitorService = coreServicesContainer.monitorService;
+    this.eventPublisher = coreServicesContainer.eventPublisher;
     this.telemetryFactory = new DefaultTelemetryFactory(this.properties);
-    const container = new PluginServiceManagerContainer();
-    this.pluginService = new PluginServiceImpl(
-      container,
+
+    this.fullServiceContainer = ServiceUtils.instance.createStandardServiceContainer(
+      this.storageService,
+      this.monitorService,
+      this.eventPublisher,
       this,
+      this.properties,
       dbType,
       knownDialectsByCode,
-      this.properties,
-      this._configurationProfile?.getDriverDialect() ?? driverDialect
+      this._configurationProfile?.getDriverDialect() ?? driverDialect,
+      this.telemetryFactory,
+      connectionProvider
     );
-    this.pluginManager = new PluginManager(
-      container,
-      this.properties,
-      new ConnectionProviderManager(connectionProvider ?? new DriverConnectionProvider(), WrapperProperties.CONNECTION_PROVIDER.get(this.properties)),
-      this.telemetryFactory
-    );
+
+    this.pluginService = this.fullServiceContainer.pluginService;
+    this.pluginManager = this.fullServiceContainer.pluginManager;
   }
 
   private async setup() {
@@ -125,12 +139,12 @@ export abstract class AwsClient extends EventEmitter implements SessionStateClie
     await this.setup();
     const hostListProvider: HostListProvider = this.pluginService
       .getDialect()
-      .getHostListProvider(this.properties, this.properties.get("host"), <HostListProviderService>(<unknown>this.pluginService));
+      .getHostListProvider(this.properties, this.properties.get("host"), this.fullServiceContainer);
     this.pluginService.setHostListProvider(hostListProvider);
     await this.pluginService.refreshHostList();
     const initialHostInfo = this.pluginService.getInitialConnectionHostInfo();
     if (initialHostInfo != null) {
-      await this.pluginManager.initHostProvider(initialHostInfo, this.properties, <HostListProviderService>(<unknown>this.pluginService));
+      await this.pluginManager.initHostProvider(initialHostInfo, this.properties, this.fullServiceContainer.hostListProviderService);
       await this.pluginService.refreshHostList();
     }
   }
@@ -152,31 +166,31 @@ export abstract class AwsClient extends EventEmitter implements SessionStateClie
     return this._connectionUrlParser;
   }
 
-  abstract setReadOnly(readOnly: boolean): Promise<any | void>;
+  abstract setReadOnly(readOnly: boolean): Promise<unknown>;
 
-  abstract isReadOnly(): boolean;
+  abstract isReadOnly(): boolean | undefined;
 
-  abstract setAutoCommit(autoCommit: boolean): Promise<any | void>;
+  abstract setAutoCommit(autoCommit: boolean): Promise<unknown>;
 
-  abstract getAutoCommit(): boolean;
+  abstract getAutoCommit(): boolean | undefined;
 
-  abstract setTransactionIsolation(level: TransactionIsolationLevel): Promise<any | void>;
+  abstract setTransactionIsolation(level: TransactionIsolationLevel): Promise<unknown>;
 
-  abstract getTransactionIsolation(): TransactionIsolationLevel;
+  abstract getTransactionIsolation(): TransactionIsolationLevel | undefined;
 
-  abstract setSchema(schema: any): Promise<any | void>;
+  abstract setSchema(schema: string): Promise<unknown>;
 
-  abstract getSchema(): string;
+  abstract getSchema(): string | undefined;
 
-  abstract setCatalog(catalog: string): Promise<any | void>;
+  abstract setCatalog(catalog: string): Promise<unknown>;
 
-  abstract getCatalog(): string;
+  abstract getCatalog(): string | undefined;
 
-  abstract end(): Promise<any>;
+  abstract end(): Promise<unknown>;
 
-  abstract connect(): Promise<any>;
+  abstract connect(): Promise<void>;
 
-  abstract rollback(): Promise<any>;
+  abstract rollback(): Promise<unknown>;
 
   unwrapPlugin<T>(iface: new (...args: any[]) => T): T | null {
     return this.pluginManager.unwrapPlugin(iface);
@@ -189,7 +203,7 @@ export abstract class AwsClient extends EventEmitter implements SessionStateClie
     return await this.pluginService.isClientValid(this.targetClient);
   }
 
-  getPluginInstance<T>(iface: any): T {
+  getPluginInstance<T>(iface: new (...args: any[]) => T): T {
     return this.pluginManager.getPluginInstance(iface);
   }
 }

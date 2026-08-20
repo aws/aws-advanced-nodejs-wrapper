@@ -15,18 +15,16 @@
 */
 
 import { MySQLDatabaseDialect } from "./mysql_database_dialect";
-import { HostListProviderService } from "../../../common/lib/host_list_provider_service";
 import { HostListProvider } from "../../../common/lib/host_list_provider/host_list_provider";
 import { RdsHostListProvider } from "../../../common/lib/host_list_provider/rds_host_list_provider";
-import { HostInfo } from "../../../common/lib/host_info";
-import { TopologyAwareDatabaseDialect } from "../../../common/lib/topology_aware_database_dialect";
+import { TopologyAwareDatabaseDialect } from "../../../common/lib/database_dialect/topology_aware_database_dialect";
 import { HostRole } from "../../../common/lib/host_role";
 import { ClientWrapper } from "../../../common/lib/client_wrapper";
 import { DatabaseDialectCodes } from "../../../common/lib/database_dialect/database_dialect_codes";
-import { WrapperProperties } from "../../../common/lib/wrapper_property";
-import { MonitoringRdsHostListProvider } from "../../../common/lib/host_list_provider/monitoring/monitoring_host_list_provider";
-import { PluginService } from "../../../common/lib/plugin_service";
 import { BlueGreenDialect, BlueGreenResult } from "../../../common/lib/database_dialect/blue_green_dialect";
+import { TopologyQueryResult } from "../../../common/lib/host_list_provider/topology_utils";
+import { AuroraTopologyUtils } from "../../../common/lib/host_list_provider/aurora_topology_utils";
+import { FullServicesContainer } from "../../../common/lib/utils/full_services_container";
 
 export class AuroraMySQLDatabaseDialect extends MySQLDatabaseDialect implements TopologyAwareDatabaseDialect, BlueGreenDialect {
   private static readonly TOPOLOGY_QUERY: string =
@@ -41,22 +39,21 @@ export class AuroraMySQLDatabaseDialect extends MySQLDatabaseDialect implements 
     "SELECT server_id " +
     "FROM information_schema.replica_host_status " +
     "WHERE SESSION_ID = 'MASTER_SESSION_ID' AND SERVER_ID = @@aurora_server_id";
+  protected static readonly INSTANCE_ID_QUERY: string = "SELECT @@aurora_server_id as instance_id, @@aurora_server_id as instance_name";
   private static readonly AURORA_VERSION_QUERY = "SHOW VARIABLES LIKE 'aurora_version'";
 
   private static readonly BG_STATUS_QUERY: string = "SELECT * FROM mysql.rds_topology";
   private static readonly TOPOLOGY_TABLE_EXIST_QUERY: string =
     "SELECT 1 AS tmp FROM information_schema.tables WHERE table_schema = 'mysql' AND table_name = 'rds_topology'";
 
-  getHostListProvider(props: Map<string, any>, originalUrl: string, hostListProviderService: HostListProviderService): HostListProvider {
-    if (WrapperProperties.PLUGINS.get(props).includes("failover2")) {
-      return new MonitoringRdsHostListProvider(props, originalUrl, hostListProviderService, <PluginService>(<unknown>hostListProviderService));
-    }
-    return new RdsHostListProvider(props, originalUrl, hostListProviderService);
+  getHostListProvider(props: Map<string, any>, originalUrl: string, servicesContainer: FullServicesContainer): HostListProvider {
+    const topologyUtils = new AuroraTopologyUtils(this, servicesContainer.hostListProviderService.getHostInfoBuilder());
+    return new RdsHostListProvider(props, originalUrl, topologyUtils, servicesContainer);
   }
 
-  async queryForTopology(targetClient: ClientWrapper, hostListProvider: HostListProvider): Promise<HostInfo[]> {
+  async queryForTopology(targetClient: ClientWrapper): Promise<TopologyQueryResult[]> {
     const res = await targetClient.query(AuroraMySQLDatabaseDialect.TOPOLOGY_QUERY);
-    const hosts: HostInfo[] = [];
+    const results: TopologyQueryResult[] = [];
     const rows: any[] = res[0];
     rows.forEach((row) => {
       // According to the topology query the result set
@@ -66,10 +63,15 @@ export class AuroraMySQLDatabaseDialect extends MySQLDatabaseDialect implements 
       const cpuUtilization: number = row["cpu"];
       const hostLag: number = row["lag"];
       const lastUpdateTime: number = row["last_update_timestamp"] ? Date.parse(row["last_update_timestamp"]) : Date.now();
-      const host: HostInfo = hostListProvider.createHost(hostName, isWriter, Math.round(hostLag) * 100 + Math.round(cpuUtilization), lastUpdateTime);
-      hosts.push(host);
+      const result: TopologyQueryResult = new TopologyQueryResult({
+        host: hostName,
+        isWriter: isWriter,
+        weight: Math.round(hostLag) * 100 + Math.round(cpuUtilization),
+        lastUpdateTime: lastUpdateTime
+      });
+      results.push(result);
     });
-    return hosts;
+    return results;
   }
 
   async identifyConnection(targetClient: ClientWrapper): Promise<string> {
@@ -87,10 +89,25 @@ export class AuroraMySQLDatabaseDialect extends MySQLDatabaseDialect implements 
     try {
       const writerId: string = res[0][0]["server_id"];
       return writerId ? writerId : null;
-    } catch (e) {
+    } catch (e: any) {
       if (e.message.includes("Cannot read properties of undefined")) {
         // Query returned no result, targetClient is not connected to a writer.
         return null;
+      }
+      throw e;
+    }
+  }
+
+  async getInstanceId(targetClient: ClientWrapper): Promise<[string, string]> {
+    const res = await targetClient.query(AuroraMySQLDatabaseDialect.INSTANCE_ID_QUERY);
+    try {
+      const instance_id: string = res[0][0]["instance_id"];
+      const instance_name: string = res[0][0]["instance_name"];
+      return [instance_id, instance_name];
+    } catch (e: any) {
+      if (e.message.includes("Cannot read properties of undefined")) {
+        // Query returned no result, targetClient is not connected to a writer.
+        return ["", ""];
       }
       throw e;
     }
@@ -112,7 +129,7 @@ export class AuroraMySQLDatabaseDialect extends MySQLDatabaseDialect implements 
   }
 
   getDialectUpdateCandidates(): string[] {
-    return [DatabaseDialectCodes.RDS_MULTI_AZ_MYSQL];
+    return [DatabaseDialectCodes.GLOBAL_AURORA_MYSQL, DatabaseDialectCodes.RDS_MULTI_AZ_MYSQL];
   }
 
   async isBlueGreenStatusAvailable(clientWrapper: ClientWrapper): Promise<boolean> {

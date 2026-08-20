@@ -15,7 +15,7 @@
 */
 
 import { readFileSync } from "fs";
-import { AwsPGClient } from "../../pg";
+import { AwsPgClient } from "../../pg";
 
 const postgresHost = "db-identifier.shardgrp-XYZ.us-east-2.rds.amazonaws.com";
 const username = "user";
@@ -23,7 +23,7 @@ const password = "password";
 const database = "employees";
 const port = 5432;
 
-const client = new AwsPGClient({
+const client = new AwsPgClient({
   host: postgresHost,
   port: port,
   user: username,

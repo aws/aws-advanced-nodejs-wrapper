@@ -27,6 +27,9 @@ import { logger } from "../../../logutils";
 import { WrapperProperties } from "../../wrapper_property";
 import { ClientWrapper } from "../../client_wrapper";
 import { FailoverRestriction } from "./failover_restriction";
+import { FullServicesContainer } from "../../utils/full_services_container";
+import { ServiceUtils } from "../../utils/service_utils";
+import { DatabaseDialect } from "../../database_dialect/database_dialect";
 
 export interface WriterFailoverHandler {
   failover(currentTopology: HostInfo[]): Promise<WriterFailoverResult>;
@@ -34,12 +37,14 @@ export interface WriterFailoverHandler {
 
 function isCurrentHostWriter(topology: HostInfo[], originalWriterHost: HostInfo): boolean {
   const latestWriter = getWriter(topology);
-  const latestWriterAllAliases = latestWriter?.allAliases;
-  const currentAliases = originalWriterHost.allAliases;
-  if (currentAliases && latestWriterAllAliases) {
-    return [...currentAliases].filter((alias) => latestWriterAllAliases.has(alias)).length > 0;
+  if (!latestWriter || !originalWriterHost) {
+    return false;
   }
-  return false;
+
+  return (
+    (!!latestWriter.hostId && latestWriter.hostId === originalWriterHost.hostId) ||
+    (!!latestWriter.hostAndPort && latestWriter.hostAndPort.toLowerCase() === originalWriterHost.hostAndPort.toLowerCase())
+  );
 }
 
 export class ClusterAwareWriterFailoverHandler implements WriterFailoverHandler {
@@ -47,6 +52,7 @@ export class ClusterAwareWriterFailoverHandler implements WriterFailoverHandler 
   static readonly RECONNECT_WRITER_TASK = "TaskA";
   static readonly WAIT_NEW_WRITER_TASK = "TaskB";
   private readonly pluginService: PluginService;
+  private readonly servicesContainer: FullServicesContainer;
   private readonly readerFailoverHandler: ClusterAwareReaderFailoverHandler;
   private readonly initialConnectionProps: Map<string, any>;
   maxFailoverTimeoutMs = 60000; // 60 sec
@@ -55,6 +61,7 @@ export class ClusterAwareWriterFailoverHandler implements WriterFailoverHandler 
 
   constructor(
     pluginService: PluginService,
+    servicesContainer: FullServicesContainer,
     readerFailoverHandler: ClusterAwareReaderFailoverHandler,
     initialConnectionProps: Map<string, any>,
     failoverTimeoutMs?: number,
@@ -62,11 +69,22 @@ export class ClusterAwareWriterFailoverHandler implements WriterFailoverHandler 
     reconnectWriterIntervalMs?: number
   ) {
     this.pluginService = pluginService;
+    this.servicesContainer = servicesContainer;
     this.readerFailoverHandler = readerFailoverHandler;
     this.initialConnectionProps = initialConnectionProps;
     this.maxFailoverTimeoutMs = failoverTimeoutMs ?? this.maxFailoverTimeoutMs;
     this.readTopologyIntervalMs = readTopologyIntervalMs ?? this.readTopologyIntervalMs;
     this.reconnectionWriterIntervalMs = reconnectWriterIntervalMs ?? this.reconnectionWriterIntervalMs;
+  }
+
+  protected async newServicesContainer(): Promise<FullServicesContainer> {
+    const container = ServiceUtils.instance.createMinimalServiceContainerFrom(this.servicesContainer, this.initialConnectionProps);
+    await container.pluginManager.init();
+    const initialHostInfo = this.pluginService.getInitialConnectionHostInfo();
+    if (initialHostInfo) {
+      container.hostListProviderService.setInitialConnectionHostInfo(initialHostInfo);
+    }
+    return container;
   }
 
   async failover(currentTopology: HostInfo[]): Promise<WriterFailoverResult> {
@@ -75,10 +93,13 @@ export class ClusterAwareWriterFailoverHandler implements WriterFailoverHandler 
       return ClusterAwareWriterFailoverHandler.DEFAULT_RESULT;
     }
 
+    const taskAContainer = await this.newServicesContainer();
+    const taskBContainer = await this.newServicesContainer();
+
     const reconnectToWriterHandlerTask = new ReconnectToWriterHandlerTask(
       currentTopology,
       getWriter(currentTopology),
-      this.pluginService,
+      taskAContainer.pluginService,
       this.initialConnectionProps,
       this.reconnectionWriterIntervalMs,
       Date.now() + this.maxFailoverTimeoutMs
@@ -88,7 +109,7 @@ export class ClusterAwareWriterFailoverHandler implements WriterFailoverHandler 
       currentTopology,
       getWriter(currentTopology),
       this.readerFailoverHandler,
-      this.pluginService,
+      taskBContainer.pluginService,
       this.initialConnectionProps,
       this.readTopologyIntervalMs,
       Date.now() + this.maxFailoverTimeoutMs
@@ -236,7 +257,7 @@ class ReconnectToWriterHandlerTask {
           const props = new Map(this.initialConnectionProps);
           props.set(WrapperProperties.HOST.name, this.originalWriterHost.host);
           this.currentClient = await this.pluginService.forceConnect(this.originalWriterHost, props);
-          await this.pluginService.forceRefreshHostList(this.currentClient);
+          await this.pluginService.forceRefreshHostList();
           latestTopology = this.pluginService.getAllHosts();
         } catch (error) {
           // Propagate errors that are not caused by network errors.
@@ -254,7 +275,7 @@ class ReconnectToWriterHandlerTask {
       }
       success = isCurrentHostWriter(latestTopology, this.originalWriterHost);
 
-      this.pluginService.setAvailability(this.originalWriterHost.allAliases, HostAvailability.AVAILABLE);
+      this.pluginService.setAvailability(this.originalWriterHost, HostAvailability.AVAILABLE);
       return new WriterFailoverResult(
         success,
         false,
@@ -379,10 +400,10 @@ class WaitForNewWriterHandlerTask {
   async refreshTopologyAndConnectToNewWriter(): Promise<boolean> {
     const allowOldWriter: boolean = this.pluginService.getDialect().getFailoverRestrictions().includes(FailoverRestriction.ENABLE_WRITER_IN_TASK_B);
 
-    while (this.pluginService.getCurrentClient() && Date.now() < this.endTime && !this.failoverCompleted) {
+    while (Date.now() < this.endTime && !this.failoverCompleted) {
       try {
         if (this.currentReaderTargetClient) {
-          await this.pluginService.forceRefreshHostList(this.currentReaderTargetClient);
+          await this.pluginService.forceRefreshHostList();
         }
         const topology = this.pluginService.getAllHosts();
 
@@ -435,13 +456,13 @@ class WaitForNewWriterHandlerTask {
       let targetClient = null;
       try {
         targetClient = await this.pluginService.forceConnect(writerCandidate, props);
-        this.pluginService.setAvailability(writerCandidate.allAliases, HostAvailability.AVAILABLE);
+        this.pluginService.setAvailability(writerCandidate, HostAvailability.AVAILABLE);
         await this.callCloseClient(this.currentReaderTargetClient);
         await this.callCloseClient(this.currentClient);
         this.currentClient = targetClient;
         return true;
       } catch (error) {
-        this.pluginService.setAvailability(writerCandidate.allAliases, HostAvailability.NOT_AVAILABLE);
+        this.pluginService.setAvailability(writerCandidate, HostAvailability.NOT_AVAILABLE);
         await this.pluginService.abortTargetClient(targetClient);
         return false;
       }

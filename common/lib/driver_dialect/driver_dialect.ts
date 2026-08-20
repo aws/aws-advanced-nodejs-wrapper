@@ -24,15 +24,15 @@ export interface DriverDialect {
 
   connect(hostInfo: HostInfo, props: Map<string, any>): Promise<ClientWrapper>;
 
-  preparePoolClientProperties(props: Map<string, any>, poolConfig: AwsPoolConfig | undefined): any;
+  preparePoolClientProperties(props: Map<string, any>, poolConfig: AwsPoolConfig | undefined): unknown;
 
-  getAwsPoolClient(props: any): AwsInternalPoolClient;
+  getAwsPoolClient(props: unknown): AwsInternalPoolClient;
 
-  setConnectTimeout(props: Map<string, any>, wrapperConnectTimeout?: any): void;
+  setConnectTimeout(props: Map<string, any>, wrapperConnectTimeout?: number): void;
 
-  setQueryTimeout(props: Map<string, any>, sql?: any, wrapperConnectTimeout?: any): void;
+  setQueryTimeout(props: Map<string, any>, sql?: unknown, wrapperQueryTimeout?: number): void;
 
-  setKeepAliveProperties(props: Map<string, any>, keepAliveProps: any): void;
+  setKeepAliveProperties(props: Map<string, any>, keepAliveProps: unknown): void;
 
-  getQueryFromMethodArg(methodArg: any): string;
+  getQueryFromMethodArg(methodArg: unknown): string;
 }

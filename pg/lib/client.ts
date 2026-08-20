@@ -14,7 +14,7 @@
   limitations under the License.
 */
 
-import { QueryArrayConfig, QueryArrayResult, QueryConfig, QueryConfigValues, QueryResult, QueryResultRow, Submittable } from "pg";
+import { ClientConfig, QueryArrayConfig, QueryArrayResult, QueryConfig, QueryConfigValues, QueryResult, QueryResultRow, Submittable } from "pg";
 import { AwsClient } from "../../common/lib/aws_client";
 import { PgConnectionUrlParser } from "./pg_connection_url_parser";
 import { DatabaseDialect, DatabaseType } from "../../common/lib/database_dialect/database_dialect";
@@ -38,19 +38,24 @@ import { ClientWrapper } from "../../common/lib/client_wrapper";
 import { RdsMultiAZClusterPgDatabaseDialect } from "./dialect/rds_multi_az_pg_database_dialect";
 import { TelemetryTraceLevel } from "../../common/lib/utils/telemetry/telemetry_trace_level";
 import { NodePostgresDriverDialect } from "./dialect/node_postgres_driver_dialect";
-import { isDialectTopologyAware } from "../../common/lib/utils/utils";
-import { PGClient, PGPoolClient } from "./pg_client";
+import { isDialectTopologyAware } from "../../common/lib/database_dialect/topology_aware_database_dialect";
+import { PgClient, PgPoolClient } from "./pg_client";
 import { DriverConnectionProvider } from "../../common/lib/driver_connection_provider";
+import { GlobalAuroraPgDatabaseDialect } from "./dialect/global_aurora_pg_database_dialect";
+import { AwsClientConfig } from "../../common/lib/wrapper_property";
 
-class BaseAwsPgClient extends AwsClient implements PGClient {
+export interface AwsPgClientConfig extends ClientConfig, AwsClientConfig {}
+
+class BaseAwsPgClient extends AwsClient implements PgClient {
   private static readonly knownDialectsByCode: Map<string, DatabaseDialect> = new Map([
     [DatabaseDialectCodes.PG, new PgDatabaseDialect()],
     [DatabaseDialectCodes.RDS_PG, new RdsPgDatabaseDialect()],
     [DatabaseDialectCodes.AURORA_PG, new AuroraPgDatabaseDialect()],
+    [DatabaseDialectCodes.GLOBAL_AURORA_PG, new GlobalAuroraPgDatabaseDialect()],
     [DatabaseDialectCodes.RDS_MULTI_AZ_PG, new RdsMultiAZClusterPgDatabaseDialect()]
   ]);
 
-  constructor(config: any, connectionProvider?: ConnectionProvider) {
+  constructor(config: AwsPgClientConfig, connectionProvider?: ConnectionProvider) {
     super(
       config,
       DatabaseType.POSTGRES,
@@ -82,7 +87,7 @@ class BaseAwsPgClient extends AwsClient implements PGClient {
     return result;
   }
 
-  isReadOnly(): boolean {
+  isReadOnly(): boolean | undefined {
     return this.pluginService.getSessionStateService().getReadOnly();
   }
 
@@ -120,7 +125,7 @@ class BaseAwsPgClient extends AwsClient implements PGClient {
     this.pluginService.getSessionStateService().setTransactionIsolation(level);
   }
 
-  getTransactionIsolation(): TransactionIsolationLevel {
+  getTransactionIsolation(): TransactionIsolationLevel | undefined {
     return this.pluginService.getSessionStateService().getTransactionIsolation();
   }
 
@@ -147,7 +152,7 @@ class BaseAwsPgClient extends AwsClient implements PGClient {
     return result;
   }
 
-  getSchema(): string {
+  getSchema(): string | undefined {
     return this.pluginService.getSessionStateService().getSchema();
   }
 
@@ -213,14 +218,18 @@ class BaseAwsPgClient extends AwsClient implements PGClient {
           // Ignore
         }
       }
-      await this.pluginService.setCurrentClient(result, result.hostInfo);
+
+      const connectedHostInfo: HostInfo =
+        this.pluginService.getRoutedHostInfo() ?? this.pluginService.getInitialConnectionHostInfo() ?? result.hostInfo;
+      await this.pluginService.setCurrentClient(result, connectedHostInfo);
+      this.pluginService.setRoutedHostInfo(null);
       await this.internalPostConnect();
     });
   }
 
-  query(text: string): Promise<any>;
+  query(text: string): Promise<QueryResult>;
 
-  query(text: string, values: any[]): Promise<any>;
+  query(text: string, values: any[]): Promise<QueryResult>;
 
   query<T extends Submittable>(queryStream: T): T;
 
@@ -329,14 +338,25 @@ class BaseAwsPgClient extends AwsClient implements PGClient {
   }
 }
 
-export class AwsPGClient extends BaseAwsPgClient {
-  constructor(config: any) {
+export class AwsPgClient extends BaseAwsPgClient {
+  constructor(config: AwsPgClientConfig) {
     super(config, new DriverConnectionProvider());
   }
 }
 
-class AwsPGPooledConnection extends BaseAwsPgClient {
-  constructor(config: any, provider: ConnectionProvider) {
+/**
+ * @deprecated Use {@link AwsPgClient} instead. `AwsPGClient` is a backwards-compatible
+ * alias retained to avoid a breaking change and will be removed in the next major release.
+ */
+export const AwsPGClient = AwsPgClient;
+/**
+ * @deprecated Use {@link AwsPgClient} instead. Type alias retained so existing type
+ * annotations keep resolving; will be removed in the next major release.
+ */
+export type AwsPGClient = AwsPgClient;
+
+class AwsPgPooledConnection extends BaseAwsPgClient {
+  constructor(config: AwsPgClientConfig, provider: ConnectionProvider) {
     super(config, provider);
   }
 
@@ -357,32 +377,39 @@ class AwsPGPooledConnection extends BaseAwsPgClient {
   }
 }
 
-export type { AwsPGPooledConnection };
+export type { AwsPgPooledConnection };
 
-export class AwsPgPoolClient implements PGPoolClient {
+/**
+ * @deprecated Use {@link AwsPgPooledConnection} instead. `AwsPGPooledConnection` is a
+ * backwards-compatible alias retained to avoid a breaking change and will be removed in
+ * the next major release.
+ */
+export type AwsPGPooledConnection = AwsPgPooledConnection;
+
+export class AwsPgPoolClient implements PgPoolClient {
   private readonly connectionProvider: InternalPooledConnectionProvider;
-  private readonly config;
-  private readonly poolConfig;
+  private readonly config: AwsPgClientConfig;
+  private readonly poolConfig?: AwsPoolConfig;
 
-  constructor(config: any, poolConfig?: AwsPoolConfig) {
+  constructor(config: AwsPgClientConfig, poolConfig?: AwsPoolConfig) {
     this.connectionProvider = new InternalPooledConnectionProvider(poolConfig);
     this.config = config;
     this.poolConfig = poolConfig;
   }
 
-  async connect(): Promise<AwsPGPooledConnection> {
-    const awsPGPooledConnection: AwsPGPooledConnection = new AwsPGPooledConnection(this.config, this.connectionProvider);
-    await awsPGPooledConnection.connect();
-    return awsPGPooledConnection;
+  async connect(): Promise<AwsPgPooledConnection> {
+    const awsPgPooledConnection: AwsPgPooledConnection = new AwsPgPooledConnection(this.config, this.connectionProvider);
+    await awsPgPooledConnection.connect();
+    return awsPgPooledConnection;
   }
 
   async end(): Promise<void> {
     await this.connectionProvider.releaseResources();
   }
 
-  query(text: string): Promise<any>;
+  query(text: string): Promise<QueryResult>;
 
-  query(text: string, values: any[]): Promise<any>;
+  query(text: string, values: any[]): Promise<QueryResult>;
 
   query<T extends Submittable>(queryStream: T): T;
 
@@ -394,16 +421,16 @@ export class AwsPgPoolClient implements PGPoolClient {
     queryTextOrConfig: string | QueryConfig<I>,
     values?: QueryConfigValues<I>
   ): Promise<QueryResult<R>> {
-    const awsPGPooledConnection: AwsPGPooledConnection = new AwsPGPooledConnection(this.config, this.connectionProvider);
+    const awsPgPooledConnection: AwsPgPooledConnection = new AwsPgPooledConnection(this.config, this.connectionProvider);
     try {
-      await awsPGPooledConnection.connect();
-      const res = await awsPGPooledConnection.query(queryTextOrConfig as any, values);
-      await awsPGPooledConnection.end();
-      return res;
+      await awsPgPooledConnection.connect();
+      const res = await awsPgPooledConnection.query(queryTextOrConfig as any, values);
+      await awsPgPooledConnection.end();
+      return res as any;
     } catch (error: any) {
       if (!(error instanceof FailoverSuccessError)) {
         // Release pooled connection.
-        await awsPGPooledConnection.end();
+        await awsPgPooledConnection.end();
       }
       throw error;
     }

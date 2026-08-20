@@ -17,12 +17,11 @@
 import { anything, instance, mock, when } from "ts-mockito";
 import { ConnectionProvider, HostInfoBuilder, PluginManager } from "../common/lib";
 import { PluginServiceImpl } from "../common/lib/plugin_service";
-import { PluginServiceManagerContainer } from "../common/lib/plugin_service_manager_container";
 import { WrapperProperties } from "../common/lib/wrapper_property";
 import { add, complete, configure, cycle, save, suite } from "benny";
 import { TestConnectionWrapper } from "./testplugin/test_connection_wrapper";
 import { SimpleHostAvailabilityStrategy } from "../common/lib/host_availability/simple_host_availability_strategy";
-import { AwsPGClient } from "../pg/lib";
+import { AwsPgClient } from "../pg/lib";
 import { NullTelemetryFactory } from "../common/lib/utils/telemetry/null_telemetry_factory";
 import { OpenTelemetryFactory } from "../common/lib/utils/telemetry/open_telemetry_factory";
 import { OTLPTraceExporter } from "@opentelemetry/exporter-trace-otlp-grpc";
@@ -41,10 +40,11 @@ import { PgClientWrapper } from "../common/lib/pg_client_wrapper";
 import { DriverDialect } from "../common/lib/driver_dialect/driver_dialect";
 import { NodePostgresDriverDialect } from "../pg/lib/dialect/node_postgres_driver_dialect";
 import { resourceFromAttributes } from "@opentelemetry/resources";
+import { FullServicesContainerImpl } from "../common/lib/utils/full_services_container";
 
 const mockConnectionProvider = mock<ConnectionProvider>();
 const mockPluginService = mock(PluginServiceImpl);
-const mockClient = mock(AwsPGClient);
+const mockClient = mock(AwsPgClient);
 const mockDialect: DriverDialect = mock(NodePostgresDriverDialect);
 
 const hostInfo = new HostInfoBuilder({ hostAvailabilityStrategy: new SimpleHostAvailabilityStrategy() }).withHost("host").build();
@@ -60,8 +60,8 @@ when(mockPluginService.getCurrentClient()).thenReturn(mockClientWrapper.client);
 when(mockPluginService.getDriverDialect()).thenReturn(mockDialect);
 
 const connectionString = "my.domain.com";
-const pluginServiceManagerContainer = new PluginServiceManagerContainer();
-pluginServiceManagerContainer.pluginService = instance(mockPluginService);
+const servicesContainer = mock(FullServicesContainerImpl);
+when(servicesContainer.pluginService).thenReturn(instance(mockPluginService));
 
 const propsExecute = new Map<string, any>();
 const propsReadWrite = new Map<string, any>();
@@ -84,19 +84,19 @@ WrapperProperties.TELEMETRY_TRACES_BACKEND.set(propsReadWrite, "OTLP");
 WrapperProperties.TELEMETRY_TRACES_BACKEND.set(props, "OTLP");
 
 const pluginManagerExecute = new PluginManager(
-  pluginServiceManagerContainer,
+  servicesContainer,
   propsExecute,
   new ConnectionProviderManager(instance(mockConnectionProvider), null),
   telemetryFactory
 );
 const pluginManagerReadWrite = new PluginManager(
-  pluginServiceManagerContainer,
+  servicesContainer,
   propsReadWrite,
   new ConnectionProviderManager(instance(mockConnectionProvider), null),
   telemetryFactory
 );
 const pluginManager = new PluginManager(
-  pluginServiceManagerContainer,
+  servicesContainer,
   props,
   new ConnectionProviderManager(instance(mockConnectionProvider), null),
   new NullTelemetryFactory()
