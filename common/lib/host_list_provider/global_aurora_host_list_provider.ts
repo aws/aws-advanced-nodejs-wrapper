@@ -23,7 +23,6 @@ import { GlobalAuroraTopologyMonitor } from "./monitoring/global_aurora_topology
 import { MonitorInitializer } from "../utils/monitoring/monitor";
 import { ClientWrapper } from "../client_wrapper";
 import { DatabaseDialect } from "../database_dialect/database_dialect";
-import { parseInstanceTemplates } from "../utils/utils";
 
 export class GlobalAuroraHostListProvider extends RdsHostListProvider {
   protected instanceTemplatesByRegion: Map<string, HostInfo>;
@@ -31,7 +30,7 @@ export class GlobalAuroraHostListProvider extends RdsHostListProvider {
     super.initSettings();
 
     const instanceTemplates = WrapperProperties.GLOBAL_CLUSTER_INSTANCE_HOST_PATTERNS.get(this.properties);
-    this.instanceTemplatesByRegion = parseInstanceTemplates(
+    this.instanceTemplatesByRegion = this.rdsHelper.parseInstanceTemplates(
       instanceTemplates,
       (hostPattern: string) => this.validateHostPatternSetting(hostPattern),
       () => this.hostListProviderService.getHostInfoBuilder()

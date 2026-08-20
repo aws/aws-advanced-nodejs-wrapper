@@ -377,7 +377,7 @@ const MESSAGES: Record<string, string> = {
   "GlobalTopologyUtils.missingTemplateForRegion": "No cluster instance template found for region '%s' when processing host '%s'.",
   "Utils.globalClusterInstanceHostPatternsRequired": "The 'globalClusterInstanceHostPatterns' property is required for Global Aurora Databases.",
   "Utils.invalidPatternFormat":
-    "Invalid pattern format '%s'. Expected format: 'region:host-pattern' (e.g., 'us-east-1:?.cluster-xyz.us-east-1.rds.amazonaws.com').",
+    "Invalid pattern format '%s'. Expected an instance endpoint pattern whose region can be determined, for example '?.cluster-xyz.us-east-1.rds.amazonaws.com'. For a custom domain, prefix the region: '[us-east-1]?.customHost' or 'us-east-1:?.customHost'.",
   "AuroraMonitoringConnectionHandler.initialized": "AuroraMonitoringConnectionHandler initialized with priorities: '%s'.",
   "GlobalDbMonitoringConnectionHandler.initialized": "GlobalDbMonitoringConnectionHandler initialized with priorities: '%s'.",
   "GlobalDbMonitoringConnectionHandler.unrecognizedPriority":
