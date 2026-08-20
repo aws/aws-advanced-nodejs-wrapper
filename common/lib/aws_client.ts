@@ -25,7 +25,7 @@ import { ClientWrapper } from "./client_wrapper";
 import { DefaultTelemetryFactory } from "./utils/telemetry/default_telemetry_factory";
 import { TelemetryFactory } from "./utils/telemetry/telemetry_factory";
 import { DriverDialect } from "./driver_dialect/driver_dialect";
-import { WrapperProperties } from "./wrapper_property";
+import { AwsClientConfig, WrapperProperties } from "./wrapper_property";
 import { DriverConfigurationProfiles } from "./profile/driver_configuration_profiles";
 import { ConfigurationProfile } from "./profile/configuration_profile";
 import { AwsWrapperError, ConnectionProvider, TransactionIsolationLevel } from "./";
@@ -54,11 +54,11 @@ export abstract class AwsClient extends EventEmitter implements SessionStateClie
   protected _connectionUrlParser: ConnectionUrlParser;
   protected _configurationProfile: ConfigurationProfile | null = null;
   readonly properties: Map<string, any>;
-  config: any;
+  config: AwsClientConfig;
   targetClient?: ClientWrapper;
 
   protected constructor(
-    config: any,
+    config: AwsClientConfig,
     dbType: DatabaseType,
     knownDialectsByCode: Map<string, DatabaseDialect>,
     parser: ConnectionUrlParser,
@@ -166,31 +166,31 @@ export abstract class AwsClient extends EventEmitter implements SessionStateClie
     return this._connectionUrlParser;
   }
 
-  abstract setReadOnly(readOnly: boolean): Promise<any | void>;
+  abstract setReadOnly(readOnly: boolean): Promise<unknown>;
 
   abstract isReadOnly(): boolean | undefined;
 
-  abstract setAutoCommit(autoCommit: boolean): Promise<any | void>;
+  abstract setAutoCommit(autoCommit: boolean): Promise<unknown>;
 
   abstract getAutoCommit(): boolean | undefined;
 
-  abstract setTransactionIsolation(level: TransactionIsolationLevel): Promise<any | void>;
+  abstract setTransactionIsolation(level: TransactionIsolationLevel): Promise<unknown>;
 
   abstract getTransactionIsolation(): TransactionIsolationLevel | undefined;
 
-  abstract setSchema(schema: any): Promise<any | void>;
+  abstract setSchema(schema: string): Promise<unknown>;
 
   abstract getSchema(): string | undefined;
 
-  abstract setCatalog(catalog: string): Promise<any | void>;
+  abstract setCatalog(catalog: string): Promise<unknown>;
 
   abstract getCatalog(): string | undefined;
 
-  abstract end(): Promise<any>;
+  abstract end(): Promise<unknown>;
 
-  abstract connect(): Promise<any>;
+  abstract connect(): Promise<void>;
 
-  abstract rollback(): Promise<any>;
+  abstract rollback(): Promise<unknown>;
 
   unwrapPlugin<T>(iface: new (...args: any[]) => T): T | null {
     return this.pluginManager.unwrapPlugin(iface);
@@ -203,7 +203,7 @@ export abstract class AwsClient extends EventEmitter implements SessionStateClie
     return await this.pluginService.isClientValid(this.targetClient);
   }
 
-  getPluginInstance<T>(iface: any): T {
+  getPluginInstance<T>(iface: new (...args: any[]) => T): T {
     return this.pluginManager.getPluginInstance(iface);
   }
 }

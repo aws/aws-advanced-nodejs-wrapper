@@ -227,9 +227,9 @@ class BaseAwsPgClient extends AwsClient implements PGClient {
     });
   }
 
-  query(text: string): Promise<any>;
+  query(text: string): Promise<QueryResult>;
 
-  query(text: string, values: any[]): Promise<any>;
+  query(text: string, values: any[]): Promise<QueryResult>;
 
   query<T extends Submittable>(queryStream: T): T;
 
@@ -389,9 +389,9 @@ export class AwsPgPoolClient implements PGPoolClient {
     await this.connectionProvider.releaseResources();
   }
 
-  query(text: string): Promise<any>;
+  query(text: string): Promise<QueryResult>;
 
-  query(text: string, values: any[]): Promise<any>;
+  query(text: string, values: any[]): Promise<QueryResult>;
 
   query<T extends Submittable>(queryStream: T): T;
 

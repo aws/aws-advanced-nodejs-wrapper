@@ -22,9 +22,9 @@ export interface PGClient {
 
   end(): Promise<void>;
 
-  query(text: string): Promise<any>;
+  query(text: string): Promise<QueryResult>;
 
-  query(text: string, values: any[]): Promise<any>;
+  query(text: string, values: any[]): Promise<QueryResult>;
 
   query<T extends Submittable>(queryStream: T): T;
 
@@ -61,7 +61,7 @@ export interface PGPoolClient {
 
   query<R extends QueryResultRow = any, I = any[]>(queryConfig: QueryConfig<I>): Promise<QueryResult<R>>;
 
-  query(text: string): Promise<any>;
+  query(text: string): Promise<QueryResult>;
 
-  query(text: string, values: any[]): Promise<any>;
+  query(text: string, values: any[]): Promise<QueryResult>;
 }
