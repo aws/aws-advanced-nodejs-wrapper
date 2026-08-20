@@ -20,20 +20,20 @@ import { AwsWrapperError } from "../../utils/errors";
 import { Messages } from "../../utils/messages";
 import { FullServicesContainer } from "../../utils/full_services_container";
 
-export class GdbReadWriteSplittingPluginFactory extends ConnectionPluginFactory {
-  private static gdbReadWriteSplittingPlugin: any;
+export class GlobalDbReadWriteSplittingPluginFactory extends ConnectionPluginFactory {
+  private static globalDbReadWriteSplittingPlugin: any;
 
   async getInstance(servicesContainer: FullServicesContainer, properties: Map<string, any>): Promise<ConnectionPlugin> {
     try {
-      if (!GdbReadWriteSplittingPluginFactory.gdbReadWriteSplittingPlugin) {
-        GdbReadWriteSplittingPluginFactory.gdbReadWriteSplittingPlugin = await import("./gdb_read_write_splitting_plugin");
+      if (!GlobalDbReadWriteSplittingPluginFactory.globalDbReadWriteSplittingPlugin) {
+        GlobalDbReadWriteSplittingPluginFactory.globalDbReadWriteSplittingPlugin = await import("./global_db_read_write_splitting_plugin");
       }
-      return new GdbReadWriteSplittingPluginFactory.gdbReadWriteSplittingPlugin.GdbReadWriteSplittingPlugin(
+      return new GlobalDbReadWriteSplittingPluginFactory.globalDbReadWriteSplittingPlugin.GlobalDbReadWriteSplittingPlugin(
         servicesContainer.pluginService,
         properties
       );
     } catch (error: any) {
-      throw new AwsWrapperError(Messages.get("ConnectionPluginChainBuilder.errorImportingPlugin", error.message, "GdbReadWriteSplittingPlugin"));
+      throw new AwsWrapperError(Messages.get("ConnectionPluginChainBuilder.errorImportingPlugin", error.message, "GlobalDbReadWriteSplittingPlugin"));
     }
   }
 }

@@ -62,23 +62,22 @@ async function initDefaultConfig(host: string, port: number, connectToProxy: boo
   return config;
 }
 
-describe("gdb failover", () => {
-  // Inherit shared failover tests with GDB-specific configuration
-  // This mirrors the Java pattern where GdbFailoverTest extends FailoverTest
+describe("globalDb failover", () => {
+  // Inherit shared failover tests with GlobalDb-specific configuration
   describe(
     "failover tests",
     createFailoverTests({
       plugins: "gdbFailover",
       getExtraConfig: () => ({
-        // These settings mimic failover/failover2 plugin logic when connecting to non-GDB Aurora or RDS DB clusters.
+        // These settings mimic failover/failover2 plugin logic when connecting to non-GlobalDb Aurora or RDS DB clusters.
         activeHomeFailoverMode: "strict-writer",
         inactiveHomeFailoverMode: "strict-writer"
       })
     })
   );
 
-  // GDB-specific tests (overrides from Java GdbFailoverTest)
-  describe("gdb-specific tests", () => {
+  // GlobalDb-specific tests
+  describe("globalDb-specific tests", () => {
     beforeEach(async () => {
       logger.info(`Test started: ${expect.getState().currentTestName}`);
       env = await TestEnvironment.getCurrent();

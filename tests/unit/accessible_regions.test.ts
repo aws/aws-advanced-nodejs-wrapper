@@ -41,7 +41,7 @@ describe("AccessibleRegions", () => {
     [",,", "only commas"]
   ])("returns null when property is %s (%s)", (value, _desc) => {
     if (value !== undefined) {
-      props.set(WrapperProperties.GDB_ACCESSIBLE_REGIONS.name, value);
+      props.set(WrapperProperties.GLOBAL_DB_ACCESSIBLE_REGIONS.name, value);
     }
     expect(AccessibleRegions.parse(props)).toBeNull();
   });
@@ -53,7 +53,7 @@ describe("AccessibleRegions", () => {
     [" us-east-1 , us-west-2 ", ["us-east-1", "us-west-2"], "trims whitespace"],
     ["us-east-1,,us-west-2,", ["us-east-1", "us-west-2"], "filters empty entries from trailing comma"]
   ])("parses '%s' → %j (%s)", (input, expected) => {
-    props.set(WrapperProperties.GDB_ACCESSIBLE_REGIONS.name, input);
+    props.set(WrapperProperties.GLOBAL_DB_ACCESSIBLE_REGIONS.name, input);
     expect(AccessibleRegions.parse(props)).toEqual(expected);
   });
 

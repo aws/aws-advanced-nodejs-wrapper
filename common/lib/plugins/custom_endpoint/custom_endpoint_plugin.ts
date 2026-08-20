@@ -32,7 +32,7 @@ import { CustomEndpointMonitor, CustomEndpointMonitorImpl } from "./custom_endpo
 import { SubscribedMethodHelper } from "../../utils/subscribed_method_helper";
 import { CanReleaseResources } from "../../can_release_resources";
 import { RdsUrlType } from "../../utils/rds_url_type";
-import { GDBRegionUtils } from "../../utils/gdb_region_utils";
+import { GlobalDbRegionUtils } from "../../utils/global_db_region_utils";
 
 export class CustomEndpointPlugin extends AbstractConnectionPlugin implements CanReleaseResources {
   private static readonly TELEMETRY_WAIT_FOR_INFO_COUNTER = "customEndpoint.waitForInfo.counter";

@@ -104,7 +104,7 @@ export class GlobalDbFailoverPlugin extends Failover2Plugin {
       // The home region must be reachable. If it is excluded from the accessible regions, failover
       // candidate filtering would always drop it, so fail loudly at configuration time.
       if (this.homeRegion && !this.accessibleRegions.includes(this.homeRegion.toLowerCase())) {
-        throw new AwsWrapperError(Messages.get("Gdb.homeRegionNotAccessible", this.homeRegion, this.accessibleRegions.join(",")));
+        throw new AwsWrapperError(Messages.get("GlobalDb.homeRegionNotAccessible", this.homeRegion, this.accessibleRegions.join(",")));
       }
     }
 

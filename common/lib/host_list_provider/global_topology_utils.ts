@@ -22,11 +22,11 @@ import { isDialectTopologyAware } from "../database_dialect/topology_aware_datab
 import { Messages } from "../utils/messages";
 import { AwsWrapperError } from "../utils/errors";
 
-export interface GdbTopologyUtils {
+export interface GlobalDbTopologyUtils {
   getRegion(instanceId: string, targetClient: ClientWrapper, dialect: DatabaseDialect): Promise<string | null>;
 }
 
-export class GlobalTopologyUtils extends TopologyUtils implements GdbTopologyUtils {
+export class GlobalTopologyUtils extends TopologyUtils implements GlobalDbTopologyUtils {
   async queryForTopology(
     targetClient: ClientWrapper,
     dialect: DatabaseDialect,

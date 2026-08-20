@@ -29,7 +29,7 @@ import { ClientWrapper } from "../../client_wrapper";
 import { TelemetryCounter } from "../../utils/telemetry/telemetry_counter";
 import { RegionUtils } from "../../utils/region_utils";
 import { RdsUrlType } from "../../utils/rds_url_type";
-import { GDBRegionUtils } from "../../utils/gdb_region_utils";
+import { GlobalDbRegionUtils } from "../../utils/global_db_region_utils";
 import { AwsCredentialIdentity, AwsCredentialIdentityProvider } from "@smithy/types/dist-types/identity/awsCredentialIdentity";
 
 export class BaseSamlAuthPlugin extends AbstractConnectionPlugin {
@@ -93,7 +93,7 @@ export class BaseSamlAuthPlugin extends AbstractConnectionPlugin {
       credentialsProvider = await this.credentialsProviderFactory.getAwsCredentialsProvider(hostInfo.host, null, props);
     }
 
-    this.regionUtils = type == RdsUrlType.RDS_GLOBAL_WRITER_CLUSTER ? new GDBRegionUtils(credentialsProvider) : new RegionUtils();
+    this.regionUtils = type == RdsUrlType.RDS_GLOBAL_WRITER_CLUSTER ? new GlobalDbRegionUtils(credentialsProvider) : new RegionUtils();
     const region: string | null = await this.regionUtils.getRegion(WrapperProperties.IAM_REGION.name, host, props);
 
     if (!region) {

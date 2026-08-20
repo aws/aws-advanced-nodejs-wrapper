@@ -67,7 +67,7 @@ export class RdsUtils {
   //
   // Aurora Global Database
   // https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/Concepts.Aurora_Fea_Regions_DB-eng.Feature.GlobalDatabase.html
-  // Global Database Endpoint: <gdb-name>.global-<xyz>.global.rds.amazonaws.com
+  // Global Database Endpoint: <globalDb-name>.global-<xyz>.global.rds.amazonaws.com
   // Example: test-global-db-name.global-123456789012.global.rds.amazonaws.com
   //
   //

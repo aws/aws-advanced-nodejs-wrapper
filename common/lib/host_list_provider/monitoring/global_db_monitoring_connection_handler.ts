@@ -25,7 +25,7 @@ import { Messages } from "../../utils/messages";
 import { AbstractMonitoringConnectionHandler } from "./monitoring_connection_handler";
 import { equalsIgnoreCase } from "../../utils/utils";
 
-export enum GdbMonitoringConnectionPriority {
+export enum GlobalDbMonitoringConnectionPriority {
   STRICT_WRITER_PRIMARY = "strict-writer-primary",
   STRICT_WRITER_SECONDARY = "strict-writer-secondary",
   STRICT_READER_PRIMARY = "strict-reader-primary",
@@ -35,44 +35,44 @@ export enum GdbMonitoringConnectionPriority {
   REGION = "region"
 }
 
-interface GdbPriorityConfig {
-  type: GdbMonitoringConnectionPriority;
+interface GlobalDbPriorityConfig {
+  type: GlobalDbMonitoringConnectionPriority;
   region?: string;
 }
 
 // AWS region identifiers look like "us-east-1", "eu-west-2", "ap-southeast-1".
 const REGION_SHAPE = /^[a-z]{2}-[a-z]+-\d+$/;
 
-function parseGdbPriority(value: string | null): GdbPriorityConfig | null {
+function parseGlobalDbPriority(value: string | null): GlobalDbPriorityConfig | null {
   if (!value) {
     return null;
   }
   const lower = value.toLowerCase().trim();
   switch (lower) {
     case "strict-writer-primary":
-      return { type: GdbMonitoringConnectionPriority.STRICT_WRITER_PRIMARY };
+      return { type: GlobalDbMonitoringConnectionPriority.STRICT_WRITER_PRIMARY };
     case "strict-writer-secondary":
-      return { type: GdbMonitoringConnectionPriority.STRICT_WRITER_SECONDARY };
+      return { type: GlobalDbMonitoringConnectionPriority.STRICT_WRITER_SECONDARY };
     case "strict-reader-primary":
-      return { type: GdbMonitoringConnectionPriority.STRICT_READER_PRIMARY };
+      return { type: GlobalDbMonitoringConnectionPriority.STRICT_READER_PRIMARY };
     case "strict-reader-secondary":
-      return { type: GdbMonitoringConnectionPriority.STRICT_READER_SECONDARY };
+      return { type: GlobalDbMonitoringConnectionPriority.STRICT_READER_SECONDARY };
     case "writer-or-reader-primary":
-      return { type: GdbMonitoringConnectionPriority.WRITER_OR_READER_PRIMARY };
+      return { type: GlobalDbMonitoringConnectionPriority.WRITER_OR_READER_PRIMARY };
     case "writer-or-reader-secondary":
-      return { type: GdbMonitoringConnectionPriority.WRITER_OR_READER_SECONDARY };
+      return { type: GlobalDbMonitoringConnectionPriority.WRITER_OR_READER_SECONDARY };
     default:
       // Any unrecognized token is treated as a region literal. If it doesn't look like an AWS
       // region identifier, it is most likely a typo (e.g. "strict-wrtier-primary") that will
       // never match any host, so warn to aid diagnosis.
       if (!REGION_SHAPE.test(lower)) {
-        logger.warn(Messages.get("GdbMonitoringConnectionHandler.unrecognizedPriority", value));
+        logger.warn(Messages.get("GlobalDbMonitoringConnectionHandler.unrecognizedPriority", value));
       }
-      return { type: GdbMonitoringConnectionPriority.REGION, region: lower };
+      return { type: GlobalDbMonitoringConnectionPriority.REGION, region: lower };
   }
 }
 
-export class GdbMonitoringConnectionHandler extends AbstractMonitoringConnectionHandler<GdbPriorityConfig> {
+export class GlobalDbMonitoringConnectionHandler extends AbstractMonitoringConnectionHandler<GlobalDbPriorityConfig> {
   private readonly rdsUtils: RdsUtils = new RdsUtils();
   private readonly accessibleRegions: string[] | null;
   private primaryRegion: string | null = null;
@@ -86,24 +86,26 @@ export class GdbMonitoringConnectionHandler extends AbstractMonitoringConnection
     getMonitoringClient: () => ClientWrapper | null,
     setMonitoringClient: (client: ClientWrapper | null) => void
   ) {
-    const priorities = GdbMonitoringConnectionHandler.parsePriorities(WrapperProperties.GDB_MONITORING_CONNECTION_PRIORITY.get(monitoringProperties));
+    const priorities = GlobalDbMonitoringConnectionHandler.parsePriorities(
+      WrapperProperties.GLOBAL_DB_MONITORING_CONNECTION_PRIORITY.get(monitoringProperties)
+    );
     super(pluginService, monitoringProperties, priorities, getMonitoringClient, setMonitoringClient);
     this.accessibleRegions = accessibleRegions;
-    logger.debug(Messages.get("GdbMonitoringConnectionHandler.initialized", JSON.stringify(this.priorities)));
+    logger.debug(Messages.get("GlobalDbMonitoringConnectionHandler.initialized", JSON.stringify(this.priorities)));
   }
 
-  private static parsePriorities(value: string | null): GdbPriorityConfig[] {
+  private static parsePriorities(value: string | null): GlobalDbPriorityConfig[] {
     if (!value) {
-      return [{ type: GdbMonitoringConnectionPriority.STRICT_WRITER_PRIMARY }];
+      return [{ type: GlobalDbMonitoringConnectionPriority.STRICT_WRITER_PRIMARY }];
     }
-    const results: GdbPriorityConfig[] = [];
+    const results: GlobalDbPriorityConfig[] = [];
     for (const part of value.split(",")) {
-      const p = parseGdbPriority(part.trim());
+      const p = parseGlobalDbPriority(part.trim());
       if (p) {
         results.push(p);
       }
     }
-    return results.length > 0 ? results : [{ type: GdbMonitoringConnectionPriority.STRICT_WRITER_PRIMARY }];
+    return results.length > 0 ? results : [{ type: GlobalDbMonitoringConnectionPriority.STRICT_WRITER_PRIMARY }];
   }
 
   override acceptConnection(client: ClientWrapper, isWriter: boolean, hostInfo: HostInfo): boolean {
@@ -148,21 +150,21 @@ export class GdbMonitoringConnectionHandler extends AbstractMonitoringConnection
     return -1;
   }
 
-  private isSatisfiedBy(priority: GdbPriorityConfig, hostInfo: HostInfo, isWriter: boolean): boolean {
+  private isSatisfiedBy(priority: GlobalDbPriorityConfig, hostInfo: HostInfo, isWriter: boolean): boolean {
     switch (priority.type) {
-      case GdbMonitoringConnectionPriority.STRICT_WRITER_PRIMARY:
+      case GlobalDbMonitoringConnectionPriority.STRICT_WRITER_PRIMARY:
         return isWriter && this.isInPrimaryRegion(hostInfo);
-      case GdbMonitoringConnectionPriority.STRICT_WRITER_SECONDARY:
+      case GlobalDbMonitoringConnectionPriority.STRICT_WRITER_SECONDARY:
         return isWriter && !this.isInPrimaryRegion(hostInfo);
-      case GdbMonitoringConnectionPriority.STRICT_READER_PRIMARY:
+      case GlobalDbMonitoringConnectionPriority.STRICT_READER_PRIMARY:
         return !isWriter && this.isInPrimaryRegion(hostInfo);
-      case GdbMonitoringConnectionPriority.STRICT_READER_SECONDARY:
+      case GlobalDbMonitoringConnectionPriority.STRICT_READER_SECONDARY:
         return !isWriter && !this.isInPrimaryRegion(hostInfo);
-      case GdbMonitoringConnectionPriority.WRITER_OR_READER_PRIMARY:
+      case GlobalDbMonitoringConnectionPriority.WRITER_OR_READER_PRIMARY:
         return this.isInPrimaryRegion(hostInfo);
-      case GdbMonitoringConnectionPriority.WRITER_OR_READER_SECONDARY:
+      case GlobalDbMonitoringConnectionPriority.WRITER_OR_READER_SECONDARY:
         return !this.isInPrimaryRegion(hostInfo);
-      case GdbMonitoringConnectionPriority.REGION:
+      case GlobalDbMonitoringConnectionPriority.REGION:
         return equalsIgnoreCase(this.getHostRegion(hostInfo), priority.region);
       default:
         return false;
@@ -177,29 +179,29 @@ export class GdbMonitoringConnectionHandler extends AbstractMonitoringConnection
     const filtered = this.filterAccessible(candidates);
     this.updatePrimaryRegion(filtered);
     switch (priority.type) {
-      case GdbMonitoringConnectionPriority.STRICT_WRITER_PRIMARY:
+      case GlobalDbMonitoringConnectionPriority.STRICT_WRITER_PRIMARY:
         return filtered.filter((h) => h.role === HostRole.WRITER && this.isInPrimaryRegion(h));
 
-      case GdbMonitoringConnectionPriority.STRICT_WRITER_SECONDARY:
+      case GlobalDbMonitoringConnectionPriority.STRICT_WRITER_SECONDARY:
         return filtered.filter((h) => h.role === HostRole.WRITER && !this.isInPrimaryRegion(h));
 
-      case GdbMonitoringConnectionPriority.STRICT_READER_PRIMARY:
+      case GlobalDbMonitoringConnectionPriority.STRICT_READER_PRIMARY:
         return filtered.filter((h) => h.role === HostRole.READER && this.isInPrimaryRegion(h));
 
-      case GdbMonitoringConnectionPriority.STRICT_READER_SECONDARY:
+      case GlobalDbMonitoringConnectionPriority.STRICT_READER_SECONDARY:
         return filtered.filter((h) => h.role === HostRole.READER && !this.isInPrimaryRegion(h));
 
-      case GdbMonitoringConnectionPriority.WRITER_OR_READER_PRIMARY: {
+      case GlobalDbMonitoringConnectionPriority.WRITER_OR_READER_PRIMARY: {
         const writers = filtered.filter((h) => h.role === HostRole.WRITER && this.isInPrimaryRegion(h));
         return writers.length > 0 ? writers : filtered.filter((h) => h.role === HostRole.READER && this.isInPrimaryRegion(h));
       }
 
-      case GdbMonitoringConnectionPriority.WRITER_OR_READER_SECONDARY: {
+      case GlobalDbMonitoringConnectionPriority.WRITER_OR_READER_SECONDARY: {
         const writers = filtered.filter((h) => h.role === HostRole.WRITER && !this.isInPrimaryRegion(h));
         return writers.length > 0 ? writers : filtered.filter((h) => h.role === HostRole.READER && !this.isInPrimaryRegion(h));
       }
 
-      case GdbMonitoringConnectionPriority.REGION: {
+      case GlobalDbMonitoringConnectionPriority.REGION: {
         const targetRegion = priority.region!;
         const writers = filtered.filter((h) => h.role === HostRole.WRITER && equalsIgnoreCase(this.getHostRegion(h), targetRegion));
         return writers.length > 0 ? writers : filtered.filter((h) => equalsIgnoreCase(this.getHostRegion(h), targetRegion));

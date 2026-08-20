@@ -15,7 +15,7 @@
 */
 
 import { ClusterTopologyMonitorImpl } from "./cluster_topology_monitor";
-import { GdbTopologyUtils } from "../global_topology_utils";
+import { GlobalDbTopologyUtils } from "../global_topology_utils";
 import { FullServicesContainer } from "../../utils/full_services_container";
 import { HostInfo } from "../../host_info";
 import { ClientWrapper } from "../../client_wrapper";
@@ -24,19 +24,19 @@ import { Messages } from "../../utils/messages";
 import { TopologyUtils } from "../topology_utils";
 import { AccessibleRegions } from "../../utils/accessible_regions";
 import { MonitoringConnectionHandler } from "./monitoring_connection_handler";
-import { GdbMonitoringConnectionHandler } from "./gdb_monitoring_connection_handler";
+import { GlobalDbMonitoringConnectionHandler } from "./global_db_monitoring_connection_handler";
 import { WrapperProperties } from "../../wrapper_property";
 import { RdsUtils } from "../../utils/rds_utils";
 import { logger } from "../../../logutils";
 
-function isGdbTopologyUtils(utils: TopologyUtils): utils is TopologyUtils & GdbTopologyUtils {
-  return "getRegion" in utils && typeof (utils as unknown as GdbTopologyUtils).getRegion === "function";
+function isGlobalDbTopologyUtils(utils: TopologyUtils): utils is TopologyUtils & GlobalDbTopologyUtils {
+  return "getRegion" in utils && typeof (utils as unknown as GlobalDbTopologyUtils).getRegion === "function";
 }
 
 export class GlobalAuroraTopologyMonitor extends ClusterTopologyMonitorImpl {
   protected readonly instanceTemplatesByRegion: Map<string, HostInfo>;
   protected readonly accessibleRegions: string[] | null;
-  protected readonly gdbRdsUtils: RdsUtils = new RdsUtils();
+  protected readonly globalDbRdsUtils: RdsUtils = new RdsUtils();
   declare public readonly topologyUtils: TopologyUtils;
 
   constructor(
@@ -63,8 +63,8 @@ export class GlobalAuroraTopologyMonitor extends ClusterTopologyMonitorImpl {
 
   protected override createConnectionHandler(): MonitoringConnectionHandler {
     const homeRegion =
-      WrapperProperties.FAILOVER_HOME_REGION.get(this.monitoringProperties) ?? this.gdbRdsUtils.getRdsRegion(this.initialHostInfo.host);
-    return new GdbMonitoringConnectionHandler(
+      WrapperProperties.FAILOVER_HOME_REGION.get(this.monitoringProperties) ?? this.globalDbRdsUtils.getRdsRegion(this.initialHostInfo.host);
+    return new GlobalDbMonitoringConnectionHandler(
       this.pluginService,
       this.monitoringProperties,
       this.accessibleRegions,
@@ -84,7 +84,7 @@ export class GlobalAuroraTopologyMonitor extends ClusterTopologyMonitorImpl {
     if (this.accessibleRegions) {
       // Only fail loud when the initial host's region is known and excluded. If the region can't be
       // determined, defer to the normal workflow rather than blocking the connection.
-      const region = this.gdbRdsUtils.getRdsRegion(this.initialHostInfo.host);
+      const region = this.globalDbRdsUtils.getRdsRegion(this.initialHostInfo.host);
       if (region && !this.accessibleRegions.includes(region.toLowerCase())) {
         const msg = Messages.get("GlobalAuroraTopologyMonitor.initialHostNotInAccessibleRegion", this.initialHostInfo.host, region);
         throw new AwsWrapperError(msg);
@@ -95,7 +95,7 @@ export class GlobalAuroraTopologyMonitor extends ClusterTopologyMonitorImpl {
   }
 
   protected override async getInstanceTemplate(hostId: string, targetClient: ClientWrapper): Promise<HostInfo> {
-    if (!isGdbTopologyUtils(this.topologyUtils)) {
+    if (!isGlobalDbTopologyUtils(this.topologyUtils)) {
       throw new AwsWrapperError(Messages.get("GlobalAuroraTopologyMonitor.invalidTopologyUtils"));
     }
 

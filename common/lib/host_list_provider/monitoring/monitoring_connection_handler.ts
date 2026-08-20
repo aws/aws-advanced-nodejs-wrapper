@@ -101,7 +101,7 @@ export interface MonitoringConnectionHandler {
  * Base class for monitoring connection handlers that manage a priority-ordered connection
  * lifecycle. Subclasses provide priority-specific logic via abstract hooks.
  *
- * @typeParam P the priority type (e.g. MonitoringConnectionPriority, GdbPriorityConfig)
+ * @typeParam P the priority type (e.g. MonitoringConnectionPriority, GlobalDbPriorityConfig)
  */
 export abstract class AbstractMonitoringConnectionHandler<P> implements MonitoringConnectionHandler {
   protected readonly pluginService: PluginService;
