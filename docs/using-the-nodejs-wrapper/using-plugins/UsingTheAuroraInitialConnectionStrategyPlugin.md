@@ -8,7 +8,7 @@ This plugin also helps retrieve connections more reliably. When a user connects 
 
 ## Enabling the Aurora Initial Connection Strategy Plugin
 
-To enable the Aurora Initial Connection Strategy Plugin, add `initialConnection` to the [`plugins`](../UsingTheNodejsWrapper.md#connection-plugin-manager-parameters) connection parameter.
+Since version 2.1.1, the Aurora Initial Connection Strategy Plugin will be enabled by default if the [`plugins`](../UsingTheNodejsWrapper.md#connection-plugin-manager-parameters) value is not specified. In earlier versions the plugin was not enabled by default. The Aurora Initial Connection Strategy Plugin can also be explicitly included by adding the plugin code `initialConnection` to the [`plugins`](../UsingTheNodejsWrapper.md#connection-plugin-manager-parameters) connection parameter.
 
 ## Aurora Initial Connection Strategy Connection Parameters
 
