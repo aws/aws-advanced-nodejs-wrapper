@@ -39,14 +39,14 @@ import { RdsMultiAZClusterPgDatabaseDialect } from "./dialect/rds_multi_az_pg_da
 import { TelemetryTraceLevel } from "../../common/lib/utils/telemetry/telemetry_trace_level";
 import { NodePostgresDriverDialect } from "./dialect/node_postgres_driver_dialect";
 import { isDialectTopologyAware } from "../../common/lib/database_dialect/topology_aware_database_dialect";
-import { PGClient, PGPoolClient } from "./pg_client";
+import { PgClient, PgPoolClient } from "./pg_client";
 import { DriverConnectionProvider } from "../../common/lib/driver_connection_provider";
 import { GlobalAuroraPgDatabaseDialect } from "./dialect/global_aurora_pg_database_dialect";
 import { AwsClientConfig } from "../../common/lib/wrapper_property";
 
 export interface AwsPgClientConfig extends ClientConfig, AwsClientConfig {}
 
-class BaseAwsPgClient extends AwsClient implements PGClient {
+class BaseAwsPgClient extends AwsClient implements PgClient {
   private static readonly knownDialectsByCode: Map<string, DatabaseDialect> = new Map([
     [DatabaseDialectCodes.PG, new PgDatabaseDialect()],
     [DatabaseDialectCodes.RDS_PG, new RdsPgDatabaseDialect()],
@@ -338,13 +338,24 @@ class BaseAwsPgClient extends AwsClient implements PGClient {
   }
 }
 
-export class AwsPGClient extends BaseAwsPgClient {
+export class AwsPgClient extends BaseAwsPgClient {
   constructor(config: AwsPgClientConfig) {
     super(config, new DriverConnectionProvider());
   }
 }
 
-class AwsPGPooledConnection extends BaseAwsPgClient {
+/**
+ * @deprecated Use {@link AwsPgClient} instead. `AwsPGClient` is a backwards-compatible
+ * alias retained to avoid a breaking change and will be removed in the next major release.
+ */
+export const AwsPGClient = AwsPgClient;
+/**
+ * @deprecated Use {@link AwsPgClient} instead. Type alias retained so existing type
+ * annotations keep resolving; will be removed in the next major release.
+ */
+export type AwsPGClient = AwsPgClient;
+
+class AwsPgPooledConnection extends BaseAwsPgClient {
   constructor(config: AwsPgClientConfig, provider: ConnectionProvider) {
     super(config, provider);
   }
@@ -366,9 +377,16 @@ class AwsPGPooledConnection extends BaseAwsPgClient {
   }
 }
 
-export type { AwsPGPooledConnection };
+export type { AwsPgPooledConnection };
 
-export class AwsPgPoolClient implements PGPoolClient {
+/**
+ * @deprecated Use {@link AwsPgPooledConnection} instead. `AwsPGPooledConnection` is a
+ * backwards-compatible alias retained to avoid a breaking change and will be removed in
+ * the next major release.
+ */
+export type AwsPGPooledConnection = AwsPgPooledConnection;
+
+export class AwsPgPoolClient implements PgPoolClient {
   private readonly connectionProvider: InternalPooledConnectionProvider;
   private readonly config: AwsPgClientConfig;
   private readonly poolConfig?: AwsPoolConfig;
@@ -379,10 +397,10 @@ export class AwsPgPoolClient implements PGPoolClient {
     this.poolConfig = poolConfig;
   }
 
-  async connect(): Promise<AwsPGPooledConnection> {
-    const awsPGPooledConnection: AwsPGPooledConnection = new AwsPGPooledConnection(this.config, this.connectionProvider);
-    await awsPGPooledConnection.connect();
-    return awsPGPooledConnection;
+  async connect(): Promise<AwsPgPooledConnection> {
+    const awsPgPooledConnection: AwsPgPooledConnection = new AwsPgPooledConnection(this.config, this.connectionProvider);
+    await awsPgPooledConnection.connect();
+    return awsPgPooledConnection;
   }
 
   async end(): Promise<void> {
@@ -403,16 +421,16 @@ export class AwsPgPoolClient implements PGPoolClient {
     queryTextOrConfig: string | QueryConfig<I>,
     values?: QueryConfigValues<I>
   ): Promise<QueryResult<R>> {
-    const awsPGPooledConnection: AwsPGPooledConnection = new AwsPGPooledConnection(this.config, this.connectionProvider);
+    const awsPgPooledConnection: AwsPgPooledConnection = new AwsPgPooledConnection(this.config, this.connectionProvider);
     try {
-      await awsPGPooledConnection.connect();
-      const res = await awsPGPooledConnection.query(queryTextOrConfig as any, values);
-      await awsPGPooledConnection.end();
+      await awsPgPooledConnection.connect();
+      const res = await awsPgPooledConnection.query(queryTextOrConfig as any, values);
+      await awsPgPooledConnection.end();
       return res as any;
     } catch (error: any) {
       if (!(error instanceof FailoverSuccessError)) {
         // Release pooled connection.
-        await awsPGPooledConnection.end();
+        await awsPgPooledConnection.end();
       }
       throw error;
     }

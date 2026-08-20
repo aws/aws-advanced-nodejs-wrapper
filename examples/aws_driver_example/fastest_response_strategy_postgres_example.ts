@@ -15,7 +15,7 @@
 */
 
 import { FailoverFailedError, FailoverSuccessError, TransactionResolutionUnknownError, PluginManager } from "../../index";
-import { AwsPGClient } from "../../pg";
+import { AwsPgClient } from "../../pg";
 
 const mysqlHost = "db-identifier.XYZ.us-east-2.rds.amazonaws.com";
 const username = "john_smith";
@@ -23,7 +23,7 @@ const password = "employees";
 const database = "database";
 const port = 3306;
 
-const client = new AwsPGClient({
+const client = new AwsPgClient({
   // Configure connection parameters. Enable readWriteSplitting, failover, and efm plugins.
   host: mysqlHost,
   port: port,
@@ -84,12 +84,12 @@ try {
   await client.end();
 }
 
-async function setInitialSessionSettings(client: AwsPGClient) {
+async function setInitialSessionSettings(client: AwsPgClient) {
   // User can edit settings.
   await client.query("SET TIME ZONE UTC");
 }
 
-async function queryWithFailoverHandling(client: AwsPGClient, query: string) {
+async function queryWithFailoverHandling(client: AwsPgClient, query: string) {
   try {
     const result = await client.query(query);
     return result;

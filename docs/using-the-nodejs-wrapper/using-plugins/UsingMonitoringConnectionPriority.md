@@ -60,7 +60,7 @@ const client = new AwsMySQLClient(params);
 await client.connect();
 
 // If using Postgres:
-const client = new AwsPGClient(params);
+const client = new AwsPgClient(params);
 await client.connect();
 ```
 
@@ -81,7 +81,7 @@ const client = new AwsMySQLClient(params);
 await client.connect();
 
 // If using Postgres:
-const client = new AwsPGClient(params);
+const client = new AwsPgClient(params);
 await client.connect();
 ```
 

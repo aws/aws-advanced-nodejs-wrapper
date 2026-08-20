@@ -16,7 +16,7 @@
 
 import { InternalPooledConnectionProvider, PluginManager } from "../../index";
 import { logger } from "../../common/logutils";
-import { AwsPGClient } from "../../pg";
+import { AwsPgClient } from "../../pg";
 
 const postgresHost = "db-identifier.XYZ.us-east-2.rds.amazonaws.com";
 const username = "john_smith";
@@ -31,7 +31,7 @@ const port = 5432;
  */
 const provider = new InternalPooledConnectionProvider();
 
-const client = new AwsPGClient({
+const client = new AwsPgClient({
   host: postgresHost,
   port: port,
   user: username,
@@ -52,7 +52,7 @@ try {
   await client.end();
 }
 
-const newClient = new AwsPGClient({
+const newClient = new AwsPgClient({
   host: postgresHost,
   port: port,
   user: username,
@@ -74,7 +74,7 @@ try {
 // Closes all pools and removes all cached pool connections.
 await provider.releaseResources();
 
-const newClient2 = new AwsPGClient({
+const newClient2 = new AwsPgClient({
   host: postgresHost,
   port: port,
   user: username,

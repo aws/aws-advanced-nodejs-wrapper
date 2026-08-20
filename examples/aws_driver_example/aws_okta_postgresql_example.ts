@@ -15,7 +15,7 @@
 */
 
 import { readFileSync } from "fs";
-import { AwsPGClient } from "../../pg";
+import { AwsPgClient } from "../../pg";
 
 const postgresHost = "db-identifier.XYZ.us-east-2.rds.amazonaws.com";
 const idpEndpoint = "123456789.okta.com";
@@ -28,7 +28,7 @@ const idpPassword = "password";
 const dbUser = "john_smith";
 const database = "employees";
 
-const client = new AwsPGClient({
+const client = new AwsPgClient({
   // Enable Okta authentication and configure connection parameters.
   host: postgresHost,
   database: database,

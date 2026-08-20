@@ -14,7 +14,7 @@
   limitations under the License.
 */
 
-import { AwsPGClient } from "../../pg";
+import { AwsPgClient } from "../../pg";
 
 const postgresHost = "db-identifier.XYZ.us-east-2.rds.amazonaws.com";
 const username = "john_smith";
@@ -22,7 +22,7 @@ const password = "password";
 const database = "employees";
 const port = 5432;
 
-const client = new AwsPGClient({
+const client = new AwsPgClient({
   // Configure connection parameters.
   host: postgresHost,
   port: port,

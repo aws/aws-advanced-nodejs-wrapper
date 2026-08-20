@@ -29,14 +29,14 @@ import { BenchmarkPluginFactory } from "./testplugin/benchmark_plugin_factory";
 import { NodePostgresDriverDialect } from "../pg/lib/dialect/node_postgres_driver_dialect";
 import { ConnectionPluginFactory } from "../common/lib/plugin_factory";
 import { DefaultPlugin } from "../common/lib/plugins/default_plugin";
-import { AwsPGClient } from "../pg/lib";
+import { AwsPgClient } from "../pg/lib";
 import { ConfigurationProfileBuilder } from "../common/lib/profile/configuration_profile_builder";
 import { FullServicesContainerImpl } from "../common/lib/utils/full_services_container";
 
 const mockConnectionProvider = mock<ConnectionProvider>();
 const mockHostListProviderService = mock<HostListProviderService>();
 const mockPluginService = mock(PluginServiceImpl);
-const mockClient = mock(AwsPGClient);
+const mockClient = mock(AwsPgClient);
 const telemetryFactory = new NullTelemetryFactory();
 when(mockPluginService.getTelemetryFactory()).thenReturn(telemetryFactory);
 when(mockPluginService.getDialect()).thenReturn(new PgDatabaseDialect());

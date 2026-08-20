@@ -21,7 +21,7 @@ import { WrapperProperties } from "../common/lib/wrapper_property";
 import { add, complete, configure, cycle, save, suite } from "benny";
 import { TestConnectionWrapper } from "./testplugin/test_connection_wrapper";
 import { SimpleHostAvailabilityStrategy } from "../common/lib/host_availability/simple_host_availability_strategy";
-import { AwsPGClient } from "../pg/lib";
+import { AwsPgClient } from "../pg/lib";
 import { NullTelemetryFactory } from "../common/lib/utils/telemetry/null_telemetry_factory";
 import { OpenTelemetryFactory } from "../common/lib/utils/telemetry/open_telemetry_factory";
 import { OTLPTraceExporter } from "@opentelemetry/exporter-trace-otlp-grpc";
@@ -44,7 +44,7 @@ import { FullServicesContainerImpl } from "../common/lib/utils/full_services_con
 
 const mockConnectionProvider = mock<ConnectionProvider>();
 const mockPluginService = mock(PluginServiceImpl);
-const mockClient = mock(AwsPGClient);
+const mockClient = mock(AwsPgClient);
 const mockDialect: DriverDialect = mock(NodePostgresDriverDialect);
 
 const hostInfo = new HostInfoBuilder({ hostAvailabilityStrategy: new SimpleHostAvailabilityStrategy() }).withHost("host").build();

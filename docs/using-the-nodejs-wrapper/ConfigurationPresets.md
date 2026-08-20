@@ -12,7 +12,7 @@ A Configuration Preset is a [configuration profile](./UsingTheNodejsWrapper.md#c
 The Configuration Preset name should be specified with the [`profileName`](./UsingTheNodejsWrapper.md#connection-plugin-manager-parameters) parameter.
 
 ```typescript
-const client = new AwsPGClient({
+const client = new AwsPgClient({
   ...
   profileName: "A2"
 });
@@ -30,7 +30,7 @@ ConfigurationProfileBuilder.get()
   .withDatabaseDialect(new CustomDatabaseDialect())
   .buildAndSet();
 
-const client = new AwsPGClient({
+const client = new AwsPgClient({
   ...
   profileName: "myNewProfile"
 });

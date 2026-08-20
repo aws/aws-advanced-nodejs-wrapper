@@ -15,9 +15,9 @@
 */
 
 import { QueryArrayConfig, QueryArrayResult, QueryConfig, QueryConfigValues, QueryResult, QueryResultRow, Submittable } from "pg";
-import { AwsPGPooledConnection } from "./client";
+import { AwsPgPooledConnection } from "./client";
 
-export interface PGClient {
+export interface PgClient {
   connect(): Promise<void>;
 
   end(): Promise<void>;
@@ -48,8 +48,8 @@ export interface PGClient {
   escapeLiteral(str: string): Promise<string>;
 }
 
-export interface PGPoolClient {
-  connect(): Promise<AwsPGPooledConnection>;
+export interface PgPoolClient {
+  connect(): Promise<AwsPgPooledConnection>;
 
   end(): Promise<void>;
 

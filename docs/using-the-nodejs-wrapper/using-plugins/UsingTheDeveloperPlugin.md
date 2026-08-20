@@ -22,7 +22,7 @@ params = {
   plugins: "dev"
 };
 
-const client = new AwsPGClient(params);
+const client = new AwsPgClient(params);
 
 const testErrorToRaise: Error = new Error("test");
 ErrorSimulatorManager.raiseErrorOnNextConnect(testErrorToRaise);
@@ -43,7 +43,7 @@ params = {
   plugins: "dev"
 };
 
-const client = new AwsPGClient(params);
+const client = new AwsPgClient(params);
 await client.connect();
 
 const simulator: ErrorSimulator = client.getPluginInstance<ErrorSimulator>(DeveloperConnectionPlugin);

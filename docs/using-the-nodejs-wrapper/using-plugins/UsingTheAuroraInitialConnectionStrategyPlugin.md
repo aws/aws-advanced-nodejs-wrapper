@@ -37,7 +37,7 @@ await client.connect();
 
 // If using PostgreSQL:
 
-const client = new AwsPGClient(params);
+const client = new AwsPgClient(params);
 await client.connect();
 ```
 
@@ -56,6 +56,6 @@ await client.connect();
 
 // If using PostgreSQL:
 
-const client = new AwsPGClient(params);
+const client = new AwsPgClient(params);
 await client.connect();
 ```

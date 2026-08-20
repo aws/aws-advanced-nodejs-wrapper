@@ -51,7 +51,7 @@ Once the custom dialect class has been created, tell the AWS Advanced NodeJS Wra
 ```typescript
 myDialect: DatabaseDialect = new CustomDialect();
 
-const client = new AwsPGClient({
+const client = new AwsPgClient({
   ...
   customDatabaseDialect: myDialect
   ...

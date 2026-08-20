@@ -26,7 +26,7 @@ import { resourceFromAttributes } from "@opentelemetry/resources";
 import { ATTR_SERVICE_NAME } from "@opentelemetry/semantic-conventions";
 import { PeriodicExportingMetricReader } from "@opentelemetry/sdk-metrics";
 import { OTLPMetricExporter } from "@opentelemetry/exporter-metrics-otlp-grpc";
-import { AwsPGClient } from "../../pg";
+import { AwsPgClient } from "../../pg";
 
 const traceExporter = new OTLPTraceExporter({ url: "http://localhost:4317" });
 const resource = resourceFromAttributes({
@@ -68,7 +68,7 @@ process.on("SIGTERM", () => {
     .finally(() => process.exit(0));
 });
 
-const client = new AwsPGClient({
+const client = new AwsPgClient({
   user: "username",
   host: "db-identifier.XYZ.us-east-2.rds.amazonaws.com",
   database: "database_name",
