@@ -140,6 +140,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 The Amazon Web Services (AWS) Advanced NodeJS Wrapper allows an application to take advantage of the features of clustered Aurora databases.
 
+[3.0.0]: https://github.com/aws/aws-advanced-nodejs-wrapper/compare/2.1.1...3.0.0
 [2.1.1]: https://github.com/aws/aws-advanced-nodejs-wrapper/compare/2.1.0...2.1.1
 [2.1.0]: https://github.com/aws/aws-advanced-nodejs-wrapper/compare/2.0.1...2.1.0
 [2.0.1]: https://github.com/aws/aws-advanced-nodejs-wrapper/compare/2.0.0...2.0.1
