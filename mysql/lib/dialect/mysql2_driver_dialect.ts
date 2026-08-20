@@ -24,12 +24,17 @@ import { AwsMysqlInternalPoolClient } from "../icp/mysql_internal_pool_client";
 import { MySQLClientWrapper } from "../../../common/lib/mysql_client_wrapper";
 import { HostInfo } from "../../../common/lib/host_info";
 import { UnsupportedMethodError } from "../../../common/lib/utils/errors";
+import { Messages } from "../../../common/lib/utils/messages";
+import { logger } from "../../../common/logutils";
 
 export class MySQL2DriverDialect implements DriverDialect {
   protected dialectName: string = this.constructor.name;
   private static readonly CONNECT_TIMEOUT_PROPERTY_NAME = "connectTimeout";
   private static readonly QUERY_TIMEOUT_PROPERTY_NAME = "timeout";
   private static readonly KEEP_ALIVE_PROPERTY_NAME = "keepAlive";
+  private static readonly CLEARTEXT_PLUGIN_PROPERTY_NAME = "enableCleartextPlugin";
+  private static readonly SSL_PROPERTY_NAME = "ssl";
+  private static readonly TOKEN_AUTH_PLUGIN_CODES = ["iam", "federatedAuth", "okta"];
 
   getDialectName(): string {
     return this.dialectName;
@@ -40,6 +45,7 @@ export class MySQL2DriverDialect implements DriverDialect {
     // MySQL2 does not support keep alive, explicitly check and throw an error if this value is set to true.
     this.setKeepAliveProperties(driverProperties, props.get(WrapperProperties.KEEPALIVE_PROPERTIES.name));
     this.setConnectTimeout(driverProperties, props.get(WrapperProperties.WRAPPER_CONNECT_TIMEOUT.name));
+    this.setCleartextPluginForTokenAuth(driverProperties, props);
     const targetClient = await createConnection(Object.fromEntries(driverProperties.entries()));
     return Promise.resolve(new MySQLClientWrapper(targetClient, hostInfo, props, this));
   }
@@ -68,6 +74,34 @@ export class MySQL2DriverDialect implements DriverDialect {
     if (timeout) {
       props.set(MySQL2DriverDialect.CONNECT_TIMEOUT_PROPERTY_NAME, timeout);
     }
+  }
+
+  /**
+   * When a database user authenticates with a generated token, the server asks for the
+   * `mysql_clear_password` authentication plugin. The underlying driver refuses that plugin unless
+   * `enableCleartextPlugin` is set, so token-based authentication cannot connect without it.
+   *
+   * The option is enabled on the user's behalf only when a token-based authentication plugin is in
+   * use and the connection is encrypted. It is never enabled silently on an unencrypted connection,
+   * because the plugin sends the token in plaintext at the protocol level; in that case the user gets
+   * a warning explaining what to configure. An explicit user-provided value always wins.
+   */
+  setCleartextPluginForTokenAuth(driverProperties: Map<string, any>, props: Map<string, any>) {
+    if (driverProperties.has(MySQL2DriverDialect.CLEARTEXT_PLUGIN_PROPERTY_NAME)) {
+      return;
+    }
+
+    const pluginCodes = (WrapperProperties.PLUGINS.get(props) ?? "").split(",").map((code: string) => code.trim());
+    if (!MySQL2DriverDialect.TOKEN_AUTH_PLUGIN_CODES.some((code) => pluginCodes.includes(code))) {
+      return;
+    }
+
+    if (!driverProperties.get(MySQL2DriverDialect.SSL_PROPERTY_NAME)) {
+      logger.warn(Messages.get("MySQL2DriverDialect.cleartextPluginRequiresEncryption"));
+      return;
+    }
+
+    driverProperties.set(MySQL2DriverDialect.CLEARTEXT_PLUGIN_PROPERTY_NAME, true);
   }
 
   setQueryTimeout(props: Map<string, any>, sql?: any, wrapperQueryTimeout?: any) {

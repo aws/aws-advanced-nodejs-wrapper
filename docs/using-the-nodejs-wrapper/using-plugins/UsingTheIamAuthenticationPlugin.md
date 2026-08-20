@@ -39,6 +39,29 @@ The AWS Advanced NodeJS Wrapper supports Amazon AWS Identity and Access Manageme
 
 This plugin requires a valid set of AWS credentials to retrieve the database credentials from AWS Secrets Manager. The AWS credentials must be located in [one of these locations](https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/Package/-aws-sdk-credential-providers/#fromNodeProviderChain) supported by the AWS SDK's default credentials provider. See also at [AWS Credentials Configuration](../custom-configuration/AwsCredentialsConfiguration.md)
 
+### MySQL requires an encrypted connection
+
+A MySQL user created with `AWSAuthenticationPlugin` authenticates by sending the generated token using the server's `mysql_clear_password` authentication plugin, which transmits the token in plaintext at the protocol level. The underlying MySQL driver refuses that plugin unless `enableCleartextPlugin` is enabled.
+
+**Set the `ssl` connection property when using `iam` with MySQL.** The wrapper then enables `enableCleartextPlugin` for you, so the token is only ever sent over an encrypted connection:
+
+```typescript
+const client = new AwsMySQLClient({
+  host: "database.cluster-xyz.us-east-2.rds.amazonaws.com",
+  port: 3306,
+  user: "example_user_name",
+  database: "mydb",
+  plugins: "iam",
+  ssl: {
+    ca: readFileSync("path/to/ssl/certificate.pem").toString()
+  }
+});
+```
+
+If `ssl` is not configured, the wrapper logs a warning and leaves `enableCleartextPlugin` unset, and the connection attempt fails — sending an authentication token unencrypted is not something the wrapper will do implicitly. Set `enableCleartextPlugin: true` yourself only if you have accepted that risk. An explicit value always takes precedence over the wrapper's default.
+
+The same applies to the `federatedAuth` and `okta` plugins, which also authenticate with a generated token. PostgreSQL is unaffected.
+
 ### Connecting with Multi-AZ or Blue/Green Deployments
 
 The following additional permissions are required when connecting to a Multi-AZ deployment or using the Blue/Green plugin with a Blue/Green deployment.
