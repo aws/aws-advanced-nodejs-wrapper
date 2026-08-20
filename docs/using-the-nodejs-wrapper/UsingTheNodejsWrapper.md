@@ -79,11 +79,11 @@ Plugins are loaded and managed through the Connection Plugin Manager and may be 
 
 ### Connection Plugin Manager Parameters
 
-| Parameter                    | Value     | Required | Description                                                                                                                                                                                   | Default Value                           |
-| ---------------------------- | --------- | -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------- |
+| Parameter                    | Value     | Required | Description                                                                                                                                                                                   | Default Value                                              |
+| ---------------------------- | --------- | -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------- |
 | `plugins`                    | `string`  | No       | Comma separated list of connection plugin codes. <br><br>Example: `failover,efm`                                                                                                              | `initialConnection,auroraConnectionTracker,failover2,efm2` |
-| `autoSortWrapperPluginOrder` | `boolean` | No       | Allows the AWS Advanced NodeJS Wrapper to sort connection plugins to prevent plugin misconfiguration. Allows a user to provide a custom plugin order if needed.                               | `true`                                  |
-| `profileName`                | `string`  | No       | Driver configuration profile name. Instead of listing plugin codes with `plugins`, the driver profile can be set with this parameter. <br><br> Example: See [below](#configuration-profiles). | `null`                                  |
+| `autoSortWrapperPluginOrder` | `boolean` | No       | Allows the AWS Advanced NodeJS Wrapper to sort connection plugins to prevent plugin misconfiguration. Allows a user to provide a custom plugin order if needed.                               | `true`                                                     |
+| `profileName`                | `string`  | No       | Driver configuration profile name. Instead of listing plugin codes with `plugins`, the driver profile can be set with this parameter. <br><br> Example: See [below](#configuration-profiles). | `null`                                                     |
 
 To use a built-in plugin, specify its relevant plugin code for the `plugins` .
 The default value for `plugins` is `initialConnection,auroraConnectionTracker,failover2,efm2`. These plugins are enabled by default. To read more about these plugins, see the [List of Available Plugins](#list-of-available-plugins) section.
