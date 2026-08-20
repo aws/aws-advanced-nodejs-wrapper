@@ -39,6 +39,7 @@ export { StaleDnsPlugin } from "./common/lib/plugins/stale_dns/stale_dns_plugin"
 export { ErrorSimulatorManager } from "./common/lib/plugins/dev/error_simulator_manager";
 
 export type { CanReleaseResources } from "./common/lib/can_release_resources";
+export type { AwsCredentialsProviderHandler } from "./common/lib/authentication/aws_credentials_manager";
 export type { ConnectionPlugin } from "./common/lib/connection_plugin";
 export type { ConnectionProvider } from "./common/lib/connection_provider";
 export type { HostSelector } from "./common/lib/host_selector";

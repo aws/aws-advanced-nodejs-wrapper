@@ -21,7 +21,7 @@ import { WrapperProperties } from "../wrapper_property";
 import { AwsWrapperError } from "../utils/errors";
 import { Messages } from "../utils/messages";
 
-interface AwsCredentialsProviderHandler {
+export interface AwsCredentialsProviderHandler {
   getAwsCredentialsProvider(hostInfo: HostInfo, properties: Map<string, any>): AwsCredentialIdentityProvider;
 }
 

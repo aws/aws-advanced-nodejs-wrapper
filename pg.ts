@@ -15,4 +15,6 @@
 */
 
 export { AwsPGClient, AwsPgPoolClient } from "./pg/lib/index";
-export type { AwsPGPooledConnection } from "./pg/lib/index";
+export type { AwsPGPooledConnection, AwsPgClientConfig } from "./pg/lib/index";
+export type { AwsClientConfig } from "./common/lib/wrapper_property";
+export type { AwsCredentialsProviderHandler } from "./common/lib/authentication/aws_credentials_manager";

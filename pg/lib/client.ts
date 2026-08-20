@@ -14,7 +14,7 @@
   limitations under the License.
 */
 
-import { QueryArrayConfig, QueryArrayResult, QueryConfig, QueryConfigValues, QueryResult, QueryResultRow, Submittable } from "pg";
+import { ClientConfig, QueryArrayConfig, QueryArrayResult, QueryConfig, QueryConfigValues, QueryResult, QueryResultRow, Submittable } from "pg";
 import { AwsClient } from "../../common/lib/aws_client";
 import { PgConnectionUrlParser } from "./pg_connection_url_parser";
 import { DatabaseDialect, DatabaseType } from "../../common/lib/database_dialect/database_dialect";
@@ -42,6 +42,9 @@ import { isDialectTopologyAware } from "../../common/lib/database_dialect/topolo
 import { PGClient, PGPoolClient } from "./pg_client";
 import { DriverConnectionProvider } from "../../common/lib/driver_connection_provider";
 import { GlobalAuroraPgDatabaseDialect } from "./dialect/global_aurora_pg_database_dialect";
+import { AwsClientConfig } from "../../common/lib/wrapper_property";
+
+export interface AwsPgClientConfig extends ClientConfig, AwsClientConfig {}
 
 class BaseAwsPgClient extends AwsClient implements PGClient {
   private static readonly knownDialectsByCode: Map<string, DatabaseDialect> = new Map([
@@ -52,7 +55,7 @@ class BaseAwsPgClient extends AwsClient implements PGClient {
     [DatabaseDialectCodes.RDS_MULTI_AZ_PG, new RdsMultiAZClusterPgDatabaseDialect()]
   ]);
 
-  constructor(config: any, connectionProvider?: ConnectionProvider) {
+  constructor(config: AwsPgClientConfig, connectionProvider?: ConnectionProvider) {
     super(
       config,
       DatabaseType.POSTGRES,
@@ -336,13 +339,13 @@ class BaseAwsPgClient extends AwsClient implements PGClient {
 }
 
 export class AwsPGClient extends BaseAwsPgClient {
-  constructor(config: any) {
+  constructor(config: AwsPgClientConfig) {
     super(config, new DriverConnectionProvider());
   }
 }
 
 class AwsPGPooledConnection extends BaseAwsPgClient {
-  constructor(config: any, provider: ConnectionProvider) {
+  constructor(config: AwsPgClientConfig, provider: ConnectionProvider) {
     super(config, provider);
   }
 
@@ -367,10 +370,10 @@ export type { AwsPGPooledConnection };
 
 export class AwsPgPoolClient implements PGPoolClient {
   private readonly connectionProvider: InternalPooledConnectionProvider;
-  private readonly config;
-  private readonly poolConfig;
+  private readonly config: AwsPgClientConfig;
+  private readonly poolConfig?: AwsPoolConfig;
 
-  constructor(config: any, poolConfig?: AwsPoolConfig) {
+  constructor(config: AwsPgClientConfig, poolConfig?: AwsPoolConfig) {
     this.connectionProvider = new InternalPooledConnectionProvider(poolConfig);
     this.config = config;
     this.poolConfig = poolConfig;

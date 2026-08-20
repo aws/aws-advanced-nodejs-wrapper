@@ -7,8 +7,12 @@ Currently, Microsoft Active Directory Federation Services (AD FS) and Okta are s
 
 - This plugin requires the following packages to be installed:
   - [@aws-sdk/rds-signer](https://www.npmjs.com/package/@aws-sdk/rds-signer)
-  - [aws-sdk](https://www.npmjs.com/package/aws-sdk)
+  - [@aws-sdk/credential-providers](https://www.npmjs.com/package/@aws-sdk/credential-providers)
+  - [@aws-sdk/client-sts](https://www.npmjs.com/package/@aws-sdk/client-sts)
+  - [axios](https://www.npmjs.com/package/axios)
   - [axios-cookiejar-support](https://www.npmjs.com/package/axios-cookiejar-support)
+  - [http-cookie-agent](https://www.npmjs.com/package/http-cookie-agent)
+  - [tough-cookie](https://www.npmjs.com/package/tough-cookie)
   - [entities](https://www.npmjs.com/package/entities)
 
 ## What is Federated Identity

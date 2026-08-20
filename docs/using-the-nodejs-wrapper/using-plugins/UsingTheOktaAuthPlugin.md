@@ -6,7 +6,8 @@ The Okta Authentication Plugin adds support for authentication via Federated Ide
 
 - This plugin requires the following packages to be installed:
   - [@aws-sdk/rds-signer](https://www.npmjs.com/package/@aws-sdk/rds-signer)
-  - [aws-sdk](https://www.npmjs.com/package/aws-sdk)
+  - [@aws-sdk/credential-providers](https://www.npmjs.com/package/@aws-sdk/credential-providers)
+  - [@aws-sdk/client-sts](https://www.npmjs.com/package/@aws-sdk/client-sts)
   - [axios](https://www.npmjs.com/package/axios)
   - [entities](https://www.npmjs.com/package/entities)
 
