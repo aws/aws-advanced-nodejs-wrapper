@@ -30,13 +30,13 @@ Use the global cluster endpoint:
 
 **Configuration Parameters:**
 
-| Parameter                           | Value                                                                                                          | Notes                                                       |
-| ----------------------------------- | -------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------- |
-| `clusterId`                         | `1`                                                                                                            | See [clusterId parameter documentation](./ClusterId.md)     |
-| `wrapperDialect`                    | `global-aurora-mysql` or `global-aurora-pg`                                                                    |                                                             |
-| `plugins`                           | `initialConnection,failover2,efm2` or<br>`initialConnection,gdbFailover,efm2`                                  | Without connection pooling                                  |
-|                                     | `auroraConnectionTracker,initialConnection,failover2,efm2` or<br>`auroraConnectionTracker,initialConnection,gdbFailover,efm2` | With connection pooling                        |
-| `globalClusterInstanceHostPatterns` | `?.XYZ1.us-east-2.rds.amazonaws.com,?.XYZ2.us-west-2.rds.amazonaws.com`                                         | See [documentation](./using-plugins/UsingTheFailover2Plugin.md) |
+| Parameter                           | Value                                                                                                                         | Notes                                                           |
+| ----------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------- |
+| `clusterId`                         | `1`                                                                                                                           | See [clusterId parameter documentation](./ClusterId.md)         |
+| `wrapperDialect`                    | `global-aurora-mysql` or `global-aurora-pg`                                                                                   |                                                                 |
+| `plugins`                           | `initialConnection,failover2,efm2` or<br>`initialConnection,gdbFailover,efm2`                                                 | Without connection pooling                                      |
+|                                     | `auroraConnectionTracker,initialConnection,failover2,efm2` or<br>`auroraConnectionTracker,initialConnection,gdbFailover,efm2` | With connection pooling                                         |
+| `globalClusterInstanceHostPatterns` | `?.XYZ1.us-east-2.rds.amazonaws.com,?.XYZ2.us-west-2.rds.amazonaws.com`                                                       | See [documentation](./using-plugins/UsingTheFailover2Plugin.md) |
 
 > **Note:** Add additional plugins according to the [compatibility guide](./compatibility/CompatibilityCrossPlugins.md).
 
@@ -51,14 +51,14 @@ Use the cluster reader endpoint:
 
 **Configuration Parameters:**
 
-| Parameter                           | Value                                                                                                          | Notes                                     |
-| ----------------------------------- | -------------------------------------------------------------------------------------------------------------- | ----------------------------------------- |
-| `clusterId`                         | `1`                                                                                                            | Use the same value as writer connections  |
-| `wrapperDialect`                    | `global-aurora-mysql` or `global-aurora-pg`                                                                    |                                           |
-| `plugins`                           | `initialConnection,failover2,efm2` or<br>`initialConnection,gdbFailover,efm2`                                  | Without connection pooling                |
-|                                     | `auroraConnectionTracker,initialConnection,failover2,efm2` or<br>`auroraConnectionTracker,initialConnection,gdbFailover,efm2` | With connection pooling      |
-| `globalClusterInstanceHostPatterns` | Same as writer configuration                                                                                   |                                           |
-| `failoverMode`                      | `strict-reader` or `reader-or-writer`                                                                          | Depending on system requirements          |
+| Parameter                           | Value                                                                                                                         | Notes                                    |
+| ----------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------- |
+| `clusterId`                         | `1`                                                                                                                           | Use the same value as writer connections |
+| `wrapperDialect`                    | `global-aurora-mysql` or `global-aurora-pg`                                                                                   |                                          |
+| `plugins`                           | `initialConnection,failover2,efm2` or<br>`initialConnection,gdbFailover,efm2`                                                 | Without connection pooling               |
+|                                     | `auroraConnectionTracker,initialConnection,failover2,efm2` or<br>`auroraConnectionTracker,initialConnection,gdbFailover,efm2` | With connection pooling                  |
+| `globalClusterInstanceHostPatterns` | Same as writer configuration                                                                                                  |                                          |
+| `failoverMode`                      | `strict-reader` or `reader-or-writer`                                                                                         | Depending on system requirements         |
 
 > **Note:** Add additional plugins according to the [compatibility guide](./compatibility/CompatibilityCrossPlugins.md).
 
