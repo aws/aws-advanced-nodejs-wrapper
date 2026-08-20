@@ -69,7 +69,7 @@ await client.connect();
 ```typescript
 const params = {
   plugins: "initialConnection,gdbFailover,efm2",
-  wrapperDialect: "global-aurora-pg",
+  dialect: "global-aurora-pg",
   failoverHomeRegion: "us-west-2",
   globalClusterInstanceHostPatterns: "?.XYZ1.us-east-1.rds.amazonaws.com,?.XYZ2.us-west-2.rds.amazonaws.com",
   gdbMonitoringConnectionPriority: "strict-writer-primary"
@@ -90,7 +90,7 @@ await client.connect();
 ```typescript
 const params = {
   plugins: "initialConnection,gdbFailover,efm2",
-  wrapperDialect: "global-aurora-pg",
+  dialect: "global-aurora-pg",
   failoverHomeRegion: "us-west-2",
   globalClusterInstanceHostPatterns: "?.XYZ1.us-east-1.rds.amazonaws.com,?.XYZ2.us-west-2.rds.amazonaws.com",
   gdbMonitoringConnectionPriority: "us-west-2"
