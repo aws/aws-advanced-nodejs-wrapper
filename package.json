@@ -2,6 +2,10 @@
   "name": "aws-advanced-nodejs-wrapper",
   "version": "3.0.0",
   "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/aws/aws-advanced-nodejs-wrapper.git"
+  },
   "engines": {
     "node": ">=22.9.0",
     "npm": ">=10.0.0"
