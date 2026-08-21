@@ -102,7 +102,7 @@ export interface AwsClientConfig {
   clusterTopologyRefreshRateMs?: number;
   /** Cluster topology high refresh rate in millis. */
   clusterTopologyHighRefreshRateMs?: number;
-  /** A unique identifier for the cluster. Connections with the same cluster id share a cluster topology cache. If unspecified, a cluster id is automatically created for AWS RDS clusters. */
+  /** A unique identifier for the cluster. Connections with the same cluster id share a cluster topology cache. If unspecified, the cluster id is '1'. Applications connecting to more than one cluster must set a distinct value for each cluster. */
   clusterId?: string;
   /** The cluster instance DNS pattern that will be used to build a complete instance endpoint. A "?" character in this pattern should be used as a placeholder for cluster instance names. This pattern is required to be specified for IP address or custom domain connections to AWS RDS clusters. Otherwise, if unspecified, the pattern will be automatically created for AWS RDS clusters. */
   clusterInstanceHostPattern?: string;
