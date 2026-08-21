@@ -4,15 +4,37 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/#semantic-versioning-200).
 
-## [Unreleased]
+## [3.0.0] - 2026-08-20
+
+### :boom: Breaking Changes
+
+- `clusterId` is no longer derived automatically, and applications that connect to more than one database cluster must now set it explicitly. Previously the wrapper generated a cluster id from the connection URL and, for AWS RDS clusters, converged connections made through instance endpoints, IP addresses or custom domains onto the cluster endpoint's id. That derivation, along with the suggested and primary cluster id caches, has been removed: `clusterId` is now taken only from the configuration parameter and defaults to `1` for every connection. An application that connects to several clusters without setting a distinct `clusterId` per cluster will have all of them share the same topology cache and monitor entries, which leads to incorrect topology and failover to the wrong cluster. Give every cluster its own value, and use the same value for every connection to a given cluster. See [Cluster ID](https://github.com/aws/aws-advanced-nodejs-wrapper/blob/main/docs/using-the-nodejs-wrapper/ClusterId.md).
+- Optional runtime dependencies are no longer installed for you. `@opentelemetry/api`, `http-cookie-agent` and `tough-cookie` moved from `dependencies` to optional `peerDependencies`, and the OpenTelemetry SDK packages (`@opentelemetry/context-async-hooks`, `@opentelemetry/resources`, `@opentelemetry/sdk-trace-base`, `@opentelemetry/semantic-conventions`) are no longer declared by the wrapper at all. Applications that use telemetry, or the [Federated Authentication](https://github.com/aws/aws-advanced-nodejs-wrapper/blob/main/docs/using-the-nodejs-wrapper/using-plugins/UsingTheFederatedAuthPlugin.md) and [Okta Authentication](https://github.com/aws/aws-advanced-nodejs-wrapper/blob/main/docs/using-the-nodejs-wrapper/using-plugins/UsingTheOktaAuthPlugin.md) plugins, must add the packages they need to their own dependencies.
+- Client constructors are typed. `AwsPgClient`, `AwsPgPoolClient`, `AwsMySQLClient` and `AwsMySQLPoolClient` now accept `AwsPgClientConfig` / `AwsMySQLClientConfig` in place of `any`, so TypeScript rejects unknown or misspelled connection properties at compile time. This is a compile-time change only; runtime behaviour is unchanged. Configurations that relied on the untyped parameter may need corrections.
+- `any` has been removed from the external API. Most visibly, `query()` on the MySQL clients now resolves to `[T, FieldPacket[]]` rather than `[T, any]`. Code that consumed those results loosely may need type updates.
+
+### :magic_wand: Added
+
+- Support for [Amazon Aurora Global Databases](https://github.com/aws/aws-advanced-nodejs-wrapper/blob/main/docs/using-the-nodejs-wrapper/GlobalDatabases.md), including in-region and cross-region failover, global writer endpoint recognition and stale DNS handling.
+- [Global Database Failover Plugin](https://github.com/aws/aws-advanced-nodejs-wrapper/blob/main/docs/using-the-nodejs-wrapper/using-plugins/UsingTheGlobalDbFailoverPlugin.md), which adds the notion of a home region and lets failover behaviour be configured separately for the in-home and out-of-home cases.
+- [Global Database Read/Write Splitting Plugin](https://github.com/aws/aws-advanced-nodejs-wrapper/blob/main/docs/using-the-nodejs-wrapper/using-plugins/UsingTheGlobalDbReadWriteSplittingPlugin.md), which can constrain new connections to a home region.
+- [Restricting Aurora Global Database access by region](https://github.com/aws/aws-advanced-nodejs-wrapper/blob/main/docs/using-the-nodejs-wrapper/using-plugins/UsingGlobalAuroraAccessibleRegions.md) with the `gdbAccessibleRegions` parameter.
+- [Monitoring connection priority](https://github.com/aws/aws-advanced-nodejs-wrapper/blob/main/docs/using-the-nodejs-wrapper/using-plugins/UsingMonitoringConnectionPriority.md), which directs the topology monitor's connection to a preferred host type or region.
+- Exported configuration types `AwsClientConfig`, `AwsPgClientConfig` and `AwsMySQLClientConfig`.
 
 ### :crab: Changed
 
 - Renamed the PostgreSQL client to `AwsPgClient` and its pooled connection type to `AwsPgPooledConnection` for consistent `Pg` casing across the `pg` module. This is a non-breaking change.
+- PostgreSQL dialect queries are now schema-qualified, so they resolve correctly regardless of the session `search_path`.
 
 ### :warning: Deprecated
 
 - `AwsPGClient` and `AwsPGPooledConnection` are now deprecated. They remain exported as backwards-compatible aliases of `AwsPgClient` and `AwsPgPooledConnection` and behave identically, so existing code continues to work without modification. Update imports to the new names; the deprecated aliases are scheduled for removal in the next major release.
+
+### :bug: Fixed
+
+- IAM, Federated Authentication and Okta authentication now work against Aurora MySQL. Aurora asks a token-authenticated user for the `mysql_clear_password` authentication plugin, which the underlying driver refuses unless `enableCleartextPlugin` is set; the wrapper now enables it when a token-based authentication plugin is in use and the connection is encrypted. See [MySQL requires an encrypted connection](https://github.com/aws/aws-advanced-nodejs-wrapper/blob/main/docs/using-the-nodejs-wrapper/using-plugins/UsingTheIamAuthenticationPlugin.md#mysql-requires-an-encrypted-connection).
+- Failover is now triggered by read-only connection errors when using `strict-writer` failover mode.
 
 ## [2.1.1] - 2026-05-28
 
@@ -119,6 +141,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 The Amazon Web Services (AWS) Advanced NodeJS Wrapper allows an application to take advantage of the features of clustered Aurora databases.
 
+[3.0.0]: https://github.com/aws/aws-advanced-nodejs-wrapper/compare/2.1.1...3.0.0
 [2.1.1]: https://github.com/aws/aws-advanced-nodejs-wrapper/compare/2.1.0...2.1.1
 [2.1.0]: https://github.com/aws/aws-advanced-nodejs-wrapper/compare/2.0.1...2.1.0
 [2.0.1]: https://github.com/aws/aws-advanced-nodejs-wrapper/compare/2.0.0...2.0.1
