@@ -16,40 +16,60 @@
 
 import { MySQLErrorHandler } from "../../mysql/lib/mysql_error_handler";
 import { PgErrorHandler } from "../../pg/lib/pg_error_handler";
+import { AwsWrapperError } from "../../common/lib/utils/errors";
 
 function errorWith(props: Record<string, any>): Error {
   return Object.assign(new Error("test"), props);
 }
 
+function asAwsWrapperError(error: Error): Error {
+  return new AwsWrapperError(error.message, error);
+}
+
 describe("test read only connection error", () => {
-  const pgHandler = new PgErrorHandler();
-  const mysqlHandler = new MySQLErrorHandler();
+  // mysql2 errors reach the plugins wrapped by ClientUtils, keeping the driver error as `cause`.
+  describe("mysql", () => {
+    const handler = new MySQLErrorHandler();
 
-  it("test pg read only detected by sqlstate 25006", () => {
-    expect(pgHandler.isReadOnlyConnectionError(errorWith({ code: "25006" }))).toBe(true);
+    it("test read only errno 1290 detected", () => {
+      expect(handler.isReadOnlyConnectionError(asAwsWrapperError(errorWith({ errno: 1290 })))).toBe(true);
+    });
+
+    it("test read only errno 1836 detected", () => {
+      expect(handler.isReadOnlyConnectionError(asAwsWrapperError(errorWith({ errno: 1836 })))).toBe(true);
+    });
+
+    it("test unrelated errno not detected", () => {
+      expect(handler.isReadOnlyConnectionError(asAwsWrapperError(errorWith({ errno: 1064 })))).toBe(false);
+    });
+
+    it("test error without errno not detected", () => {
+      expect(handler.isReadOnlyConnectionError(asAwsWrapperError(new Error("read only")))).toBe(false);
+    });
+
+    it("test read only errno detected on an unwrapped error", () => {
+      expect(handler.isReadOnlyConnectionError(errorWith({ errno: 1290 }))).toBe(true);
+    });
   });
 
-  it("test pg unrelated sqlstate not detected", () => {
-    expect(pgHandler.isReadOnlyConnectionError(errorWith({ code: "42601" }))).toBe(false);
-  });
+  // pg hands the driver error to the plugins as-is.
+  describe("pg", () => {
+    const handler = new PgErrorHandler();
 
-  it("test pg error without code not detected", () => {
-    expect(pgHandler.isReadOnlyConnectionError(new Error("cannot execute in a read-only transaction"))).toBe(false);
-  });
+    it("test read only sqlstate detected", () => {
+      expect(handler.isReadOnlyConnectionError(errorWith({ code: "25006" }))).toBe(true);
+    });
 
-  it("test mysql read only detected by errno 1290", () => {
-    expect(mysqlHandler.isReadOnlyConnectionError(errorWith({ errno: 1290 }))).toBe(true);
-  });
+    it("test unrelated sqlstate not detected", () => {
+      expect(handler.isReadOnlyConnectionError(errorWith({ code: "42601" }))).toBe(false);
+    });
 
-  it("test mysql read only detected by errno 1836", () => {
-    expect(mysqlHandler.isReadOnlyConnectionError(errorWith({ errno: 1836 }))).toBe(true);
-  });
+    it("test error without sqlstate not detected", () => {
+      expect(handler.isReadOnlyConnectionError(new Error("cannot execute INSERT in a read-only transaction"))).toBe(false);
+    });
 
-  it("test mysql unrelated errno not detected", () => {
-    expect(mysqlHandler.isReadOnlyConnectionError(errorWith({ errno: 1064 }))).toBe(false);
-  });
-
-  it("test mysql error without errno not detected", () => {
-    expect(mysqlHandler.isReadOnlyConnectionError(new Error("read only"))).toBe(false);
+    it("test read only sqlstate detected on a wrapped error", () => {
+      expect(handler.isReadOnlyConnectionError(asAwsWrapperError(errorWith({ code: "25006" })))).toBe(true);
+    });
   });
 });
