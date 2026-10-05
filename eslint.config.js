@@ -24,6 +24,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import js from "@eslint/js";
 import { FlatCompat } from "@eslint/eslintrc";
+import pgSql from "./scripts/eslint-rules/qualify-pg-sql.mjs";
 
 header.rules.header.meta.schema = false;
 const __filename = fileURLToPath(import.meta.url);
@@ -95,6 +96,17 @@ export default defineConfig([
         ],
         2
       ]
+    }
+  },
+  {
+    files: ["pg/**/*.ts"],
+
+    plugins: {
+      "pg-sql": pgSql
+    },
+
+    rules: {
+      "pg-sql/qualify-pg-sql": "error"
     }
   }
 ]);

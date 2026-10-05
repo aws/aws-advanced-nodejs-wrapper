@@ -107,6 +107,7 @@
     "globals": "^16.5.0",
     "http-cookie-agent": "^6.0.8",
     "jest-html-reporter": "^4.4.0",
+    "libpg-query": "^18.1.5",
     "lint-staged": "^16.4.0",
     "mysql2": "^3.22.3",
     "node-fetch": "^3.3.2",
