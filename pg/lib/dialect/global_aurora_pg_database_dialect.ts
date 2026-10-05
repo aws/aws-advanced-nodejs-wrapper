@@ -35,7 +35,7 @@ export class GlobalAuroraPgDatabaseDialect extends AuroraPgDatabaseDialect imple
     "VISIBILITY_LAG_IN_MSEC, AWS_REGION " +
     "FROM pg_catalog.aurora_global_db_instance_status()";
 
-  private static readonly REGION_COUNT_QUERY = "SELECT count(1) FROM pg_catalog.aurora_global_db_status()";
+  private static readonly REGION_COUNT_QUERY = "SELECT pg_catalog.count(1) FROM pg_catalog.aurora_global_db_status()";
 
   private static readonly REGION_BY_INSTANCE_ID_QUERY =
     "SELECT AWS_REGION FROM pg_catalog.aurora_global_db_instance_status() WHERE SERVER_ID OPERATOR(pg_catalog.=) $1";
