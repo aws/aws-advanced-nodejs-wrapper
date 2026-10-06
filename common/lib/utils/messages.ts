@@ -178,6 +178,8 @@ const MESSAGES: Record<string, string> = {
   "MonitorImpl.startMonitoring": "Start monitoring for %s.",
   "MonitorImpl.stopMonitoring": "Stop monitoring for %s.",
   "MonitorService.startMonitoringNullMonitor": "Start monitoring called but could not find monitor for host: '%s'.",
+  "MonitorService.errorDuringCleanup": "An error occurred during the monitor service cleanup task: %s",
+  "MonitorService.errorWhileCheckingMonitor": "An error occurred while checking monitor '%s': %s",
   "MonitorService.monitorClassMismatch": "The monitor stored at '%s' did not have the expected type '%s'. The actual monitor was '%s'.",
   "MonitorService.monitorStuck": "Monitor '%s' has not been updated within the inactive timeout of %s milliseconds. The monitor will be stopped.",
   "MonitorService.monitorTypeNotRegistered":

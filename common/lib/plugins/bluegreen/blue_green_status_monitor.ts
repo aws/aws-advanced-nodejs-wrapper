@@ -171,7 +171,7 @@ export class BlueGreenStatusMonitor {
         }
       }
     } catch (e: any) {
-      logger.debug(Messages.get("Bgd.monitoringUnhandledError", this.role.name, JSON.stringify(e)));
+      logger.debug(Messages.get("Bgd.monitoringUnhandledError", this.role.name, e.message));
     } finally {
       await this.closeConnection();
       logger.debug(Messages.get("Bgd.monitoringCompleted", this.role.name));
