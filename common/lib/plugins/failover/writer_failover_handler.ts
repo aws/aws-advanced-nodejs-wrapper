@@ -52,7 +52,6 @@ export class ClusterAwareWriterFailoverHandler implements WriterFailoverHandler 
   static readonly DEFAULT_RESULT = new WriterFailoverResult(false, false, [], "None", null);
   static readonly RECONNECT_WRITER_TASK = "TaskA";
   static readonly WAIT_NEW_WRITER_TASK = "TaskB";
-  private static readonly TIMEOUT_ERROR_MESSAGE = "Connection attempt task timed out.";
   private readonly pluginService: PluginService;
   private readonly servicesContainer: FullServicesContainer;
   private readonly readerFailoverHandler: ClusterAwareReaderFailoverHandler;
@@ -118,7 +117,7 @@ export class ClusterAwareWriterFailoverHandler implements WriterFailoverHandler 
     );
 
     const timer: any = {};
-    const timeoutTask = getTimeoutTask(timer, ClusterAwareWriterFailoverHandler.TIMEOUT_ERROR_MESSAGE, this.maxFailoverTimeoutMs);
+    const timeoutTask = getTimeoutTask(timer, Messages.get("Failover.connectionAttemptTaskTimeout"), this.maxFailoverTimeoutMs);
 
     const taskA = reconnectToWriterHandlerTask.call();
     const taskB = waitForNewWriterHandlerTask.call();
@@ -157,7 +156,7 @@ export class ClusterAwareWriterFailoverHandler implements WriterFailoverHandler 
           return result;
         }
         failed = true;
-        throw new InternalQueryTimeoutError(ClusterAwareWriterFailoverHandler.TIMEOUT_ERROR_MESSAGE);
+        throw new InternalQueryTimeoutError(Messages.get("Failover.connectionAttemptTaskTimeout"));
       })
       .catch((error: any) => {
         logger.info(Messages.get("ClusterAwareWriterFailoverHandler.failedToConnectToWriterInstance"));

@@ -162,7 +162,7 @@ export class MonitorServiceImpl implements MonitorService, EventSubscriber {
         await this.checkMonitors();
       } catch (error: any) {
         // Never let a failed check end the cleanup task, otherwise monitors are never cleaned up again.
-        logger.warn(Messages.get("MonitorService.errorDuringCleanup", error.message));
+        logger.warn(Messages.get("MonitorService.errorDuringCleanup", error?.message ?? String(error)));
       }
     }
   }
@@ -228,7 +228,7 @@ export class MonitorServiceImpl implements MonitorService, EventSubscriber {
           }
         } catch (error: any) {
           // Keep checking the remaining monitors.
-          logger.warn(Messages.get("MonitorService.errorWhileCheckingMonitor", monitorDescription, error.message));
+          logger.warn(Messages.get("MonitorService.errorWhileCheckingMonitor", monitorDescription, error?.message ?? String(error)));
         }
       }
     }
