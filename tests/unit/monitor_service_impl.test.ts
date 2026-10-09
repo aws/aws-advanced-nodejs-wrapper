@@ -160,6 +160,31 @@ describe("monitor service impl test", () => {
     expect(monitorA).not.toBe(monitorB);
   });
 
+  it("check monitors cleans up a stuck monitor", async () => {
+    const hostInfo = new HostInfoBuilder({ host: "test-host", hostAvailabilityStrategy: new SimpleHostAvailabilityStrategy() }).build();
+    const mockClientWrapper = new MySQLClientWrapper(undefined, mock(HostInfo), new Map<string, any>(), new MySQL2DriverDialect());
+
+    await monitorService.startMonitoring(
+      mockClientWrapper,
+      hostInfo,
+      properties,
+      FAILURE_DETECTION_TIME_MILLIS,
+      FAILURE_DETECTION_INTERVAL_MILLIS,
+      FAILURE_DETECTION_COUNT
+    );
+
+    const monitor = coreMonitorService.get(HostMonitorImpl, hostInfo.host);
+    expect(monitor).not.toBeNull();
+
+    // Place the last activity timestamp outside of the inactive timeout so the monitor is treated as stuck.
+    (monitor as any).lastActivityTimestampNanos = BigInt(0);
+
+    await (coreMonitorService as any).checkMonitors();
+
+    expect(coreMonitorService.get(HostMonitorImpl, hostInfo.host)).toBeNull();
+    expect(monitor!.isStopped()).toBe(true);
+  });
+
   it("release resources clears monitors", async () => {
     const hostInfo = new HostInfoBuilder({ host: "test-host", hostAvailabilityStrategy: new SimpleHostAvailabilityStrategy() }).build();
     const mockClientWrapper = new MySQLClientWrapper(undefined, mock(HostInfo), new Map<string, any>(), new MySQL2DriverDialect());

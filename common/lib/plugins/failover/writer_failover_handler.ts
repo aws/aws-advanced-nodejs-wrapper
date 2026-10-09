@@ -20,7 +20,8 @@ import { ClusterAwareReaderFailoverHandler } from "./reader_failover_handler";
 import { PluginService } from "../../plugin_service";
 import { HostAvailability } from "../../host_availability/host_availability";
 import { AwsWrapperError } from "../../";
-import { getWriter, logTopology, maskProperties } from "../../utils/utils";
+import { getTimeoutTask, getWriter, logTopology, maskProperties } from "../../utils/utils";
+import { InternalQueryTimeoutError } from "../../utils/errors";
 import { ReaderFailoverResult } from "./reader_failover_result";
 import { Messages } from "../../utils/messages";
 import { logger } from "../../../logutils";
@@ -115,12 +116,8 @@ export class ClusterAwareWriterFailoverHandler implements WriterFailoverHandler 
       Date.now() + this.maxFailoverTimeoutMs
     );
 
-    let timeoutId: any;
-    const timeoutTask: Promise<void> = new Promise((resolve, reject) => {
-      timeoutId = setTimeout(() => {
-        reject("Connection attempt task timed out.");
-      }, this.maxFailoverTimeoutMs);
-    });
+    const timer: any = {};
+    const timeoutTask = getTimeoutTask(timer, Messages.get("Failover.connectionAttemptTaskTimeout"), this.maxFailoverTimeoutMs);
 
     const taskA = reconnectToWriterHandlerTask.call();
     const taskB = waitForNewWriterHandlerTask.call();
@@ -159,12 +156,12 @@ export class ClusterAwareWriterFailoverHandler implements WriterFailoverHandler 
           return result;
         }
         failed = true;
-        throw new AwsWrapperError("Connection attempt task timed out.");
+        throw new InternalQueryTimeoutError(Messages.get("Failover.connectionAttemptTaskTimeout"));
       })
       .catch((error: any) => {
         logger.info(Messages.get("ClusterAwareWriterFailoverHandler.failedToConnectToWriterInstance"));
         failed = true;
-        if (JSON.stringify(error).includes("Connection attempt task timed out.")) {
+        if (error instanceof InternalQueryTimeoutError) {
           return new WriterFailoverResult(false, false, [], "None", null);
         }
         throw error;
@@ -172,7 +169,7 @@ export class ClusterAwareWriterFailoverHandler implements WriterFailoverHandler 
       .finally(async () => {
         await reconnectToWriterHandlerTask.cancel(failed, selectedTask);
         await waitForNewWriterHandlerTask.cancel(selectedTask);
-        clearTimeout(timeoutId);
+        clearTimeout(timer.timeoutId);
       });
   }
 

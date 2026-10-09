@@ -101,6 +101,7 @@ const MESSAGES: Record<string, string> = {
   "Failover.transactionResolutionUnknownError": "Unknown transaction resolution error occurred during failover.",
   "Failover.failoverReaderTimeout": "The reader failover process was not able to establish a connection before timing out.",
   "Failover.timeoutError": "Internal failover task has timed out.",
+  "Failover.connectionAttemptTaskTimeout": "Connection attempt task timed out.",
   "Failover.newWriterNotAllowed":
     "The failover process identified the new writer but the host is not in the list of allowed hosts. New writer host: '%s'. Allowed hosts: '%s'.",
   "GlobalDbRegionUtils.unableToRetrieveGlobalClusterARN": "Unable to retrieve the primary global region for the provided global database cluster.",
@@ -178,6 +179,8 @@ const MESSAGES: Record<string, string> = {
   "MonitorImpl.startMonitoring": "Start monitoring for %s.",
   "MonitorImpl.stopMonitoring": "Stop monitoring for %s.",
   "MonitorService.startMonitoringNullMonitor": "Start monitoring called but could not find monitor for host: '%s'.",
+  "MonitorService.errorDuringCleanup": "An error occurred during the monitor service cleanup task: %s",
+  "MonitorService.errorWhileCheckingMonitor": "An error occurred while checking monitor '%s': %s",
   "MonitorService.monitorClassMismatch": "The monitor stored at '%s' did not have the expected type '%s'. The actual monitor was '%s'.",
   "MonitorService.monitorStuck": "Monitor '%s' has not been updated within the inactive timeout of %s milliseconds. The monitor will be stopped.",
   "MonitorService.monitorTypeNotRegistered":
