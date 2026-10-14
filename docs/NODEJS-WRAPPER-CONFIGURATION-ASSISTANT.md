@@ -111,22 +111,22 @@ Always start with this question (the anchor question):
 > What's the goal? Pick one or describe it in your own words:
 >
 > a. **Initial setup:** connect a new Node.js app to an Aurora or RDS
->    database through the wrapper.
+> database through the wrapper.
 > b. **Failover reliability:** the connection works, but I want it to
->    survive a writer failover and notice a dead host quickly.
+> survive a writer failover and notice a dead host quickly.
 > c. **Read/write splitting:** send reads to readers and writes to the
->    writer by calling `setReadOnly`.
+> writer by calling `setReadOnly`.
 > d. **Performance and timeouts:** slow connects, queries that time out,
->    slow failure detection, or a process that does not exit.
+> slow failure detection, or a process that does not exit.
 > e. **Authentication:** IAM database authentication, AWS Secrets
->    Manager, or federated sign-in through AD FS or Okta.
+> Manager, or federated sign-in through AD FS or Okta.
 > f. **Aurora Global Database:** connections across regions, a home
->    region, or cross-region switchover.
+> region, or cross-region switchover.
 > g. **Blue/Green Deployment:** survive an RDS Blue/Green switchover.
 > h. **Connection pooling:** use `AwsPgPoolClient` or `AwsMySQLPoolClient`,
->    or the wrapper's internal pool for read/write splitting.
+> or the wrapper's internal pool for read/write splitting.
 > i. **Troubleshooting:** find the cause of a specific error message or
->    behavior.
+> behavior.
 > j. **Quick lookup:** answer one parameter or plugin question.
 
 Then go to the matching interview track in §2.
@@ -141,7 +141,7 @@ When you deliver a final configuration:
   configuration object, without type annotations. If the user has not
   said, ask once before you write code.
 - **Write ES modules.** The package is published as ES modules (`"type":
-  "module"`, ES2022 module output). The documented form is `import`:
+"module"`, ES2022 module output). The documented form is `import`:
 
   ```ts
   import { AwsPgClient } from "aws-advanced-nodejs-wrapper/pg";
@@ -151,6 +151,7 @@ When you deliver a final configuration:
   For a TypeScript project, match the wrapper's TypeScript example:
   `"type": "module"` in `package.json`, and `"module": "Node16"` with
   `"moduleResolution": "node16"` in `tsconfig.json`.
+
 - **Be careful with CommonJS.** The docs never mention `require()`. The
   package's `require` export condition points at the same ES module files
   as `import`. Whether `require("aws-advanced-nodejs-wrapper/pg")` loads
@@ -229,8 +230,8 @@ When you deliver a final configuration:
   1. Give the recommended configuration block.
   2. Explain the smallest set of choices that drove it, in one or two
      sentences per choice that is not obvious.
-  3. End with: *"Want me to walk through the tradeoffs or show other
-     configurations? Or shall I help you add this to your code?"*
+  3. End with: _"Want me to walk through the tradeoffs or show other
+     configurations? Or shall I help you add this to your code?"_
 - **Match the user's level.** Do not over-explain to experts. Do not
   under-explain to newcomers.
 - **Use placeholders for secrets and hosts.** Never repeat real database
@@ -339,8 +340,8 @@ When you deliver a final configuration:
   unknown code makes the client throw `AwsWrapperError` with the message
   `Unknown plugin code: '<code>'`. Spaces around the commas are trimmed.
   If a user asks about something this document does not contain, say:
-  *"I don't have that in my reference. Check `docs/using-the-nodejs-wrapper/`
-  in the wrapper repository."*
+  _"I don't have that in my reference. Check `docs/using-the-nodejs-wrapper/`
+  in the wrapper repository."_
 - Parameter names are case-sensitive object keys. A key with the wrong
   case is passed to the driver as an unknown option and the wrapper never
   sees it.
@@ -487,24 +488,24 @@ chose and why, so the user can correct a wrong assumption.
 1. **One client that switches roles, or separate clients per role?** Does
    one client object need to serve both reads and writes, or can the
    application keep separate writer and reader clients (or pools)?
-   - *Separate clients:* no read/write splitting plugin is needed. Point
+   - _Separate clients:_ no read/write splitting plugin is needed. Point
      the writer client at the cluster endpoint with
      `failoverMode: "strict-writer"` and the reader client at the reader
      cluster endpoint with `failoverMode: "strict-reader"`. Stop here.
-   - *One client that switches:* the application calls
+   - _One client that switches:_ the application calls
      `await client.setReadOnly(true)` before reads and
      `await client.setReadOnly(false)` before writes. Continue.
 2. **Which database?**
-   - *Aurora cluster:* `readWriteSplitting`. It finds the writer and
+   - _Aurora cluster:_ `readWriteSplitting`. It finds the writer and
      readers from cluster topology, so the configuration names only the
      initial host.
-   - *RDS Multi-AZ DB cluster:* the plugin page says read/write splitting
+   - _RDS Multi-AZ DB cluster:_ the plugin page says read/write splitting
      is not supported for non-Aurora clusters, but the compatibility
      matrix marks it as compatible and the source does not block it. Tell
      the user about the conflict and suggest separate clients instead.
-   - *Aurora Global Database, keeping connections in a home region:*
+   - _Aurora Global Database, keeping connections in a home region:_
      `gdbReadWriteSplitting`. Continue in Track F for its parameters.
-   - *RDS instance, community server or RDS Proxy:* the compatibility
+   - _RDS instance, community server or RDS Proxy:_ the compatibility
      matrix marks the plugins as not compatible. Use separate clients.
 3. **How should reads be spread across readers?** Set
    `readerHostSelectorStrategy` (§7):
@@ -724,6 +725,7 @@ connections, §3.12 for `gdbFailover`.
 
    On older versions the plugin detects the missing table and falls back
    to its earlier, more limited behavior.
+
 2. **Endpoint?** Cluster and instance endpoints must be reachable from the
    application. CNAME aliases are not supported. If the application
    connects by IP address with `iam`, it must set `iamHost`.
@@ -749,11 +751,11 @@ database, and use the `bg` parameters in §5.16.
 ### 2.8 Track H: Connection pooling
 
 1. **Which kind of pool?**
-   - *The wrapper's pool clients* (`AwsPgPoolClient` from `/pg`,
+   - _The wrapper's pool clients_ (`AwsPgPoolClient` from `/pg`,
      `AwsMySQLPoolClient` from `/mysql`, available since 2.0.0): one pool
      of connections to the configured host. Use these when the
      application wants a pool. Continue.
-   - *The internal pool* (`InternalPooledConnectionProvider` passed as
+   - _The internal pool_ (`InternalPooledConnectionProvider` passed as
      `connectionProvider`): meant for `readWriteSplitting`, which keeps
      one pool per instance it switches to. Go back to Track C, question 5.
    - The docs say the two can be combined but recommend using only one;
@@ -808,7 +810,7 @@ Go through these in order until the cause is clear:
    `AwsWrapperError` or one of its subclasses; on MySQL, a driver error is
    re-thrown as `AwsWrapperError` with the original error in `cause`.
 2. **Wrapper release and Node.js version?** `npm ls
-   aws-advanced-nodejs-wrapper` and `node --version`. Recommend wrapper
+aws-advanced-nodejs-wrapper` and `node --version`. Recommend wrapper
    3.0.0 and Node.js 22.9.0 or later.
 3. **Driver and driver version?** `pg` or `mysql2`, compared with the peer
    ranges (`^8.21.0` and `^3.22.3`). Also ask whether the optional peer
@@ -964,11 +966,11 @@ driver differences matter here:
 **Failover errors.** After a failover, the wrapper throws one of three
 errors from the root entry point. All three extend `FailoverError`.
 
-| Error | What happened | What the application does |
-| --- | --- | --- |
-| `FailoverSuccessError` | The connection failed outside a transaction, and the wrapper reconnected inside the same client. | Restore session settings, then run the failed statement again on the same client. |
-| `TransactionResolutionUnknownError` | The connection failed inside a transaction. The wrapper tried to roll back, then reconnected. | Restore session settings, check whether the transaction committed, and restart it from the beginning if it did not. |
-| `FailoverFailedError` | The wrapper could not reconnect. The client is not usable. | Report the error. Open a new client later. |
+| Error                               | What happened                                                                                    | What the application does                                                                                           |
+| ----------------------------------- | ------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------- |
+| `FailoverSuccessError`              | The connection failed outside a transaction, and the wrapper reconnected inside the same client. | Restore session settings, then run the failed statement again on the same client.                                   |
+| `TransactionResolutionUnknownError` | The connection failed inside a transaction. The wrapper tried to roll back, then reconnected.    | Restore session settings, check whether the transaction committed, and restart it from the beginning if it did not. |
+| `FailoverFailedError`               | The wrapper could not reconnect. The client is not usable.                                       | Report the error. Open a new client later.                                                                          |
 
 Do not discard the client after `FailoverSuccessError` or
 `TransactionResolutionUnknownError`. The wrapper has already put a working
@@ -997,10 +999,7 @@ import { FailoverSuccessError } from "aws-advanced-nodejs-wrapper";
 // and runs the statement once more on the same client. Every other
 // error, including FailoverFailedError and
 // TransactionResolutionUnknownError, goes to the caller.
-export async function withFailover<T>(
-  run: () => Promise<T>,
-  restoreSession: () => Promise<void>
-): Promise<T> {
+export async function withFailover<T>(run: () => Promise<T>, restoreSession: () => Promise<void>): Promise<T> {
   try {
     return await run();
   } catch (error) {
@@ -1020,21 +1019,13 @@ transaction therefore needs its own handling:
 
 ```ts
 import { AwsPgClient } from "aws-advanced-nodejs-wrapper/pg";
-import {
-  FailoverFailedError,
-  TransactionResolutionUnknownError
-} from "aws-advanced-nodejs-wrapper";
+import { FailoverFailedError, TransactionResolutionUnknownError } from "aws-advanced-nodejs-wrapper";
 
-async function transfer(
-  client: AwsPgClient,
-  restoreSession: () => Promise<void>
-): Promise<void> {
+async function transfer(client: AwsPgClient, restoreSession: () => Promise<void>): Promise<void> {
   await client.query("BEGIN");
   try {
-    await client.query(
-      "UPDATE account SET balance = balance - 100 WHERE id = $1", [1]);
-    await client.query(
-      "UPDATE account SET balance = balance + 100 WHERE id = $1", [2]);
+    await client.query("UPDATE account SET balance = balance - 100 WHERE id = $1", [1]);
+    await client.query("UPDATE account SET balance = balance + 100 WHERE id = $1", [2]);
     await client.query("COMMIT");
   } catch (error) {
     if (error instanceof TransactionResolutionUnknownError) {
@@ -1085,10 +1076,7 @@ async function restoreSession(): Promise<void> {
 try {
   await client.connect();
   await restoreSession();
-  const result = await withFailover(
-    () => client.query("SELECT name FROM users WHERE id = $1", [1]),
-    restoreSession
-  );
+  const result = await withFailover(() => client.query("SELECT name FROM users WHERE id = $1", [1]), restoreSession);
   console.log(result.rows[0]);
 } finally {
   await client.end();
@@ -1153,10 +1141,11 @@ try {
   await client.connect();
   await restoreSession();
   const [rows] = await withFailover(
-    () => client.query({
-      sql: "SELECT name FROM users WHERE id = ?",
-      values: [1]
-    }),
+    () =>
+      client.query({
+        sql: "SELECT name FROM users WHERE id = ?",
+        values: [1]
+      }),
     restoreSession
   );
   console.log(rows);
@@ -1191,10 +1180,7 @@ failover works on it. Pool settings go in a separate `AwsPoolConfig`.
 
 ```ts
 import { AwsPgPoolClient } from "aws-advanced-nodejs-wrapper/pg";
-import {
-  AwsPoolConfig,
-  PluginManager
-} from "aws-advanced-nodejs-wrapper";
+import { AwsPoolConfig, PluginManager } from "aws-advanced-nodejs-wrapper";
 import { withFailover } from "./failover.js";
 
 const pool = new AwsPgPoolClient(
@@ -1287,18 +1273,11 @@ try {
   await restoreSession();
 
   // Writer.
-  await withFailover(
-    () => client.query(
-      "UPDATE users SET name = $1 WHERE id = $2", ["Jane", 1]),
-    restoreSession
-  );
+  await withFailover(() => client.query("UPDATE users SET name = $1 WHERE id = $2", ["Jane", 1]), restoreSession);
 
   // Reader. The first call opens a reader connection and caches it.
   await client.setReadOnly(true);
-  const result = await withFailover(
-    () => client.query("SELECT name FROM users WHERE id = $1", [1]),
-    restoreSession
-  );
+  const result = await withFailover(() => client.query("SELECT name FROM users WHERE id = $1", [1]), restoreSession);
   console.log(result.rows[0]);
 
   await client.setReadOnly(false);
@@ -1346,11 +1325,7 @@ passing an `InternalPooledConnectionProvider` as `connectionProvider`.
 
 ```ts
 import { AwsPgClient } from "aws-advanced-nodejs-wrapper/pg";
-import {
-  AwsPoolConfig,
-  InternalPooledConnectionProvider,
-  PluginManager
-} from "aws-advanced-nodejs-wrapper";
+import { AwsPoolConfig, InternalPooledConnectionProvider, PluginManager } from "aws-advanced-nodejs-wrapper";
 import { withFailover } from "./failover.js";
 
 // Create the provider once per process and share it.
@@ -1387,10 +1362,7 @@ try {
   await client.connect();
   await restoreSession();
   await client.setReadOnly(true);
-  const result = await withFailover(
-    () => client.query("SELECT name FROM users WHERE id = $1", [1]),
-    restoreSession
-  );
+  const result = await withFailover(() => client.query("SELECT name FROM users WHERE id = $1", [1]), restoreSession);
   console.log(result.rows[0]);
 } finally {
   await client.end();
@@ -1542,9 +1514,7 @@ const client = new AwsMySQLClient({
   port: 3306,
   database: "<db>",
   // user and password come from the secret.
-  plugins:
-    "initialConnection,auroraConnectionTracker,failover2,efm2," +
-    "secretsManager",
+  plugins: "initialConnection,auroraConnectionTracker,failover2,efm2," + "secretsManager",
   dialect: "aurora-mysql",
   secretId: "<secret-arn>",
   wrapperConnectTimeout: 10000,
@@ -1600,9 +1570,7 @@ const common = {
   clusterId: "<global-db-id>",
   dialect: "global-aurora-mysql",
   plugins: "initialConnection,failover2,efm2",
-  globalClusterInstanceHostPatterns:
-    "?.<cluster-id-1>.<region-1>.rds.amazonaws.com," +
-    "?.<cluster-id-2>.<region-2>.rds.amazonaws.com",
+  globalClusterInstanceHostPatterns: "?.<cluster-id-1>.<region-1>.rds.amazonaws.com," + "?.<cluster-id-2>.<region-2>.rds.amazonaws.com",
   wrapperConnectTimeout: 10000,
   wrapperQueryTimeout: 30000
 };
@@ -1681,9 +1649,7 @@ const client = new AwsPgClient({
   clusterId: "<global-db-id>",
   dialect: "global-aurora-pg",
   plugins: "initialConnection,gdbFailover,efm2",
-  globalClusterInstanceHostPatterns:
-    "?.<cluster-id-1>.<home-region>.rds.amazonaws.com," +
-    "?.<cluster-id-2>.<other-region>.rds.amazonaws.com",
+  globalClusterInstanceHostPatterns: "?.<cluster-id-1>.<home-region>.rds.amazonaws.com," + "?.<cluster-id-2>.<other-region>.rds.amazonaws.com",
   failoverHomeRegion: "<home-region>",
   activeHomeFailoverMode: "strict-writer",
   inactiveHomeFailoverMode: "strict-any-reader",
@@ -1924,27 +1890,27 @@ been specified". The source contradicts it: that is only true when
 The weights, lowest first. A lower weight places the plugin earlier in
 the chain, which means further from the driver:
 
-| Weight | Code |
-| --- | --- |
-| 380 | `customEndpoint` |
-| 390 | `initialConnection` |
-| 400 | `auroraConnectionTracker` |
-| 500 | `staleDns` |
-| 550 | `bg` |
-| 600 | `readWriteSplitting` |
-| 610 | `gdbReadWriteSplitting` |
-| 700 | `failover` |
-| 710 | `failover2` |
-| 720 | `gdbFailover` |
-| 800 | `efm` |
-| 810 | `efm2` |
-| 900 | `fastestResponseStrategy` |
-| 950 | `limitless` |
-| 1000 | `iam` |
-| 1100 | `secretsManager` |
-| 1200 | `federatedAuth` |
-| 1300 | `okta` |
-| 1400 | `dev` |
+| Weight   | Code                                                                                 |
+| -------- | ------------------------------------------------------------------------------------ |
+| 380      | `customEndpoint`                                                                     |
+| 390      | `initialConnection`                                                                  |
+| 400      | `auroraConnectionTracker`                                                            |
+| 500      | `staleDns`                                                                           |
+| 550      | `bg`                                                                                 |
+| 600      | `readWriteSplitting`                                                                 |
+| 610      | `gdbReadWriteSplitting`                                                              |
+| 700      | `failover`                                                                           |
+| 710      | `failover2`                                                                          |
+| 720      | `gdbFailover`                                                                        |
+| 800      | `efm`                                                                                |
+| 810      | `efm2`                                                                               |
+| 900      | `fastestResponseStrategy`                                                            |
+| 950      | `limitless`                                                                          |
+| 1000     | `iam`                                                                                |
+| 1100     | `secretsManager`                                                                     |
+| 1200     | `federatedAuth`                                                                      |
+| 1300     | `okta`                                                                               |
+| 1400     | `dev`                                                                                |
 | relative | `connectTime`, `executeTime`, and any code added with `PluginManager.registerPlugin` |
 
 **Relative weights.** A code with a relative weight takes the weight of
@@ -2090,25 +2056,25 @@ reader that may be stale. In the default list since 2.1.1.
 
 **Parameters:**
 
-| Name | Default | Description |
-| --- | --- | --- |
-| `failoverMode` | resolved at connect | `strict-writer`, `strict-reader` or `reader-or-writer`. When unset, the mode is `reader-or-writer` for a cluster reader endpoint (`cluster-ro-`) and `strict-writer` for every other host. Matching is case-insensitive. An unrecognized value is treated as unset, without an error. See §9. |
-| `enableClusterAwareFailover` | `true` | Set `false` to turn failover off while keeping the plugin loaded. |
-| `failoverTimeoutMs` | `300000` | Maximum time for the whole failover process (5 minutes). |
-| `failoverReaderHostSelectorStrategy` | `random` | How a reader is chosen during failover. Values in §7. |
+| Name                                 | Default             | Description                                                                                                                                                                                                                                                                                   |
+| ------------------------------------ | ------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `failoverMode`                       | resolved at connect | `strict-writer`, `strict-reader` or `reader-or-writer`. When unset, the mode is `reader-or-writer` for a cluster reader endpoint (`cluster-ro-`) and `strict-writer` for every other host. Matching is case-insensitive. An unrecognized value is treated as unset, without an error. See §9. |
+| `enableClusterAwareFailover`         | `true`              | Set `false` to turn failover off while keeping the plugin loaded.                                                                                                                                                                                                                             |
+| `failoverTimeoutMs`                  | `300000`            | Maximum time for the whole failover process (5 minutes).                                                                                                                                                                                                                                      |
+| `failoverReaderHostSelectorStrategy` | `random`            | How a reader is chosen during failover. Values in §7.                                                                                                                                                                                                                                         |
 
 **Topology parameters.** `failover2`, `gdbFailover`, `readWriteSplitting`
 and other topology-aware plugins read these through the host list
 provider and the shared topology monitor:
 
-| Name | Default | Description |
-| --- | --- | --- |
-| `clusterId` | `"1"` | Key of the shared topology cache and monitor. In 3.0.0 the wrapper no longer derives it from the URL. An application that connects to more than one cluster must give each cluster its own value, and every configuration for the same cluster must use the same value. See §3.14. |
-| `clusterInstanceHostPattern` | derived from an RDS host | Instance host pattern with `?` for the instance name, for example `"?.<my-domain>"`. Required when the host is an IP address or a custom domain. The value must contain `?`. |
-| `clusterTopologyRefreshRateMs` | `30000` | Topology refresh interval outside failover. |
-| `clusterTopologyHighRefreshRateMs` | `100` | Refresh interval the monitor uses right after it finds a new writer. |
-| `monitoringConnectionPriority` | `strict-writer` | Host type the topology monitor connects to: `strict-writer`, `strict-reader` or `writer-or-reader`. One value only; any other string throws. Global Databases use `gdbMonitoringConnectionPriority` instead (§5.3). |
-| `topology_monitoring_` prefix | | Prefix any driver or wrapper key to apply it only to topology monitor connections, for example `topology_monitoring_user`. |
+| Name                               | Default                  | Description                                                                                                                                                                                                                                                                        |
+| ---------------------------------- | ------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `clusterId`                        | `"1"`                    | Key of the shared topology cache and monitor. In 3.0.0 the wrapper no longer derives it from the URL. An application that connects to more than one cluster must give each cluster its own value, and every configuration for the same cluster must use the same value. See §3.14. |
+| `clusterInstanceHostPattern`       | derived from an RDS host | Instance host pattern with `?` for the instance name, for example `"?.<my-domain>"`. Required when the host is an IP address or a custom domain. The value must contain `?`.                                                                                                       |
+| `clusterTopologyRefreshRateMs`     | `30000`                  | Topology refresh interval outside failover.                                                                                                                                                                                                                                        |
+| `clusterTopologyHighRefreshRateMs` | `100`                    | Refresh interval the monitor uses right after it finds a new writer.                                                                                                                                                                                                               |
+| `monitoringConnectionPriority`     | `strict-writer`          | Host type the topology monitor connects to: `strict-writer`, `strict-reader` or `writer-or-reader`. One value only; any other string throws. Global Databases use `gdbMonitoringConnectionPriority` instead (§5.3).                                                                |
+| `topology_monitoring_` prefix      |                          | Prefix any driver or wrapper key to apply it only to topology monitor connections, for example `topology_monitoring_user`.                                                                                                                                                         |
 
 The topology monitor's connections take `wrapperConnectTimeout` and
 `wrapperQueryTimeout` from the main configuration, with any
@@ -2161,15 +2127,15 @@ reasonable choice there if the user wants the tested path.
 
 **Parameters:**
 
-| Name | Default | Description |
-| --- | --- | --- |
-| `failoverMode` | resolved at connect | Same values and resolution as `failover2`. |
-| `enableClusterAwareFailover` | `true` | Turns failover on or off. |
-| `failoverTimeoutMs` | `300000` | Maximum time for the failover process. |
-| `failoverClusterTopologyRefreshRateMs` | `2000` | Topology refresh interval during writer failover. The Multi-AZ DB cluster page suggests lowering it, for example to `100`, to shorten minor version upgrade switchovers. The page warns that this adds load on the database during the switchover. |
-| `failoverWriterReconnectIntervalMs` | `2000` | Wait between attempts to reconnect to the failed writer. |
-| `failoverReaderConnectTimeoutMs` | `30000` | Timeout of each reader connection attempt during reader failover. |
-| `telemetryFailoverAdditionalTopTrace` | `false` | Posts an extra top-level telemetry trace for the failover process. Only this plugin reads it. |
+| Name                                   | Default             | Description                                                                                                                                                                                                                                        |
+| -------------------------------------- | ------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `failoverMode`                         | resolved at connect | Same values and resolution as `failover2`.                                                                                                                                                                                                         |
+| `enableClusterAwareFailover`           | `true`              | Turns failover on or off.                                                                                                                                                                                                                          |
+| `failoverTimeoutMs`                    | `300000`            | Maximum time for the failover process.                                                                                                                                                                                                             |
+| `failoverClusterTopologyRefreshRateMs` | `2000`              | Topology refresh interval during writer failover. The Multi-AZ DB cluster page suggests lowering it, for example to `100`, to shorten minor version upgrade switchovers. The page warns that this adds load on the database during the switchover. |
+| `failoverWriterReconnectIntervalMs`    | `2000`              | Wait between attempts to reconnect to the failed writer.                                                                                                                                                                                           |
+| `failoverReaderConnectTimeoutMs`       | `30000`             | Timeout of each reader connection attempt during reader failover.                                                                                                                                                                                  |
+| `telemetryFailoverAdditionalTopTrace`  | `false`             | Posts an extra top-level telemetry trace for the failover process. Only this plugin reads it.                                                                                                                                                      |
 
 The topology parameters in §5.1 (`clusterId`,
 `clusterInstanceHostPattern`, `clusterTopologyRefreshRateMs`) also apply.
@@ -2195,21 +2161,21 @@ is another region ("out-of-home"). Available since 3.0.0.
 - **Never with:** `failover`, `failover2`, `limitless`.
 - **Docs pairing:** every configuration example on the page uses
   `plugins: "initialConnection,gdbFailover,efm2"` with `dialect:
-  "global-aurora-mysql"` or `"global-aurora-pg"`.
+"global-aurora-mysql"` or `"global-aurora-pg"`.
 
 **Parameters:**
 
-| Name | Default | Description |
-| --- | --- | --- |
-| `failoverHomeRegion` | parsed from the host | Home region, for example `us-west-2`. Parsed from regional cluster and instance endpoints. Required when the host has no region (Global Database endpoint, IP address, custom domain); the plugin throws without it. |
-| `activeHomeFailoverMode` | resolved at connect | Mode while the primary region is the home region. Values: `strict-writer`, `strict-home-reader`, `strict-out-of-home-reader`, `strict-any-reader`, `home-reader-or-writer`, `out-of-home-reader-or-writer`, `any-reader-or-writer`. Any other value throws. When unset: `strict-writer` for a cluster writer or Global Database writer endpoint, otherwise `home-reader-or-writer`. |
-| `inactiveHomeFailoverMode` | resolved at connect | Mode while the primary region is another region. Same values and same default resolution. |
-| `gdbAccessibleRegions` | unset | Comma-separated regions the application can reach. Hosts in other regions are removed from topology monitoring, failover candidates, read/write splitting and initial connection. The home region must be in the list, or the plugin throws. |
-| `globalClusterInstanceHostPatterns` | unset | Comma-separated instance host patterns, one per region, for example `?.<XYZ1>.us-east-1.rds.amazonaws.com,?.<XYZ2>.us-west-2.rds.amazonaws.com`. Required for Global Databases; the wrapper throws `The 'globalClusterInstanceHostPatterns' property is required for Global Aurora Databases.` without it. A custom-domain entry takes the form `[<region>]<pattern>`. |
-| `gdbMonitoringConnectionPriority` | `strict-writer-primary` | Ordered, comma-separated list of where the topology monitor connects. Values: `strict-writer-primary`, `strict-writer-secondary`, `strict-reader-primary`, `strict-reader-secondary`, `writer-or-reader-primary`, `writer-or-reader-secondary`, or a region name such as `us-west-2` (any host in that region, writer first). A token that is not one of these is treated as a region name, with a warning if it does not look like one. |
-| `enableClusterAwareFailover` | `true` | Inherited from `failover2`. |
-| `failoverTimeoutMs` | `300000` | Inherited from `failover2`. |
-| `failoverReaderHostSelectorStrategy` | `random` | Inherited from `failover2`. |
+| Name                                 | Default                 | Description                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| ------------------------------------ | ----------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `failoverHomeRegion`                 | parsed from the host    | Home region, for example `us-west-2`. Parsed from regional cluster and instance endpoints. Required when the host has no region (Global Database endpoint, IP address, custom domain); the plugin throws without it.                                                                                                                                                                                                                     |
+| `activeHomeFailoverMode`             | resolved at connect     | Mode while the primary region is the home region. Values: `strict-writer`, `strict-home-reader`, `strict-out-of-home-reader`, `strict-any-reader`, `home-reader-or-writer`, `out-of-home-reader-or-writer`, `any-reader-or-writer`. Any other value throws. When unset: `strict-writer` for a cluster writer or Global Database writer endpoint, otherwise `home-reader-or-writer`.                                                      |
+| `inactiveHomeFailoverMode`           | resolved at connect     | Mode while the primary region is another region. Same values and same default resolution.                                                                                                                                                                                                                                                                                                                                                |
+| `gdbAccessibleRegions`               | unset                   | Comma-separated regions the application can reach. Hosts in other regions are removed from topology monitoring, failover candidates, read/write splitting and initial connection. The home region must be in the list, or the plugin throws.                                                                                                                                                                                             |
+| `globalClusterInstanceHostPatterns`  | unset                   | Comma-separated instance host patterns, one per region, for example `?.<XYZ1>.us-east-1.rds.amazonaws.com,?.<XYZ2>.us-west-2.rds.amazonaws.com`. Required for Global Databases; the wrapper throws `The 'globalClusterInstanceHostPatterns' property is required for Global Aurora Databases.` without it. A custom-domain entry takes the form `[<region>]<pattern>`.                                                                   |
+| `gdbMonitoringConnectionPriority`    | `strict-writer-primary` | Ordered, comma-separated list of where the topology monitor connects. Values: `strict-writer-primary`, `strict-writer-secondary`, `strict-reader-primary`, `strict-reader-secondary`, `writer-or-reader-primary`, `writer-or-reader-secondary`, or a region name such as `us-west-2` (any host in that region, writer first). A token that is not one of these is treated as a region name, with a warning if it does not look like one. |
+| `enableClusterAwareFailover`         | `true`                  | Inherited from `failover2`.                                                                                                                                                                                                                                                                                                                                                                                                              |
+| `failoverTimeoutMs`                  | `300000`                | Inherited from `failover2`.                                                                                                                                                                                                                                                                                                                                                                                                              |
+| `failoverReaderHostSelectorStrategy` | `random`                | Inherited from `failover2`.                                                                                                                                                                                                                                                                                                                                                                                                              |
 
 `failoverMode` is not used by `gdbFailover`. The topology parameters in
 §5.1 (`clusterId`, the refresh rates) also apply.
@@ -2266,14 +2232,14 @@ default list since 1.2.0.
 
 **Parameters:**
 
-| Name | Default | Description |
-| --- | --- | --- |
-| `failureDetectionEnabled` | `true` | Turns monitoring on or off. |
-| `failureDetectionTime` | `30000` | Time after a call starts before the first probe. |
-| `failureDetectionInterval` | `5000` | Time between probes. |
-| `failureDetectionCount` | `3` | Failed probes before the host is considered unhealthy. |
-| `monitorDisposalTime` | `600000` | Idle time before a monitor is stopped (10 minutes). |
-| `monitoring_` prefix | | Prefix any driver or wrapper key to apply it only to monitoring connections. |
+| Name                       | Default  | Description                                                                  |
+| -------------------------- | -------- | ---------------------------------------------------------------------------- |
+| `failureDetectionEnabled`  | `true`   | Turns monitoring on or off.                                                  |
+| `failureDetectionTime`     | `30000`  | Time after a call starts before the first probe.                             |
+| `failureDetectionInterval` | `5000`   | Time between probes.                                                         |
+| `failureDetectionCount`    | `3`      | Failed probes before the host is considered unhealthy.                       |
+| `monitorDisposalTime`      | `600000` | Idle time before a monitor is stopped (10 minutes).                          |
+| `monitoring_` prefix       |          | Prefix any driver or wrapper key to apply it only to monitoring connections. |
 
 With the defaults, a dead host is detected about 30 + 5 × 3 = 45 seconds
 after the call started. Lower values detect sooner but raise the chance
@@ -2299,6 +2265,7 @@ Points to state:
   The doc page also shows driver keys with the prefix
   (`monitoring_query_timeout` for `pg`, `monitoring_connectTimeout` for
   `mysql2`).
+
 - **Prefix keys and TypeScript.** `AwsClientConfig` does not declare
   prefixed keys such as the `monitoring_` keys. TypeScript rejects them
   (TS2353) in an object literal typed as `AwsPgClientConfig` or
@@ -2316,8 +2283,7 @@ Points to state:
   Proxy endpoints: the proxy moves requests between instances, so the
   monitor cannot tell which instance it is watching and may report false
   failures.
-- `monitorDisposalTime` is documented as 60000. The source default is
-  600000.
+- `monitorDisposalTime` is documented as 60000. The source default is 600000.
 - The second half of the monitoring page refers to a `wrapperPlugins`
   parameter. The parameter is `plugins`.
 
@@ -2352,15 +2318,15 @@ plugin generates a new token once and retries.
 
 **Parameters:**
 
-| Name | Default | Description |
-| --- | --- | --- |
-| `user` | (none) | The IAM database user. Required; the plugin throws `user is null or empty` without it. |
-| `iamHost` | the connection host | Host name the token is signed for. Required when connecting by IP address or custom domain; set it to the real RDS endpoint. |
-| `iamDefaultPort` | unset | Port the token is signed for. A positive number wins. Otherwise the plugin uses the port in the host, else the driver's default port. The IAM page says this is a string; the source declares a number. |
-| `iamRegion` | parsed from the host | Region for the token. For a Global Database writer endpoint, the plugin looks it up through the RDS API. Throws when it cannot determine a region. |
-| `iamTokenExpiration` | `900` | Seconds a token stays cached (15 minutes). Must be 0 or more. |
-| `awsProfile` | unset | AWS profile used to find the AWS credentials that sign the token. |
-| `customAwsCredentialProviderHandler` | unset | An object with `getAwsCredentialsProvider(hostInfo, props)` that returns an AWS SDK credential provider. Use it to pick credentials in code. |
+| Name                                 | Default              | Description                                                                                                                                                                                             |
+| ------------------------------------ | -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `user`                               | (none)               | The IAM database user. Required; the plugin throws `user is null or empty` without it.                                                                                                                  |
+| `iamHost`                            | the connection host  | Host name the token is signed for. Required when connecting by IP address or custom domain; set it to the real RDS endpoint.                                                                            |
+| `iamDefaultPort`                     | unset                | Port the token is signed for. A positive number wins. Otherwise the plugin uses the port in the host, else the driver's default port. The IAM page says this is a string; the source declares a number. |
+| `iamRegion`                          | parsed from the host | Region for the token. For a Global Database writer endpoint, the plugin looks it up through the RDS API. Throws when it cannot determine a region.                                                      |
+| `iamTokenExpiration`                 | `900`                | Seconds a token stays cached (15 minutes). Must be 0 or more.                                                                                                                                           |
+| `awsProfile`                         | unset                | AWS profile used to find the AWS credentials that sign the token.                                                                                                                                       |
+| `customAwsCredentialProviderHandler` | unset                | An object with `getAwsCredentialsProvider(hostInfo, props)` that returns an AWS SDK credential provider. Use it to pick credentials in code.                                                            |
 
 Without `awsProfile` or a handler, the AWS SDK default credential chain
 applies.
@@ -2409,14 +2375,14 @@ plugin fetches the secret again once and retries.
 
 **Parameters:**
 
-| Name | Default | Description |
-| --- | --- | --- |
-| `secretId` | (none) | Secret name or ARN. Required; the plugin throws when the client is created without it. |
-| `secretRegion` | parsed from an ARN | Region of the secret. Required unless `secretId` is an ARN. |
-| `secretEndpoint` | unset | Endpoint override URL for the Secrets Manager client, with protocol, for example `https://<endpoint>`. |
-| `secretExpirationSec` | `870` | Seconds the secret stays cached. Must be 0 or more. |
-| `secretUsernameProperty` | `username` | Key in the secret JSON that holds the user name. Must not be empty. |
-| `secretPasswordProperty` | `password` | Key in the secret JSON that holds the password. Must not be empty. |
+| Name                     | Default            | Description                                                                                            |
+| ------------------------ | ------------------ | ------------------------------------------------------------------------------------------------------ |
+| `secretId`               | (none)             | Secret name or ARN. Required; the plugin throws when the client is created without it.                 |
+| `secretRegion`           | parsed from an ARN | Region of the secret. Required unless `secretId` is an ARN.                                            |
+| `secretEndpoint`         | unset              | Endpoint override URL for the Secrets Manager client, with protocol, for example `https://<endpoint>`. |
+| `secretExpirationSec`    | `870`              | Seconds the secret stays cached. Must be 0 or more.                                                    |
+| `secretUsernameProperty` | `username`         | Key in the secret JSON that holds the user name. Must not be empty.                                    |
+| `secretPasswordProperty` | `password`         | Key in the secret JSON that holds the password. Must not be empty.                                     |
 
 Points to state:
 
@@ -2449,21 +2415,21 @@ authentication enabled.
 
 **Parameters:**
 
-| Name | Default | Description |
-| --- | --- | --- |
-| `dbUser` | (none) | IAM database user. The plugin copies it into `user` for the database login. The docs mark it required. |
-| `idpEndpoint` | (none) | AD FS host. Required. |
-| `idpPort` | `443` | AD FS port. |
-| `idpUsername` | falls back to `user` | AD FS user name. |
-| `idpPassword` | falls back to `password` | AD FS password. Use a placeholder such as `<password>` in examples and load the value from a secret store. |
-| `rpIdentifier` | `urn:amazon:webservices` | Relying party identifier. |
-| `iamRoleArn` | (none) | ARN of the IAM role to assume. Required. |
-| `iamIdpArn` | (none) | ARN of the SAML identity provider in IAM. Required. |
-| `iamRegion` | parsed from the host | Region for the token. The docs mark it required; the source parses it from the host and throws only when it finds none. |
-| `iamHost` | the connection host | Host the token is signed for. |
-| `iamDefaultPort` | unset | Port the token is signed for (number). |
-| `iamTokenExpiration` | `900` | Seconds a token stays cached. |
-| `httpsAgentOptions` | unset | `node:https` agent options for the AD FS requests, for example `{ timeout: 5000 }`. |
+| Name                 | Default                  | Description                                                                                                             |
+| -------------------- | ------------------------ | ----------------------------------------------------------------------------------------------------------------------- |
+| `dbUser`             | (none)                   | IAM database user. The plugin copies it into `user` for the database login. The docs mark it required.                  |
+| `idpEndpoint`        | (none)                   | AD FS host. Required.                                                                                                   |
+| `idpPort`            | `443`                    | AD FS port.                                                                                                             |
+| `idpUsername`        | falls back to `user`     | AD FS user name.                                                                                                        |
+| `idpPassword`        | falls back to `password` | AD FS password. Use a placeholder such as `<password>` in examples and load the value from a secret store.              |
+| `rpIdentifier`       | `urn:amazon:webservices` | Relying party identifier.                                                                                               |
+| `iamRoleArn`         | (none)                   | ARN of the IAM role to assume. Required.                                                                                |
+| `iamIdpArn`          | (none)                   | ARN of the SAML identity provider in IAM. Required.                                                                     |
+| `iamRegion`          | parsed from the host     | Region for the token. The docs mark it required; the source parses it from the host and throws only when it finds none. |
+| `iamHost`            | the connection host      | Host the token is signed for.                                                                                           |
+| `iamDefaultPort`     | unset                    | Port the token is signed for (number).                                                                                  |
+| `iamTokenExpiration` | `900`                    | Seconds a token stays cached.                                                                                           |
+| `httpsAgentOptions`  | unset                    | `node:https` agent options for the AD FS requests, for example `{ timeout: 5000 }`.                                     |
 
 Points to state:
 
@@ -2488,20 +2454,20 @@ exchanges it with STS, and generates an IAM database token for `dbUser`.
 
 **Parameters:**
 
-| Name | Default | Description |
-| --- | --- | --- |
-| `dbUser` | (none) | IAM database user; copied into `user`. The docs mark it required. |
-| `idpEndpoint` | (none) | Okta host. Required. |
-| `appId` | (none) | ID of the AWS app configured in Okta. Required. |
-| `idpUsername` | falls back to `user` | Okta user name. |
-| `idpPassword` | falls back to `password` | Okta password. |
-| `iamRoleArn` | (none) | ARN of the IAM role to assume. Required. |
-| `iamIdpArn` | (none) | ARN of the SAML identity provider in IAM. Required. |
-| `iamRegion` | parsed from the host | Region for the token; throws only when it cannot find one. |
-| `iamHost` | the connection host | Host the token is signed for. |
-| `iamDefaultPort` | unset | Port the token is signed for (number). |
-| `iamTokenExpiration` | `900` | Seconds a token stays cached. |
-| `httpsAgentOptions` | unset | `node:https` agent options for the Okta requests. |
+| Name                 | Default                  | Description                                                       |
+| -------------------- | ------------------------ | ----------------------------------------------------------------- |
+| `dbUser`             | (none)                   | IAM database user; copied into `user`. The docs mark it required. |
+| `idpEndpoint`        | (none)                   | Okta host. Required.                                              |
+| `appId`              | (none)                   | ID of the AWS app configured in Okta. Required.                   |
+| `idpUsername`        | falls back to `user`     | Okta user name.                                                   |
+| `idpPassword`        | falls back to `password` | Okta password.                                                    |
+| `iamRoleArn`         | (none)                   | ARN of the IAM role to assume. Required.                          |
+| `iamIdpArn`          | (none)                   | ARN of the SAML identity provider in IAM. Required.               |
+| `iamRegion`          | parsed from the host     | Region for the token; throws only when it cannot find one.        |
+| `iamHost`            | the connection host      | Host the token is signed for.                                     |
+| `iamDefaultPort`     | unset                    | Port the token is signed for (number).                            |
+| `iamTokenExpiration` | `900`                    | Seconds a token stays cached.                                     |
+| `httpsAgentOptions`  | unset                    | `node:https` agent options for the Okta requests.                 |
 
 `okta` does not read `idpPort` or `rpIdentifier`. MySQL needs `ssl`
 (§5.6). Global Database endpoints need `rds:DescribeGlobalClusters`.
@@ -2537,12 +2503,12 @@ the initial host.
 
 **Parameters:**
 
-| Name | Default | Description |
-| --- | --- | --- |
-| `readerHostSelectorStrategy` | `random` | How the reader is chosen. `random` and `roundRobin` work everywhere; `leastConnections` needs the internal connection pool; `fastestResponse` needs `fastestResponseStrategy`. When the strategy is not accepted, `connect` throws. Details in §7. |
-| `cachedReaderKeepAliveTimeoutMs` | `0` | How long the cached reader connection is reused before the plugin opens a new reader connection. `0` reuses it for the life of the client. Ignored for connections from the internal pool. |
-| `roundRobinHostWeightPairs` | unset | For `roundRobin`: `<host>:<weight>` pairs, for example `instance-1:1,instance-2:4`. Weights are integers of 1 or more. |
-| `roundRobinDefaultWeight` | `1` | For `roundRobin`: weight of hosts not in the pairs list. |
+| Name                             | Default  | Description                                                                                                                                                                                                                                        |
+| -------------------------------- | -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `readerHostSelectorStrategy`     | `random` | How the reader is chosen. `random` and `roundRobin` work everywhere; `leastConnections` needs the internal connection pool; `fastestResponse` needs `fastestResponseStrategy`. When the strategy is not accepted, `connect` throws. Details in §7. |
+| `cachedReaderKeepAliveTimeoutMs` | `0`      | How long the cached reader connection is reused before the plugin opens a new reader connection. `0` reuses it for the life of the client. Ignored for connections from the internal pool.                                                         |
+| `roundRobinHostWeightPairs`      | unset    | For `roundRobin`: `<host>:<weight>` pairs, for example `instance-1:1,instance-2:4`. Weights are integers of 1 or more.                                                                                                                             |
+| `roundRobinDefaultWeight`        | `1`      | For `roundRobin`: weight of hosts not in the pairs list.                                                                                                                                                                                           |
 
 **Internal connection pool.** Each client that calls
 `setReadOnly(true)` for the first time opens a new physical reader
@@ -2561,7 +2527,7 @@ Points to state:
 - If switching to a reader fails and the current connection still
   works, the plugin stays on the writer and logs a warning.
 - SQL statements also switch the connection: `SET SESSION
-  CHARACTERISTICS AS TRANSACTION READ ONLY` (or `READ WRITE`) on
+CHARACTERISTICS AS TRANSACTION READ ONLY` (or `READ WRITE`) on
   PostgreSQL, and `SET SESSION TRANSACTION READ ONLY` (or `READ WRITE`)
   on MySQL, have the same effect as `setReadOnly`.
 - The plugin routes; it does not recover broken connections. A failed
@@ -2591,12 +2557,12 @@ regions. Everything in §5.10 applies. Available since 3.0.0.
 
 **Parameters** (in addition to those of `readWriteSplitting`):
 
-| Name | Default | Description |
-| --- | --- | --- |
-| `gdbRwHomeRegion` | parsed from the host | Home region. Required when the host has no region (Global Database endpoint, IP address, custom domain); the plugin throws without it. |
-| `gdbRwRestrictWriterToHomeRegion` | `true` | Throw instead of connecting to a writer outside the home region. |
-| `gdbRwRestrictReaderToHomeRegion` | `true` | Use only readers in the home region; throw when none are available. |
-| `gdbAccessibleRegions` | unset | Regions the application can reach (§5.3). The home region must be in the list, or `connect` throws. |
+| Name                              | Default              | Description                                                                                                                            |
+| --------------------------------- | -------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| `gdbRwHomeRegion`                 | parsed from the host | Home region. Required when the host has no region (Global Database endpoint, IP address, custom domain); the plugin throws without it. |
+| `gdbRwRestrictWriterToHomeRegion` | `true`               | Throw instead of connecting to a writer outside the home region.                                                                       |
+| `gdbRwRestrictReaderToHomeRegion` | `true`               | Use only readers in the home region; throw when none are available.                                                                    |
+| `gdbAccessibleRegions`            | unset                | Regions the application can reach (§5.3). The home region must be in the list, or `connect` throws.                                    |
 
 With `gdbRwRestrictWriterToHomeRegion` at its default `true`, a request
 for a writer connection throws when the writer is outside the home
@@ -2612,9 +2578,9 @@ host. `readWriteSplitting` then switches to that host.
 - **Requires:** `readWriteSplitting` (or `gdbReadWriteSplitting`) in the
   list and `readerHostSelectorStrategy: "fastestResponse"`. With any other
   strategy, selecting a reader throws `Unsupported host selector strategy:
-  '<strategy>'. To use the fastest response strategy plugin, please
-  ensure the property readerHostSelectorStrategy is set to
-  'fastestResponse'.`
+'<strategy>'. To use the fastest response strategy plugin, please
+ensure the property readerHostSelectorStrategy is set to
+'fastestResponse'.`
 - **Database types:** Aurora clusters, Aurora Global Database, RDS
   Multi-AZ DB clusters.
 - **Endpoints:** all except Limitless shard groups.
@@ -2622,18 +2588,16 @@ host. `readWriteSplitting` then switches to that host.
 
 **Parameters:**
 
-| Name | Default | Description |
-| --- | --- | --- |
-| `readerHostSelectorStrategy` | `random` | Must be `fastestResponse`. |
-| `responseMeasurementIntervalMs` | `30000` | Interval between response time measurements. The cached fastest host expires at the same interval. |
-| `monitoring_` prefix | | Applies a key only to the response time monitoring connections. The same prefix also applies to `efm` and `efm2` monitors. |
+| Name                            | Default  | Description                                                                                                                |
+| ------------------------------- | -------- | -------------------------------------------------------------------------------------------------------------------------- |
+| `readerHostSelectorStrategy`    | `random` | Must be `fastestResponse`.                                                                                                 |
+| `responseMeasurementIntervalMs` | `30000`  | Interval between response time measurements. The cached fastest host expires at the same interval.                         |
+| `monitoring_` prefix            |          | Applies a key only to the response time monitoring connections. The same prefix also applies to `efm` and `efm2` monitors. |
 
 ```ts
 const config = {
   // ... host, user, password, database
-  plugins:
-    "initialConnection,readWriteSplitting,fastestResponseStrategy," +
-    "failover2,efm2",
+  plugins: "initialConnection,readWriteSplitting,fastestResponseStrategy," + "failover2,efm2",
   readerHostSelectorStrategy: "fastestResponse",
   monitoring_wrapperConnectTimeout: 3000
 };
@@ -2705,12 +2669,12 @@ In the default list since 2.1.1.
 
 **Parameters:**
 
-| Name | Default | Description |
-| --- | --- | --- |
-| `readerHostSelectorStrategy` | `random` | How a reader is chosen for a reader endpoint (§7). |
-| `openConnectionRetryTimeoutMs` | `30000` | Maximum total time for connection retries. |
-| `openConnectionRetryIntervalMs` | `1000` | Wait between retries. |
-| `gdbAccessibleRegions` | unset | Hosts outside these regions are not chosen (§5.3). |
+| Name                            | Default  | Description                                        |
+| ------------------------------- | -------- | -------------------------------------------------- |
+| `readerHostSelectorStrategy`    | `random` | How a reader is chosen for a reader endpoint (§7). |
+| `openConnectionRetryTimeoutMs`  | `30000`  | Maximum total time for connection retries.         |
+| `openConnectionRetryIntervalMs` | `1000`   | Wait between retries.                              |
+| `gdbAccessibleRegions`          | unset    | Hosts outside these regions are not chosen (§5.3). |
 
 When the plugin cannot get a connection with the right role in time, it
 falls back to a normal connection to the endpoint. The parameters
@@ -2742,8 +2706,8 @@ perform failover itself.
 
 **Parameters:**
 
-| Name | Default | Description |
-| --- | --- | --- |
+| Name                                     | Default | Description                                                                                                                                                                                                  |
+| ---------------------------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `skipInactiveWriterClusterEndpointCheck` | `false` | On a first connection through a regional cluster writer endpoint in a different region from the current writer (an inactive Global Database secondary writer endpoint), skip the check and connect normally. |
 
 The check is read by the shared helper, so
@@ -2772,7 +2736,7 @@ switchover. It detects failed switchovers and rollbacks.
   falls back to limited behavior.
 - **Dialect:** only the Aurora and RDS dialects for each engine support
   Blue/Green. With any other dialect, the plugin logs `Blue/Green
-  Deployments aren't supported by the current database dialect`.
+Deployments aren't supported by the current database dialect`.
 - **Endpoints:** cluster writer, reader and custom endpoints, instance
   endpoints, RDS Proxy. IP addresses with special configuration. CNAME
   aliases (custom domains) are not supported. Cluster and instance
@@ -2781,15 +2745,15 @@ switchover. It detects failed switchovers and rollbacks.
 
 **Parameters:**
 
-| Name | Default | Description |
-| --- | --- | --- |
-| `bgdId` | `"1"` | Blue/Green Deployment identifier. Give each deployment a distinct value when one application uses more than one; all configurations for the same deployment use the same value. |
-| `bgConnectTimeoutMs` | `30000` | Maximum wait for a new connection while traffic is suspended during switchover. |
-| `bgBaselineMs` | `60000` | Status check interval outside switchover. The docs advise keeping it below 900000. |
-| `bgIncreasedMs` | `1000` | Status check interval as a switchover approaches. The docs advise 500 to 2000. |
-| `bgHighMs` | `100` | Status check interval during switchover. The docs advise 50 to 500. |
-| `bgSwitchoverTimeoutMs` | `180000` | Maximum switchover duration. After it, the wrapper assumes the switchover finished and resumes normal operation. |
-| `bgSuspendNewBlueConnections` | `false` | Also suspend new connections to blue hosts during switchover. |
+| Name                          | Default  | Description                                                                                                                                                                     |
+| ----------------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `bgdId`                       | `"1"`    | Blue/Green Deployment identifier. Give each deployment a distinct value when one application uses more than one; all configurations for the same deployment use the same value. |
+| `bgConnectTimeoutMs`          | `30000`  | Maximum wait for a new connection while traffic is suspended during switchover.                                                                                                 |
+| `bgBaselineMs`                | `60000`  | Status check interval outside switchover. The docs advise keeping it below 900000.                                                                                              |
+| `bgIncreasedMs`               | `1000`   | Status check interval as a switchover approaches. The docs advise 500 to 2000.                                                                                                  |
+| `bgHighMs`                    | `100`    | Status check interval during switchover. The docs advise 50 to 500.                                                                                                             |
+| `bgSwitchoverTimeoutMs`       | `180000` | Maximum switchover duration. After it, the wrapper assumes the switchover finished and resumes normal operation.                                                                |
+| `bgSuspendNewBlueConnections` | `false`  | Also suspend new connections to blue hosts during switchover.                                                                                                                   |
 
 Points to state:
 
@@ -2804,8 +2768,8 @@ Points to state:
 - **IAM.** With `iam`, the plugin keeps signing tokens for the real host
   name when it connects by IP address. A user who connects by IP address
   with `iam` must set `iamHost`, or the plugin throws `Connecting with IP
-  address when IAM authentication is enabled requires an 'iamHost'
-  parameter.` The IAM user also needs the grants in §5.6.
+address when IAM authentication is enabled requires an 'iamHost'
+parameter.` The IAM user also needs the grants in §5.6.
 - **Plan the switchover.** Deploy the application with `bg` first and
   give it several minutes to collect status before starting the
   switchover. After the switchover, the plugin can stay loaded without
@@ -2830,13 +2794,13 @@ plugin connects normally.
 
 **Parameters:**
 
-| Name | Default | Description |
-| --- | --- | --- |
-| `customEndpointRegion` | parsed from the host | Region of the custom endpoint. The plugin throws when it cannot determine one. |
-| `customEndpointInfoRefreshRateMs` | `10000` | How often the monitor fetches the endpoint's members. |
-| `customEndpointMonitorExpirationMs` | `900000` | How long an unused monitor runs before it is removed (15 minutes). |
-| `waitForCustomEndpointInfo` | `true` | Wait for member information before connecting or running a method. With `false`, a connection may briefly reach an instance outside the custom endpoint. |
-| `waitForCustomEndpointInfoTimeoutMs` | `10000` | Maximum wait for member information. |
+| Name                                 | Default              | Description                                                                                                                                              |
+| ------------------------------------ | -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `customEndpointRegion`               | parsed from the host | Region of the custom endpoint. The plugin throws when it cannot determine one.                                                                           |
+| `customEndpointInfoRefreshRateMs`    | `10000`              | How often the monitor fetches the endpoint's members.                                                                                                    |
+| `customEndpointMonitorExpirationMs`  | `900000`             | How long an unused monitor runs before it is removed (15 minutes).                                                                                       |
+| `waitForCustomEndpointInfo`          | `true`               | Wait for member information before connecting or running a method. With `false`, a connection may briefly reach an instance outside the custom endpoint. |
+| `waitForCustomEndpointInfoTimeoutMs` | `10000`              | Maximum wait for member information.                                                                                                                     |
 
 Points to state:
 
@@ -2847,7 +2811,7 @@ Points to state:
   AWS SDK default credential chain. `awsProfile` does not apply.
 - This plugin cannot be part of a custom configuration profile: its
   factory has no profile weight, so building the chain throws `Unknown
-  plugin weight` (§11).
+plugin weight` (§11).
 
 ### 5.18 `limitless`: Aurora Limitless Database
 
@@ -2873,15 +2837,15 @@ the DB shard group endpoint.
 
 **Parameters:**
 
-| Name | Default | Description |
-| --- | --- | --- |
-| `limitlessTransactionRouterMonitorIntervalMs` | `15000` | Interval between router polls. The default matches the rate at which the database refreshes its load metrics. |
-| `limitlessTransactionRouterMonitorDisposalTimeMs` | `600000` | Idle time before a router monitor is stopped. |
-| `limitlessConnectMaxRetries` | `5` | Maximum connection retries. |
-| `limitlessWaitForTransactionRouterInfo` | `true` | When the router cache is empty (for example at startup): `true` fetches router information first and connects to a router; `false` connects through the shard group endpoint. |
-| `limitlessGetTransactionRouterInfoRetryIntervalMs` | `300` | Wait between retries when fetching router information. |
-| `limitlessGetTransactionRouterInfoMaxRetries` | `5` | Maximum retries when fetching router information. |
-| `limitless_router_monitor_` prefix | | Applies a key only to router monitoring connections, for example `limitless_router_monitor_query_timeout: 1000`. |
+| Name                                               | Default  | Description                                                                                                                                                                   |
+| -------------------------------------------------- | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `limitlessTransactionRouterMonitorIntervalMs`      | `15000`  | Interval between router polls. The default matches the rate at which the database refreshes its load metrics.                                                                 |
+| `limitlessTransactionRouterMonitorDisposalTimeMs`  | `600000` | Idle time before a router monitor is stopped.                                                                                                                                 |
+| `limitlessConnectMaxRetries`                       | `5`      | Maximum connection retries.                                                                                                                                                   |
+| `limitlessWaitForTransactionRouterInfo`            | `true`   | When the router cache is empty (for example at startup): `true` fetches router information first and connects to a router; `false` connects through the shard group endpoint. |
+| `limitlessGetTransactionRouterInfoRetryIntervalMs` | `300`    | Wait between retries when fetching router information.                                                                                                                        |
+| `limitlessGetTransactionRouterInfoMaxRetries`      | `5`      | Maximum retries when fetching router information.                                                                                                                             |
+| `limitless_router_monitor_` prefix                 |          | Applies a key only to router monitoring connections, for example `limitless_router_monitor_query_timeout: 1000`.                                                              |
 
 Points to state:
 
@@ -2941,10 +2905,7 @@ such as network failures. The docs state it is not for production.
 
 ```ts
 import { AwsPgClient } from "aws-advanced-nodejs-wrapper/pg";
-import {
-  DeveloperConnectionPlugin,
-  ErrorSimulatorManager
-} from "aws-advanced-nodejs-wrapper";
+import { DeveloperConnectionPlugin, ErrorSimulatorManager } from "aws-advanced-nodejs-wrapper";
 import type { ErrorSimulator } from "aws-advanced-nodejs-wrapper";
 
 const client = new AwsPgClient({
@@ -2958,9 +2919,7 @@ await client.connect().catch(() => {}); // throws "test"
 await client.connect(); // connects normally
 
 // Fail the next query once.
-const simulator = client.getPluginInstance<ErrorSimulator>(
-  DeveloperConnectionPlugin
-);
+const simulator = client.getPluginInstance<ErrorSimulator>(DeveloperConnectionPlugin);
 simulator.raiseErrorOnNextCall(new Error("test"), "query");
 ```
 
@@ -3042,29 +3001,29 @@ Two TypeScript details matter:
 
 ### 6.2 Core
 
-| Name | Default | Description |
-|---|---|---|
-| `host` | `null` | Database host. Required to connect. Kept in the properties passed to the driver. |
-| `port` | `-1` | Database port. `-1` means the dialect default: `5432` for PostgreSQL, `3306` for MySQL. Kept for the driver. |
-| `database` | `null` | Database name. Kept for the driver. |
-| `user` | `null` | Database user. Kept for the driver. Part of the default internal pool key (§14.3). |
-| `password` | `null` | Database password. Kept for the driver. |
-| `plugins` | `initialConnection,auroraConnectionTracker,failover2,efm2` | Comma-separated plugin codes (§4). The same default applies to both drivers. When set, the list replaces the default. `""` loads zero plugins, and the wrapper behaves like the plain driver. Spaces around commas are trimmed. |
-| `autoSortWrapperPluginOrder` | `true` | Sorts the listed plugins by their built-in weights (§4.3). Sorting is skipped when the list is exactly the default string, when only one plugin is listed, or when this is `false`. |
-| `profileName` | `null` | Name of a configuration profile or preset (§11). When set, the profile's plugin list replaces `plugins` completely. An unknown name throws `AwsWrapperError` in the constructor. |
-| `dialect` | `null` (detected) | Database dialect code as a string, for example `"aurora-pg"` (§8). Setting it skips detection and the refinement queries after connect. An unknown code throws `AwsWrapperError`. |
-| `customDatabaseDialect` | `null` | An object that implements the `DatabaseDialect` interface (§8.1). Wins over `dialect`. An object without `getDialectName` throws `AwsWrapperError`. |
-| `connectionProvider` | `null` | A `ConnectionProvider` object. Pass an `InternalPooledConnectionProvider` to turn on the internal pool (§14.3). |
-| `clusterId` | `"1"` | Key for the topology cache and the topology monitor; the Blue/Green monitor also reads it. Since 3.0.0 it is not derived from the host. Each cluster in one process needs its own value, and every connection to the same cluster needs the same value, whatever endpoint it uses. Any string works. See §3.14. |
+| Name                         | Default                                                    | Description                                                                                                                                                                                                                                                                                                     |
+| ---------------------------- | ---------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `host`                       | `null`                                                     | Database host. Required to connect. Kept in the properties passed to the driver.                                                                                                                                                                                                                                |
+| `port`                       | `-1`                                                       | Database port. `-1` means the dialect default: `5432` for PostgreSQL, `3306` for MySQL. Kept for the driver.                                                                                                                                                                                                    |
+| `database`                   | `null`                                                     | Database name. Kept for the driver.                                                                                                                                                                                                                                                                             |
+| `user`                       | `null`                                                     | Database user. Kept for the driver. Part of the default internal pool key (§14.3).                                                                                                                                                                                                                              |
+| `password`                   | `null`                                                     | Database password. Kept for the driver.                                                                                                                                                                                                                                                                         |
+| `plugins`                    | `initialConnection,auroraConnectionTracker,failover2,efm2` | Comma-separated plugin codes (§4). The same default applies to both drivers. When set, the list replaces the default. `""` loads zero plugins, and the wrapper behaves like the plain driver. Spaces around commas are trimmed.                                                                                 |
+| `autoSortWrapperPluginOrder` | `true`                                                     | Sorts the listed plugins by their built-in weights (§4.3). Sorting is skipped when the list is exactly the default string, when only one plugin is listed, or when this is `false`.                                                                                                                             |
+| `profileName`                | `null`                                                     | Name of a configuration profile or preset (§11). When set, the profile's plugin list replaces `plugins` completely. An unknown name throws `AwsWrapperError` in the constructor.                                                                                                                                |
+| `dialect`                    | `null` (detected)                                          | Database dialect code as a string, for example `"aurora-pg"` (§8). Setting it skips detection and the refinement queries after connect. An unknown code throws `AwsWrapperError`.                                                                                                                               |
+| `customDatabaseDialect`      | `null`                                                     | An object that implements the `DatabaseDialect` interface (§8.1). Wins over `dialect`. An object without `getDialectName` throws `AwsWrapperError`.                                                                                                                                                             |
+| `connectionProvider`         | `null`                                                     | A `ConnectionProvider` object. Pass an `InternalPooledConnectionProvider` to turn on the internal pool (§14.3).                                                                                                                                                                                                 |
+| `clusterId`                  | `"1"`                                                      | Key for the topology cache and the topology monitor; the Blue/Green monitor also reads it. Since 3.0.0 it is not derived from the host. Each cluster in one process needs its own value, and every connection to the same cluster needs the same value, whatever endpoint it uses. Any string works. See §3.14. |
 
 ### 6.3 Timeouts and TCP keep-alive
 
-| Name | Default | Description |
-|---|---|---|
-| `wrapperConnectTimeout` | `10000` ms | Connect timeout. `pg`: `connectionTimeoutMillis`. `mysql2`: `connectTimeout`. The parameter page says the default is 20000; the source default is 10000. |
-| `wrapperQueryTimeout` | `20000` ms | Query timeout. `pg`: `query_timeout`. `mysql2`: the wrapper's own timer around every `query`, `execute` and `end` call; the `mysql2` per-query `timeout` option is set only on the wrapper's internal queries. The wrapper also uses it for its own timer around its internal queries (dialect and topology checks). |
-| `wrapperKeepAliveProperties` | `null` | `Map` of TCP keep-alive settings for the driver. Only `pg` is supported, and only the keys `keepAlive` and `keepAliveInitialDelayMillis`. With `mysql2`, any `keepAlive` key, even `false`, throws `UnsupportedMethodError` when the connection opens. |
-| ~~`mysqlQueryTimeout`~~ | `20000` ms | Deprecated since 1.1.0. Use `wrapperQueryTimeout`. Setting it logs a deprecation warning once, and it then wins over `wrapperQueryTimeout` for the wrapper's own timer. |
+| Name                         | Default    | Description                                                                                                                                                                                                                                                                                                          |
+| ---------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `wrapperConnectTimeout`      | `10000` ms | Connect timeout. `pg`: `connectionTimeoutMillis`. `mysql2`: `connectTimeout`. The parameter page says the default is 20000; the source default is 10000.                                                                                                                                                             |
+| `wrapperQueryTimeout`        | `20000` ms | Query timeout. `pg`: `query_timeout`. `mysql2`: the wrapper's own timer around every `query`, `execute` and `end` call; the `mysql2` per-query `timeout` option is set only on the wrapper's internal queries. The wrapper also uses it for its own timer around its internal queries (dialect and topology checks). |
+| `wrapperKeepAliveProperties` | `null`     | `Map` of TCP keep-alive settings for the driver. Only `pg` is supported, and only the keys `keepAlive` and `keepAliveInitialDelayMillis`. With `mysql2`, any `keepAlive` key, even `false`, throws `UnsupportedMethodError` when the connection opens.                                                               |
+| ~~`mysqlQueryTimeout`~~      | `20000` ms | Deprecated since 1.1.0. Use `wrapperQueryTimeout`. Setting it logs a deprecation warning once, and it then wins over `wrapperQueryTimeout` for the wrapper's own timer.                                                                                                                                              |
 
 How the two timeouts reach each driver, as read in the source (not run):
 
@@ -3112,11 +3071,11 @@ const client = new AwsPgClient({
 
 ### 6.4 Session state
 
-| Name | Default | Description |
-|---|---|---|
-| `transferSessionStateOnSwitch` | `true` | When the wrapper switches the client to a new connection (failover, read/write splitting), it applies the current session state to the new connection. |
-| `resetSessionStateOnClose` | `true` | Restores the original session values before a connection is closed or returned to a pool. |
-| `rollbackOnSwitch` | `true` | Undocumented. When the wrapper switches connections, it rolls back the old connection if a transaction was open or if this is `true`. |
+| Name                           | Default | Description                                                                                                                                            |
+| ------------------------------ | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `transferSessionStateOnSwitch` | `true`  | When the wrapper switches the client to a new connection (failover, read/write splitting), it applies the current session state to the new connection. |
+| `resetSessionStateOnClose`     | `true`  | Restores the original session values before a connection is closed or returned to a pool.                                                              |
+| `rollbackOnSwitch`             | `true`  | Undocumented. When the wrapper switches connections, it rolls back the old connection if a transaction was open or if this is `true`.                  |
 
 Only state set through client methods is tracked: `setReadOnly` and
 `setTransactionIsolation` on both clients, `setSchema` on `AwsPgClient`,
@@ -3129,17 +3088,17 @@ for `setAutoCommit` and `setCatalog`, and `AwsMySQLClient` throws it for
 
 ### 6.5 Topology and monitoring
 
-| Name | Default | Description |
-|---|---|---|
-| `clusterInstanceHostPattern` | derived from an RDS host | Instance DNS pattern with `?` in place of the instance name, for example `?.my-domain.com`. Required when the host is an IP address or a custom domain (§12.3). |
-| `globalClusterInstanceHostPatterns` | `undefined` | Required for Aurora Global Database. One pattern per region, comma-separated (§12.4). Missing it throws when the Global Database host list provider starts. |
-| `clusterTopologyRefreshRateMs` | `30000` | Normal topology refresh interval in milliseconds. |
-| `clusterTopologyHighRefreshRateMs` | `100` | Faster refresh interval in milliseconds that the topology monitor uses after a writer change. This is the rate that matters for `failover2` and `gdbFailover`. The `failover2` page says the high rate lasts about 30 seconds; I could not find that duration in the source, so do not quote it. |
-| `monitoringConnectionPriority` | `strict-writer` | Which host the topology monitor connects to: `strict-writer`, `strict-reader` or `writer-or-reader`. One value only; any other string, including a comma list, throws. |
-| `gdbMonitoringConnectionPriority` | `strict-writer-primary` | Global Database version of the parameter above (§13.2). The monitoring page gives the default as `null`; the source default is `strict-writer-primary`. |
-| `gdbAccessibleRegions` | `null` (all regions) | Comma-separated regions the application can reach. Hosts in other regions are dropped from topology monitoring, failover candidates, read/write splitting targets and `initialConnection` choices. The home region must be in the list, or `gdbFailover` throws at connect. |
-| `failoverHomeRegion` | `null` | Home region for `gdbFailover`; the Global Database topology monitor also reads it. Required when the host name does not contain a region (§9.2). |
-| `singleWriterConnectionString` | the string `"false"` | Read only by the `pg`, `rds-pg`, `mysql` and `rds-mysql` dialects, which take the host list from `host`. When it is true and `host` holds several comma-separated hosts, the first host is the writer and the rest are readers. The docs do not describe it. The default is the string `"false"`, which the code tests as a boolean, so it counts as true, as with `enableGreenHostReplacement` (§6.10). |
+| Name                                | Default                  | Description                                                                                                                                                                                                                                                                                                                                                                                              |
+| ----------------------------------- | ------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `clusterInstanceHostPattern`        | derived from an RDS host | Instance DNS pattern with `?` in place of the instance name, for example `?.my-domain.com`. Required when the host is an IP address or a custom domain (§12.3).                                                                                                                                                                                                                                          |
+| `globalClusterInstanceHostPatterns` | `undefined`              | Required for Aurora Global Database. One pattern per region, comma-separated (§12.4). Missing it throws when the Global Database host list provider starts.                                                                                                                                                                                                                                              |
+| `clusterTopologyRefreshRateMs`      | `30000`                  | Normal topology refresh interval in milliseconds.                                                                                                                                                                                                                                                                                                                                                        |
+| `clusterTopologyHighRefreshRateMs`  | `100`                    | Faster refresh interval in milliseconds that the topology monitor uses after a writer change. This is the rate that matters for `failover2` and `gdbFailover`. The `failover2` page says the high rate lasts about 30 seconds; I could not find that duration in the source, so do not quote it.                                                                                                         |
+| `monitoringConnectionPriority`      | `strict-writer`          | Which host the topology monitor connects to: `strict-writer`, `strict-reader` or `writer-or-reader`. One value only; any other string, including a comma list, throws.                                                                                                                                                                                                                                   |
+| `gdbMonitoringConnectionPriority`   | `strict-writer-primary`  | Global Database version of the parameter above (§13.2). The monitoring page gives the default as `null`; the source default is `strict-writer-primary`.                                                                                                                                                                                                                                                  |
+| `gdbAccessibleRegions`              | `null` (all regions)     | Comma-separated regions the application can reach. Hosts in other regions are dropped from topology monitoring, failover candidates, read/write splitting targets and `initialConnection` choices. The home region must be in the list, or `gdbFailover` throws at connect.                                                                                                                              |
+| `failoverHomeRegion`                | `null`                   | Home region for `gdbFailover`; the Global Database topology monitor also reads it. Required when the host name does not contain a region (§9.2).                                                                                                                                                                                                                                                         |
+| `singleWriterConnectionString`      | the string `"false"`     | Read only by the `pg`, `rds-pg`, `mysql` and `rds-mysql` dialects, which take the host list from `host`. When it is true and `host` holds several comma-separated hosts, the first host is the writer and the rest are readers. The docs do not describe it. The default is the string `"false"`, which the code tests as a boolean, so it counts as true, as with `enableGreenHostReplacement` (§6.10). |
 
 ### 6.6 Failover time profiles
 
@@ -3150,33 +3109,33 @@ example through a preset (§11) or on an RDS Multi-AZ DB cluster (§13.4).
 
 **`failover2` and `gdbFailover`:**
 
-| Parameter | Default | Read by | What it controls |
-|---|---|---|---|
-| `failoverTimeoutMs` | `300000` | plugin | Total time allowed for one failover. |
-| `failoverMode` | resolved at connect | `failover2` only | §9.1. `gdbFailover` uses its own two modes (§9.2). |
-| `failoverReaderHostSelectorStrategy` | `random` | plugin | Strategy for picking a reader during reader failover (§7). |
-| `clusterTopologyRefreshRateMs` | `30000` | topology host list provider | Normal topology refresh. |
-| `clusterTopologyHighRefreshRateMs` | `100` | topology monitor | Refresh rate after a writer change. |
-| `enableClusterAwareFailover` | `true` | plugin | §9.3. |
+| Parameter                            | Default             | Read by                     | What it controls                                           |
+| ------------------------------------ | ------------------- | --------------------------- | ---------------------------------------------------------- |
+| `failoverTimeoutMs`                  | `300000`            | plugin                      | Total time allowed for one failover.                       |
+| `failoverMode`                       | resolved at connect | `failover2` only            | §9.1. `gdbFailover` uses its own two modes (§9.2).         |
+| `failoverReaderHostSelectorStrategy` | `random`            | plugin                      | Strategy for picking a reader during reader failover (§7). |
+| `clusterTopologyRefreshRateMs`       | `30000`             | topology host list provider | Normal topology refresh.                                   |
+| `clusterTopologyHighRefreshRateMs`   | `100`               | topology monitor            | Refresh rate after a writer change.                        |
+| `enableClusterAwareFailover`         | `true`              | plugin                      | §9.3.                                                      |
 
 **`failover` (v1):**
 
-| Parameter | Default | What it controls |
-|---|---|---|
-| `failoverTimeoutMs` | `300000` | Total time allowed for one failover. |
-| `failoverClusterTopologyRefreshRateMs` | `2000` | Topology refresh rate while a writer failover runs. |
-| `failoverWriterReconnectIntervalMs` | `2000` | Wait between attempts to reconnect to the failed writer. |
-| `failoverReaderConnectTimeoutMs` | `30000` | Connect timeout for each reader attempt during reader failover. |
+| Parameter                              | Default  | What it controls                                                |
+| -------------------------------------- | -------- | --------------------------------------------------------------- |
+| `failoverTimeoutMs`                    | `300000` | Total time allowed for one failover.                            |
+| `failoverClusterTopologyRefreshRateMs` | `2000`   | Topology refresh rate while a writer failover runs.             |
+| `failoverWriterReconnectIntervalMs`    | `2000`   | Wait between attempts to reconnect to the failed writer.        |
+| `failoverReaderConnectTimeoutMs`       | `30000`  | Connect timeout for each reader attempt during reader failover. |
 
 The failover configuration guide gives two example profiles, written in
 the v1 parameters:
 
-| Parameter | Normal | Aggressive |
-|---|---|---|
-| `failoverTimeoutMs` | `180000` | `30000` |
-| `failoverWriterReconnectIntervalMs` | `2000` | `2000` |
-| `failoverReaderConnectTimeoutMs` | `30000` | `10000` |
-| `failoverClusterTopologyRefreshRateMs` | `2000` | `2000` |
+| Parameter                              | Normal   | Aggressive |
+| -------------------------------------- | -------- | ---------- |
+| `failoverTimeoutMs`                    | `180000` | `30000`    |
+| `failoverWriterReconnectIntervalMs`    | `2000`   | `2000`     |
+| `failoverReaderConnectTimeoutMs`       | `30000`  | `10000`    |
+| `failoverClusterTopologyRefreshRateMs` | `2000`   | `2000`     |
 
 For `failover2`, only `failoverTimeoutMs` from that table applies. Use
 `180000` for a three-minute limit or `30000` for a fail-fast application;
@@ -3192,31 +3151,31 @@ are recommended.
 
 ### 6.7 Reader selection and host availability
 
-| Name | Default | Description |
-|---|---|---|
-| `readerHostSelectorStrategy` | `random` | Strategy for choosing a reader. Read by `initialConnection`, `readWriteSplitting` and `gdbReadWriteSplitting`. §7. |
-| `roundRobinHostWeightPairs` | `null` | Weights for `roundRobin`, as `<instance-name>:<weight>,...`. §7. |
-| `roundRobinDefaultWeight` | `1` | Weight for hosts not in `roundRobinHostWeightPairs`. §7. |
-| `defaultHostAvailabilityStrategy` | `null` | `exponentialBackoff` or unset. §9.4. |
-| `hostAvailabilityStrategyMaxRetries` | `5` | §9.4. |
-| `hostAvailabilityStrategyInitialBackoffTimeSec` | `30` | §9.4. |
+| Name                                            | Default  | Description                                                                                                        |
+| ----------------------------------------------- | -------- | ------------------------------------------------------------------------------------------------------------------ |
+| `readerHostSelectorStrategy`                    | `random` | Strategy for choosing a reader. Read by `initialConnection`, `readWriteSplitting` and `gdbReadWriteSplitting`. §7. |
+| `roundRobinHostWeightPairs`                     | `null`   | Weights for `roundRobin`, as `<instance-name>:<weight>,...`. §7.                                                   |
+| `roundRobinDefaultWeight`                       | `1`      | Weight for hosts not in `roundRobinHostWeightPairs`. §7.                                                           |
+| `defaultHostAvailabilityStrategy`               | `null`   | `exponentialBackoff` or unset. §9.4.                                                                               |
+| `hostAvailabilityStrategyMaxRetries`            | `5`      | §9.4.                                                                                                              |
+| `hostAvailabilityStrategyInitialBackoffTimeSec` | `30`     | §9.4.                                                                                                              |
 
 ### 6.8 Logging and telemetry
 
-| Name | Default | Description |
-|---|---|---|
-| `LOG_LEVEL` (environment variable) | `warn` | Not a connection parameter. The wrapper logs to the console through `winston`. Because importing the wrapper loads a `.env` file from the working directory, `LOG_LEVEL` can also come from that file. Levels that work: `error`, `warn`, `info`, `debug`, `silly`; use `debug` to see the wrapper's detailed messages. `verbose` behaves like `info`. The docs also list `notice`, `http` and `timing`; the wrapper's own level list does not contain them, so, as read in the source, they turn off all wrapper log output. The docs do not list `debug`. §16.1 covers the levels. |
-| `enableTelemetry` | `false` | Turns telemetry on. Telemetry is not a plugin, so `plugins` does not change. The application must start an OpenTelemetry SDK itself and install the OpenTelemetry packages, which 3.0.0 no longer installs. |
-| `telemetryTracesBackend` | `null` (off) | `OTLP`, `XRAY` or `NONE`, any case. Another value throws `AwsWrapperError`. In the 3.0.0 source the X-Ray path calls the factory class without `new`, which I expect to fail with "A tracing backend could not be found." I read this in the source and did not run it; prefer `OTLP`. |
-| `telemetryMetricsBackend` | `null` (off) | `OTLP` or `NONE`, any case. The docs list only these two values. The source sends `XRAY` to the same X-Ray branch as traces, which I expect to fail as described for `telemetryTracesBackend`; use `OTLP`. |
-| `telemetrySubmitToplevel` | `false` | `true` submits the wrapper's top-level traces as top-level traces; `false` nests them under the application's current trace. The telemetry page spells it `telemetrySubmitTopLevel` (capital L); that key is not read. |
+| Name                               | Default      | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| ---------------------------------- | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `LOG_LEVEL` (environment variable) | `warn`       | Not a connection parameter. The wrapper logs to the console through `winston`. Because importing the wrapper loads a `.env` file from the working directory, `LOG_LEVEL` can also come from that file. Levels that work: `error`, `warn`, `info`, `debug`, `silly`; use `debug` to see the wrapper's detailed messages. `verbose` behaves like `info`. The docs also list `notice`, `http` and `timing`; the wrapper's own level list does not contain them, so, as read in the source, they turn off all wrapper log output. The docs do not list `debug`. §16.1 covers the levels. |
+| `enableTelemetry`                  | `false`      | Turns telemetry on. Telemetry is not a plugin, so `plugins` does not change. The application must start an OpenTelemetry SDK itself and install the OpenTelemetry packages, which 3.0.0 no longer installs.                                                                                                                                                                                                                                                                                                                                                                          |
+| `telemetryTracesBackend`           | `null` (off) | `OTLP`, `XRAY` or `NONE`, any case. Another value throws `AwsWrapperError`. In the 3.0.0 source the X-Ray path calls the factory class without `new`, which I expect to fail with "A tracing backend could not be found." I read this in the source and did not run it; prefer `OTLP`.                                                                                                                                                                                                                                                                                               |
+| `telemetryMetricsBackend`          | `null` (off) | `OTLP` or `NONE`, any case. The docs list only these two values. The source sends `XRAY` to the same X-Ray branch as traces, which I expect to fail as described for `telemetryTracesBackend`; use `OTLP`.                                                                                                                                                                                                                                                                                                                                                                           |
+| `telemetrySubmitToplevel`          | `false`      | `true` submits the wrapper's top-level traces as top-level traces; `false` nests them under the application's current trace. The telemetry page spells it `telemetrySubmitTopLevel` (capital L); that key is not read.                                                                                                                                                                                                                                                                                                                                                               |
 
 ### 6.9 AWS credentials
 
-| Name | Default | Description |
-|---|---|---|
-| `awsProfile` | `null` | AWS profile name. The default credentials come from `fromNodeProviderChain()` in `@aws-sdk/credential-providers`; with this set, from `fromNodeProviderChain({ profile })`. |
-| `customAwsCredentialProviderHandler` | `null` | An object with `getAwsCredentialsProvider(hostInfo, properties)` that returns an AWS SDK credential provider. An object without that method throws `AwsWrapperError`. The `AwsCredentialsProviderHandler` type is exported from all three entry points. |
+| Name                                 | Default | Description                                                                                                                                                                                                                                             |
+| ------------------------------------ | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `awsProfile`                         | `null`  | AWS profile name. The default credentials come from `fromNodeProviderChain()` in `@aws-sdk/credential-providers`; with this set, from `fromNodeProviderChain({ profile })`.                                                                             |
+| `customAwsCredentialProviderHandler` | `null`  | An object with `getAwsCredentialsProvider(hostInfo, properties)` that returns an AWS SDK credential provider. An object without that method throws `AwsWrapperError`. The `AwsCredentialsProviderHandler` type is exported from all three entry points. |
 
 Scope, as read in the source: these two parameters are used only by the
 `iam` plugin, including the RDS `DescribeGlobalClusters` lookup it runs
@@ -3230,8 +3189,8 @@ the source.
 
 ### 6.10 Blue/Green host replacement
 
-| Name | Default | Description |
-|---|---|---|
+| Name                         | Default              | Description                                                                                                                                                |
+| ---------------------------- | -------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `enableGreenHostReplacement` | the string `"false"` | When a host name with a `-green-xxxxxx` suffix no longer resolves after a Blue/Green switchover, the wrapper connects to the host name without the suffix. |
 
 The docs give the default as `false`. In the source the default is the
@@ -3246,11 +3205,11 @@ The wrapper offers three ways to notice that a database host stopped
 answering while a query runs. They overlap. Pick one main mechanism per
 connection type and tune it.
 
-| Mechanism | Driver support | Detects | When to prefer it |
-|---|---|---|---|
-| `wrapperQueryTimeout` | both | A query that runs longer than the limit. | Short OLTP queries whose normal time is well under the limit. It also ends legitimate long queries, so it suits reports badly. |
-| `wrapperKeepAliveProperties` | `pg` only | A dead peer, through operating system TCP keep-alive probes. | Long-running PostgreSQL queries, when the operating system keep-alive timing can be tuned. |
-| `efm2` plugin | both | A host that fails separate health-check connections. | Long queries on MySQL, where keep-alive is not available, or when detection must not depend on operating system settings. It is in the default plugin list. |
+| Mechanism                    | Driver support | Detects                                                      | When to prefer it                                                                                                                                           |
+| ---------------------------- | -------------- | ------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `wrapperQueryTimeout`        | both           | A query that runs longer than the limit.                     | Short OLTP queries whose normal time is well under the limit. It also ends legitimate long queries, so it suits reports badly.                              |
+| `wrapperKeepAliveProperties` | `pg` only      | A dead peer, through operating system TCP keep-alive probes. | Long-running PostgreSQL queries, when the operating system keep-alive timing can be tuned.                                                                  |
+| `efm2` plugin                | both           | A host that fails separate health-check connections.         | Long queries on MySQL, where keep-alive is not available, or when detection must not depend on operating system settings. It is in the default plugin list. |
 
 §17.2 has the decision tree for choosing among them.
 
@@ -3275,12 +3234,12 @@ overrides the unprefixed value there. Any property can be overridden this
 way, including `user`, `password`, `database` and the wrapper timeouts.
 The prefixes use underscores.
 
-| Prefix | Used by | Default when unset | Removed before the driver call? |
-|---|---|---|---|
-| `monitoring_` | `efm` and `efm2` health checks; `fastestResponseStrategy` response-time checks | Inherits the application's values | Yes |
-| `topology_monitoring_` | The cluster topology monitor | `wrapperConnectTimeout` 5000 ms and `wrapperQueryTimeout` 5000 ms, unless set with or without the prefix | Yes |
-| `blue_green_monitoring_` | `bg` status monitor | `wrapperConnectTimeout` 10000 ms and `wrapperQueryTimeout` 10000 ms, unless set without the prefix | Yes |
-| `limitless_router_monitor_` | `limitless` router monitor | Inherits the application's values | No |
+| Prefix                      | Used by                                                                        | Default when unset                                                                                       | Removed before the driver call? |
+| --------------------------- | ------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------- | ------------------------------- |
+| `monitoring_`               | `efm` and `efm2` health checks; `fastestResponseStrategy` response-time checks | Inherits the application's values                                                                        | Yes                             |
+| `topology_monitoring_`      | The cluster topology monitor                                                   | `wrapperConnectTimeout` 5000 ms and `wrapperQueryTimeout` 5000 ms, unless set with or without the prefix | Yes                             |
+| `blue_green_monitoring_`    | `bg` status monitor                                                            | `wrapperConnectTimeout` 10000 ms and `wrapperQueryTimeout` 10000 ms, unless set without the prefix       | Yes                             |
+| `limitless_router_monitor_` | `limitless` router monitor                                                     | Inherits the application's values                                                                        | No                              |
 
 Three findings from the source that differ from the docs:
 
@@ -3333,12 +3292,12 @@ it needs a reader. Two parameters name a strategy:
 
 The v1 `failover` plugin does not read either parameter.
 
-| Strategy | Where it works | Parameters | Behavior |
-|---|---|---|---|
-| `random` | Every connection. Default. | (without parameters) | Picks a random host among the available hosts with the requested role. |
-| `roundRobin` | Every connection. | `roundRobinHostWeightPairs`, `roundRobinDefaultWeight` | Takes turns through the available hosts, sorted by host name. A host with weight N is picked N times in a row before the next host. |
-| `leastConnections` | Only with the internal pool (`connectionProvider` set to an `InternalPooledConnectionProvider`, §14.3). | (without parameters) | Picks the host with the fewest active connections in the internal pools. |
-| `fastestResponse` | Only when the `fastestResponseStrategy` plugin is in `plugins`. | `responseMeasurementIntervalMs` (default `30000`) | Picks the host with the fastest measured response time, cached for one measurement interval. |
+| Strategy           | Where it works                                                                                          | Parameters                                             | Behavior                                                                                                                            |
+| ------------------ | ------------------------------------------------------------------------------------------------------- | ------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------- |
+| `random`           | Every connection. Default.                                                                              | (without parameters)                                   | Picks a random host among the available hosts with the requested role.                                                              |
+| `roundRobin`       | Every connection.                                                                                       | `roundRobinHostWeightPairs`, `roundRobinDefaultWeight` | Takes turns through the available hosts, sorted by host name. A host with weight N is picked N times in a row before the next host. |
+| `leastConnections` | Only with the internal pool (`connectionProvider` set to an `InternalPooledConnectionProvider`, §14.3). | (without parameters)                                   | Picks the host with the fewest active connections in the internal pools.                                                            |
+| `fastestResponse`  | Only when the `fastestResponseStrategy` plugin is in `plugins`.                                         | `responseMeasurementIntervalMs` (default `30000`)      | Picks the host with the fastest measured response time, cached for one measurement interval.                                        |
 
 `highestWeight` also exists in the source, but only the `limitless`
 plugin uses it internally. Neither connection provider accepts it, and
@@ -3391,18 +3350,18 @@ features exist. Set `dialect` to the string code. The docs show
 the real class, `DatabaseDialectCodes`, is not exported from any entry
 point. Use the string.
 
-| Code | Database | Client |
-|---|---|---|
-| `aurora-pg` | Aurora PostgreSQL. Also used for Aurora Limitless (§13.3). | `AwsPgClient` |
-| `global-aurora-pg` | Aurora Global Database, PostgreSQL | `AwsPgClient` |
-| `rds-multi-az-pg` | RDS for PostgreSQL Multi-AZ DB cluster | `AwsPgClient` |
-| `rds-pg` | RDS for PostgreSQL instance | `AwsPgClient` |
-| `pg` | Any other PostgreSQL | `AwsPgClient` |
-| `aurora-mysql` | Aurora MySQL | `AwsMySQLClient` |
-| `global-aurora-mysql` | Aurora Global Database, MySQL | `AwsMySQLClient` |
-| `rds-multi-az-mysql` | RDS for MySQL Multi-AZ DB cluster | `AwsMySQLClient` |
-| `rds-mysql` | RDS for MySQL instance | `AwsMySQLClient` |
-| `mysql` | Any other MySQL | `AwsMySQLClient` |
+| Code                  | Database                                                   | Client           |
+| --------------------- | ---------------------------------------------------------- | ---------------- |
+| `aurora-pg`           | Aurora PostgreSQL. Also used for Aurora Limitless (§13.3). | `AwsPgClient`    |
+| `global-aurora-pg`    | Aurora Global Database, PostgreSQL                         | `AwsPgClient`    |
+| `rds-multi-az-pg`     | RDS for PostgreSQL Multi-AZ DB cluster                     | `AwsPgClient`    |
+| `rds-pg`              | RDS for PostgreSQL instance                                | `AwsPgClient`    |
+| `pg`                  | Any other PostgreSQL                                       | `AwsPgClient`    |
+| `aurora-mysql`        | Aurora MySQL                                               | `AwsMySQLClient` |
+| `global-aurora-mysql` | Aurora Global Database, MySQL                              | `AwsMySQLClient` |
+| `rds-multi-az-mysql`  | RDS for MySQL Multi-AZ DB cluster                          | `AwsMySQLClient` |
+| `rds-mysql`           | RDS for MySQL instance                                     | `AwsMySQLClient` |
+| `mysql`               | Any other MySQL                                            | `AwsMySQLClient` |
 
 The dialect page's table omits `global-aurora-pg` and
 `global-aurora-mysql`; the Global Database page uses them, and the source
@@ -3425,22 +3384,22 @@ are rare; check that the user truly needs one.
 Without `dialect` or `customDatabaseDialect`, the wrapper first picks a
 dialect from the shape of `host`:
 
-| Host | PostgreSQL | MySQL |
-|---|---|---|
-| Global writer endpoint (`.global-<XYZ>.global.rds.amazonaws.com`) | `global-aurora-pg` | `global-aurora-mysql` |
-| Limitless shard group endpoint (`.shardgrp-`) | `aurora-pg` | treated as another RDS host |
-| Cluster writer or reader endpoint (`.cluster-`, `.cluster-ro-`) | `aurora-pg` | `aurora-mysql` |
-| Any other RDS host (instance, custom endpoint, proxy) | `rds-pg` | `rds-mysql` |
-| IP address, custom domain, `localhost` | `pg` | `mysql` |
+| Host                                                              | PostgreSQL         | MySQL                       |
+| ----------------------------------------------------------------- | ------------------ | --------------------------- |
+| Global writer endpoint (`.global-<XYZ>.global.rds.amazonaws.com`) | `global-aurora-pg` | `global-aurora-mysql`       |
+| Limitless shard group endpoint (`.shardgrp-`)                     | `aurora-pg`        | treated as another RDS host |
+| Cluster writer or reader endpoint (`.cluster-`, `.cluster-ro-`)   | `aurora-pg`        | `aurora-mysql`              |
+| Any other RDS host (instance, custom endpoint, proxy)             | `rds-pg`           | `rds-mysql`                 |
+| IP address, custom domain, `localhost`                            | `pg`               | `mysql`                     |
 
 After the first connection, the wrapper refines that guess by running
 check queries against the candidates of the chosen dialect:
 
-| Starting dialect | Candidates checked, in order |
-|---|---|
-| `pg`, `mysql` | Multi-AZ DB cluster, Aurora, RDS |
-| `rds-pg` | Multi-AZ DB cluster, Aurora |
-| `rds-mysql` | Aurora, Multi-AZ DB cluster |
+| Starting dialect            | Candidates checked, in order         |
+| --------------------------- | ------------------------------------ |
+| `pg`, `mysql`               | Multi-AZ DB cluster, Aurora, RDS     |
+| `rds-pg`                    | Multi-AZ DB cluster, Aurora          |
+| `rds-mysql`                 | Aurora, Multi-AZ DB cluster          |
 | `aurora-pg`, `aurora-mysql` | Global Database, Multi-AZ DB cluster |
 
 The result is cached per host for a long time; the source comment says 24
@@ -3459,10 +3418,10 @@ database type is known. A user-set `dialect` is never refined.
 A driver dialect tells the wrapper how to call the underlying driver. The
 client class decides it, and a parameter to choose it does not exist.
 
-| Client | Driver dialect | Driver | What the dialect does |
-|---|---|---|---|
-| `AwsPgClient`, `AwsPgPoolClient` | `NodePostgresDriverDialect` | `pg` | Maps `wrapperConnectTimeout` to `connectionTimeoutMillis`, `wrapperQueryTimeout` to `query_timeout`, and the keep-alive map to `keepAlive` and `keepAliveInitialDelayMillis`. |
-| `AwsMySQLClient`, `AwsMySQLPoolClient` | `MySQL2DriverDialect` | `mysql2` | Maps `wrapperConnectTimeout` to `connectTimeout`. Maps `wrapperQueryTimeout` to the per-query `timeout` only on the wrapper's internal queries; the application's `query`, `execute` and `end` calls run under the wrapper's own timer instead. Refuses any `keepAlive` key. Sets `enableCleartextPlugin` for token authentication over TLS (§10.2). |
+| Client                                 | Driver dialect              | Driver   | What the dialect does                                                                                                                                                                                                                                                                                                                                |
+| -------------------------------------- | --------------------------- | -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `AwsPgClient`, `AwsPgPoolClient`       | `NodePostgresDriverDialect` | `pg`     | Maps `wrapperConnectTimeout` to `connectionTimeoutMillis`, `wrapperQueryTimeout` to `query_timeout`, and the keep-alive map to `keepAlive` and `keepAliveInitialDelayMillis`.                                                                                                                                                                        |
+| `AwsMySQLClient`, `AwsMySQLPoolClient` | `MySQL2DriverDialect`       | `mysql2` | Maps `wrapperConnectTimeout` to `connectTimeout`. Maps `wrapperQueryTimeout` to the per-query `timeout` only on the wrapper's internal queries; the application's `query`, `execute` and `end` calls run under the wrapper's own timer instead. Refuses any `keepAlive` key. Sets `enableCleartextPlugin` for token authentication over TLS (§10.2). |
 
 Both drivers are used through their promise APIs only. Callback-style
 calls do not work, for clients or for pools.
@@ -3473,11 +3432,11 @@ calls do not work, for clients or for pools.
 
 ### 9.1 `failover` and `failover2`: `failoverMode`
 
-| Value | Behavior in `failover2` |
-|---|---|
-| `strict-writer` | Reconnect only to the new writer. |
-| `strict-reader` | Reconnect only to an instance that reports itself as a reader. The old writer is accepted only if it has become a reader. |
-| `reader-or-writer` | Try the readers first, then the old writer, and accept whatever role answers. |
+| Value              | Behavior in `failover2`                                                                                                   |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------------- |
+| `strict-writer`    | Reconnect only to the new writer.                                                                                         |
+| `strict-reader`    | Reconnect only to an instance that reports itself as a reader. The old writer is accepted only if it has become a reader. |
+| `reader-or-writer` | Try the readers first, then the old writer, and accept whatever role answers.                                             |
 
 Both plugins accept the same three values. When `failoverMode` is unset,
 or set to a value that is not one of these three, the wrapper resolves it
@@ -3502,15 +3461,15 @@ the home region. When they match, the primary region is the home region,
 and `activeHomeFailoverMode` applies. When they differ,
 `inactiveHomeFailoverMode` applies.
 
-| Value | Candidates |
-|---|---|
-| `strict-writer` | The writer, in whichever region it is. |
-| `strict-home-reader` | Readers in the home region. |
-| `strict-out-of-home-reader` | Readers outside the home region. |
-| `strict-any-reader` | Readers in any region. |
-| `home-reader-or-writer` | The writer, or readers in the home region. |
+| Value                          | Candidates                                      |
+| ------------------------------ | ----------------------------------------------- |
+| `strict-writer`                | The writer, in whichever region it is.          |
+| `strict-home-reader`           | Readers in the home region.                     |
+| `strict-out-of-home-reader`    | Readers outside the home region.                |
+| `strict-any-reader`            | Readers in any region.                          |
+| `home-reader-or-writer`        | The writer, or readers in the home region.      |
 | `out-of-home-reader-or-writer` | The writer, or readers outside the home region. |
-| `any-reader-or-writer` | Any host. |
+| `any-reader-or-writer`         | Any host.                                       |
 
 For the three `...-or-writer` modes, the plugin does not prefer readers.
 It lets `failoverReaderHostSelectorStrategy` choose among all candidates,
@@ -3545,11 +3504,11 @@ set `plugins` without any failover code.
 The wrapper marks a host `NOT_AVAILABLE` when connecting to it fails. By
 default the mark stays until something sets the host available again.
 
-| Name | Default | Description |
-|---|---|---|
-| `defaultHostAvailabilityStrategy` | `null` | Unset, or any value other than `exponentialBackoff`, gives the simple strategy, which does not add logic. `exponentialBackoff` (any case) turns on the backoff strategy. |
-| `hostAvailabilityStrategyMaxRetries` | `5` | After this many failures in a row, the host stays `NOT_AVAILABLE`. Must be at least 1, or the strategy throws `IllegalArgumentError`. |
-| `hostAvailabilityStrategyInitialBackoffTimeSec` | `30` | Base wait in seconds. Must be at least 1. |
+| Name                                            | Default | Description                                                                                                                                                              |
+| ----------------------------------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `defaultHostAvailabilityStrategy`               | `null`  | Unset, or any value other than `exponentialBackoff`, gives the simple strategy, which does not add logic. `exponentialBackoff` (any case) turns on the backoff strategy. |
+| `hostAvailabilityStrategyMaxRetries`            | `5`     | After this many failures in a row, the host stays `NOT_AVAILABLE`. Must be at least 1, or the strategy throws `IllegalArgumentError`.                                    |
+| `hostAvailabilityStrategyInitialBackoffTimeSec` | `30`    | Base wait in seconds. Must be at least 1.                                                                                                                                |
 
 With `exponentialBackoff`, as read in the source, a host that has failed
 N times in a row is reported as available again after 2^N times the base
@@ -3570,35 +3529,35 @@ and the checks that do exist in code are named in its last column.
 
 ### 10.1 Combinations to avoid
 
-| Combination | Why | Checked in code? |
-|---|---|---|
-| Any two of `failover`, `failover2`, `gdbFailover` | Two failover implementations on one connection interfere. Pick one. | No |
-| `efm` + `efm2` | The monitoring page says this should not have negative side effects but is not recommended; the matrix marks it incompatible. Pick `efm2`. | No |
-| Any two of `iam`, `secretsManager`, `federatedAuth`, `okta` | Each supplies the credentials for the connection. Load one. | No |
-| `readWriteSplitting` + `gdbReadWriteSplitting` | Two read/write splitters. Pick one. | No |
-| `staleDns` + `initialConnection` | Marked incompatible in the matrix. | No |
-| `staleDns` + `gdbReadWriteSplitting` | Marked incompatible in the matrix. | No |
-| `staleDns` + any failover plugin | Redundant. The failover plugins already run a stale DNS check when they connect. The matrix marks the pair compatible. | No |
-| `connectTime` + `initialConnection` | Marked incompatible in the matrix, without a reason. I could not find one in the source. | No |
-| `limitless` + `failover`, `failover2`, `gdbFailover`, `readWriteSplitting`, `gdbReadWriteSplitting`, `customEndpoint`, `auroraConnectionTracker`, `initialConnection`, `staleDns`, `fastestResponseStrategy` or `bg` | Limitless routes connections itself. The Limitless page calls failover, EFM and read/write splitting compatible but without added value; the matrix marks them incompatible. Advise against all of them. `efm` and `efm2` are marked compatible with `limitless`. | No |
-| `limitless` with any dialect other than `aurora-pg` | Only the Aurora PostgreSQL dialect provides the router query. The plugin throws `AwsWrapperError`. | Yes |
-| `fastestResponseStrategy` without `readWriteSplitting` and `readerHostSelectorStrategy: "fastestResponse"` | The plugin only adds a strategy. | Partly: `readWriteSplitting` throws at connect if no plugin or provider accepts its strategy. |
-| `leastConnections` without the internal pool | The default provider does not track connection counts. | Yes: throws when a host is chosen. |
-| `gdbFailover` with `gdbAccessibleRegions` that leaves out the home region | Failover could never reach the home region. | Yes: throws at connect. |
-| `bg` on a Multi-AZ DB cluster or a community database | The dialect does not support Blue/Green Deployments. The status monitor throws, and the status provider logs a warning. | Yes |
-| `bg` on Aurora Global Database | Not supported according to the README and the matrix. The Global dialects inherit Blue/Green support in code, so the code does not stop it. | No |
-| EFM (`efm`, `efm2`) with an RDS Proxy, IP address or custom domain host | Marked incompatible in the endpoint matrix. | No |
+| Combination                                                                                                                                                                                                          | Why                                                                                                                                                                                                                                                               | Checked in code?                                                                              |
+| -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
+| Any two of `failover`, `failover2`, `gdbFailover`                                                                                                                                                                    | Two failover implementations on one connection interfere. Pick one.                                                                                                                                                                                               | No                                                                                            |
+| `efm` + `efm2`                                                                                                                                                                                                       | The monitoring page says this should not have negative side effects but is not recommended; the matrix marks it incompatible. Pick `efm2`.                                                                                                                        | No                                                                                            |
+| Any two of `iam`, `secretsManager`, `federatedAuth`, `okta`                                                                                                                                                          | Each supplies the credentials for the connection. Load one.                                                                                                                                                                                                       | No                                                                                            |
+| `readWriteSplitting` + `gdbReadWriteSplitting`                                                                                                                                                                       | Two read/write splitters. Pick one.                                                                                                                                                                                                                               | No                                                                                            |
+| `staleDns` + `initialConnection`                                                                                                                                                                                     | Marked incompatible in the matrix.                                                                                                                                                                                                                                | No                                                                                            |
+| `staleDns` + `gdbReadWriteSplitting`                                                                                                                                                                                 | Marked incompatible in the matrix.                                                                                                                                                                                                                                | No                                                                                            |
+| `staleDns` + any failover plugin                                                                                                                                                                                     | Redundant. The failover plugins already run a stale DNS check when they connect. The matrix marks the pair compatible.                                                                                                                                            | No                                                                                            |
+| `connectTime` + `initialConnection`                                                                                                                                                                                  | Marked incompatible in the matrix, without a reason. I could not find one in the source.                                                                                                                                                                          | No                                                                                            |
+| `limitless` + `failover`, `failover2`, `gdbFailover`, `readWriteSplitting`, `gdbReadWriteSplitting`, `customEndpoint`, `auroraConnectionTracker`, `initialConnection`, `staleDns`, `fastestResponseStrategy` or `bg` | Limitless routes connections itself. The Limitless page calls failover, EFM and read/write splitting compatible but without added value; the matrix marks them incompatible. Advise against all of them. `efm` and `efm2` are marked compatible with `limitless`. | No                                                                                            |
+| `limitless` with any dialect other than `aurora-pg`                                                                                                                                                                  | Only the Aurora PostgreSQL dialect provides the router query. The plugin throws `AwsWrapperError`.                                                                                                                                                                | Yes                                                                                           |
+| `fastestResponseStrategy` without `readWriteSplitting` and `readerHostSelectorStrategy: "fastestResponse"`                                                                                                           | The plugin only adds a strategy.                                                                                                                                                                                                                                  | Partly: `readWriteSplitting` throws at connect if no plugin or provider accepts its strategy. |
+| `leastConnections` without the internal pool                                                                                                                                                                         | The default provider does not track connection counts.                                                                                                                                                                                                            | Yes: throws when a host is chosen.                                                            |
+| `gdbFailover` with `gdbAccessibleRegions` that leaves out the home region                                                                                                                                            | Failover could never reach the home region.                                                                                                                                                                                                                       | Yes: throws at connect.                                                                       |
+| `bg` on a Multi-AZ DB cluster or a community database                                                                                                                                                                | The dialect does not support Blue/Green Deployments. The status monitor throws, and the status provider logs a warning.                                                                                                                                           | Yes                                                                                           |
+| `bg` on Aurora Global Database                                                                                                                                                                                       | Not supported according to the README and the matrix. The Global dialects inherit Blue/Green support in code, so the code does not stop it.                                                                                                                       | No                                                                                            |
+| EFM (`efm`, `efm2`) with an RDS Proxy, IP address or custom domain host                                                                                                                                              | Marked incompatible in the endpoint matrix.                                                                                                                                                                                                                       | No                                                                                            |
 
 ### 10.2 Driver limits
 
-| Item | Limit |
-|---|---|
-| `wrapperKeepAliveProperties` | `pg` only. Any `keepAlive` key with `mysql2` throws `UnsupportedMethodError` when the connection opens. |
-| Configuration presets (`profileName`) | Fail on MySQL, because every preset sets a `keepAlive` key (§11). |
+| Item                                                 | Limit                                                                                                                                                                                                                                                                                                                                                                                                               |
+| ---------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `wrapperKeepAliveProperties`                         | `pg` only. Any `keepAlive` key with `mysql2` throws `UnsupportedMethodError` when the connection opens.                                                                                                                                                                                                                                                                                                             |
+| Configuration presets (`profileName`)                | Fail on MySQL, because every preset sets a `keepAlive` key (§11).                                                                                                                                                                                                                                                                                                                                                   |
 | `iam`, `federatedAuth`, `okta` with `AwsMySQLClient` | Aurora asks token users for the `mysql_clear_password` plugin, which `mysql2` refuses unless `enableCleartextPlugin` is set. When `plugins` contains one of these codes and the config has `ssl`, the wrapper sets `enableCleartextPlugin: true` unless the user set it. Without `ssl` it only logs a warning, and the login fails. The check reads `plugins` only, so a profile's plugin list does not trigger it. |
-| Callback APIs | Not supported on any client or pool. Use the promise APIs. |
-| `setAutoCommit`, `setCatalog` | `AwsMySQLClient` only. `AwsPgClient` throws `UnsupportedMethodError`. |
-| `setSchema` | `AwsPgClient` only. `AwsMySQLClient` throws `UnsupportedMethodError`. |
+| Callback APIs                                        | Not supported on any client or pool. Use the promise APIs.                                                                                                                                                                                                                                                                                                                                                          |
+| `setAutoCommit`, `setCatalog`                        | `AwsMySQLClient` only. `AwsPgClient` throws `UnsupportedMethodError`.                                                                                                                                                                                                                                                                                                                                               |
+| `setSchema`                                          | `AwsPgClient` only. `AwsMySQLClient` throws `UnsupportedMethodError`.                                                                                                                                                                                                                                                                                                                                               |
 
 ### 10.3 Database type compatibility
 
@@ -3606,21 +3565,21 @@ From the compatibility matrix in the docs. "yes" means the plugin adds
 value there; "no" means it does not. The notes after the table add what
 the source and other pages say.
 
-| Plugin | Aurora Global | Aurora cluster | RDS Multi-AZ DB cluster (3 instances) | RDS Multi-AZ DB instance (2 instances) | RDS Single-AZ instance | Community |
-|---|---|---|---|---|---|---|
-| `failover`, `failover2`, `gdbFailover` | yes | yes | yes | no | no | no |
-| `efm`, `efm2` | yes | yes | yes | yes | yes | yes |
-| `iam`, `secretsManager`, `federatedAuth`, `okta` | yes | yes | yes | yes | yes | no |
-| `readWriteSplitting`, `gdbReadWriteSplitting` | yes | yes | yes | no | no | no |
-| `initialConnection` | yes | yes | yes | no | no | no |
-| `auroraConnectionTracker` | yes | yes | yes | no | no | no |
-| `staleDns` | yes | yes | yes | no | no | no |
-| `customEndpoint` | yes | yes | yes | no | no | no |
-| `fastestResponseStrategy` | yes | yes | yes | no | no | no |
-| `limitless` | no | yes (PostgreSQL only) | yes (PostgreSQL only) | no | no | no |
-| `bg` | no | yes | no | yes | yes | no |
-| `connectTime` | yes | yes | yes | yes | yes | yes |
-| `dev`, `executeTime` | universal | universal | universal | universal | universal | universal |
+| Plugin                                           | Aurora Global | Aurora cluster        | RDS Multi-AZ DB cluster (3 instances) | RDS Multi-AZ DB instance (2 instances) | RDS Single-AZ instance | Community |
+| ------------------------------------------------ | ------------- | --------------------- | ------------------------------------- | -------------------------------------- | ---------------------- | --------- |
+| `failover`, `failover2`, `gdbFailover`           | yes           | yes                   | yes                                   | no                                     | no                     | no        |
+| `efm`, `efm2`                                    | yes           | yes                   | yes                                   | yes                                    | yes                    | yes       |
+| `iam`, `secretsManager`, `federatedAuth`, `okta` | yes           | yes                   | yes                                   | yes                                    | yes                    | no        |
+| `readWriteSplitting`, `gdbReadWriteSplitting`    | yes           | yes                   | yes                                   | no                                     | no                     | no        |
+| `initialConnection`                              | yes           | yes                   | yes                                   | no                                     | no                     | no        |
+| `auroraConnectionTracker`                        | yes           | yes                   | yes                                   | no                                     | no                     | no        |
+| `staleDns`                                       | yes           | yes                   | yes                                   | no                                     | no                     | no        |
+| `customEndpoint`                                 | yes           | yes                   | yes                                   | no                                     | no                     | no        |
+| `fastestResponseStrategy`                        | yes           | yes                   | yes                                   | no                                     | no                     | no        |
+| `limitless`                                      | no            | yes (PostgreSQL only) | yes (PostgreSQL only)                 | no                                     | no                     | no        |
+| `bg`                                             | no            | yes                   | no                                    | yes                                    | yes                    | no        |
+| `connectTime`                                    | yes           | yes                   | yes                                   | yes                                    | yes                    | yes       |
+| `dev`, `executeTime`                             | universal     | universal             | universal                             | universal                              | universal              | universal |
 
 Notes:
 
@@ -3699,7 +3658,7 @@ From the endpoint matrix in the docs. "Special configuration" means
 - **Global writer endpoint with `iam`:** add `initialConnection`.
 - **`fastestResponseStrategy`:** always together with
   `readWriteSplitting` and `readerHostSelectorStrategy:
-  "fastestResponse"`.
+"fastestResponse"`.
 - **`leastConnections`:** always with an `InternalPooledConnectionProvider`
   in `connectionProvider`.
 - **MySQL with `iam`, `federatedAuth` or `okta`:** set `ssl` in the
@@ -3750,31 +3709,31 @@ presets exists only as an image and a PDF in the docs.
 Every value below was read from the source. Timeouts are in milliseconds.
 "Keep-alive" is the `keepAlive` key inside `wrapperKeepAliveProperties`.
 
-| Preset | Plugins | `wrapperConnectTimeout` | `wrapperQueryTimeout` | Keep-alive |
-|---|---|---|---|---|
-| `A0` | (zero plugins) | 10000 | 5000 | `false` |
-| `A1` | (zero plugins) | 30000 | 30000 | `false` |
-| `A2` | (zero plugins) | 3000 | 3000 | `false` |
-| `B` | (zero plugins) | 10000 | 0 | `true` |
-| `C0` | `efm` | 10000 | 0 | `false` |
-| `C1` | `efm` | 10000 | 0 | `false` |
-| `D0` | `initialConnection`, `auroraConnectionTracker`, `readWriteSplitting`, `failover` | 10000 | 5000 | `false` |
-| `D1` | as `D0` | 30000 | 30000 | `false` |
-| `E` | as `D0` | 10000 | 0 | `true` |
-| `F0` | as `D0`, plus `efm` | 10000 | 0 | `false` |
-| `F1` | as `D0`, plus `efm` | 10000 | 0 | `false` |
-| `G0` | `auroraConnectionTracker`, `staleDns`, `failover` | 10000 | 5000 | `false` |
-| `G1` | as `G0` | 30000 | 30000 | `false` |
-| `H` | as `G0` | 10000 | 0 | `true` |
-| `I0` | as `G0`, plus `efm` | 10000 | 0 | `true` |
-| `I1` | as `G0`, plus `efm` | 10000 | 0 | `false` |
+| Preset | Plugins                                                                          | `wrapperConnectTimeout` | `wrapperQueryTimeout` | Keep-alive |
+| ------ | -------------------------------------------------------------------------------- | ----------------------- | --------------------- | ---------- |
+| `A0`   | (zero plugins)                                                                   | 10000                   | 5000                  | `false`    |
+| `A1`   | (zero plugins)                                                                   | 30000                   | 30000                 | `false`    |
+| `A2`   | (zero plugins)                                                                   | 3000                    | 3000                  | `false`    |
+| `B`    | (zero plugins)                                                                   | 10000                   | 0                     | `true`     |
+| `C0`   | `efm`                                                                            | 10000                   | 0                     | `false`    |
+| `C1`   | `efm`                                                                            | 10000                   | 0                     | `false`    |
+| `D0`   | `initialConnection`, `auroraConnectionTracker`, `readWriteSplitting`, `failover` | 10000                   | 5000                  | `false`    |
+| `D1`   | as `D0`                                                                          | 30000                   | 30000                 | `false`    |
+| `E`    | as `D0`                                                                          | 10000                   | 0                     | `true`     |
+| `F0`   | as `D0`, plus `efm`                                                              | 10000                   | 0                     | `false`    |
+| `F1`   | as `D0`, plus `efm`                                                              | 10000                   | 0                     | `false`    |
+| `G0`   | `auroraConnectionTracker`, `staleDns`, `failover`                                | 10000                   | 5000                  | `false`    |
+| `G1`   | as `G0`                                                                          | 30000                   | 30000                 | `false`    |
+| `H`    | as `G0`                                                                          | 10000                   | 0                     | `true`     |
+| `I0`   | as `G0`, plus `efm`                                                              | 10000                   | 0                     | `true`     |
+| `I1`   | as `G0`, plus `efm`                                                              | 10000                   | 0                     | `false`    |
 
 The presets that load `efm` also set the monitor values:
 
-| Presets | `failureDetectionTime` | `failureDetectionInterval` | `failureDetectionCount` | `monitoring_wrapperConnectTimeout` | `monitoring_wrapperQueryTimeout` |
-|---|---|---|---|---|---|
-| `C0`, `F0`, `I0` | 60000 | 15000 | 5 | 10000 | 5000 |
-| `C1`, `F1`, `I1` | 30000 | 5000 | 3 | 3000 | 3000 |
+| Presets          | `failureDetectionTime` | `failureDetectionInterval` | `failureDetectionCount` | `monitoring_wrapperConnectTimeout` | `monitoring_wrapperQueryTimeout` |
+| ---------------- | ---------------------- | -------------------------- | ----------------------- | ---------------------------------- | -------------------------------- |
+| `C0`, `F0`, `I0` | 60000                  | 15000                      | 5                       | 10000                              | 5000                             |
+| `C1`, `F1`, `I1` | 30000                  | 5000                       | 3                       | 3000                               | 3000                             |
 
 The D, E and F presets also define an internal pool:
 `new InternalPooledConnectionProvider(new AwsPoolConfig({ maxConnections:
@@ -3835,10 +3794,10 @@ preset when the user asks for one, and state the points above.
 The wrapper does not use a connection URL. The config object passed to
 the client holds the host and every other setting (§6.1).
 
-| Database | Client | Entry point | Default port |
-|---|---|---|---|
-| PostgreSQL (Aurora, RDS, community) | `AwsPgClient`, `AwsPgPoolClient` | `aws-advanced-nodejs-wrapper/pg` | `5432` |
-| MySQL (Aurora, RDS, community) | `AwsMySQLClient`, `AwsMySQLPoolClient` | `aws-advanced-nodejs-wrapper/mysql` | `3306` |
+| Database                            | Client                                 | Entry point                         | Default port |
+| ----------------------------------- | -------------------------------------- | ----------------------------------- | ------------ |
+| PostgreSQL (Aurora, RDS, community) | `AwsPgClient`, `AwsPgPoolClient`       | `aws-advanced-nodejs-wrapper/pg`    | `5432`       |
+| MySQL (Aurora, RDS, community)      | `AwsMySQLClient`, `AwsMySQLPoolClient` | `aws-advanced-nodejs-wrapper/mysql` | `3306`       |
 
 ```ts
 import { AwsMySQLClient } from "aws-advanced-nodejs-wrapper/mysql";
@@ -3866,19 +3825,19 @@ connects to.
 
 ### 12.2 Aurora and RDS endpoint patterns
 
-| Endpoint type | Pattern | How the wrapper treats it |
-|---|---|---|
-| Aurora Global Database writer | `<global-db-name>.global-<XYZ>.global.rds.amazonaws.com` | Global dialect directly. The name does not contain a region, so `gdbFailover` needs `failoverHomeRegion`. |
-| Aurora cluster writer | `<cluster-name>.cluster-<XYZ>.<region>.rds.amazonaws.com` | Aurora dialect, then refined. Failover mode `strict-writer`. |
-| Aurora cluster reader | `<cluster-name>.cluster-ro-<XYZ>.<region>.rds.amazonaws.com` | Aurora dialect, then refined. Failover mode `reader-or-writer`. |
-| Aurora custom endpoint | `<endpoint-name>.cluster-custom-<XYZ>.<region>.rds.amazonaws.com` | RDS dialect, then refined. Cannot be used as `clusterInstanceHostPattern`. |
-| Aurora or RDS instance | `<instance-name>.<XYZ>.<region>.rds.amazonaws.com` | RDS dialect, then refined. The only endpoint type that a user-supplied internal pool pools (§14.3). |
-| RDS Multi-AZ DB cluster writer | `<cluster-name>.cluster-<XYZ>.<region>.rds.amazonaws.com` | Same shape as Aurora. Starts as Aurora and is refined to the Multi-AZ dialect. |
-| RDS Multi-AZ DB cluster reader | `<cluster-name>.cluster-ro-<XYZ>.<region>.rds.amazonaws.com` | Same shape as Aurora. |
-| RDS Proxy | `<proxy-name>.proxy-<XYZ>.<region>.rds.amazonaws.com` | Cannot be used as `clusterInstanceHostPattern`. |
-| RDS Proxy custom endpoint | `<endpoint-name>.endpoint.proxy-<XYZ>.<region>.rds.amazonaws.com` | Same as RDS Proxy. |
-| Aurora Limitless shard group | `<shard-group-name>.shardgrp-<XYZ>.<region>.rds.amazonaws.com` | `aurora-pg` directly for PostgreSQL. |
-| IP address or custom domain | IPv4, IPv6, or any other name | `pg` or `mysql` first, then refined. Needs `clusterInstanceHostPattern` (§12.5). |
+| Endpoint type                  | Pattern                                                           | How the wrapper treats it                                                                                 |
+| ------------------------------ | ----------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| Aurora Global Database writer  | `<global-db-name>.global-<XYZ>.global.rds.amazonaws.com`          | Global dialect directly. The name does not contain a region, so `gdbFailover` needs `failoverHomeRegion`. |
+| Aurora cluster writer          | `<cluster-name>.cluster-<XYZ>.<region>.rds.amazonaws.com`         | Aurora dialect, then refined. Failover mode `strict-writer`.                                              |
+| Aurora cluster reader          | `<cluster-name>.cluster-ro-<XYZ>.<region>.rds.amazonaws.com`      | Aurora dialect, then refined. Failover mode `reader-or-writer`.                                           |
+| Aurora custom endpoint         | `<endpoint-name>.cluster-custom-<XYZ>.<region>.rds.amazonaws.com` | RDS dialect, then refined. Cannot be used as `clusterInstanceHostPattern`.                                |
+| Aurora or RDS instance         | `<instance-name>.<XYZ>.<region>.rds.amazonaws.com`                | RDS dialect, then refined. The only endpoint type that a user-supplied internal pool pools (§14.3).       |
+| RDS Multi-AZ DB cluster writer | `<cluster-name>.cluster-<XYZ>.<region>.rds.amazonaws.com`         | Same shape as Aurora. Starts as Aurora and is refined to the Multi-AZ dialect.                            |
+| RDS Multi-AZ DB cluster reader | `<cluster-name>.cluster-ro-<XYZ>.<region>.rds.amazonaws.com`      | Same shape as Aurora.                                                                                     |
+| RDS Proxy                      | `<proxy-name>.proxy-<XYZ>.<region>.rds.amazonaws.com`             | Cannot be used as `clusterInstanceHostPattern`.                                                           |
+| RDS Proxy custom endpoint      | `<endpoint-name>.endpoint.proxy-<XYZ>.<region>.rds.amazonaws.com` | Same as RDS Proxy.                                                                                        |
+| Aurora Limitless shard group   | `<shard-group-name>.shardgrp-<XYZ>.<region>.rds.amazonaws.com`    | `aurora-pg` directly for PostgreSQL.                                                                      |
+| IP address or custom domain    | IPv4, IPv6, or any other name                                     | `pg` or `mysql` first, then refined. Needs `clusterInstanceHostPattern` (§12.5).                          |
 
 The source also recognizes the China region forms
 (`.rds.<region>.amazonaws.com.cn` and `.<region>.rds.amazonaws.com.cn`),
@@ -3919,11 +3878,11 @@ const config = {
 Required for Aurora Global Database. A comma-separated list with one
 entry per region. Each entry takes one of three forms:
 
-| Form | Example | Region taken from |
-|---|---|---|
-| Bare RDS pattern | `?.<XYZ1>.us-east-1.rds.amazonaws.com` | The pattern's host name |
-| `region:pattern` | `us-east-1:?.db.example.com` | The text before the colon |
-| `[region]pattern` | `[us-east-1]?.db.example.com` | The brackets |
+| Form              | Example                                | Region taken from         |
+| ----------------- | -------------------------------------- | ------------------------- |
+| Bare RDS pattern  | `?.<XYZ1>.us-east-1.rds.amazonaws.com` | The pattern's host name   |
+| `region:pattern`  | `us-east-1:?.db.example.com`           | The text before the colon |
+| `[region]pattern` | `[us-east-1]?.db.example.com`          | The brackets              |
 
 A trailing `:<port>` is allowed in each form. In a bare pattern a colon
 followed only by digits is read as a port, not as a region. Each pattern
@@ -4027,15 +3986,15 @@ value or an ordered comma-separated list; the monitor takes the first
 connection it can get and moves to a better entry later, when one
 becomes reachable.
 
-| Value | Monitor connects to |
-|---|---|
-| `strict-writer-primary` | The writer in the primary region. Default. |
-| `strict-writer-secondary` | A writer in a secondary region. |
-| `strict-reader-primary` | A reader in the primary region. |
-| `strict-reader-secondary` | A reader in a secondary region. |
-| `writer-or-reader-primary` | The writer in the primary region, else a reader there. |
-| `writer-or-reader-secondary` | A writer in a secondary region, else a reader there. |
-| `<region>`, for example `us-west-2` | Any host in that region, writer first. |
+| Value                               | Monitor connects to                                    |
+| ----------------------------------- | ------------------------------------------------------ |
+| `strict-writer-primary`             | The writer in the primary region. Default.             |
+| `strict-writer-secondary`           | A writer in a secondary region.                        |
+| `strict-reader-primary`             | A reader in the primary region.                        |
+| `strict-reader-secondary`           | A reader in a secondary region.                        |
+| `writer-or-reader-primary`          | The writer in the primary region, else a reader there. |
+| `writer-or-reader-secondary`        | A writer in a secondary region, else a reader there.   |
+| `<region>`, for example `us-west-2` | Any host in that region, writer first.                 |
 
 Any other word is taken as a region name. If it does not look like a
 region (`xx-xxxx-N`), the wrapper logs a warning, and the entry never
@@ -4166,10 +4125,10 @@ const client = new AwsPgClient({
 
 ### 14.1 Which pool layer
 
-| Layer | What it pools | When to use it |
-|---|---|---|
-| Wrapper pool clients: `AwsPgPoolClient`, `AwsMySQLPoolClient` (since 2.0.0) | Whole wrapper connections to the host in the config. Every pooled connection runs the plugin pipeline, so failover works on it. | Any application that would use `pg.Pool` or `mysql2.createPool`. This is the normal choice. §3.5 has the recipe. |
-| Internal pool: `InternalPooledConnectionProvider` passed as `connectionProvider` | Physical connections, one pool per instance and user, used when a client switches instances. | Read/write splitting where many short-lived clients call `setReadOnly`. Required for `leastConnections`. §3.7 has the recipe. |
+| Layer                                                                            | What it pools                                                                                                                   | When to use it                                                                                                                |
+| -------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| Wrapper pool clients: `AwsPgPoolClient`, `AwsMySQLPoolClient` (since 2.0.0)      | Whole wrapper connections to the host in the config. Every pooled connection runs the plugin pipeline, so failover works on it. | Any application that would use `pg.Pool` or `mysql2.createPool`. This is the normal choice. §3.5 has the recipe.              |
+| Internal pool: `InternalPooledConnectionProvider` passed as `connectionProvider` | Physical connections, one pool per instance and user, used when a client switches instances.                                    | Read/write splitting where many short-lived clients call `setReadOnly`. Required for `leastConnections`. §3.7 has the recipe. |
 
 The two save different work. A wrapper pool client reuses whole
 connections, so the application does not open a new connection (and run
@@ -4190,16 +4149,16 @@ from `/pg` and `/mysql`, but those entry points do not export it. Always
 pass an object: `new AwsPoolConfig()` without an argument throws a
 `TypeError` in the source.
 
-| `AwsPoolConfig` option | Default | Driver | Becomes |
-|---|---|---|---|
-| `maxConnections` | `10` | both | `pg`: `max`; `mysql2`: `connectionLimit` |
-| `idleTimeoutMillis` | `60000` | both | `pg`: `idleTimeoutMillis`; `mysql2`: `idleTimeout` |
-| `maxIdleConnections` | same as `maxConnections` | MySQL | `maxIdle` |
-| `waitForConnections` | `true` | MySQL | `waitForConnections` |
-| `queueLimit` | `0` (unlimited) | MySQL | `queueLimit` |
-| `allowExitOnIdle` | `false` | PostgreSQL | `allowExitOnIdle` |
-| `maxLifetimeSeconds` | `0` (unlimited) | PostgreSQL | `maxLifetimeSeconds` |
-| `minConnections` | `0` | PostgreSQL | Not passed to `pg.Pool`. The docs say it maps to `pg`'s `min`; in the source it does not change the pool. |
+| `AwsPoolConfig` option | Default                  | Driver     | Becomes                                                                                                   |
+| ---------------------- | ------------------------ | ---------- | --------------------------------------------------------------------------------------------------------- |
+| `maxConnections`       | `10`                     | both       | `pg`: `max`; `mysql2`: `connectionLimit`                                                                  |
+| `idleTimeoutMillis`    | `60000`                  | both       | `pg`: `idleTimeoutMillis`; `mysql2`: `idleTimeout`                                                        |
+| `maxIdleConnections`   | same as `maxConnections` | MySQL      | `maxIdle`                                                                                                 |
+| `waitForConnections`   | `true`                   | MySQL      | `waitForConnections`                                                                                      |
+| `queueLimit`           | `0` (unlimited)          | MySQL      | `queueLimit`                                                                                              |
+| `allowExitOnIdle`      | `false`                  | PostgreSQL | `allowExitOnIdle`                                                                                         |
+| `maxLifetimeSeconds`   | `0` (unlimited)          | PostgreSQL | `maxLifetimeSeconds`                                                                                      |
+| `minConnections`       | `0`                      | PostgreSQL | Not passed to `pg.Pool`. The docs say it maps to `pg`'s `min`; in the source it does not change the pool. |
 
 Options the pools do not take: `mysql2` `timeout` and `reconnect`, and
 `pg` `connectionTimeoutMillis`. Use `wrapperQueryTimeout` and
@@ -4211,12 +4170,12 @@ how long a borrow waits.
 
 How the pool clients behave:
 
-| Operation | PostgreSQL | MySQL |
-|---|---|---|
-| Borrow | `await pool.connect()` returns an `AwsPgPooledConnection` | `await pool.getConnection()` returns an `AwsMySQLPooledConnection` |
-| Return | `await conn.release()` | `await conn.release()` or `pool.releaseConnection(conn)` |
-| One statement | `await pool.query(...)` | `await pool.query(...)` |
-| Close | `await pool.end()` | `await pool.end()` |
+| Operation     | PostgreSQL                                                | MySQL                                                              |
+| ------------- | --------------------------------------------------------- | ------------------------------------------------------------------ |
+| Borrow        | `await pool.connect()` returns an `AwsPgPooledConnection` | `await pool.getConnection()` returns an `AwsMySQLPooledConnection` |
+| Return        | `await conn.release()`                                    | `await conn.release()` or `pool.releaseConnection(conn)`           |
+| One statement | `await pool.query(...)`                                   | `await pool.query(...)`                                            |
+| Close         | `await pool.end()`                                        | `await pool.end()`                                                 |
 
 Points to state:
 
@@ -4267,7 +4226,7 @@ one provider per process and share it across clients.
   when `setReadOnly` switches a client to an instance.
 - **Pool key.** By default a pool is keyed by the instance URL and the
   `user`. An `InternalPoolMapping` (`{ getPoolKey: (hostInfo, props) =>
-  string }`) replaces the user part of the key. Keep the user in a custom
+string }`) replaces the user part of the key. Keep the user in a custom
   key, or different users can share a pool and a connection opened by a
   privileged user can go to a less privileged one.
 - **Passwords are not checked again.** The first connection to each
@@ -4307,16 +4266,10 @@ lifetimes, so connections spread across transaction routers again.
 Close the layers from the outside in, once, when the application stops:
 
 ```ts
-import {
-  InternalPooledConnectionProvider,
-  PluginManager
-} from "aws-advanced-nodejs-wrapper";
+import { InternalPooledConnectionProvider, PluginManager } from "aws-advanced-nodejs-wrapper";
 import { AwsPgPoolClient } from "aws-advanced-nodejs-wrapper/pg";
 
-async function shutdown(
-  pool: AwsPgPoolClient | null,
-  provider: InternalPooledConnectionProvider | null
-): Promise<void> {
+async function shutdown(pool: AwsPgPoolClient | null, provider: InternalPooledConnectionProvider | null): Promise<void> {
   // 1. Stop the shared monitors and background tasks.
   await PluginManager.releaseResources();
   // 2. Close the internal pools, if a provider was created.
@@ -4417,17 +4370,17 @@ console.log(result.rows[0]);
 
 What carries over and what changes:
 
-| `pg` code | With `AwsPgClient` |
-| --- | --- |
-| `new Client(config)` | `new AwsPgClient(config)`. Wrapper parameters go in the same object as the `pg` options. |
-| `query(text)`, `query(text, values)`, `query({ text, values })`, named statements `query({ name, text, values })` | The same calls. The result is the `pg` `QueryResult`, so rows are in `result.rows`. |
-| `query({ ..., rowMode: "array" })` | The same call. The result is still a `QueryResult`; the rows are arrays in `result.rows`. The client guide prints `result[0]` for this case, and the pool guide prints `result.rows[0]`. The source returns the `pg` result unchanged, so `result.rows[0]` is correct. |
-| `connectionTimeoutMillis`, `query_timeout` | Set `wrapperConnectTimeout` and `wrapperQueryTimeout` instead. The wrapper writes them into `connectionTimeoutMillis` and `query_timeout`. |
-| `keepAlive`, `keepAliveInitialDelayMillis` | Put them in `wrapperKeepAliveProperties`, for example `new Map([["keepAlive", true], ["keepAliveInitialDelayMillis", 10000]])` (a `Map`, as §6.1 explains). The wrapper copies only these two keys to `pg`. |
-| `SET search_path ...` | `await client.setSchema("<schema>")`. The wrapper tracks it and applies it to a new connection after a failover. |
-| `SET SESSION CHARACTERISTICS AS TRANSACTION READ ONLY` | `await client.setReadOnly(true)`. With `readWriteSplitting` this also moves the client to a reader. |
-| Isolation level set with SQL | `await client.setTransactionIsolation(level)` with `TransactionIsolationLevel` from the root entry point. |
-| `await client.end()` | The same. It is safe to call when `connect()` failed. |
+| `pg` code                                                                                                         | With `AwsPgClient`                                                                                                                                                                                                                                                     |
+| ----------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `new Client(config)`                                                                                              | `new AwsPgClient(config)`. Wrapper parameters go in the same object as the `pg` options.                                                                                                                                                                               |
+| `query(text)`, `query(text, values)`, `query({ text, values })`, named statements `query({ name, text, values })` | The same calls. The result is the `pg` `QueryResult`, so rows are in `result.rows`.                                                                                                                                                                                    |
+| `query({ ..., rowMode: "array" })`                                                                                | The same call. The result is still a `QueryResult`; the rows are arrays in `result.rows`. The client guide prints `result[0]` for this case, and the pool guide prints `result.rows[0]`. The source returns the `pg` result unchanged, so `result.rows[0]` is correct. |
+| `connectionTimeoutMillis`, `query_timeout`                                                                        | Set `wrapperConnectTimeout` and `wrapperQueryTimeout` instead. The wrapper writes them into `connectionTimeoutMillis` and `query_timeout`.                                                                                                                             |
+| `keepAlive`, `keepAliveInitialDelayMillis`                                                                        | Put them in `wrapperKeepAliveProperties`, for example `new Map([["keepAlive", true], ["keepAliveInitialDelayMillis", 10000]])` (a `Map`, as §6.1 explains). The wrapper copies only these two keys to `pg`.                                                            |
+| `SET search_path ...`                                                                                             | `await client.setSchema("<schema>")`. The wrapper tracks it and applies it to a new connection after a failover.                                                                                                                                                       |
+| `SET SESSION CHARACTERISTICS AS TRANSACTION READ ONLY`                                                            | `await client.setReadOnly(true)`. With `readWriteSplitting` this also moves the client to a reader.                                                                                                                                                                    |
+| Isolation level set with SQL                                                                                      | `await client.setTransactionIsolation(level)` with `TransactionIsolationLevel` from the root entry point.                                                                                                                                                              |
+| `await client.end()`                                                                                              | The same. It is safe to call when `connect()` failed.                                                                                                                                                                                                                  |
 
 `setAutoCommit`, `getAutoCommit`, `setCatalog` and `getCatalog` throw
 `UnsupportedMethodError` on `AwsPgClient`. Session settings made with
@@ -4455,9 +4408,7 @@ After:
 
 ```ts
 import { AwsMySQLClient } from "aws-advanced-nodejs-wrapper/mysql";
-import type {
-  AwsMySQLClientConfig
-} from "aws-advanced-nodejs-wrapper/mysql";
+import type { AwsMySQLClientConfig } from "aws-advanced-nodejs-wrapper/mysql";
 
 const config: AwsMySQLClientConfig = {
   host: "<cluster-endpoint>",
@@ -4519,8 +4470,7 @@ import { AwsWrapperError } from "aws-advanced-nodejs-wrapper";
 function mysqlErrorCode(error: unknown): string | undefined {
   // mysql2 errors carry a string code such as "ER_DUP_ENTRY". The
   // wrapper puts the mysql2 error in cause.
-  const source =
-    error instanceof AwsWrapperError ? error.cause : error;
+  const source = error instanceof AwsWrapperError ? error.cause : error;
   return (source as { code?: string } | undefined)?.code;
 }
 ```
@@ -4538,19 +4488,19 @@ do not export it). Recipe §3.5 shows the PostgreSQL form.
 
 Option mapping, from the pool guide and the driver dialect source:
 
-| Driver pool option | Wrapper setting | Notes |
-| --- | --- | --- |
-| `pg` `max`, `mysql2` `connectionLimit` | `maxConnections` | Default 10. |
-| `pg` `idleTimeoutMillis`, `mysql2` `idleTimeout` | `idleTimeoutMillis` | Default 60000. The pool guide maps `mysql2` `acquireTimeout` to this option, but the source passes `idleTimeoutMillis` to `mysql2` `idleTimeout`, which is a different setting. |
-| `mysql2` `maxIdle` | `maxIdleConnections` | MySQL only. Default: the value of `maxConnections`. |
-| `mysql2` `waitForConnections` | `waitForConnections` | MySQL only. Default `true`. |
-| `mysql2` `queueLimit` | `queueLimit` | MySQL only. Default 0 (no limit). |
-| `pg` `allowExitOnIdle` | `allowExitOnIdle` | PostgreSQL only. Default `false`. |
-| `pg` `maxLifetimeSeconds` | `maxLifetimeSeconds` | PostgreSQL only. Default 0. |
-| `pg` `min` | `minConnections` | The guide documents it, but the source never passes it to `pg.Pool`, so it has no effect. |
-| `pg` `connectionTimeoutMillis` | `wrapperConnectTimeout` in the connection config | Not an `AwsPoolConfig` option. |
-| `mysql2` `timeout` | `wrapperQueryTimeout` in the connection config | Not an `AwsPoolConfig` option. |
-| `mysql2` `reconnect` | none | The guide says the failover plugin handles reconnection. |
+| Driver pool option                               | Wrapper setting                                  | Notes                                                                                                                                                                           |
+| ------------------------------------------------ | ------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `pg` `max`, `mysql2` `connectionLimit`           | `maxConnections`                                 | Default 10.                                                                                                                                                                     |
+| `pg` `idleTimeoutMillis`, `mysql2` `idleTimeout` | `idleTimeoutMillis`                              | Default 60000. The pool guide maps `mysql2` `acquireTimeout` to this option, but the source passes `idleTimeoutMillis` to `mysql2` `idleTimeout`, which is a different setting. |
+| `mysql2` `maxIdle`                               | `maxIdleConnections`                             | MySQL only. Default: the value of `maxConnections`.                                                                                                                             |
+| `mysql2` `waitForConnections`                    | `waitForConnections`                             | MySQL only. Default `true`.                                                                                                                                                     |
+| `mysql2` `queueLimit`                            | `queueLimit`                                     | MySQL only. Default 0 (no limit).                                                                                                                                               |
+| `pg` `allowExitOnIdle`                           | `allowExitOnIdle`                                | PostgreSQL only. Default `false`.                                                                                                                                               |
+| `pg` `maxLifetimeSeconds`                        | `maxLifetimeSeconds`                             | PostgreSQL only. Default 0.                                                                                                                                                     |
+| `pg` `min`                                       | `minConnections`                                 | The guide documents it, but the source never passes it to `pg.Pool`, so it has no effect.                                                                                       |
+| `pg` `connectionTimeoutMillis`                   | `wrapperConnectTimeout` in the connection config | Not an `AwsPoolConfig` option.                                                                                                                                                  |
+| `mysql2` `timeout`                               | `wrapperQueryTimeout` in the connection config   | Not an `AwsPoolConfig` option.                                                                                                                                                  |
+| `mysql2` `reconnect`                             | none                                             | The guide says the failover plugin handles reconnection.                                                                                                                        |
 
 API differences to tell the user about:
 
@@ -4567,7 +4517,7 @@ API differences to tell the user about:
   failover.
 - Always pass an object to `AwsPoolConfig`. `new AwsPoolConfig()` without
   an argument throws `TypeError: Cannot read properties of undefined
-  (reading 'maxConnections')`. Write `new AwsPoolConfig({})`.
+(reading 'maxConnections')`. Write `new AwsPoolConfig({})`.
 - The guide warns that holding `maxConnections` connections and then
   calling `pool.query()` can wait forever, depending on the driver.
 
@@ -4772,13 +4722,13 @@ example runs only because `npx tsx` does not type-check.
 simple queries and may need changes for full functionality. In the
 source:
 
-| Gap in `adapter/pgaws.ts` | Effect | What the user changes |
-| --- | --- | --- |
-| Imports `AwsPgClient` from `aws-advanced-nodejs-wrapper/dist/pg/lib/index.js` | That path is not in the exports map, so Node.js refuses it when the package comes from npm. | Import from `aws-advanced-nodejs-wrapper/pg`. |
-| `performIO` reads `args` from the Prisma query but never passes them | Queries with `where` values or other parameters run without their values. | Pass the values: `this.client.query(sql, values)`. |
-| `performIO` cuts the SQL at the first `LIMIT` or `OFFSET` | Pagination (`take`, `skip`) is silently removed. The code comment says these terms throw when passed to the client. | Remove the cut after passing the values, and test pagination. The skill does not know whether passing the values is enough. |
-| `commit()` is empty, `rollback()` is not awaited, `startTransaction` sends no `BEGIN` | Prisma transactions do not run as transactions. | Avoid `$transaction` until the user completes these methods. |
-| The adapter re-throws every error unchanged | `FailoverSuccessError` and the other failover errors reach Prisma. | See below. |
+| Gap in `adapter/pgaws.ts`                                                             | Effect                                                                                                              | What the user changes                                                                                                       |
+| ------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| Imports `AwsPgClient` from `aws-advanced-nodejs-wrapper/dist/pg/lib/index.js`         | That path is not in the exports map, so Node.js refuses it when the package comes from npm.                         | Import from `aws-advanced-nodejs-wrapper/pg`.                                                                               |
+| `performIO` reads `args` from the Prisma query but never passes them                  | Queries with `where` values or other parameters run without their values.                                           | Pass the values: `this.client.query(sql, values)`.                                                                          |
+| `performIO` cuts the SQL at the first `LIMIT` or `OFFSET`                             | Pagination (`take`, `skip`) is silently removed. The code comment says these terms throw when passed to the client. | Remove the cut after passing the values, and test pagination. The skill does not know whether passing the values is enough. |
+| `commit()` is empty, `rollback()` is not awaited, `startTransaction` sends no `BEGIN` | Prisma transactions do not run as transactions.                                                                     | Avoid `$transaction` until the user completes these methods.                                                                |
+| The adapter re-throws every error unchanged                                           | `FailoverSuccessError` and the other failover errors reach Prisma.                                                  | See below.                                                                                                                  |
 
 **Failover with Prisma.** The adapter does not handle failover errors.
 The skill does not know how Prisma reports an error that a driver adapter
@@ -4828,7 +4778,7 @@ For an `InternalPooledConnectionProvider`, call
 ### 15.9 Moving an existing application: checklist
 
 1. Install the wrapper with `npm install aws-advanced-nodejs-wrapper@3.0.0
-   @aws-sdk/credential-providers @aws-sdk/rds-signer` and keep the driver,
+@aws-sdk/credential-providers @aws-sdk/rds-signer` and keep the driver,
    at a version inside the peer range. Add the optional packages the
    chosen plugins need (§3.1).
 2. Confirm Node.js 22.9.0 or later, and an ES module project (§15.6).
@@ -4886,16 +4836,16 @@ Facts about how the level is read, from `common/logutils.ts`:
   verbose, debug, silly). A level must exist in both lists to behave as
   expected (inferred from reading the code).
 
-| `LOG_LEVEL` | What the wrapper prints |
-| --- | --- |
-| unset | `warn` and `error` lines. |
-| `error` | `error` lines. |
-| `warn` | `warn` and `error` lines. |
-| `info` | Adds `info` lines, such as the plugin order and failover results. Use this level in production when the user wants the failover lines. |
-| `debug` | Adds `debug` lines: the dialect, failover steps, topology monitor start, connection tracker actions, and the `executeTime` and `connectTime` plugin output. Use this level to diagnose. |
-| `silly` | Everything, including `debug`. |
-| `verbose` | Behaves like `info`. The wrapper's own check lets `debug` lines through, but `winston` at `verbose` drops them. |
-| `notice`, `http`, `timing`, `silent` | The wrapper prints no lines. The main doc page lists these values (and omits `debug`), but they are not in the wrapper's own list, so its check refuses every message. |
+| `LOG_LEVEL`                          | What the wrapper prints                                                                                                                                                                 |
+| ------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| unset                                | `warn` and `error` lines.                                                                                                                                                               |
+| `error`                              | `error` lines.                                                                                                                                                                          |
+| `warn`                               | `warn` and `error` lines.                                                                                                                                                               |
+| `info`                               | Adds `info` lines, such as the plugin order and failover results. Use this level in production when the user wants the failover lines.                                                  |
+| `debug`                              | Adds `debug` lines: the dialect, failover steps, topology monitor start, connection tracker actions, and the `executeTime` and `connectTime` plugin output. Use this level to diagnose. |
+| `silly`                              | Everything, including `debug`.                                                                                                                                                          |
+| `verbose`                            | Behaves like `info`. The wrapper's own check lets `debug` lines through, but `winston` at `verbose` drops them.                                                                         |
+| `notice`, `http`, `timing`, `silent` | The wrapper prints no lines. The main doc page lists these values (and omits `debug`), but they are not in the wrapper's own list, so its check refuses every message.                  |
 
 The `AwsWrapperLogger` class is exported from the root entry point, but
 the `winston` logger inside it is a private static field. The 3.0.0 entry
@@ -4917,73 +4867,73 @@ recommend.
 
 ### 16.2 Key log lines
 
-| Message | Level | What it tells you |
-| --- | --- | --- |
-| `Plugins order has been rearranged. The following order is in effect: ...` | `info` | The plugin chain after sorting by weight (§4.3). It prints class-based names, not plugin codes: for example `AuroraInitialConnectionStrategy, Failover2Plugin, HostMonitoring2Plugin`. It is absent when `plugins` is exactly the default string, when only one plugin is listed, when `autoSortWrapperPluginOrder` is `false`, and when a configuration profile supplies the plugins. |
-| `Current dialect: <code>, <dialect class>, canUpdate: <true or false>` | `debug` | The database dialect in use (§8). `canUpdate: true` means the wrapper may still change it after it connects. Check this line first when topology, failover or Global Database behavior is wrong. |
-| `[clusterId: '<id>'] Start cluster topology monitoring for '<host>'.` | `debug` | A topology monitor started, and for which `clusterId`. Two lines with different ids for one cluster mean duplicate monitors; one id for two clusters means they share a cache. |
-| `Opened monitoring connection to: '<host>'.` | `debug` | The topology monitor reached a host. |
-| `The monitoring connection is connected to a writer: '<host>'.` | `info` | The topology monitor found the writer. |
-| `[Failover] Detected an error while executing a command: <message>` | `debug` | The failover plugin saw an error on a statement and is deciding whether to fail over. |
-| `failoverMode = <mode>` | `debug` | The failover mode `failover` or `failover2` resolved at connect time (§9). |
-| `Starting writer failover procedure.` / `Starting reader failover procedure.` | `debug` | Failover began. |
-| `Starting Global DB failover procedure.` | `info` | `gdbFailover` began. |
-| `[Failover] Connected to <host>` | `info` | Failover finished on this host. The application then receives `FailoverSuccessError` or `TransactionResolutionUnknownError`. |
-| `Internal failover task has timed out.` | `error` | `failover2` reader failover used up `failoverTimeoutMs` without a reader connection. The application then receives `FailoverFailedError`. |
-| `Unable to establish SQL connection and fetch topology.` (`failover2`), `The request to discover the new topology timed out or was unsuccessful.` (`gdbFailover`) | `error` | The wrapper could not read the new topology during failover. |
-| `Invalidating opened connections to host: '<host>' ...` | `debug` | `auroraConnectionTracker` is closing connections to a host whose role changed. |
-| `Setting the current client to '<id>' - '<host>'` | `debug` | `readWriteSplitting` switched the client's connection, after `setReadOnly`. |
-| `A reader instance was requested via setReadOnly, but there are no readers in the host list. The current writer will be used as a fallback: '<host>'` | `warn` | `setReadOnly(true)` stayed on the writer because the topology lists no readers. |
-| `Failed to switch to a reader; the current writer will be used as a fallback: '<host>'` | `warn` | A reader connection failed, so reads run on the writer. |
-| `Token-based authentication requires the 'mysql_clear_password' authentication plugin, ...` | `warn` | MySQL with `iam`, `federatedAuth` or `okta` and without `ssl`. The connection will fail. |
-| `An error occurred while attempting to obtain the writer id because the query was invalid. Please ensure you are connecting to an Aurora or RDS DB cluster. ...` | `error` | A topology plugin is running against a database without cluster topology, often the default plugin list on an RDS instance or a community server. |
-| `The connection configuration property 'mysqlQueryTimeout' is deprecated since version 1.1.0. ...` | `warn` | Replace `mysqlQueryTimeout` with `wrapperQueryTimeout`. |
-| `[bgdId: '<id>'] Blue/Green Deployments aren't supported by the current database dialect: <dialect>.` | `warn` | The `bg` plugin is loaded on a dialect without Blue/Green support (§5.16). |
+| Message                                                                                                                                                           | Level   | What it tells you                                                                                                                                                                                                                                                                                                                                                                      |
+| ----------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Plugins order has been rearranged. The following order is in effect: ...`                                                                                        | `info`  | The plugin chain after sorting by weight (§4.3). It prints class-based names, not plugin codes: for example `AuroraInitialConnectionStrategy, Failover2Plugin, HostMonitoring2Plugin`. It is absent when `plugins` is exactly the default string, when only one plugin is listed, when `autoSortWrapperPluginOrder` is `false`, and when a configuration profile supplies the plugins. |
+| `Current dialect: <code>, <dialect class>, canUpdate: <true or false>`                                                                                            | `debug` | The database dialect in use (§8). `canUpdate: true` means the wrapper may still change it after it connects. Check this line first when topology, failover or Global Database behavior is wrong.                                                                                                                                                                                       |
+| `[clusterId: '<id>'] Start cluster topology monitoring for '<host>'.`                                                                                             | `debug` | A topology monitor started, and for which `clusterId`. Two lines with different ids for one cluster mean duplicate monitors; one id for two clusters means they share a cache.                                                                                                                                                                                                         |
+| `Opened monitoring connection to: '<host>'.`                                                                                                                      | `debug` | The topology monitor reached a host.                                                                                                                                                                                                                                                                                                                                                   |
+| `The monitoring connection is connected to a writer: '<host>'.`                                                                                                   | `info`  | The topology monitor found the writer.                                                                                                                                                                                                                                                                                                                                                 |
+| `[Failover] Detected an error while executing a command: <message>`                                                                                               | `debug` | The failover plugin saw an error on a statement and is deciding whether to fail over.                                                                                                                                                                                                                                                                                                  |
+| `failoverMode = <mode>`                                                                                                                                           | `debug` | The failover mode `failover` or `failover2` resolved at connect time (§9).                                                                                                                                                                                                                                                                                                             |
+| `Starting writer failover procedure.` / `Starting reader failover procedure.`                                                                                     | `debug` | Failover began.                                                                                                                                                                                                                                                                                                                                                                        |
+| `Starting Global DB failover procedure.`                                                                                                                          | `info`  | `gdbFailover` began.                                                                                                                                                                                                                                                                                                                                                                   |
+| `[Failover] Connected to <host>`                                                                                                                                  | `info`  | Failover finished on this host. The application then receives `FailoverSuccessError` or `TransactionResolutionUnknownError`.                                                                                                                                                                                                                                                           |
+| `Internal failover task has timed out.`                                                                                                                           | `error` | `failover2` reader failover used up `failoverTimeoutMs` without a reader connection. The application then receives `FailoverFailedError`.                                                                                                                                                                                                                                              |
+| `Unable to establish SQL connection and fetch topology.` (`failover2`), `The request to discover the new topology timed out or was unsuccessful.` (`gdbFailover`) | `error` | The wrapper could not read the new topology during failover.                                                                                                                                                                                                                                                                                                                           |
+| `Invalidating opened connections to host: '<host>' ...`                                                                                                           | `debug` | `auroraConnectionTracker` is closing connections to a host whose role changed.                                                                                                                                                                                                                                                                                                         |
+| `Setting the current client to '<id>' - '<host>'`                                                                                                                 | `debug` | `readWriteSplitting` switched the client's connection, after `setReadOnly`.                                                                                                                                                                                                                                                                                                            |
+| `A reader instance was requested via setReadOnly, but there are no readers in the host list. The current writer will be used as a fallback: '<host>'`             | `warn`  | `setReadOnly(true)` stayed on the writer because the topology lists no readers.                                                                                                                                                                                                                                                                                                        |
+| `Failed to switch to a reader; the current writer will be used as a fallback: '<host>'`                                                                           | `warn`  | A reader connection failed, so reads run on the writer.                                                                                                                                                                                                                                                                                                                                |
+| `Token-based authentication requires the 'mysql_clear_password' authentication plugin, ...`                                                                       | `warn`  | MySQL with `iam`, `federatedAuth` or `okta` and without `ssl`. The connection will fail.                                                                                                                                                                                                                                                                                               |
+| `An error occurred while attempting to obtain the writer id because the query was invalid. Please ensure you are connecting to an Aurora or RDS DB cluster. ...`  | `error` | A topology plugin is running against a database without cluster topology, often the default plugin list on an RDS instance or a community server.                                                                                                                                                                                                                                      |
+| `The connection configuration property 'mysqlQueryTimeout' is deprecated since version 1.1.0. ...`                                                                | `warn`  | Replace `mysqlQueryTimeout` with `wrapperQueryTimeout`.                                                                                                                                                                                                                                                                                                                                |
+| `[bgdId: '<id>'] Blue/Green Deployments aren't supported by the current database dialect: <dialect>.`                                                             | `warn`  | The `bg` plugin is loaded on a dialect without Blue/Green support (§5.16).                                                                                                                                                                                                                                                                                                             |
 
 ### 16.3 Common failure patterns
 
-| Symptom | Likely cause | Fix |
-| --- | --- | --- |
-| `Unknown plugin code: '<code>'` from the client | A misspelled or wrong-case code, or a name from an old doc page such as `auroraStaleDns` | Use the exact camelCase codes in §5 (`failover2`, `efm2`, `staleDns`, `secretsManager`). |
-| `Unknown dialect code: '<code>'.` | A `dialect` value that is not a code in §8, or `"custom"` | Use a string code such as `"aurora-pg"`. For a custom dialect, pass the object as `customDatabaseDialect`. |
-| `Configuration profile '<name>' not found.` | A wrong `profileName`, or a custom profile that was never registered | Use a preset name from §11, or remove `profileName`. |
-| `Invalid value '<v>' for property '<name>'. Allowed values: ...` | A value outside the allowed list, for example for `monitoringConnectionPriority`, `activeHomeFailoverMode` or `inactiveHomeFailoverMode` | Use a listed value (§9 for the Global Database modes). |
-| `The plugin could not be imported due to error '...'. Please ensure the required dependencies have been installed. Plugin: '...'`, or a module-not-found error that names an `@aws-sdk/*`, `axios` or cookie package | An optional peer package that the plugin needs is not installed. npm does not install them with the wrapper. | Install the packages listed for the plugin (§3.1, §5). |
-| `SyntaxError: The requested module 'aws-advanced-nodejs-wrapper/pg' does not provide an export named 'AwsPoolConfig'` (or `/mysql`) | The import comes from the pool guide, which uses the wrong entry point | Import `AwsPoolConfig` from `aws-advanced-nodejs-wrapper`. |
-| `ERR_PACKAGE_PATH_NOT_EXPORTED` for a path under `aws-advanced-nodejs-wrapper/dist/...` | A deep import, often copied from the Prisma sample adapter | Import from `/pg`, `/mysql` or the root entry point only. |
-| An import of `ConfigurationProfileBuilder`, `DriverConfigurationProfiles`, a `*PluginFactory` class or `DatabaseDialectCodes` fails | The docs show these classes, but no entry point exports them | Use preset names through `profileName`, string dialect codes, and plugin codes in `plugins`. |
-| TypeScript rejects a key such as `monitoring_wrapperConnectTimeout` | The 3.0.0 config types do not declare prefixed keys | Spread the prefixed keys from a separate object (§6.12). |
-| No wrapper log lines at all | `LOG_LEVEL` unset (only `warn` and `error` print), set to a value the wrapper does not know (`notice`, `http`, `timing`), or set in code after the wrapper was imported | Set `LOG_LEVEL=debug` in the environment or `.env` (§16.1). |
-| `debug` lines missing with `LOG_LEVEL=verbose` | `winston` drops `debug` at `verbose` | Use `debug`. |
-| MySQL statements fail after 20 seconds with "Client query task timed out" (`InternalQueryTimeoutError`) | The wrapper's MySQL query timer, `wrapperQueryTimeout`, default 20000 ms | Raise `wrapperQueryTimeout` above the longest statement. Do not set 0 (§15.3). |
-| MySQL code that checks `error.code` stops matching | Driver errors arrive as `AwsWrapperError` with the `mysql2` error in `cause` | Read the code from `error.cause` (§15.3). |
-| `UnsupportedMethodError: Keep alive configuration is not supported for MySQL2.` | A `keepAlive` key in `wrapperKeepAliveProperties` on MySQL, even `false`; or a configuration preset on MySQL, because every preset sets one | Remove the key. Do not use presets on MySQL. |
-| `UnsupportedMethodError` from `setAutoCommit` or `setCatalog` on PostgreSQL, or from `setSchema` on MySQL | The method is not supported by that client | Use `setSchema` on PostgreSQL, `setCatalog` on MySQL (§15.2, §15.3). |
-| MySQL with `iam`, `federatedAuth` or `okta`: login fails, and a warning mentions `mysql_clear_password` | `ssl` not set, so the wrapper did not turn on `enableCleartextPlugin` | Set `ssl`. With a MySQL pool, also set `enableCleartextPlugin: true` (§15.4). |
-| `user is null or empty` with `iam` | `user` missing from the config | Set `user` to the IAM database user. |
-| `Configuration parameter 'secretId' is required.` or `Was not able to either fetch or read the database credentials from AWS Secrets Manager ...` | `secretId` missing or wrong; `secretRegion` missing for a secret name that is not an ARN; missing AWS permissions | Set `secretId` and `secretRegion` (or use the ARN). The Secrets Manager client uses the AWS SDK default credential chain; `awsProfile` does not apply to it (§5.7). |
-| `Unable to fetch database credentials with the given username key and password key. ...` | The secret's JSON keys do not match `secretUsernameProperty` / `secretPasswordProperty` (defaults `username` and `password`), or the secret is nested JSON | Set the two properties to the secret's keys; use a flat JSON secret. |
-| `Unsupported host selection strategy '<s>' ...` | `leastConnections` without the internal pool, a misspelled strategy, or `fastestResponse` without the plugin | Use `random`, `roundRobin`, `leastConnections` (internal pool only) or `fastestResponse` (with `fastestResponseStrategy` and `readWriteSplitting`). |
-| `Unsupported host selector strategy: '<s>'. To use the fastest response strategy plugin, please ensure the property 'readerHostSelectorStrategy' is set to 'fastestResponse'.` | `fastestResponseStrategy` loaded, but the strategy is something else, or the doc typo `fastestReponse` | Set `readerHostSelectorStrategy: "fastestResponse"`. |
-| `setReadOnly(true)` but reads still run on the writer, with the "no readers in the host list" warning | The topology has no readers, or the host is a custom domain or IP without `clusterInstanceHostPattern` | Check the cluster has readers; set `clusterInstanceHostPattern` (§5.10). |
-| Invalid `clusterInstanceHostPattern` error mentioning the `?` placeholder | The pattern has no `?` | Write it as `?.<domain>`, for example `?.<cluster-id>.<region>.rds.amazonaws.com`. |
-| Failover reconnects to a host from another cluster, or topology mixes two clusters | Two clusters share the default `clusterId` (`"1"`). Since 3.0.0 the wrapper no longer derives it from the host. | Give each cluster its own `clusterId`, and use the same value on every connection to one cluster (§3.14). |
-| Several topology monitors for one cluster (more than one "Start cluster topology monitoring" line) | Connections to the same cluster use different `clusterId` values | Use one value per cluster. |
-| The application discards the client after every error and loses failover | The client was closed on `FailoverSuccessError` or `TransactionResolutionUnknownError` | Keep the client: it already holds the new connection. Re-apply session settings and retry (§3.2). |
-| `Cannot execute statement in a READ ONLY transaction.` on an idle client after a failover | An idle plain client still points at the old writer, now a reader | Keep `auroraConnectionTracker` in the list for plain clients. The tracker closes those connections, and the error becomes a closed-connection error such as `Can't add new command when connection is in closed state`. |
-| Failover never happens through an RDS Proxy endpoint | `failover` and `failover2` turn themselves off for RDS Proxy hosts | Expected. Leave failover plugins out with RDS Proxy; also leave out `efm` and `efm2` (§17.2). |
-| Failover on an RDS Multi-AZ DB cluster fails with `FailoverFailedError` "The new writer was identified to be '...', but querying the instance for its role returned a reader." | The known issue on the Multi-AZ page: stale topology names the wrong writer | Retry with a new client; see §13.4 for the Multi-AZ notes. |
-| `Error obtaining host list: ... Provided database might not be a Multi-AZ RDS PostgreSQL database cluster.` | `rds-multi-az-pg` dialect on a cluster without topology information | Use RDS for PostgreSQL 13.12, 14.9, 15.4 or later (revision R3), and run `CREATE EXTENSION rds_tools;`. |
-| `The 'globalClusterInstanceHostPatterns' property is required for Global Aurora Databases.` | A global dialect without the per-region patterns | Set `globalClusterInstanceHostPatterns`, one pattern per region (§12.4). |
-| `The 'failoverHomeRegion' property is required when connecting to a Global Aurora Database without a region in the URL.` | `gdbFailover` with the global writer endpoint, an IP or a custom domain | Set `failoverHomeRegion`. |
-| `The home region '<r>' must be included in the accessible regions '<list>'. ...` | `gdbAccessibleRegions` leaves out the home region | Add the home region to the list. |
-| `Unsupported dialect '<d>' encountered. ... compatible with the Limitless Connection Plugin.` | `limitless` on anything other than Aurora PostgreSQL Limitless | Remove `limitless`, or connect to the shard group endpoint of an Aurora PostgreSQL Limitless database. |
-| The process does not exit after the work is done | `PluginManager.releaseResources()` was not called, so the shared monitors keep running | Add the shutdown calls (§15.8). |
-| Connections from one pool client close when another pool client ends | `pool.end()` clears the pool cache that all pool clients share | Call `pool.end()` once, at shutdown (§15.4). |
-| The application waits forever on `pool.query()` | It already holds `maxConnections` connections from `connect()` or `getConnection()` | Release connections before calling `pool.query()`, or raise `maxConnections`. |
-| A pooled connection is handed to a user whose password was wrong | The internal pool key is host URL and user, without the password; a custom `InternalPoolMapping` without the user name shares pools across users | Expected pool behavior per the docs. Keep the user in the pool key; call `provider.releaseResources()` to clear the pools. |
-| Callback-style code fails, or its callback never runs | Callback APIs are not supported | Use `await` with the promise APIs. |
-| Settings such as `blue_green_monitoring_wrapperConnectTimeout` or `frt_*` keys have no effect | In 3.0.0 the `bg` plugin deletes `blue_green_monitoring_` keys without applying them, and the `frt_` prefix is not read anywhere | For `efm`, `efm2` and `fastestResponseStrategy` monitoring connections use the `monitoring_` prefix. The `bg` monitor uses the main timeouts, 10000 ms each when unset. |
+| Symptom                                                                                                                                                                                                              | Likely cause                                                                                                                                                            | Fix                                                                                                                                                                                                                     |
+| -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Unknown plugin code: '<code>'` from the client                                                                                                                                                                      | A misspelled or wrong-case code, or a name from an old doc page such as `auroraStaleDns`                                                                                | Use the exact camelCase codes in §5 (`failover2`, `efm2`, `staleDns`, `secretsManager`).                                                                                                                                |
+| `Unknown dialect code: '<code>'.`                                                                                                                                                                                    | A `dialect` value that is not a code in §8, or `"custom"`                                                                                                               | Use a string code such as `"aurora-pg"`. For a custom dialect, pass the object as `customDatabaseDialect`.                                                                                                              |
+| `Configuration profile '<name>' not found.`                                                                                                                                                                          | A wrong `profileName`, or a custom profile that was never registered                                                                                                    | Use a preset name from §11, or remove `profileName`.                                                                                                                                                                    |
+| `Invalid value '<v>' for property '<name>'. Allowed values: ...`                                                                                                                                                     | A value outside the allowed list, for example for `monitoringConnectionPriority`, `activeHomeFailoverMode` or `inactiveHomeFailoverMode`                                | Use a listed value (§9 for the Global Database modes).                                                                                                                                                                  |
+| `The plugin could not be imported due to error '...'. Please ensure the required dependencies have been installed. Plugin: '...'`, or a module-not-found error that names an `@aws-sdk/*`, `axios` or cookie package | An optional peer package that the plugin needs is not installed. npm does not install them with the wrapper.                                                            | Install the packages listed for the plugin (§3.1, §5).                                                                                                                                                                  |
+| `SyntaxError: The requested module 'aws-advanced-nodejs-wrapper/pg' does not provide an export named 'AwsPoolConfig'` (or `/mysql`)                                                                                  | The import comes from the pool guide, which uses the wrong entry point                                                                                                  | Import `AwsPoolConfig` from `aws-advanced-nodejs-wrapper`.                                                                                                                                                              |
+| `ERR_PACKAGE_PATH_NOT_EXPORTED` for a path under `aws-advanced-nodejs-wrapper/dist/...`                                                                                                                              | A deep import, often copied from the Prisma sample adapter                                                                                                              | Import from `/pg`, `/mysql` or the root entry point only.                                                                                                                                                               |
+| An import of `ConfigurationProfileBuilder`, `DriverConfigurationProfiles`, a `*PluginFactory` class or `DatabaseDialectCodes` fails                                                                                  | The docs show these classes, but no entry point exports them                                                                                                            | Use preset names through `profileName`, string dialect codes, and plugin codes in `plugins`.                                                                                                                            |
+| TypeScript rejects a key such as `monitoring_wrapperConnectTimeout`                                                                                                                                                  | The 3.0.0 config types do not declare prefixed keys                                                                                                                     | Spread the prefixed keys from a separate object (§6.12).                                                                                                                                                                |
+| No wrapper log lines at all                                                                                                                                                                                          | `LOG_LEVEL` unset (only `warn` and `error` print), set to a value the wrapper does not know (`notice`, `http`, `timing`), or set in code after the wrapper was imported | Set `LOG_LEVEL=debug` in the environment or `.env` (§16.1).                                                                                                                                                             |
+| `debug` lines missing with `LOG_LEVEL=verbose`                                                                                                                                                                       | `winston` drops `debug` at `verbose`                                                                                                                                    | Use `debug`.                                                                                                                                                                                                            |
+| MySQL statements fail after 20 seconds with "Client query task timed out" (`InternalQueryTimeoutError`)                                                                                                              | The wrapper's MySQL query timer, `wrapperQueryTimeout`, default 20000 ms                                                                                                | Raise `wrapperQueryTimeout` above the longest statement. Do not set 0 (§15.3).                                                                                                                                          |
+| MySQL code that checks `error.code` stops matching                                                                                                                                                                   | Driver errors arrive as `AwsWrapperError` with the `mysql2` error in `cause`                                                                                            | Read the code from `error.cause` (§15.3).                                                                                                                                                                               |
+| `UnsupportedMethodError: Keep alive configuration is not supported for MySQL2.`                                                                                                                                      | A `keepAlive` key in `wrapperKeepAliveProperties` on MySQL, even `false`; or a configuration preset on MySQL, because every preset sets one                             | Remove the key. Do not use presets on MySQL.                                                                                                                                                                            |
+| `UnsupportedMethodError` from `setAutoCommit` or `setCatalog` on PostgreSQL, or from `setSchema` on MySQL                                                                                                            | The method is not supported by that client                                                                                                                              | Use `setSchema` on PostgreSQL, `setCatalog` on MySQL (§15.2, §15.3).                                                                                                                                                    |
+| MySQL with `iam`, `federatedAuth` or `okta`: login fails, and a warning mentions `mysql_clear_password`                                                                                                              | `ssl` not set, so the wrapper did not turn on `enableCleartextPlugin`                                                                                                   | Set `ssl`. With a MySQL pool, also set `enableCleartextPlugin: true` (§15.4).                                                                                                                                           |
+| `user is null or empty` with `iam`                                                                                                                                                                                   | `user` missing from the config                                                                                                                                          | Set `user` to the IAM database user.                                                                                                                                                                                    |
+| `Configuration parameter 'secretId' is required.` or `Was not able to either fetch or read the database credentials from AWS Secrets Manager ...`                                                                    | `secretId` missing or wrong; `secretRegion` missing for a secret name that is not an ARN; missing AWS permissions                                                       | Set `secretId` and `secretRegion` (or use the ARN). The Secrets Manager client uses the AWS SDK default credential chain; `awsProfile` does not apply to it (§5.7).                                                     |
+| `Unable to fetch database credentials with the given username key and password key. ...`                                                                                                                             | The secret's JSON keys do not match `secretUsernameProperty` / `secretPasswordProperty` (defaults `username` and `password`), or the secret is nested JSON              | Set the two properties to the secret's keys; use a flat JSON secret.                                                                                                                                                    |
+| `Unsupported host selection strategy '<s>' ...`                                                                                                                                                                      | `leastConnections` without the internal pool, a misspelled strategy, or `fastestResponse` without the plugin                                                            | Use `random`, `roundRobin`, `leastConnections` (internal pool only) or `fastestResponse` (with `fastestResponseStrategy` and `readWriteSplitting`).                                                                     |
+| `Unsupported host selector strategy: '<s>'. To use the fastest response strategy plugin, please ensure the property 'readerHostSelectorStrategy' is set to 'fastestResponse'.`                                       | `fastestResponseStrategy` loaded, but the strategy is something else, or the doc typo `fastestReponse`                                                                  | Set `readerHostSelectorStrategy: "fastestResponse"`.                                                                                                                                                                    |
+| `setReadOnly(true)` but reads still run on the writer, with the "no readers in the host list" warning                                                                                                                | The topology has no readers, or the host is a custom domain or IP without `clusterInstanceHostPattern`                                                                  | Check the cluster has readers; set `clusterInstanceHostPattern` (§5.10).                                                                                                                                                |
+| Invalid `clusterInstanceHostPattern` error mentioning the `?` placeholder                                                                                                                                            | The pattern has no `?`                                                                                                                                                  | Write it as `?.<domain>`, for example `?.<cluster-id>.<region>.rds.amazonaws.com`.                                                                                                                                      |
+| Failover reconnects to a host from another cluster, or topology mixes two clusters                                                                                                                                   | Two clusters share the default `clusterId` (`"1"`). Since 3.0.0 the wrapper no longer derives it from the host.                                                         | Give each cluster its own `clusterId`, and use the same value on every connection to one cluster (§3.14).                                                                                                               |
+| Several topology monitors for one cluster (more than one "Start cluster topology monitoring" line)                                                                                                                   | Connections to the same cluster use different `clusterId` values                                                                                                        | Use one value per cluster.                                                                                                                                                                                              |
+| The application discards the client after every error and loses failover                                                                                                                                             | The client was closed on `FailoverSuccessError` or `TransactionResolutionUnknownError`                                                                                  | Keep the client: it already holds the new connection. Re-apply session settings and retry (§3.2).                                                                                                                       |
+| `Cannot execute statement in a READ ONLY transaction.` on an idle client after a failover                                                                                                                            | An idle plain client still points at the old writer, now a reader                                                                                                       | Keep `auroraConnectionTracker` in the list for plain clients. The tracker closes those connections, and the error becomes a closed-connection error such as `Can't add new command when connection is in closed state`. |
+| Failover never happens through an RDS Proxy endpoint                                                                                                                                                                 | `failover` and `failover2` turn themselves off for RDS Proxy hosts                                                                                                      | Expected. Leave failover plugins out with RDS Proxy; also leave out `efm` and `efm2` (§17.2).                                                                                                                           |
+| Failover on an RDS Multi-AZ DB cluster fails with `FailoverFailedError` "The new writer was identified to be '...', but querying the instance for its role returned a reader."                                       | The known issue on the Multi-AZ page: stale topology names the wrong writer                                                                                             | Retry with a new client; see §13.4 for the Multi-AZ notes.                                                                                                                                                              |
+| `Error obtaining host list: ... Provided database might not be a Multi-AZ RDS PostgreSQL database cluster.`                                                                                                          | `rds-multi-az-pg` dialect on a cluster without topology information                                                                                                     | Use RDS for PostgreSQL 13.12, 14.9, 15.4 or later (revision R3), and run `CREATE EXTENSION rds_tools;`.                                                                                                                 |
+| `The 'globalClusterInstanceHostPatterns' property is required for Global Aurora Databases.`                                                                                                                          | A global dialect without the per-region patterns                                                                                                                        | Set `globalClusterInstanceHostPatterns`, one pattern per region (§12.4).                                                                                                                                                |
+| `The 'failoverHomeRegion' property is required when connecting to a Global Aurora Database without a region in the URL.`                                                                                             | `gdbFailover` with the global writer endpoint, an IP or a custom domain                                                                                                 | Set `failoverHomeRegion`.                                                                                                                                                                                               |
+| `The home region '<r>' must be included in the accessible regions '<list>'. ...`                                                                                                                                     | `gdbAccessibleRegions` leaves out the home region                                                                                                                       | Add the home region to the list.                                                                                                                                                                                        |
+| `Unsupported dialect '<d>' encountered. ... compatible with the Limitless Connection Plugin.`                                                                                                                        | `limitless` on anything other than Aurora PostgreSQL Limitless                                                                                                          | Remove `limitless`, or connect to the shard group endpoint of an Aurora PostgreSQL Limitless database.                                                                                                                  |
+| The process does not exit after the work is done                                                                                                                                                                     | `PluginManager.releaseResources()` was not called, so the shared monitors keep running                                                                                  | Add the shutdown calls (§15.8).                                                                                                                                                                                         |
+| Connections from one pool client close when another pool client ends                                                                                                                                                 | `pool.end()` clears the pool cache that all pool clients share                                                                                                          | Call `pool.end()` once, at shutdown (§15.4).                                                                                                                                                                            |
+| The application waits forever on `pool.query()`                                                                                                                                                                      | It already holds `maxConnections` connections from `connect()` or `getConnection()`                                                                                     | Release connections before calling `pool.query()`, or raise `maxConnections`.                                                                                                                                           |
+| A pooled connection is handed to a user whose password was wrong                                                                                                                                                     | The internal pool key is host URL and user, without the password; a custom `InternalPoolMapping` without the user name shares pools across users                        | Expected pool behavior per the docs. Keep the user in the pool key; call `provider.releaseResources()` to clear the pools.                                                                                              |
+| Callback-style code fails, or its callback never runs                                                                                                                                                                | Callback APIs are not supported                                                                                                                                         | Use `await` with the promise APIs.                                                                                                                                                                                      |
+| Settings such as `blue_green_monitoring_wrapperConnectTimeout` or `frt_*` keys have no effect                                                                                                                        | In 3.0.0 the `bg` plugin deletes `blue_green_monitoring_` keys without applying them, and the `frt_` prefix is not read anywhere                                        | For `efm`, `efm2` and `fastestResponseStrategy` monitoring connections use the `monitoring_` prefix. The `bg` monitor uses the main timeouts, 10000 ms each when unset.                                                 |
 
 ### 16.4 When to open an issue
 
@@ -5307,55 +5257,55 @@ benefit.
 
 Flag these whenever they appear in a configuration the user shows you.
 
-| Anti-pattern | Why it is a problem | Recommended fix |
-| --- | --- | --- |
-| `plugins` left unset on an RDS instance or a community server | The default list (`initialConnection,auroraConnectionTracker,failover2,efm2`) assumes cluster topology. The docs say failover and EFM must be disabled on plain RDS databases. | Set `plugins` to what the database supports, for example `"efm2"` or `""`. |
-| Two failover plugins (`failover`, `failover2`, `gdbFailover`), `efm` with `efm2`, or both read/write splitting plugins | The docs say never to combine them. The wrapper does not check. | Keep one from each family. |
-| Two auth plugins in one list | The docs mark every pair of `iam`, `secretsManager`, `federatedAuth` and `okta` as incompatible. | Keep one. |
-| `staleDns` together with a failover plugin or `initialConnection` | Failover already contains the stale DNS logic, and the matrix marks `staleDns` incompatible with `initialConnection`. | Remove `staleDns`. |
-| Several clusters in one process with the default `clusterId` | Since 3.0.0 the id is no longer derived from the host. The clusters share one topology cache and one monitor, and failover can pick a host from the wrong cluster. | A distinct `clusterId` per cluster, the same on every connection to one cluster. |
-| One cluster reached through several hosts with different `clusterId` values | Duplicate caches and monitors for one cluster. | One `clusterId` per cluster. |
-| IP address or custom domain without `clusterInstanceHostPattern` | The wrapper cannot build instance host names. | Set `clusterInstanceHostPattern` with a `?` placeholder. |
-| Instance endpoints for the writer connection | The docs advise against them: an instance can change role in a failover, and the wrapper always connects to the named instance. | Use the cluster writer endpoint. |
-| Closing the client on every error | After `FailoverSuccessError` the client already holds the new connection; closing it discards fast failover. | Check the error class and reuse the client (§3.2). |
-| Session settings made with SQL and not restored after failover | Only settings made through the client methods are carried to a new connection. | Use `setReadOnly`, `setTransactionIsolation`, `setSchema` / `setCatalog`, `setAutoCommit`, or re-apply the SQL after `FailoverSuccessError`. |
-| Callback-style API calls | Not supported, for clients or pools. | Use the promise APIs. |
-| `AwsPoolConfig` imported from `/pg` or `/mysql`; imports from `dist/...` | Those entry points do not export it, and Node.js refuses subpaths outside the exports map. | Import from the root entry point. |
-| Imports of `ConfigurationProfileBuilder`, `DriverConfigurationProfiles`, `*PluginFactory`, `DatabaseDialectCodes` or `SessionStateTransferHandler` | No entry point exports them. | Use `profileName`, string dialect codes and plugin codes. |
-| `AwsPGClient` in new code | Deprecated alias, scheduled for removal in the next major release. | `AwsPgClient`. |
-| `DialectCodes.AURORA_MYSQL` from the dialect page | That class does not exist. | `dialect: "aurora-mysql"`. |
-| `LOG_LEVEL` set to `notice`, `http`, `timing` or `verbose` | The first three hide all wrapper output; `verbose` hides the `debug` lines. | `debug` to diagnose; `info` or `warn` in production. |
-| `LOG_LEVEL` assigned in application code | The wrapper reads it once, when its module loads. | Set it in the environment or `.env`. |
-| `LOG_LEVEL=debug` or `silly` left on in production, or `connectTime` / `executeTime` in a production list | Large log volume. The topology lines name hosts. | `info` or `warn` in production; timing plugins only while diagnosing. |
-| `wrapperQueryTimeout: 0` on MySQL | The wrapper's MySQL timer then fires at once, so the source suggests every call fails. | Use a large value. |
-| `wrapperQueryTimeout` left at the MySQL default for long reports | Every MySQL call over 20000 ms fails with `InternalQueryTimeoutError`. | Raise it per client for long work. |
-| `wrapperKeepAliveProperties` with any `keepAlive` key on MySQL | Throws `UnsupportedMethodError`. | Remove it; use `efm2` and timeouts (§17.2). |
-| A configuration preset on MySQL | Every preset sets a `keepAlive` key. | Explicit configuration (§3.4). |
-| `profileName` together with `plugins` | The profile's plugin list wins; `plugins` is ignored. | Use one or the other. |
-| Expecting a D, E or F preset to provide an internal pool | The source suggests the pool is not applied (§17.6). | Configure `connectionProvider` explicitly (§3.7). |
-| `leastConnections` without the internal pool; `fastestResponse` without `fastestResponseStrategy` | Connect throws an unsupported strategy error. | Add the internal pool or the plugin, or pick another strategy (§17.5). |
-| `frt_` keys, or `blue_green_monitoring_` keys, expected to tune monitoring connections | In 3.0.0 neither prefix is applied. | `monitoring_` for `efm`, `efm2` and `fastestResponseStrategy`; the main timeouts for `bg`. |
-| `efm` or `efm2` with an RDS Proxy endpoint | The docs advise against it: the proxy routes requests to changing instances, which can cause false detections. | Leave EFM out with RDS Proxy. |
-| EFM on a cluster endpoint without `initialConnection` | The endpoint matrix marks this combination as requiring `initialConnection`. | Keep `initialConnection` in the list. |
-| Monitoring connections without a connect timeout | The docs warn that a monitor may wait forever to connect to an unavailable instance. | Set `monitoring_wrapperConnectTimeout` to a non-zero value. |
-| A very short `failoverTimeoutMs` | All hosts are briefly unavailable during a failover, so an aggressive timeout can make failover fail. | Start from the docs' normal profile (180000) or aggressive profile (30000), not lower. |
-| `iam`, `federatedAuth` or `okta` on MySQL without `ssl` | The wrapper does not enable the cleartext plugin, and login fails. | Set `ssl`. |
-| `enableCleartextPlugin: true` without `ssl` | The token is sent unencrypted. | Set `ssl` as well. |
-| `awsProfile` or `customAwsCredentialProviderHandler` used to pick credentials for `secretsManager` | The source builds the Secrets Manager client with only a region and endpoint. | Configure the AWS SDK default chain (for example the `AWS_PROFILE` environment variable). |
-| Internal pool with an `InternalPoolMapping` that leaves out the user | Pools are shared across users without re-checking credentials. | Include the user in the pool key. |
-| Internal pool together with `AwsPgPoolClient` or `AwsMySQLPoolClient` | The docs say this adds overhead without benefit. | One pool type. |
-| Ending one pool client while others still run | `pool.end()` clears the pool cache all pool clients share. | End pools once, at shutdown. |
-| `PluginManager.releaseResources()` missing, or called per request | Missing: monitors keep the process alive. Per request: monitors stop while other requests use them. | Call it once at shutdown, before `pool.end()` or `provider.releaseResources()`. |
-| `readWriteSplitting` on a client that never calls `setReadOnly` | The plugin only acts on `setReadOnly`. | Remove the plugin, or call `setReadOnly` around read work. |
-| `readWriteSplitting` on a non-Aurora cluster or RDS Proxy | The plugin page says it is not supported on non-Aurora clusters; the matrix marks RDS Proxy not compatible. | Separate writer and reader clients. |
-| `limitless` with a failover, read/write splitting, `customEndpoint` or `auroraConnectionTracker` plugin | The cross-plugin matrix marks these incompatible. The Limitless page says failover and read/write splitting add overhead without value there. | `limitless` alone (plus an auth plugin if needed). |
-| Global Database without `globalClusterInstanceHostPatterns`, or with duplicate instance names across regions | The wrapper throws without the patterns, and the docs say instance names must be unique across regions. | Set the patterns; keep instance names unique. |
-| `gdbMonitoringConnectionPriority` naming a region outside `gdbAccessibleRegions` | The docs warn the monitoring connection may fail. | Keep the two parameters consistent. |
-| `endpointSubstitutionRole`, `verifyOpenedConnectionType` or `skipFailoverOnInterruptedThread` copied from the Global Database failover page | The first and third do not exist in the source; the second is defined but never read. | Remove them. |
-| `telemetrySubmitTopLevel` (capital L) from the telemetry page | The source reads `telemetrySubmitToplevel`. | Use the source spelling. |
-| `enableGreenHostReplacement` left unset when the user wants it off | The default is the string `"false"`, which JavaScript treats as true, so the source suggests the replacement is on. | Set `enableGreenHostReplacement: false` (the boolean) to turn it off. |
-| The Prisma sample adapter used as is in production | It drops query values, cuts `LIMIT` and `OFFSET`, and does not run transactions. | Complete the adapter first (§15.7). |
-| The `dev` plugin outside tests | It exists to raise simulated errors. | Load it only in tests. |
+| Anti-pattern                                                                                                                                       | Why it is a problem                                                                                                                                                            | Recommended fix                                                                                                                              |
+| -------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| `plugins` left unset on an RDS instance or a community server                                                                                      | The default list (`initialConnection,auroraConnectionTracker,failover2,efm2`) assumes cluster topology. The docs say failover and EFM must be disabled on plain RDS databases. | Set `plugins` to what the database supports, for example `"efm2"` or `""`.                                                                   |
+| Two failover plugins (`failover`, `failover2`, `gdbFailover`), `efm` with `efm2`, or both read/write splitting plugins                             | The docs say never to combine them. The wrapper does not check.                                                                                                                | Keep one from each family.                                                                                                                   |
+| Two auth plugins in one list                                                                                                                       | The docs mark every pair of `iam`, `secretsManager`, `federatedAuth` and `okta` as incompatible.                                                                               | Keep one.                                                                                                                                    |
+| `staleDns` together with a failover plugin or `initialConnection`                                                                                  | Failover already contains the stale DNS logic, and the matrix marks `staleDns` incompatible with `initialConnection`.                                                          | Remove `staleDns`.                                                                                                                           |
+| Several clusters in one process with the default `clusterId`                                                                                       | Since 3.0.0 the id is no longer derived from the host. The clusters share one topology cache and one monitor, and failover can pick a host from the wrong cluster.             | A distinct `clusterId` per cluster, the same on every connection to one cluster.                                                             |
+| One cluster reached through several hosts with different `clusterId` values                                                                        | Duplicate caches and monitors for one cluster.                                                                                                                                 | One `clusterId` per cluster.                                                                                                                 |
+| IP address or custom domain without `clusterInstanceHostPattern`                                                                                   | The wrapper cannot build instance host names.                                                                                                                                  | Set `clusterInstanceHostPattern` with a `?` placeholder.                                                                                     |
+| Instance endpoints for the writer connection                                                                                                       | The docs advise against them: an instance can change role in a failover, and the wrapper always connects to the named instance.                                                | Use the cluster writer endpoint.                                                                                                             |
+| Closing the client on every error                                                                                                                  | After `FailoverSuccessError` the client already holds the new connection; closing it discards fast failover.                                                                   | Check the error class and reuse the client (§3.2).                                                                                           |
+| Session settings made with SQL and not restored after failover                                                                                     | Only settings made through the client methods are carried to a new connection.                                                                                                 | Use `setReadOnly`, `setTransactionIsolation`, `setSchema` / `setCatalog`, `setAutoCommit`, or re-apply the SQL after `FailoverSuccessError`. |
+| Callback-style API calls                                                                                                                           | Not supported, for clients or pools.                                                                                                                                           | Use the promise APIs.                                                                                                                        |
+| `AwsPoolConfig` imported from `/pg` or `/mysql`; imports from `dist/...`                                                                           | Those entry points do not export it, and Node.js refuses subpaths outside the exports map.                                                                                     | Import from the root entry point.                                                                                                            |
+| Imports of `ConfigurationProfileBuilder`, `DriverConfigurationProfiles`, `*PluginFactory`, `DatabaseDialectCodes` or `SessionStateTransferHandler` | No entry point exports them.                                                                                                                                                   | Use `profileName`, string dialect codes and plugin codes.                                                                                    |
+| `AwsPGClient` in new code                                                                                                                          | Deprecated alias, scheduled for removal in the next major release.                                                                                                             | `AwsPgClient`.                                                                                                                               |
+| `DialectCodes.AURORA_MYSQL` from the dialect page                                                                                                  | That class does not exist.                                                                                                                                                     | `dialect: "aurora-mysql"`.                                                                                                                   |
+| `LOG_LEVEL` set to `notice`, `http`, `timing` or `verbose`                                                                                         | The first three hide all wrapper output; `verbose` hides the `debug` lines.                                                                                                    | `debug` to diagnose; `info` or `warn` in production.                                                                                         |
+| `LOG_LEVEL` assigned in application code                                                                                                           | The wrapper reads it once, when its module loads.                                                                                                                              | Set it in the environment or `.env`.                                                                                                         |
+| `LOG_LEVEL=debug` or `silly` left on in production, or `connectTime` / `executeTime` in a production list                                          | Large log volume. The topology lines name hosts.                                                                                                                               | `info` or `warn` in production; timing plugins only while diagnosing.                                                                        |
+| `wrapperQueryTimeout: 0` on MySQL                                                                                                                  | The wrapper's MySQL timer then fires at once, so the source suggests every call fails.                                                                                         | Use a large value.                                                                                                                           |
+| `wrapperQueryTimeout` left at the MySQL default for long reports                                                                                   | Every MySQL call over 20000 ms fails with `InternalQueryTimeoutError`.                                                                                                         | Raise it per client for long work.                                                                                                           |
+| `wrapperKeepAliveProperties` with any `keepAlive` key on MySQL                                                                                     | Throws `UnsupportedMethodError`.                                                                                                                                               | Remove it; use `efm2` and timeouts (§17.2).                                                                                                  |
+| A configuration preset on MySQL                                                                                                                    | Every preset sets a `keepAlive` key.                                                                                                                                           | Explicit configuration (§3.4).                                                                                                               |
+| `profileName` together with `plugins`                                                                                                              | The profile's plugin list wins; `plugins` is ignored.                                                                                                                          | Use one or the other.                                                                                                                        |
+| Expecting a D, E or F preset to provide an internal pool                                                                                           | The source suggests the pool is not applied (§17.6).                                                                                                                           | Configure `connectionProvider` explicitly (§3.7).                                                                                            |
+| `leastConnections` without the internal pool; `fastestResponse` without `fastestResponseStrategy`                                                  | Connect throws an unsupported strategy error.                                                                                                                                  | Add the internal pool or the plugin, or pick another strategy (§17.5).                                                                       |
+| `frt_` keys, or `blue_green_monitoring_` keys, expected to tune monitoring connections                                                             | In 3.0.0 neither prefix is applied.                                                                                                                                            | `monitoring_` for `efm`, `efm2` and `fastestResponseStrategy`; the main timeouts for `bg`.                                                   |
+| `efm` or `efm2` with an RDS Proxy endpoint                                                                                                         | The docs advise against it: the proxy routes requests to changing instances, which can cause false detections.                                                                 | Leave EFM out with RDS Proxy.                                                                                                                |
+| EFM on a cluster endpoint without `initialConnection`                                                                                              | The endpoint matrix marks this combination as requiring `initialConnection`.                                                                                                   | Keep `initialConnection` in the list.                                                                                                        |
+| Monitoring connections without a connect timeout                                                                                                   | The docs warn that a monitor may wait forever to connect to an unavailable instance.                                                                                           | Set `monitoring_wrapperConnectTimeout` to a non-zero value.                                                                                  |
+| A very short `failoverTimeoutMs`                                                                                                                   | All hosts are briefly unavailable during a failover, so an aggressive timeout can make failover fail.                                                                          | Start from the docs' normal profile (180000) or aggressive profile (30000), not lower.                                                       |
+| `iam`, `federatedAuth` or `okta` on MySQL without `ssl`                                                                                            | The wrapper does not enable the cleartext plugin, and login fails.                                                                                                             | Set `ssl`.                                                                                                                                   |
+| `enableCleartextPlugin: true` without `ssl`                                                                                                        | The token is sent unencrypted.                                                                                                                                                 | Set `ssl` as well.                                                                                                                           |
+| `awsProfile` or `customAwsCredentialProviderHandler` used to pick credentials for `secretsManager`                                                 | The source builds the Secrets Manager client with only a region and endpoint.                                                                                                  | Configure the AWS SDK default chain (for example the `AWS_PROFILE` environment variable).                                                    |
+| Internal pool with an `InternalPoolMapping` that leaves out the user                                                                               | Pools are shared across users without re-checking credentials.                                                                                                                 | Include the user in the pool key.                                                                                                            |
+| Internal pool together with `AwsPgPoolClient` or `AwsMySQLPoolClient`                                                                              | The docs say this adds overhead without benefit.                                                                                                                               | One pool type.                                                                                                                               |
+| Ending one pool client while others still run                                                                                                      | `pool.end()` clears the pool cache all pool clients share.                                                                                                                     | End pools once, at shutdown.                                                                                                                 |
+| `PluginManager.releaseResources()` missing, or called per request                                                                                  | Missing: monitors keep the process alive. Per request: monitors stop while other requests use them.                                                                            | Call it once at shutdown, before `pool.end()` or `provider.releaseResources()`.                                                              |
+| `readWriteSplitting` on a client that never calls `setReadOnly`                                                                                    | The plugin only acts on `setReadOnly`.                                                                                                                                         | Remove the plugin, or call `setReadOnly` around read work.                                                                                   |
+| `readWriteSplitting` on a non-Aurora cluster or RDS Proxy                                                                                          | The plugin page says it is not supported on non-Aurora clusters; the matrix marks RDS Proxy not compatible.                                                                    | Separate writer and reader clients.                                                                                                          |
+| `limitless` with a failover, read/write splitting, `customEndpoint` or `auroraConnectionTracker` plugin                                            | The cross-plugin matrix marks these incompatible. The Limitless page says failover and read/write splitting add overhead without value there.                                  | `limitless` alone (plus an auth plugin if needed).                                                                                           |
+| Global Database without `globalClusterInstanceHostPatterns`, or with duplicate instance names across regions                                       | The wrapper throws without the patterns, and the docs say instance names must be unique across regions.                                                                        | Set the patterns; keep instance names unique.                                                                                                |
+| `gdbMonitoringConnectionPriority` naming a region outside `gdbAccessibleRegions`                                                                   | The docs warn the monitoring connection may fail.                                                                                                                              | Keep the two parameters consistent.                                                                                                          |
+| `endpointSubstitutionRole`, `verifyOpenedConnectionType` or `skipFailoverOnInterruptedThread` copied from the Global Database failover page        | The first and third do not exist in the source; the second is defined but never read.                                                                                          | Remove them.                                                                                                                                 |
+| `telemetrySubmitTopLevel` (capital L) from the telemetry page                                                                                      | The source reads `telemetrySubmitToplevel`.                                                                                                                                    | Use the source spelling.                                                                                                                     |
+| `enableGreenHostReplacement` left unset when the user wants it off                                                                                 | The default is the string `"false"`, which JavaScript treats as true, so the source suggests the replacement is on.                                                            | Set `enableGreenHostReplacement: false` (the boolean) to turn it off.                                                                        |
+| The Prisma sample adapter used as is in production                                                                                                 | It drops query values, cuts `LIMIT` and `OFFSET`, and does not run transactions.                                                                                               | Complete the adapter first (§15.7).                                                                                                          |
+| The `dev` plugin outside tests                                                                                                                     | It exists to raise simulated errors.                                                                                                                                           | Load it only in tests.                                                                                                                       |
 
 ---
 
@@ -5386,11 +5336,7 @@ requests.
 ```ts
 // db.ts
 import { AwsPgPoolClient } from "aws-advanced-nodejs-wrapper/pg";
-import {
-  AwsPoolConfig,
-  FailoverSuccessError,
-  PluginManager
-} from "aws-advanced-nodejs-wrapper";
+import { AwsPoolConfig, FailoverSuccessError, PluginManager } from "aws-advanced-nodejs-wrapper";
 
 export const pool = new AwsPgPoolClient(
   {
@@ -5516,11 +5462,7 @@ JavaScript, password in an environment variable.
 ```js
 // db.js ("type": "module" in package.json)
 import { AwsMySQLPoolClient } from "aws-advanced-nodejs-wrapper/mysql";
-import {
-  AwsPoolConfig,
-  FailoverSuccessError,
-  PluginManager
-} from "aws-advanced-nodejs-wrapper";
+import { AwsPoolConfig, FailoverSuccessError, PluginManager } from "aws-advanced-nodejs-wrapper";
 
 export const pool = new AwsMySQLPoolClient(
   {
@@ -5651,5 +5593,4 @@ parameter is defined in `common/lib/wrapper_property.ts`.
 
 ---
 
-*End of skill. Version baseline: 3.0.0 (August 2026).*
-
+_End of skill. Version baseline: 3.0.0 (August 2026)._

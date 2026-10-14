@@ -44,11 +44,11 @@ The file follows the [Agent Skills](https://agentskills.io) format. It is large:
 2. Add it to your AI tool:
    - **Tools that support Agent Skills** (Kiro, Cursor, Claude Code, GitHub Copilot in VS Code, and others): create a folder named `nodejs-wrapper-configuration-assistant` in one of the tool's skills directories, and save the file inside it as `SKILL.md`. The folder name must match the `name` field at the top of the file; otherwise the tool does not load the skill.
 
-     | Tool | Project skills directory | User skills directory |
-     |---|---|---|
-     | Kiro | `.kiro/skills/` | `~/.kiro/skills/` |
-     | Cursor | `.cursor/skills/`, `.agents/skills/`, or `.claude/skills/` | `~/.cursor/skills/`, `~/.agents/skills/`, or `~/.claude/skills/` |
-     | Claude Code | `.claude/skills/` | `~/.claude/skills/` |
+     | Tool                      | Project skills directory                                   | User skills directory                                             |
+     | ------------------------- | ---------------------------------------------------------- | ----------------------------------------------------------------- |
+     | Kiro                      | `.kiro/skills/`                                            | `~/.kiro/skills/`                                                 |
+     | Cursor                    | `.cursor/skills/`, `.agents/skills/`, or `.claude/skills/` | `~/.cursor/skills/`, `~/.agents/skills/`, or `~/.claude/skills/`  |
+     | Claude Code               | `.claude/skills/`                                          | `~/.claude/skills/`                                               |
      | GitHub Copilot in VS Code | `.github/skills/`, `.agents/skills/`, or `.claude/skills/` | `~/.copilot/skills/`, `~/.agents/skills/`, or `~/.claude/skills/` |
 
      For example, to add the skill to a project for Claude Code, Cursor, and VS Code at once:
@@ -63,6 +63,7 @@ The file follows the [Agent Skills](https://agentskills.io) format. It is large:
    - **ChatGPT custom GPT**: upload it as a knowledge file.
    - **Amazon Bedrock**: send the file as the system prompt of your `InvokeModel` or `Converse` request. Avoid attaching it to a Bedrock knowledge base: a knowledge base passes the model only the passages that match each question, so the skill's interview steps and rules (section 1 of the file) may be missing.
    - **Plain chat (ChatGPT, Claude, Gemini)**: paste it at the start of a new conversation, then ask your question.
+
 3. Ask the AI for help. It will interview you when it needs more details, or give you a configuration straight away if you ask it to skip the interview.
 
 ### Example prompts
