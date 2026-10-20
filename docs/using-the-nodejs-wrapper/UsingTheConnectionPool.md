@@ -45,7 +45,8 @@ const pool = mysql.createPool({
 With the `AwsMySQLPoolClient`, provide the configuration separately like so:
 
 ```typescript
-import { AwsMySQLPoolClient, AwsPoolConfig } from "aws-advanced-nodejs-wrapper/mysql";
+import { AwsPoolConfig } from "aws-advanced-nodejs-wrapper";
+import { AwsMySQLPoolClient } from "aws-advanced-nodejs-wrapper/mysql";
 
 const poolConfig = new AwsPoolConfig({
   maxConnections: 10,
@@ -99,7 +100,8 @@ console.log(rows[0]); // { 'NOW()': 2023-12-01T10:30:00.000Z }
 **AwsMySQLPoolClient:**
 
 ```typescript
-import { AwsMySQLPoolClient, AwsPoolConfig } from "aws-advanced-nodejs-wrapper/mysql";
+import { AwsPoolConfig } from "aws-advanced-nodejs-wrapper";
+import { AwsMySQLPoolClient } from "aws-advanced-nodejs-wrapper/mysql";
 
 const pool = new AwsMySQLPoolClient(
   {
@@ -188,7 +190,8 @@ const pool = new Pool({
 With the `AwsPgPoolClient`, provide the configuration separately like so:
 
 ```typescript
-import { AwsPgPoolClient, AwsPoolConfig } from "aws-advanced-nodejs-wrapper/pg";
+import { AwsPoolConfig } from "aws-advanced-nodejs-wrapper";
+import { AwsPgPoolClient } from "aws-advanced-nodejs-wrapper/pg";
 
 const poolConfig = new AwsPoolConfig({
   maxConnections: 10,
@@ -242,7 +245,8 @@ console.log(result.rows[0]); // { now: 2023-12-01T10:30:00.000Z }
 **AwsPgPoolClient:**
 
 ```typescript
-import { AwsPgPoolClient, AwsPoolConfig } from "aws-advanced-nodejs-wrapper/pg";
+import { AwsPoolConfig } from "aws-advanced-nodejs-wrapper";
+import { AwsPgPoolClient } from "aws-advanced-nodejs-wrapper/pg";
 
 const pool = new AwsPgPoolClient(
   {
@@ -380,7 +384,8 @@ Ensure your application does not fetch more connections than the max number of c
 For instance, see the [warning](https://node-postgres.com/apis/pool#releasing-clients) for `node-postgres`.
 
 ```typescript
-import { AwsPgPoolClient, AwsPoolConfig } from "aws-advanced-nodejs-wrapper/pg";
+import { AwsPoolConfig } from "aws-advanced-nodejs-wrapper";
+import { AwsPgPoolClient } from "aws-advanced-nodejs-wrapper/pg";
 
 const poolConfig = new AwsPoolConfig({ maxConnections: 10 });
 const pool = new AwsPgPoolClient(

@@ -4,6 +4,24 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/#semantic-versioning-200).
 
+## [3.0.1] - 2026-10-21
+
+### :crab: Changed
+
+- The OpenTelemetry SDK, exporter and instrumentation packages are no longer peer dependencies of the wrapper. If you enable telemetry, add the packages your backend needs to your own dependencies. See [Telemetrywip](https://github.com/aws/aws-advanced-nodejs-wrapper/blob/main/docs/using-the-nodejs-wrapper/Telemetry.md) ([PR #709](https://github.com/aws/aws-advanced-nodejs-wrapper/pull/709)).
+- The optional `axios` peer dependency is now `^1.20.0`, up from `^1.18.1`. Upgrade `axios` if you use the [Federated Authentication](https://github.com/aws/aws-advanced-nodejs-wrapper/blob/main/docs/using-the-nodejs-wrapper/using-plugins/UsingTheFederatedAuthPlugin.md) or [Okta Authentication](https://github.com/aws/aws-advanced-nodejs-wrapper/blob/main/docs/using-the-nodejs-wrapper/using-plugins/UsingTheOktaAuthPlugin.md) plugins ([PR #704](https://github.com/aws/aws-advanced-nodejs-wrapper/pull/704)).
+- Updated the [Telemetry](https://github.com/aws/aws-advanced-nodejs-wrapper/blob/main/docs/using-the-nodejs-wrapper/Telemetry.md) documentation with per-backend install instructions and a complete OpenTelemetry SDK setup example ([PR #709](https://github.com/aws/aws-advanced-nodejs-wrapper/pull/709)).
+
+### :bug: Fixed
+
+- The monitor cleanup task now continues after a failed monitor check. An error during the check previously ended the task, leaving expired and stuck monitors in place for the rest of the process ([PR #703](https://github.com/aws/aws-advanced-nodejs-wrapper/pull/703)).
+- Monitor and error details now appear in log messages instead of `{}` ([PR #703](https://github.com/aws/aws-advanced-nodejs-wrapper/pull/703)).
+- The Aurora Global Database region count query is now schema-qualified, so it resolves correctly regardless of the session `search_path` ([PR #702](https://github.com/aws/aws-advanced-nodejs-wrapper/pull/702)).
+- The wrapper no longer requires `@opentelemetry/sdk-node` to enable telemetry ([PR #709](https://github.com/aws/aws-advanced-nodejs-wrapper/pull/709)).
+- Parameter `telemetrySubmitTopLevel` spelling corrected to `telemetrySubmitToplevel` in [Telemetry](https://github.com/aws/aws-advanced-nodejs-wrapper/blob/main/docs/using-the-nodejs-wrapper/Telemetry.md) ([PR #709](https://github.com/aws/aws-advanced-nodejs-wrapper/pull/709)).
+- Failover is now triggered by read-only connection errors on MySQL when using `strict-writer` failover mode ([PR #692](https://github.com/aws/aws-advanced-nodejs-wrapper/pull/692)).
+- Corrected the `AwsPoolConfig` import in the [Using the Connection Pool](https://github.com/aws/aws-advanced-nodejs-wrapper/blob/main/docs/using-the-nodejs-wrapper/UsingTheConnectionPool.md) samples.
+
 ## [3.0.0] - 2026-08-20
 
 ### :boom: Breaking Changes
@@ -141,6 +159,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 The Amazon Web Services (AWS) Advanced NodeJS Wrapper allows an application to take advantage of the features of clustered Aurora databases.
 
+[3.0.1]: https://github.com/aws/aws-advanced-nodejs-wrapper/compare/3.0.0...3.0.1
 [3.0.0]: https://github.com/aws/aws-advanced-nodejs-wrapper/compare/2.1.1...3.0.0
 [2.1.1]: https://github.com/aws/aws-advanced-nodejs-wrapper/compare/2.1.0...2.1.1
 [2.1.0]: https://github.com/aws/aws-advanced-nodejs-wrapper/compare/2.0.1...2.1.0
