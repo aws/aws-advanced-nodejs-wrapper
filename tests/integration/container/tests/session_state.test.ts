@@ -163,7 +163,7 @@ describe("session state", () => {
           schema = await DriverHelper.executeQuery(env.engine, newClient, "SHOW search_path");
           transactionIsolation = await DriverHelper.executeQuery(env.engine, newClient, "SHOW TRANSACTION ISOLATION LEVEL");
           expect(readOnly.rows[0]["transaction_read_only"]).toEqual("on");
-          expect(schema.rows[0]["search_path"]).toEqual("testsessionstate");
+          expect(schema.rows[0]["search_path"]).toEqual('"testSessionState"');
           expect(transactionIsolation.rows[0]["transaction_isolation"]).toEqual("serializable");
 
           await client.setReadOnly(false);

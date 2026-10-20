@@ -26,8 +26,11 @@ import { ErrorHandler } from "../../../common/lib/error_handler";
 import { PgErrorHandler } from "../pg_error_handler";
 import { Messages } from "../../../common/lib/utils/messages";
 import { FullServicesContainer } from "../../../common/lib/utils/full_services_container";
+import { SqlIdentifierUtils } from "../../../common/lib/utils/sql_identifier_utils";
 
 export class PgDatabaseDialect implements DatabaseDialect {
+  private static readonly IDENTIFIER_QUOTE: string = '"';
+
   protected dialectName: string = this.constructor.name;
   protected defaultPort: number = 5432;
 
@@ -92,7 +95,7 @@ export class PgDatabaseDialect implements DatabaseDialect {
   }
 
   getSetSchemaQuery(schema: string): string {
-    return `SET search_path TO ${schema}`;
+    return `SET search_path TO ${SqlIdentifierUtils.quote(schema, PgDatabaseDialect.IDENTIFIER_QUOTE)}`;
   }
 
   async isDialect(targetClient: ClientWrapper): Promise<boolean> {

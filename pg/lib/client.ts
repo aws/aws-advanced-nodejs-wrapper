@@ -147,7 +147,7 @@ class BaseAwsPgClient extends AwsClient implements PgClient {
     }
 
     this.pluginService.getSessionStateService().setupPristineSchema();
-    const result = await this.queryWithoutUpdate(`SET search_path TO ${schema};`);
+    const result = await this.queryWithoutUpdate(this.pluginService.getDialect().getSetSchemaQuery(schema));
     this.pluginService.getSessionStateService().setSchema(schema);
     return result;
   }
