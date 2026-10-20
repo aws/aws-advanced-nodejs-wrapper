@@ -71,11 +71,9 @@ export class MySQLErrorHandler implements ErrorHandler {
   }
 
   isReadOnlyConnectionError(e: Error): boolean {
-    if (Object.prototype.hasOwnProperty.call(e, "errno")) {
-      // @ts-ignore
-      return MySQLErrorHandler.READ_ONLY_ERROR_CODES.includes(e["errno"]);
-    }
-    return false;
+    // The driver error reaches the plugins wrapped in an AwsWrapperError, which keeps it as `cause`.
+    const errno = (e as { errno?: number }).errno ?? (e.cause as { errno?: number })?.errno;
+    return MySQLErrorHandler.READ_ONLY_ERROR_CODES.includes(errno);
   }
 
   hasLoginError(): boolean {

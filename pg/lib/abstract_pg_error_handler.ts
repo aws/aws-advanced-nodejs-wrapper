@@ -74,11 +74,9 @@ export abstract class AbstractPgErrorHandler implements ErrorHandler {
   }
 
   isReadOnlyConnectionError(e: Error): boolean {
-    if (Object.prototype.hasOwnProperty.call(e, "code")) {
-      // @ts-ignore
-      return AbstractPgErrorHandler.READ_ONLY_CONNECTION_SQLSTATE === e["code"];
-    }
-    return false;
+    // pg hands the driver error over as-is today; the `cause` lookup covers it being wrapped later.
+    const code = (e as { code?: string }).code ?? (e.cause as { code?: string })?.code;
+    return code === AbstractPgErrorHandler.READ_ONLY_CONNECTION_SQLSTATE;
   }
 
   hasLoginError(): boolean {
