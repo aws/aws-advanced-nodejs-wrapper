@@ -173,7 +173,7 @@ export class ClusterAwareReaderFailoverHandler implements ReaderFailoverHandler 
 
   async getResultFromNextTaskBatch(hosts: HostInfo[], i: number, failoverTaskId: string): Promise<ReaderFailoverResult> {
     const timer: any = {};
-    const timeoutTask = getTimeoutTask(timer, "Connection attempt task timed out.", this.timeoutMs);
+    const timeoutTask = getTimeoutTask(timer, Messages.get("Failover.connectionAttemptTaskTimeout"), this.timeoutMs);
 
     const numTasks = i + 1 < hosts.length ? 2 : 1;
     const getResultTask = this.getResultTask(hosts, numTasks, i, failoverTaskId);
@@ -183,7 +183,7 @@ export class ClusterAwareReaderFailoverHandler implements ReaderFailoverHandler 
         if (result) {
           return result;
         }
-        throw new AwsWrapperError("Connection attempt task timed out.");
+        throw new AwsWrapperError(Messages.get("Failover.connectionAttemptTaskTimeout"));
       })
       .catch((error) => {
         if (error instanceof InternalQueryTimeoutError) {

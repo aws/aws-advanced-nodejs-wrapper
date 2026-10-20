@@ -158,8 +158,21 @@ export class MonitorServiceImpl implements MonitorService, EventSubscriber {
         return;
       }
 
-      await this.checkMonitors();
+      try {
+        await this.checkMonitors();
+      } catch (error: any) {
+        // Never let a failed check end the cleanup task, otherwise monitors are never cleaned up again.
+        logger.warn(Messages.get("MonitorService.errorDuringCleanup", error?.message ?? String(error)));
+      }
     }
+  }
+
+  /**
+   * Builds a short, human-readable identifier for a monitor. Monitors hold cyclic references and bigint
+   * timestamps, so they cannot be serialized with JSON.stringify.
+   */
+  private static describeMonitor(monitor: Monitor, key: unknown): string {
+    return `${monitor.constructor.name}[${String(key)}]`;
   }
 
   protected async checkMonitors(): Promise<void> {
@@ -180,36 +193,42 @@ export class MonitorServiceImpl implements MonitorService, EventSubscriber {
 
         const monitor = monitorItem.getMonitor();
         const monitorSettings = container.getSettings();
+        const monitorDescription = MonitorServiceImpl.describeMonitor(monitor, key);
 
-        // Check for stopped monitors
-        if (monitor.getState() === MonitorState.STOPPED) {
-          cache.delete(key);
-          await monitor.stop();
-          continue;
-        }
+        try {
+          // Check for stopped monitors
+          if (monitor.getState() === MonitorState.STOPPED) {
+            cache.delete(key);
+            await monitor.stop();
+            continue;
+          }
 
-        // Check for error state monitors
-        if (monitor.getState() === MonitorState.ERROR) {
-          cache.delete(key);
-          logger.debug(Messages.get("MonitorService.removedErrorMonitor", JSON.stringify(monitor)));
-          await this.handleMonitorError(container, key, monitorItem);
-          continue;
-        }
+          // Check for error state monitors
+          if (monitor.getState() === MonitorState.ERROR) {
+            cache.delete(key);
+            logger.debug(Messages.get("MonitorService.removedErrorMonitor", monitorDescription));
+            await this.handleMonitorError(container, key, monitorItem);
+            continue;
+          }
 
-        // Check for inactive/stuck monitors
-        const inactiveTimeoutNs = monitorSettings.inactiveTimeoutNanos;
-        if (getTimeInNanos() - monitor.getLastActivityTimestampNanos() > inactiveTimeoutNs) {
-          cache.delete(key);
-          logger.info(Messages.get("MonitorService.monitorStuck", JSON.stringify(monitor), convertNanosToMs(inactiveTimeoutNs).toString()));
-          await this.handleMonitorError(container, key, monitorItem);
-          continue;
-        }
+          // Check for inactive/stuck monitors
+          const inactiveTimeoutNs = monitorSettings.inactiveTimeoutNanos;
+          if (getTimeInNanos() - monitor.getLastActivityTimestampNanos() > inactiveTimeoutNs) {
+            cache.delete(key);
+            logger.info(Messages.get("MonitorService.monitorStuck", monitorDescription, convertNanosToMs(inactiveTimeoutNs).toString()));
+            await this.handleMonitorError(container, key, monitorItem);
+            continue;
+          }
 
-        // Check for expired monitors that can be disposed
-        if (cacheItem.isExpired() && monitor.canDispose()) {
-          cache.delete(key);
-          logger.info(Messages.get("MonitorService.removedExpiredMonitor", JSON.stringify(monitor)));
-          await monitor.stop();
+          // Check for expired monitors that can be disposed
+          if (cacheItem.isExpired() && monitor.canDispose()) {
+            cache.delete(key);
+            logger.info(Messages.get("MonitorService.removedExpiredMonitor", monitorDescription));
+            await monitor.stop();
+          }
+        } catch (error: any) {
+          // Keep checking the remaining monitors.
+          logger.warn(Messages.get("MonitorService.errorWhileCheckingMonitor", monitorDescription, error?.message ?? String(error)));
         }
       }
     }
@@ -222,7 +241,7 @@ export class MonitorServiceImpl implements MonitorService, EventSubscriber {
     const errorResponses = cacheContainer.getSettings().errorResponses;
     if (errorResponses && errorResponses.has(MonitorErrorResponse.RECREATE)) {
       if (!cacheContainer.getCache().has(key)) {
-        logger.info(Messages.get("MonitorService.recreatingMonitor", JSON.stringify(monitor)));
+        logger.info(Messages.get("MonitorService.recreatingMonitor", MonitorServiceImpl.describeMonitor(monitor, key)));
         const newMonitorItem = new MonitorItem(errorMonitorItem.getMonitorSupplier());
         const expirationNs = cacheContainer.getSettings().expirationTimeoutNanos;
         cacheContainer.getCache().set(key, new CacheItem(newMonitorItem, getTimeInNanos() + expirationNs));
@@ -333,7 +352,9 @@ export class MonitorServiceImpl implements MonitorService, EventSubscriber {
       return monitor as T;
     }
 
-    logger.info(Messages.get("MonitorService.monitorClassMismatch", JSON.stringify(key), monitorClass.name, JSON.stringify(monitor)));
+    logger.info(
+      Messages.get("MonitorService.monitorClassMismatch", String(key), monitorClass.name, MonitorServiceImpl.describeMonitor(monitor, key))
+    );
     return null;
   }
 
