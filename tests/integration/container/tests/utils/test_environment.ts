@@ -24,7 +24,7 @@ import { TestDatabaseInfo } from "./test_database_info";
 import { DatabaseEngine } from "./database_engine";
 import { AuroraTestUtility } from "./aurora_test_utility";
 import { DatabaseEngineDeployment } from "./database_engine_deployment";
-import { AsyncHooksContextManager } from "@opentelemetry/context-async-hooks";
+import { AsyncLocalStorageContextManager } from "@opentelemetry/context-async-hooks";
 import { context } from "@opentelemetry/api";
 import { NodeSDK } from "@opentelemetry/sdk-node";
 import { AWSXRayPropagator } from "@opentelemetry/propagator-aws-xray";
@@ -248,7 +248,7 @@ export class TestEnvironment {
       return host;
     });
 
-    const contextManager = new AsyncHooksContextManager();
+    const contextManager = new AsyncLocalStorageContextManager();
     contextManager.enable();
     context.setGlobalContextManager(contextManager);
 
@@ -276,7 +276,7 @@ export class TestEnvironment {
       ],
       resource: resource,
       traceExporter: traceExporter,
-      metricReader: metricReader,
+      metricReaders: [metricReader],
       idGenerator: new AWSXRayIdGenerator()
     });
 

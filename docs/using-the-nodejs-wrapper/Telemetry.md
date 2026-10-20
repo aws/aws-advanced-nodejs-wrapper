@@ -30,9 +30,46 @@ The list of available metrics for the AWS Advanced NodeJS Wrapper and its plugin
 
 Before enabling the Telemetry feature, a few setup steps are required to ensure the monitoring data is properly emitted.
 
-1. In order to visualize the telemetry data in the AWS Console, make sure you have an IAM user or role with permissions to [AWS X-Ray](https://docs.aws.amazon.com/xray/latest/devguide/security-iam.html) and [Amazon CloudWatch](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/auth-and-access-control-cw.html).
+1. Install the telemetry packages for the backend you intend to use. The wrapper does not install them for you, and it pins no version beyond `@opentelemetry/api` and `aws-xray-sdk`.
 
-2. Download the [AWS Distro for OpenTelemetry Collector](https://aws-otel.github.io/docs/getting-started/collector) and set it up. The AWS Distro for OpenTelemetry Collector is responsible from receiving telemetry data from the application using the AWS Advanced NodeJS Wrapper and forward it to AWS. Both of those connections happen via HTTP, therefore URLs and ports need to be correctly configured for the collector.
+> [!WARNING]
+> The wrapper declares `@opentelemetry/api` and `aws-xray-sdk` as optional peer dependencies and reads whatever provider your application registers. If the packages for your chosen backend are missing, the wrapper fails on the first connection with `A tracing backend could not be found.`
+>
+> For `OTLP` traces and metrics:
+>
+> ```bash
+> npm install @opentelemetry/api @opentelemetry/sdk-node \
+>   @opentelemetry/sdk-metrics \
+>   @opentelemetry/exporter-trace-otlp-grpc @opentelemetry/exporter-metrics-otlp-grpc
+> ```
+>
+> For `XRAY` traces:
+>
+> ```bash
+> npm install aws-xray-sdk
+> ```
+>
+> `XRAY` applies to traces only. If you also want metrics, add the `OTLP` packages above, since `telemetryMetricsBackend` has no X-Ray option.
+
+The wrapper imports only `@opentelemetry/api` on the `OTLP` path and only `aws-xray-sdk` on the `XRAY` path. The remaining packages register the provider and carry the data out. Without a registered provider the wrapper records against a no-op tracer and exports nothing. Drop `@opentelemetry/sdk-metrics` and `@opentelemetry/exporter-metrics-otlp-grpc` if you only want traces, or `@opentelemetry/exporter-trace-otlp-grpc` if you only want metrics.
+
+`NodeSDK` builds its own context manager and resource and takes `serviceName` as a configuration field, so `@opentelemetry/context-async-hooks`, `@opentelemetry/resources` and `@opentelemetry/semantic-conventions` are not needed.
+
+None of these four packages are needed either. Each one traces your application's own work:
+
+| Package                                  | Needed for                                         |
+| ---------------------------------------- | -------------------------------------------------- |
+| `@opentelemetry/instrumentation-http`    | Tracing your application's own outbound HTTP calls |
+| `@opentelemetry/instrumentation-aws-sdk` | Tracing your application's own AWS SDK calls       |
+| `@opentelemetry/propagator-aws-xray`     | Propagating X-Ray trace headers across services    |
+| `@opentelemetry/id-generator-aws-xray`   | Emitting trace IDs in the format X-Ray expects     |
+
+> [!NOTE]
+> The example below is written against the `0.22x` line of the OpenTelemetry experimental packages, which is what this wrapper is tested against. It also works on `0.300.0`, which restructured the SDK and requires Node 22.15.0 or later.
+
+2. In order to visualize the telemetry data in the AWS Console, make sure you have an IAM user or role with permissions to [AWS X-Ray](https://docs.aws.amazon.com/xray/latest/devguide/security-iam.html) and [Amazon CloudWatch](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/auth-and-access-control-cw.html).
+
+3. Download the [AWS Distro for OpenTelemetry Collector](https://aws-otel.github.io/docs/getting-started/collector) and set it up. The AWS Distro for OpenTelemetry Collector is responsible from receiving telemetry data from the application using the AWS Advanced NodeJS Wrapper and forward it to AWS. Both of those connections happen via HTTP, therefore URLs and ports need to be correctly configured for the collector.
 
 > [!WARNING]
 > The AWS Distro for OpenTelemetry Collector can be set up either locally or remotely. It is up to the user to decide where is best to set it up. If you decide to host it remotely, ensure that the application has the necessary permissions or allowlists to connect to the Collector.
@@ -52,53 +89,49 @@ In order to enable Telemetry in the AWS Advanced NodeJS Wrapper, you need to:
 
 Setting up the recorders require to instantiate an `OpenTelemetrySDK` in the application code prior to using the wrapper. Instantiating the `OpenTelemetrySDK` requires you to configure the endpoints where traces and metrics are being forwarded to.
 
-The code sample below shows a simple manner to instantiate trace and metrics recording in an application using Telemetry.
+The code sample below is a complete setup for `telemetryTracesBackend: "OTLP"` with `telemetryMetricsBackend: "OTLP"`, sending both the wrapper's traces and its metrics to the collector. Import it once, before you create any client.
 
 ```typescript
-const _traceExporter = new OTLPTraceExporter({ url: "http://localhost:4317" });
-const _resource = Resource.default().merge(
-  new Resource({
-    [ATTR_SERVICE_NAME]: "aws-advanced-nodejs-wrapper"
-  })
-);
-
-const _metricReader = new PeriodicExportingMetricReader({
-  exporter: new OTLPMetricExporter(),
-  exportIntervalMillis: 1000
-});
-
-const contextManager = new AsyncHooksContextManager();
-contextManager.enable();
-context.setGlobalContextManager(contextManager);
+// telemetry.ts
+import { OTLPMetricExporter } from "@opentelemetry/exporter-metrics-otlp-grpc";
+import { OTLPTraceExporter } from "@opentelemetry/exporter-trace-otlp-grpc";
+import { PeriodicExportingMetricReader } from "@opentelemetry/sdk-metrics";
+import { NodeSDK } from "@opentelemetry/sdk-node";
 
 const sdk = new NodeSDK({
-  textMapPropagator: new AWSXRayPropagator(),
-  instrumentations: [
-    new HttpInstrumentation(),
-    new AwsInstrumentation({
-      suppressInternalInstrumentation: true
+  serviceName: "aws-advanced-nodejs-wrapper",
+  traceExporter: new OTLPTraceExporter({ url: "http://localhost:4317" }),
+  metricReaders: [
+    new PeriodicExportingMetricReader({
+      exporter: new OTLPMetricExporter({ url: "http://localhost:4317" }),
+      exportIntervalMillis: 1000
     })
-  ],
-  resource: _resource,
-  traceExporter: _traceExporter,
-  metricReader: _metricReader,
-  idGenerator: new AWSXRayIdGenerator()
+  ]
 });
 
-// This enables the API to record telemetry.
+// Registers the tracer and meter providers that the wrapper records against.
 sdk.start();
 
-// Gracefully shut down the SDK on process exit.
+// Flush any buffered telemetry before the process exits.
 process.on("SIGTERM", () => {
   sdk
     .shutdown()
-    .then(() => console.log("Tracing and Metrics terminated"))
+    .then(() => console.log("Tracing and metrics terminated"))
     .catch((error) => console.log("Error terminating tracing and metrics", error))
     .finally(() => process.exit(0));
 });
 ```
 
-We also provide a [complete sample application](../../examples/aws_driver_example/telemetry_metrics_otlp_example.ts) using telemetry in the examples folder of this repository.
+Add `instrumentations`, `textMapPropagator` or `idGenerator` only when you want to trace your application's own work alongside the wrapper's.
+
+To send traces to X-Ray instead, set `telemetryTracesBackend: "XRAY"` and drop `traceExporter` from the configuration above. The wrapper opens its own X-Ray segments through `aws-xray-sdk`, so no OpenTelemetry tracing setup is involved. Metrics have no X-Ray backend, so leave `telemetryMetricsBackend` as `"OTLP"` and keep the `metricReaders` block.
+
+Runnable versions of both setups are in the examples folder:
+
+| Sample                                                                                                   | Traces | Metrics |
+| -------------------------------------------------------------------------------------------------------- | ------ | ------- |
+| [telemetry_metrics_otlp_example.ts](../../examples/aws_driver_example/telemetry_metrics_otlp_example.ts) | `OTLP` | `OTLP`  |
+| [telemetry_tracing_xray_example.ts](../../examples/aws_driver_example/telemetry_tracing_xray_example.ts) | `XRAY` | `OTLP`  |
 
 ### Telemetry Parameters
 

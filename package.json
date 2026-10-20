@@ -71,18 +71,17 @@
     "@babel/core": "^7.29.7",
     "@babel/node": "^7.29.7",
     "@opentelemetry/api": "^1.9.1",
-    "@opentelemetry/context-async-hooks": "^2.7.1",
-    "@opentelemetry/exporter-metrics-otlp-grpc": "^0.218.0",
-    "@opentelemetry/exporter-trace-otlp-grpc": "^0.218.0",
+    "@opentelemetry/context-async-hooks": "^2.12.0",
+    "@opentelemetry/exporter-metrics-otlp-grpc": ">=0.219.0 <0.300.0",
+    "@opentelemetry/exporter-trace-otlp-grpc": ">=0.219.0 <0.300.0",
     "@opentelemetry/id-generator-aws-xray": "^2.1.0",
-    "@opentelemetry/instrumentation-aws-sdk": "^0.73.0",
-    "@opentelemetry/instrumentation-http": "^0.218.0",
+    "@opentelemetry/instrumentation-aws-sdk": "^0.78.0",
+    "@opentelemetry/instrumentation-http": ">=0.219.0 <0.300.0",
     "@opentelemetry/propagator-aws-xray": "^2.2.0",
-    "@opentelemetry/resources": "^2.7.1",
-    "@opentelemetry/sdk-metrics": "^2.7.1",
-    "@opentelemetry/sdk-node": "^0.218.0",
-    "@opentelemetry/sdk-trace-base": "^2.7.1",
-    "@opentelemetry/semantic-conventions": "^1.41.1",
+    "@opentelemetry/resources": "^2.12.0",
+    "@opentelemetry/sdk-metrics": "^2.12.0",
+    "@opentelemetry/sdk-node": ">=0.219.0 <0.300.0",
+    "@opentelemetry/semantic-conventions": "^1.43.0",
     "@types/jest": "^29.5.14",
     "@types/lodash": "^4.17.24",
     "@types/node": "^22.10.7",
@@ -137,14 +136,6 @@
     "@aws-sdk/credential-providers": "^3.1053.0",
     "@aws-sdk/rds-signer": "^3.1053.0",
     "@opentelemetry/api": "^1.9.1",
-    "@opentelemetry/exporter-metrics-otlp-grpc": "^0.218.0",
-    "@opentelemetry/exporter-trace-otlp-grpc": "^0.218.0",
-    "@opentelemetry/id-generator-aws-xray": "^2.1.0",
-    "@opentelemetry/instrumentation-aws-sdk": "^0.73.0",
-    "@opentelemetry/instrumentation-http": "^0.218.0",
-    "@opentelemetry/propagator-aws-xray": "^2.2.0",
-    "@opentelemetry/sdk-metrics": "^2.7.1",
-    "@opentelemetry/sdk-node": "^0.218.0",
     "@smithy/types": "^4.14.2",
     "aws-xray-sdk": "^3.12.0",
     "axios": "^1.20.0",
@@ -176,30 +167,6 @@
       "optional": true
     },
     "@opentelemetry/api": {
-      "optional": true
-    },
-    "@opentelemetry/exporter-metrics-otlp-grpc": {
-      "optional": true
-    },
-    "@opentelemetry/exporter-trace-otlp-grpc": {
-      "optional": true
-    },
-    "@opentelemetry/id-generator-aws-xray": {
-      "optional": true
-    },
-    "@opentelemetry/instrumentation-aws-sdk": {
-      "optional": true
-    },
-    "@opentelemetry/instrumentation-http": {
-      "optional": true
-    },
-    "@opentelemetry/propagator-aws-xray": {
-      "optional": true
-    },
-    "@opentelemetry/sdk-metrics": {
-      "optional": true
-    },
-    "@opentelemetry/sdk-node": {
       "optional": true
     },
     "@smithy/types": {

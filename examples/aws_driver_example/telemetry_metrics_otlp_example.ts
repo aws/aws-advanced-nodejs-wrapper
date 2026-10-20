@@ -14,52 +14,27 @@
   limitations under the License.
 */
 
-import { AsyncHooksContextManager } from "@opentelemetry/context-async-hooks";
-import { context } from "@opentelemetry/api";
-import { NodeSDK } from "@opentelemetry/sdk-node";
-import { AWSXRayPropagator } from "@opentelemetry/propagator-aws-xray";
-import { HttpInstrumentation } from "@opentelemetry/instrumentation-http";
-import { AwsInstrumentation } from "@opentelemetry/instrumentation-aws-sdk";
-import { AWSXRayIdGenerator } from "@opentelemetry/id-generator-aws-xray";
-import { OTLPTraceExporter } from "@opentelemetry/exporter-trace-otlp-grpc";
-import { resourceFromAttributes } from "@opentelemetry/resources";
-import { ATTR_SERVICE_NAME } from "@opentelemetry/semantic-conventions";
-import { PeriodicExportingMetricReader } from "@opentelemetry/sdk-metrics";
 import { OTLPMetricExporter } from "@opentelemetry/exporter-metrics-otlp-grpc";
+import { OTLPTraceExporter } from "@opentelemetry/exporter-trace-otlp-grpc";
+import { PeriodicExportingMetricReader } from "@opentelemetry/sdk-metrics";
+import { NodeSDK } from "@opentelemetry/sdk-node";
 import { AwsPgClient } from "../../pg";
 
-const traceExporter = new OTLPTraceExporter({ url: "http://localhost:4317" });
-const resource = resourceFromAttributes({
-  [ATTR_SERVICE_NAME]: "aws-advanced-nodejs-wrapper"
-});
-
-const metricReader = new PeriodicExportingMetricReader({
-  exporter: new OTLPMetricExporter(),
-  exportIntervalMillis: 1000
-});
-
-const contextManager = new AsyncHooksContextManager();
-contextManager.enable();
-context.setGlobalContextManager(contextManager);
-
 const sdk = new NodeSDK({
-  textMapPropagator: new AWSXRayPropagator(),
-  instrumentations: [
-    new HttpInstrumentation(),
-    new AwsInstrumentation({
-      suppressInternalInstrumentation: true
+  serviceName: "aws-advanced-nodejs-wrapper",
+  traceExporter: new OTLPTraceExporter({ url: "http://localhost:4317" }),
+  metricReaders: [
+    new PeriodicExportingMetricReader({
+      exporter: new OTLPMetricExporter({ url: "http://localhost:4317" }),
+      exportIntervalMillis: 1000
     })
-  ],
-  resource: resource,
-  traceExporter: traceExporter,
-  metricReader: metricReader,
-  idGenerator: new AWSXRayIdGenerator()
+  ]
 });
 
-// This enables the API to record telemetry.
+// Registers the tracer and meter providers that the wrapper records against.
 sdk.start();
 
-// Shut down the SDK on process exit.
+// Flush any buffered telemetry before the process exits.
 process.on("SIGTERM", () => {
   sdk
     .shutdown()
