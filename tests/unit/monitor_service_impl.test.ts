@@ -27,6 +27,7 @@ import { MonitorServiceImpl } from "../../common/lib/utils/monitoring/monitor_se
 import { FullServicesContainer } from "../../common/lib/utils/full_services_container";
 import { BatchingEventPublisher } from "../../common/lib/utils/events/batching_event_publisher";
 import { WrapperProperties } from "../../common/lib/wrapper_property";
+import { convertMsToNanos, getTimeInNanos } from "../../common/lib/utils/utils";
 
 const FAILURE_DETECTION_TIME_MILLIS = 10;
 const FAILURE_DETECTION_INTERVAL_MILLIS = 100;
@@ -176,8 +177,9 @@ describe("monitor service impl test", () => {
     const monitor = coreMonitorService.get(HostMonitorImpl, hostInfo.host);
     expect(monitor).not.toBeNull();
 
-    // Place the last activity timestamp outside of the inactive timeout so the monitor is treated as stuck.
-    (monitor as any).lastActivityTimestampNanos = BigInt(0);
+    // Place the last activity timestamp outside of the 3 minute inactive timeout so the monitor is treated as
+    // stuck. The timestamp has to be relative to getTimeInNanos, which is monotonic rather than epoch based.
+    (monitor as any).lastActivityTimestampNanos = getTimeInNanos() - convertMsToNanos(4 * 60 * 1000);
 
     await (coreMonitorService as any).checkMonitors();
 
