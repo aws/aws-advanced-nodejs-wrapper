@@ -15,10 +15,9 @@
 */
 
 import { TelemetryContext } from "./telemetry_context";
-import { context, createContextKey, Span as APISpan, SpanStatusCode, trace, Tracer } from "@opentelemetry/api";
+import { context, createContextKey, ROOT_CONTEXT, Span as APISpan, SpanStatusCode, trace, Tracer } from "@opentelemetry/api";
 import { TelemetryTraceLevel } from "./telemetry_trace_level";
 import { TelemetryConst } from "./telemetry_const";
-import { api } from "@opentelemetry/sdk-node";
 import { logger } from "../../../logutils";
 import { OpenTelemetryFactory } from "./open_telemetry_factory";
 
@@ -37,7 +36,7 @@ export class OpenTelemetryContext implements TelemetryContext {
 
   async start(func: () => any): Promise<any> {
     const activeContext = context.active();
-    const isRoot = activeContext === api.ROOT_CONTEXT;
+    const isRoot = activeContext === ROOT_CONTEXT;
 
     let effectiveTraceLevel: TelemetryTraceLevel = this.traceLevel;
     if (isRoot && this.traceLevel === TelemetryTraceLevel.NESTED) {
@@ -96,7 +95,7 @@ export class OpenTelemetryContext implements TelemetryContext {
   }
 
   async createSpanCopy(telemetryContext: OpenTelemetryContext): Promise<void> {
-    const activeContext = api.ROOT_CONTEXT;
+    const activeContext = ROOT_CONTEXT;
     const key = createContextKey(`${this.name}-key`);
     return context.with(activeContext.setValue(key, "context"), () => {
       return this.tracer.startActiveSpan(this.name, (span: APISpan) => {

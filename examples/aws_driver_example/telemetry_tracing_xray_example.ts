@@ -14,49 +14,28 @@
   limitations under the License.
 */
 
-import { AwsPgClient } from "../../pg";
-import { AsyncHooksContextManager } from "@opentelemetry/context-async-hooks";
-import { context } from "@opentelemetry/api";
-import { NodeSDK } from "@opentelemetry/sdk-node";
-import { AWSXRayPropagator } from "@opentelemetry/propagator-aws-xray";
-import { HttpInstrumentation } from "@opentelemetry/instrumentation-http";
-import { AwsInstrumentation } from "@opentelemetry/instrumentation-aws-sdk";
-import { AWSXRayIdGenerator } from "@opentelemetry/id-generator-aws-xray";
-import { resourceFromAttributes } from "@opentelemetry/resources";
-import { ATTR_SERVICE_NAME } from "@opentelemetry/semantic-conventions";
-import { PeriodicExportingMetricReader } from "@opentelemetry/sdk-metrics";
 import { OTLPMetricExporter } from "@opentelemetry/exporter-metrics-otlp-grpc";
+import { PeriodicExportingMetricReader } from "@opentelemetry/sdk-metrics";
+import { NodeSDK } from "@opentelemetry/sdk-node";
+import { PluginManager } from "../../index";
+import { AwsPgClient } from "../../pg";
 
-const resource = resourceFromAttributes({
-  [ATTR_SERVICE_NAME]: "aws-advanced-nodejs-wrapper"
-});
-
-const metricReader = new PeriodicExportingMetricReader({
-  exporter: new OTLPMetricExporter(),
-  exportIntervalMillis: 1000
-});
-
-const contextManager = new AsyncHooksContextManager();
-contextManager.enable();
-context.setGlobalContextManager(contextManager);
-
+// Traces go to X-Ray through aws-xray-sdk, which needs no setup here. This SDK is
+// only for the metrics, which still go to the collector over OTLP.
 const sdk = new NodeSDK({
-  textMapPropagator: new AWSXRayPropagator(),
-  instrumentations: [
-    new HttpInstrumentation(),
-    new AwsInstrumentation({
-      suppressInternalInstrumentation: true
+  serviceName: "aws-advanced-nodejs-wrapper",
+  metricReaders: [
+    new PeriodicExportingMetricReader({
+      exporter: new OTLPMetricExporter({ url: "http://localhost:4317" }),
+      exportIntervalMillis: 1000
     })
-  ],
-  resource: resource,
-  metricReader: metricReader,
-  idGenerator: new AWSXRayIdGenerator()
+  ]
 });
 
-// This enables the API to record telemetry.
+// Registers the meter provider that the wrapper records against.
 sdk.start();
 
-// Shut down the SDK on process exit.
+// Flush any buffered telemetry before the process exits.
 process.on("SIGTERM", () => {
   sdk
     .shutdown()
@@ -83,3 +62,9 @@ try {
 } finally {
   await client.end();
 }
+
+// Clean up resources used by the plugins.
+await PluginManager.releaseResources();
+
+// Flush buffered telemetry now that no more will be produced.
+await sdk.shutdown();

@@ -28,7 +28,7 @@ import { OTLPTraceExporter } from "@opentelemetry/exporter-trace-otlp-grpc";
 import { ATTR_SERVICE_NAME } from "@opentelemetry/semantic-conventions";
 import { PeriodicExportingMetricReader } from "@opentelemetry/sdk-metrics";
 import { OTLPMetricExporter } from "@opentelemetry/exporter-metrics-otlp-grpc";
-import { AsyncHooksContextManager } from "@opentelemetry/context-async-hooks";
+import { AsyncLocalStorageContextManager } from "@opentelemetry/context-async-hooks";
 import { context } from "@opentelemetry/api";
 import { NodeSDK } from "@opentelemetry/sdk-node";
 import { AWSXRayPropagator } from "@opentelemetry/propagator-aws-xray";
@@ -112,7 +112,7 @@ const metricReader = new PeriodicExportingMetricReader({
   exportIntervalMillis: 1000
 });
 
-const contextManager = new AsyncHooksContextManager();
+const contextManager = new AsyncLocalStorageContextManager();
 contextManager.enable();
 context.setGlobalContextManager(contextManager);
 
@@ -126,7 +126,7 @@ const sdk = new NodeSDK({
   ],
   resource: resource,
   traceExporter: traceExporter,
-  metricReader: metricReader,
+  metricReaders: [metricReader],
   idGenerator: new AWSXRayIdGenerator()
 });
 
