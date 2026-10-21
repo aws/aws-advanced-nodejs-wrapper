@@ -18,6 +18,7 @@ import { OTLPMetricExporter } from "@opentelemetry/exporter-metrics-otlp-grpc";
 import { OTLPTraceExporter } from "@opentelemetry/exporter-trace-otlp-grpc";
 import { PeriodicExportingMetricReader } from "@opentelemetry/sdk-metrics";
 import { NodeSDK } from "@opentelemetry/sdk-node";
+import { PluginManager } from "../../index";
 import { AwsPgClient } from "../../pg";
 
 const sdk = new NodeSDK({
@@ -61,3 +62,9 @@ try {
 } finally {
   await client.end();
 }
+
+// Clean up resources used by the plugins.
+await PluginManager.releaseResources();
+
+// Flush buffered telemetry now that no more will be produced.
+await sdk.shutdown();

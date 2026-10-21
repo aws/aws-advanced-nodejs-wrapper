@@ -53,17 +53,6 @@ Before enabling the Telemetry feature, a few setup steps are required to ensure 
 
 The wrapper imports only `@opentelemetry/api` on the `OTLP` path and only `aws-xray-sdk` on the `XRAY` path. The remaining packages register the provider and carry the data out. Without a registered provider the wrapper records against a no-op tracer and exports nothing. Drop `@opentelemetry/sdk-metrics` and `@opentelemetry/exporter-metrics-otlp-grpc` if you only want traces, or `@opentelemetry/exporter-trace-otlp-grpc` if you only want metrics.
 
-`NodeSDK` builds its own context manager and resource and takes `serviceName` as a configuration field, so `@opentelemetry/context-async-hooks`, `@opentelemetry/resources` and `@opentelemetry/semantic-conventions` are not needed.
-
-None of these four packages are needed either. Each one traces your application's own work:
-
-| Package                                  | Needed for                                         |
-| ---------------------------------------- | -------------------------------------------------- |
-| `@opentelemetry/instrumentation-http`    | Tracing your application's own outbound HTTP calls |
-| `@opentelemetry/instrumentation-aws-sdk` | Tracing your application's own AWS SDK calls       |
-| `@opentelemetry/propagator-aws-xray`     | Propagating X-Ray trace headers across services    |
-| `@opentelemetry/id-generator-aws-xray`   | Emitting trace IDs in the format X-Ray expects     |
-
 > [!NOTE]
 > The example below is written against the `0.22x` line of the OpenTelemetry experimental packages, which is what this wrapper is tested against. It also works on `0.300.0`, which restructured the SDK and requires Node 22.15.0 or later.
 
@@ -87,12 +76,11 @@ In order to enable Telemetry in the AWS Advanced NodeJS Wrapper, you need to:
 
 2. Set up the recorders that will export the telemetry data from the code to the ADOT Collector.
 
-Setting up the recorders require to instantiate an `OpenTelemetrySDK` in the application code prior to using the wrapper. Instantiating the `OpenTelemetrySDK` requires you to configure the endpoints where traces and metrics are being forwarded to.
+To set up the recorders, instantiate `NodeSDK` and configure the forwarding endpoints in your application code prior to using the wrapper.
 
-The code sample below is a complete setup for `telemetryTracesBackend: "OTLP"` with `telemetryMetricsBackend: "OTLP"`, sending both the wrapper's traces and its metrics to the collector. Import it once, before you create any client.
+The code sample below shows one way to instantiate trace and metrics recording for `telemetryTracesBackend: "OTLP"` with `telemetryMetricsBackend: "OTLP"`. This configuration only needs to be done once before you create any client.
 
 ```typescript
-// telemetry.ts
 import { OTLPMetricExporter } from "@opentelemetry/exporter-metrics-otlp-grpc";
 import { OTLPTraceExporter } from "@opentelemetry/exporter-trace-otlp-grpc";
 import { PeriodicExportingMetricReader } from "@opentelemetry/sdk-metrics";
@@ -122,11 +110,19 @@ process.on("SIGTERM", () => {
 });
 ```
 
-Add `instrumentations`, `textMapPropagator` or `idGenerator` only when you want to trace your application's own work alongside the wrapper's.
+`NodeSDK` fills in a context manager and a resource of its own, so nothing else is required. Three further options change how traces are identified and propagated. None is needed for the wrapper's telemetry:
+
+| Option              | Add it to                                                                  |
+| ------------------- | -------------------------------------------------------------------------- |
+| `instrumentations`  | Trace your application's own HTTP or AWS SDK calls alongside the wrapper's |
+| `textMapPropagator` | Carry trace context between services in the `X-Amzn-Trace-Id` header       |
+| `idGenerator`       | Embed the trace start time in the trace ID, the way X-Ray's own IDs do     |
+
+X-Ray accepts the random trace IDs OpenTelemetry generates by default, so `idGenerator` is not needed to get traces into the console. Without it, the timestamp X-Ray reads from the first four bytes of a trace ID is random and decodes to an arbitrary date.
 
 To send traces to X-Ray instead, set `telemetryTracesBackend: "XRAY"` and drop `traceExporter` from the configuration above. The wrapper opens its own X-Ray segments through `aws-xray-sdk`, so no OpenTelemetry tracing setup is involved. Metrics have no X-Ray backend, so leave `telemetryMetricsBackend` as `"OTLP"` and keep the `metricReaders` block.
 
-Runnable versions of both setups are in the examples folder:
+Sample applications for both setups are in the examples folder:
 
 | Sample                                                                                                   | Traces | Metrics |
 | -------------------------------------------------------------------------------------------------------- | ------ | ------- |
@@ -142,7 +138,7 @@ In addition to the parameter that enables Telemetry, you can pass the following 
 | `enableTelemetry`         | boolean |    No    | Telemetry will be enabled when this property is set to `true`, otherwise no telemetry data will be gathered during the execution of the wrapper.                                                                                                                                                                                                                                                                                                                                                                                                                                                                            | `false`       |
 | `telemetryTracesBackend`  | string  |    No    | Determines to which backend the gathered tracing data will be forwarded to. Possible values include: `NONE`, `XRAY`, and `OTLP`.<br>`NONE` indicates that the application will collect tracing data but this data will not be forwarded anywhere.<br>`XRAY` indicates that the traces will be collected by the AWS XRay Daemon.<br>`OTLP` indicates that the traces will be collected by the AWS OTEL Collector.                                                                                                                                                                                                            | `NONE`        |
 | `telemetryMetricsBackend` | string  |    No    | Determines to which backend the gathered metrics data will be forwarded to. Possible values include: `NONE` and `OTLP`.<br>`NONE` indicates that the application will collect metrics data but this data will not be forwarded anywhere.<br>`OTLP` indicates that the metrics will be collected by the AWS OTEL Collector.                                                                                                                                                                                                                                                                                                  | `NONE`        |
-| `telemetrySubmitTopLevel` | boolean |    No    | By default the wrapper will look for open traces in the users application prior to record telemetry data. If there is a current open trace, the traces created will be attached to that open trace. If not, all telemetry traces created will be top level. Setting the parameter to `false` means that every call to the wrapper will generate a trace with no direct parent trace attached to it. If there is already an open trace being recorded by the application, no wrapper traces will be created. See the [Nested tracing strategies section](#nested-tracing-strategies-using-amazon-xray) for more information. | `false`       |
+| `telemetrySubmitToplevel` | boolean |    No    | By default the wrapper will look for open traces in the users application prior to record telemetry data. If there is a current open trace, the traces created will be attached to that open trace. If not, all telemetry traces created will be top level. Setting the parameter to `false` means that every call to the wrapper will generate a trace with no direct parent trace attached to it. If there is already an open trace being recorded by the application, no wrapper traces will be created. See the [Nested tracing strategies section](#nested-tracing-strategies-using-amazon-xray) for more information. | `false`       |
 
 ## Nested tracing strategies using Amazon XRay
 
@@ -162,7 +158,7 @@ When a trace is hierarchically linked to a parent trace, we say that this trace 
 
 Applications that interact with the AWS Advanced NodeJS Wrapper may or may not have already opened telemetry traces on their own. In this case, it is up to the user to determine how they want to mix both application and wrapper traces.
 
-This can be done using the AWS Advanced NodeJS Wrapper's `telemetrySubmitTopLevel` property. This property allows users to choose to submit the wrapper traces always as top level traces or to submit them nested to the application traces.
+This can be done using the AWS Advanced NodeJS Wrapper's `telemetrySubmitToplevel` property. This property allows users to choose to submit the wrapper traces always as top level traces or to submit them nested to the application traces.
 The default value is set to `false`, which means the wrapper traces to always be nested into their application traces. That will happen unless there are no open application traces when the wrapper is running. In that case no wrapper traces will be collected or submitted. When the property is set to `true`, all the wrapper traces would be submitted top level traces. If the application has already open traces, it will not be possible for the wrapper traces to be top level and the wrapper traces therefore will not be submitted.
 
 ## List of Metrics
@@ -170,6 +166,14 @@ The default value is set to `false`, which means the wrapper traces to always be
 The AWS Advanced NodeJS Wrapper also submits a set of metrics to Amazon CloudWatch when the wrapper is used. These metrics are predefined, and they help give insight on what is happening inside the plugins when the plugins are used.
 
 Metrics can be one of 3 types: counters, gauges or histograms.
+
+> [!NOTE]
+> Every metric below belongs to a plugin, and it appears only when that plugin is enabled. Once it
+> appears it reports on every export interval, carrying `0` until the event it counts happens. So a
+> run with no plugins beyond the defaults publishes no plugin metrics at all, while a run with the
+> `iam` plugin publishes `iam.fetchTokenCount` continuously and it stays `0` until a token is
+> actually fetched. If a metric you expect is missing, check that its plugin is in `plugins`. If it
+> is present but always `0`, its event has not occurred.
 
 ### EFM plugin
 

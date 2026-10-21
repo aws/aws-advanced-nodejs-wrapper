@@ -17,6 +17,7 @@
 import { OTLPMetricExporter } from "@opentelemetry/exporter-metrics-otlp-grpc";
 import { PeriodicExportingMetricReader } from "@opentelemetry/sdk-metrics";
 import { NodeSDK } from "@opentelemetry/sdk-node";
+import { PluginManager } from "../../index";
 import { AwsPgClient } from "../../pg";
 
 // Traces go to X-Ray through aws-xray-sdk, which needs no setup here. This SDK is
@@ -61,3 +62,9 @@ try {
 } finally {
   await client.end();
 }
+
+// Clean up resources used by the plugins.
+await PluginManager.releaseResources();
+
+// Flush buffered telemetry now that no more will be produced.
+await sdk.shutdown();
