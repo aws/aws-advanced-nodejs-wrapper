@@ -8,7 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### :crab: Changed
 
-- The OpenTelemetry SDK, exporter and instrumentation packages are no longer peer dependencies of the wrapper. If you enable telemetry, add the packages your backend needs to your own dependencies. See [Telemetrywip](https://github.com/aws/aws-advanced-nodejs-wrapper/blob/main/docs/using-the-nodejs-wrapper/Telemetry.md) ([PR #709](https://github.com/aws/aws-advanced-nodejs-wrapper/pull/709)).
+- The OpenTelemetry SDK, exporter and instrumentation packages are no longer peer dependencies of the wrapper. If you enable telemetry, add the packages your backend needs to your own dependencies. See [Telemetry](https://github.com/aws/aws-advanced-nodejs-wrapper/blob/main/docs/using-the-nodejs-wrapper/Telemetry.md) ([PR #709](https://github.com/aws/aws-advanced-nodejs-wrapper/pull/709)).
 - The optional `axios` peer dependency is now `^1.20.0`, up from `^1.18.1`. Upgrade `axios` if you use the [Federated Authentication](https://github.com/aws/aws-advanced-nodejs-wrapper/blob/main/docs/using-the-nodejs-wrapper/using-plugins/UsingTheFederatedAuthPlugin.md) or [Okta Authentication](https://github.com/aws/aws-advanced-nodejs-wrapper/blob/main/docs/using-the-nodejs-wrapper/using-plugins/UsingTheOktaAuthPlugin.md) plugins ([PR #704](https://github.com/aws/aws-advanced-nodejs-wrapper/pull/704)).
 - Updated the [Telemetry](https://github.com/aws/aws-advanced-nodejs-wrapper/blob/main/docs/using-the-nodejs-wrapper/Telemetry.md) documentation with per-backend install instructions and a complete OpenTelemetry SDK setup example ([PR #709](https://github.com/aws/aws-advanced-nodejs-wrapper/pull/709)).
 
