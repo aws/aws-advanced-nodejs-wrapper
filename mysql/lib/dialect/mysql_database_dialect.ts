@@ -29,8 +29,11 @@ import { MySQLErrorHandler } from "../mysql_error_handler";
 import { Messages } from "../../../common/lib/utils/messages";
 import { HostRole } from "../../../common/lib/host_role";
 import { FullServicesContainer } from "../../../common/lib/utils/full_services_container";
+import { SqlIdentifierUtils } from "../../../common/lib/utils/sql_identifier_utils";
 
 export class MySQLDatabaseDialect implements DatabaseDialect {
+  private static readonly IDENTIFIER_QUOTE: string = "`";
+
   protected dialectName: string = this.constructor.name;
   protected defaultPort: number = 3306;
 
@@ -91,7 +94,7 @@ export class MySQLDatabaseDialect implements DatabaseDialect {
   }
 
   getSetCatalogQuery(catalog: string): string {
-    return `USE ${catalog}`;
+    return `USE ${SqlIdentifierUtils.quote(catalog, MySQLDatabaseDialect.IDENTIFIER_QUOTE)}`;
   }
 
   getSetSchemaQuery(schema: string): string {
