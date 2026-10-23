@@ -388,7 +388,7 @@ export class BlueGreenStatusMonitor {
           // Old1 cluster/instance has been separated and no longer receives
           // updates from related green cluster/instance.
           if (this.role !== BlueGreenRole.SOURCE) {
-            logger.warn(Messages.get("Bgd.noEntriesInStatusTable", this.role.name));
+            logger.debug(Messages.get("Bgd.noEntriesInStatusTable", this.role.name));
           }
           this.currentPhase = null;
         }
