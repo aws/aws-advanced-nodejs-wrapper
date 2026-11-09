@@ -14,7 +14,6 @@
   limitations under the License.
 */
 
-
 import { HostInfoBuilder } from "../../common/lib";
 import { SimpleHostAvailabilityStrategy } from "../../common/lib/host_availability/simple_host_availability_strategy";
 import { BlueGreenRole } from "../../common/lib/plugins/bluegreen/blue_green_role";
