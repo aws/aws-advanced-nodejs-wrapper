@@ -134,7 +134,10 @@ describe("Aurora initial connection strategy plugin", () => {
   it.each(["writer", "reader"])("skips %s role verification when verifyOpenedConnectionType is none", async (role) => {
     WrapperProperties.VERIFY_OPENED_CONNECTION_ROLE.set(props, "none");
     const isReader = role === "reader";
-    const candidate = hostInfoBuilder.withHost("instance").withRole(isReader ? HostRole.READER : HostRole.WRITER).build();
+    const candidate = hostInfoBuilder
+      .withHost("instance")
+      .withRole(isReader ? HostRole.READER : HostRole.WRITER)
+      .build();
     const client = isReader ? readerClient : writerClient;
     when(mockRdsUtils.identifyRdsType(anything())).thenReturn(isReader ? RdsUrlType.RDS_READER_CLUSTER : RdsUrlType.RDS_WRITER_CLUSTER);
     when(mockPluginService.getAllHosts()).thenReturn([candidate]);
