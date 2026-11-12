@@ -131,6 +131,29 @@ describe("Aurora initial connection strategy plugin", () => {
     verify(mockPluginService.forceRefreshHostList()).never();
   });
 
+  it.each(["writer", "reader"])("skips %s role verification when verifyOpenedConnectionType is none", async (role) => {
+    WrapperProperties.VERIFY_OPENED_CONNECTION_ROLE.set(props, "none");
+    const isReader = role === "reader";
+    const candidate = hostInfoBuilder
+      .withHost("instance")
+      .withRole(isReader ? HostRole.READER : HostRole.WRITER)
+      .build();
+    const client = isReader ? readerClient : writerClient;
+    when(mockRdsUtils.identifyRdsType(anything())).thenReturn(isReader ? RdsUrlType.RDS_READER_CLUSTER : RdsUrlType.RDS_WRITER_CLUSTER);
+    when(mockPluginService.getAllHosts()).thenReturn([candidate]);
+    when(mockPluginService.getHosts()).thenReturn([candidate]);
+    when(mockPluginService.acceptsStrategy(anything(), anything())).thenReturn(true);
+    when(mockPluginService.getHostInfoByStrategy(anything(), anything(), anything())).thenReturn(candidate);
+    when(mockPluginService.connect(anything(), anything(), anything())).thenResolve(client);
+    // A contradictory role must be ignored when verification is disabled.
+    when(mockPluginService.getHostRole(client)).thenResolve(isReader ? HostRole.WRITER : HostRole.READER);
+
+    expect(await plugin.connect(hostInfo, props, true, mockFunc)).toBe(client);
+    verify(mockPluginService.getHostRole(anything())).never();
+    verify(mockPluginService.forceRefreshHostList()).never();
+    verify(mockPluginService.setRoutedHostInfo(candidate)).once();
+  });
+
   it("test reader - resolves to writer", async () => {
     when(mockRdsUtils.identifyRdsType(anything())).thenReturn(RdsUrlType.RDS_READER_CLUSTER);
     when(mockPluginService.getHosts()).thenReturn([hostInfoBuilder.withRole(HostRole.READER).build()]);

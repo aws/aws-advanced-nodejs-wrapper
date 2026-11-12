@@ -42,7 +42,7 @@ import { isDialectTopologyAware } from "../../common/lib/database_dialect/topolo
 import { PgClient, PgPoolClient } from "./pg_client";
 import { DriverConnectionProvider } from "../../common/lib/driver_connection_provider";
 import { GlobalAuroraPgDatabaseDialect } from "./dialect/global_aurora_pg_database_dialect";
-import { AwsClientConfig } from "../../common/lib/wrapper_property";
+import { AwsClientConfig, WrapperProperties } from "../../common/lib/wrapper_property";
 
 export interface AwsPgClientConfig extends ClientConfig, AwsClientConfig {}
 
@@ -205,7 +205,10 @@ class BaseAwsPgClient extends AwsClient implements PgClient {
         throw new AwsWrapperError(Messages.get("HostInfo.noHostParameter"));
       }
       const result: ClientWrapper = await this.pluginManager.connect(hostInfo, this.properties, true, null);
-      if (isDialectTopologyAware(this.pluginService.getDialect())) {
+      if (
+        WrapperProperties.VERIFY_OPENED_CONNECTION_ROLE.get(this.properties) !== "none" &&
+        isDialectTopologyAware(this.pluginService.getDialect())
+      ) {
         try {
           const role = await this.pluginService.getHostRole(result);
           // The current host role may be incorrect, use the created client to confirm the host role.
