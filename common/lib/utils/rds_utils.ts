@@ -89,6 +89,10 @@ export class RdsUtils {
     /^(?<instance>.+)\.(?<dns>proxy-|cluster-|cluster-ro-|cluster-custom-|shardgrp-)?(?<domain>[a-zA-Z0-9]+\.(?<region>[a-zA-Z0-9-]+)\.(rds|rds-fips)\.amazonaws\.(com|au|eu|uk)\.?)$/i;
   private static readonly AURORA_CLUSTER_PATTERN =
     /^(?<instance>.+)\.(?<dns>cluster-|cluster-ro-)+(?<domain>[a-zA-Z0-9]+\.(?<region>[a-zA-Z0-9-]+)\.(rds|rds-fips)\.amazonaws\.(com|au|eu|uk)\.?)$/i;
+  private static readonly AURORA_CLUSTER_GROUP_DNS_PATTERN =
+    /^(?<instance>.+)\.(?<dns>rw-|ro-)(?<domain>[a-zA-Z0-9]+\.db-cluster-group\.(?<region>[a-zA-Z0-9-]+)\.(rds|rds-fips)\.amazonaws\.(com|au|eu|uk)\.?)$/i;
+  private static readonly AURORA_DATA_GROUP_DNS_PATTERN =
+    /^(?<instance>.+)\.(?<dns>ro-)?(?<domain>[a-zA-Z0-9]+\.data-group\.(?<region>[a-zA-Z0-9-]+)\.(rds|rds-fips)\.amazonaws\.(com|au|eu|uk)\.?)$/i;
   private static readonly AURORA_LIMITLESS_CLUSTER_PATTERN =
     /^(?<instance>.+)\.(?<dns>shardgrp-)+(?<domain>[a-zA-Z0-9]+\.(?<region>[a-zA-Z0-9-]+)\.(rds|rds-fips)\.(amazonaws\.com\.?|amazonaws\.eu\.?|amazonaws\.au\.?|amazonaws\.uk\.?|amazonaws\.com\.cn\.?|sc2s\.sgov\.gov\.?|c2s\.ic\.gov\.?))$/i;
   private static readonly AURORA_CHINA_DNS_PATTERN =
@@ -146,6 +150,8 @@ export class RdsUtils {
     const preparedHost = RdsUtils.getPreparedHost(host);
     const matcher = this.cacheMatcher(
       preparedHost,
+      RdsUtils.AURORA_CLUSTER_GROUP_DNS_PATTERN,
+      RdsUtils.AURORA_DATA_GROUP_DNS_PATTERN,
       RdsUtils.AURORA_DNS_PATTERN,
       RdsUtils.AURORA_CHINA_DNS_PATTERN,
       RdsUtils.AURORA_OLD_CHINA_DNS_PATTERN,
@@ -162,7 +168,7 @@ export class RdsUtils {
 
   public isRdsInstance(host: string): boolean {
     const preparedHost = RdsUtils.getPreparedHost(host);
-    return !this.getDnsGroup(preparedHost) && this.isRdsDns(preparedHost);
+    return !this.getDnsGroup(preparedHost) && !this.isDataGroupWriterDns(preparedHost) && this.isRdsDns(preparedHost);
   }
 
   isRdsProxyDns(host: string) {
@@ -192,8 +198,15 @@ export class RdsUtils {
 
   getRdsClusterId(host: string): string | null {
     const preparedHost = RdsUtils.getPreparedHost(host);
+    const dataGroupMatcher = this.getDataGroupMatcher(preparedHost);
+    if (dataGroupMatcher) {
+      return this.getRegexGroup(dataGroupMatcher, RdsUtils.INSTANCE_GROUP);
+    }
+
     const matcher = this.cacheMatcher(
       preparedHost,
+      RdsUtils.AURORA_CLUSTER_GROUP_DNS_PATTERN,
+      RdsUtils.AURORA_DATA_GROUP_DNS_PATTERN,
       RdsUtils.AURORA_DNS_PATTERN,
       RdsUtils.AURORA_CHINA_DNS_PATTERN,
       RdsUtils.AURORA_OLD_CHINA_DNS_PATTERN,
@@ -215,12 +228,14 @@ export class RdsUtils {
     const preparedHost = RdsUtils.getPreparedHost(host);
     const matcher = this.cacheMatcher(
       preparedHost,
+      RdsUtils.AURORA_CLUSTER_GROUP_DNS_PATTERN,
+      RdsUtils.AURORA_DATA_GROUP_DNS_PATTERN,
       RdsUtils.AURORA_DNS_PATTERN,
       RdsUtils.AURORA_CHINA_DNS_PATTERN,
       RdsUtils.AURORA_OLD_CHINA_DNS_PATTERN,
       RdsUtils.AURORA_GOV_DNS_PATTERN
     );
-    if (this.getRegexGroup(matcher, RdsUtils.DNS_GROUP) === null) {
+    if (this.getRegexGroup(matcher, RdsUtils.DNS_GROUP) === null && !this.isDataGroupWriterDns(preparedHost)) {
       return this.getRegexGroup(matcher, RdsUtils.INSTANCE_GROUP);
     }
 
@@ -235,6 +250,8 @@ export class RdsUtils {
     const preparedHost = RdsUtils.getPreparedHost(host);
     const matcher = this.cacheMatcher(
       preparedHost,
+      RdsUtils.AURORA_CLUSTER_GROUP_DNS_PATTERN,
+      RdsUtils.AURORA_DATA_GROUP_DNS_PATTERN,
       RdsUtils.AURORA_DNS_PATTERN,
       RdsUtils.AURORA_CHINA_DNS_PATTERN,
       RdsUtils.AURORA_OLD_CHINA_DNS_PATTERN,
@@ -324,6 +341,8 @@ export class RdsUtils {
     const preparedHost = RdsUtils.getPreparedHost(host);
     const matcher = this.cacheMatcher(
       preparedHost,
+      RdsUtils.AURORA_CLUSTER_GROUP_DNS_PATTERN,
+      RdsUtils.AURORA_DATA_GROUP_DNS_PATTERN,
       RdsUtils.AURORA_DNS_PATTERN,
       RdsUtils.AURORA_CHINA_DNS_PATTERN,
       RdsUtils.AURORA_OLD_CHINA_DNS_PATTERN,
@@ -377,6 +396,26 @@ export class RdsUtils {
       return false;
     }
     return dnsGroup.toLowerCase() === "shardgrp-";
+  }
+
+  public isClusterGroupWriterDns(host: string): boolean {
+    const matcher = this.getClusterGroupMatcher(RdsUtils.getPreparedHost(host));
+    return equalsIgnoreCase(this.getRegexGroup(matcher, RdsUtils.DNS_GROUP), "rw-");
+  }
+
+  public isClusterGroupReaderDns(host: string): boolean {
+    const matcher = this.getClusterGroupMatcher(RdsUtils.getPreparedHost(host));
+    return equalsIgnoreCase(this.getRegexGroup(matcher, RdsUtils.DNS_GROUP), "ro-");
+  }
+
+  public isDataGroupWriterDns(host: string): boolean {
+    const matcher = this.getDataGroupMatcher(RdsUtils.getPreparedHost(host));
+    return matcher !== null && !this.getRegexGroup(matcher, RdsUtils.DNS_GROUP);
+  }
+
+  public isDataGroupReaderDns(host: string): boolean {
+    const matcher = this.getDataGroupMatcher(RdsUtils.getPreparedHost(host));
+    return equalsIgnoreCase(this.getRegexGroup(matcher, RdsUtils.DNS_GROUP), "ro-");
   }
 
   public getRdsClusterHostUrl(host: string): string | null {
@@ -442,6 +481,14 @@ export class RdsUtils {
       return RdsUrlType.RDS_CUSTOM_CLUSTER;
     } else if (this.isLimitlessDbShardGroupDns(preparedHost)) {
       return RdsUrlType.RDS_AURORA_LIMITLESS_DB_SHARD_GROUP;
+    } else if (this.isClusterGroupWriterDns(preparedHost)) {
+      return RdsUrlType.RDS_CLUSTER_GROUP_WRITER;
+    } else if (this.isClusterGroupReaderDns(preparedHost)) {
+      return RdsUrlType.RDS_CLUSTER_GROUP_READER;
+    } else if (this.isDataGroupWriterDns(preparedHost)) {
+      return RdsUrlType.RDS_DATA_GROUP_WRITER;
+    } else if (this.isDataGroupReaderDns(preparedHost)) {
+      return RdsUrlType.RDS_DATA_GROUP_READER;
     } else if (this.isRdsProxyDns(preparedHost)) {
       return RdsUrlType.RDS_PROXY;
     } else if (this.isRdsProxyEndpointDns(preparedHost)) {
@@ -520,6 +567,8 @@ export class RdsUtils {
 
     const matcher = this.cacheMatcher(
       host,
+      RdsUtils.AURORA_CLUSTER_GROUP_DNS_PATTERN,
+      RdsUtils.AURORA_DATA_GROUP_DNS_PATTERN,
       RdsUtils.AURORA_DNS_PATTERN,
       RdsUtils.AURORA_CHINA_DNS_PATTERN,
       RdsUtils.AURORA_OLD_CHINA_DNS_PATTERN,
@@ -529,7 +578,15 @@ export class RdsUtils {
     return this.getRegexGroup(matcher, RdsUtils.DNS_GROUP);
   }
 
-  private getRegexGroup(matcher: RegExpMatchArray, groupName: string): string | null {
+  private getClusterGroupMatcher(host: string): RegExpMatchArray | null {
+    return host ? host.match(RdsUtils.AURORA_CLUSTER_GROUP_DNS_PATTERN) : null;
+  }
+
+  private getDataGroupMatcher(host: string): RegExpMatchArray | null {
+    return host ? host.match(RdsUtils.AURORA_DATA_GROUP_DNS_PATTERN) : null;
+  }
+
+  private getRegexGroup(matcher: RegExpMatchArray | null, groupName: string): string | null {
     if (!matcher) {
       return null;
     }
