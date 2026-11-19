@@ -308,7 +308,8 @@ export class BlueGreenStatusMonitor {
     const currentTopologyCopy = this.currentTopology;
 
     if (currentTopologyCopy && this.collectedTopology) {
-      this.hostNames = new Set(currentTopologyCopy.map((hostSpec) => hostSpec.host));
+      // Add to the set instead of replacing it: collectStatus() may have already added cluster endpoints.
+      currentTopologyCopy.forEach((hostSpec) => this.hostNames.add(hostSpec.host));
     }
   }
 
