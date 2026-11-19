@@ -44,7 +44,7 @@ import { isDialectTopologyAware } from "../../common/lib/database_dialect/topolo
 import { MySQLClient, MySQLPoolClient } from "./mysql_client";
 import { DriverConnectionProvider } from "../../common/lib/driver_connection_provider";
 import { GlobalAuroraMySQLDatabaseDialect } from "./dialect/global_aurora_mysql_database_dialect";
-import { AwsClientConfig } from "../../common/lib/wrapper_property";
+import { AwsClientConfig, WrapperProperties } from "../../common/lib/wrapper_property";
 
 export interface AwsMySQLClientConfig extends ConnectionOptions, AwsClientConfig {}
 
@@ -77,7 +77,10 @@ class BaseAwsMySQLClient extends AwsClient implements MySQLClient {
         throw new AwsWrapperError(Messages.get("HostInfo.noHostParameter"));
       }
       const result: ClientWrapper = await this.pluginManager.connect(hostInfo, this.properties, true, null);
-      if (isDialectTopologyAware(this.pluginService.getDialect())) {
+      if (
+        WrapperProperties.VERIFY_OPENED_CONNECTION_ROLE.get(this.properties) !== "none" &&
+        isDialectTopologyAware(this.pluginService.getDialect())
+      ) {
         try {
           const role = await this.pluginService.getHostRole(result);
           // The current host role may be incorrect, use the created client to confirm the host role.

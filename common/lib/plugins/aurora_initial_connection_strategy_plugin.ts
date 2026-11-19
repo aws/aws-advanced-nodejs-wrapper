@@ -131,7 +131,10 @@ export class AuroraInitialConnectionStrategyPlugin extends AbstractConnectionPlu
         }
         writerCandidateClient = await this.pluginService.connect(writerCandidate, props, this);
 
-        if ((await this.pluginService.getHostRole(writerCandidateClient)) !== HostRole.WRITER) {
+        if (
+          WrapperProperties.VERIFY_OPENED_CONNECTION_ROLE.get(props) !== "none" &&
+          (await this.pluginService.getHostRole(writerCandidateClient)) !== HostRole.WRITER
+        ) {
           // If the new connection resolves to a reader instance, this means the topology is outdated.
           // Force refresh to update the topology.
           await this.pluginService.forceRefreshHostList();
@@ -202,7 +205,10 @@ export class AuroraInitialConnectionStrategyPlugin extends AbstractConnectionPlu
         }
         readerCandidateClient = await this.pluginService.connect(readerCandidate, props, this);
 
-        if ((await this.pluginService.getHostRole(readerCandidateClient)) !== HostRole.READER) {
+        if (
+          WrapperProperties.VERIFY_OPENED_CONNECTION_ROLE.get(props) !== "none" &&
+          (await this.pluginService.getHostRole(readerCandidateClient)) !== HostRole.READER
+        ) {
           // If the new connection resolves to a writer instance, this means the topology is outdated.
           // Force refresh to update the topology.
           await this.pluginService.forceRefreshHostList();
