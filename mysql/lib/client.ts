@@ -147,7 +147,7 @@ class BaseAwsMySQLClient extends AwsClient implements MySQLClient {
       return;
     }
     this.pluginService.getSessionStateService().setupPristineCatalog();
-    await this.queryWithoutUpdate({ sql: `USE ${catalog}` });
+    await this.queryWithoutUpdate({ sql: this.pluginService.getDialect().getSetCatalogQuery(catalog) });
     this.pluginService.getSessionStateService().setCatalog(catalog);
   }
 
