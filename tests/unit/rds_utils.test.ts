@@ -15,6 +15,7 @@
 */
 
 import { RdsUtils } from "../../common/lib/utils/rds_utils";
+import { RdsUrlType } from "../../common/lib/utils/rds_url_type";
 
 const us_east_region_cluster = "database-test-name.cluster-XYZ.us-east-2.rds.amazonaws.com";
 const us_east_region_cluster_read_only = "database-test-name.cluster-ro-XYZ.us-east-2.rds.amazonaws.com";
@@ -23,6 +24,10 @@ const us_east_region_proxy = "proxy-test-name.proxy-XYZ.us-east-2.rds.amazonaws.
 const us_east_region_custom_domain = "custom-test-name.cluster-custom-XYZ.us-east-2.rds.amazonaws.com";
 const us_east_region_limitless_db_shard_group = "database-test-name.shardgrp-XYZ.us-east-2.rds.amazonaws.com";
 const usEastRegionElbUrl = "elb-name.elb.us-east-2.amazonaws.com";
+const us_east_region_cluster_group_writer = "group-test-name.rw-XYZ.db-cluster-group.us-east-2.rds.amazonaws.com";
+const us_east_region_cluster_group_reader = "group-test-name.ro-XYZ.db-cluster-group.us-east-2.rds.amazonaws.com";
+const us_east_region_data_group_writer = "database-test-name.XYZ.data-group.us-east-2.rds.amazonaws.com";
+const us_east_region_data_group_reader = "database-test-name.ro-XYZ.data-group.us-east-2.rds.amazonaws.com";
 
 const china_region_cluster = "database-test-name.cluster-XYZ.rds.cn-northwest-1.amazonaws.com.cn";
 const old_china_region_cluster = "database-test-name.cluster-XYZ.cn-northwest-1.rds.amazonaws.com.cn";
@@ -338,6 +343,83 @@ describe("test_rds_utils", () => {
       "test-instance-green-abcdef-12345.domain.com"
     );
     expect(target.removeGreenInstancePrefix("test-instance-green-123456-green-123456.domain.com")).toBe("test-instance-green-123456.domain.com");
+  });
+
+  it("test_cluster_group_dns", () => {
+    const target = new RdsUtils();
+    expect(target.isClusterGroupWriterDns(us_east_region_cluster_group_writer)).toBeTruthy();
+    expect(target.isClusterGroupWriterDns(us_east_region_cluster_group_reader)).toBeFalsy();
+    expect(target.isClusterGroupWriterDns(us_east_region_cluster)).toBeFalsy();
+    expect(target.isClusterGroupWriterDns(us_east_region_instance)).toBeFalsy();
+
+    expect(target.isClusterGroupReaderDns(us_east_region_cluster_group_reader)).toBeTruthy();
+    expect(target.isClusterGroupReaderDns(us_east_region_cluster_group_writer)).toBeFalsy();
+    expect(target.isClusterGroupReaderDns(us_east_region_cluster_read_only)).toBeFalsy();
+    expect(target.isClusterGroupReaderDns(us_east_region_instance)).toBeFalsy();
+
+    expect(target.isRdsDns(us_east_region_cluster_group_writer)).toBeTruthy();
+    expect(target.isRdsDns(us_east_region_cluster_group_reader)).toBeTruthy();
+    expect(target.isRdsInstance(us_east_region_cluster_group_writer)).toBeFalsy();
+    expect(target.isRdsInstance(us_east_region_cluster_group_reader)).toBeFalsy();
+    expect(target.isRdsClusterDns(us_east_region_cluster_group_writer)).toBeFalsy();
+    expect(target.isRdsClusterDns(us_east_region_cluster_group_reader)).toBeFalsy();
+    expect(target.isWriterClusterDns(us_east_region_cluster_group_writer)).toBeFalsy();
+    expect(target.isReaderClusterDns(us_east_region_cluster_group_reader)).toBeFalsy();
+
+    expect(target.getRdsRegion(us_east_region_cluster_group_writer)).toBe("us-east-2");
+    expect(target.getRdsRegion(us_east_region_cluster_group_reader)).toBe("us-east-2");
+    expect(target.getRdsClusterId(us_east_region_cluster_group_writer)).toBe("group-test-name");
+    expect(target.getRdsClusterId(us_east_region_cluster_group_reader)).toBe("group-test-name");
+    expect(target.getRdsInstanceId(us_east_region_cluster_group_writer)).toBeNull();
+    expect(target.getRdsInstanceHostPattern(us_east_region_cluster_group_writer)).toBe("?.XYZ.db-cluster-group.us-east-2.rds.amazonaws.com");
+
+    expect(target.identifyRdsType(us_east_region_cluster_group_writer)).toBe(RdsUrlType.RDS_CLUSTER_GROUP_WRITER);
+    expect(target.identifyRdsType(us_east_region_cluster_group_reader)).toBe(RdsUrlType.RDS_CLUSTER_GROUP_READER);
+    expect(target.identifyRdsType(us_east_region_cluster_group_writer.toUpperCase())).toBe(RdsUrlType.RDS_CLUSTER_GROUP_WRITER);
+  });
+
+  it("test_data_group_dns", () => {
+    const target = new RdsUtils();
+    expect(target.isDataGroupWriterDns(us_east_region_data_group_writer)).toBeTruthy();
+    expect(target.isDataGroupWriterDns(us_east_region_data_group_reader)).toBeFalsy();
+    expect(target.isDataGroupWriterDns(us_east_region_cluster)).toBeFalsy();
+    expect(target.isDataGroupWriterDns(us_east_region_instance)).toBeFalsy();
+    expect(target.isDataGroupWriterDns(us_east_region_cluster_group_writer)).toBeFalsy();
+
+    expect(target.isDataGroupReaderDns(us_east_region_data_group_reader)).toBeTruthy();
+    expect(target.isDataGroupReaderDns(us_east_region_data_group_writer)).toBeFalsy();
+    expect(target.isDataGroupReaderDns(us_east_region_cluster_read_only)).toBeFalsy();
+    expect(target.isDataGroupReaderDns(us_east_region_instance)).toBeFalsy();
+    expect(target.isDataGroupReaderDns(us_east_region_cluster_group_reader)).toBeFalsy();
+
+    expect(target.isClusterGroupWriterDns(us_east_region_data_group_writer)).toBeFalsy();
+    expect(target.isClusterGroupReaderDns(us_east_region_data_group_reader)).toBeFalsy();
+
+    expect(target.isRdsDns(us_east_region_data_group_writer)).toBeTruthy();
+    expect(target.isRdsDns(us_east_region_data_group_reader)).toBeTruthy();
+    expect(target.isRdsInstance(us_east_region_data_group_writer)).toBeFalsy();
+    expect(target.isRdsInstance(us_east_region_data_group_reader)).toBeFalsy();
+    expect(target.isRdsInstance(us_east_region_instance)).toBeTruthy();
+    expect(target.isRdsClusterDns(us_east_region_data_group_writer)).toBeFalsy();
+    expect(target.isRdsClusterDns(us_east_region_data_group_reader)).toBeFalsy();
+    expect(target.isWriterClusterDns(us_east_region_data_group_writer)).toBeFalsy();
+    expect(target.isReaderClusterDns(us_east_region_data_group_reader)).toBeFalsy();
+
+    expect(target.getRdsRegion(us_east_region_data_group_writer)).toBe("us-east-2");
+    expect(target.getRdsRegion(us_east_region_data_group_reader)).toBe("us-east-2");
+    expect(target.getRdsClusterId(us_east_region_data_group_writer)).toBe("database-test-name");
+    expect(target.getRdsClusterId(us_east_region_data_group_reader)).toBe("database-test-name");
+    expect(target.getRdsInstanceId(us_east_region_data_group_writer)).toBeNull();
+    expect(target.getRdsInstanceId(us_east_region_data_group_reader)).toBeNull();
+    expect(target.getRdsInstanceHostPattern(us_east_region_data_group_writer)).toBe("?.XYZ.data-group.us-east-2.rds.amazonaws.com");
+
+    expect(target.identifyRdsType(us_east_region_data_group_writer)).toBe(RdsUrlType.RDS_DATA_GROUP_WRITER);
+    expect(target.identifyRdsType(us_east_region_data_group_reader)).toBe(RdsUrlType.RDS_DATA_GROUP_READER);
+    expect(target.identifyRdsType(us_east_region_data_group_writer.toUpperCase())).toBe(RdsUrlType.RDS_DATA_GROUP_WRITER);
+    expect(target.identifyRdsType(us_east_region_data_group_reader.toUpperCase())).toBe(RdsUrlType.RDS_DATA_GROUP_READER);
+    expect(target.identifyRdsType(us_east_region_cluster_group_writer)).toBe(RdsUrlType.RDS_CLUSTER_GROUP_WRITER);
+    expect(target.identifyRdsType(us_east_region_cluster_group_reader)).toBe(RdsUrlType.RDS_CLUSTER_GROUP_READER);
+    expect(target.identifyRdsType(us_east_region_instance)).toBe(RdsUrlType.RDS_INSTANCE);
   });
 
   it("test_broken_paths_host_pattern", () => {
