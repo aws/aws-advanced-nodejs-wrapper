@@ -18,10 +18,20 @@ import { HostRole } from "./host_role";
 import { HostInfo } from "./host_info";
 import { PluginService } from "./plugin_service";
 import { ConnectionInfo } from "./connection_info";
+import { ClientWrapper } from "./client_wrapper";
 
 export interface ConnectionProvider {
   connect(hostInfo: HostInfo, pluginService: PluginService, props: Map<string, any>): Promise<ConnectionInfo>;
   acceptsUrl(hostInfo: HostInfo, props: Map<string, any>): boolean;
   acceptsStrategy(role: HostRole, strategy: string): boolean;
   getHostInfoByStrategy(hosts: HostInfo[], role: HostRole, strategy: string, props?: Map<string, any>): HostInfo;
+
+  /**
+   * Marks a client returned by {@link connect} so that ending it closes its physical connection instead of returning
+   * it to this provider's internal pool. Call it before ending the client, because another caller can take a released
+   * connection at once. Providers without an internal pool do not implement this method.
+   *
+   * @returns true if the client belongs to this provider's pool and is still checked out, otherwise false.
+   */
+  evictClient?(client: ClientWrapper): boolean;
 }

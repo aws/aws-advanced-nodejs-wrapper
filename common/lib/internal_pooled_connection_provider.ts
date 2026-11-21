@@ -127,7 +127,13 @@ export class InternalPooledConnectionProvider implements PooledConnectionProvide
   }
 
   async getPoolConnection(hostInfo: HostInfo, props: Map<string, string>) {
-    return new PoolClientWrapper(await this.internalPool!.connect(), hostInfo, props);
+    // Captured before the await, because a concurrent connect on this provider can replace internalPool.
+    const pool = this.internalPool!;
+    return new PoolClientWrapper(await pool.connect(), hostInfo, props, pool);
+  }
+
+  evictClient(client: ClientWrapper): boolean {
+    return client instanceof PoolClientWrapper && client.markForEviction();
   }
 
   async releaseResources() {

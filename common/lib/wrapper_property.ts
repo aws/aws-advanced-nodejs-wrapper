@@ -222,6 +222,10 @@ export interface AwsClientConfig {
   verifyInactiveClusterWriterEndpointConnectionType?: string;
   /** Defines whether an opened connection should be verified to be a writer or reader, or if no role verification should be performed (writer, reader, none). */
   verifyOpenedConnectionType?: string;
+  /** Maximum physical connection lifetime in milliseconds. Required by the connectionLifetime plugin. */
+  connectionLifetimeMs?: number;
+  /** Action to take after the physical connection reaches its configured lifetime (reconnect, close). */
+  connectionLifetimeAction?: string;
 }
 
 export class WrapperProperty<T> {
@@ -408,6 +412,18 @@ export class WrapperProperties {
       "discovery of the newly promoted writer.",
     2000
   );
+  static readonly CONNECTION_LIFETIME_MS = new WrapperProperty<number>(
+    "connectionLifetimeMs",
+    "Maximum physical connection lifetime in milliseconds.",
+    undefined
+  );
+
+  static readonly CONNECTION_LIFETIME_ACTION = new WrapperProperty<string>(
+    "connectionLifetimeAction",
+    "Action to take after the physical connection reaches its configured lifetime. Supported values are close and reconnect.",
+    "reconnect"
+  );
+
   static readonly FAILOVER_TIMEOUT_MS = new WrapperProperty<number>("failoverTimeoutMs", "Maximum allowed time for the failover process.", 300000);
   static readonly FAILOVER_WRITER_RECONNECT_INTERVAL_MS = new WrapperProperty<number>(
     "failoverWriterReconnectIntervalMs",

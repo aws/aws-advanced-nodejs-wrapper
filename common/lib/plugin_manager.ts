@@ -402,6 +402,10 @@ export class PluginManager {
     return this.connectionProviderManager.getConnectionProvider(hostInfo, props);
   }
 
+  evictClient(client: ClientWrapper): boolean {
+    return this.connectionProviderManager.evictClient(client);
+  }
+
   private static implementsCanReleaseResources(plugin: any): plugin is CanReleaseResources {
     return plugin.releaseResources !== undefined;
   }

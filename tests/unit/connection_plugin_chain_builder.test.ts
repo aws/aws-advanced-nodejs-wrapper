@@ -31,6 +31,7 @@ import { NullTelemetryFactory } from "../../common/lib/utils/telemetry/null_tele
 import { AbstractConnectionPlugin } from "../../common/lib/abstract_connection_plugin";
 import { ConnectionPluginFactory } from "../../common/lib/plugin_factory";
 import { FullServicesContainer } from "../../common/lib/utils/full_services_container";
+import { ConnectionLifetimePlugin } from "../../common/lib/plugins/connection_lifetime_plugin";
 
 const mockPluginService: PluginServiceImpl = mock(PluginServiceImpl);
 const mockPluginServiceInstance: PluginService = instance(mockPluginService);
@@ -120,6 +121,26 @@ describe("testConnectionPluginChainBuilder", () => {
     expect(result[1]).toBeInstanceOf(IamAuthenticationPlugin);
     expect(result[2]).toBeInstanceOf(ExecuteTimePlugin);
     expect(result[3]).toBeInstanceOf(ConnectTimePlugin);
+    expect(result[4]).toBeInstanceOf(DefaultPlugin);
+  });
+
+  it("sort connection lifetime plugin first", async () => {
+    const props = new Map();
+    props.set(WrapperProperties.PLUGINS.name, "iam,staleDns,failover,connectionLifetime");
+    props.set(WrapperProperties.CONNECTION_LIFETIME_MS.name, 300000);
+
+    const result = await ConnectionPluginChainBuilder.getPlugins(
+      mockServicesContainer,
+      props,
+      new ConnectionProviderManager(mockDefaultConnProvider, mockEffectiveConnProvider),
+      null
+    );
+
+    expect(result.length).toBe(5);
+    expect(result[0]).toBeInstanceOf(ConnectionLifetimePlugin);
+    expect(result[1]).toBeInstanceOf(StaleDnsPlugin);
+    expect(result[2]).toBeInstanceOf(FailoverPlugin);
+    expect(result[3]).toBeInstanceOf(IamAuthenticationPlugin);
     expect(result[4]).toBeInstanceOf(DefaultPlugin);
   });
 

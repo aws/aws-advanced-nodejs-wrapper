@@ -49,6 +49,11 @@ export class AwsPgInternalPoolClient implements AwsInternalPoolClient {
     }
   }
 
+  discardClient(client: pkgPg.PoolClient): void {
+    // A truthy argument tells the pool to destroy the client rather than keep it.
+    client.release(true);
+  }
+
   getIdleCount(): number {
     return this.targetPool.idleCount;
   }

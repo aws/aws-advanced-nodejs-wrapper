@@ -42,6 +42,10 @@ export class AwsMysqlInternalPoolClient implements AwsInternalPoolClient {
     }
   }
 
+  discardClient(client: any): void {
+    client.destroy();
+  }
+
   getIdleCount(): number {
     return this.targetPool.pool._freeConnections.length;
   }
