@@ -56,3 +56,8 @@ export interface BlueGreenDialect {
   isBlueGreenStatusAvailable(clientWrapper: ClientWrapper): Promise<boolean>;
   getBlueGreenStatus(clientWrapper: ClientWrapper): Promise<BlueGreenResult[] | null>;
 }
+
+// Interfaces do not exist at runtime, so a dialect counts as a Blue/Green dialect when it has both methods.
+export function isBlueGreenDialect(dialect: any): dialect is BlueGreenDialect {
+  return typeof dialect?.isBlueGreenStatusAvailable === "function" && typeof dialect?.getBlueGreenStatus === "function";
+}
