@@ -229,7 +229,7 @@ public class AuroraTestUtility {
         .storageType(DEFAULT_STORAGE_TYPE)
         .allocatedStorage(DEFAULT_ALLOCATED_STORAGE)
         .iops(DEFAULT_IOPS)
-        .tags(this.getTag())
+        .tags(this.getTags())
         .build());
 
     // Wait for all instances to be up
@@ -307,7 +307,7 @@ public class AuroraTestUtility {
             .engine(engine)
             .engineVersion(version)
             .storageEncrypted(true)
-            .tags(this.getTag())
+            .tags(this.getTags())
             .dbClusterParameterGroupName(clusterParameterGroupName)
             .build();
 
@@ -324,7 +324,7 @@ public class AuroraTestUtility {
               .engine(engine)
               .engineVersion(version)
               .publiclyAccessible(true)
-              .tags(this.getTag())
+              .tags(this.getTags())
               .build());
     }
 
@@ -384,7 +384,7 @@ public class AuroraTestUtility {
             .enableIAMDatabaseAuthentication(true)
             .backupRetentionPeriod(1)
             .storageEncrypted(true)
-            .tags(this.getTag())
+            .tags(this.getTags())
             .allocatedStorage(DEFAULT_ALLOCATED_STORAGE)
             .dbClusterInstanceClass(instanceClass)
             .storageType(DEFAULT_STORAGE_TYPE)
@@ -427,7 +427,7 @@ public class AuroraTestUtility {
             .engine(info.getDatabaseEngine())
             .engineVersion(info.getDatabaseEngineVersion())
             .publiclyAccessible(true)
-            .tags(this.getTag())
+            .tags(this.getTags())
             .build());
 
     // Wait for the instance to become available
@@ -506,6 +506,7 @@ public class AuroraTestUtility {
             .dbClusterParameterGroupName(groupName)
             .description("Test custom cluster parameter group for BGD.")
             .dbParameterGroupFamily(this.getAuroraParameterGroupFamily(engine, engineVersion))
+            .tags(this.getTags())
             .build());
 
     if (!response.sdkHttpResponse().isSuccessful()) {
@@ -1208,7 +1209,7 @@ public class AuroraTestUtility {
             CreateBlueGreenDeploymentRequest.builder()
                 .blueGreenDeploymentName(blueGreenName)
                 .source(sourceArn)
-                .tags(this.getTag())
+                .tags(this.getTags())
                 .build());
       } catch (RdsException ex) {
         if (ex.statusCode() != 500 || count == 0) {
@@ -1364,13 +1365,14 @@ public class AuroraTestUtility {
     }
   }
 
-  private Tag getTag() {
+  // The env=test-runner tag is what the account's cleanup job matches on to delete leftover test resources.
+  private Tag[] getTags() {
     ZoneId zoneId = ZoneId.of("America/Los_Angeles");
     ZonedDateTime zdt = Instant.now().atZone(zoneId);
     String timeStr = zdt.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss zzz"));
-    return Tag.builder()
-        .key("env").value("test-runner")
-        .key("created").value(timeStr)
-        .build();
+    return new Tag[] {
+        Tag.builder().key("env").value("test-runner").build(),
+        Tag.builder().key("created").value(timeStr).build()
+    };
   }
 }
