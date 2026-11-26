@@ -27,7 +27,7 @@ import type {
   TransactionOptions
 } from "@prisma/driver-adapter-utils";
 import { Error, ok, err } from "@prisma/driver-adapter-utils";
-import { AwsPgClient } from "aws-advanced-nodejs-wrapper/dist/pg/lib/index.js";
+import { AwsPgClient } from "aws-advanced-nodejs-wrapper/pg";
 import { fieldToColumnType, UnsupportedNativeDataType } from "./conversion";
 
 class AwsQueryable<ClientT extends AwsPgClient> implements Queryable {
