@@ -72,7 +72,7 @@ export class AuroraInitialConnectionStrategyPlugin extends AbstractConnectionPlu
     }
 
     if (type === RdsUrlType.RDS_WRITER_CLUSTER) {
-      const writerCandidateClient = await this.getVerifiedWriterClient(props, isInitialConnection, connectFunc);
+      const writerCandidateClient = await this.getVerifiedWriterClient(props, isInitialConnection, connectFunc, hostInfo.host);
       if (writerCandidateClient === null) {
         // Can't get writer connection. Continue with a normal workflow.
         logger.debug("Writer cluster endpoint does not resolve to a valid reader instance, skipping the initial connection strategy logic.");
@@ -94,11 +94,17 @@ export class AuroraInitialConnectionStrategyPlugin extends AbstractConnectionPlu
     return connectFunc();
   }
 
-  async getVerifiedWriterClient<T>(props: Map<string, any>, isInitialConnection: boolean, connectFunc: () => Promise<T>): Promise<any> {
+  async getVerifiedWriterClient<T>(
+    props: Map<string, any>,
+    isInitialConnection: boolean,
+    connectFunc: () => Promise<T>,
+    originalHost?: string
+  ): Promise<any> {
     if (!this.hostListProviderService) {
       throw new AwsWrapperError(Messages.get("HostListProviderService.notFound")); // should not be reached
     }
     const retryDelayMs = WrapperProperties.OPEN_CONNECTION_RETRY_INTERVAL_MS.get(props);
+    const verifyRole = this.shouldVerifyWriterRole(props, originalHost);
 
     const endTimeMillis = Date.now() + WrapperProperties.OPEN_CONNECTION_RETRY_TIMEOUT_MS.get(props);
     let writerCandidateClient: any;
@@ -118,7 +124,7 @@ export class AuroraInitialConnectionStrategyPlugin extends AbstractConnectionPlu
           writerCandidate = await this.pluginService.identifyConnection(writerCandidateClient);
 
           if (writerCandidate) {
-            if (this.shouldVerifyRole(props) && writerCandidate.role !== HostRole.WRITER) {
+            if (verifyRole && writerCandidate.role !== HostRole.WRITER) {
               // Shouldn't be here. But let's try again.
               await this.pluginService.abortTargetClient(writerCandidateClient);
               await sleep(retryDelayMs);
@@ -131,7 +137,7 @@ export class AuroraInitialConnectionStrategyPlugin extends AbstractConnectionPlu
         }
         writerCandidateClient = await this.pluginService.connect(writerCandidate, props, this);
 
-        if (this.shouldVerifyRole(props) && (await this.pluginService.getHostRole(writerCandidateClient)) !== HostRole.WRITER) {
+        if (verifyRole && (await this.pluginService.getHostRole(writerCandidateClient)) !== HostRole.WRITER) {
           // If the new connection resolves to a reader instance, this means the topology is outdated.
           // Force refresh to update the topology.
           await this.pluginService.forceRefreshHostList();
@@ -160,6 +166,7 @@ export class AuroraInitialConnectionStrategyPlugin extends AbstractConnectionPlu
     }
 
     const retryDelayMs = WrapperProperties.OPEN_CONNECTION_RETRY_INTERVAL_MS.get(props);
+    const verifyRole = this.shouldVerifyRole(props);
     const endTimeMs = Date.now() + WrapperProperties.OPEN_CONNECTION_RETRY_TIMEOUT_MS.get(props);
 
     let readerCandidateClient: any;
@@ -181,7 +188,7 @@ export class AuroraInitialConnectionStrategyPlugin extends AbstractConnectionPlu
           readerCandidate = await this.pluginService.identifyConnection(readerCandidateClient);
 
           if (readerCandidate) {
-            if (this.shouldVerifyRole(props) && readerCandidate.role !== HostRole.READER) {
+            if (verifyRole && readerCandidate.role !== HostRole.READER) {
               if (this.hasNoReaders()) {
                 // It seems that cluster has no readers. Simulate Aurora reader cluster endpoint logic
                 // and return the current (writer) client.
@@ -202,7 +209,7 @@ export class AuroraInitialConnectionStrategyPlugin extends AbstractConnectionPlu
         }
         readerCandidateClient = await this.pluginService.connect(readerCandidate, props, this);
 
-        if (this.shouldVerifyRole(props) && (await this.pluginService.getHostRole(readerCandidateClient)) !== HostRole.READER) {
+        if (verifyRole && (await this.pluginService.getHostRole(readerCandidateClient)) !== HostRole.READER) {
           // If the new connection resolves to a writer instance, this means the topology is outdated.
           // Force refresh to update the topology.
           await this.pluginService.forceRefreshHostList();
@@ -233,6 +240,20 @@ export class AuroraInitialConnectionStrategyPlugin extends AbstractConnectionPlu
 
   private shouldVerifyRole(props: Map<string, any>): boolean {
     return WrapperProperties.VERIFY_OPENED_CONNECTION_ROLE.get(props) !== "none";
+  }
+
+  private shouldVerifyWriterRole(props: Map<string, any>, originalHost?: string): boolean {
+    const setting = WrapperProperties.VERIFY_OPENED_CONNECTION_ROLE.get(props);
+    if (setting != null) {
+      return setting !== "none";
+    }
+
+    const writer = this.getWriter();
+    if (writer !== null && originalHost && this.rdsUtils.isRdsInstance(writer.host) && this.rdsUtils.isSameRegion(writer.host, originalHost)) {
+      return true;
+    }
+
+    return WrapperProperties.VERIFY_INACTIVE_CLUSTER_WRITER_CONNECTION_ROLE.get(props) !== "none";
   }
 
   private getWriter(): HostInfo | null {
