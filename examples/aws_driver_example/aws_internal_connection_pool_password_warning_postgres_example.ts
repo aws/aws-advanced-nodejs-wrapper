@@ -15,7 +15,6 @@
 */
 
 import { InternalPooledConnectionProvider, PluginManager } from "../../index";
-import { logger } from "../../common/logutils";
 import { AwsPgClient } from "../../pg";
 
 const postgresHost = "db-identifier.XYZ.us-east-2.rds.amazonaws.com";
@@ -92,5 +91,5 @@ try {
   // Clean up resources used by the plugins.
   await PluginManager.releaseResources();
 
-  logger.debug("example complete");
+  console.log("example complete");
 }
