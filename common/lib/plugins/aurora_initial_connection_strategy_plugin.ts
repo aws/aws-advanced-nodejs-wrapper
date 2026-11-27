@@ -118,7 +118,7 @@ export class AuroraInitialConnectionStrategyPlugin extends AbstractConnectionPlu
           writerCandidate = await this.pluginService.identifyConnection(writerCandidateClient);
 
           if (writerCandidate) {
-            if (writerCandidate.role !== HostRole.WRITER) {
+            if (this.shouldVerifyRole(props) && writerCandidate.role !== HostRole.WRITER) {
               // Shouldn't be here. But let's try again.
               await this.pluginService.abortTargetClient(writerCandidateClient);
               await sleep(retryDelayMs);
@@ -131,10 +131,7 @@ export class AuroraInitialConnectionStrategyPlugin extends AbstractConnectionPlu
         }
         writerCandidateClient = await this.pluginService.connect(writerCandidate, props, this);
 
-        if (
-          WrapperProperties.VERIFY_OPENED_CONNECTION_ROLE.get(props) !== "none" &&
-          (await this.pluginService.getHostRole(writerCandidateClient)) !== HostRole.WRITER
-        ) {
+        if (this.shouldVerifyRole(props) && (await this.pluginService.getHostRole(writerCandidateClient)) !== HostRole.WRITER) {
           // If the new connection resolves to a reader instance, this means the topology is outdated.
           // Force refresh to update the topology.
           await this.pluginService.forceRefreshHostList();
@@ -184,7 +181,7 @@ export class AuroraInitialConnectionStrategyPlugin extends AbstractConnectionPlu
           readerCandidate = await this.pluginService.identifyConnection(readerCandidateClient);
 
           if (readerCandidate) {
-            if (readerCandidate.role !== HostRole.READER) {
+            if (this.shouldVerifyRole(props) && readerCandidate.role !== HostRole.READER) {
               if (this.hasNoReaders()) {
                 // It seems that cluster has no readers. Simulate Aurora reader cluster endpoint logic
                 // and return the current (writer) client.
@@ -205,10 +202,7 @@ export class AuroraInitialConnectionStrategyPlugin extends AbstractConnectionPlu
         }
         readerCandidateClient = await this.pluginService.connect(readerCandidate, props, this);
 
-        if (
-          WrapperProperties.VERIFY_OPENED_CONNECTION_ROLE.get(props) !== "none" &&
-          (await this.pluginService.getHostRole(readerCandidateClient)) !== HostRole.READER
-        ) {
+        if (this.shouldVerifyRole(props) && (await this.pluginService.getHostRole(readerCandidateClient)) !== HostRole.READER) {
           // If the new connection resolves to a writer instance, this means the topology is outdated.
           // Force refresh to update the topology.
           await this.pluginService.forceRefreshHostList();
@@ -235,6 +229,10 @@ export class AuroraInitialConnectionStrategyPlugin extends AbstractConnectionPlu
         }
       }
     }
+  }
+
+  private shouldVerifyRole(props: Map<string, any>): boolean {
+    return WrapperProperties.VERIFY_OPENED_CONNECTION_ROLE.get(props) !== "none";
   }
 
   private getWriter(): HostInfo | null {

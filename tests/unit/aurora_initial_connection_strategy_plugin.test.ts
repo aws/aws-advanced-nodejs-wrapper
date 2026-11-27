@@ -154,6 +154,30 @@ describe("Aurora initial connection strategy plugin", () => {
     verify(mockPluginService.setRoutedHostInfo(candidate)).once();
   });
 
+  it.each(["writer", "reader"])("does not retry on a topology role mismatch for %s when verifyOpenedConnectionType is none", async (role) => {
+    WrapperProperties.VERIFY_OPENED_CONNECTION_ROLE.set(props, "none");
+    const isReader = role === "reader";
+    // No candidate is found up front, and the identified host reports the opposite role.
+    const identified = hostInfoBuilder
+      .withHost("instance")
+      .withRole(isReader ? HostRole.WRITER : HostRole.READER)
+      .build();
+    const client = isReader ? writerClient : readerClient;
+    const connectFunc = jest.fn(() => Promise.resolve(client));
+    when(mockRdsUtils.identifyRdsType(anything())).thenReturn(isReader ? RdsUrlType.RDS_READER_CLUSTER : RdsUrlType.RDS_WRITER_CLUSTER);
+    // For the reader case the cluster has a reader, so the "no readers" fallback does not apply.
+    when(mockPluginService.getAllHosts()).thenReturn(isReader ? [hostInfoBuilder.withHost("reader").withRole(HostRole.READER).build()] : []);
+    when(mockPluginService.getHosts()).thenReturn([]);
+    when(mockPluginService.acceptsStrategy(anything(), anything())).thenReturn(true);
+    when(mockPluginService.getHostInfoByStrategy(anything(), anything(), anything())).thenReturn(undefined);
+    when(mockPluginService.identifyConnection(anything())).thenResolve(identified);
+
+    expect(await plugin.connect(hostInfo, props, true, connectFunc)).toBe(client);
+    expect(connectFunc).toHaveBeenCalledTimes(1);
+    verify(mockPluginService.abortTargetClient(anything())).never();
+    verify(mockPluginService.setRoutedHostInfo(identified)).once();
+  });
+
   it("test reader - resolves to writer", async () => {
     when(mockRdsUtils.identifyRdsType(anything())).thenReturn(RdsUrlType.RDS_READER_CLUSTER);
     when(mockPluginService.getHosts()).thenReturn([hostInfoBuilder.withRole(HostRole.READER).build()]);
