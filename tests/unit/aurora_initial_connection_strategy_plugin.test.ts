@@ -178,6 +178,59 @@ describe("Aurora initial connection strategy plugin", () => {
     verify(mockPluginService.setRoutedHostInfo(identified)).once();
   });
 
+  describe("writer cluster endpoint role verification", () => {
+    const writerInstance = hostInfoBuilder.withHost("writer-instance").withRole(HostRole.WRITER).build();
+
+    function setup(sameRegion: boolean) {
+      const client = instance(mock(PgClientWrapper));
+      when(mockRdsUtils.identifyRdsType(anything())).thenReturn(RdsUrlType.RDS_WRITER_CLUSTER);
+      when(mockRdsUtils.isRdsClusterDns(anything())).thenReturn(false);
+      when(mockRdsUtils.isRdsInstance(anything())).thenReturn(true);
+      when(mockRdsUtils.isSameRegion(anything(), anything())).thenReturn(sameRegion);
+      when(mockPluginService.getAllHosts()).thenReturn([writerInstance]);
+      when(mockPluginService.connect(anything(), anything(), anything())).thenResolve(client);
+      // The connection reports a reader, which would normally trigger a retry.
+      when(mockPluginService.getHostRole(client)).thenResolve(HostRole.READER);
+      return client;
+    }
+
+    it("skips verification for an inactive writer endpoint when verifyInactiveClusterWriterEndpointConnectionType is none", async () => {
+      WrapperProperties.VERIFY_INACTIVE_CLUSTER_WRITER_CONNECTION_ROLE.set(props, "none");
+      const client = setup(false);
+
+      expect(await plugin.connect(hostInfo, props, true, mockFunc)).toBe(client);
+      verify(mockPluginService.getHostRole(anything())).never();
+      verify(mockPluginService.setRoutedHostInfo(writerInstance)).once();
+    });
+
+    it("still verifies an active writer endpoint when verifyInactiveClusterWriterEndpointConnectionType is none", async () => {
+      WrapperProperties.VERIFY_INACTIVE_CLUSTER_WRITER_CONNECTION_ROLE.set(props, "none");
+      WrapperProperties.OPEN_CONNECTION_RETRY_TIMEOUT_MS.set(props, 1);
+      setup(true);
+
+      await plugin.connect(hostInfo, props, true, mockFunc);
+      verify(mockPluginService.getHostRole(anything())).atLeast(1);
+    });
+
+    it("verifies an inactive writer endpoint by default", async () => {
+      WrapperProperties.OPEN_CONNECTION_RETRY_TIMEOUT_MS.set(props, 1);
+      setup(false);
+
+      await plugin.connect(hostInfo, props, true, mockFunc);
+      verify(mockPluginService.getHostRole(anything())).atLeast(1);
+    });
+
+    it("lets an explicit verifyOpenedConnectionType override verifyInactiveClusterWriterEndpointConnectionType", async () => {
+      WrapperProperties.VERIFY_OPENED_CONNECTION_ROLE.set(props, "writer");
+      WrapperProperties.VERIFY_INACTIVE_CLUSTER_WRITER_CONNECTION_ROLE.set(props, "none");
+      WrapperProperties.OPEN_CONNECTION_RETRY_TIMEOUT_MS.set(props, 1);
+      setup(false);
+
+      await plugin.connect(hostInfo, props, true, mockFunc);
+      verify(mockPluginService.getHostRole(anything())).atLeast(1);
+    });
+  });
+
   it("test reader - resolves to writer", async () => {
     when(mockRdsUtils.identifyRdsType(anything())).thenReturn(RdsUrlType.RDS_READER_CLUSTER);
     when(mockPluginService.getHosts()).thenReturn([hostInfoBuilder.withRole(HostRole.READER).build()]);
