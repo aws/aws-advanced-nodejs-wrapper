@@ -158,6 +158,14 @@ export interface PluginService extends ErrorHandler {
 
   setIsPooledClient(isPooledClient: boolean): void;
 
+  /**
+   * Marks a client so that ending it closes its physical connection instead of returning it to an internal
+   * connection pool. Call it before ending the client. Does nothing for clients that do not come from an internal pool.
+   *
+   * @returns true if a provider marked the client, otherwise false.
+   */
+  evictClient(client: ClientWrapper): boolean;
+
   getTrackedConnectionHost(): TrackedConnection | null;
 
   setTrackedConnectionHost(host: TrackedConnection | null): void;
@@ -810,6 +818,10 @@ export class PluginServiceImpl implements PluginService, HostListProviderService
 
   setIsPooledClient(isPooledClient: boolean): void {
     this._isPooledClient = isPooledClient;
+  }
+
+  evictClient(client: ClientWrapper): boolean {
+    return this.servicesContainer.pluginManager?.evictClient(client) ?? false;
   }
 
   getTrackedConnectionHost(): TrackedConnection | null {

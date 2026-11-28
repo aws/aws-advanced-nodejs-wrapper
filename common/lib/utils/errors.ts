@@ -40,7 +40,7 @@ export class FailoverError extends AwsWrapperError {}
 
 export class FailoverSuccessError extends FailoverError {
   constructor(message?: string, cause?: any) {
-    super(Messages.get("Failover.connectionChangedError"));
+    super(message ?? Messages.get("Failover.connectionChangedError"), cause);
   }
 }
 
@@ -57,3 +57,33 @@ export class AwsTimeoutError extends AwsWrapperError {}
 export class InternalQueryTimeoutError extends AwsTimeoutError {}
 
 export class UnavailableHostError extends AwsWrapperError {}
+
+/**
+ * The connection reached its configured maximum lifetime and was closed. The client cannot be used again.
+ */
+export class ConnectionLifetimeError extends AwsWrapperError {
+  constructor(cause?: any) {
+    super(Messages.get("ConnectionLifetimeError.connectionClosed"), cause);
+  }
+}
+
+/**
+ * The connection reached its configured maximum lifetime and a replacement connection could not be established.
+ * The original error is available as `cause`.
+ */
+export class ConnectionLifetimeFailedError extends AwsWrapperError {
+  constructor(cause?: any) {
+    super(Messages.get("ConnectionLifetimeFailedError.unableToReconnect"), cause);
+  }
+}
+
+/**
+ * The connection reached its configured maximum lifetime and was replaced with a new connection. The pending call
+ * was not executed. It extends `FailoverSuccessError` so that applications that already retry after a successful
+ * failover also retry here.
+ */
+export class ConnectionLifetimeSuccessError extends FailoverSuccessError {
+  constructor(cause?: any) {
+    super(Messages.get("ConnectionLifetimeSuccessError.connectionChanged"), cause);
+  }
+}

@@ -19,6 +19,11 @@ export interface AwsInternalPoolClient {
 
   end(): Promise<any>;
 
+  /**
+   * Closes a client checked out by {@link connect} and removes it from the pool, instead of releasing it for reuse.
+   */
+  discardClient(client: any): void;
+
   releaseResources(): Promise<void>;
 
   getIdleCount(): number;

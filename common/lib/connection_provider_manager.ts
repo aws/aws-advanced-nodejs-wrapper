@@ -19,6 +19,7 @@ import { HostRole } from "./host_role";
 import { HostInfo } from "./host_info";
 import { CanReleaseResources } from "./can_release_resources";
 import { DriverConnectionProvider } from "./driver_connection_provider";
+import { ClientWrapper } from "./client_wrapper";
 
 export class ConnectionProviderManager {
   private readonly forceConnectProvider: ConnectionProvider;
@@ -63,6 +64,19 @@ export class ConnectionProviderManager {
     }
 
     return host;
+  }
+
+  /**
+   * Marks a client for eviction from the internal pool of whichever provider issued it.
+   * See {@link ConnectionProvider.evictClient}.
+   *
+   * @returns true if one of the providers marked the client.
+   */
+  evictClient(client: ClientWrapper): boolean {
+    if (this.effectiveProvider?.evictClient?.(client)) {
+      return true;
+    }
+    return this.defaultProvider !== this.effectiveProvider && (this.defaultProvider.evictClient?.(client) ?? false);
   }
 
   getDefaultConnectionProvider(): ConnectionProvider {

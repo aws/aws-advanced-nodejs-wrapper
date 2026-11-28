@@ -65,6 +65,28 @@ const MESSAGES: Record<string, string> = {
   "HostIdCacheService.errorIdentifyConnection": "An error occurred while identifying the connection's host ID.",
   "ExecuteTimePlugin.executeTime": "Executed method '%s' in %s milliseconds.",
   "ConnectTimePlugin.connectTime": "Connected to '%s' in %s milliseconds.",
+  "ConnectionLifetimePlugin.invalidConnectionLifetime":
+    "The configuration property 'connectionLifetimeMs' is required and must be a positive whole number of milliseconds. Received: '%s'.",
+  "ConnectionLifetimePlugin.invalidConnectionLifetimeAction":
+    "The configuration property 'connectionLifetimeAction' must be either 'close' or 'reconnect'. Received: '%s'.",
+  "ConnectionLifetimePlugin.actionDeferred":
+    "The connection has reached its maximum lifetime, but the lifetime action is deferred while a transaction is active. Executing '%s' on the current connection.",
+  "ConnectionLifetimePlugin.closing": "The connection has reached its maximum lifetime. Closing the connection to '%s'.",
+  "ConnectionLifetimePlugin.closeConnectionFailed": "Unable to close the expired connection: %s",
+  "ConnectionLifetimePlugin.originalHostUnavailable": "The original application host is unavailable for connection lifetime reconnection.",
+  "ConnectionLifetimePlugin.reconnecting": "The connection has reached its maximum lifetime. Reconnecting to the original application host '%s'.",
+  "ConnectionLifetimePlugin.reconnected": "Replaced the expired connection with a new connection to '%s'.",
+  "ConnectionLifetimePlugin.reconnectFailed": "Unable to replace the expired connection: %s",
+  "ConnectionLifetimePlugin.reconnectReturnedNull": "The connection lifetime reconnect attempt did not return a connection.",
+  "ConnectionLifetimePlugin.replacementCloseFailed":
+    "Unable to close the unused replacement connection after a connection lifetime reconnect failure: %s",
+  "ConnectionLifetimePlugin.failedInstallationConnectionCloseFailed":
+    "Unable to close a connection after a replacement connection was only partially installed: %s",
+  "ConnectionLifetimeError.connectionClosed": "The connection has reached its maximum lifetime and is closed.",
+  "ConnectionLifetimeSuccessError.connectionChanged":
+    "The active connection changed because its configured maximum lifetime was reached. The pending call was not executed. Re-configure session state if required and retry the operation.",
+  "ConnectionLifetimeFailedError.unableToReconnect":
+    "Unable to establish a replacement connection after the configured maximum connection lifetime was reached.",
   "ClusterAwareWriterFailoverHandler.failoverCalledWithInvalidTopology": "Failover was called with an invalid (null or empty) topology.",
   "ClusterAwareWriterFailoverHandler.failedToConnectToWriterInstance": "Failed to connect to the writer instance.",
   "ClusterAwareWriterFailoverHandler.successfulConnectionInvalidTopology":
@@ -225,6 +247,7 @@ const MESSAGES: Record<string, string> = {
   "DefaultTelemetryFactory.missingTracingBackend": "A tracing backend could not be found.",
   "DefaultTelemetryFactory.missingMetricsBackend": "A metrics backend could not be found.",
   "InternalPooledConnectionProvider.pooledConnectionFailed": "Internal pooled connection failed with message: '%s'",
+  "PoolClientWrapper.evicted": "Closed the pooled connection to '%s' instead of returning it to the internal pool.",
   "ErrorHandler.NoOpListener": "[%s] NoOp error event listener caught error: '%s'",
   "ErrorHandler.TrackerListener": "[%s] Tracker error event listener caught error: '%s'",
   "LimitlessConnectionPlugin.failedToConnectToHost": "Failed to connect to host '%s'.",

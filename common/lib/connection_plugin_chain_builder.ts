@@ -46,6 +46,7 @@ import { BlueGreenPluginFactory } from "./plugins/bluegreen/blue_green_plugin_fa
 import { GlobalDbFailoverPluginFactory } from "./plugins/global_db_failover/global_db_failover_plugin_factory";
 import { FullServicesContainer } from "./utils/full_services_container";
 import { GlobalDbReadWriteSplittingPluginFactory } from "./plugins/read_write_splitting/global_db_read_write_splitting_plugin_factory";
+import { ConnectionLifetimePluginFactory } from "./plugins/connection_lifetime_plugin_factory";
 
 /*
   Type alias used for plugin factory sorting. It holds a reference to a plugin
@@ -60,6 +61,7 @@ export class ConnectionPluginChainBuilder {
   static readonly WEIGHT_RELATIVE_TO_PRIOR_PLUGIN = -1;
 
   static readonly PLUGIN_FACTORIES = new Map<string, PluginFactoryInfo>([
+    ["connectionLifetime", { factory: ConnectionLifetimePluginFactory, weight: 50 }],
     ["customEndpoint", { factory: CustomEndpointPluginFactory, weight: 380 }],
     ["initialConnection", { factory: AuroraInitialConnectionStrategyFactory, weight: 390 }],
     ["auroraConnectionTracker", { factory: AuroraConnectionTrackerPluginFactory, weight: 400 }],
@@ -84,6 +86,7 @@ export class ConnectionPluginChainBuilder {
   ]);
 
   static readonly PLUGIN_WEIGHTS = new Map<typeof ConnectionPluginFactory, number>([
+    [ConnectionLifetimePluginFactory, 50],
     [AuroraInitialConnectionStrategyFactory, 390],
     [AuroraConnectionTrackerPluginFactory, 400],
     [StaleDnsPluginFactory, 500],

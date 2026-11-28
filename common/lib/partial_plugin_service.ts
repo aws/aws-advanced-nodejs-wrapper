@@ -534,6 +534,10 @@ export class PartialPluginService implements PluginService, HostListProviderServ
     this._isPooledClient = isPooledClient;
   }
 
+  evictClient(client: ClientWrapper): boolean {
+    return this.servicesContainer.pluginManager?.evictClient(client) ?? false;
+  }
+
   getTrackedConnectionHost(): TrackedConnection | null {
     return this._trackedConnectionHost;
   }

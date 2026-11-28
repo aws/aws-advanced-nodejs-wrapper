@@ -33,6 +33,7 @@
     - [Custom Endpoint Plugin](./using-the-nodejs-wrapper/using-plugins/UsingTheCustomEndpointPlugin.md)
     - [Developer Plugin](./using-the-nodejs-wrapper/using-plugins/UsingTheDeveloperPlugin.md)
     - [Limitless Connection Plugin](./using-the-nodejs-wrapper/using-plugins/UsingTheLimitlessConnectionPlugin.md)
+    - [Connection Lifetime Plugin](./using-the-nodejs-wrapper/using-plugins/UsingTheConnectionLifetimePlugin.md)
     - [Plugins Compatibility](./using-the-nodejs-wrapper/compatibility/Compatibility.md)
       - [Database Type Compatibility](./using-the-nodejs-wrapper/compatibility/CompatibilityDatabaseTypes.md)
       - [Database URL Type Compatibility](./using-the-nodejs-wrapper/compatibility/CompatibilityEndpoints.md)
