@@ -28,7 +28,7 @@ import { BlueGreenIntervalRate } from "./blue_green_interval_rate";
 import { RdsUtils } from "../../utils/rds_utils";
 import { WrapperProperties } from "../../wrapper_property";
 import { DatabaseDialect } from "../../database_dialect/database_dialect";
-import { BlueGreenDialect } from "../../database_dialect/blue_green_dialect";
+import { BlueGreenDialect, isBlueGreenDialect } from "../../database_dialect/blue_green_dialect";
 import { Messages } from "../../utils/messages";
 import { levels, logger } from "../../../logutils";
 import { HostRole } from "../../host_role";
@@ -152,7 +152,7 @@ export class BlueGreenStatusProvider {
   }
 
   protected isBlueGreenDialect(dialect: any): dialect is BlueGreenDialect {
-    return dialect;
+    return isBlueGreenDialect(dialect);
   }
 
   protected async prepareStatus(role: BlueGreenRole, interimStatus: BlueGreenInterimStatus): Promise<void> {

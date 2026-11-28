@@ -16,7 +16,7 @@
 
 import { BlueGreenRole } from "./blue_green_role";
 import { BlueGreenInterimStatus } from "./blue_green_interim_status";
-import { BlueGreenDialect, BlueGreenResult } from "../../database_dialect/blue_green_dialect";
+import { BlueGreenDialect, BlueGreenResult, isBlueGreenDialect } from "../../database_dialect/blue_green_dialect";
 import { PluginService } from "../../plugin_service";
 import { BlueGreenIntervalRate } from "./blue_green_interval_rate";
 import { HostInfo } from "../../host_info";
@@ -116,17 +116,13 @@ export class BlueGreenStatusMonitor {
     this.onBlueGreenStatusChangeFunc = onBlueGreenStatusChangeFunc;
 
     const dialect: DatabaseDialect = this.pluginService.getDialect();
-    if (!BlueGreenStatusMonitor.implementsBlueGreenDialect(dialect)) {
+    if (!isBlueGreenDialect(dialect)) {
       throw new AwsWrapperError(Messages.get("Bgd.unsupportedDialect", bgdId, dialect.getDialectName()));
     }
     this.blueGreenDialect = <BlueGreenDialect>(<unknown>this.pluginService.getDialect());
 
     // Intentionally not calling await on this method.
     this.runMonitoringLoop();
-  }
-
-  private static implementsBlueGreenDialect(dialect: any): dialect is BlueGreenDialect {
-    return typeof dialect?.isBlueGreenStatusAvailable === "function" && typeof dialect?.getBlueGreenStatus === "function";
   }
 
   protected async runMonitoringLoop(): Promise<void> {
