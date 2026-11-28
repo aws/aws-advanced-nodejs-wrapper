@@ -24,6 +24,10 @@ export class RdsUrlType {
   public static readonly RDS_INSTANCE = new RdsUrlType(true, false, true);
   public static readonly RDS_AURORA_LIMITLESS_DB_SHARD_GROUP = new RdsUrlType(true, false, true);
   public static readonly RDS_GLOBAL_WRITER_CLUSTER = new RdsUrlType(true, true, false);
+  public static readonly RDS_CLUSTER_GROUP_WRITER = new RdsUrlType(true, false, true);
+  public static readonly RDS_CLUSTER_GROUP_READER = new RdsUrlType(true, false, true);
+  public static readonly RDS_DATA_GROUP_WRITER = new RdsUrlType(true, false, true);
+  public static readonly RDS_DATA_GROUP_READER = new RdsUrlType(true, false, true);
   public static readonly OTHER = new RdsUrlType(false, false, false);
 
   private constructor(
